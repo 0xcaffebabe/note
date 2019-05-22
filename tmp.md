@@ -4,6 +4,9 @@
 Intent intent = new Intent()
 intent.setAction(""); // 隐式启动
 ```
+### 数据传递
+getIntent
+Bundle
 
 ## VIM
 - i :进入insert模式
@@ -31,4 +34,6 @@ intent.setAction(""); // 隐式启动
 - vs
 - sp
 - ctrl+w
+---
+text object
 

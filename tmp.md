@@ -4,7 +4,9 @@
 ### 数据传递
 getIntent
 Bundle
-
+传输大对象时的异常
+Task
+BackStack
 ## VIM
 ---
 - ctrl+h 

@@ -7,6 +7,10 @@ Bundle
 传输大对象时的异常
 Task
 BackStack
+### 四种启动模式
+- standard
+- singleTop
+- singleTask
 ## VIM
 ---
 - ctrl+h 
@@ -32,4 +36,7 @@ BackStack
 - ctrl+w
 ---
 text object
+--- 
+y p
+宏的使用
 

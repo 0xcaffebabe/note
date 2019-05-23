@@ -56,3 +56,70 @@ startActivity(intent);
         <category android:name="android.intent.category.LAUNCHER" />
 </intent-filter>
 ```
+## Activity之间的数据传递
+Activity之间通过Intent来传递数据，载体是Bundle:
+```java
+Intent intent = new Intent();
+Bundle bundle = new Bundle();
+bundle.putInt("int",1);
+bundle.putString("string","adsa");
+bundle.putSerializable("ser",new HashMap<>());
+bundle.putParcelable();
+```
+（也可以选择不适用Bundle，直接通过Intent进行put）Bundle除了能传递基本类型与String外，还支持Serializable，可序列化对象，也能存放实现了Parcelable接口的对象，这是安卓自己的一个接口。
+
+接收方则是通过调用```getIntent()```这个方法获取传递过来的Intent，如果不为空，则就可以通过Intent来获取数据
+```java
+Intent intent = getIntent();
+
+if (intent != null){
+    Log.i("test",String.valueOf(intent.getExtras().getInt("int")));
+}
+```
+### 获取返回数据
+当一个Activity返回到上一个Activity时，要如何进行数据交互？
+使用回调：
+Activity1:
+```java
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        Button btn = findViewById(R.id.button);
+
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+               startActivityForResult(new Intent(),1);
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        Log.i("test",data.getStringExtra("name"));
+        super.onActivityResult(requestCode, resultCode, data);
+
+    }
+```
+Activity2:
+```java
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main2);
+        Intent intent = getIntent();
+
+        if (intent != null){
+            Log.i("test",String.valueOf(intent.getExtras().getInt("int")));
+        }
+
+        Intent intent1 = new Intent();
+        intent1.putExtra("name","my");
+        setResult(1,intent1);
+    }
+```
+需要注意的是，如果要求Activity返回结果，需要使用```startActivityForResult```这个函数
+## Activity与Task
+

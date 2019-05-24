@@ -2,8 +2,7 @@
 ## Activity
 
 ### 数据传递
-getIntent
-Bundle
+
 传输大对象时的异常
 Task
 BackStack
@@ -44,5 +43,14 @@ ctrl+x ctrl+f
 ctrl+x ctrl+o
 
 ---
+
 修改vim的配色
+
+---
+持久化配置
+按键映射
+
+# Gradle
+gradle 的安装
+Groovy
 

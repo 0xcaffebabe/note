@@ -15,20 +15,14 @@ BackStack
 - ctrl+u
 - ctrl+k
 ---
- % s/a/b/g
----
-- vs
-- sp
-- ctrl+w
----
 text object
 --- 
-y p
+
 宏的使用
 ctrl+n ctrl+p
 ctrl+x ctrl+f
 ctrl+x ctrl+o
-
 ---
+
 修改vim的配色
 

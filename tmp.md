@@ -2,7 +2,7 @@
 ## Activity
 
 ### 数据传递
-
+Bundle
 传输大对象时的异常
 Task
 BackStack
@@ -12,36 +12,16 @@ BackStack
 - singleTask
 ## VIM
 ---
-- ctrl+h 
-- ctrl+w
 - ctrl+u
 - ctrl+k
 ---
-- W w
-- B b
-- 0 $
-- gg/G
-- ctrl+u
-- ctrl+f
-- zz
----
-- dt?
-- ct?
----
- % s/a/b/g
----
-- vs
-- sp
-- ctrl+w
----
 text object
 --- 
-y p
+
 宏的使用
 ctrl+n ctrl+p
 ctrl+x ctrl+f
 ctrl+x ctrl+o
-
 ---
 
 修改vim的配色
@@ -49,6 +29,9 @@ ctrl+x ctrl+o
 ---
 持久化配置
 按键映射
+---
+*map
+*noremap
 
 # Gradle
 gradle 的安装

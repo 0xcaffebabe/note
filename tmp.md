@@ -1,15 +1,5 @@
 # tmp
-## Activity
 
-### 数据传递
-Bundle
-传输大对象时的异常
-Task
-BackStack
-### 四种启动模式
-- standard
-- singleTop
-- singleTask
 ## VIM
 ---
 - ctrl+u
@@ -32,8 +22,18 @@ ctrl+x ctrl+o
 ---
 *map
 *noremap
-
+---
+插件的安装
+vim-plug
 # Gradle
 gradle 的安装
 Groovy
+# git
+git config
+git init
+git add
+git commit
+git status
+git reset
+
 

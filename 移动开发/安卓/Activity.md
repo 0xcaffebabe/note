@@ -121,5 +121,32 @@ Activity2:
     }
 ```
 需要注意的是，如果要求Activity返回结果，需要使用```startActivityForResult```这个函数
+### 传输大数据对象异常
+在传输数据时，数据量不能大于0.25m，否则将会出现异常
 ## Activity与Task
-
+##Task简介
+1. android任务栈又称为Task，它是一个栈结构，具有后进先出的特性，用于存放我们的Activity组件。 
+2. 我们每次打开一个新的Activity或者退出当前Activity都会在一个称为任务栈的结构中添加或者减少一个Activity组件，因此一个任务栈包含了一个activity的集合, android系统可以通过Task有序地管理每个activity，并决定哪个Activity与用户进行交互:只有在任务栈栈顶的activity才可以跟用户进行交互。 
+3. 在我们退出应用程序时，必须把所有的任务栈中所有的activity清除出栈时,任务栈才会被销毁。当然任务栈也可以移动到后台, 并且保留了每一个activity的状态. 可以有序的给用户列出它们的任务, 同时也不会丢失Activity的状态信息。 
+4. 需要注意的是，一个App中可能不止一个任务栈，某些特殊情况下，单独一个Actvity可以独享一个任务栈。还有一点就是一个Task中的Actvity可以来自不同的App，同一个App的Activity也可能不在一个Task中。
+### Activity的四种启动模式
+- Standard 模式
+在这样模式下，每启动一个Activity都会重新创建一个Activity的新实例，并且将其加入任务栈中
+![Standard模式图解](https://img-blog.csdn.net/20160723152327677?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+- singleTop 模式
+在这种模式下，如果有新的Activity已经存在任务栈的栈顶，那么此Activity就不会被重新创建新实例，而是复用已存在任务栈栈顶的Activity
+如果Activity在顶层，那么不会新建新的实例：
+![single top](https://img-blog.csdn.net/20160723155025823?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+如果不在顶层，那么仍会创建新的实例：
+![enter image description here](https://img-blog.csdn.net/20160723155032885?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+- singleTask 模式
+ 又称为栈内复用模式。这是一种单例模式，与singTop点类似，只不过singTop是检测栈顶元素是否有需要启动的Activity，而singTask则是检测整个栈中是否存在当前需要启动的Activity，如果存在就直接将该Activity置于栈顶，并将该Activity以上的Activity都从任务栈中移出销毁
+![enter image description here](https://img-blog.csdn.net/20160723162300494?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+- singleInstance 模式
+在singleInstance模式下，该Activity在整个android系统内存中有且只有一个实例，而且该实例单独尊享一个Task
+![enter image description here](https://img-blog.csdn.net/20160723180108411?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+### 设置Activity的启动模式
+设置启动模式只需在清单文件的activity节点中增加android:launchMode即可。
+### BackTask
+Task可以分为foreground task和background task. 当用户按下home键时, 当前task就会从foreground task变成background task. 如果一个task变为background task, 那么栈中的所有activity都将处于stopped状态
+![enter image description here](http://www.jcodecraeer.com/uploads/allimg/121101/0020302355-0.png)

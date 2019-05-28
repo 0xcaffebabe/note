@@ -13,7 +13,9 @@
     - ctrl + f ：下翻页
     - zz：将光标移到屏幕中间
     - dt{char} : delete to char (删除到char)
-    - ct{char} : delete to char and into insert(删除到char然后进入insert模式)
+    - ct{char} : delete to char and into insert(删除到char然后进入insert
+    - ctrl+u：向前滚动半页
+    模式)
 - **插入模式**：
 ```
 i:进入插入模式
@@ -30,3 +32,40 @@ ctrl + u ：undo操作
 - **可视模式**：在正常模式中按下v, V, <Ctrl>+v，可以进入可视模式。可视模式中的操作有点像拿鼠标进行操作，选择文本的时候有一种鼠标选择的即视感，有时候会很方便
     - y：复制
     - p：粘贴
+## 宏的使用
+录制宏：
+回放宏：
+## 自动补全
+- 单词自动补全
+    - ctrl + n：下一个单词
+    - ctrl + p: 上一个单词
+- 文件自动补全
+ctrl + f
+## 修改VIM的配色
+```
+: colorscheme xx
+```
+其中xx为配色名称
+## 持久化配置
+在~/.vimrc中可以输入一些命令，以此来保存配置：
+```
+set nu
+set autoindent
+set background=dark
+colorscheme hybrid
+syntax on
+```
+## 按键映射
+*map：
+其中*可以为i(insert),c(command),n(normal),v(visual)
+*noremap:
+*的取值同上
+nore的区别在于这种按键映射是非递归的。
+举例：
+```
+imap jj <esc> 
+```
+这么样一条命令代表在insert模式下按下jj会自动切换到normal模式
+## 插件的安装
+
+

@@ -1,30 +1,19 @@
 # tmp
 
+#Activity
+- ActivityThread
+# Handler
+postMessage
+sendMessage
+post
+callback
 ## VIM
----
-- ctrl+u
-- ctrl+k
----
-text object
---- 
-
-宏的使用
-ctrl+n ctrl+p
-ctrl+x ctrl+f
-ctrl+x ctrl+o
----
-
-修改vim的配色
-
----
-持久化配置
-按键映射
----
-*map
-*noremap
 ---
 插件的安装
 vim-plug
+---
+startify
+nerdree
 # Gradle
 gradle 的安装
 Groovy
@@ -35,5 +24,7 @@ git add
 git commit
 git status
 git reset
+git clone
+git push
 
 

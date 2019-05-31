@@ -27,9 +27,5 @@ gradle 的安装
 Groovy
 ## 任务
 
-# git
-git branch
-git checkout
-git merge
 
 

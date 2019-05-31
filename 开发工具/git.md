@@ -62,4 +62,22 @@ $ git push -u origin master
 ```shell
 $ git clone https://github.com/996icu/996.ICU.git
 ```
+## 开启一条新分支
+```shell
+$ git branch x
+
+```
+## 切换分支
+```shell
+$ git checkout x
+Switched to branch 'x'
+```
+## 分支合并
+```shell
+$ git merge x
+Updating 054beab..d4f708c
+Fast-forward
+ code | 1 +
+ 1 file changed, 1 insertion(+)
+```
 

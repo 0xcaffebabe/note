@@ -70,4 +70,5 @@ Intent intent = new Intent();
 - 文件共享
     *SharedPreferences本质：XML*
 - Messenger
-
+- AIDL
+- ContentProvider

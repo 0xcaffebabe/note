@@ -9,6 +9,7 @@ From now
   - 安卓
     - [Activity](./移动开发/安卓/Activity.md)
     - [Intent](./移动开发/安卓/Intent.md)
+    - [RecyclerView](./移动开发/安卓/RecyclerView.md)
     - [Handler](./移动开发/安卓/handler.md)
     - [IPC机制](./移动开发/安卓/IPC机制.md)
 - 开发工具

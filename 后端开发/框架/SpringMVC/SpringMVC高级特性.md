@@ -62,3 +62,52 @@
 
 # 处理异常
 
+- 自定义异常
+
+```java
+@ResponseStatus(value = HttpStatus.NOT_FOUND,reason = "未找到")
+public class MyException extends RuntimeException{ }
+```
+
+```java
+@RequestMapping("/home")
+    public String hello(Model model){
+
+        model.addAttribute("time", LocalDate.now());
+        if (true)
+        throw new MyException();
+        return "home.html";
+    }
+```
+
+- 异常处理器
+```java
+@ExceptionHandler(Exception.class)
+    @ResponseBody
+    public Object handler(Exception e){
+        return e.getMessage();
+    }
+```
+
+# 控制器通知
+本质：对Controller进行AOP
+```java
+// 所有的controller发生异常都会通过这个类进行处理
+@ControllerAdvice
+public class MyControllerAdvice {
+
+    @ExceptionHandler(Exception.class)
+    @ResponseBody
+    public Object handler(Exception e){
+        return e.getMessage();
+    }
+}
+```
+
+# 请求重定向转发数据
+*forward(服务器转发)与redirect(客户端重定向)*
+## 重定向传递数据的方法
+- url传递
+- flash属性传递
+
+

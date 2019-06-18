@@ -9,6 +9,7 @@ From now
     - 框架
         - [Spring](./后端开发/框架/Spring/nav.md)
         - [SpringMVC](./后端开发/框架/SpringMVC/nav.md)
+        - [Spring Security](./后端开发/框架/SpringSecurity/nav.md)
 
 - 移动开发
   - 安卓

@@ -37,8 +37,98 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 }
 ```
+
 ## 添加用户
+
 - 基于内存
 
+```java
+@Bean
+    public UserDetailsService userDetailsService() throws Exception {
+        // ensure the passwords are encoded properly
+        User.UserBuilder users = User.withDefaultPasswordEncoder();
+        InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
+        manager.createUser(users.username("user").password("password").roles("USER").build());
+        manager.createUser(users.username("admin").password("password").roles("USER","ADMIN").build());
+        return manager;
+    }
+```
 
+- 基于数据库
+- 基于LDAP
+
+## 添加自定义用户服务
+
+实现该接口
+
+```java
+public interface UserDetailsService {
+	UserDetails loadUserByUsername(String username) throws UsernameNotFoundException;
+}
+```
+
+UserDetails需要实现的内容
+
+```java
+public interface UserDetails extends Serializable {
+	
+	Collection<? extends GrantedAuthority> getAuthorities();
+
+	String getPassword();
+
+	String getUsername();
+
+	boolean isAccountNonExpired();
+
+	boolean isAccountNonLocked();
+
+	boolean isCredentialsNonExpired();
+
+	boolean isEnabled();
+}
+```
+
+# 自定义拦截请求
+
+```java
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        System.out.println("auth pro run");
+        http
+                .authorizeRequests()
+                .antMatchers("/home").hasRole("ADMIN").and().formLogin().and()
+                .authorizeRequests()
+                .anyRequest().permitAll();
+    }
+```
+
+# 使用Spring表达式
+
+```java
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        System.out.println("auth pro run");
+        http
+                .authorizeRequests()
+                .antMatchers("/home").access("hasRole('ADMIN') and hasIpAddress('::1')").and().formLogin().and()
+                .authorizeRequests()
+                .anyRequest().permitAll();
+    }
+```
+
+# 强制使用Https
+
+```java
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        System.out.println("auth pro run");
+        http
+                .authorizeRequests()
+                .antMatchers("/home").access("hasRole('ADMIN') and hasIpAddress('::1')").and().formLogin().and()
+                .authorizeRequests()
+                .anyRequest().permitAll().and().requiresChannel().anyRequest().requiresSecure();
+    }
+```
+
+# CSRF防御
 

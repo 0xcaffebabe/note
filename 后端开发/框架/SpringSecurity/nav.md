@@ -85,7 +85,7 @@ public interface UserDetails extends Serializable {
 	boolean isCredentialsNonExpired();
 
 	boolean isEnabled();
-}
+}                                            
 ```
 
 # 自定义拦截请求
@@ -102,7 +102,7 @@ public interface UserDetails extends Serializable {
     }
 ```
 
-# 使用Spring表达式
+## 使用Spring表达式
 
 ```java
     @Override
@@ -116,7 +116,7 @@ public interface UserDetails extends Serializable {
     }
 ```
 
-# 强制使用Https
+## 强制使用Https
 
 ```java
     @Override
@@ -130,5 +130,22 @@ public interface UserDetails extends Serializable {
     }
 ```
 
-# CSRF防御
+## CSRF防御
+
+## 使用HTTP Basic认证
+```java
+ http
+                .authorizeRequests()
+                .antMatchers("/home").access("hasRole('ADMIN') and hasIpAddress('::1')").and().httpBasic().and()
+                .authorizeRequests()
+                .anyRequest().permitAll();
+```
+## 启用记住我功能
+```java
+.and().httpBasic().and().rememberMe()
+```
+
+# 保护视图
+- Spring Security的jsp标签库
+- 使用thymeleaf的spring security 方言
 

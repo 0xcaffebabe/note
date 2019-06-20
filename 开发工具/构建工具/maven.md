@@ -4,11 +4,11 @@
 
 ## 简介
 
-项目管理工具。 基于项目对象模型（POM）， 可以通过一小段描述信息管理项目的构建。 
+项目管理工具。 基于项目对象模型（POM）， 可以通过一小段描述信息管理项目的构建。
 
 ## 下载与安装
 
-下载地址'https://maven.apache.org/'
+下载地址'<https://maven.apache.org/>'
 
 - 配置环境变量
 
@@ -21,19 +21,22 @@
 ## 目录结构
 
 - src
-    - main
 
-        - java
-            - package
+  - main
 
-    - test
+    - java
 
-        - java
-            - package
+      - package
+
+  - test
+
+    - java
+
+      - package
 
 ### 一些喜欢忘记的知识点
 
-- 指定JDK版本： 
+- 指定JDK版本：
 
 ```xml
 <properties>
@@ -50,7 +53,4 @@
 ```shell
 mvn clean # 清理target目录下的类文件
 mvn install # 将本项目安装到仓库
-
 ```
-
-

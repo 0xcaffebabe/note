@@ -233,4 +233,52 @@ mvn archetype:generate
 
 ## 依赖传递
 
+> A->B(compile) 第一关系: a依赖b compile B->C(compile) 第二关系: b依赖c compile
+
+## 依赖冲突
+
+- 短路优先
+
+  > A->B->C->X(1.0) A->D->X(2.0) 由于只能引入一个版本的包，此时Maven按照最短路径选择导入x(2.0) A->B->X(1.0) A->D->X(2.0) 路径长度一致，则优先选择第一个，此时导入x(1.0)
+
+```xml
+<!--排除B对C的依赖-->
+
+<dependency>  
+            <groupId>B</groupId>  
+            <artifactId>B</artifactId>  
+            <version>0.1</version>  
+            <exclusions>
+                 <exclusion>
+                    <groupId>C</groupId>  
+                    <artifactId>C</artifactId><!--无需指定要排除项目的版本号-->
+                 </exclusion>
+            </exclusions>
+</dependency>
+```
+
+## 聚合与继承
+
+- 聚合
+
+  ```xml
+  <modules>
+        <module>study-common</module>
+        <module>study-plugin</module>
+        <module>study-blog</module>
+        <module>study-web</module>
+    </modules>
+  ```
+
+- 继承
+
+  ```xml
+  <parent>  
+    <groupId>com.tiantian.mavenTest</groupId>  
+    <artifactId>projectA</artifactId>  
+    <version>1.0-SNAPSHOT</version>  
+  </parent>
+  ```
+
+## 创建web项目
 

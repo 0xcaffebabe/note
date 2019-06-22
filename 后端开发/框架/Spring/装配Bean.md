@@ -91,12 +91,13 @@
 
   由于spring早期大量使用xml来配置，所以这节的内容还是需要了解一下的。 不过对于新项目，还是推荐使用注解或者java配置
 
-- 创建一个xml ```xml <?xml version="1.0" encoding="UTF-8"?>
+- 创建一个xml
+ ```xml <?xml version="1.0" encoding="UTF-8"?>
 
   <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemalocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
   </beans>
 
-````
+```
 - 创建一个bean
 ```xml
 <bean class="wang.ismy.spring.Bean1"/>

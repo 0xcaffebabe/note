@@ -10,6 +10,7 @@
   ## 简化JAVA开发
 
 - 依赖注入
+
 - 应用切面
 - 各种模板
 
@@ -18,6 +19,7 @@
   ### 常用上下文：
 
 - AnnotationConfigApplicationContext
+
 - AnnotationConfigWebApplicationContext
 - ClassPathXmlApplicationContext
 - FileSystemXmlApplicationContext
@@ -33,4 +35,4 @@
 
   ## Spring框架的核心
 
-   DI 和 AOP
+  DI 和 AOP

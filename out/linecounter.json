@@ -1,0 +1,399 @@
+{
+    "extension": "linecounter",
+    "version": "0.2.2",
+    "workspace": "d:\\学习\\note",
+    "linecount": [
+        {
+            "version": "0.2.2",
+            "counttime": "2019-07-04 10:53:43",
+            "filesum": 59,
+            "codesum": 3196,
+            "commentsum": 50,
+            "blanksum": 677,
+            "statistics": {
+                "": {
+                    "code": 2,
+                    "comment": 0,
+                    "blank": 0
+                },
+                ".md": {
+                    "code": 3183,
+                    "comment": 50,
+                    "blank": 677
+                },
+                ".code-workspace": {
+                    "code": 11,
+                    "comment": 0,
+                    "blank": 0
+                }
+            },
+            "filelist": [
+                {
+                    "blank": 0,
+                    "code": 2,
+                    "comment": 0,
+                    "filename": ".gitattributes"
+                },
+                {
+                    "filename": "assets\\批注 2019-06-13 151452.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "assets\\批注 2019-06-17 151441.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "assets\\批注 2019-06-17 151543.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "assets\\批注 2019-06-20 131454.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "assets\\批注 2019-06-20 143319.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "assets\\批注 2019-06-20 143412.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "assets\\批注 2019-06-21 135418.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "assets\\批注 2019-06-21 135628.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "assets\\批注 2019-06-21 143028.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "assets\\批注 2019-06-21 150246.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "assets\\批注 2019-06-22 153017.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 12,
+                    "code": 23,
+                    "comment": 0,
+                    "filename": "README.md"
+                },
+                {
+                    "blank": 0,
+                    "code": 6,
+                    "comment": 0,
+                    "filename": "temp1.md"
+                },
+                {
+                    "blank": 6,
+                    "code": 12,
+                    "comment": 0,
+                    "filename": "tmp.md"
+                },
+                {
+                    "blank": 15,
+                    "code": 38,
+                    "comment": 2,
+                    "filename": "后端开发\\框架\\Spring\\AOP.md"
+                },
+                {
+                    "blank": 8,
+                    "code": 17,
+                    "comment": 0,
+                    "filename": "后端开发\\框架\\Spring\\nav.md"
+                },
+                {
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0,
+                    "filename": "后端开发\\框架\\Spring\\SpringData\\JDBCTemplate.md"
+                },
+                {
+                    "blank": 0,
+                    "code": 4,
+                    "comment": 0,
+                    "filename": "后端开发\\框架\\Spring\\SpringData\\nav.md"
+                },
+                {
+                    "blank": 19,
+                    "code": 86,
+                    "comment": 0,
+                    "filename": "后端开发\\框架\\Spring\\SpringData\\ORM.md"
+                },
+                {
+                    "blank": 30,
+                    "code": 83,
+                    "comment": 1,
+                    "filename": "后端开发\\框架\\Spring\\SpringData\\概览.md"
+                },
+                {
+                    "blank": 19,
+                    "code": 46,
+                    "comment": 3,
+                    "filename": "后端开发\\框架\\Spring\\SpringData\\缓存数据.md"
+                },
+                {
+                    "blank": 1,
+                    "code": 3,
+                    "comment": 0,
+                    "filename": "后端开发\\框架\\Spring\\SpringMVC\\nav.md"
+                },
+                {
+                    "blank": 17,
+                    "code": 101,
+                    "comment": 1,
+                    "filename": "后端开发\\框架\\Spring\\SpringMVC\\SpringMVC起步.md"
+                },
+                {
+                    "blank": 26,
+                    "code": 86,
+                    "comment": 1,
+                    "filename": "后端开发\\框架\\Spring\\SpringMVC\\SpringMVC高级特性.md"
+                },
+                {
+                    "blank": 9,
+                    "code": 67,
+                    "comment": 0,
+                    "filename": "后端开发\\框架\\Spring\\SpringMVC\\渲染WEB视图.md"
+                },
+                {
+                    "blank": 0,
+                    "code": 2,
+                    "comment": 0,
+                    "filename": "后端开发\\框架\\Spring\\SpringSecurity\\nav.md"
+                },
+                {
+                    "blank": 35,
+                    "code": 115,
+                    "comment": 2,
+                    "filename": "后端开发\\框架\\Spring\\SpringSecurity\\springSecurity.md"
+                },
+                {
+                    "blank": 20,
+                    "code": 44,
+                    "comment": 0,
+                    "filename": "后端开发\\框架\\Spring\\SpringSecurity\\保护方法调用.md"
+                },
+                {
+                    "blank": 15,
+                    "code": 23,
+                    "comment": 2,
+                    "filename": "后端开发\\框架\\Spring\\spring概览.md"
+                },
+                {
+                    "blank": 0,
+                    "code": 2,
+                    "comment": 0,
+                    "filename": "后端开发\\框架\\Spring\\Spring集成\\nav.md"
+                },
+                {
+                    "blank": 11,
+                    "code": 26,
+                    "comment": 2,
+                    "filename": "后端开发\\框架\\Spring\\Spring集成\\远程服务.md"
+                },
+                {
+                    "blank": 43,
+                    "code": 113,
+                    "comment": 2,
+                    "filename": "后端开发\\框架\\Spring\\装配Bean.md"
+                },
+                {
+                    "blank": 39,
+                    "code": 120,
+                    "comment": 0,
+                    "filename": "后端开发\\框架\\Spring\\高级装配.md"
+                },
+                {
+                    "blank": 7,
+                    "code": 76,
+                    "comment": 2,
+                    "filename": "开发工具\\git.md"
+                },
+                {
+                    "blank": 2,
+                    "code": 69,
+                    "comment": 0,
+                    "filename": "开发工具\\vim\\vim.md"
+                },
+                {
+                    "blank": 4,
+                    "code": 56,
+                    "comment": 0,
+                    "filename": "开发工具\\构建工具\\gradle.md"
+                },
+                {
+                    "blank": 76,
+                    "code": 208,
+                    "comment": 0,
+                    "filename": "开发工具\\构建工具\\maven.md"
+                },
+                {
+                    "blank": 0,
+                    "code": 4,
+                    "comment": 0,
+                    "filename": "操作系统\\nav.md"
+                },
+                {
+                    "blank": 11,
+                    "code": 117,
+                    "comment": 0,
+                    "filename": "操作系统\\内存管理.md"
+                },
+                {
+                    "blank": 56,
+                    "code": 102,
+                    "comment": 2,
+                    "filename": "操作系统\\文件管理.md"
+                },
+                {
+                    "blank": 40,
+                    "code": 58,
+                    "comment": 1,
+                    "filename": "操作系统\\输入输出.md"
+                },
+                {
+                    "blank": 11,
+                    "code": 164,
+                    "comment": 0,
+                    "filename": "操作系统\\进程与线程.md"
+                },
+                {
+                    "blank": 1,
+                    "code": 9,
+                    "comment": 0,
+                    "filename": "数据库系统\\nav.md"
+                },
+                {
+                    "blank": 2,
+                    "code": 194,
+                    "comment": 0,
+                    "filename": "数据库系统\\关系数据库\\中级SQL.md"
+                },
+                {
+                    "blank": 0,
+                    "code": 24,
+                    "comment": 0,
+                    "filename": "数据库系统\\关系数据库\\关系模型.md"
+                },
+                {
+                    "blank": 6,
+                    "code": 112,
+                    "comment": 0,
+                    "filename": "数据库系统\\关系数据库\\初级SQL.md"
+                },
+                {
+                    "blank": 2,
+                    "code": 117,
+                    "comment": 0,
+                    "filename": "数据库系统\\关系数据库\\引言.md"
+                },
+                {
+                    "blank": 6,
+                    "code": 45,
+                    "comment": 0,
+                    "filename": "数据库系统\\关系数据库\\形式化关系查询语言.md"
+                },
+                {
+                    "blank": 0,
+                    "code": 11,
+                    "comment": 0,
+                    "filename": "数据库系统\\关系数据库\\数据库系统.code-workspace"
+                },
+                {
+                    "blank": 3,
+                    "code": 17,
+                    "comment": 4,
+                    "filename": "数据库系统\\关系数据库\\高级SQL.md"
+                },
+                {
+                    "blank": 4,
+                    "code": 86,
+                    "comment": 0,
+                    "filename": "数据库系统\\数据库设计\\关系数据库设计.md"
+                },
+                {
+                    "blank": 5,
+                    "code": 150,
+                    "comment": 0,
+                    "filename": "数据库系统\\数据库设计\\数据库设计和ER模型.md"
+                },
+                {
+                    "blank": 69,
+                    "code": 156,
+                    "comment": 10,
+                    "filename": "汇编.md"
+                },
+                {
+                    "blank": 10,
+                    "code": 142,
+                    "comment": 7,
+                    "filename": "移动开发\\安卓\\Activity.md"
+                },
+                {
+                    "blank": 17,
+                    "code": 96,
+                    "comment": 2,
+                    "filename": "移动开发\\安卓\\handler.md"
+                },
+                {
+                    "blank": 2,
+                    "code": 55,
+                    "comment": 4,
+                    "filename": "移动开发\\安卓\\Intent.md"
+                },
+                {
+                    "blank": 10,
+                    "code": 62,
+                    "comment": 2,
+                    "filename": "移动开发\\安卓\\IPC机制.md"
+                },
+                {
+                    "blank": 8,
+                    "code": 47,
+                    "comment": 0,
+                    "filename": "移动开发\\安卓\\RecyclerView.md"
+                }
+            ]
+        }
+    ]
+}

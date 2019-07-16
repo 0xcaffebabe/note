@@ -109,7 +109,52 @@ UpdateWrapper<User> wrapper = new UpdateWrapper<User>()
 userMapper.delete(wrapper);
 ```
 
+# AR模式
 
+- 实体类继承Model
+
+```java
+@Data
+public class User extends Model<User> {
+
+    private String username;
+
+    private String password;
+
+    private Integer age;
+
+    private LocalDate createTime;
+}
+```
+
+```java
+@Test
+    public void test6(){
+        User user = new User();
+        user.setUsername("20190716");
+        user.setPassword("123");
+        user.setCreateTime(LocalDate.now());
+        user.setAge(111);
+        assertTrue(user.insert());
+    }
+```
+
+# 主键策略
+
+- 设置策略
+
+```java
+@TableId(type = IdType.UUID)
+private String username;
+```
+
+```java
+User user = new User();
+user.setPassword("1111");
+assertTrue(user.insert());
+```
+
+# 通过Service
 
 
 

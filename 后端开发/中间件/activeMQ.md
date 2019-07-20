@@ -145,7 +145,8 @@ jmsTemplate.send(destination,new MessageCreator() {
     }
 
     @Bean
-    public DefaultMessageListenerContainer defaultMessageListenerContainer(Destination destination,
+    public DefaultMessageListenerContainer 
+    defaultMessageListenerContainer(Destination destination,
                                                                            ConnectionFactory connectionFactory,
                                                                            MessageListener messageListener){
 
@@ -156,3 +157,18 @@ jmsTemplate.send(destination,new MessageCreator() {
         return container;
     }
 ```
+
+# 集群
+
+- 高可用
+- 负载均衡
+
+## 集群方式
+
+- 客户端集群
+- Broker集群
+- Master Slave
+
+# 企业开发需要解决的问题
+
+

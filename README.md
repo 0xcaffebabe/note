@@ -17,10 +17,12 @@ From now
     - [C](./后端开发/语言/C/nav.md)
   - 中间件
     - [ActiveMQ](./后端开发/中间件/activeMQ.md)
+    - [RabbitMQ](./后端开发/中间件/rabbitMQ.md)
   - 框架
 
     - [Spring](./后端开发/框架/Spring/nav.md)
     - [Mybatis-Plus](./后端开发/框架/mybatis-plus.md)
+    - [Netty](./后端开发/框架/netty.md)
 
 - 移动开发
 

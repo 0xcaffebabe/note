@@ -7,4 +7,30 @@
 
 以上操作均可以使用包管理工具完成
 
+# 核心概念
+
+- Server
+- Connection
+- Channel
+- Message
+- Virtual host
+- Exchange
+- Binding
+- Routing key
+- Queue
+
+# 使用
+
+- 引入依赖
+
+```xml
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+            <version>2.1.6.RELEASE</version>
+        </dependency>
+```
+
+
+
 

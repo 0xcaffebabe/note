@@ -26,14 +26,8 @@ From now
 
 - 移动开发
 
-  - 安卓
+  - [安卓](./移动开发/安卓/nav.md)
 
-    - [Activity](./移动开发/安卓/Activity.md)
-    - [Intent](./移动开发/安卓/Intent.md)
-    - [RecyclerView](./移动开发/安卓/RecyclerView.md)
-    - [Handler](./移动开发/安卓/handler.md)
-    - [IPC机制](./移动开发/安卓/IPC机制.md)
-    - [通知栏](./移动开发/安卓/通知栏.md)
 
 - 开发工具
 

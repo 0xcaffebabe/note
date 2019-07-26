@@ -36,6 +36,12 @@ docker commit -m 'update' e07dc4e0236a nginx-update
 docker stop e07dc4e0236a
 ```
 
+- 进入容器内部
+
+```shell
+docker exec -it <name> bash
+```
+
 # Dockerfile
 
 ![批注 2019-07-25 153841](/assets/批注%202019-07-25%20153841.png)
@@ -68,4 +74,27 @@ docker pull <name>
 ```
 
 # Compose
+
+# Docker 网络
+
+- 网络类型
+  - Bridge
+  - Host
+  - None
+- 端口映射
+
+```shell
+# 将本机8080端口映射到容器80端口
+docker run -p 8080:80 <name>
+
+# 将本机端口随机与容器端口映射
+docker run -P <name>
+```
+
+# 镜像制作
+
+
+
+
+
 

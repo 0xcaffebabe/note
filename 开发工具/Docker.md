@@ -58,3 +58,14 @@ EXPOSE 80
 
 > 容器外的持久化操作
 
+# Registry
+
+> 仓库
+
+```shell
+docker search <name>
+docker pull <name>
+```
+
+# Compose
+

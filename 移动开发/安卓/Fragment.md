@@ -43,7 +43,7 @@
 - 新版本
 
 ```java
-    getSupportFragmentManager()
+getSupportFragmentManager()
                         .beginTransaction()
                         .add(R.id.title_layout,new TitleFragment())
                         .commit();
@@ -54,7 +54,7 @@ _V4包_
 # 动态切换
 
 ```java
-                Random random = new Random();
+Random random = new Random();
                 if (random.nextBoolean()){
                     getSupportFragmentManager()
                             .beginTransaction()
@@ -72,8 +72,73 @@ _V4包_
 
 ![批注 2019-07-30 152358](/assets/批注%202019-07-30%20152358.png)
 
+# 通信
+
+## Activity 向 Fragment传值
+
+```java
+// Activity 端
+TitleFragment titleFragment  = new TitleFragment();
+                    Bundle bundle = new Bundle();
+                    bundle.putString("id", UUID.randomUUID().toString());
+                    titleFragment.setArguments(bundle);
+                    getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.title_layout,titleFragment)
+                            .commit();
+```
+
+```java
+// Fragment端
+if (getArguments() != null){
+            textView.setText(getArguments().getString("id"));
+        }
+```
+
+## Fragment 向 Activity 传值
+
+- 回调接口
+
+```java
+linearLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (listener != null){
+                    listener.onClick();
+                }
+
+            }
+        });
 
 
+///////////////
 
+
+ public interface TitleFragmentClickListener{
+        void onClick();
+    }
+
+    public void setListener(TitleFragmentClickListener listener) {
+        this.listener = listener;
+    }
+```
+
+```java
+
+titleFragment.setListener(new TitleFragment.TitleFragmentClickListener() {
+                        @Override
+                        public void onClick() {
+                            Toast.makeText(getApplicationContext(),"click 111",Toast.LENGTH_SHORT).show();
+                        }
+                    });
+```
+
+## Fragment 向 Fragment 传值
+
+```java
+getFragmentManager().findFragmentById()
+```
+
+## ListFragment
 
 

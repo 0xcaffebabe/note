@@ -15,9 +15,11 @@ From now
   - 语言
 
     - [C](./后端开发/语言/C/nav.md)
+    - [JAVA](./后端开发/语言/JAVA/nav.md)
   - 中间件
     - [ActiveMQ](./后端开发/中间件/activeMQ.md)
     - [RabbitMQ](./后端开发/中间件/rabbitMQ.md)
+    - [Kafka](./后端开发/中间件/Kafka.md)
   - 框架
 
     - [Spring](./后端开发/框架/Spring/nav.md)

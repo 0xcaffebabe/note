@@ -36,6 +36,7 @@ From now
   - [Docker](./开发工具/Docker.md)
   - [VIM](./开发工具/vim/vim.md)
   - [GIT](./开发工具/git.md)
+  - [idea](./开发工具/idea.md)
   - 构建工具
 
     - [Gradle](./开发工具/构建工具/gradle.md)

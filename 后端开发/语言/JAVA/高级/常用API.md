@@ -106,6 +106,49 @@ System.out.println(new SimpleDateFormat().format(new Date()));
 System.out.println(new SimpleDateFormat("yyyy-MM-dd a H:m:s").format(new Date()));
 ```
 
+# Calendar类
+
+```java
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.YEAR,18);
+        
+        System.out.println(calendar.getTime());
+```
+
+# System类
+
+```java
+        System.currentTimeMillis();
+        System.arraycopy();
+```
+
+# StringBuilder类
+
+![01_StringBuilder的原理](/assets/01_StringBuilder的原理.bmp)
+
+```java
+        StringBuilder sb = new StringBuilder("hello");
+        sb.append(" ")
+                .append("world");
+        System.out.println(sb.toString());
+```
+
+# 包装类
+
+![02_包装类的概念](/assets/02_包装类的概念.bmp)
+
+- 装箱拆箱
+  - 自动装箱拆箱
+
+## 基本类型与字符串的转换
+
+```java
+        System.out.println(Double.toString(1.6));
+        System.out.println(Double.parseDouble("1.5"));
+```
+
+
+
 
 
 

@@ -178,6 +178,57 @@ FileReader reader = new FileReader("fos.txt");
 - public String getProperty(String key) ：使用此属性列表中指定的键搜索属性值。 
 - public Set<String> stringPropertyNames() ：所有键的名称的集合。
 
+## 与流相关的方法
+
+- store
+- load
+
+# 缓冲流
+
+- 字节缓冲流： BufferedInputStream ， BufferedOutputStream 
+- 字符缓冲流： BufferedReader ， BufferedWriter
+
+# 字符集与字符编码
+
+>字符编码 Character Encoding : 就是一套自然语言的字符与二进制数之间的对应规则。 
+
+- 字符集 Charset ：也叫编码表。是一个系统支持的所有字符的集合，包括各国家文字、标点符号、图形符 号、数字等。
+
+![02_转换流的原理](/assets/02_转换流的原理.bmp)
+
+```java
+        InputStreamReader reader = new InputStreamReader(new FileInputStream("gbk.txt"),"gbk");
+
+        OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream("utf8.txt"), StandardCharsets.UTF_8);
+        int c = -1;
+        while ((c= reader.read()) != -1){
+            writer.write(c);
+        }
+        writer.close();
+```
+
+
+# 序列化
+
+- ObjectOutputStream
+- ObjectInputStream
+
+```java
+        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("object"));
+        oos.writeObject(new Person("jav",15));
+
+        ObjectInputStream ois = new ObjectInputStream(new FileInputStream("object"));
+        Person p = (Person)ois.readObject();
+        System.out.println(p);
+```
+
+**transient关键字**
+
+# 打印流
+
+
+
+
 
 
 

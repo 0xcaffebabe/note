@@ -141,5 +141,144 @@ reg.test('some text');
 - encodeURIComponent:编码范围更广
 
 - parseInt
+
 - isNaN
+
 - eval
+
+# BOM
+
+> BOM浏览器对象模型（Browser Object Model）BOM对象是在Web中使用JavaScript的核心，该对象提供了与浏览器交互相关对象结构。BOM由多个子对象组成，其核心为window对象，它是BOM的顶层对象，表示在浏览器环境中的一个全局的顶级对象，所有在浏览器环境中使用的对象都是window对象的子对象
+
+## window
+
+## 方法
+
+与弹出框有关的方法：
+
+- alert() 显示带有一段消息和一个确认按钮的警告框。
+- confirm() 显示带有一段消息以及确认按钮和取消按钮的对话框。
+
+  - 如果用户点击确定按钮，则方法返回true
+  - 如果用户点击取消按钮，则方法返回false
+
+- prompt() 显示可提示用户输入的对话框。
+
+  - 返回值：获取用户输入的值
+
+与打开关闭有关的方法：
+
+- close() 关闭浏览器窗口。
+
+  - 谁调用我 ，我关谁
+
+- open() 打开一个新的浏览器窗口
+
+  - 返回新的Window对象
+
+与定时器有关的方法：
+
+- setTimeout() 在指定的毫秒数后调用函数或计算表达式。
+- clearTimeout() 取消由 setTimeout() 方法设置的 timeout。
+- setInterval() 按照指定的周期（以毫秒计）来调用函数或计算表达式。
+- clearInterval() 取消由 setInterval() 设置的 timeout。
+
+### 属性
+
+## navigator
+
+## screen
+
+## history
+
+## location
+
+- forward
+- back
+
+# DOM
+
+- 核心DOM
+
+  - Document：文档对象
+  - Element：元素对象
+  - Attribute：属性对象
+  - Text：文本对象
+  - Comment:注释对象
+  - Node：节点对象，其他5个的父对象
+
+- XML DOM
+
+- HTML DOM
+
+## 核心DOM
+
+### 获取元素
+
+- getElementById
+- getElementsByTagName
+- getElementsByClassName
+- getElementsByName
+
+### 创建元素
+
+- createAttribute
+- createComment
+- createElement
+- createTextNode
+
+### Element
+
+- removeAttribute
+- setAttribute
+
+### Node
+
+- appendChild()
+- removeChild()
+- replaceChild()
+- _parentNode_
+
+## HTML DOM
+
+- innerHTML
+- style
+
+# 事件
+
+```
+* 常见的事件：
+        1\. 点击事件：
+            1\. onclick：单击事件
+            2\. ondblclick：双击事件
+        2\. 焦点事件
+            1\. onblur：失去焦点
+            2\. onfocus:元素获得焦点。
+
+        3\. 加载事件：
+            1\. onload：一张页面或一幅图像完成加载。
+
+        4\. 鼠标事件：
+            1\. onmousedown    鼠标按钮被按下。
+            2\. onmouseup    鼠标按键被松开。
+            3\. onmousemove    鼠标被移动。
+            4\. onmouseover    鼠标移到某元素之上。
+            5\. onmouseout    鼠标从某元素移开。
+
+
+        5\. 键盘事件：
+            1\. onkeydown    某个键盘按键被按下。    
+            2\. onkeyup        某个键盘按键被松开。
+            3\. onkeypress    某个键盘按键被按下并松开。
+
+        6\. 选择和改变
+            1\. onchange    域的内容被改变。
+            2\. onselect    文本被选中。
+
+        7\. 表单事件：
+            1\. onsubmit    确认按钮被点击。
+            2\. onreset    重置按钮被点击。
+```
+
+- event
+

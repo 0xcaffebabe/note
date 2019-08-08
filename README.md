@@ -19,6 +19,7 @@ From now
   - 语言
       - [C](./后端开发/语言/C/nav.md)
       - [JAVA](./后端开发/语言/JAVA/nav.md)
+      - [XML](./后端开发/语言/xml.md)
   - 中间件
     - [ActiveMQ](./后端开发/中间件/activeMQ.md)
     - [RabbitMQ](./后端开发/中间件/rabbitMQ.md)
@@ -36,13 +37,17 @@ From now
   - [HTML](./前端开发/HTML.md)
   - [CSS](./前端开发/CSS.md)
   - [JavaScript](./前端开发/JavaScript.md)
+  - [Bootstrap](./前端开发/Bootstrap.md)
 
 #### 移动开发
 
   - [安卓](./移动开发/安卓/nav.md)
 
 
-#### 开发工具
+<details>
+
+  <summary>开发工具</summary>
+
   - [Docker](./开发工具/Docker.md)
   - [VIM](./开发工具/vim/vim.md)
   - [GIT](./开发工具/git.md)
@@ -52,3 +57,7 @@ From now
 
     - [Gradle](./开发工具/构建工具/gradle.md)
     - [Maven](./开发工具/构建工具/maven.md)
+
+</details>
+
+

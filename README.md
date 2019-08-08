@@ -24,12 +24,16 @@ From now
     - [ActiveMQ](./后端开发/中间件/activeMQ.md)
     - [RabbitMQ](./后端开发/中间件/rabbitMQ.md)
     - [Kafka](./后端开发/中间件/Kafka.md)
+    - [Tomcat](./后端开发/中间件/Tomcat.md)
   - 框架
 
     - [Spring](./后端开发/框架/Spring/nav.md)
     - [SpringCloud](./后端开发/框架/SpringCloud/nav.md)
     - [Mybatis-Plus](./后端开发/框架/mybatis-plus.md)
     - [Netty](./后端开发/框架/netty.md)
+
+- Jakarta EE
+  - [Servlet](./JakartaEE/Servlet.md)
 </details>
 
 

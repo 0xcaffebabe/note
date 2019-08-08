@@ -74,4 +74,21 @@ id属性值唯一
   - 优点：不占内存。
   - 缺点：只能读取，不能增删改
 
+# jsuop
+
+- Jsoup：工具类，可以解析html或xml文档，返回Document
+  - parse
+- Document：文档对象。代表内存中的dom树
+  - getElementByXX
+- Element：元素对象
+  - getElementByXX
+- Node：节点对象
+
+## 快捷查询
+
+- selector
+- XPath
+
+
+
 

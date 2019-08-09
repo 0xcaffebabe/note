@@ -96,38 +96,111 @@ public class MyServlet implements Servlet{
 - /xxx/xxx:多层路径，目录结构
 - *.do：扩展名匹配
 
-
 ## Request
 
 ### 体系结构
 
 ```
-request对象继承体系结构：	
-		ServletRequest		--	接口
-			|	继承
-		HttpServletRequest	-- 接口
-			|	实现
-		org.apache.catalina.connector.RequestFacade 类(tomcat)
+request对象继承体系结构：    
+        ServletRequest        --    接口
+            |    继承
+        HttpServletRequest    -- 接口
+            |    实现
+        org.apache.catalina.connector.RequestFacade 类(tomcat)
 ```
 
 ### 方法
 
 - 获取请求行数据
-  - String getMethod()  
+
+  - String getMethod()
   - String getContextPath()
   - String getServletPath()
   - String getQueryString()
   - String getRequestURI()
   - String getProtocol()
   - String getRemoteAddr()
+
 - 获取请求头数据
+
   - String getHeader(String name)
-  - Enumeration<String> getHeaderNames()
+  - Enumeration
+
+    `string getHeaderNames()`
+
 - 获取请求体数据
+
   - BufferedReader getReader()
   - ServletInputStream getInputStream()
+
 - 其他
+
   - String getParameter(String name)
   - String[] getParameterValues(String name)
-  - Map<String,String[]> getParameterMap()
-- 
+  - `Map<string,string[]> getParameterMap()</string,string[]>`
+
+### 请求转发
+
+```java
+req.getRequestDispatcher("/404")
+                .forward(req,resp);
+```
+
+- 浏览器地址栏路径不发生变化
+- 只能转发到当前服务器内部资源中。
+- 转发是一次请求
+
+### 共享数据
+
+_request域：代表一次请求的范围，一般用于请求转发的多个资源中共享数据_
+
+- void setAttribute(String name,Object obj):存储数据
+- Object getAttitude(String name):通过键获取值
+- void removeAttribute(String name):通过键移除键值对
+
+## Response
+
+### 方法
+
+- 设置状态码：setStatus(int sc)
+- 字符输出流：PrintWriter getWriter()
+- 字节输出流：ServletOutputStream getOutputStream()
+
+```
+* 重定向的特点:redirect
+                1\. 地址栏发生变化
+                2\. 重定向可以访问其他站点(服务器)的资源
+                3\. 重定向是两次请求。不能使用request对象来共享数据
+            * 转发的特点：forward
+                1\. 转发地址栏路径不变
+                2\. 转发只能访问当前服务器下的资源
+                3\. 转发是一次请求，可以使用request对象来共享数据
+```
+
+### 乱码问题
+
+`PrintWriter pw = response.getWriter();`获取的流的默认编码是ISO-8859-1
+
+```java
+//设置编码，是在获取流之前设置
+response.setContentType("text/html;charset=utf-8");
+```
+
+## **ServletContext**
+
+获取：
+- 通过request对象获取
+`request.getServletContext();`
+- 通过HttpServlet获取
+`this.getServletContext();`
+
+### 获取MIME类型
+
+```java
+System.out.println(getServletContext().getMimeType("a.jpg"));
+```
+
+### 域对象：共享数据
+
+
+

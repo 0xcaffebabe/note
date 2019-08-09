@@ -36,3 +36,43 @@ POST /login.html    HTTP/1.1
 
   username=zhangsan
 ```
+
+# 响应行
+
+```
+协议/版本 响应状态码 状态码描述
+```
+
+## 状态码
+
+分类  | 分类描述
+--- | -----------------------
+1** | 信息，服务器收到请求，需要请求者继续执行操作
+2** | 成功，操作被成功接收并处理
+3** | 重定向，需要进一步的操作以完成请求
+4** | 客户端错误，请求包含语法错误或无法完成请求
+5** | 服务器错误，服务器在处理请求的过程中发生了错误
+
+# 响应头
+
+```
+头名称： 值
+```
+
+```
+HTTP/1.1 200 OK
+            Content-Type: text/html;charset=UTF-8
+            Content-Length: 101
+            Date: Wed, 06 Jun 2018 07:08:42 GMT
+
+            <html>
+              <head>
+                <title>$Title$</title>
+              </head>
+              <body>
+              hello , response
+              </body>
+            </html>
+```
+
+

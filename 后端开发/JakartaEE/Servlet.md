@@ -76,3 +76,58 @@ public class MyServlet implements Servlet{
 
 ![](http://static.oschina.net/uploads/space/2015/0403/112707_yOnu_120166.jpg)
 
+## Servlet3.0
+
+- 加上注解后不用配置web.xml
+
+```java
+@WebServlet("/*")
+```
+
+# 体系结构
+
+![批注 2019-08-09 093125](/assets/批注%202019-08-09%20093125.png)
+
+# 配置
+
+路径定义规则：
+
+- /xxx：路径匹配
+- /xxx/xxx:多层路径，目录结构
+- *.do：扩展名匹配
+
+
+## Request
+
+### 体系结构
+
+```
+request对象继承体系结构：	
+		ServletRequest		--	接口
+			|	继承
+		HttpServletRequest	-- 接口
+			|	实现
+		org.apache.catalina.connector.RequestFacade 类(tomcat)
+```
+
+### 方法
+
+- 获取请求行数据
+  - String getMethod()  
+  - String getContextPath()
+  - String getServletPath()
+  - String getQueryString()
+  - String getRequestURI()
+  - String getProtocol()
+  - String getRemoteAddr()
+- 获取请求头数据
+  - String getHeader(String name)
+  - Enumeration<String> getHeaderNames()
+- 获取请求体数据
+  - BufferedReader getReader()
+  - ServletInputStream getInputStream()
+- 其他
+  - String getParameter(String name)
+  - String[] getParameterValues(String name)
+  - Map<String,String[]> getParameterMap()
+- 

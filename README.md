@@ -12,6 +12,8 @@ From now
 - [操作系统](./操作系统/nav.md)
 - [软件工程](./软件工程/nav.md)
 - [计算机系统](./计算机系统/nav.md)
+- 计算机网络
+  - [HTTP](./计算机网络/HTTP.md)
 <details>
 
   <summary>后端开发</summary>
@@ -33,7 +35,7 @@ From now
     - [Netty](./后端开发/框架/netty.md)
 
 - Jakarta EE
-  - [Servlet](./JakartaEE/Servlet.md)
+  - [Servlet](./后端开发/JakartaEE/Servlet.md)
 </details>
 
 

@@ -189,10 +189,9 @@ response.setContentType("text/html;charset=utf-8");
 ## **ServletContext**
 
 获取：
-- 通过request对象获取
-`request.getServletContext();`
-- 通过HttpServlet获取
-`this.getServletContext();`
+
+- 通过request对象获取 `request.getServletContext();`
+- 通过HttpServlet获取 `this.getServletContext();`
 
 ### 获取MIME类型
 
@@ -202,5 +201,12 @@ System.out.println(getServletContext().getMimeType("a.jpg"));
 
 ### 域对象：共享数据
 
+- setAttribute(String name,Object value)
+- getAttribute(String name)
+- removeAttribute(String name)
+
+### 获取文件真实路径
+
+- String getRealPath(String path)
 
 

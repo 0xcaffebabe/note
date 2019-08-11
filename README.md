@@ -36,6 +36,8 @@ From now
 
 - Jakarta EE
   - [Servlet](./后端开发/JakartaEE/Servlet.md)
+  - [JSP](./后端开发/JakartaEE/JSP.md)
+  - [Cookie&Session](./后端开发/JakartaEE/Cookie&Session.md)
 </details>
 
 

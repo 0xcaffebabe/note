@@ -61,4 +61,69 @@ out         | JspWriter           | 输出对象，数据输出到页面上
 config      | ServletConfig       | Servlet的配置对象
 exception   | Throwable           | 异常对象
 
+# MVC
+
+![MVC开发模式](/assets/MVC开发模式.bmp)
+
+- 耦合性低，方便维护，可以利于分工协作
+- 重用性高
+- 使得项目架构变得复杂，对开发人员要求高
+
+# EL表达式
+
+>Expression Language 表达式语言
+
+- 语法：${表达式}
+
+## 忽略
+
+- 设置jsp中page指令中：isELIgnored="true" 忽略当前jsp页面中所有的el表达式
+- ` \${表达式}` ：忽略当前这个el表达式
+
+## 运算符
+
+- 算术运算符
+- 比较运算符
+- 逻辑运算符
+- 空运算符
+
+    ```el
+    ${empty list}
+    ```
+### 获取值
+
+- ${域名称.键名}
+  - pageScope
+  - requestScope
+  - sessionScope
+  - applicationScope
+
+- ${键名}：表示依次从最小的域中查找是否有该键对应的值，直到找到为止。
+
+- 获取对象、List集合、Map集合的值
+  - 对象：${域名称.键名.属性名}
+  - List集合：${域名称.键名[索引]}
+  - Map集合：
+    - ${域名称.键名.key名称}
+    - ${域名称.键名["key名称"]}
+
+*逻辑视图*
+
+## 隐式对象
+
+![批注 2019-08-11 151212](/assets/批注%202019-08-11%20151212.png)
+
+# JSTL
+
+>JavaServer Pages Tag Library  JSP标准标签库
+
+- if
+- choose
+- forEach
+
+
+
+
+  
+
 

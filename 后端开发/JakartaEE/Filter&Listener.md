@@ -46,4 +46,31 @@
 @WebFilter(value = "/*",dispatcherTypes = DispatcherType.ERROR)
 ```
 
+## 过滤器链
 
+- 注解配置
+
+  - 按照类名字符串排序
+
+- web.xml配置
+
+  - 按照filter-mapping排序
+
+# Listener
+
+- ServletContextListener
+- HttpSessionListener
+- ServletRequestListener
+
+## 使用
+
+- 实现接口
+- 配置
+
+  - 注解配置
+
+    ```java
+    @WebListener
+    ```
+
+  - web.xml

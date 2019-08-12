@@ -47,6 +47,7 @@ From now
   - [CSS](./前端开发/CSS.md)
   - [JavaScript](./前端开发/JavaScript.md)
   - [Bootstrap](./前端开发/Bootstrap.md)
+  - [Jquery](./前端开发/Jquery.md)
 
 #### 移动开发
 

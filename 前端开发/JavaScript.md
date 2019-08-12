@@ -282,3 +282,25 @@ reg.test('some text');
 
 - event
 
+# JSON
+
+## 语法
+
+- 数据在名称/值对中：json数据是由键值对构成的
+- 数据由逗号分隔：多个键值对由逗号分隔
+- 花括号保存对象：使用{}定义json 格式
+- 方括号保存数组：[]
+
+## 获取数据
+
+- json对象.键名
+- json对象["键名"]
+- 数组对象[索引]
+
+## 转换
+
+```js
+JSON.stringify({username:'name'}) // to text
+
+```
+

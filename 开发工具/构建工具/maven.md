@@ -1,7 +1,5 @@
 # Maven
 
-[toc]
-
 ## 简介
 
 项目管理工具。 基于项目对象模型（POM）， 可以通过一小段描述信息管理项目的构建。
@@ -16,7 +14,7 @@
 
 ![批注 2019-06-20 131454](/assets/批注%202019-06-20%20131454.png)
 
-将'%M2_HOME%\bin'添加到Path环境变量下
+将`%M2_HOME%\bin`添加到Path环境变量下
 
 ## 目录结构
 
@@ -28,11 +26,15 @@
 
       - package
 
+    - resources
+
   - test
 
     - java
 
       - package
+
+    - resources
 
 ### 一些喜欢忘记的知识点
 
@@ -53,6 +55,9 @@
 ```shell
 mvn clean # 清理target目录下的类文件
 mvn install # 将本项目安装到本地仓库
+mvn compile # 编译
+mvn test # 执行测试
+mvn package #打包
 ```
 
 ### 添加依赖
@@ -103,6 +108,7 @@ mvn archetype:generate
   - test
   - package
   - install
+  - deploy
 
 - site 生成项目站点
 
@@ -281,4 +287,3 @@ mvn archetype:generate
   ```
 
 ## 创建web项目
-

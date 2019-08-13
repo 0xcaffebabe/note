@@ -301,6 +301,14 @@ reg.test('some text');
 
 ```js
 JSON.stringify({username:'name'}) // to text
-
+JSON.parse(str) // to obj
 ```
+
+## 后端解析
+
+- 常见的解析器：Jsonlib，Gson，fastjson，jackson
+
+
+
+
 

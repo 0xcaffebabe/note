@@ -33,6 +33,7 @@ From now
     - [Spring](./后端开发/框架/Spring/nav.md)
     - [SpringCloud](./后端开发/框架/SpringCloud/nav.md)
     - [Mybatis-Plus](./后端开发/框架/mybatis-plus.md)
+    - [Mybatis](./后端开发/框架/mybatis/nav.md)
     - [Netty](./后端开发/框架/netty.md)
 
 - Jakarta EE

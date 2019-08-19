@@ -61,4 +61,30 @@ SELECT * FROM user WHERE username LIKE '%' #{name} '%'
 </select>
 ```
 
+# Properties标签
 
+```xml
+<properties resource="jdbc.cfg">
+
+    </properties>
+```
+
+# typeAliases标签
+
+```xml
+<typeAliases>
+        <!--指定别名，不区分大小写-->
+        <typeAlias type="wang.ismy.mybatis.entity.User" alias="user"/>
+
+        <!--指定该包下的所有类为别名，不区分大小写-->
+        <package name="wang.ismy.mybatis.entity"/>
+    </typeAliases>
+```
+
+# mapper
+
+```xml
+<mappers>
+        <package name="wang.ismy.mybatis.dao">
+    </mappers>
+```

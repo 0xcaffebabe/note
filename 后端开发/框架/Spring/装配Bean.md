@@ -87,31 +87,51 @@
   }
   ```
 
-  ## 使用XML配置
+## 使用XML配置
 
-  由于spring早期大量使用xml来配置，所以这节的内容还是需要了解一下的。 不过对于新项目，还是推荐使用注解或者java配置
+由于spring早期大量使用xml来配置，所以这节的内容还是需要了解一下的。 不过对于新项目，还是推荐使用注解或者java配置
 
 - 创建一个xml
- ```xml <?xml version="1.0" encoding="UTF-8"?>
 
-  <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemalocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
-  </beans>
-
-```
-- 创建一个bean
 ```xml
-<bean class="wang.ismy.spring.Bean1"/>
-````
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd">
 
-- - 使用构造器注入
+</beans>
+```
 
-    ```xml
-    <bean name="bean1" class="wang.ismy.spring.Bean1"/>
+- 创建一个bean
 
-    <bean class="wang.ismy.spring.Bean">
-        <constructor-arg ref="bean1"/>
-    </bean>
-    ```
+```xml
+<!--方式1-->
+<bean class="wang.ismy.spring.Bean"/>
+<!--方式2：普通工厂创建-->
+<bean id="factory" class="wang.ismy.spring.Factory"/>
+<bean factory-bean="factory" factory-method="get"/>
+<!--方式3：静态工厂-->
+<bean class="wang.ismy.spring.Factory" factory-method="get"/>
+```
+
+- 生命周期方法回调
+
+```xml
+<!--只有作用范围是单例时destroy才会被调用-->
+<bean scope="singleton" class="wang.ismy.spring.Bean" 
+init-method="init" destroy-method="destroy"/>
+```
+
+- 使用构造器注入
+
+```xml
+<bean name="bean1" class="wang.ismy.spring.Bean1"/>
+
+<bean class="wang.ismy.spring.Bean">
+    <constructor-arg ref="bean1"/>
+</bean>
+```
 
 - - 设置属性 bean1：
 
@@ -138,19 +158,19 @@
     </bean>
     ```
 
-- 使用xml配置：
+- 使用xml配置运行：
 
-  ```java
-  ClassPathXmlApplicationContext context =
+```java
+ClassPathXmlApplicationContext context =
                 new ClassPathXmlApplicationContext("classpath:spring.xml");
 
-        context.getBean(Bean1.class).run();
-  ```
+context.getBean(Bean1.class).run();
+```
 
-  ## 导入配置
+## 导入配置
 
-  ```java
-  @ImportResource("classpath:spring.xml") // 导入xml配置
+```java
+@ImportResource("classpath:spring.xml") // 导入xml配置
   @Import(Config.class) // 导入java代码配置
   public class Config {}
-  ```
+```

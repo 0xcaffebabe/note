@@ -1,8 +1,8 @@
-# note
+# 个人学习笔记
 
 --------------------------------------------------------------------------------
 
-From now
+![star](https://img.shields.io/github/stars/0xcaffebabe/note)  ![fork](https://img.shields.io/github/forks/0xcaffebabe/note)
 
 
 # 目录

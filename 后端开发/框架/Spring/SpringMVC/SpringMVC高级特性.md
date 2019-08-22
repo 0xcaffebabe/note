@@ -31,6 +31,14 @@
 
 # 处理multipart 数据
 
+## 必要前提
+
+- form表单的enctype取值必须是：multipart/form-data
+- method属性取值必须是Post
+- 提供一个文件选择域`<input type=”file” />`
+
+## 使用
+
 - 配置multipart解析器
     - StandardServletMultipartResolver
     - CommonsMultipartResolver
@@ -40,6 +48,10 @@
     public MultipartResolver multipartResolver(){
         return new StandardServletMultipartResolver();
     }
+```
+
+```xml
+<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver"/>
 ```
 
 - 处理multipart 请求
@@ -80,6 +92,26 @@ public class MyException extends RuntimeException{ }
     }
 ```
 
+## 定义异常处理
+
+```java
+public class MyExceptionHandler implements HandlerExceptionResolver {
+    @Override
+    public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+        try {
+            response.getWriter().println(ex.getMessage());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+}
+```
+
+```xml
+<bean id="handlerExceptionResolver" class="MyExceptionHandler"/>
+```
+
 - 异常处理器
 ```java
 @ExceptionHandler(Exception.class)
@@ -109,5 +141,8 @@ public class MyControllerAdvice {
 ## 重定向传递数据的方法
 - url传递
 - flash属性传递
+
+
+# 拦截器
 
 

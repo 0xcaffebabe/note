@@ -115,10 +115,10 @@ public class MyExceptionHandler implements HandlerExceptionResolver {
 - 异常处理器
 ```java
 @ExceptionHandler(Exception.class)
-    @ResponseBody
-    public Object handler(Exception e){
-        return e.getMessage();
-    }
+@ResponseBody
+public Object handler(Exception e){
+    return e.getMessage();
+}
 ```
 
 # 控制器通知
@@ -145,4 +145,32 @@ public class MyControllerAdvice {
 
 # 拦截器
 
+```java
+public class MyInterceptor implements HandlerInterceptor {
 
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        System.out.println("进入controller前执行");
+        return true;
+    }
+
+    @Override
+    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+        System.out.println("完成controller方法后执行");
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+        System.out.println("请求完成执行");
+    }
+}
+```
+
+```xml
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/**"/>
+            <bean class="wang.ismy.spring.mvc.MyInterceptor"/>
+        </mvc:interceptor>
+    </mvc:interceptors>
+```

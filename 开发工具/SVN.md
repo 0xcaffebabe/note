@@ -11,3 +11,23 @@
 
 - TortoiseSVN
 
+## 操作
+
+- 浏览
+- checkout
+- commit
+- update
+- revert
+- export
+- edit conflict
+
+## 整合IDEA
+
+- share project
+
+## 目录结构
+
+- Trunk 主干目录，此目录下的文件为基准文件
+- Branches 用于开发的分支目录
+- Tags 用于发布的版本目录
+

@@ -129,5 +129,3 @@ indexWriter.updateDocument(new Term("content","name"),document);
 
 # QueryParser
 
-
-

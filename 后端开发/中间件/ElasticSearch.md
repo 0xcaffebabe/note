@@ -166,6 +166,160 @@ docker run --name elasticsearch --net somenetwork -v /root/plugin:/usr/share/ela
         </dependency>
 ```
 
+- 连接
+
+```java
+Settings settings = Settings.builder()
+                .put("cluster.name","docker-cluster")
+                .build();
+
+TransportClient client = new PreBuiltTransportClient(settings);
+client.addTransportAddress(
+            new TransportAddress(InetAddress.getByName("my-pc"),9300));
+```
+
+- 创建索引
+
+```java
+client.admin().indices().prepareCreate("index").get();
+```
+
+- 设置映射
+
+```java
+        XContentBuilder builder = XContentFactory.jsonBuilder()
+                .startObject()
+                .startObject("article")
+                .startObject("properties")
+                .startObject("id")
+                .field("type", "long")
+                .field("store", true)
+                .endObject()
+                .startObject("title")
+                .field("type", "text")
+                .field("store", true)
+                .field("analyzer", "ik_smart")
+                .endObject()
+                .startObject("content")
+                .field("type", "text")
+                .field("store", true)
+                .field("analyzer", "ik_smart")
+                .endObject()
+                .endObject()
+                .endObject()
+                .endObject();
+        client.admin().indices().preparePutMapping("index")
+                .setType("article")
+                .setSource(builder)
+                .get();
+```
+
+- 添加文档
+
+```java
+        XContentBuilder builder = XContentFactory.jsonBuilder()
+                .startObject()
+                    .field("id",1L)
+                    .field("title","央视快评：勇做敢于斗争善于斗争的战士")
+                    .field("content","9月3日，习近平总书记在中央党校（国家行政学院）中青年干部培训班开班式上发表重要讲话强调，广大干部特别是年轻干部要经受严格的思想淬炼、政治历练、实践锻炼，发扬斗争精神，增强斗争本领，为实现“两个一百年”奋斗目标、实现中华民族伟大复兴的中国梦而顽强奋斗。")
+                .endObject();
+        client.prepareIndex("index","article","1")
+                .setSource(builder)
+                .get();
+```
+
+- POJO添加文档
+
+```java
+        Article article = new Article();
+        article.setId(3L);
+        article.setTitle("3央视快评：勇做敢于斗争善于斗争的战士");
+        article.setContent("9月3日3333，（国家行政学院）中青年干部培训班开班式上发表重要讲话强调，广大干部特别是年");
+        String json = new ObjectMapper().writeValueAsString(article);
+
+        client.prepareIndex("index","article","3")
+                .setSource(json, XContentType.JSON)
+                .get();
+```
+
+## 查询
+
+- 根据ID
+
+```java
+        QueryBuilder queryBuilder = QueryBuilders.idsQuery().addIds("1","2");
+        SearchResponse response = client.prepareSearch("index")
+                .setTypes("article")
+                .setQuery(queryBuilder)
+                .get();
+        SearchHits hits = response.getHits();
+
+        System.out.println("总记录:"+hits);
+        SearchHit[] ret = hits.getHits();
+
+        for (SearchHit documentFields : ret) {
+            Map<String, Object> map = documentFields.getSourceAsMap();
+            System.out.println("id:"+map.get("id"));
+            System.out.println("title:"+map.get("title"));
+            System.out.println("content:"+map.get("content"));
+            System.out.println("-------------------");
+        }
+```
+
+- 根据term
+
+```java
+QueryBuilder queryBuilder = QueryBuilders.termQuery("title","斗争");
+```
+
+- 根据queryString
+
+```java
+        QueryBuilder queryBuilder = QueryBuilders.queryStringQuery("青年强调")
+                .defaultField("content");
+```
+
+- 分页查询
+
+```java
+        SearchResponse response = client.prepareSearch("index")
+                .setTypes("article")
+                .setQuery(queryBuilder)
+                .setFrom(10)
+                .setSize(5)
+                .get();
+```
+
+- 高亮显示结果
+
+```java
+        HighlightBuilder highlightBuilder = new HighlightBuilder();
+        highlightBuilder.field(highlight);
+        highlightBuilder.preTags("<em>");
+        highlightBuilder.postTags("</em>");
+
+        SearchResponse response = client.prepareSearch("index")
+                .setTypes("article")
+                .setQuery(queryBuilder)
+                .highlighter(highlightBuilder)
+                .get();
+        SearchHits hits = response.getHits();
+
+        System.out.println("总记录:"+hits.getTotalHits());
+        SearchHit[] ret = hits.getHits();
+
+        for (SearchHit documentFields : ret) {
+            Map<String, Object> map = documentFields.getSourceAsMap();
+
+            System.out.println("id:"+map.get("id"));
+            System.out.println("content:"+map.get("content"));
+            Map<String, HighlightField> highlightFields = documentFields.getHighlightFields();
+            System.out.println(highlightFields.get(highlight).getFragments()[0]);
+            System.out.println("-------------------");
+
+        }
+```
+
 
 
 

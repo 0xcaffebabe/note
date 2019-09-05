@@ -148,6 +148,28 @@ docker run --name elasticsearch --net somenetwork -v /root/plugin:/usr/share/ela
 
 *集群*
 
+## 搭建
+
+- 配置
+
+```yml
+# 集群名称，必须保持一致
+cluster.name:  elasticsearch
+# 节点的名称
+node.name: node-1
+# 监听网段
+network.host: 0.0.0.0
+# 本节点rest服务端口
+http.port: 9201
+# 本节点数据传输端口
+transport.tcp.port: 9301
+# 集群节点信息
+discovery.seed_hosts: ["127.0.0.1:9301","127.0.0.1:9302","127.0.0.1:9303"]
+cluster.initial_master_nodes: ["node-1","node-2","node-3"]
+```
+
+另外两个节点配置省略...
+
 # JAVA客户端
 
 - 依赖

@@ -1,3 +1,12 @@
+
+>ORM（Object-Relational Mapping） 表示对象关系映射。在面向对象的软件开发中，通过ORM，就可以把对象映射到关系型数据库中。只要有一套程序能够做到建立对象与数据库的关联，操作对象就可以直接操作数据库数据，就可以说这套程序实现了ORM对象关系映射
+
+# JPA
+
+>JPA的全称是Java Persistence API， 即Java 持久化API，是SUN公司推出的一套基于ORM的规范，内部是由一系列的接口和抽象类构成
+
+
+
 # 需要的一些复杂特性
 
 - 延迟加载
@@ -7,13 +16,14 @@
 # 集成 Hibernate
 
 # Spring与JAVA持久化API
+
 - 配置实体管理器工厂
+
 ```java
 @Configuration
 @ComponentScan("wang.ismy.spring")
 @EnableJpaRepositories(basePackages = "wang.ismy.spring",entityManagerFactoryRef = "entityManagerFactoryBean")
 public class Config {
-
 
     @Bean
     public DataSource dataSourceDev(){

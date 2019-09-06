@@ -46,6 +46,7 @@
   - [Cookie&Session](./后端开发/JakartaEE/Cookie&Session.md)
   - [Filter&Listener](./后端开发/JakartaEE/Filter&Listener.md)
   - [JNDI](./后端开发/JakartaEE/JNDI.md)
+  - [JPA](./后端开发/JakartaEE/JPA.md)
 </details>
 
 

@@ -16,7 +16,7 @@
   - [概览](./SpringData/概览.md)
   - [ORM](./SpringData/ORM.md)
   - [缓存数据](./SpringData/缓存数据.md)
-  - [缓存数据](./SpringData/elasticsearch.md)
+  - [Elasticsearch](./SpringData/elasticsearch.md)
 - ## Spring Security
 
   - [概览](./SpringSecurity/springSecurity.md)

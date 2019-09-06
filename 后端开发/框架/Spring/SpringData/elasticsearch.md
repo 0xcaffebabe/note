@@ -86,6 +86,35 @@ articleDao.findAll().forEach(System.out::println);
 System.out.println(articleDao.findById(2L).get());
 ```
 
+# 自定义查询
+
+```java
+@Repository
+public interface ArticleDao extends ElasticsearchRepository<Article,Long> {
+
+    List<Article> findAllByTitle(String title);
+}
+```
+
+- 分页查询
+
+```java
+List<Article> findAllByTitle(String title, Pageable pageable);
+articleDao.findAllByTitle("中", PageRequest.of(0,5)).forEach(System.out::println);
+```
+
+- 原生查询
+
+```java
+        NativeSearchQuery query = new NativeSearchQueryBuilder()
+                .withQuery(QueryBuilders.queryStringQuery("中国").defaultField("title"))
+                .withPageable(PageRequest.of(0,5))
+                .build();
+        template.queryForList(query,Article.class).forEach(System.out::println);
+```
+
+
+
 
 
 

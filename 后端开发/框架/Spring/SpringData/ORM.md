@@ -3,9 +3,6 @@
 
 # JPA
 
->JPA的全称是Java Persistence API， 即Java 持久化API，是SUN公司推出的一套基于ORM的规范，内部是由一系列的接口和抽象类构成
-
-
 
 # 需要的一些复杂特性
 
@@ -13,7 +10,10 @@
 - 预先抓取
 - 级联
 
+
 # 集成 Hibernate
+
+
 
 # Spring与JAVA持久化API
 

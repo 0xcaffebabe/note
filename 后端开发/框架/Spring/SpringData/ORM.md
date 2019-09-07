@@ -151,11 +151,106 @@ public interface AdminRepository extends JpaRepository<Admin,Integer> {
 
 - 一些关键词
 
-![批注 2019-06-20 143319](/assets/批注%202019-06-20%20143319.png) ![批注 2019-06-20 143412](/assets/批注%202019-06-20%20143412.png)
+Keyword           | Sample                                  | JPQL
+----------------- | --------------------------------------- | ----------------------------------------------------------------
+And               | findByLastnameAndFirstname              | ... where x.lastname = ?1 and x.firstname = ?2
+Or                | findByLastnameOrFirstname               | ... where x.lastname = ?1 or x.firstname = ?2
+Is,Equals         | findByFirstnameIs,findByFirstnameEquals | ... where x.firstname = ?1
+Between           | findByStartDateBetween                  | ... where x.startDate between ?1 and ?2
+LessThan          | findByAgeLessThan                       | ... where x.age < ?1
+LessThanEqual     | findByAgeLessThanEqual                  | ... where x.age ⇐ ?1
+GreaterThan       | findByAgeGreaterThan                    | ... where x.age > ?1
+GreaterThanEqual  | findByAgeGreaterThanEqual               | ... where x.age >= ?1
+After             | findByStartDateAfter                    | ... where x.startDate > ?1
+Before            | findByStartDateBefore                   | ... where x.startDate < ?1
+IsNull            | findByAgeIsNull                         | ... where x.age is null
+IsNotNull,NotNull | findByAge(Is)NotNull                    | ... where x.age not null
+Like              | findByFirstnameLike                     | ... where x.firstname like ?1
+NotLike           | findByFirstnameNotLike                  | ... where x.firstname not like ?1
+StartingWith      | findByFirstnameStartingWith             | ... where x.firstname like ?1 (parameter bound with appended %)
+EndingWith        | findByFirstnameEndingWith               | ... where x.firstname like ?1 (parameter bound with prepended %)
+Containing        | findByFirstnameContaining               | ... where x.firstname like ?1 (parameter bound wrapped in %)
+OrderBy           | findByAgeOrderByLastnameDesc            | ... where x.age = ?1 order by x.lastname desc
+Not               | findByLastnameNot                       | ... where x.lastname <> ?1
+In                | findByAgeIn(Collection ages)            | ... where x.age in ?1
+NotIn             | findByAgeNotIn(Collection age)          | ... where x.age not in ?1
+TRUE              | findByActiveTrue()                      | ... where x.active = true
+FALSE             | findByActiveFalse()                     | ... where x.active = false
+IgnoreCase        | findByFirstnameIgnoreCase               | ... where UPPER(x.firstame) = UPPER(?1)
 
-- 自定义SQL查询
+- 使用SQL
 
-  ```java
-  @Query(value = "SELECT * FROM admin WHERE username = 'admin'",nativeQuery = true)
-  Admin selfCondition();
-  ```
+```java
+@Query(value = "SELECT * FROM admin WHERE username = 'admin'",nativeQuery = true)
+Admin selfCondition();
+```
+
+- 使用JPQL
+
+```java
+@Query("FROM Customer WHERE custName = ?1")
+List<Customer> findByJPQL(String name);
+
+// 更新操作
+@Query("UPDATE Customer SET custName = ?2 WHERE custId = ?1")
+@Modifying
+int update(Long id,String name);
+```
+
+## 动态查询
+
+_JpaSpecificationExecutor_
+
+_Specification_
+
+- 示例
+
+```java
+        Specification<Customer> spec = (Specification<Customer>) (root/*比较的属性*/, query, cb/*查询方式*/) -> {
+            Path<Object> custName = root.get("custName");
+            return cb.equal(custName,"老王八");
+        };
+        Optional<Customer> one = repository.findOne(spec);
+
+        System.out.println(one.get());
+```
+
+- 条件拼接
+
+```java
+        Specification<Customer> spec = (Specification<Customer>) (root/*比较的属性*/, query, cb/*查询方式*/) -> {
+            Path<Object> custName = root.get("custName");
+            Path<Object> custIndustry = root.get("custIndustry");
+
+            var p1 = cb.equal(custName,"老王八");
+            var p2 = cb.equal(custIndustry,"隔壁");
+
+            return  cb.and(p1,p2);
+        };
+```
+
+- 模糊查询
+
+```java
+        Specification<Customer> spec = (Specification<Customer>) (root/*比较的属性*/, query, cb/*查询方式*/) -> {
+            Path<Object> custName = root.get("custName");
+
+            return cb.like(custName.as(String.class),"%老%");
+        };
+        repository.findAll(spec).forEach(System.out::println);
+```
+
+- 排序
+
+```java
+repository.findAll(spec, new Sort(Sort.Direction.DESC,"custId")).forEach(System.out::println);
+```
+
+- 分页
+
+```java
+repository.findAll(PageRequest.of(0,3)).forEach(System.out::println);
+```
+
+
+

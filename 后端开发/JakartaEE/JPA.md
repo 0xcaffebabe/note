@@ -161,8 +161,20 @@ SELECT COUNT(custId) FROM Customer
 
 - 分页查询
 
-```sql
+```java
+String jpql = "FROM Customer";
+List list = entityManager.createQuery(jpql)
+                .setFirstResult(0)
+                .setMaxResults(2).getResultList();
+```
 
+- 条件查询
+
+```java
+String jpql = "FROM Customer WHERE custName LIKE ?1";
+List list = entityManager.createQuery(jpql)
+                .setParameter(1,"%李%")
+                .getResultList();
 ```
 
 

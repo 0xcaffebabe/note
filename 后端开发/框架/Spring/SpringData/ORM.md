@@ -364,6 +364,19 @@ customerRepository.delete(cus.get());
         roleDao.save(role);
 ```
 
+- 级联
+
+## 对象导航
+
+```java
+public enum FetchType {
+    LAZY,EAGER
+}
+```
+
+
+
+
 
 
 

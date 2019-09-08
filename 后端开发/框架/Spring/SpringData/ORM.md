@@ -252,5 +252,120 @@ repository.findAll(spec, new Sort(Sort.Direction.DESC,"custId")).forEach(System.
 repository.findAll(PageRequest.of(0,3)).forEach(System.out::println);
 ```
 
+Page接口
+
+```java
+public interface Page<T> extends Slice<T> {
+
+	static <T> Page<T> empty() {
+		return empty(Pageable.unpaged());
+	}
+
+	static <T> Page<T> empty(Pageable pageable) {
+		return new PageImpl<>(Collections.emptyList(), pageable, 0);
+	}
+
+	int getTotalPages();
+
+	long getTotalElements();
+
+	<U> Page<U> map(Function<? super T, ? extends U> converter);
+}
+```
+
+## 多表操作
+
+### 一对多
+
+- 主表
+
+```java
+@OneToMany(targetEntity = LinkMan.class)
+    @JoinColumn(name = "lkm_cust_id",referencedColumnName = "cust_id")
+    private Set<LinkMan> linkMan = new HashSet<>(0);
+```
+
+- 从表
+
+```java
+   @ManyToOne(targetEntity = Customer.class)
+    @JoinColumn(name = "lkm_cust_id",referencedColumnName = "cust_id")
+    private Customer customer;
+```
+
+- 操作
+
+```java
+        Customer customer = new Customer();
+        customer.setCustName("20190908");
+
+        LinkMan man = new LinkMan();
+        man.setLkmName("小婊砸");
+        man.setCustomer(customer);
+        customerRepository.save(customer);
+        linkManRepository.save(man);
+```
+
+- 放弃外键维护
+
+```java
+@OneToMany(mappedBy = "customer")
+```
+
+- 级联添加
+
+```java
+@OneToMany(mappedBy = "customer",cascade = CascadeType.ALL)
+```
+
+```java
+        Customer customer = new Customer();
+        customer.setCustName("20190908");
+
+        LinkMan man = new LinkMan();
+        man.setLkmName("小婊砸");
+        man.setCustomer(customer);
+        customer.getLinkMans().add(man);
+
+        customerRepository.save(customer);
+```
+
+- 级联删除
+
+```java
+Optional<Customer> cus = customerRepository.findById(1L);
+customerRepository.delete(cus.get());
+```
+
+### 多对多
+
+```java
+    @ManyToMany(targetEntity = Role.class)
+    @JoinTable(name = "user_role",joinColumns = {@JoinColumn(name = "user_id",referencedColumnName = "user_id")},
+            inverseJoinColumns = {@JoinColumn(name = "role_id",referencedColumnName = "role_id")})
+    private Set<Role> roleSet  = new HashSet<>();
+```
+
+```java
+    @ManyToMany(targetEntity = User.class)
+    @JoinTable(name = "user_role",joinColumns ={@JoinColumn(name = "role_id",referencedColumnName = "role_id")},
+            inverseJoinColumns =  {@JoinColumn(name = "user_id",referencedColumnName = "user_id")})
+    private Set<User> userSet = new HashSet<>();
+```
+
+```java
+        User user = new User();
+        user.setUsername("老王");
+
+        Role role = new Role();
+        role.setRoleName("隔壁");
+        user.getRoleSet().add(role);
+        userDao.save(user);
+        roleDao.save(role);
+```
+
+
+
+
 
 

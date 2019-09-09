@@ -141,6 +141,101 @@ public class SpringMybatisApplication {
 }
 ```
 
+# 集成Junit
+
+- 导入依赖
+
+```xml
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+```
+
+- 建立测试
+
+```java
+@SpringBootTest
+@RunWith(SpringRunner.class)
+public class ControllerTest{
+
+    @Autowired
+    UserMapper mapper;
+
+    @Test
+    public void test(){
+        assertNotNull(mapper);
+    }
+}
+```
+
+# 集成Spring data jpa
+
+- 依赖
+
+```xml
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+```
+
+- 配置
+
+```properties
+# 数据库连接信息
+spring.datasource.username=root
+spring.datasource.password=123
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.datasource.url=jdbc:mysql:///ssm
+
+# spring data jpa相关配置
+spring.jpa.database=mysql
+spring.jpa.show-sql=true
+spring.jpa.generate-ddl=true
+spring.jpa.hibernate.ddl-auto=update
+
+```
+
+# 集成Redis
+
+- 依赖
+
+```xml
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+            <version>2.1.8.RELEASE</version>
+        </dependency>
+```
+
+- 配置
+
+```properties
+# redis相关配置
+spring.redis.host=127.0.0.1
+spring.redis.port=6379
+```
+
+- 使用
+
+```java
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class RedisTest {
+
+    @Autowired
+    RedisTemplate<String,String> redisTemplate;
+
+    @Test
+    public void test(){
+        String name = redisTemplate.boundValueOps("name").get();
+
+        Assert.assertEquals("my",name);
+    }
+}
+```
 
 
 

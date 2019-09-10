@@ -73,19 +73,21 @@ $ git push -u origin master
 $ git clone https://github.com/996icu/996.ICU.git
 ```
 
-## 开启一条新分支
+## 分支
+
+- 开启一条新分支
 
 ```shell
 $ git branch x
 ```
 
-## 切换分支
+- 切换分支
 
 ```shell
 git checkout x
 ```
 
-## 分支合并
+- 分支合并
 
 ```shell
 git merge x
@@ -96,7 +98,7 @@ git merge x
 - 生成ssh密钥
 
 ```shell
-ssh-keygen -t rsa 
+ssh-keygen -t rsa
 ```
 
 - 添加远程仓库地址
@@ -110,3 +112,31 @@ git remote add origin git@github.com:0xcaffebabe/repo1.git
 ```shell
 git push -u origin master
 ```
+
+# 搭建Git私服
+
+- 安装git
+- 初始化服务器本地仓库
+
+```shell
+git --bare init /home/git/first
+```
+
+- 设置远程仓库地址
+
+```shell
+git remote add origin ssh://root@my-pc/home/git/first
+```
+
+- 推送
+
+```shell
+git push --set-upstream origin master
+```
+
+## 从远程仓库下载源码
+
+```shell
+git clone ssh://root@my-pc/home/git/first
+```
+

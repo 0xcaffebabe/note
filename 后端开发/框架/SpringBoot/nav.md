@@ -1,21 +1,20 @@
-  # 环境搭建
+# 环境搭建
 
-  ```xml
-      <parent>
+```xml
+<parent> <!--继承父工程 -->
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>2.1.8.RELEASE</version>
-    </parent>
+</parent>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-    </dependencies>
-
-  ```
+<dependencies>
+    <!--引入依赖-->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+</dependencies>
+```
 
 ```java
 @SpringBootApplication
@@ -29,11 +28,11 @@ public class Application{
 # 热部署
 
 ```xml
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <optional>true</optional>
-        </dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-devtools</artifactId>
+    <optional>true</optional>
+</dependency>
 ```
 
 IDEA需要开启自动编译
@@ -62,10 +61,10 @@ student:
   - name: tom
     age: 3
   - name: ll
-    age: 2    
+    age: 2
 ```
 
-## 属性映射
+## 属性注入
 
 - @Value
 
@@ -89,13 +88,7 @@ public class Controller {
         return name+age;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setAge(Integer age) {
-        this.age = age;
-    }
+    // 省略setter
 }
 ```
 
@@ -104,12 +97,11 @@ public class Controller {
 - 引入依赖
 
 ```xml
-        <dependency>
+<dependency>
             <groupId>org.mybatis.spring.boot</groupId>
             <artifactId>mybatis-spring-boot-starter</artifactId>
             <version>2.1.0</version>
         </dependency>
-
 ```
 
 - 配置数据库信息和mybatis配置
@@ -125,7 +117,6 @@ spring.datasource.url=jdbc:mysql:///ssm
 
 mybatis.mapper-locations=mappers/*.xml
 mybatis.configuration.map-underscore-to-camel-case=true
-
 ```
 
 - 配置mybatis包扫描路径
@@ -146,7 +137,7 @@ public class SpringMybatisApplication {
 - 导入依赖
 
 ```xml
-        <dependency>
+<dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
@@ -175,7 +166,7 @@ public class ControllerTest{
 - 依赖
 
 ```xml
-        <dependency>
+<dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
@@ -195,7 +186,6 @@ spring.jpa.database=mysql
 spring.jpa.show-sql=true
 spring.jpa.generate-ddl=true
 spring.jpa.hibernate.ddl-auto=update
-
 ```
 
 # 集成Redis
@@ -203,7 +193,7 @@ spring.jpa.hibernate.ddl-auto=update
 - 依赖
 
 ```xml
-        <dependency>
+<dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
             <version>2.1.8.RELEASE</version>
@@ -236,8 +226,3 @@ public class RedisTest {
     }
 }
 ```
-
-
-
-
-

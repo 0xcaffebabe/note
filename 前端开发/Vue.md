@@ -110,7 +110,29 @@ new Vue({
 
 # AJAX
 
+- axios
 
+```javascript
+var that = this;
+            axios.get("/user/list")
+                .then(function (r) {
+                    that.userList = r.data;
+                })
+                .catch(function(error){
+                    console.error(error);
+                })
+```
 
+```js
+            var that = this;
+            axios.post("/user/"+this.user.id,this.user)
+                .then(function (res) {
+                    alert(res.data);
+                    that.findAll();
 
+                })
+                .catch(function (reason) {
+                    console.error(reason);
+                })
+```
 

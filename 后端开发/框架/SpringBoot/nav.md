@@ -188,6 +188,27 @@ spring.jpa.generate-ddl=true
 spring.jpa.hibernate.ddl-auto=update
 ```
 
+## 使用通用Mapper
+
+- 依赖
+
+```xml
+        <dependency>
+            <groupId>tk.mybatis</groupId>
+            <artifactId>mapper-spring-boot-starter</artifactId>
+            <version>2.1.5</version>
+        </dependency>
+```
+
+- 继承
+
+```java
+public interface UserMapper extends BaseMapper<User> { }
+```
+
+- @MapperScan注解需要使用tk.mybatis包
+
+
 # 集成Redis
 
 - 依赖

@@ -201,5 +201,32 @@ var that = this;
     new Vue({ el: '#components-demo' });
 ```
 
+## 父子组件通信
+
+```js
+const introduce = {
+        template:'<h1>{{msg}}</h1>',
+        props:['msg']
+    }
+    new Vue({
+        el: '#components-demo'
+        ,
+        data:{
+            msg:'大家好，我是渣渣辉'
+        }
+        ,
+        components:{
+            introduce
+        }
+
+    });
+```
+
+```html
+<div id="components-demo">
+    <introduce :msg="msg"></introduce>
+</div>
+```
+
 
 

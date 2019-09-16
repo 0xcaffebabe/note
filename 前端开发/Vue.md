@@ -108,6 +108,50 @@ new Vue({
 
 ![](https://cn.vuejs.org/images/lifecycle.png)
 
+# 计算属性
+
+```js
+    new Vue({
+       el:"#app",
+       data:{
+           msg:"123",
+           birthday:158536
+       }
+       ,
+        computed:{
+           birth(){
+               return new Date(this.birthday);
+           }
+        }
+
+    });
+```
+
+- 与方法的区别
+
+>不同的是计算属性是基于它们的响应式依赖进行缓存的。只在相关响应式依赖发生改变时它们才会重新求值
+
+# 侦听属性
+
+```js
+var vm = new Vue({
+  el: '#demo',
+  data: {
+    firstName: 'Foo',
+    lastName: 'Bar',
+    fullName: 'Foo Bar'
+  },
+  watch: {
+    firstName: function (val) {
+      this.fullName = val + ' ' + this.lastName
+    },
+    lastName: function (val) {
+      this.fullName = this.firstName + ' ' + val
+    }
+  }
+})
+```
+
 # AJAX
 
 - axios
@@ -135,4 +179,27 @@ var that = this;
                     console.error(reason);
                 })
 ```
+
+# 组件化
+
+```html
+<div id="components-demo">
+    <button-counter></button-counter>
+</div>
+```
+
+```js
+    // 定义一个名为 button-counter 的新组件
+    Vue.component('button-counter', {
+        data: function () {
+            return {
+                count: 0
+            }
+        },
+        template: '<button v-on:click="count++">You clicked me {{ count }} times.</button>'
+    });
+    new Vue({ el: '#components-demo' });
+```
+
+
 

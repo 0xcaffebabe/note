@@ -41,6 +41,7 @@
 
   - [Lucene](./后端开发/Lucene.md)
   - [微服务](./后端开发/微服务.md)
+  - [JAVA并发编程](./后端开发/JAVA并发编程.md)
 - Jakarta EE
   - [Servlet](./后端开发/JakartaEE/Servlet.md)
   - [JSP](./后端开发/JakartaEE/JSP.md)

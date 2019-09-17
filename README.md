@@ -86,4 +86,5 @@
 - [travel](https://github.com/0xcaffebabe/travel)
 - [ssm](https://github.com/0xcaffebabe/ssm)
 - [pms](https://github.com/0xcaffebabe/pms)
+- [shop](https://github.com/0xcaffebabe/shop)
 

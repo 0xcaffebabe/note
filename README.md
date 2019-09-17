@@ -29,6 +29,7 @@
     - [RabbitMQ](./后端开发/中间件/rabbitMQ.md)
     - [Kafka](./后端开发/中间件/Kafka.md)
     - [Tomcat](./后端开发/中间件/Tomcat.md)
+    - [Nginx](./后端开发/中间件/Nginx.md)
     - [ElasticSearch](./后端开发/中间件/ElasticSearch.md)
   - 框架
 

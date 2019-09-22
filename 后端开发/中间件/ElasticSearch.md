@@ -82,13 +82,19 @@ PUT /索引库名/_mapping/类型名称
 
 # 添加文档
 
-`POST http://my-pc:9200/blog/{documentName}/1`
+```json
+POST /索引库名/类型名
+{
+    "key":"value"
+}
+```
+
+- 自定义id
 
 ```json
+POST /索引库名/类型/id值
 {
-    "id":1,
-    "title":"标题1",
-    "content":"内容1"
+    ...
 }
 ```
 
@@ -102,21 +108,34 @@ PUT /索引库名/_mapping/类型名称
 
 # 查询
 
+## 基本查询
+
+```json
+GET /索引库名/_search
+{
+    "query":{
+        "查询类型":{
+            "查询条件":"查询条件值"
+        }
+    }
+}
+```
+
 - 根据ID查询
 
 `GET http://my-pc:9200/blog/hello/1`
 
-- 根据关键词查询
-
-`GET http://my-pc:9200/blog/hello/_search`
+- 根据字段查询
 
 ```json
+GET /shop/_search
 {
-    "query":{
-        "term":{
-            "content":"内"
-        }
+  "_source": ["title","price"],
+  "query": {
+    "term": {
+      "price": 2699
     }
+  }
 }
 ```
 
@@ -130,6 +149,57 @@ PUT /索引库名/_mapping/类型名称
             "query":"内容"
         }
     }
+}
+```
+
+### 过滤
+
+- includes：来指定想要显示的字段
+- excludes：来指定不想要显示的字段
+
+```json
+GET /shop/_search
+{
+  "_source": {
+    "includes":["title","price"]
+  },
+  "query": {
+    "term": {
+      "price": 2699
+    }
+  }
+}
+```
+
+### 排序
+
+```json
+GET /heima/_search
+{
+  ...
+  "sort": [
+    {
+      "price": {
+        "order": "desc"
+      }
+    }
+  ]
+}
+```
+
+### 模糊查询
+
+```json
+GET /heima/_search
+{
+  "query": {
+    "fuzzy": {
+        "title": {
+            "value":"appla",
+            "fuzziness":1
+        }
+    }
+  }
 }
 ```
 
@@ -160,6 +230,10 @@ docker run --name elasticsearch --net somenetwork -v /root/plugin:/usr/share/ela
   "text": "中文测试分词"
 }
 ```
+
+# 聚合
+
+>桶
 
 # ES集群
 

@@ -19,6 +19,14 @@ docker run -d --name elasticsearch --net somenetwork -p 9200:9200 -p 9300:9300 -
 
 # 概念
 
+索引（indices）--------------------------------Databases 数据库
+
+​类型（type）-----------------------------Table 数据表
+
+​文档（Document）----------------Row 行
+
+​字段（Field）-------------------Columns 列
+
 - 索引 index
 - 类型 type
 - 字段 field
@@ -28,36 +36,45 @@ docker run -d --name elasticsearch --net somenetwork -p 9200:9200 -p 9300:9300 -
 - 节点 node
 - 分片与复制
 
-# 添加索引
-
-`PUT http://my-pc:9200/blog1`
+# 创建索引
 
 ```json
+PUT /blog
 {
-    "mappings":{
-            "properties":{
-                "id":{
-                    "type":"long",
-                    "store":true
-                }
-                ,
-                "title":{
-                    "type":"text",
-                    "store":true,
-                    "index":true,
-                    "analyzer":"standard"
-                }
-                ,
-                "content":{
-                    "type":"text",
-                    "store":true,
-                    "index":true,
-                    "analyzer":"standard"
-                }
-            }
-        }
+    "settings": {
+        "number_of_shards": 3,
+        "number_of_replicas": 2
+      }
 }
 ```
+
+- 获取索引库信息
+
+`GET /blog`
+
+- 删除索引库
+
+`DELETE /blog`
+
+# 添加映射
+
+```json
+PUT /索引库名/_mapping/类型名称
+{
+  "properties": {
+    "字段名": {
+      "type": "类型",
+      "index": true，
+      "store": true，
+      "analyzer": "分词器"
+    }
+  }
+}
+```
+
+- 查看映射关系
+
+`GET /索引库名/_mapping`
 
 - 更新索引
 
@@ -69,9 +86,9 @@ docker run -d --name elasticsearch --net somenetwork -p 9200:9200 -p 9300:9300 -
 
 ```json
 {
-	"id":1,
-	"title":"标题1",
-	"content":"内容1"
+    "id":1,
+    "title":"标题1",
+    "content":"内容1"
 }
 ```
 
@@ -95,11 +112,11 @@ docker run -d --name elasticsearch --net somenetwork -p 9200:9200 -p 9300:9300 -
 
 ```json
 {
-	"query":{
-		"term":{
-			"content":"内"
-		}
-	}
+    "query":{
+        "term":{
+            "content":"内"
+        }
+    }
 }
 ```
 
@@ -107,12 +124,12 @@ docker run -d --name elasticsearch --net somenetwork -p 9200:9200 -p 9300:9300 -
 
 ```json
 {
-	"query":{
-		"query_string":{
-			"default_field":"content",
-			"query":"内容"
-		}
-	}
+    "query":{
+        "query_string":{
+            "default_field":"content",
+            "query":"内容"
+        }
+    }
 }
 ```
 
@@ -146,7 +163,7 @@ docker run --name elasticsearch --net somenetwork -v /root/plugin:/usr/share/ela
 
 # ES集群
 
-*集群*
+_集群_
 
 ## 搭建
 
@@ -175,7 +192,7 @@ cluster.initial_master_nodes: ["node-1","node-2","node-3"]
 - 依赖
 
 ```xml
-        <dependency>
+<dependency>
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch</artifactId>
             <version>7.3.1</version>
@@ -209,7 +226,7 @@ client.admin().indices().prepareCreate("index").get();
 - 设置映射
 
 ```java
-        XContentBuilder builder = XContentFactory.jsonBuilder()
+XContentBuilder builder = XContentFactory.jsonBuilder()
                 .startObject()
                 .startObject("article")
                 .startObject("properties")
@@ -239,7 +256,7 @@ client.admin().indices().prepareCreate("index").get();
 - 添加文档
 
 ```java
-        XContentBuilder builder = XContentFactory.jsonBuilder()
+XContentBuilder builder = XContentFactory.jsonBuilder()
                 .startObject()
                     .field("id",1L)
                     .field("title","央视快评：勇做敢于斗争善于斗争的战士")
@@ -253,7 +270,7 @@ client.admin().indices().prepareCreate("index").get();
 - POJO添加文档
 
 ```java
-        Article article = new Article();
+Article article = new Article();
         article.setId(3L);
         article.setTitle("3央视快评：勇做敢于斗争善于斗争的战士");
         article.setContent("9月3日3333，（国家行政学院）中青年干部培训班开班式上发表重要讲话强调，广大干部特别是年");
@@ -269,7 +286,7 @@ client.admin().indices().prepareCreate("index").get();
 - 根据ID
 
 ```java
-        QueryBuilder queryBuilder = QueryBuilders.idsQuery().addIds("1","2");
+QueryBuilder queryBuilder = QueryBuilders.idsQuery().addIds("1","2");
         SearchResponse response = client.prepareSearch("index")
                 .setTypes("article")
                 .setQuery(queryBuilder)
@@ -297,14 +314,14 @@ QueryBuilder queryBuilder = QueryBuilders.termQuery("title","斗争");
 - 根据queryString
 
 ```java
-        QueryBuilder queryBuilder = QueryBuilders.queryStringQuery("青年强调")
+QueryBuilder queryBuilder = QueryBuilders.queryStringQuery("青年强调")
                 .defaultField("content");
 ```
 
 - 分页查询
 
 ```java
-        SearchResponse response = client.prepareSearch("index")
+SearchResponse response = client.prepareSearch("index")
                 .setTypes("article")
                 .setQuery(queryBuilder)
                 .setFrom(10)
@@ -315,7 +332,7 @@ QueryBuilder queryBuilder = QueryBuilders.termQuery("title","斗争");
 - 高亮显示结果
 
 ```java
-        HighlightBuilder highlightBuilder = new HighlightBuilder();
+HighlightBuilder highlightBuilder = new HighlightBuilder();
         highlightBuilder.field(highlight);
         highlightBuilder.preTags("<em>");
         highlightBuilder.postTags("</em>");
@@ -342,13 +359,17 @@ QueryBuilder queryBuilder = QueryBuilders.termQuery("title","斗争");
         }
 ```
 
+# kibana
 
+Kibana是一个基于Node.js的Elasticsearch索引库数据统计工具，可以利用Elasticsearch的聚合功能，生成各种图表，如柱形图，线状图，饼图等。
 
+而且还提供了操作Elasticsearch索引数据的控制台，并且提供了一定的API提示，非常有利于我们学习Elasticsearch的语法。
 
+## 安装
 
+- docker
 
-
-
-
-
-
+```shell
+docker pull kibana:5.6.8 # 拉取镜像
+docker run -d --name kibana --net somenetwork -p 5601:5601 kibana:5.6.8 # 启动
+```

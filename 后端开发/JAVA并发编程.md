@@ -153,3 +153,152 @@ synchronized(obj){
 - BlockingQueue
     - 该类型的队列执行take时如果没有元素则会一直阻塞，put如果超过了界限也会一直阻塞，直至有可用空间
     - 实现类:ArrayBlockingQueue与LinkedBlockingDeque等
+## 同步工具类
+
+- CountDownLatch(闭锁)
+
+> 确保某些活动直到其他活动都完成后才继续执行(并发编程中的屏障)
+
+```java
+        CountDownLatch lock = new CountDownLatch(5);
+
+        for (int i = 0; i < 5; i++) {
+            int finalI = i;
+            new Thread(()->{
+                Random random = new Random();
+                try {
+                    Thread.sleep(random.nextInt(5000));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("线程"+ finalI +"完成");
+                lock.countDown();
+            }).start();
+        }
+
+        lock.await();
+        System.out.println("all mission complete");
+```
+
+- FutureTask
+
+>用来执行一些较长时间的计算，通过get来获取结果（阻塞或者超时）
+
+- Semaphore(信号量)
+
+> 用来控制使用资源的主体数量
+
+```java
+        Semaphore semaphore = new Semaphore(5);
+
+        for (int i = 0; i < 10; i++) {
+            new Thread(()->{
+                Random rnd = new Random();
+
+                try {
+                    semaphore.acquire();
+                    System.out.println(Thread.currentThread()+"acquire lock");
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }finally {
+                    semaphore.release();
+                }
+            }).start();
+```
+
+- CyclicBarrier（栅栏）
+
+>闭锁用于等待事件，而栅栏用于等待其他线程
+
+```java
+        CyclicBarrier barrier = new CyclicBarrier(5, () -> System.out.println("mission complete"));
+
+        for (int i = 0; i < 5; i++) {
+            new Thread(() -> {
+                Random rnd= new Random();
+                try {
+                    System.out.println(Thread.currentThread()+"run");
+                    Thread.sleep(rnd.nextInt(3000));
+                    barrier.await();
+                } catch (InterruptedException | BrokenBarrierException e) {
+                    e.printStackTrace();
+                }
+
+            }).start();
+```
+
+# 任务执行
+
+- 串行执行
+- 显式创建线程执行
+
+## Executor框架
+
+```java
+public interface Executor {
+
+    void execute(Runnable command);
+}
+```
+
+### 执行策略
+
+- 什么线程
+- 什么顺序
+- 多少任务执行
+- 多少任务等待
+- 如何放弃以及通知放弃
+- 任务执行前操作
+
+### 线程池
+
+```java
+        Executors.newFixedThreadPool(5); // 创建固定长度的线程池
+        Executors.newCachedThreadPool(); // 可缓存线程池，动态伸缩
+        Executors.newSingleThreadExecutor(); // 单线程线程池
+        Executors.newScheduledThreadPool(5); // 可以延迟或者定时执行
+```
+
+### 生命周期
+
+ExecutorService继承了Executor，增加了一些方法
+
+```java
+public interface ExecutorService extends Executor {
+    // 平缓关闭
+    void shutdown();
+
+    // 粗暴关闭
+    List<Runnable> shutdownNow();
+
+    boolean isShutdown();
+
+    boolean isTerminated();
+
+    boolean awaitTermination(long timeout, TimeUnit unit)
+        throws InterruptedException;
+
+    <T> Future<T> submit(Callable<T> task);
+
+    <T> Future<T> submit(Runnable task, T result);
+
+    Future<?> submit(Runnable task);
+
+    <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
+        throws InterruptedException;
+
+    <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks,
+                                  long timeout, TimeUnit unit)
+        throws InterruptedException;
+
+    <T> T invokeAny(Collection<? extends Callable<T>> tasks)
+        throws InterruptedException, ExecutionException;
+
+    <T> T invokeAny(Collection<? extends Callable<T>> tasks,
+                    long timeout, TimeUnit unit)
+        throws InterruptedException, ExecutionException, TimeoutException;
+}
+
+```
+

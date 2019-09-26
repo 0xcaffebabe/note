@@ -17,6 +17,17 @@ docker run -d --hostname my-rabbit --name some-rabbit -p 15672:15672 -p 5672:567
 
 ![](https://gitee.com/caffebabee/leyou/raw/master/day15-rabbitmq%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5/assets/1527068544487.png)
 
+## 订阅模型-Fanout
+
+- 可以有多个消费者
+- 每个消费者有自己的queue（队列）
+- 每个队列都要绑定到Exchange（交换机）
+- 生产者发送的消息，只能发送到交换机，交换机来决定要发给哪个队列，生产者无法决定。
+- 交换机把消息发送给绑定过的所有队列
+- 队列的消费者都能拿到消息。实现一条消息被多个消费者消费
+
+
+
 # 消息确认机制（ACK）
 
 - 自动ACK：消息一旦被接收，消费者自动发送ACK

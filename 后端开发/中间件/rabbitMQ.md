@@ -7,6 +7,21 @@
 
 以上操作均可以使用包管理工具完成
 
+## 使用docker
+
+```shell
+docker run -d --hostname my-rabbit --name some-rabbit -p 15672:15672 -p 5672:5672 rabbitmq:3-management
+```
+
+# 消息模型
+
+![](https://gitee.com/caffebabee/leyou/raw/master/day15-rabbitmq%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5/assets/1527068544487.png)
+
+# 消息确认机制（ACK）
+
+- 自动ACK：消息一旦被接收，消费者自动发送ACK
+- 手动ACK：消息接收后，不会发送ACK，需要手动调用
+
 # 核心概念
 
 - Server
@@ -24,11 +39,11 @@
 - 引入依赖
 
 ```xml
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-amqp</artifactId>
-            <version>2.1.6.RELEASE</version>
-        </dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-amqp</artifactId>
+    <version>2.1.6.RELEASE</version>
+</dependency>
 ```
 
 - 添加队列
@@ -46,7 +61,7 @@
 - 发送
 
 ```java
-    @Autowired
+@Autowired
     private RabbitTemplate rabbitTemplate;
 
     public void sendUser(User user) throws Exception{
@@ -61,6 +76,7 @@
 ```
 
 - 接收
+
   - 消费端配置
 
     ```properties
@@ -69,6 +85,7 @@
     spring.rabbitmq.listener.simple.max-concurrency=10
     spring.rabbitmq.listener.simple.prefetch=1
     ```
+
   - 消费
 
     ```java
@@ -87,6 +104,3 @@
 # 消息可靠投递方案
 
 ![批注 2019-07-21 113405](/assets/批注%202019-07-21%20113405.png)
-
-
-

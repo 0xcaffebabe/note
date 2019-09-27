@@ -26,7 +26,17 @@ docker run -d --hostname my-rabbit --name some-rabbit -p 15672:15672 -p 5672:567
 - 交换机把消息发送给绑定过的所有队列
 - 队列的消费者都能拿到消息。实现一条消息被多个消费者消费
 
+![](https://www.rabbitmq.com/img/tutorials/python-three-overall.png)
 
+## 订阅模型-Direct
+
+![](https://gitee.com/caffebabee/leyou/raw/master/day15-rabbitmq%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5/assets/1532766437787.png)
+
+## 订阅模型-Topic
+
+Topic类型的Exchange与Direct相比，都是可以根据RoutingKey把消息路由到不同的队列。只不过Topic类型Exchange可以让队列在绑定Routing key 的时候使用通配符
+
+![](https://gitee.com/caffebabee/leyou/raw/master/day15-rabbitmq%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5/assets/1532766712166.png)
 
 # 消息确认机制（ACK）
 

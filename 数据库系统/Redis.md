@@ -54,10 +54,11 @@
 
 ## 通用
 
-- keys * : 查询所有的键
+- keys * : 查询所有的键(生产环境应禁用，原因：正则表达式可能会占用大量资源)
 - type key ： 获取键对应的value的类型
 - del key：删除指定的key value
-
+- exists key：判断指定的key是否存在
+- expire key time：指定key的生存时间，单位：秒
 # 持久化
 
 ## RDB
@@ -103,10 +104,3 @@ appendfsync everysec ： 每隔一秒进行一次持久化
 
         pool.close();
 ```
-
-
-
-
-
-
-

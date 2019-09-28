@@ -104,3 +104,21 @@ appendfsync everysec ： 每隔一秒进行一次持久化
 
         pool.close();
 ```
+
+# Spring Data Redis
+
+## RedisTemplate基本操作
+
+- redisTemplate.opsForValue() ：操作字符串
+- redisTemplate.opsForHash() ：操作hash
+- redisTemplate.opsForList()：操作list
+- redisTemplate.opsForSet()：操作set
+- redisTemplate.opsForZSet()：操作zset
+
+StringRedisTemplate是K,V均为String的RedisTemplate
+
+## 使用
+
+```java
+template.opsForValue().set("name","hello,bitch");
+```

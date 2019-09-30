@@ -294,3 +294,139 @@ public interface ExecutorService extends Executor {
 
 ```
 
+# 取消与关闭
+
+- 取消策略
+
+通常，使用中断来取消是最合理的方式
+
+```java
+class MyThread extends  Thread{
+
+    @Override
+    public void run() {
+        while(!isInterrupted()){
+            System.out.println("running");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+        System.out.println("my thread done");
+    }
+}
+```
+
+## 使用Future取消
+
+```java
+        Future<Double> future = service.submit(() -> {
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return Math.random();
+        });
+
+        try {
+            Double ret = future.get(3, TimeUnit.SECONDS);
+            System.out.println("result"+ret);
+        } catch (ExecutionException | TimeoutException e) {
+            e.printStackTrace();
+        }finally {
+            future.cancel(true);
+            System.out.println("task cancel");
+        }
+```
+
+## 处理不可中断的阻塞
+
+由于如IO等的资源一旦阻塞就无法进行中断，所以可对其做关闭处理来模拟中断
+
+# 停止基于线程的服务
+
+- 使用生命周期管理ExecutorService
+- 毒药对象
+  - 本质上就是一个flag，当队列读取到这个毒药时，就会停止相关操作
+
+# 处理非正常的线程终止
+
+```java
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread t, Throwable e) {
+                System.out.println(t + "something happen" + e);
+            }
+        });
+
+        new Thread(){
+            @Override
+            public void run() {
+                throw new RuntimeException("aaaa");
+            }
+        }.start();
+```
+
+# JVM关闭钩子
+
+```java
+        Runtime.getRuntime().addShutdownHook(new Thread(){
+            @Override
+            public void run() {
+                System.out.println("jvm shutdown");
+            }
+        });
+```
+
+# 线程池的大小
+
+N<sub>cpu</sub> = CPU数量
+U<sub>cpu</sub> = 预期CPU使用率
+W/C = 等待时间/计算时间
+
+最优大小等于 N<sub>cpu</sub> * U<sub>cpu</sub> * (1 + W/C)
+
+# 活跃性危险
+
+- 死锁
+    - 静态顺序死锁
+    - 动态顺序死锁
+    - 资源死锁
+>死锁是指两个或两个以上的进程在执行过程中，由于竞争资源或者由于彼此通信而造成的一种阻塞的现象，若无外力作用，它们都将无法推进下去。此时称系统处于死锁状态或系统产生了死锁，这些永远在互相等待的进程称为死锁进程。
+
+## 诊断与避免
+
+- 定时锁
+  - 获取-超时-退出
+
+## 其他活跃性危险
+
+- 饥饿
+  - 无法获取到需要的资源
+- 响应性慢
+- 活锁
+  - 线程不断重复某个操作
+
+# 性能与伸缩性
+
+- 引入线程的开销
+  - 上下文切换
+  - 内存同步
+  - 阻塞
+
+# 如何减少锁的竞争
+
+- 缩小锁的范围
+  - 缩小synchronized关键字包围的代码块
+- 减小锁的粒度
+  - 不同的操作使用不同的锁
+- 分段锁
+- 替代独占锁
+  - 采取读写锁
+
+
+
+
+

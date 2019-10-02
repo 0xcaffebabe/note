@@ -52,6 +52,7 @@
   - [JPA](./后端开发/JakartaEE/JPA.md)
 </details>
 
+- [网络爬虫](./网络爬虫/nav.md)
 
 #### 前端开发
   - [HTML](./前端开发/HTML.md)

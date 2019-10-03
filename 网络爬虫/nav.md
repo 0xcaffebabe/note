@@ -152,6 +152,20 @@ Spider.create(new JobProcessor())
 
 ## Site
 
+## Scheduler
+
+- 使用布隆过滤器
+
+```java
+Spider.create(null)
+                .setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(100000)));
+```
+
+### 三种去重方式
+
+- HashSet
+- Redis
+- 布隆过滤器
 
 ## [文档](http://webmagic.io/docs/zh/)
 
@@ -161,4 +175,9 @@ Spider.create(new JobProcessor())
 - 聚焦
 - 增量式
 - 深层网络
+
+# 网页去重
+
+- simhash
+
 

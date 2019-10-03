@@ -79,3 +79,86 @@ Element e = doc.getElementById("login");
         doc.select("div")
                 .forEach(System.out::println);
 ```
+
+# WebMagic
+
+![](https://camo.githubusercontent.com/06cb8227231a6adf6d2a57b14b60a25389a25fe9/687474703a2f2f636f64653463726166742e6769746875622e696f2f696d616765732f706f7374732f7765626d616769632e706e67)
+
+## 使用
+
+- 实现PageProcessor
+
+```java
+public class JobProcessor implements PageProcessor {
+
+    private Site site = Site.me().addHeader("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36");
+
+    @Override
+    public void process(Page page) {
+        page.putField("div1",page.getHtml().css("#logo-2014").get());
+        page.putField("div2",page.getHtml().xpath("//div").get());
+
+    }
+
+    @Override
+    public Site getSite() {
+        return site;
+    }
+}
+```
+
+- 运行
+
+```java
+        Spider.create(new JobProcessor())
+                .addUrl("https://search.jd.com/Search?keyword=%E6%89%8B%E6%9C%BA&enc=utf-8&wq=%E6%89%8B%E6%9C%BA&pvid=9524dc8e0e2d45f08656f023fa60a0de")
+                .run();
+```
+
+## 元素抽取
+
+- XPath
+- Regex
+- CSS
+
+```java
+        page.putField("div1",page.getHtml().css("#logo-2014").get()); // 获取一条
+        page.putField("div2",page.getHtml().xpath("//div[@id=logo-2014]").all());  // 获取全部
+```
+
+## 获取链接
+
+```java
+page.getHtml().links()
+```
+
+- 递归访问
+
+```java
+page.addTargetRequests(page.getHtml().links().all());
+```
+
+## 输出数据
+
+
+- PipeLine
+
+```java
+Spider.create(new JobProcessor())
+                .addUrl("url")
+                .addPipeline(new FilePipeline("./result.txt"))
+                .run();
+```
+
+## Site
+
+
+## [文档](http://webmagic.io/docs/zh/)
+
+# 爬虫分类
+
+- 通用
+- 聚焦
+- 增量式
+- 深层网络
+

@@ -426,6 +426,44 @@ W/C = 等待时间/计算时间
 - 替代独占锁
   - 采取读写锁
 
+# 并发程序测试
+
+- 正确性测试
+- 安全性测试
+- 性能测试
+
+## 性能测试陷阱
+
+- 垃圾回收
+- 动态编译（JIT）
+- 编译优化
+- 竞争程度
+
+# 显式锁
+
+- Lock接口
+
+```java
+public interface Lock {
+    // 其中一个实现类：ReentrantLock
+    void lock();
+
+    void lockInterruptibly() throws InterruptedException;
+
+    boolean tryLock();
+
+    boolean tryLock(long time, TimeUnit unit) throws InterruptedException;
+
+    void unlock();
+
+    Condition newCondition();
+}
+```
+
+显式锁拥有比内置锁(synchronized关键字)更多的功能，但使用起来更加复杂，显式锁作为一种高级工具，只有在synchronized无法满足需求的情况下才使用
+
+ReentrantLock是一种互斥锁，也就说在同一时间内只有一个线程能对资源读或者写，如果要对读写分别控制，考虑使用ReadWriteLock
+
 
 
 

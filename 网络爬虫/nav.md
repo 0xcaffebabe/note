@@ -76,7 +76,7 @@ Element e = doc.getElementById("login");
 ## 使用CSS选择器
 
 ```java
-        doc.select("div")
+doc.select("div")
                 .forEach(System.out::println);
 ```
 
@@ -110,7 +110,7 @@ public class JobProcessor implements PageProcessor {
 - 运行
 
 ```java
-        Spider.create(new JobProcessor())
+Spider.create(new JobProcessor())
                 .addUrl("https://search.jd.com/Search?keyword=%E6%89%8B%E6%9C%BA&enc=utf-8&wq=%E6%89%8B%E6%9C%BA&pvid=9524dc8e0e2d45f08656f023fa60a0de")
                 .run();
 ```
@@ -122,7 +122,7 @@ public class JobProcessor implements PageProcessor {
 - CSS
 
 ```java
-        page.putField("div1",page.getHtml().css("#logo-2014").get()); // 获取一条
+page.putField("div1",page.getHtml().css("#logo-2014").get()); // 获取一条
         page.putField("div2",page.getHtml().xpath("//div[@id=logo-2014]").all());  // 获取全部
 ```
 
@@ -139,7 +139,6 @@ page.addTargetRequests(page.getHtml().links().all());
 ```
 
 ## 输出数据
-
 
 - PipeLine
 
@@ -179,5 +178,20 @@ Spider.create(null)
 # 网页去重
 
 - simhash
+
+**海明距离**
+
+> 在信息编码中，两个合法代码对应位上编码不同的位数称为码距，又称海明距离。举例如下：10101和00110从第一位开始依次有第一位、第四、第五位不同，则海明距离为3
+
+# 使用代理
+
+```java
+        downloader.setProxyProvider(new SimpleProxyProvider(List.of(new Proxy("116.114.19.211",443))));
+
+        Spider.create(new ProxyProcessor())
+                .addUrl("http://ip-api.com/json/?lang=zh-CN")
+                .setDownloader(downloader)
+                .run();
+```
 
 

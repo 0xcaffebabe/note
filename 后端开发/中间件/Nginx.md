@@ -31,3 +31,26 @@ http{
     }
 }
 ```
+
+# SSI
+
+>服务端嵌入
+
+ssi包含类似于jsp页面中的incluce指令，ssi是在web服务端将include指定 的页面包含在网页中，渲染html网页响 应给客户端 。nginx、apache等多数web容器都支持SSI指令。
+
+```
+<!‐‐#include virtual="/../....html"‐‐>
+```
+
+## 配置
+
+```conf
+server{ 
+    listen       80;
+    server_name  www.edu.com;      
+    ssi on;      
+    ssi_silent_errors on;      
+    .....
+```
+
+

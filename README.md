@@ -84,6 +84,11 @@
 
 </details>
 
+### 运维
+
+- [持续集成](./运维/持续集成.md)
+- [容器管理](./运维/容器管理.md)
+
 #### 项目开发
 - [travel](https://github.com/0xcaffebabe/travel)
 - [ssm](https://github.com/0xcaffebabe/ssm)

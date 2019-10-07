@@ -203,6 +203,46 @@ docker run -P <name>
 
 # 镜像制作
 
+# DockerMaven插件
+
+- 开启docker接受远程操作
+- 添加maven插件
+
+```xml
+<plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.4.12</version>
+                <configuration>
+                    <!-- 注意imageName一定要是符合正则[a-z0-9-_.]的，否则构建不会成功 -->
+                    <!-- 详见：https://github.com/spotify/docker-maven-plugin    Invalid repository name ... only [a-z0-9-_.] are allowed-->
+                    <imageName>my-pc:5000/${project.artifactId}:${project.version}</imageName>
+                    <baseImage>java</baseImage>
+                    <entryPoint>["java", "-jar", "/${project.build.finalName}.jar"]</entryPoint>
+                    <resources>
+                        <resource>
+                            <targetPath>/</targetPath>
+                            <directory>${project.build.directory}</directory>
+                            <include>${project.build.finalName}.jar</include>
+                        </resource>
+                    </resources>
+                    <dockerHost>http://my-pc:2375</dockerHost>
+                </configuration>
+</plugin>
+```
+
+- 构建并推送
+
+```shell
+ mvn clean package docker:build -DpushImage
+```
+
+
+
+
+
+
+
 
 
 

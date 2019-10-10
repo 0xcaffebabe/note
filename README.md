@@ -51,6 +51,7 @@
   - [Filter&Listener](./后端开发/JakartaEE/Filter&Listener.md)
   - [JNDI](./后端开发/JakartaEE/JNDI.md)
   - [JPA](./后端开发/JakartaEE/JPA.md)
+  - [Freemarker](./后端开发/JakartaEE/Freemarker.md)
 </details>
 
 - [网络爬虫](./网络爬虫/nav.md)

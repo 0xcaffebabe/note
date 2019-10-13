@@ -1,3 +1,6 @@
+
+# 介绍
+
 > RabbitMQ是实现了高级消息队列协议（AMQP）的开源消息代理软件（亦称面向消息的中间件）。RabbitMQ服务器是用Erlang语言编写的，而集群和故障转移是构建在开放电信平台框架上的。所有主要的编程语言均有与代理接口通讯的客户端库。
 
 # 安装
@@ -15,7 +18,7 @@ docker run -d --hostname my-rabbit --name some-rabbit -p 15672:15672 -p 5672:567
 
 # 消息模型
 
-![](https://gitee.com/caffebabee/leyou/raw/master/day15-rabbitmq%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5/assets/1527068544487.png)
+![rabbitMq的6种消息模型](https://gitee.com/caffebabee/leyou/raw/master/day15-rabbitmq%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5/assets/1527068544487.png)
 
 ## 订阅模型-Fanout
 
@@ -26,17 +29,20 @@ docker run -d --hostname my-rabbit --name some-rabbit -p 15672:15672 -p 5672:567
 - 交换机把消息发送给绑定过的所有队列
 - 队列的消费者都能拿到消息。实现一条消息被多个消费者消费
 
-![](https://www.rabbitmq.com/img/tutorials/python-three-overall.png)
+![Fanout模式](https://www.rabbitmq.com/img/tutorials/python-three-overall.png)
 
 ## 订阅模型-Direct
 
-![](https://gitee.com/caffebabee/leyou/raw/master/day15-rabbitmq%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5/assets/1532766437787.png)
+![Direct模式](https://gitee.com/caffebabee/leyou/raw/master/day15-rabbitmq%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5/assets/1532766437787.png)
 
 ## 订阅模型-Topic
 
 Topic类型的Exchange与Direct相比，都是可以根据RoutingKey把消息路由到不同的队列。只不过Topic类型Exchange可以让队列在绑定Routing key 的时候使用通配符
 
-![](https://gitee.com/caffebabee/leyou/raw/master/day15-rabbitmq%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5/assets/1532766712166.png)
+![Topic模式](https://gitee.com/caffebabee/leyou/raw/master/day15-rabbitmq%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5/assets/1532766712166.png)
+
+- #可以匹配一个或多个词
+- *只能匹配一个词
 
 # 消息确认机制（ACK）
 
@@ -83,17 +89,12 @@ Topic类型的Exchange与Direct相比，都是可以根据RoutingKey把消息路
 
 ```java
 @Autowired
-    private RabbitTemplate rabbitTemplate;
+private RabbitTemplate rabbitTemplate;
 
-    public void sendUser(User user) throws Exception{
-        CorrelationData correlationData =
-                new CorrelationData(user.getUsername());
-
-        rabbitTemplate.convertAndSend("user-exchange",
-                "user.abcd",
-                user,correlationData
-                );
-    }
+public void sendUser(User user) throws Exception{
+    CorrelationData correlationData = new CorrelationData(user.getUsername());
+    rabbitTemplate.convertAndSend("user-exchange","user.abcd",user,correlationData);
+}
 ```
 
 - 接收

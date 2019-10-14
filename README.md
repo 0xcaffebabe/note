@@ -13,6 +13,7 @@
   - [Redis](./数据库系统/Redis.md)
   - [MongoDB](./数据库系统/MongoDB.md)
 - [操作系统](./操作系统/nav.md)
+  - [FastDFS](./操作系统/FastDFS.md)
 - [软件工程](./软件工程/nav.md)
 - [计算机系统](./计算机系统/nav.md)
 - [计算机网络](./计算机网络/nav.md)

@@ -32,9 +32,12 @@
     - [Kafka](./后端开发/中间件/Kafka.md)
     - [Tomcat](./后端开发/中间件/Tomcat.md)
     - [Nginx](./后端开发/中间件/Nginx.md)
-    - [ElasticSearch](./后端开发/中间件/ElasticSearch.md)
+    
+  - 全文检索
+    - [Lucene](./后端开发/全文检索/Lucene.md)
+    - [ElasticSearch](./后端开发/全文检索/ElasticSearch.md)
+  
   - 框架
-
     - [Spring](./后端开发/框架/Spring/nav.md)
     - [SpringBoot](./后端开发/框架/SpringBoot/nav.md)
     - [SpringCloud](./后端开发/框架/SpringCloud/nav.md)
@@ -42,7 +45,6 @@
     - [Mybatis](./后端开发/框架/mybatis/nav.md)
     - [Netty](./后端开发/框架/netty.md)
 
-  - [Lucene](./后端开发/Lucene.md)
   - [微服务](./后端开发/微服务.md)
   - [JAVA并发编程](./后端开发/JAVA并发编程.md)
 - Jakarta EE

@@ -71,8 +71,8 @@ PUT /索引库名/_mapping/类型名称
   "properties": {
     "字段名": {
       "type": "类型",
-      "index": true，
-      "store": true，
+      "index": true,
+      "store": true,
       "analyzer": "分词器"
     }
   }
@@ -133,6 +133,8 @@ GET /索引库名/_search
 `GET http://my-pc:9200/blog/hello/1`
 
 - 根据字段查询
+
+>Term Query为精确查询，在搜索时会整体匹配关键字，不再将关键字分词。 
 
 ```json
 GET /shop/_search

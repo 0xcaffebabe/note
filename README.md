@@ -12,6 +12,7 @@
   - [Oracle](./数据库系统/oracle/nav.md)
   - [Redis](./数据库系统/Redis.md)
   - [MongoDB](./数据库系统/MongoDB.md)
+  - [分布式事务](./数据库系统/分布式事务.md)
 - [操作系统](./操作系统/nav.md)
   - [FastDFS](./操作系统/FastDFS.md)
 - [软件工程](./软件工程/nav.md)

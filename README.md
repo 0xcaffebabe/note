@@ -15,7 +15,9 @@
   - [分布式事务](./数据库系统/分布式事务.md)
 - [操作系统](./操作系统/nav.md)
   - [FastDFS](./操作系统/FastDFS.md)
+  - [虚拟化](./操作系统/虚拟化.md)
 - [软件工程](./软件工程/nav.md)
+  - [DevOps](./软件工程/DevOps.md)
 - [计算机系统](./计算机系统/nav.md)
 - [计算机网络](./计算机网络/nav.md)
   - [HTTP](./计算机网络/HTTP.md)
@@ -103,4 +105,8 @@
 - [pms](https://github.com/0xcaffebabe/pms)
 - [shop](https://github.com/0xcaffebabe/shop)
 - [edu](https://github.com/0xcaffebabe/edu)
+
+### 未知
+
+- [区块链](./未知/区块链.md)
 

@@ -84,6 +84,7 @@
   <summary>开发工具</summary>
 
   - [Docker](./开发工具/Docker.md)
+  - [K8s](./开发工具/K8s.md)
   - [VIM](./开发工具/vim/vim.md)
   - [GIT](./开发工具/git.md)
   - [SVN](./开发工具/SVN.md)

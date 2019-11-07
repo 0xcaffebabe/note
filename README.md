@@ -22,6 +22,7 @@
 - [计算机系统](./计算机系统/nav.md)
 - [计算机网络](./计算机网络/nav.md)
   - [HTTP](./计算机网络/HTTP.md)
+    - [RESTful](./计算机网络/RESTful.md)
 <details>
 
   <summary>后端开发</summary>
@@ -72,8 +73,10 @@
   - [Bootstrap](./前端开发/Bootstrap.md)
   - [Jquery](./前端开发/Jquery.md)
   - [AJAX](./前端开发/AJAX.md)
+  - [NodeJs](./前端开发/NodeJs.md)
   - [ES6](./前端开发/ES6.md)
   - [Vue](./前端开发/Vue.md)
+  - [NPM](./前端开发/NPM.md)
   - [Webpack](./前端开发/Webpack.md)
 
 #### 移动开发

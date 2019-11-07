@@ -3,7 +3,8 @@
 # 全局安装
 
 ```shell
-npm install webpack@3.6.0 -g
+npm install webpack -g 
+npm install webpack-cli -g 
 ```
 
 # 使用

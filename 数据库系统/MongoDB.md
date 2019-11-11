@@ -63,5 +63,38 @@ db.createUser(      {       
 )
 ```
 
+# JAVA操作
+
+- 依赖
+
+```xml
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>3.11.0</version>
+        </dependency>
+```
+
+- 使用
+
+```java
+        MongoClient client = new MongoClient("my-pc");
+        MongoDatabase db = client.getDatabase("db");
+
+        MongoCollection<Document> spit = db.getCollection("spit");
+        Document d = new Document();
+        d.append("name","jntm");
+        spit.insertOne(d);
+        for (Document document : spit.find()) {
+            System.out.println(document.getString("name"));
+        }
+        client.close();
+```
+
+## Spring data mongodb
+
+
+
+
 # GridFS
 

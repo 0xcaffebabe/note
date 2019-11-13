@@ -1,4 +1,3 @@
-
 # 介绍
 
 > RabbitMQ是实现了高级消息队列协议（AMQP）的开源消息代理软件（亦称面向消息的中间件）。RabbitMQ服务器是用Erlang语言编写的，而集群和故障转移是构建在开放电信平台框架上的。所有主要的编程语言均有与代理接口通讯的客户端库。
@@ -41,8 +40,9 @@ Topic类型的Exchange与Direct相比，都是可以根据RoutingKey把消息路
 
 ![Topic模式](https://gitee.com/caffebabee/leyou/raw/master/day15-rabbitmq%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5/assets/1532766712166.png)
 
-- #可以匹配一个或多个词
-- *只能匹配一个词
+- `#` 可以匹配一个或多个词
+
+- `*`只能匹配一个词
 
 # 消息确认机制（ACK）
 
@@ -54,12 +54,17 @@ Topic类型的Exchange与Direct相比，都是可以根据RoutingKey把消息路
 - Server
 - Connection
 - Channel
+  - （信道）：它建立在上述的TCP连接中
 - Message
 - Virtual host
+  - 权限控制的基本单位，一个VirtualHost里面有若干Exchange和 MessageQueue，以及指定被哪些user使用
 - Exchange
+  - 生产者将消息发送到Exchange（交换器），由Exchange将消息路由到一个 或多个Queue中（或者丢弃）。Exchange并不存储消息
 - Binding
 - Routing key
+  - 生产者在将消息发送给Exchange的时候，一般会指定一个routing key， 来指定这个消息的路由规则，而这个routing key需要与Exchange Type及binding key联 合使用才能最终生效
 - Queue
+  - （队列）是RabbitMQ的内部对象，用于存储消息
 
 # 使用
 
@@ -69,7 +74,6 @@ Topic类型的Exchange与Direct相比，都是可以根据RoutingKey把消息路
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-amqp</artifactId>
-    <version>2.1.6.RELEASE</version>
 </dependency>
 ```
 

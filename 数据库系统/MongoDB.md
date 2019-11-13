@@ -94,7 +94,5 @@ db.createUser(      {       
 ## Spring data mongodb
 
 
-
-
 # GridFS
 

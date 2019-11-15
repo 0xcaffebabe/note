@@ -112,6 +112,7 @@
 - [pms](https://github.com/0xcaffebabe/pms)
 - [shop](https://github.com/0xcaffebabe/shop)
 - [edu](https://github.com/0xcaffebabe/edu)
+- [soc](https://github.com/0xcaffebabe/soc)
 
 ### 未知
 

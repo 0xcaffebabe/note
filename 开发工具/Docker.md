@@ -231,10 +231,22 @@ docker run -P <name>
 </plugin>
 ```
 
+- JDK8以上的版本需要添加如下依赖
+
+```xml
+<dependencies>
+                    <dependency>
+                        <groupId>javax.activation</groupId>
+                        <artifactId>activation</artifactId>
+                        <version>1.1.1</version>
+                    </dependency>
+</dependencies>
+```
+
 - 构建并推送
 
 ```shell
- mvn clean package docker:build -DpushImage
+mvn clean package docker:build -DpushImage
 ```
 
 

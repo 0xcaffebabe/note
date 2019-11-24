@@ -21,7 +21,7 @@ _web服务器与web容器_
 - 在conf\Catalina\localhost创建任意名称的xml文件。在文件中编写
 
   ```
-  `<Context docBase="D:\hello" />`
+  <Context docBase="D:\hello" />
   ```
 
   - 虚拟目录：xml文件的名称
@@ -36,4 +36,18 @@ _web服务器与web容器_
     - classes目录：放置字节码文件的目录
     - lib目录：放置依赖的jar包
 
+
+# 优化
+
+## 禁用AJP连接
+
+>AJP（Apache JServ Protocol）是定向包协议。因为性能原因，使用二进制格式来传输可读性文本。WEB服务器通过 TCP连接 和 SERVLET容器连接
+
+## 设置线程池
+
+## 设置运行模式
+
+- bio
+- nio
+- apr
 

@@ -35,7 +35,7 @@
 
  # 用户及权限管理
 
-- 创建一个能在主机登录的yonghu
+- 创建一个能在主机登录的用户
   
   ```sql
   create user 'user2'@'%' identified by '123';

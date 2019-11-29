@@ -6,7 +6,7 @@
 
 
 # 目录
-
+- [算法与数据结构](./算法与数据结构/nav.md)
 - [数据库系统](./数据库系统/nav.md)
   - [MySQL](./数据库系统/mysql/nav.md)
   - [Oracle](./数据库系统/oracle/nav.md)

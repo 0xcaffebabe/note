@@ -96,3 +96,21 @@ public static void main(String[] args) {
   - `Supplier<Object> ` sp = Object::new
 - Class[]::new，调用某类构造函数，支持数组对象构建
   - `Function<Integer,Object> ` f = Object[]::new
+
+# 应用
+
+- 类型信息
+  - 被赋值后，可以看作是一个函数式接口的实例(对象)
+  - 但是Lambda表达式没有存储目标类型(target type)的信息
+  - 重载调用，依据重载的规则和类型参数推理
+- 变量遮蔽
+  - Lambda表达式可以访问外部嵌套块的变量
+    - 但是变量要求是final或者是effectively final的
+  - 在Lambda表达式中，不可以声明与(外部嵌套块)局部变量同名的参数或者局部变量
+- 表达式中的this，就是创建这个表达式的方法的this参数
+- 优先级比嵌套类要高
+  - 无法创建命名实例，无法获取自身的引用(this)
+- 方法引用比自定义Lambda表达式的优先级高
+  - 系统自带的方法引用更简洁高效
+  - 对于复杂的Lambda表达式，采用方法引用比内嵌Lambda表达式更清晰，更容易维护
+- 坚持使用标准的函数式接口

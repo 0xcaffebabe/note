@@ -34,7 +34,7 @@
         <property name="dialect">org.hibernate.dialect.MySQL57Dialect</property>
         <property name="show_sql">true</property>
 
-        <mapping package="wang.ismy.orm.entity"/>
+        <mapping class="wang.ismy.orm.entity.Book"/>
     </session-factory>
 </hibernate-configuration>
 ```
@@ -48,7 +48,7 @@ public class Book {
 
     @Id
     @Column(name = "bid")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.TABLE)
     private Integer id;
 
     @Column(name = "bname")
@@ -58,4 +58,47 @@ public class Book {
     private String author;
 }
 ```
+
+- 使用
+
+```java
+        Configuration cfg = new Configuration().configure();
+
+        SessionFactory sessionFactory = cfg.buildSessionFactory();
+
+        Session session = sessionFactory.openSession();
+        Transaction tx = session.beginTransaction();
+
+        Book book = new Book();
+        book.setName("cxk 篮球入门指南");
+        book.setAuthor("cxk");
+        session.save(book);
+
+        tx.commit();
+
+        session.close();
+        sessionFactory.close();
+```
+
+- 查询
+
+```java
+        Session session = sessionFactory.openSession();
+        Book book = new Book();
+        book.setId(2);
+        session.get(Book.class, 2);
+```
+
+- 删除
+
+```java
+        Book book = new Book();
+        book.setId(2);
+        session.delete(book);
+```
+
+## 运行原理
+
+![](https://img-blog.csdn.net/20170921205322084?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzY3NDgyNzg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
 

@@ -57,32 +57,80 @@ Stream<Map.Entry<String, String>> entryStream = map.entrySet().stream();
 - Collections.parallelStream()将任何集合转为并行流
 - Stream.parallel()方法，产生一个并行流
 
-
-# 常用方法
+# 流的方法
 
 - 延迟方法：返回值类型仍然是 Stream 接口自身类型的方法，因此支持链式调用。（除了终结方法外，其余方 法均为延迟方法。） 
 - 终结方法：返回值类型不再是 Stream 接口自身类型的方法，因此不再支持类似 StringBuilder 那样的链式调 用。本小节中，终结方法包括 count 和 forEach 方法。
 
-## forEach
+# 转换方法
 
-## filter
+## 过滤filter
+
+- filter(Predicate<? super T> predicate)
+- 接收一个Lambda表达式，对每个元素进行判定，符合条件留下
+
+## 去重distinct
+
+- 对流的元素进行过滤，去除重复，只留下不重复的元素
+- 对象的判定，先调用hashCode方法，再调用equals方法
+
+## 排序sorted
+
+- 提供Comparator，对流的元素进行排序
 
 ## map
 
->要将流中的元素映射到另一个流中
+>利用方法引用对流每个元素进行函数计算
 
 ```java
-        Stream.of(1,2,3,4,5)
+        Stream.of(1,2,3)
                 .map(String::valueOf)
-                .forEach(System.out::println);
+                .forEach(System.out::println); // ["1","2","3"]
 ```
 
-## count
+### flatMap
 
-## limit
+对结果进行展开
 
-## skip
+## 抽取limit
 
-## concat
+只取前n个
 
+## 跳过skip
+
+跳过前n个
+
+## 连接concat
+
+```java
+Stream.concat(s1,s2); // 连接两个流
+```
+
+## 额外调试peek
+
+可以对流操作，但是不影响它
+
+# Optional
+
+`Optional<T>`
+
+- 一个包装器对象
+- 要么包装了类型T的对象，要么没有包装任何对象
+- 如果T有值，那么直接返回T的对象
+- 如果T是null，那么可以返回一个替代物
+
+## 使用
+
+- get方法，获取值，不安全的用法
+- orElse方法，获取值，如果为null，采用替代物的值
+- orElseGet方法，获取值，如果为null，采用Lambda表达式值返回
+- orElseThrow方法，获取值，如果为null，抛出异常
+- ifPresent方法，判断是否为空，不为空返回true
+- isPresent(Consumer), 判断是否为空，如果不为空，则进行后续Consumer操作,如果为空，则不做任何事情
+- map(Function), 将值传递给Function函数进行计算。如果为空，则不计算
+
+## 注意事项
+
+- 直接使用get，很容易引发NoSuchElementException异常
+- 使用isPresent判断值是否存在，这和判断null是一样的低效
 

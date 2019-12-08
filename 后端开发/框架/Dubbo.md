@@ -175,3 +175,37 @@ server:
 @Reference(version = "1.0.0")
 private UserService userService;
 ```
+
+# 负载均衡
+
+- 设置负载均衡的方式
+
+```java
+@Reference(version = "1.0.0",loadbalance = "roudrobin")
+private UserService userService;
+```
+
+- random
+  - 随机
+- roudrobin
+  - 轮询
+
+# 协议
+
+Dubbo 缺省协议采用单一长连接和 NIO 异步通讯，适合于小数据量大并发的服务调用，以及服务消费者机器数远大于服务提供者机器数的情况。
+
+反之，Dubbo 缺省协议不适合传送大数据量的服务，比如传文件，传视频等，除非请求量很低
+
+![](https://dubbo.apache.org/docs/zh-cn/user/sources/images/dubbo-protocol.jpg)
+
+缺省协议，使用基于 mina 1.1.7 和 hessian 3.2.1 的 tbremoting 交互。
+
+- 连接个数：单连接
+- 连接方式：长连接
+- 传输协议：TCP
+- 传输方式：NIO 异步传输
+- 序列化：Hessian 二进制序列化
+- 适用范围：传入传出参数数据包较小（建议小于100K），消费者比提供者个数多，单一消费者无法压满
+- 提供者，尽量不要用 dubbo 协议传输大文件或超大字符串。
+- 适用场景：常规远程服务方法调用
+

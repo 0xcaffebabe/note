@@ -134,3 +134,58 @@ Stream.concat(s1,s2); // 连接两个流
 - 直接使用get，很容易引发NoSuchElementException异常
 - 使用isPresent判断值是否存在，这和判断null是一样的低效
 
+# 终结方法
+
+## 聚合函数
+
+- count(), 计数
+- max(Comparator)，最大值，需要比较器
+- min(Comparator)，最小值，需要比较器
+- findFirst(), 找到第一个元素
+- findAny(), 找到任意一个元素
+- anyMatch(Predicate)，如有任意一个元素满足Predicate，返回true
+- allMatch(Predicate)，如所有元素满足Predicate，返回true
+- noneMatch(Predicate)，如没有任何元素满足Predicate，返回true
+
+## 归约函数
+
+reduce，传递一个二元函数BinaryOperator，对流元素进行计算
+
+如求和、求积、字符串连接
+
+## 迭代函数
+
+- iterator() ：获取一个迭代器
+- forEach(Consumer)，应用一个函数到每个元素上
+
+## 收集函数
+
+- toArray()，将结果转为数组
+- collect(Collectors.toList()),将结果转为List
+- collect(Collectors.toSet()),将结果转为Set
+- collect(Collectors.toMap()), 将结果转为Map
+- collect(Collectors.joining()), 将结果连接起来
+
+# 优点
+
+- 统一转换元素
+- 过滤元素
+- 利用单个操作合并元素
+- 将元素序列存放到某一个集合中
+- 搜索满足某些条件的元素的序列
+- 类似SQL操作，遵循“做什么而非怎么做”原则
+- 简化了串行/并行的大批量操作
+
+## 与循环迭代比较
+
+- Stream广泛使用Lambda表达式，只能读取外围的final或者effectivelyfinal变量，循环迭代代码可以读取/修改任意的局部变量
+- 在循环迭代代码块中，可以随意break/continue/return，或者抛出异常，而Lambda表达式无法完成这些事情
+
+# 注意事项
+
+- 一个流，一次只能一个用途，不能多个用途，用了不能再用
+- 避免创建无限流
+- 注意操作顺序
+- 谨慎使用并行流
+
+

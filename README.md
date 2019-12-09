@@ -56,6 +56,7 @@
     - [Netty](./后端开发/框架/netty.md)
     - [Dubbo](./后端开发/框架/Dubbo.md)
 
+  - [GraphQL](./后端开发/GraphQL.md)
   - [微服务](./后端开发/微服务.md)
   - [ServiceComb](./后端开发/ServiceComb.md)
   - [JAVA并发编程](./后端开发/JAVA并发编程.md)

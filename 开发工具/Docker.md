@@ -188,9 +188,10 @@ docker push 127.0.0.1:5000/nginx
 # Docker 网络
 
 - 网络类型
-  - Bridge
-  - Host
-  - None
+  - Bridge：:Docker设计的NAT网络模型（默认类型）
+  - Host：与主机共享Network Namespace，--net=host
+  - None：:不为容器配置任何网络功能，没有网络 --net=none
+  - Container：与另一个运行中的容器共享Network Namespace，--net=container:containerID
 - 端口映射
 
 ```shell

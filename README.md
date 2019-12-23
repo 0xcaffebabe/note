@@ -87,6 +87,7 @@
   - [ReactJS](./前端开发/ReactJS.md)
   - [NPM](./前端开发/NPM.md)
   - [Webpack](./前端开发/Webpack.md)
+  - [小程序开发](./前端开发/小程序开发.md)
 
 #### 移动开发
 

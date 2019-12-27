@@ -7,6 +7,10 @@
 
 # 目录
 - [算法与数据结构](./算法与数据结构/nav.md)
+
+<details>
+  <summary>数据库系统</summary>
+
 - [数据库系统](./数据库系统/nav.md)
   - [MySQL](./数据库系统/mysql/nav.md)
   - [Oracle](./数据库系统/oracle/nav.md)
@@ -15,6 +19,8 @@
   - [分布式事务](./数据库系统/分布式事务.md)
   - [数据库优化](./数据库系统/数据库优化.md)
   - [ORM](./数据库系统/ORM.md)
+</details>
+
 - [操作系统](./操作系统/nav.md)
   - [FastDFS](./操作系统/FastDFS.md)
   - [虚拟化](./操作系统/虚拟化.md)

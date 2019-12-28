@@ -6,6 +6,7 @@
 
 
 # 目录
+
 - [算法与数据结构](./算法与数据结构/nav.md)
 
 <details>
@@ -80,7 +81,10 @@
 
 - [网络爬虫](./网络爬虫/nav.md)
 
-#### 前端开发
+<details>
+
+  <summary>前端开发</summary>
+
   - [HTML](./前端开发/HTML.md)
   - [CSS](./前端开发/CSS.md)
   - [JavaScript](./前端开发/JavaScript.md)
@@ -94,6 +98,8 @@
   - [NPM](./前端开发/NPM.md)
   - [Webpack](./前端开发/Webpack.md)
   - [小程序开发](./前端开发/小程序开发.md)
+
+</details>
 
 #### 移动开发
 

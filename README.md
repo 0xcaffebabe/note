@@ -42,6 +42,8 @@
   - 语言
       - [C](./后端开发/语言/C/nav.md)
       - [JAVA](./后端开发/语言/JAVA/nav.md)
+        - [JAVA并发编程](./后端开发/语言/JAVA/JAVA并发编程/JAVA并发编程.md)
+        - [JAVA内存模型](./后端开发/语言/JAVA/JAVA并发编程/JAVA内存模型.md)
         - [JVM](./后端开发/语言/JAVA/JVM/JVM.md)
       - [XML](./后端开发/语言/xml.md)
   - 中间件
@@ -68,7 +70,6 @@
   - [GraphQL](./后端开发/GraphQL.md)
   - [微服务](./后端开发/微服务.md)
   - [ServiceComb](./后端开发/ServiceComb.md)
-  - [JAVA并发编程](./后端开发/JAVA并发编程.md)
   - [用户认证](./后端开发/用户认证.md)
 - Jakarta EE
   - [Servlet](./后端开发/JakartaEE/Servlet.md)

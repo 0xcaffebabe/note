@@ -153,6 +153,7 @@ synchronized(obj){
 - BlockingQueue
     - 该类型的队列执行take时如果没有元素则会一直阻塞，put如果超过了界限也会一直阻塞，直至有可用空间
     - 实现类:ArrayBlockingQueue与LinkedBlockingDeque等
+
 ## 同步工具类
 
 - CountDownLatch(闭锁)

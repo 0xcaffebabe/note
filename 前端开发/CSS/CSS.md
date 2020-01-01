@@ -13,19 +13,7 @@
 
 ## 字体文本
 
-- font-size
-- color
-- text-align
 - line-height
-
-## 背景
-
-## 边框
-
-## 尺寸
-
-- width
-- height
 
 ## 盒子模型
 

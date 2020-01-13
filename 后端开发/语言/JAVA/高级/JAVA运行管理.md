@@ -43,3 +43,27 @@ JMX是一个为应用程序植入管理功能的框架
 - JMX提供了一个可扩展、动态的管理架构
 - JMX充分利用已有的Java技术
 - JMX容易和现有的管理技术进行集成
+
+## JAVA运行安全
+
+### 启用
+
+```java
+System.setSecurityManager(new SecurityManager());
+```
+
+```shell
+java –Djava.security.manager –Djava.security.policy=My.policy HelloWorld
+```
+
+### 安全策略文件
+
+建立代码来源和访问权限的关系
+
+```
+ permission java.io.FilePermission “/tmp/*”, “read, write”
+```
+
+```java
+FilePermission p = new FilePermission("/tmp/*","read,write");
+```

@@ -87,3 +87,33 @@ Opera    | YES      | (从 Opera 25 起) | YES | YES
 ## 新增表单属性
 
 ![](http://image.mamicode.com/info/201901/20190106005941629009.png)
+
+## CSS3
+
+### 选择器
+
+#### 属性选择器
+
+![](https://images2017.cnblogs.com/blog/1199008/201711/1199008-20171108095116481-170436080.png)
+
+```css
+input[type=search] {
+  color: skyblue;
+}
+``` 
+
+#### 结构伪类选择器
+
+![](http://www.sunpcn.cn/wp-content/uploads/2015/08/wysxzq.jpg)
+
+nth-child 详解
+
+- n 可以是数字、关键字、公式
+
+- n 如果是数字，就是选中第几个
+
+- 常见的关键字有 `even` 偶数、`odd` 奇数
+
+- 常见的公式如下(如果 n 是公式，则从 0 开始计算)
+
+- 但如果是第 0 个元素或者超出了元素的个数会被忽略

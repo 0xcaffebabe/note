@@ -131,3 +131,65 @@ nth-child 详解
 - `before` 和 `after` 创建的是一个元素，但是属于行内元素
 - 创建出来的元素在 `Dom` 中查找不到，所以称为伪元素
 - 伪元素和标签选择器一样，权重为 1
+
+### 2D转换
+
+#### 2D转换translate
+
+- x 就是 x 轴上水平移动
+- y 就是 y 轴上水平移动
+
+```css
+transform: translate(x, y)
+transform: translateX(n)
+transfrom: translateY(n)
+```
+
+- `2D` 的移动主要是指 水平、垂直方向上的移动
+- `translate` 最大的优点就是不影响其他元素的位置
+- `translate` 中的100%单位，是相对于本身的宽度和高度来进行计算的
+- 行内标签没有效果
+
+#### 2D旋转rotate
+
+`2D` 旋转指的是让元素在二维平面内顺时针或者逆时针旋转
+
+```css
+transform: rotate(度数) 
+```
+
+- rotate` 里面跟度数，单位是 `deg`
+- 角度为正时，顺时针，角度为负时，逆时针
+- 默认旋转的中心点是元素的中心点
+
+#### 设置元素旋转中心点(transform-origin)
+
+```css
+transform-origin: x y;
+```
+
+- 注意后面的参数 x 和 y 用空格隔开
+- x y 默认旋转的中心点是元素的中心 (50% 50%)，等价于 `center`  `center`
+- 还可以给 x y 设置像素或者方位名词(`top`、`bottom`、`left`、`right`、`center`)
+
+#### `2D` 转换之 `scale`
+
+用来控制元素的放大与缩小
+
+```css
+transform: scale(x, y)
+```
+
+- 注意，x 与 y 之间使用逗号进行分隔
+- `transform: scale(1, 1)`: 宽高都放大一倍，相当于没有放大
+- `transform: scale(2, 2)`: 宽和高都放大了二倍
+- `transform: scale(2)`: 如果只写了一个参数，第二个参数就和第一个参数一致
+- `transform:scale(0.5, 0.5)`: 缩小
+- `scale` 最大的优势：可以设置转换中心点缩放，默认以中心点缩放，而且不影响其他盒子
+
+#### 综合写法
+
+- 同时使用多个转换，其格式为 `transform: translate() rotate() scale()`
+- 顺序会影响到转换的效果(先旋转会改变坐标轴方向)
+- 但我们同时有位置或者其他属性的时候，要将位移放到最前面
+

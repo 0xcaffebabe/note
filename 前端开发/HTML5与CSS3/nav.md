@@ -193,3 +193,71 @@ transform: scale(x, y)
 - 顺序会影响到转换的效果(先旋转会改变坐标轴方向)
 - 但我们同时有位置或者其他属性的时候，要将位移放到最前面
 
+### 动画
+
+动画是 `CSS3` 中最具颠覆性的特征之一，可通过设置多个节点来精确的控制一个或者一组动画，从而实现复杂的动画效果
+
+- 定义动画
+
+```css
+@keyframes motion {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(1000px);
+    }
+}
+```
+
+- 使用动画
+
+```css
+div {
+    width: 200px;
+    height: 200px;
+    background-color: skyblue;
+    animation: motion 5s;
+}
+```
+
+- 0% 是动画的开始，100 % 是动画的完成，这样的规则就是动画序列
+- 在 @keyframs 中规定某项 CSS 样式，就由创建当前样式逐渐改为新样式的动画效果
+- 动画是使元素从一个样式逐渐变化为另一个样式的效果，可以改变任意多的样式任意多的次数
+- 用百分比来规定变化发生的时间，或用 `from` 和 `to`，等同于 0% 和 100%
+
+##### 场景属性
+
+```css
+div {
+  width: 100px;
+  height: 100px;
+  background-color: aquamarine;
+  /* 动画名称 */
+  animation-name: move;
+  /* 动画花费时长 */
+  animation-duration: 2s;
+  /* 动画速度曲线 */
+  animation-timing-function: ease-in-out;
+  /* 动画等待多长时间执行 */
+  animation-delay: 2s;
+  /* 规定动画播放次数 infinite: 无限循环 */
+  animation-iteration-count: infinite;
+  /* 是否逆行播放 */
+  animation-direction: alternate;
+  /* 动画结束之后的状态 */
+  animation-fill-mode: forwards;
+}
+```
+
+- 简写
+
+```css
+animation: name duration timing-function delay iteration-count direction fill-mode
+```
+
+- 简写属性里面不包含 `animation-paly-state`
+- 暂停动画 `animation-paly-state: paused`; 经常和鼠标经过等其他配合使用
+- 要想动画走回来，而不是直接调回来：`animation-direction: alternate`
+- 盒子动画结束后，停在结束位置：`animation-fill-mode: forwards` 
+

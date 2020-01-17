@@ -1,4 +1,4 @@
 out/
 .gitigore
-*.java
+*.class
 .vscode

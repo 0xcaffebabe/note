@@ -261,3 +261,51 @@ animation: name duration timing-function delay iteration-count direction fill-mo
 - 要想动画走回来，而不是直接调回来：`animation-direction: alternate`
 - 盒子动画结束后，停在结束位置：`animation-fill-mode: forwards` 
 
+## 3D转换
+
+### 三维坐标系
+
+![202001170927](/assets/202001170927.gif)
+
+### 3D 移动 translate3d
+
+```css
+/* 注意：x, y, z 对应的值不能省略，不需要填写用 0 进行填充 */
+transform: translate3d(x, y, z)
+```
+
+### 透视 perspective
+
+![202001170939](/assets/202001170939.png)
+
+**透视需要写在被视察元素的父盒子上面**
+
+```css
+body {
+  perspective: 1000px;
+}
+```
+
+### 3D 旋转rotate
+
+>3D 旋转指可以让元素在三维平面内沿着 x 轴、y 轴、z 轴 或者自定义轴进行旋转
+
+```css
+transform: rotate3d(x, y, z, deg)
+```
+
+```css
+rotateY
+rotateX
+rotateZ
+/* 沿着对角线旋转 */
+transform: rotate3d(1, 1, 0, 180deg)
+```
+
+### 3D 呈现 transform-style
+
+- 控制子元素是否开启三维立体环境
+- `transform-style: flat`  代表子元素不开启 `3D` 立体空间，默认的
+- `transform-style: preserve-3d` 子元素开启立体空间
+
+

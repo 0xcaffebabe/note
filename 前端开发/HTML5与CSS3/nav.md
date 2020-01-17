@@ -308,4 +308,10 @@ transform: rotate3d(1, 1, 0, 180deg)
 - `transform-style: flat`  代表子元素不开启 `3D` 立体空间，默认的
 - `transform-style: preserve-3d` 子元素开启立体空间
 
+## 浏览器私有前缀
+
+- 火狐-moz-
+- ie-ms-
+- -webkit-
+- -o-
 

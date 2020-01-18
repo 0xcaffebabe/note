@@ -1,16 +1,15 @@
 # 个人学习笔记
 
+学习/读书过程中的一点记录
+
 --------------------------------------------------------------------------------
 
 ![star](https://img.shields.io/github/stars/0xcaffebabe/note)  ![fork](https://img.shields.io/github/forks/0xcaffebabe/note) ![license](https://img.shields.io/github/license/0xcaffebabe/note)
 
 
-# 目录
+## 目录
 
 - [算法与数据结构](./算法与数据结构/nav.md)
-
-<details>
-  <summary>数据库系统</summary>
 
 - [数据库系统](./数据库系统/nav.md)
   - [MySQL](./数据库系统/mysql/nav.md)
@@ -20,7 +19,7 @@
   - [分布式事务](./数据库系统/分布式事务.md)
   - [数据库优化](./数据库系统/数据库优化.md)
   - [ORM](./数据库系统/ORM.md)
-</details>
+
 
 - [操作系统](./操作系统/nav.md)
   - [FastDFS](./操作系统/FastDFS.md)
@@ -36,10 +35,9 @@
 - [计算机网络](./计算机网络/nav.md)
   - [HTTP](./计算机网络/HTTP.md)
     - [RESTful](./计算机网络/RESTful.md)
-<details>
 
-  <summary>后端开发</summary>
 
+- 后端开发
   - 语言
       - [C](./后端开发/语言/C/nav.md)
       - [JAVA](./后端开发/语言/JAVA/nav.md)
@@ -80,13 +78,13 @@
   - [JNDI](./后端开发/JakartaEE/JNDI.md)
   - [JPA](./后端开发/JakartaEE/JPA.md)
   - [Freemarker](./后端开发/JakartaEE/Freemarker.md)
-</details>
+
 
 - [网络爬虫](./网络爬虫/nav.md)
 
-<details>
 
-  <summary>前端开发</summary>
+
+- 前端开发
 
   - [HTML](./前端开发/HTML.md)
   - [CSS](./前端开发/CSS/nav.md)
@@ -104,15 +102,11 @@
   - [Webpack](./前端开发/Webpack.md)
   - [小程序开发](./前端开发/小程序开发.md)
 
-</details>
-
 #### 移动开发
 
   - [安卓](./移动开发/安卓/nav.md)
 
-<details>
-
-  <summary>开发工具</summary>
+- 开发工具
 
   - [Docker](./开发工具/Docker.md)
   - [K8s](./开发工具/K8s.md)
@@ -124,8 +118,6 @@
   - 构建工具
     - [Gradle](./开发工具/构建工具/gradle.md)
     - [Maven](./开发工具/构建工具/maven.md)
-
-</details>
 
 ### 运维
 

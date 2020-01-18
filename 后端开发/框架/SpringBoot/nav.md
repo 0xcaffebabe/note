@@ -1,10 +1,19 @@
-# 环境搭建
+# Spring Boot
+
+- 内嵌式容器简化Web项目
+- 没有冗余代码生成和XML配置的要求
+
+## 与和SpringCloud
+
+SpringCloud依赖于SpringBoot组件，使用SpringMVC编写HTTP接口，同时SpringCloud是一套完整的微服务解决框架
+
+## 环境搭建
 
 ```xml
 <parent> <!--继承父工程 -->
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.1.8.RELEASE</version>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>2.1.8.RELEASE</version>
 </parent>
 
 <dependencies>
@@ -25,7 +34,7 @@ public class Application{
 }
 ```
 
-# 热部署
+## 热部署
 
 ```xml
 <dependency>
@@ -37,9 +46,9 @@ public class Application{
 
 IDEA需要开启自动编译
 
-# 配置
+## 配置
 
-## YML语法
+### YML语法
 
 ```yml
 # 普通数据配置
@@ -64,7 +73,7 @@ student:
     age: 2
 ```
 
-## 属性注入
+### 属性注入
 
 - @Value
 
@@ -92,7 +101,55 @@ public class Controller {
 }
 ```
 
-# 集成Mybatis
+## 继承freemarker
+
+- 引入依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-freemarker</artifactId>
+</dependency>
+```
+
+- 配置
+
+```properties
+spring.freemarker.allow-request-override=false
+spring.freemarker.cache=true
+spring.freemarker.check-template-location=true
+spring.freemarker.charset=UTF-8
+spring.freemarker.content-type=text/html
+spring.freemarker.expose-request-attributes=false
+spring.freemarker.expose-session-attributes=false
+spring.freemarker.expose-spring-macro-helpers=false
+spring.freemarker.suffix=.ftl
+spring.freemarker.template-loader-path=classpath:/templates/
+```
+
+- 创建Controller
+
+```java
+@Controller
+public class HelloController {
+
+    @RequestMapping("hello")
+    public String index(ModelMap map){
+        map.put("hello","java");
+        return "index";
+    }
+}
+```
+
+- 在template目录下创建index.ftl
+
+```html
+<body>
+    ${hello}
+</body>
+```
+
+## 集成Mybatis
 
 - 引入依赖
 
@@ -132,16 +189,16 @@ public class SpringMybatisApplication {
 }
 ```
 
-# 集成Junit
+## 集成Junit
 
 - 导入依赖
 
 ```xml
 <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-test</artifactId>
+    <scope>test</scope>
+</dependency>
 ```
 
 - 建立测试
@@ -161,7 +218,7 @@ public class ControllerTest{
 }
 ```
 
-# 集成Spring data jpa
+## 集成Spring data jpa
 
 - 依赖
 
@@ -188,16 +245,16 @@ spring.jpa.generate-ddl=true
 spring.jpa.hibernate.ddl-auto=update
 ```
 
-## 使用通用Mapper
+### 使用通用Mapper
 
 - 依赖
 
 ```xml
-        <dependency>
-            <groupId>tk.mybatis</groupId>
-            <artifactId>mapper-spring-boot-starter</artifactId>
-            <version>2.1.5</version>
-        </dependency>
+<dependency>
+    <groupId>tk.mybatis</groupId>
+    <artifactId>mapper-spring-boot-starter</artifactId>
+    <version>2.1.5</version>
+</dependency>
 ```
 
 - 继承
@@ -209,16 +266,16 @@ public interface UserMapper extends BaseMapper<User> { }
 - @MapperScan注解需要使用tk.mybatis包
 
 
-# 集成Redis
+## 集成Redis
 
 - 依赖
 
 ```xml
 <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-            <version>2.1.8.RELEASE</version>
-        </dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+    <version>2.1.8.RELEASE</version>
+</dependency>
 ```
 
 - 配置

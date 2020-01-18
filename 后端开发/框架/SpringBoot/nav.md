@@ -101,7 +101,36 @@ public class Controller {
 }
 ```
 
-## 继承freemarker
+## 全局异常捕获
+
+```java
+@ControllerAdvice
+public class ErrorHandler {
+
+    @ResponseBody
+    @ExceptionHandler(Throwable.class)
+    public String error(Exception e){
+        return e.getMessage();
+    }
+}
+```
+
+## 异步调用
+
+- 添加`@EnableAsync`
+- 在需要异步调用的方法上面添加`@Async`
+
+## 多环境配置
+
+```properties
+spring.profiles.active=dev
+```
+
+添加开发环境配置文件`application-dev.properties`
+
+## 集成其他框架
+
+### 集成freemarker
 
 - 引入依赖
 
@@ -149,7 +178,7 @@ public class HelloController {
 </body>
 ```
 
-## 集成Mybatis
+### 集成Mybatis
 
 - 引入依赖
 
@@ -169,9 +198,7 @@ spring.datasource.username=root
 spring.datasource.password=123
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 spring.datasource.url=jdbc:mysql:///ssm
-
 # mybatis相关配置
-
 mybatis.mapper-locations=mappers/*.xml
 mybatis.configuration.map-underscore-to-camel-case=true
 ```
@@ -189,7 +216,7 @@ public class SpringMybatisApplication {
 }
 ```
 
-## 集成Junit
+### 集成Junit
 
 - 导入依赖
 
@@ -218,7 +245,7 @@ public class ControllerTest{
 }
 ```
 
-## 集成Spring data jpa
+### 集成Spring data jpa
 
 - 依赖
 
@@ -245,7 +272,7 @@ spring.jpa.generate-ddl=true
 spring.jpa.hibernate.ddl-auto=update
 ```
 
-### 使用通用Mapper
+#### 使用通用Mapper
 
 - 依赖
 
@@ -266,7 +293,7 @@ public interface UserMapper extends BaseMapper<User> { }
 - @MapperScan注解需要使用tk.mybatis包
 
 
-## 集成Redis
+### 集成Redis
 
 - 依赖
 

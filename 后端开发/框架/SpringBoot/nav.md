@@ -151,6 +151,33 @@ spring.profiles.active=dev
 
 通过把多个DataSource交给jta事务管理器管理，使用jta事务管理器来解决分布式事务问题
 
+## 打包
+
+### jar
+
+- 添加插件
+
+```xml
+<plugin>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-maven-plugin</artifactId>
+</plugin>
+```
+
+- 执行`mvn package`
+
+### war
+
+添加打包插件
+
+- 设置打包方式
+
+```xml
+<packaging>war</packaging>
+```
+
+- 执行打包命令
+
 ## 集成其他框架
 
 ### 集成freemarker
@@ -274,9 +301,9 @@ public class ControllerTest{
 
 ```xml
 <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-jpa</artifactId>
+</dependency>
 ```
 
 - 配置

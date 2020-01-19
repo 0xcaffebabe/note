@@ -128,3 +128,49 @@ width:100%;
 max-width: 1200px;
 min-width: 320px;
 ```
+
+### flex布局
+
+pc端浏览器支持情况比较差
+
+如果是移动端或者是不考虑兼容的pc则采用flex
+
+#### 原理
+
+flex 是 flexible Box 的缩写，意为"弹性布局"，用来为盒状模型提供最大的灵活性，任何一个容器都可以指定为 flex 布局
+
+通过给父盒子添加flex属性，来控制子盒子的位置和排列方式
+
+#### 父项常见属性
+
+- flex-direction设置主轴的方向
+
+![202001182037](/assets/202001182037.jpg)
+
+```css
+flex-direction: value;
+```
+
+![202001190842](/assets/202001190842.jpg)
+
+-  justify-content 设置主轴上的子元素排列方式
+
+![202001190846](/assets/202001190846.jpg)
+
+- flex-wrap设置是否换行
+
+nowrap 不换行
+wrap 换行
+
+- align-items 设置侧轴上的子元素排列方式（单行 ）
+
+flex-start 从头部开始
+flex-end 从尾部开始
+center 居中显示
+stretch 拉伸
+
+- align-content  设置侧轴上的子元素的排列方式（多行）
+
+![202001190916](/assets/202001190916.jpg)
+
+

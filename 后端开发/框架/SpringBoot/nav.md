@@ -178,6 +178,14 @@ spring.profiles.active=dev
 
 - 执行打包命令
 
+## 性能
+
+### 组件自动扫描带来的问题
+
+使用 @SpringBootApplication 注解后，会触发自动配置（ auto-configuration ）和 组件扫描 （ component scanning ）
+
+### JVM参数调整
+
 ## 集成其他框架
 
 ### 集成freemarker

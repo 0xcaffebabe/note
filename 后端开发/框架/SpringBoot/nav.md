@@ -128,6 +128,29 @@ spring.profiles.active=dev
 
 添加开发环境配置文件`application-dev.properties`
 
+## 事务管理
+
+- 依赖
+
+```xml
+<dependency>
+    <groupId>javax.transaction</groupId>
+    <artifactId>javax.transaction-api</artifactId>
+    <version>1.3</version>
+</dependency>
+```
+
+- 添加`@Transactional`
+
+## 多数据源
+
+配置多个DataSource，一个DataSource配置一个事务管理器，声明事务时指定事务管理器，
+不同的ORM框架有不同的指定数据源的方式
+
+### jta-atomikos
+
+通过把多个DataSource交给jta事务管理器管理，使用jta事务管理器来解决分布式事务问题
+
 ## 集成其他框架
 
 ### 集成freemarker
@@ -184,10 +207,10 @@ public class HelloController {
 
 ```xml
 <dependency>
-            <groupId>org.mybatis.spring.boot</groupId>
-            <artifactId>mybatis-spring-boot-starter</artifactId>
-            <version>2.1.0</version>
-        </dependency>
+    <groupId>org.mybatis.spring.boot</groupId>
+    <artifactId>mybatis-spring-boot-starter</artifactId>
+    <version>2.1.0</version>
+</dependency>
 ```
 
 - 配置数据库信息和mybatis配置

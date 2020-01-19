@@ -173,4 +173,24 @@ stretch 拉伸
 
 ![202001190916](/assets/202001190916.jpg)
 
+-  flex-flow 属性是 flex-direction 和 flex-wrap 属性的复合属性
+
+```css
+flex-flow:row wrap;
+```
+
+#### flex布局子项常见属性
+
+- flex 属性
+
+定义子项目分配剩余空间，用flex来表示占多少**份数**
+
+- align-self控制子项自己在侧轴上的排列方式
+
+align-self 属性允许单个项目有与其他项目不一样的对齐方式，可覆盖 align-items 属性
+
+- order 属性定义项目的排列顺序
+
+数值越小，排列越靠前，默认为0
+
 

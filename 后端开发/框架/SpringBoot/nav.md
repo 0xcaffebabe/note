@@ -205,6 +205,12 @@ spring.profiles.active=dev
 </dependency>
 ```
 
+## 监控中心
+
+Actuator是spring boot的一个附加功能,可在应用程序生产环境时监视和管理应用程序
+
+
+
 ## 集成其他框架
 
 ### 集成freemarker

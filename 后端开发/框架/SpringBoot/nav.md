@@ -144,8 +144,7 @@ spring.profiles.active=dev
 
 ## 多数据源
 
-配置多个DataSource，一个DataSource配置一个事务管理器，声明事务时指定事务管理器，
-不同的ORM框架有不同的指定数据源的方式
+配置多个DataSource，一个DataSource配置一个事务管理器，声明事务时指定事务管理器， 不同的ORM框架有不同的指定数据源的方式
 
 ### jta-atomikos
 
@@ -209,7 +208,34 @@ spring.profiles.active=dev
 
 Actuator是spring boot的一个附加功能,可在应用程序生产环境时监视和管理应用程序
 
+- 添加依赖
 
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+```
+
+- 添加配置
+
+```yml
+# 暴露出所有监控接口
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+```
+
+路径                    | 作用
+--------------------- | ----------------------------
+/actuator/beans       | 显示应用程序中所有Spring bean的完整列表。
+/actuator/configprops | 显示所有配置信息。
+/actuator/env         | 陈列所有的环境变量。
+/actuator/mappings    | 显示所有@RequestMapping的url整理列表。
+/actuator/health      | 显示应用程序运行状况信息 up表示成功 down失败
+/actuator/info        | 返回配置中前缀为info的配置项
 
 ## 集成其他框架
 
@@ -374,7 +400,6 @@ public interface UserMapper extends BaseMapper<User> { }
 ```
 
 - @MapperScan注解需要使用tk.mybatis包
-
 
 ### 集成Redis
 

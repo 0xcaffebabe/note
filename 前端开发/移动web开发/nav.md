@@ -230,3 +230,9 @@ mediatype 查询类型
 
 媒体特性也可以加在css引用中，来达到不同的屏幕加载不同的css文件
 
+### rem适配方案
+
+1.less+rem+媒体查询
+
+2.lflexible.js+rem
+

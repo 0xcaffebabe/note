@@ -325,6 +325,28 @@ public class SpringMybatisApplication {
 }
 ```
 
+#### 整合PageHelper
+
+- 引入依赖
+
+```xml
+<dependency>
+    <groupId>com.github.pagehelper</groupId>
+    <artifactId>pagehelper-spring-boot-starter</artifactId>
+    <version>1.2.13</version>
+</dependency>
+```
+
+- 配置
+
+```properties
+pagehelper.helperDialect=mysql
+pagehelper.reasonable=true
+pagehelper.supportMethodsArguments=true
+pagehelper.params=count=countSql
+pagehelper.page-size-zero=true
+```
+
 ### 集成Junit
 
 - 导入依赖

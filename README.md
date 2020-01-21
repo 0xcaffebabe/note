@@ -2,6 +2,8 @@
 
 学习/读书过程中的一点记录
 
+在线阅读:[https://ismy.wang/note](https://ismy.wang/note)
+
 --------------------------------------------------------------------------------
 
 ![star](https://img.shields.io/github/stars/0xcaffebabe/note) ![fork](https://img.shields.io/github/forks/0xcaffebabe/note) ![license](https://img.shields.io/github/license/0xcaffebabe/note)

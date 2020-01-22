@@ -198,19 +198,6 @@ reg.test('some text');
 
 # DOM
 
-- 核心DOM
-
-  - Document：文档对象
-  - Element：元素对象
-  - Attribute：属性对象
-  - Text：文本对象
-  - Comment:注释对象
-  - Node：节点对象，其他5个的父对象
-
-- XML DOM
-
-- HTML DOM
-
 ## 核心DOM
 
 ### 获取元素

@@ -108,7 +108,7 @@
 - [Less](./前端开发/Less/nav.md)
 - [HTML5与CSS3](./前端开发/HTML5与CSS3/nav.md)
 - [移动web开发](./前端开发/移动web开发/nav.md)
-- [JavaScript](./前端开发/JavaScript.md)
+- [JavaScript](./前端开发/JavaScript/nav.md)
 - [Bootstrap](./前端开发/Bootstrap.md)
 - [Jquery](./前端开发/Jquery.md)
 - [AJAX](./前端开发/AJAX.md)

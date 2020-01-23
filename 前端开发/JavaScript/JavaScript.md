@@ -228,43 +228,6 @@ reg.test('some text');
 - innerHTML
 - style
 
-# 事件
-
-```
-* 常见的事件：
-        1\. 点击事件：
-            1\. onclick：单击事件
-            2\. ondblclick：双击事件
-        2\. 焦点事件
-            1\. onblur：失去焦点
-            2\. onfocus:元素获得焦点。
-
-        3\. 加载事件：
-            1\. onload：一张页面或一幅图像完成加载。
-
-        4\. 鼠标事件：
-            1\. onmousedown    鼠标按钮被按下。
-            2\. onmouseup    鼠标按键被松开。
-            3\. onmousemove    鼠标被移动。
-            4\. onmouseover    鼠标移到某元素之上。
-            5\. onmouseout    鼠标从某元素移开。
-
-
-        5\. 键盘事件：
-            1\. onkeydown    某个键盘按键被按下。    
-            2\. onkeyup        某个键盘按键被松开。
-            3\. onkeypress    某个键盘按键被按下并松开。
-
-        6\. 选择和改变
-            1\. onchange    域的内容被改变。
-            2\. onselect    文本被选中。
-
-        7\. 表单事件：
-            1\. onsubmit    确认按钮被点击。
-            2\. onreset    重置按钮被点击。
-```
-
-- event
 
 # JSON
 

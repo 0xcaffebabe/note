@@ -54,3 +54,24 @@ document.body; // 返回body对象
 document.documentElement; // 返回html对象
 ```
 
+## 操作元素
+
+### 获取/改变元素内容
+
+```js
+element.innerText; // 不包括html标签与空格和换行
+element.innerHTML; // 包括html标签与空格换行
+```
+
+### 表单元素的属性操作
+
+```
+type/value/checked/selected/disabled
+```
+
+### 样式属性操作
+
+```js
+element.style.backgroundColor; // 直接修改样式
+element.className; // 修改类属性
+```

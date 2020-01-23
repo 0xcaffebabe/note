@@ -223,11 +223,6 @@ reg.test('some text');
 - replaceChild()
 - _parentNode_
 
-## HTML DOM
-
-- innerHTML
-- style
-
 
 # JSON
 

@@ -202,9 +202,6 @@ reg.test('some text');
 
 ### 获取元素
 
-- getElementById
-- getElementsByTagName
-- getElementsByClassName
 - getElementsByName
 
 ### 创建元素

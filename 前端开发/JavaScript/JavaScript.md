@@ -196,28 +196,6 @@ reg.test('some text');
 - forward
 - back
 
-# DOM
-
-## 核心DOM
-
-### 获取元素
-
-- getElementsByName
-
-### 创建元素
-
-- createAttribute
-- createComment
-- createElement
-- createTextNode
-
-### Node
-
-- appendChild()
-- removeChild()
-- replaceChild()
-- _parentNode_
-
 
 # JSON
 

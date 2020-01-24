@@ -39,6 +39,12 @@
 返回值：元素对象集合（伪数组，数组元素是元素对象）
 ```
 
+### 根据name属性获取
+
+```js
+document.getElementsByName('name');
+```
+
 ### H5新增获取元素方式
 
 ```js
@@ -102,4 +108,73 @@ console.log(div.dataset['index']);
 // 需要使用驼峰命名
 console.log(div.dataset.listName);
 console.log(div.dataset['listName']);
+```
+
+## 节点操作
+
+网页中的所有内容都是节点（标签、属性、文本、注释等），在DOM 中，节点使用 node 来表示
+
+HTML DOM 树中的所有节点均可通过 JavaScript 进行访问，所有 HTML 元素（节点）均可被修改，也可以创建或删除
+
+节点至少拥有nodeType（节点类型）、nodeName（节点名称）和nodeValue（节点值）这三个基本属性
+
+- 元素节点 nodeType=1
+- 属性节点 nodeType=2
+- 文本节点 nodeType=3（包括文字 空格 换行）
+
+### 父节点
+
+```js
+// 获取该节点最近的父节点
+node.parentNode;
+```
+
+### 子节点
+
+```js
+// 获取所有子节点，包含 元素节点 文本节点等等
+node.childNodes;
+// 只返回元素节点
+node.children;
+```
+
+```js
+// 返回子节点，包含 元素节点 文本节点等等
+node.firstChild;
+node.lastChild;
+// 返回元素子节点
+node.firstElementChild;
+node.lastElementChild;
+```
+
+### 兄弟节点
+
+```js
+// 下一个
+node.nextSibling;
+// 前一个
+node.previousSibling;
+node.nextElementSibling;
+node.previousElementSibling;
+```
+
+### 创建节点
+
+```js
+document.createAttribute
+document.createComment
+document.createElement
+document.createTextNode
+```
+
+### 节点修改
+
+```js
+document.appendChild()
+document.removeChild()
+document.replaceChild()
+```
+
+```js
+node.insertBefore(child,指定元素)
 ```

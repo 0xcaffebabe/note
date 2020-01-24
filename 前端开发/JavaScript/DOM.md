@@ -75,3 +75,31 @@ type/value/checked/selected/disabled
 element.style.backgroundColor; // 直接修改样式
 element.className; // 修改类属性
 ```
+
+### 自定义属性操作
+
+```js
+element.getAttribute('name'); // 获取自定义属性
+element.removeAttribute('name'); // 移除自定义属性
+element.setAttribute('name','value'); // 设置自定义属性
+```
+
+### HTML5自定义属性
+
+```html
+<div getTime="20" data-index="2" data-list-name="andy"></div>
+```
+
+获取方法
+
+```js
+// 可以使用获取自定义属性的方式获取
+console.log(div.getAttribute('data-index'));
+console.log(div.getAttribute('data-list-name'));
+// 也可以使用专用API
+console.log(div.dataset.index);
+console.log(div.dataset['index']);
+// 需要使用驼峰命名
+console.log(div.dataset.listName);
+console.log(div.dataset['listName']);
+```

@@ -211,11 +211,6 @@ reg.test('some text');
 - createElement
 - createTextNode
 
-### Element
-
-- removeAttribute
-- setAttribute
-
 ### Node
 
 - appendChild()

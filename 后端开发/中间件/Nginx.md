@@ -91,14 +91,14 @@ http{
 
 ```
 upstream so {
-        server www.baidu.com:80;
-        server www.163.com:80;
+    server www.baidu.com:80;
+    server www.163.com:80;
 }
 server {
-        listen 8080;
-        location / {
-                proxy_pass http://so/;
-        }
+    listen 8080;
+    location / {
+            proxy_pass http://so/;
+    }
 }
 ```
 
@@ -162,12 +162,22 @@ Keepalived是基于vrrp协议的一款高可用软件。Keepailived有一台主�
 
 ```
 location / {
-        proxy_pass http://so/;
-        proxy_connect_timeout 1s;
-        proxy_send_timeout 1s;
-        proxy_read_timeout 1s;
+    proxy_pass http://so/;
+    proxy_connect_timeout 1s;
+    proxy_send_timeout 1s;
+    proxy_read_timeout 1s;
 }
 ```
+
+## 动静分离
+
+动静分离将网站静态资源（HTML，JavaScript，CSS，img等文件）与后台应用分开部署，提高用户访问静态资源的速度，降低对后台应用访问的频次。这里我们将静态资源放到nginx中，动态资源转发到tomcat服务器中
+
+- nginx实现方式
+
+通过对URL或者域名的判断，进行转发
+
+![202001242247](/assets/202001242247.gif)
 
 ## SSI
 

@@ -179,6 +179,10 @@ location / {
 
 ![202001242247](/assets/202001242247.gif)
 
+### 浏览器缓存
+
+对于静态文件，例如：CSS、图片，服务器会自动完成 Last Modified 和 If Modified Since 的比较，完成缓存或者更新
+
 ## SSI
 
 >服务端嵌入

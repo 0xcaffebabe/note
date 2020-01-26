@@ -158,23 +158,32 @@ node.nextElementSibling;
 node.previousElementSibling;
 ```
 
-### 创建节点
+### 创建元素
 
 ```js
-document.createAttribute
-document.createComment
-document.createElement
-document.createTextNode
+document.write(); // 创建元素  如果页面文档流加载完毕，再调用这句话会导致页面重绘
+node.innerHTML(); // 直接写HTML来创建元素
+document.createElement('tagName');// 创建成功将返回一个节点
 ```
 
-### 节点修改
+### 节点新增
 
 ```js
-document.appendChild()
-document.removeChild()
+node.appendChild()
+node.insertBefore(child,指定元素)
 document.replaceChild()
 ```
 
+### 节点删除
+
 ```js
-node.insertBefore(child,指定元素)
+// 从 node节点中删除一个子节点，返回删除的节点
+node.removeChild(childNode)
+```
+
+### 节点复制
+
+```js
+// 参数true深拷贝，false浅拷贝
+node.cloneNode();
 ```

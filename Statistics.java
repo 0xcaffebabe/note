@@ -12,6 +12,7 @@ public class Statistics {
         fileCount();
         wordCount();
         lineCount();
+        imgFileCount();
     }
 
     // 统计笔记文件数
@@ -55,6 +56,11 @@ public class Statistics {
             fis.close();
         }
         System.out.println("word count:"+wordCount);
+    }
+
+    // 统计图片数
+    private static void imgFileCount() {
+        System.out.println("image count:"+ listFiles(new File("./assets")).stream().count());
     }
 
     private static List<File> getMDFiles() {

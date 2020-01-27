@@ -174,21 +174,7 @@ reg.test('some text');
 
   - 返回新的Window对象
 
-
-
-### 属性
-
-## navigator
-
 ## screen
-
-## history
-
-## location
-
-- forward
-- back
-
 
 # JSON
 

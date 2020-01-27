@@ -148,8 +148,6 @@ reg.test('some text');
 
 # BOM
 
-> BOM浏览器对象模型（Browser Object Model）BOM对象是在Web中使用JavaScript的核心，该对象提供了与浏览器交互相关对象结构。BOM由多个子对象组成，其核心为window对象，它是BOM的顶层对象，表示在浏览器环境中的一个全局的顶级对象，所有在浏览器环境中使用的对象都是window对象的子对象
-
 ## window
 
 ## 方法
@@ -176,12 +174,7 @@ reg.test('some text');
 
   - 返回新的Window对象
 
-与定时器有关的方法：
 
-- setTimeout() 在指定的毫秒数后调用函数或计算表达式。
-- clearTimeout() 取消由 setTimeout() 方法设置的 timeout。
-- setInterval() 按照指定的周期（以毫秒计）来调用函数或计算表达式。
-- clearInterval() 取消由 setInterval() 设置的 timeout。
 
 ### 属性
 

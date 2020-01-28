@@ -146,7 +146,15 @@ reg.test('some text');
 
 - eval
 
-# BOM
+# 立即执行函数
+
+```js
+(
+    function(){
+        //...
+    }
+)()
+```
 
 ## window
 
@@ -173,8 +181,6 @@ reg.test('some text');
 - open() 打开一个新的浏览器窗口
 
   - 返回新的Window对象
-
-## screen
 
 # JSON
 

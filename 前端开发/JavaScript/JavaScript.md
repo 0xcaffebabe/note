@@ -182,6 +182,19 @@ reg.test('some text');
 
   - 返回新的Window对象
 
+# 动画函数封装
+
+>核心原理：通过定时器 setInterval() 不断移动盒子位置。
+
+- 利用 JS 是一门动态语言，可以很方便的给当前对象添加属性来将定时器添加到对象中
+
+```js
+obj.timer = setInterval(function() {
+    //..
+    clearInterval(obj.timer);
+})
+```
+
 # JSON
 
 ## 语法

@@ -188,11 +188,28 @@ reg.test('some text');
 
 - 利用 JS 是一门动态语言，可以很方便的给当前对象添加属性来将定时器添加到对象中
 
+## 缓动效果
+
+- 核心算法： (目标值 - 现在的位置)   /  10    做为每次移动的距离步长
+
+## 动函数添加回调函数 
+
+回调函数原理：函数可以作为一个参数。将这个函数作为参数传到另一个函数里面，当那个函数执行完之后，再执行传进去的这个函数，这个过程就叫做回调
+
+## 完整代码
+
 ```js
-obj.timer = setInterval(function() {
-    //..
+function animate(obj,target,callback){
     clearInterval(obj.timer);
-})
+    obj.timer = setInterval(() => {
+        var step = Math.ceil((target - obj.offsetLeft)/10);
+        if (obj.offsetLeft >= target){
+            clearInterval(obj.timer);
+            callback();
+        }
+        obj.style.left = obj.offsetLeft + step + 'px';
+    }, 15);
+}
 ```
 
 # JSON

@@ -238,7 +238,14 @@ JSON.parse(str) // to obj
 
 - 常见的解析器：Jsonlib，Gson，fastjson，jackson
 
+# 移动端常用插件
 
+- Swiper 插件：轮播图插件
+- lsuperslide：常用特效插件
+- l iscroll：平滑滚动
+- zy.media.js：移动端视频插件
 
+# 移动端常用框架
 
+- bootstrap
 

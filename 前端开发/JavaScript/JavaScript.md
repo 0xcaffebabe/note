@@ -148,7 +148,7 @@ reg.test('some text');
 
 # 立即执行函数
 
-```js
+```javascript
 (
     function(){
         //...
@@ -184,21 +184,21 @@ reg.test('some text');
 
 # 动画函数封装
 
->核心原理：通过定时器 setInterval() 不断移动盒子位置。
+> 核心原理：通过定时器 setInterval() 不断移动盒子位置。
 
 - 利用 JS 是一门动态语言，可以很方便的给当前对象添加属性来将定时器添加到对象中
 
 ## 缓动效果
 
-- 核心算法： (目标值 - 现在的位置)   /  10    做为每次移动的距离步长
+- 核心算法： (目标值 - 现在的位置) / 10 做为每次移动的距离步长
 
-## 动函数添加回调函数 
+## 动函数添加回调函数
 
 回调函数原理：函数可以作为一个参数。将这个函数作为参数传到另一个函数里面，当那个函数执行完之后，再执行传进去的这个函数，这个过程就叫做回调
 
 ## 完整代码
 
-```js
+```javascript
 function animate(obj,target,callback){
     clearInterval(obj.timer);
     obj.timer = setInterval(() => {
@@ -229,7 +229,7 @@ function animate(obj,target,callback){
 
 ## 转换
 
-```js
+```javascript
 JSON.stringify({username:'name'}) // to text
 JSON.parse(str) // to obj
 ```
@@ -249,3 +249,40 @@ JSON.parse(str) // to obj
 
 - bootstrap
 
+# 本地存储
+
+## 特性
+
+1、数据存储在用户浏览器中
+
+2、设置、读取方便、甚至页面刷新不丢失数据
+
+3、容量较大，sessionStorage约5M、localStorage约20M
+
+4、只能存储字符串，可以将对象JSON.stringify() 编码后
+
+## sessionStorage
+
+1、生命周期为关闭浏览器窗口
+
+2、在同一个窗口(页面)下数据可以共享
+
+3、以键值对的形式存储使用
+
+```js
+// 存储
+sessionStorage.setItem(key, value);
+// 获取
+sessionStorage.getItem(key);
+// 删除
+sessionStorage.removeItem(key);
+// 清除所有
+sessionStorage.clear();
+```
+
+## localStorage
+
+- 生命周期永久，除非手动删除
+- 多窗口共享
+
+使用方式同sessionStorage

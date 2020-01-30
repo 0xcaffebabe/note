@@ -110,6 +110,14 @@ console.log(div.dataset.listName);
 console.log(div.dataset['listName']);
 ```
 
+###  classList 属性
+
+```js
+element.classList.add('current');
+element.classList.remove('current');
+element.classList.toggle('current');
+```
+
 ## 节点操作
 
 网页中的所有内容都是节点（标签、属性、文本、注释等），在DOM 中，节点使用 node 来表示

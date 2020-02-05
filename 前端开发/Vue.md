@@ -69,9 +69,44 @@ var vm = new Vue({
 
 ### 条件渲染
 
+#### v-if
+
+<!--  flag为true时才被<渲染> -->
+<span v-if="flag">content</span>
+
+- v-else
+
 ```html
-<span v-if="flag">传智播客</span>
-<span v-show="flag">itcast</span>
+<div v-if="Math.random() > 0.5">
+  Now you see me
+</div>
+<div v-else>
+  Now you don't
+</div>
+```
+
+- v-else-if
+
+```html
+<div v-if="type === 'A'">
+  A
+</div>
+<div v-else-if="type === 'B'">
+  B
+</div>
+<div v-else-if="type === 'C'">
+  C
+</div>
+<div v-else>
+  Not A/B/C
+</div>
+```
+
+#### v-show
+
+```html
+<!--  flag为true时才被<显示> -->
+<span v-show="flag">content</span>
 ```
 
 ### 样式绑定

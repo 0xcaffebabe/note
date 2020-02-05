@@ -205,27 +205,107 @@ axios.post("/user/"+this.user.id,this.user)
 
 ```js
 const introduce = {
-        template:'<h1>{{msg}}</h1>',
-        props:['msg']
+    template:'<h1>{{msg}}</h1>',
+    props:['msg']
+}
+new Vue({
+    el: '#components-demo'
+    ,
+    data:{
+        msg:'大家好，我是渣渣辉'
     }
-    new Vue({
-        el: '#components-demo'
-        ,
-        data:{
-            msg:'大家好，我是渣渣辉'
-        }
-        ,
-        components:{
-            introduce
-        }
+    ,
+    components:{
+        introduce
+    }
 
-    });
+});
 ```
 
 ```html
 <div id="components-demo">
     <introduce :msg="msg"></introduce>
 </div>
+```
+
+## 组件化带来的问题
+
+- 组件状态管理(vuex)
+- 多组件混合使用(vue-router)
+- 组件间的合作(props,emit/on,bus)
+
+## vue-router
+
+- 引入vue组件
+
+```js
+import Info from '../views/Info.vue';
+```
+
+- 在router中添加
+
+```js
+const routes = [
+  //...
+  {
+    path: '/info',
+    name: 'info',
+    component: Info,
+  },
+];
+```
+
+## vuex
+
+使用vuex来管理全局状态
+
+- info组件向vuex发起请求
+
+```js
+import store from '@/store';
+
+export default {
+  name: 'info',
+  store,
+  methods: {
+    add() {
+      console.log('add');
+      store.commit('add');
+    },
+  },
+};
+```
+
+- vuex更新状态
+
+```js
+//...
+export default new Vuex.Store({
+  state: {
+    count: 0
+  },
+  mutations: {
+    add() {
+      this.state.count++;
+      console.log('vuex add');
+    },
+  }
+  // ...
+});
+```
+
+- about组件通过vuex来获取状态
+
+```js
+import store from '@/store';
+  
+export default {
+  name: 'about',
+  store,
+  data() {
+    return { count: store.state.count };
+  },
+};
 ```
 
 ## vue-cli

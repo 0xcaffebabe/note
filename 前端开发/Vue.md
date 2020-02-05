@@ -196,37 +196,49 @@ axios.post("/user/"+this.user.id,this.user)
 
 利用组件化开发，拆分功能，封装组件，单独维护
 
+```js
+// 定义一个名为 button-counter 的全局组件
+Vue.component('button-counter', {
+    data: function () {
+        return {
+            count: 0
+        }
+    },
+    template: '<button v-on:click="count++">You clicked me {{ count }} times.</button>'
+});
+new Vue({ el: '#app' });
+```
 ```html
-<div id="components-demo">
+<div id="app">
+    <!-- 使用自定义组件 -->
     <button-counter></button-counter>
 </div>
-```
-
-```js
-    // 定义一个名为 button-counter 的新组件
-    Vue.component('button-counter', {
-        data: function () {
-            return {
-                count: 0
-            }
-        },
-        template: '<button v-on:click="count++">You clicked me {{ count }} times.</button>'
-    });
-    new Vue({ el: '#components-demo' });
 ```
 
 ## 父子组件通信
 
 ```js
 const introduce = {
-    template:'<h1>{{msg}}</h1>',
+    template:'<h1 @click="fun()">{{msg}}</h1>',
+    methods: {
+        fun() {
+            // 触发上一层事件
+           this.$emit('delete');
+        }
+    },
     props:['msg']
 }
 new Vue({
-    el: '#components-demo'
+    el: '#app'
     ,
     data:{
         msg:'大家好，我是渣渣辉'
+    }
+    ,
+    methods: {
+        handleDelete() {
+            // delete son
+        }
     }
     ,
     components:{
@@ -235,10 +247,9 @@ new Vue({
 
 });
 ```
-
 ```html
-<div id="components-demo">
-    <introduce :msg="msg"></introduce>
+<div id="app">
+    <introduce :msg="msg" @delete="handleDelete"></introduce>
 </div>
 ```
 

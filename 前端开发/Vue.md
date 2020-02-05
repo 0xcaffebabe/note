@@ -37,6 +37,111 @@ var vm = new Vue({
 
 ![202002051607](/assets/202002051607.png)
 
+## 数据渲染
+
+### 插值表达式
+
+```javascript
+{{ number + 1 }}
+{{ ok ? 'YES' : 'NO' }}
+```
+
+```html
+<div v-text="message"></div><!--会进行HTML转义-->
+<div v-html="message"></div>
+<!-- 完整语法 -->
+<a v-bind:href="url">...</a>
+<!-- 缩写 -->
+<a :href="url">...</a>
+```
+
+### 输入绑定
+
+```html
+<input type="text" v-model="user.password"><br/>
+```
+
+### 列表渲染
+
+```html
+<li v-for="(value,index) in arr">{{value}} and {{index}}</li>
+```
+
+### 条件渲染
+
+```html
+<span v-if="flag">传智播客</span>
+<span v-show="flag">itcast</span>
+```
+
+
+## 属性
+
+### 计算属性
+
+```js
+new Vue({
+   el:"#app",
+   data:{
+       msg:"123",
+       birthday:158536
+   }
+   ,
+    computed:{
+       birth(){
+           return new Date(this.birthday);
+       }
+    }
+});
+```
+
+- 与方法的区别
+
+>不同的是计算属性是基于它们的响应式依赖进行缓存的。只在相关响应式依赖发生改变时它们才会重新求值
+
+**getter与setter**
+
+```js
+// ...
+computed: {
+  fullName: {
+    // getter
+    get: function () {
+      return this.firstName + ' ' + this.lastName
+    },
+    // setter
+    set: function (newValue) {
+      var names = newValue.split(' ')
+      this.firstName = names[0]
+      this.lastName = names[names.length - 1]
+    }
+  }
+}
+// ...
+```
+
+### 侦听属性
+
+```js
+var vm = new Vue({
+  el: '#demo',
+  data: {
+    firstName: 'Foo',
+    lastName: 'Bar',
+    fullName: 'Foo Bar'
+  },
+  watch: {
+    // 当firstName属性发生改变，该方法会被调用
+    firstName: function (val) {
+      this.fullName = val + ' ' + this.lastName
+    },
+    lastName: function (val) {
+      this.fullName = this.firstName + ' ' + val
+    }
+  }
+})
+```
+
 ## 常用系统指令
 
 ### v-on事件绑定
@@ -106,86 +211,6 @@ new Vue({
 
 `.enter` `.tab` `.delete` ( "删除" 和 "退格" ) `.esc` `.space` `.up` `.down` `.left` `.right` `.ctrl` `.alt` `.shift` `.meta`
 
-## 数据渲染
-
-### 插值表达式
-
-```javascript
-{{ number + 1 }}
-{{ ok ? 'YES' : 'NO' }}
-```
-
-```html
-<div v-text="message"></div><!--会进行HTML转义-->
-<div v-html="message"></div>
-<!-- 完整语法 -->
-<a v-bind:href="url">...</a>
-<!-- 缩写 -->
-<a :href="url">...</a>
-```
-
-## 输入绑定
-
-```html
-<input type="text" v-model="user.password"><br/>
-```
-
-## 列表渲染
-
-```html
-<li v-for="(value,index) in arr">{{value}} and {{index}}</li>
-```
-
-## 条件渲染
-
-```html
-<span v-if="flag">传智播客</span>
-<span v-show="flag">itcast</span>
-```
-
-# 计算属性
-
-```js
-new Vue({
-   el:"#app",
-   data:{
-       msg:"123",
-       birthday:158536
-   }
-   ,
-    computed:{
-       birth(){
-           return new Date(this.birthday);
-       }
-    }
-
-});
-```
-
-- 与方法的区别
-
->不同的是计算属性是基于它们的响应式依赖进行缓存的。只在相关响应式依赖发生改变时它们才会重新求值
-
-# 侦听属性
-
-```js
-var vm = new Vue({
-  el: '#demo',
-  data: {
-    firstName: 'Foo',
-    lastName: 'Bar',
-    fullName: 'Foo Bar'
-  },
-  watch: {
-    firstName: function (val) {
-      this.fullName = val + ' ' + this.lastName
-    },
-    lastName: function (val) {
-      this.fullName = this.firstName + ' ' + val
-    }
-  }
-})
-```
 
 # AJAX
 

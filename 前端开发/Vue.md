@@ -17,17 +17,17 @@
 
 ```javascript
 new Vue({
-            el:"#app",
-            data:{
-                message:"hello world"//model
-            },
-            methods:{
-                fun:function(msg){
-                    //alert(msg);
-                    this.message = msg;
-                }
-            }
-        });
+    el:"#app",
+    data:{
+        message:"hello world"//model
+    },
+    methods:{
+        fun:function(msg){
+            //alert(msg);
+            this.message = msg;
+        }
+    }
+});
 ```
 
 - v-on:keydown
@@ -40,8 +40,8 @@ new Vue({
 
 ```html
 <div @mouseover="fun1" id="div">
-                <textarea @mouseover="fun2($event)">这是一个文件域</textarea>
-            </div>
+    <textarea @mouseover="fun2($event)">这是一个文件域</textarea>
+</div>
 ```
 
 `@mouseover == v-on:mouseover`
@@ -111,20 +111,20 @@ new Vue({
 # 计算属性
 
 ```js
-    new Vue({
-       el:"#app",
-       data:{
-           msg:"123",
-           birthday:158536
+new Vue({
+   el:"#app",
+   data:{
+       msg:"123",
+       birthday:158536
+   }
+   ,
+    computed:{
+       birth(){
+           return new Date(this.birthday);
        }
-       ,
-        computed:{
-           birth(){
-               return new Date(this.birthday);
-           }
-        }
+    }
 
-    });
+});
 ```
 
 - 与方法的区别
@@ -158,26 +158,26 @@ var vm = new Vue({
 
 ```javascript
 var that = this;
-            axios.get("/user/list")
-                .then(function (r) {
-                    that.userList = r.data;
-                })
-                .catch(function(error){
-                    console.error(error);
-                })
+axios.get("/user/list")
+    .then(function (r) {
+        that.userList = r.data;
+    })
+    .catch(function(error){
+        console.error(error);
+    })
 ```
 
 ```js
-            var that = this;
-            axios.post("/user/"+this.user.id,this.user)
-                .then(function (res) {
-                    alert(res.data);
-                    that.findAll();
+var that = this;
+axios.post("/user/"+this.user.id,this.user)
+    .then(function (res) {
+        alert(res.data);
+        that.findAll();
 
-                })
-                .catch(function (reason) {
-                    console.error(reason);
-                })
+    })
+    .catch(function (reason) {
+        console.error(reason);
+    })
 ```
 
 # 组件化
@@ -228,5 +228,21 @@ const introduce = {
 </div>
 ```
 
+## vue-cli
 
+### 安装
+
+```shell
+npm install -g @vue/cli
+```
+
+### 创建项目
+
+```shell
+vue create project-name
+```
+
+### 工程结构
+
+![批注 2020-02-05 095145](/assets/批注%202020-02-05%20095145.png)
 

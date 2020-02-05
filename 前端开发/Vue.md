@@ -1,23 +1,45 @@
-# 插值表达式
+# vue
 
-```javascript
-{{ number + 1 }}
-{{ ok ? 'YES' : 'NO' }}
-```
+## 两种视图模式
 
-## MVP
+### MVP
 
 ![202002051355](/assets/202002051355.jpg)
 
 - 与MVC不同的是，MVP中的M与V没有直接交互
 
-## MVVM
+### MVVM
 
 ![批注 2020-02-05 140125](/assets/批注%202020-02-05%20140125.png)
 
-# 常用系统指令
+## vue实例
 
-## v-on事件绑定
+每个 Vue 应用都是通过用 Vue 函数创建一个新的 Vue 实例开始的
+
+```js
+var vm = new Vue({
+  // 选项
+})
+```
+
+```
+根实例
+└─ TodoList
+   ├─ TodoItem
+   │  ├─ DeleteTodoButton
+   │  └─ EditTodoButton
+   └─ TodoListFooter
+      ├─ ClearTodosButton
+      └─ TodoListStatistics
+```
+
+### 实例生命周期
+
+![202002051607](/assets/202002051607.png)
+
+## 常用系统指令
+
+### v-on事件绑定
 
 - v-on:click
 
@@ -86,6 +108,13 @@ new Vue({
 
 ## 数据渲染
 
+### 插值表达式
+
+```javascript
+{{ number + 1 }}
+{{ ok ? 'YES' : 'NO' }}
+```
+
 ```html
 <div v-text="message"></div><!--会进行HTML转义-->
 <div v-html="message"></div>
@@ -113,10 +142,6 @@ new Vue({
 <span v-if="flag">传智播客</span>
 <span v-show="flag">itcast</span>
 ```
-
-# 生命周期
-
-![](https://cn.vuejs.org/images/lifecycle.png)
 
 # 计算属性
 

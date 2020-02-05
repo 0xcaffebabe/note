@@ -63,16 +63,30 @@ var vm = new Vue({
 
 ### 列表渲染
 
+- 渲染list
+
 ```html
-<li v-for="(value,index) in arr">{{value}} and {{index}}</li>
+<li v-for="(value,index) in list" :key="value.id">{{value}} and {{index}}</li>
+```
+
+- 渲染对象
+
+```html
+<ul>
+  <li v-for="(value,key,index) in object">
+    {{key}} : {{ value }}
+  </li>
+</ul>
 ```
 
 ### 条件渲染
 
 #### v-if
 
+```html
 <!--  flag为true时才被<渲染> -->
 <span v-if="flag">content</span>
+```
 
 - v-else
 

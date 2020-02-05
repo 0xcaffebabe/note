@@ -326,3 +326,10 @@ vue create project-name
 
 ![批注 2020-02-05 095145](/assets/批注%202020-02-05%20095145.png)
 
+## 集成vue
+
+- 单页面、多页面
+  - vue.js
+- 复杂单页面
+  - vue-cli
+

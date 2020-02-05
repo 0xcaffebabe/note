@@ -74,6 +74,63 @@ var vm = new Vue({
 <span v-show="flag">itcast</span>
 ```
 
+### 样式绑定
+
+- 绑定class
+
+```html
+<!-- 当isActive为true时，这个标签就会增加active这个类，反之会删除active这个类 -->
+<h2 :class="{ 'active': isActive }">home</h2>
+<h2 :class="{ active: isActive }">home</h2>
+```
+
+**数组语法**
+
+```html
+<div v-bind:class="[activeClass, errorClass]"></div>
+```
+```js
+data: {
+  activeClass: 'active',
+  errorClass: 'text-danger'
+}
+```
+
+渲染为
+
+```html
+<div class="active text-danger"></div>
+```
+
+- 绑定style
+
+拼接字符串
+
+```html
+<div v-bind:style="{ color: activeColor, fontSize: fontSize + 'px' }"></div>
+```
+
+```js
+data: {
+  activeColor: 'red',
+  fontSize: 30
+}
+```
+
+样式对象
+
+```html
+<div v-bind:style="styleObject"></div>
+```
+data: {
+  styleObject: {
+    color: 'red',
+    fontSize: '13px'
+  }
+}
+```js
+
+```
 
 ## 属性
 

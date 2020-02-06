@@ -152,10 +152,12 @@
 - [shop](https://github.com/0xcaffebabe/shop)
 - [edu](https://github.com/0xcaffebabe/edu)
 - [soc](https://github.com/0xcaffebabe/soc)
+- [sell](https://github.com/0xcaffebabe/sell)
 
 #### 前端
 
 - [shop-web](https://github.com/0xcaffebabe/shop-web)
+- [shop-web](https://github.com/0xcaffebabe/travel-vue)
 
 ### 未知
 

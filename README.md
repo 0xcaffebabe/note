@@ -157,5 +157,5 @@
 #### 前端
 
 - [shop-web](https://github.com/0xcaffebabe/shop-web) 纯HTML CSS实现的电商前端
-- [shop-web](https://github.com/0xcaffebabe/travel-vue) 基于VUE的旅游网站前端
+- [travel-vue](https://github.com/0xcaffebabe/travel-vue) 基于VUE的旅游网站前端
 

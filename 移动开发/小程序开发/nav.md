@@ -40,3 +40,108 @@ json | 否  | 页面配置
 
 rpx（responsive pixel）: 可以根据屏幕宽度进行自适应。规定屏幕宽为750rpx。如在 iPhone6 上，屏幕宽度为375px，共有750个物理像素，则750rpx = 375px = 750物理像素，1rpx = 0.5px = 1物理像素
 
+## 配置
+
+- 全局配置app.json控制整个程序的行为
+- 页面配置page.json控制单个页面
+
+## 组件
+
+- swiper
+
+## 页面注册
+
+### 生命周期
+
+![](https://res.wx.qq.com/wxdoc/dist/assets/img/page-lifecycle.2e646c86.png)
+
+- 生命周期回调
+
+```js
+Page({
+    // 启动页面后弹出消息
+    onLoad: function () {
+        wx.showToast({
+        title: '鸡你太美',
+        });
+    }
+})
+```
+
+## 视图
+
+### 数据绑定
+
+在小程序中，在js的data中定义变量
+
+```js
+Page({
+
+  // ..
+  data: {
+    msg: 'msg'
+  }
+  //...
+```
+
+可以在WXML中进行绑定，跟VUE一样，但是需要注意的是，这种绑定是单向绑定
+
+```html
+<view>{{message}}</view>
+```
+
+需要使用setData来设置或者更新数据
+
+```js
+this.setData({msg:'abc'});
+```
+
+更复杂的用法
+
+```html
+<!-- 绑定属性（需要在双引号内） -->
+<view id="item-{{id}}"> </view>
+<!-- 运算 -->
+<view hidden="{{flag ? true : false}}"> Hidden </view>
+```
+
+- 条件渲染
+
+```html
+<view wx:if="{{condition}}"> True </view>
+```
+
+```html
+<view wx:if="{{view == 'WEBVIEW'}}">WEBVIEW</view>
+<view wx:elif="{{view == 'APP'}}">APP</view> 
+<view wx:else="{{view == 'MINA'}}">MINA</view>
+```
+
+- 列表渲染
+
+```html
+<view wx:for="{{array}}">{{item}}</view>
+```
+
+### 事件
+
+在WXML中绑定事件
+
+```htm
+<view class="moto-container" bind:tap="onTap">
+</view>
+```
+
+```js
+Page({
+  onTap(){
+    console.log('hello')
+  }
+})
+```
+
+#### bind与catch
+
+bind是冒泡，事件会往上传递
+
+catch会阻止事件向上冒泡

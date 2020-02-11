@@ -1,0 +1,90 @@
+# 特点
+
+- 基于TCP/IP的高级协议
+- 默认端口号:80
+- 基于请求/响应模型的:一次请求对应一次响应
+- 无状态的：每次请求之间相互独立，不能交互数据
+
+# 请求行
+
+```
+请求方式 请求url 请求协议/版本
+```
+
+# 请求头
+
+```
+请求头名称: 请求头值
+```
+
+# 请求空行
+
+# 请求体
+
+# 格式
+
+```
+POST /login.html    HTTP/1.1
+  Host: localhost
+  User-Agent: Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:60.0) Gecko20100101 Firefox/60.0
+  Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+  Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,enq=0.2
+  Accept-Encoding: gzip, deflate
+  Referer: http://localhost/login.html
+  Connection: keep-alive
+  Upgrade-Insecure-Requests: 1
+
+  username=zhangsan
+```
+
+# 响应行
+
+```
+协议/版本 响应状态码 状态码描述
+```
+
+## 状态码
+
+分类  | 分类描述
+--- | -----------------------
+1** | 信息，服务器收到请求，需要请求者继续执行操作
+2** | 成功，操作被成功接收并处理
+3** | 重定向，需要进一步的操作以完成请求
+4** | 客户端错误，请求包含语法错误或无法完成请求
+5** | 服务器错误，服务器在处理请求的过程中发生了错误
+
+# 响应头
+
+```
+头名称： 值
+```
+
+```
+HTTP/1.1 200 OK
+            Content-Type: text/html;charset=UTF-8
+            Content-Length: 101
+            Date: Wed, 06 Jun 2018 07:08:42 GMT
+
+            <html>
+              <head>
+                <title>$Title$</title>
+              </head>
+              <body>
+              hello , response
+              </body>
+            </html>
+```
+
+# CDN
+
+>CDN加速意思就是在用户和我们的服务器之间加一个缓存机制,动态获取IP地址根据地理位置，让用户到最近的服务器访问
+
+## 原理
+
+1) 用户向浏览器提供要访问的域名；
+2) 浏览器调用域名解析库对域名进行解析，由于CDN对域名解析过程进行了调整，所以解析函数库一般得到的是该域名对应的
+CNAME记录，为了得到实际IP地址，浏览器需要再次对获得的CNAME域名进行解析以得到实际的IP地址；在此过程中，使用的全局负载均衡DNS解析，如根据地理位置信息解析对应的IP地址，使得用户能就近访问；
+3) 此次解析得到CDN缓存服务器的IP地址，浏览器在得到实际的IP地址以后，向缓存服务器发出访问请求；
+4) 缓存服务器根据浏览器提供的要访问的域名，通过Cache内部专用DNS解析得到此域名的实际IP地址，再由缓存服务器向此实际IP地址提交访问请求；
+5) 缓存服务器从实际IP地址得得到内容以后，一方面在本地进行保存，以备以后使用，二方面把获取的数据返回给客户端，完成数据服务过程；
+6) 客户端得到由缓存服务器返回的数据以后显示出来并完成整个浏览的数据请求过程。

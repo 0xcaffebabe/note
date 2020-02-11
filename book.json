@@ -1,0 +1,63 @@
+{
+    "title": "个人学习笔记",
+    "author": "MY",
+    "links": {
+        "sidebar": {
+            "Github": "https://github.com/0xcaffebabe",
+            "博客": "https://ismy.wang"
+        }
+    },
+    "plugins": [
+        "back-to-top-button",
+        "chapter-fold",
+        "code",
+        "splitter",
+        "search-pro",
+        "pageview-count",
+        "-sharing",
+        "sharing-plus",
+        "tbfed-pagefooter",
+        "hide-element",
+        "page-toc-button"
+    ],
+    "pluginsConfig": {
+        "sharing": {
+            "douban": true,
+            "facebook": true,
+            "google": true,
+            "pocket": true,
+            "qq": true,
+            "qzone": true,
+            "twitter": true,
+            "weibo": true,
+            "all": [
+                "douban",
+                "facebook",
+                "google",
+                "instapaper",
+                "linkedin",
+                "twitter",
+                "weibo",
+                "messenger",
+                "qq",
+                "qzone",
+                "viber",
+                "whatsapp"
+            ]
+        },
+        "tbfed-pagefooter": {
+            "copyright": "MY",
+            "modify_label": "该页面最后修改于：",
+            "modify_format": "YYYY-MM-DD HH:mm:ss"
+        },
+        "hide-element": {
+            "elements": [
+                ".gitbook-link"
+            ]
+        },
+        "page-toc-button": {
+            "maxTocDepth": 5,
+            "minTocSize": 5
+           }
+    }
+}

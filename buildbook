@@ -1,2 +1,2 @@
-#!/bin/shell
+#!/bin/sh
 gitbook build ./ docs

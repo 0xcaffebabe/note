@@ -539,6 +539,19 @@
             
         </li>
     
+        <li class="chapter " data-level="10.1.2.4" data-path="../../后端开发/语言/JAVA/JAVA编程规范.html">
+            
+                <a href="../../后端开发/语言/JAVA/JAVA编程规范.html">
+            
+                    
+                    JAVA编程规范
+            
+                </a>
+            
+
+            
+        </li>
+    
 
             </ul>
             
@@ -1521,6 +1534,26 @@
     
 
     
+        
+        <li class="header">通识</li>
+        
+        
+    
+        <li class="chapter " data-level="19.1" data-path="../../通识/技术与世界.html">
+            
+                <a href="../../通识/技术与世界.html">
+            
+                    
+                    技术与世界
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
 
     <li class="divider"></li>
 
@@ -1725,8 +1758,41 @@
 <h4 id="bind&#x4E0E;catch">bind&#x4E0E;catch</h4>
 <p>bind&#x662F;&#x5192;&#x6CE1;&#xFF0C;&#x4E8B;&#x4EF6;&#x4F1A;&#x5F80;&#x4E0A;&#x4F20;&#x9012;</p>
 <p>catch&#x4F1A;&#x963B;&#x6B62;&#x4E8B;&#x4EF6;&#x5411;&#x4E0A;&#x5192;&#x6CE1;</p>
+<h2 id="&#x6A21;&#x5757;&#x5316;">&#x6A21;&#x5757;&#x5316;</h2>
+<ul>
+<li>&#x6A21;&#x5757;&#x5BFC;&#x51FA;</li>
+</ul>
+<pre><code class="lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">method1</span>(<span class="hljs-params"></span>)</span>{
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&quot;123&quot;</span>);
+}
+<span class="hljs-built_in">module</span>.exports.method1 = method1;
+</code></pre>
+<ul>
+<li>&#x6A21;&#x5757;&#x4F7F;&#x7528;</li>
+</ul>
+<pre><code class="lang-javascript"><span class="hljs-keyword">const</span> common = <span class="hljs-built_in">require</span>(<span class="hljs-string">&apos;common.js&apos;</span>)
+</code></pre>
+<h3 id="&#x6A21;&#x677F;template">&#x6A21;&#x677F;template</h3>
+<ul>
+<li>&#x5B9A;&#x4E49;&#x6A21;&#x677F;</li>
+</ul>
+<pre><code class="lang-html"><span class="hljs-tag">&lt;<span class="hljs-name">template</span> <span class="hljs-attr">name</span>=<span class="hljs-string">&quot;staffName&quot;</span>&gt;</span> 
+    <span class="hljs-tag">&lt;<span class="hljs-name">view</span>&gt;</span>FirstName: {{firstName}}, LastName: {{lastName}}<span class="hljs-tag">&lt;/<span class="hljs-name">view</span>&gt;</span> 
+<span class="hljs-tag">&lt;/<span class="hljs-name">template</span>&gt;</span>
+</code></pre>
+<ul>
+<li>&#x5F15;&#x5165;&#x6A21;&#x677F;</li>
+</ul>
+<pre><code class="lang-html"><span class="hljs-tag">&lt;<span class="hljs-name">import</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;item.wxml&quot;</span> /&gt;</span>
+</code></pre>
+<ul>
+<li>&#x4F7F;&#x7528;&#x6A21;&#x677F;</li>
+</ul>
+<pre><code class="lang-html"><span class="hljs-comment">&lt;!--           &#x6A21;&#x677F;&#x540D;           &#x4F20;&#x5165;&#x7684;&#x5BF9;&#x8C61;  --&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">template</span> <span class="hljs-attr">is</span>=<span class="hljs-string">&quot;staffName&quot;</span> <span class="hljs-attr">data</span>=<span class="hljs-string">&quot;{{staffA}}&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">template</span>&gt;</span>
+</code></pre>
 <footer class="page-footer"><span class="copyright">MY all right reserved&#xFF0C;powered by Gitbook</span><span class="footer-modification">&#x8BE5;&#x9875;&#x9762;&#x6700;&#x540E;&#x4FEE;&#x6539;&#x4E8E;&#xFF1A;
-2020-02-11 22:23:23
+2020-02-12 14:33:17
 </span></footer>
                                 
                                 </section>
@@ -1786,7 +1852,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"小程序开发","level":"13.2","depth":1,"next":{"title":"Docker","level":"14.1","depth":1,"path":"开发工具/Docker.md","ref":"./开发工具/Docker.md","articles":[]},"previous":{"title":"安卓","level":"13.1","depth":1,"path":"移动开发/安卓/nav.md","ref":"./移动开发/安卓/nav.md","articles":[]},"dir":"ltr"},"config":{"plugins":["back-to-top-button","chapter-fold","code","splitter","search-pro","pageview-count","-sharing","sharing-plus","tbfed-pagefooter","hide-element","page-toc-button"],"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"tbfed-pagefooter":{"copyright":"MY","modify_label":"该页面最后修改于：","modify_format":"YYYY-MM-DD HH:mm:ss"},"chapter-fold":{},"splitter":{},"search-pro":{},"search":{},"sharing-plus":{"qq":false,"all":["facebook","google","twitter","instapaper","linkedin","pocket","stumbleupon"],"douban":false,"facebook":true,"weibo":false,"instapaper":false,"whatsapp":false,"hatenaBookmark":false,"twitter":true,"messenger":false,"line":false,"vk":false,"pocket":true,"google":false,"viber":false,"stumbleupon":false,"qzone":false,"linkedin":false},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"code":{"copyButtons":true},"hide-element":{"elements":[".gitbook-link"]},"fontsettings":{"theme":"white","family":"sans","size":2},"highlight":{},"page-toc-button":{"maxTocDepth":5,"minTocSize":5},"back-to-top-button":{},"pageview-count":{},"sharing":{"qq":true,"all":["douban","facebook","google","instapaper","linkedin","twitter","weibo","messenger","qq","qzone","viber","whatsapp"],"douban":true,"facebook":true,"weibo":true,"twitter":true,"pocket":true,"google":true,"qzone":true},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","author":"MY","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"个人学习笔记","links":{"sidebar":{"Github":"https://github.com/0xcaffebabe","博客":"https://ismy.wang"}},"gitbook":"*"},"file":{"path":"移动开发/小程序开发/nav.md","mtime":"2020-02-11T14:23:23.174Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2020-02-11T14:23:28.436Z"},"basePath":"../..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"小程序开发","level":"13.2","depth":1,"next":{"title":"Docker","level":"14.1","depth":1,"path":"开发工具/Docker.md","ref":"./开发工具/Docker.md","articles":[]},"previous":{"title":"安卓","level":"13.1","depth":1,"path":"移动开发/安卓/nav.md","ref":"./移动开发/安卓/nav.md","articles":[]},"dir":"ltr"},"config":{"plugins":["back-to-top-button","chapter-fold","code","splitter","search-pro","pageview-count","-sharing","sharing-plus","tbfed-pagefooter","hide-element","page-toc-button"],"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"tbfed-pagefooter":{"copyright":"MY","modify_label":"该页面最后修改于：","modify_format":"YYYY-MM-DD HH:mm:ss"},"chapter-fold":{},"splitter":{},"search-pro":{},"search":{},"sharing-plus":{"qq":false,"all":["facebook","google","twitter","instapaper","linkedin","pocket","stumbleupon"],"douban":false,"facebook":true,"weibo":false,"instapaper":false,"whatsapp":false,"hatenaBookmark":false,"twitter":true,"messenger":false,"line":false,"vk":false,"pocket":true,"google":false,"viber":false,"stumbleupon":false,"qzone":false,"linkedin":false},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"code":{"copyButtons":true},"hide-element":{"elements":[".gitbook-link"]},"fontsettings":{"theme":"white","family":"sans","size":2},"highlight":{},"page-toc-button":{"maxTocDepth":5,"minTocSize":5},"back-to-top-button":{},"pageview-count":{},"sharing":{"qq":true,"all":["douban","facebook","google","instapaper","linkedin","twitter","weibo","messenger","qq","qzone","viber","whatsapp"],"douban":true,"facebook":true,"weibo":true,"twitter":true,"pocket":true,"google":true,"qzone":true},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","author":"MY","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"个人学习笔记","links":{"sidebar":{"Github":"https://github.com/0xcaffebabe","博客":"https://ismy.wang"}},"gitbook":"*"},"file":{"path":"移动开发/小程序开发/nav.md","mtime":"2020-02-12T06:33:17.717Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2020-02-12T09:09:28.252Z"},"basePath":"../..","book":{"language":""}});
         });
     </script>
 </div>

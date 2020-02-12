@@ -134,7 +134,7 @@ this.setData({msg:'abc'});
 </view>
 ```
 
-{% endraw %}
+
 
 ```js
 Page({
@@ -149,3 +149,45 @@ Page({
 bind是冒泡，事件会往上传递
 
 catch会阻止事件向上冒泡
+
+## 模块化
+
+- 模块导出
+
+```javascript
+function method1(){
+  console.log("123");
+}
+module.exports.method1 = method1;
+```
+
+- 模块使用
+
+```javascript
+const common = require('common.js')
+```
+
+### 模板template
+
+- 定义模板
+
+```html
+<template name="staffName"> 
+    <view>FirstName: {{firstName}}, LastName: {{lastName}}</view> 
+</template> 
+```
+
+- 引入模板
+
+```html
+<import src="item.wxml" />
+```
+
+- 使用模板
+
+```html
+<!--           模板名           传入的对象  -->
+<template is="staffName" data="{{staffA}}"></template>
+```
+
+{% endraw %}

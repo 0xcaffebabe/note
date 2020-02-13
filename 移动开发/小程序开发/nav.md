@@ -191,3 +191,36 @@ const common = require('common.js')
 ```
 
 {% endraw %}
+
+## 页面间参数传递
+
+- 页面跳转
+
+```js
+wx.navigateTo({
+    url: './post-detail/post-detail?id='+id,
+})
+```
+
+```js
+  onLoad: function (options) {
+    // 这里可以拿到url的参数
+    console.log(options.id);
+  },
+```
+
+## 缓存
+
+```js
+// 设置缓存
+wx.setStorage({
+     key: '',
+     data: '',
+})
+// 获取缓存
+wx.getStorage({
+      key: ,
+      success: function(res) {},
+    })
+```
+

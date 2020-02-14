@@ -224,3 +224,22 @@ wx.getStorage({
     })
 ```
 
+## 全局变量
+
+- 在app.js中定义
+
+```js
+App({
+  globalData: {
+    flag:false
+  }
+  //...
+}
+```
+
+- 使用
+
+```js
+var app =getApp();
+app.globalData.flag= true;
+```

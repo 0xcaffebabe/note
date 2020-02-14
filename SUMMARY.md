@@ -301,6 +301,19 @@
 
 ### DSL
 
+- [HTML](./DSL/HTML.md)
+- [CSS](./DSL/CSS/nav.md)
+  - [选择器](./DSL/CSS/选择器.md)
+  - [字体样式](./DSL/CSS/字体样式.md)
+  - [复合选择器](./DSL/CSS/复合选择器.md)
+  - [标签显式模式](./DSL/CSS/标签显式模式.md)
+  - [行高](./DSL/CSS/行高.md)
+  - [背景](./DSL/CSS/背景.md)
+  - [盒子模型](./DSL/CSS/盒子模型.md)
+  - [浮动](./DSL/CSS/浮动.md)
+  - [定位](./DSL/CSS/定位.md)
+  - [高级技巧](./DSL/CSS/高级技巧.md)
+  - [Less](./DSL/CSS/less.md)
 - [xml](./DSL/xml.md)
 - [GraphQL](./DSL/GraphQL.md)
 
@@ -320,9 +333,6 @@
 
 ### 前端开发
 
-- [HTML](./前端开发/HTML.md)
-- [CSS](./前端开发/CSS/nav.md)
-- [Less](./前端开发/Less/nav.md)
 - [HTML5与CSS3](./前端开发/HTML5与CSS3/nav.md)
 - [移动web开发](./前端开发/移动web开发/nav.md)
 - [JavaScript](./前端开发/JavaScript/nav.md)

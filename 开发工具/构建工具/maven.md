@@ -287,7 +287,3 @@ mvn archetype:generate
   ```
 
 ## 创建web项目
-
-# 高级应用
-
-- [分模块构建](./maven/分模块构建.md)

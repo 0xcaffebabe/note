@@ -266,7 +266,24 @@
     - [分页插件](./编程语言/JAVA/框架/mybatis/分页插件.md)
   - [Mybatis-Plus](./编程语言/JAVA/框架/mybatis-plus.md)
   - [Dubbo](./编程语言/JAVA/框架/Dubbo.md)
+  - [JUnit](./编程语言/JAVA/框架/Junit.md)
   - [JAVA编程规范](./编程语言/JAVA/JAVA编程规范.md)
+- [JavaScript](./编程语言/JavaScript/JavaScript.md)
+  - [DOM](./编程语言/JavaScript/DOM.md)
+  - [事件](./编程语言/JavaScript/事件.md)
+  - [BOM](./编程语言/JavaScript/BOM.md)
+  - [AJAX](./编程语言/JavaScript/AJAX.md)
+  - [ES6](./编程语言/JavaScript/ES6.md)
+  - [NodeJS](./编程语言/JavaScript/NodeJs.md)
+  - -第三方库/框架-
+  - [Jquery](./编程语言/JavaScript/Jquery.md)
+  - [VUE](./编程语言/JavaScript/VUE/nav.md)
+    - [数据渲染](./编程语言/JavaScript/VUE/数据渲染.md)
+    - [属性操作](./编程语言/JavaScript/VUE/属性操作.md)
+    - [系统指令](./编程语言/JavaScript/VUE/系统指令.md)
+    - [组件](./编程语言/JavaScript/VUE/组件.md)
+    - [动画](./编程语言/JavaScript/VUE/动画.md)\
+  - [ReactJS](./编程语言/JavaScript/ReactJS.md)
 
 ### Spring
 
@@ -313,7 +330,9 @@
   - [浮动](./DSL/CSS/浮动.md)
   - [定位](./DSL/CSS/定位.md)
   - [高级技巧](./DSL/CSS/高级技巧.md)
+  - [CSS3](./DSL/CSS/CSS3.md)
   - [Less](./DSL/CSS/less.md)
+  - [Bootstrap](./DSL/CSS/Bootstrap.md)
 - [xml](./DSL/xml.md)
 - [GraphQL](./DSL/GraphQL.md)
 
@@ -331,43 +350,30 @@
   - [Lucene](./中间件/全文检索/Lucene.md)
   - [ElasticSearch](./中间件/全文检索/ElasticSearch.md)
 
-### 前端开发
-
-- [HTML5与CSS3](./前端开发/HTML5与CSS3/nav.md)
-- [移动web开发](./前端开发/移动web开发/nav.md)
-- [JavaScript](./前端开发/JavaScript/nav.md)
-- [Bootstrap](./前端开发/Bootstrap.md)
-- [Jquery](./前端开发/Jquery.md)
-- [AJAX](./前端开发/AJAX.md)
-- [NodeJs](./前端开发/NodeJs.md)
-- [ES6](./前端开发/ES6.md)
-- [Vue](./前端开发/Vue/nav.md)
-- [ReactJS](./前端开发/ReactJS.md)
-- [NPM](./前端开发/NPM.md)
-- [Webpack](./前端开发/Webpack.md)
-
 ### 移动开发
 
 - [安卓](./移动开发/安卓/nav.md)
+- [移动web开发](./移动开发/移动web开发.md)
 - [小程序开发](./移动开发/小程序开发/nav.md)
 
-### 开发工具
+### 工具
 
-- [Docker](./开发工具/Docker.md)
-- [K8s](./开发工具/K8s.md)
 - [VIM](./开发工具/vim/vim.md)
 - [GIT](./开发工具/git.md)
 - [SVN](./开发工具/SVN.md)
 - [idea](./开发工具/idea.md)
-- [Junit](./开发工具/Junit.md)
-- 构建工具
-
-  - [Gradle](./开发工具/构建工具/gradle.md)
-  - [Maven](./开发工具/构建工具/maven.md)
+- -构建工具-
+- [Gradle](./开发工具/构建工具/gradle.md)
+- [Maven](./开发工具/构建工具/maven.md)
+  - [分模块构建](./开发工具/构建工具/maven/分模块构建.md)
+- [NPM](./开发工具/构建工具/NPM.md)
+- [WebPack](./开发工具/构建工具/WebPack.md)
 
 ### 运维
 
 - [持续集成](./运维/持续集成.md)
+- [Docker](./运维/Docker.md)
+- [K8s](./运维/K8s.md)
 - [容器管理](./运维/容器管理.md)
 
 ### 项目开发

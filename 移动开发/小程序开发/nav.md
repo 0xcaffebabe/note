@@ -243,3 +243,13 @@ App({
 var app =getApp();
 app.globalData.flag= true;
 ```
+
+## 路由
+
+- 三种路由方式
+
+```js
+navigateTo
+redirectTo
+switchTab
+```

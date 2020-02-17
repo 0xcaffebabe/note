@@ -1,6 +1,7 @@
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -13,6 +14,7 @@ public class Statistics {
         wordCount();
         lineCount();
         imgFileCount();
+        repositorySize();
     }
 
     // 统计笔记文件数
@@ -61,6 +63,17 @@ public class Statistics {
     // 统计图片数
     private static void imgFileCount() {
         System.out.println("image count:"+ listFiles(new File("./assets")).stream().count());
+    }
+
+    // 统计仓库容量
+    private static void repositorySize(){
+        long size = 0;
+        List<File> list = listFiles(new File("./"));
+        for(var f : list){
+            size+=f.length();
+        }
+        DecimalFormat df = new DecimalFormat("0.00");
+        System.out.println("repository size:"+df.format(size/1024.0/1024.0)+"MB");
     }
 
     private static List<File> getMDFiles() {

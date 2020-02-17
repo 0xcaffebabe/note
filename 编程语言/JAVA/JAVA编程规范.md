@@ -27,4 +27,19 @@ return new Integer(i);
 
 但是Boolean本来就取值范围就是true与false，所以这个包装类本身是使用了两个成员变量来缓存true与false
 
+### 正确的序列化姿势
+
+>【强制】当序列化类新增属性时，请不要修改 serialVersionUID 字段，以避免反序列失败；如果完全不兼容升级，避免反序列化混乱，那么请修改 serialVersionUID 值。
+说明：注意 serialVersionUID 值不一致会抛出序列化运行时异常。
+
+序列化的目的：**持久化、传输**
+
+一些序列化方案
+
+- 原生序列化
+- Hessian 序列化
+  - 跨语言的序列化方案
+- Kryo 序列化
+- JSON 序列化
+  - json存在的一个问题是可能存在类型丢失
 

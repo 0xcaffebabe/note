@@ -253,3 +253,84 @@ navigateTo
 redirectTo
 switchTab
 ```
+
+## 组件
+
+### 视图组件
+
+- view
+
+> 类似div
+
+### 基础组件
+
+- icon
+
+```html
+<icon type="success"></icon>
+<icon type="search"></icon>
+```
+
+- text
+
+```html
+<text>一段文本</text>
+```
+
+- progress
+
+### 表单组件
+
+- button
+
+```html
+<button size='default'>默认尺寸按钮</button>
+```
+
+- form
+- image
+- switch
+- slider
+- checkbox
+
+## 场景值
+
+- 代表是怎么来的
+
+## 视图层
+
+### WXML
+
+import 的依赖无法传递
+
+- 嵌入
+
+```html
+<include src="header.wxml" />
+```
+
+### WXSS
+
+- 单位
+
+rpx（responsive pixel）: 可以根据屏幕宽度进行自适应
+
+- 样式导入
+
+```css
+@import "common.wxss";
+```
+
+- 内联样式
+  - style与class
+  
+- 选择器
+  - .class
+  - #id
+  - element
+  - element,element
+  - ::after
+  - ::before
+
+- 全局样式与局部样式
+  - app.wxss 是全局样式，定义在page目录下的是局部样式

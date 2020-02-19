@@ -107,4 +107,53 @@ return false;
 
 加在接口的方法上，修饰之后该方法就代表是一个默认实现，如果其他类继承该接口，就可以不用实现该方法，直接使用这个默认实现
 
+### jdk常用工具类
+
+#### Arrays
+
+- sort
+
+使用的双轴快速排序
+
+- binarySearch
+- copyOf、copyOfRange
+
+#### Collections
+
+- min、max
+
+这里可以学习一下最值方法返回值泛型的定义：
+
+```java
+public static <T extends Object & Comparable<? super T>> T max
+```
+
+代表T必须继承自Object且实现了Comparable接口
+
+- 包装线程安全的集合
+
+synchronized打头的方法可以将指定的集合包装成线程安全的集合
+
+具体原理是Collections内部有这些对应的线程安全集合，这些集合内部组合线程不安全的集合，通过synchronized加锁来操作内部的这些集合
+
+- 不可变集合
+
+unmodifiable 打头的方法则是会得到一些不可变集合，这些集合不能执行修改操作，否则会抛异常，也是通过对集合的包装来实现的
+
+#### Objects
+
+- equals
+
+Objects的equals内部的比较采用了deepEquals，这样即使两个对象是数组，也能放心比较
+
+- 一些判空方法
+
+![202002191416](/assets/202002191416.jfif)
+
+---
+
+问：如何写好一个工具类
+
+答： static final 关键字对方法进行修饰，工具类构造器必须是私有等等手段
+
 

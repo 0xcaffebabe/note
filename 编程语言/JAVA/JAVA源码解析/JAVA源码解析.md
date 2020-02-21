@@ -32,3 +32,33 @@ ArrayList的remove方法，删除之后都会对被删除位置的元素进行�
 
 - Arrays.asList(array),当array被修改时，会造成list也被修改
 - toArray 方法如果声明的数组小于list长度，会得到一个空数组
+
+### JAVA7到JAVA8集合的升级
+
+- 所有集合都新增了forEach 方法
+- JAVA7中ArrayList无参初始化是直接初始化10，JAVA8无参初始化则是一个空数组
+- JAVA7中的HashMap无参初始化的大小是16，JAVA8无参初始化则是一个空数组，并且引入了红黑树，并且增加了xxIfAbsent等方法
+- Arrays 提供了很多 parallel 开头的方法，这些方法支持并行计算
+
+### Guava
+
+#### 工厂模式初始化
+
+```java
+HashMap<Object, Object> map = Maps.newHashMap();
+```
+
+#### Lists
+
+```java
+ArrayList<String> list = Lists.newArrayList();
+ArrayList<Object> objects = Lists.newArrayListWithCapacity(10);
+// 不知道精确值，给出一个模糊值
+ArrayList<Object> objects1 = Lists.newArrayListWithExpectedSize(20);
+// 反转一个list，并非物理反转，而是通过对传入index的处理实现的
+var list = Lists.reverse(list)
+// list拆分
+var list = Lists.partition(list,3)
+```
+
+#### Maps

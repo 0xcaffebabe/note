@@ -298,7 +298,7 @@
     - [属性操作](./编程语言/JavaScript/VUE/属性操作.md)
     - [系统指令](./编程语言/JavaScript/VUE/系统指令.md)
     - [组件](./编程语言/JavaScript/VUE/组件.md)
-    - [动画](./编程语言/JavaScript/VUE/动画.md)\
+    - [动画](./编程语言/JavaScript/VUE/动画.md)
   - [ReactJS](./编程语言/JavaScript/ReactJS.md)
 - [python](./编程语言/python.md)
 ### Spring

@@ -1,6 +1,6 @@
-![批注 2019-09-09 193656](/assets/批注%202019-09-09%20193656.png)
-
 # GIT
+
+![批注 2019-09-09 193656](/assets/批注%202019-09-09%20193656.png)
 
 ## 整体流程
 
@@ -93,7 +93,7 @@ git checkout x
 git merge x
 ```
 
-# 推送到远程仓库
+## 推送到远程仓库
 
 - 生成ssh密钥
 
@@ -113,7 +113,7 @@ git remote add origin git@github.com:0xcaffebabe/repo1.git
 git push -u origin master
 ```
 
-# 搭建Git私服
+## 搭建Git私服
 
 - 安装git
 - 初始化服务器本地仓库
@@ -140,3 +140,38 @@ git push --set-upstream origin master
 git clone ssh://root@my-pc/home/git/first
 ```
 
+## 一些坑
+
+- 检出错误
+
+```
+ssh: connect to host xxx.com port 22: Connection refused
+```
+
+确定是否有权限
+
+- 切换邮箱提交错误
+
+新的账户没有提交权限，然而你在新的账户上有了一次提交，此时代码推不上去，切换回原邮箱依然提示推不上去
+
+此时，需要回滚撤销此次提交，切回有权限的邮箱重新提交并推送
+
+- 切分支错误
+
+拉取新分支时，一定要注意检查父分支
+
+- 提前合并到master
+
+如果相关代码没有准备好，提前将代码合并到master，会引发错误
+
+- merge冲突
+
+此时一定要慎之又慎，来处理冲突
+
+- 一个分支干多件事
+
+如果一个分支干多件事，测试代码没有覆盖，很容易出bug
+
+- 及时合并到master
+
+开发周期较长时，要及时合并到master，避免最后大量冲突

@@ -1,5 +1,0 @@
-#!/bin/sh
-rm -rf ./docs
-git fetch
-git pull
-./buildbook

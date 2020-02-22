@@ -186,3 +186,86 @@ try:
 except ValueError as e:
     print('catch exception:',e)
 ```
+
+## 面向对象
+
+### 查看数据类型
+
+```py
+print(type(''))
+```
+
+### 类的定义
+
+```py
+class Person:
+    pass # pass是占位符
+```
+
+### 实例化
+
+```py
+p = Person()
+```
+
+### 属性
+
+```py
+class Person:
+    # 增加构造器参数,self，定义时必须有这个参数，但是调用时不必传递，等同于this
+    def __init__(self,firstName,lastName):
+        self.firstName = firstName
+        self.lastName = lastName
+# 创建对象时传入参数
+p = Person('c','xk')
+# 访问属性
+print(p.firstName)
+```
+
+### 方法
+
+```py
+class Person:
+    # 省略...
+    def say(self):
+        print(self.firstName+self.lastName)
+# 调用方法
+p.say()
+```
+
+## 模块和包
+
+### 模块的导入
+
+```py
+# 导入模块
+import random
+# 使用模块
+print(random.randint(1,9))
+```
+
+### 包
+
+```
+包/
+├── __init__.py
+├── 模块1.py
+├── 模块2.py
+├── 子包1/
+    ├── __init__.py
+    ├── 模块3.py
+    └── 模块4.py
+└── 子包2/
+    ├── __init__.py
+    ├── 模块5.py
+    └── 孙子包1/
+        ├── __init__.py
+        └── 模块6.py
+```
+
+包的导入
+
+```py
+import package.subpackage.module
+```
+

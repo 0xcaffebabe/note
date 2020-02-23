@@ -532,3 +532,75 @@ print(random.randint(1,9))
 ```python
 import package.subpackage.module
 ```
+
+## 迭代器
+
+迭代指的是通过重复执行某个操作，不断获取被迭代对象中的数据。这样的每一次操作就是就是一次 **迭代**
+
+迭代器可以提供迭代功能，当我们需要逐一获取数据集合中的数据时，使用迭代器可以达成这个目的
+
+迭代器可以不保存数据，它的数据可以在需要时被计算出来（这一特性也叫做惰性计算）
+
+```py
+# 将容器包装成一个迭代器
+iterator = iter([1,2,3,4])
+# 不断迭代，直至迭代完抛出异常
+while True:
+    print(next(iterator))
+```
+
+python的for循环迭代就是通过使用迭代器完成的
+
+- 对一个容器调用 iter() 函数，获取到该容器的迭代器
+- 每次循环时对迭代器调用 next() 函数，以获取一个值
+- 若捕获到 StopIteration 异常则结束循环
+
+### 可迭代
+
+定义了 `__iter__()` 方法的类对象就是可迭代的。当这个类对象被 iter() 函数使用时，将返回一个迭代器对象
+
+### 自定义迭代器
+
+```py
+class MyIterator:
+    # 定义了这个方法就代表是可迭代的
+    def __iter__(self):
+        self.count=0
+        return self
+    # 实现可迭代对象的接口
+    def __next__(self):
+        self.count = self.count+1
+        return self.count
+# 使用
+i = MyIterator()
+for i in i:
+    print(i)
+```
+
+## 生成器
+
+yield 语句的作用和 return 语句有几分相似，都可以将结果返回。不同在于，生成器函数执行至 yield 语句，返回结果的同时记录下函数内的状态，下次执行这个生成器函数，将从上次退出的位置（yield 的下一句代码）继续执行
+
+```py
+# 另外一种定义迭代器的方式
+def f():
+    for i in range(10):
+        yield i
+
+# 使用
+i = f()
+for j in i:
+    print(j)
+```
+
+### 生成器表达式
+
+```py
+生成器 = (针对项的操作 for 项 in 可迭代对象)
+```
+
+```py
+# 输出0-9每个数的平方
+for i in (j**2 for j in range(10)):
+    print(i)
+```

@@ -1,19 +1,18 @@
-# 转换
+# jQuery
 
-- jq -- > js : jq对象[索引] 或者 jq对象.get(索引)
-- js -- > jq : $(js对象)
+j就是 JavaScript；Query 查询； 意思就是查询js，把js中的DOM操作做了封装
 
-# 基本操作
+**版本介绍**
 
-## 事件绑定
+1x ：兼容 IE 678 等低版本浏览器， 官网不再更新
 
-```javascript
-$("div").click(function () {
-        alert("click");
-});
-```
+2x ：不兼容 IE 678 等低版本浏览器， 官网不再更新
 
-## 入口函数
+3x ：不兼容 IE 678 等低版本浏览器， 是官方主要更新维护的版本
+
+## 基本操作
+
+### 入口函数
 
 ```javascript
 $(function () {
@@ -21,30 +20,62 @@ $(function () {
 });
 ```
 
+不同于原生 js 中的 load 事件是等页面文档、外部的 js 文件、css文件、图片加载完毕才执行内部代码
+
 window.onload 和 $(function) 区别
 
 - window.onload 只能定义一次,如果定义多次，后边的会将前边的覆盖掉
 - $(function)可以定义多次的。
 
-## 样式控制
+### jQuery中的顶级对象$
+
+$是 jQuery 的别称，在代码中可以使用 jQuery 代替
+
+$是jQuery的顶级对象，相当于原生JavaScript中的 window
+
+1. 用原生 JS 获取来的对象就是 DOM 对象
+2. jQuery 方法获取的元素就是 jQuery 对象。
+3. jQuery 对象本质是： 利用$对DOM 对象包装后产生的对象（伪数组形式存储）
+
+4. jq对象 -- > dom对象 : `jq对象[索引]` 或者 `jq对象.get(索引)`
 
 ```javascript
-$("div").css("color","red");
+var domObject1 = $('div')[0]
+var domObject2 = $('div').get(0)
 ```
 
-# 选择器
+- dom对象 -- > jq对象 : `$(js对象)`
+
+```javascript
+var jQueryObject = $(box);
+```
+
+## 事件绑定
+
+```javascript
+$("div").click(function () {
+    alert("click");
+});
+```
+
+## 选择器
 
 类型           | 语法                   | 作用
 ------------ | -------------------- | -------------------
+-            | 基础选择器                | -
 标签选择器（元素选择器） | $("html标签名")         | 获得所有匹配标签名称的元素
 ID选择器        | $("#id的属性值")         | 获得与指定id属性值匹配的元素
 类选择器         | $(".class的属性值")      | 获得与指定的class属性值匹配的元素
 并集选择器        | $("选择器1,选择器2....")   | 获取多个选择器选中的所有元素
+交集选择器        | $("li.current")      | 交集元素
+-            | 层级选择器                | -
 后代选择器        | $("A B ")            | 选择A元素内部的所有B元素
 子选择器         | $("A > B")           | 选择A元素内部的所有B子元素
+-            | 属性选择器                | -
 属性名称选择器      | $("A[属性名]")          | 包含指定属性的选择器
 属性选择器        | $("A[属性名='值']")      | 包含指定属性等于指定值的选择器
 符合属性选择器      | $("A[属性名='值'][]...") | 包含多个属性条件的选择器
+-            | 筛选选择器                | -
 过滤选择器        | :first               | 获得选择的元素中的第一个元素
 尾选择器         | :last                | 获得选择的元素中的最后一个元素
 非元素选择器       | :not(selector)       | 不包括指定内容的元素
@@ -58,6 +89,42 @@ ID选择器        | $("#id的属性值")         | 获得与指定id属性值�
 不可用元素选择器     | :disabled            | 获得不可用元素
 选中选择器        | :checked             | 获得单选/复选框选中的元素
 选中选择器        | :selected            | 获得下拉框选中的元素
+
+一些节点选择的辅助方法：
+
+![202002231554](/assets/202002231554.png)
+
+- 隐式迭代
+
+```javascript
+$('div').hide();  // 页面中所有的div全部隐藏，不用循环操作
+```
+
+## 样式控制
+
+- 修改简单元素样式
+
+```javascript
+// 1.参数只写属性名，则是返回属性值
+var strColor = $(this).css('color');
+// 2.  参数是属性名，属性值，逗号分隔，是设置一组样式，属性必须加引号，值如果是数字可以不用跟单位和引号
+$(this).css("color", "red");
+// 3.  参数可以是对象形式，方便设置多组样式。属性名和属性值用冒号隔开， 属性可以不用加引号
+$(this).css({ "color":"white","font-size":"20px"});
+```
+
+- 设置类样式
+
+原生 JS 中 className 会覆盖元素原先里面的类名，jQuery 里面类操作只是对指定类进行操作，不影响原先的类名
+
+```js
+// 1.添加类
+$("div").addClass("current");
+// 2.删除类
+$("div").removeClass("current");
+// 3.切换类
+$("div").toggleClass("current");
+```
 
 # DOM操作
 
@@ -116,7 +183,7 @@ ID选择器        | $("#id的属性值")         | 获得与指定id属性值�
 
 - empty():清空元素的所有后代元素
 
-# 动画
+## 动画
 
 参数：
 
@@ -128,25 +195,40 @@ ID选择器        | $("#id的属性值")         | 获得与指定id属性值�
 
 - fn：在动画完成时执行的函数，每个元素执行一次。
 
-## 方法
+### 显示隐藏
 
-### 默认
+- show([speed,[easing],[fn]]) 显示
+- hide([speed,[easing],[fn]]) 引擎
+- toggle([speed],[easing],[fn]) 切换
 
-- show([speed,[easing],[fn]])
-- hide([speed,[easing],[fn]])
-- toggle([speed],[easing],[fn])
+### 滑入滑出
 
-## 滑动
+- slideDown([speed],[easing],[fn]) 下拉
+- slideUp([speed,[easing],[fn]]) 上拉
+- slideToggle([speed],[easing],[fn]) 切换
 
-- slideDown([speed],[easing],[fn])
-- slideUp([speed,[easing],[fn]])
-- slideToggle([speed],[easing],[fn])
+### 淡入淡出
 
-## 淡入淡出
-
-- fadeIn([speed],[easing],[fn])
+- fadeIn([speed],[easing],[fn]) 
 - fadeOut([speed],[easing],[fn])
 - fadeToggle([speed,[easing],[fn]])
+- fadeTo([speed],opacity,[easing],[fn])
+
+### 自定义动画
+
+- animate(params,[speed],[easing],[fn])
+
+params代表要变化的css样式
+
+```js
+$("div").animate({height:200})
+```
+
+### 动画排队
+
+动画或者效果一旦触发就会执行，如果多次触发，就造成多个动画或者效果排队执行
+
+- stop() 写到动画或者效果的前面， 相当于停止结束上一次的动画
 
 # 遍历
 
@@ -194,4 +276,3 @@ jq对象.off("事件名称")
 - 如果off方法不传递任何参数，则将组件上的所有事件全部解绑
 
 # 插件
-

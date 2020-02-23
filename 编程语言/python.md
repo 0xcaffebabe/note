@@ -149,6 +149,83 @@ print(str + '?')
 print(str*3)
 ```
 
+### 字典
+
+也就是map,显著优势是可以通过键快速地查询数据
+
+```py
+# 创建空字典
+map = {}
+# 创建有内容的字典
+map = {'key1': 1, 'key2': 2}
+# 增加键值对/修改键所对应的值
+map['key3'] = 3
+# 通过键获取值,若键不存在则将抛出 KeyError 异常
+print(map['key2'])
+# 通过方法来获取，不存在返回None
+print(map.get('key1'))
+# 不存在返回默认值0
+print(map.get('keyx', 0))
+# 是否包含某个键
+print('x' in map)
+# 获取所有键，返回迭代器
+print(map.keys())
+# 获取所有值，返回迭代器
+print(map.values())
+# 获取键值对迭代器，每一对都是元组
+print(map.items())
+# 根据键删除,返回值，如果键不存在，则会抛出 KeyError 异常
+map.pop('key1')
+# 键不存在返回默认值，不会抛异常
+map.pop('key1', 'x')
+# 键不存在会抛异常
+del map['key2']
+# 随机弹出一个键值对
+print(map.popitem())
+# 用字典更新字典
+map = {'key1': 'x'}
+map.update({'key1': 1})
+
+```
+
+### 集合
+
+其中的元素没有顺序关系。集合中的元素没有重复，重复的元素将被自动剔除最终只留下一个，集合也是用花括号（{}）来表示，不同于字典的是，花括号中放的是一个个数据，而不是键值对
+
+```py
+# 创建空集合
+s = set()
+# 创建集合
+s = {1, 2, 3, 4, 5}
+# 添加元素
+s.add(0)
+# 并集
+s.update({7, 8, 9})
+# 查看元素是否在集合中
+print(0 in s)
+# 弹出一个元素
+print(s.pop())
+# 删除指定元素,如果要删除的元素不存在，则抛出 KeyError 异常
+s.remove(1)
+# 删除，但不抛出异常
+s.discard(1)
+# 求交集
+print({1, 2, 3}.intersection({3, 4, 5}))
+print({1, 2, 3} & {3, 4, 5})
+# 求并集
+print({1, 2, 3}.union({3, 4, 5}))
+print({1, 2, 3} | {3, 4, 5})
+# 求差集
+print({1, 2, 3}.difference({3, 4, 5}))
+print({1, 2, 3} - {3, 4, 5})
+# 是否为子集
+print({1, 2}.issubset({1, 2, 3}))
+# 是否为超集
+print({1, 2, 3}.issuperset({1, 2}))
+# 清空集合
+s.clear()
+```
+
 ## 数值运算
 
 ```python

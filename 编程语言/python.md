@@ -360,6 +360,54 @@ print(sorted([3,5,7,1]))
 print(range(100))
 ```
 
+### 函数进阶
+
+- 参数默认值
+
+```py
+# 如果省略a，则a的默认值为10
+def f(a=10):
+    print(a)
+```
+
+- 关键字参数
+
+```py
+def f(x,y):
+    print(x)
+    print(y)
+# 这里通过指定参数名，可以颠倒参数的顺序
+f(y=1,x=2)
+```
+```py
+# 使用这种方式，kw能把接收到参数组合成一个map
+def f(**kw):
+    print(kw)
+    
+f(x=1,y=2,z=3)
+```
+
+- 任意参数列表
+
+```py
+# 类似于java的可变参数
+def f(*kw):
+    print(kw)
+    
+f(1,2,3)
+```
+
+- 多返回值
+
+```py
+def f():
+    x=1
+    y=2
+    return x,y
+    
+a,b=f()
+```
+
 ## 逻辑关键字
 
 - and
@@ -497,6 +545,107 @@ class Person:
 p.say()
 ```
 
+### 进阶
+
+- 类属性与类方法
+
+```py
+class Person:
+    # 定义一个类变量
+    people = '70亿'
+    # 定义一个类方法
+    @classmethod
+    def go(klass):
+        print(str(klass)+'go')
+# 使用
+print(Person.people)
+Person.go()
+```
+
+- 静态方法
+
+```py
+class Person:
+    ...
+    # 定义一个静态方法，区别在于不用传入klass
+    @staticmethod
+    def go0():
+        print('static go')
+```
+
+- 私有属性
+
+```py
+class Person:
+    # 定义一个类私有属性
+    __people = '70'
+    @classmethod
+    def f(klass):
+        print(Person.__people)
+    def f1(self):
+        # 私有成员变量
+        self.__age=15
+        return self.__age
+
+Person.f()
+p = Person()
+print(p.f1())
+# 会抛异常
+p.__age
+# 会抛出异常
+print(Person._people)
+```
+
+- 特殊方法
+
+头尾有双下划线的方法都是特殊方法
+
+`__init__()`用于对象的初始化。在实例化类的过程中，被自动调用,就是构造器
+
+`__next__()` 对迭代器调用 next() 函数，便能生成下一个值。这个过程的背后，next() 调用了迭代器的 `__next__()` 方法
+
+`__len__()` 实现了 `__len__()` 方法，调用 len() 函数时将自动调用容器的` __len__() `方法
+
+`__str__() ` 在使用 print() 函数时将自动调用类的 `__str__()` 方法,toString()
+
+`__getitem__()` 'abc'[2] 即等同于 'abc'.`__getitem__(2)`
+
+- 类继承
+
+```py
+class Animal:
+    def run(self):
+        print('animal run')
+
+class Dog(Animal):
+    def __init__(self):
+        # 调用父类的构造器
+        super().__init__()
+    # 覆写父类的方法
+    def run(self):
+        print('dog run')
+    def bark(self):
+        print('wolf wolf')
+dog = Dog()
+dog.run()
+dog.bark()
+```
+
+- 多继承
+
+```py
+class MachineDog:
+    def kill(self):
+        print('machine dog kill you')
+class Dog(Animal):
+   ...
+class KillingMachineDog(Dog,MachineDog):
+    pass
+superDog = KillingMachineDog()
+superDog.bark()
+superDog.kill()
+```
+
 ## 模块和包
 
 ### 模块的导入
@@ -603,4 +752,30 @@ for j in i:
 # 输出0-9每个数的平方
 for i in (j**2 for j in range(10)):
     print(i)
+```
+
+也可以加上if语句
+
+```py
+# 输出0-100中偶数的平方
+for i in (j**2 for j in range(100) if j%2==0):
+    print(i)
+```
+
+### 字典生成式
+
+```py
+{键: 值 for 项 in 可迭代对象}
+```
+
+```py
+# 生成0-10的键为i，值为i的平方的map
+map = {i:i**2 for i in range(10)}
+```
+
+### 集合生成式
+
+```py
+# 生成0-10的集合
+set = {i for i in range(10)}
 ```

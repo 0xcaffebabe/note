@@ -255,6 +255,7 @@
         - [Set](./编程语言/JAVA/JAVA源码解析/Set.md)
       - [并发集合](./编程语言/JAVA/JAVA源码解析/并发集合.md)
       - [队列](./编程语言/JAVA/JAVA源码解析/队列.md)
+      - [线程](./编程语言/JAVA/JAVA源码解析/线程.md)
     - [JVM](./编程语言/JAVA/JVM/JVM.md)
       - [运行参数](./编程语言/JAVA/JVM/运行参数.md)
       - [内存结构](./编程语言/JAVA/JVM/内存结构.md)
@@ -288,7 +289,7 @@
     - [ES6](./编程语言/JavaScript/ES6.md)
     - [NodeJS](./编程语言/JavaScript/NodeJs.md)
     - -第三方库/框架-
-    - [Jquery](./编程语言/JavaScript/Jquery.md)
+    - [jQuery](./编程语言/JavaScript/Jquery.md)
     - [VUE](./编程语言/JavaScript/VUE/nav.md)
       - [数据渲染](./编程语言/JavaScript/VUE/数据渲染.md)
       - [属性操作](./编程语言/JavaScript/VUE/属性操作.md)

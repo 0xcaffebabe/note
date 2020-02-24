@@ -1,16 +1,19 @@
+# redis
+
 > redis是一款高性能的NOSQL系列的非关系型数据库
 
-# 应用场景
+## 应用场景
 
 - 缓存（数据查询、短连接、新闻内容、商品内容等等）
 - 聊天室的在线好友列表
 - 任务队列。（秒杀、抢购、12306等等）
 - 应用排行榜
 - 网站访问统计
-- 数据过期处理（可以精确到毫秒
+- 数据过期处理（可以精确到毫秒）
 - 分布式集群架构中的session分离
+- 分布式锁
 
-# 数据结构
+## 数据结构
 
 - 字符串类型 string
 - 哈希类型 hash
@@ -18,21 +21,21 @@
 - 集合类型 set
 - 有序集合类型 sortedset
 
-# 命令操作
+## 命令操作
 
-## 字符串类型
+### 字符串类型
 
 - 存储：`set key value`
 - 获取 `get key`
 - 删除 `del key`
 
-## 哈希类型
+### 哈希类型
 
 - 存储：`hset key field value`
 - 获取：`hget key field`
 - 删除： `hdel key field`
 
-## 列表类型
+### 列表类型
 
 - 将元素加入列表左边：`lpush key value`
 - 将元素加入列表右边：`rpush key value`
@@ -40,34 +43,35 @@
 - 删除列表最左边的元素，并将元素返回:`lpop key`
 - 删除列表最右边的元素，并将元素返回:`rpop key`
 
-## 集合类型
+### 集合类型
 
 - 存储：`sadd key value`
 - 获取：`smembers key`
 - 删除：`srem key value`
 
-## 有序集合类型
+### 有序集合类型
 
 - 存储：`zadd key score value`
 - 获取：`zrange key start end`
 - 删除：`zrem key value`
 
-## 通用
+### 通用
 
 - keys * : 查询所有的键(生产环境应禁用，原因：正则表达式可能会占用大量资源)
 - type key ： 获取键对应的value的类型
 - del key：删除指定的key value
 - exists key：判断指定的key是否存在
 - expire key time：指定key的生存时间，单位：秒
-# 持久化
 
-## RDB
+## 持久化
+
+### RDB
 
 - 配置文件
 
 > after 60 sec if at least 10000 keys changed save 60 10000
 
-## AOF
+### AOF
 
 ```
 appendonly no（关闭aof） --> appendonly yes （开启aof）
@@ -77,9 +81,9 @@ appendfsync everysec ： 每隔一秒进行一次持久化
 # appendfsync no     ： 不进行持久化
 ```
 
-# Jedis
+## Jedis
 
-## 基本使用
+### 基本使用
 
 ```java
         Jedis jedis = new Jedis("127.0.0.1");
@@ -89,7 +93,7 @@ appendfsync everysec ： 每隔一秒进行一次持久化
         jedis.close();
 ```
 
-## 连接池
+### 连接池
 
 ```java
         JedisPoolConfig config = new JedisPoolConfig();
@@ -105,9 +109,9 @@ appendfsync everysec ： 每隔一秒进行一次持久化
         pool.close();
 ```
 
-# Spring Data Redis
+## Spring Data Redis
 
-## RedisTemplate基本操作
+### RedisTemplate基本操作
 
 - redisTemplate.opsForValue() ：操作字符串
 - redisTemplate.opsForHash() ：操作hash
@@ -117,7 +121,7 @@ appendfsync everysec ： 每隔一秒进行一次持久化
 
 StringRedisTemplate是K,V均为String的RedisTemplate
 
-## 使用
+### 使用
 
 ```java
 template.opsForValue().set("name","hello,bitch");

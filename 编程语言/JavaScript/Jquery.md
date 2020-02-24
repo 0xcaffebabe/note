@@ -126,24 +126,54 @@ $("div").removeClass("current");
 $("div").toggleClass("current");
 ```
 
-# DOM操作
+## DOM操作
 
-## 内容操作
+### 内容操作
 
-- html(): 获取/设置元素的标签体内容 `<a><font>内容</font></a> --> <font>内容</font>`
-- text(): 获取/设置元素的标签体纯文本内容 `<a><font>内容</font></a> --> 内容`
+- html(): 获取/设置元素的标签体内容
+
+```html
+<a><font>内容</font></a>
+```
+```js
+$("a").html(); // <font>内容</font>
+```
+
+- text(): 获取/设置元素的标签体纯文本内容
+
+```html
+<a><font>内容</font></a>
+```
+```js
+$("a").text(); // 内容
+```
+
 - val()： 获取/设置元素的value属性值
 
-## 属性操作
+### 属性操作
 
-- attr(): 获取/设置元素的属性
+- attr(): 获取/设置元素的属性(只能操作自定义属性)
+
+```js
+var link = $("div").prop('index'); // 获取自定义属性
+$("div").prop('index','xx'); // 设置自定义属性
+```
+
 - removeAttr():删除属性，如果操作的是元素自定义的属性，则建议使用attr
-- prop():获取/设置元素的属性，如果操作的是元素的固有属性，则建议使用prop
-- removeProp():删除属性
-- addClass():添加class属性值
-- removeClass():删除class属性值
-- toggleClass():切换class属性
-- css()
+- prop():获取/设置元素的属性（只能操作固有属性）
+
+```js
+var link = $("div").prop('href'); // 获取属性
+$("div").prop('href','xx'); // 设置属性
+```
+
+- removeProp():删除自定义属性
+- 数据缓存 data()，可以在指定的元素上存取数据，并不会修改 DOM 元素结构
+
+```js
+$("div").data("key","value") //向元素添加数据
+$("div").data("key") //获取添加的数据
+```
 
 ## 节点操作
 
@@ -154,7 +184,8 @@ $("div").toggleClass("current");
 - prepend():父元素将子元素追加到开头
 
   - 对象1.prepend(对象2):将对象2添加到对象1元素内部，并且在开头
-
+- after():添加在目标元素后面
+- before():添加在目标元素前面
 - appendTo():
 
   - `对象1.appendTo(对象2):将对象1添加到对象2内部，并且在末尾`
@@ -179,7 +210,7 @@ $("div").toggleClass("current");
 
   - `对象1.insertBefore(对象2)： 将对象2添加到对象1前边。对象1和对象2是兄弟关系`
 
-- remove():移除元素
+- remove():移除元素（自身）
 
 - empty():清空元素的所有后代元素
 
@@ -230,35 +261,40 @@ $("div").animate({height:200})
 
 - stop() 写到动画或者效果的前面， 相当于停止结束上一次的动画
 
-# 遍历
+## 元素操作
 
-## jq对象.each(callback)
+### 遍历
+
+- jq对象.each(callback)
 
 ```javascript
-$("div").each(function (i,e) {
-        console.table(i,e);
+$("div").each(function (index,element) {
+    console.table(index,element);
 });
 ```
 
-- 如果当前function返回为false，则结束循环(break)。
-- 如果当前function返回为true，则结束本次循环，继续下次循环(continue)
+回调方法传入的element是dom元素
 
-## $.each(object, [callback])
+如果当前function返回为false，则结束循环(break)。
+
+如果当前function返回为true，则结束本次循环，继续下次循环(continue)
+
+- $.each(object, [callback])
 
 ```javascript
 $.each($("div"),function (i, e) {
-        console.table(i,e);
-    })
+    console.table(i,e);
+})
 ```
 
-## for..of
+- for..of
 
 _ES6语法_
 
 ```javascript
 for (let i of $("div")){
-        console.log(i);
-    }
+  console.log(i);
+}
 ```
 
 # 事件绑定

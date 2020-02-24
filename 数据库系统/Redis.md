@@ -126,3 +126,17 @@ StringRedisTemplate是K,V均为String的RedisTemplate
 ```java
 template.opsForValue().set("name","hello,bitch");
 ```
+
+## 实现发布订阅
+
+- 消费者订阅频道
+
+```shell
+127.0.0.1:6379> SUBSCRIBE redisChat
+```
+
+- 生产者向频道发送数据
+
+```shell
+127.0.0.1:6379> PUBLISH redisChat "Redis is a great caching technique"
+```

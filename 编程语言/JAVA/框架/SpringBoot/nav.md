@@ -431,7 +431,6 @@ public interface UserMapper extends BaseMapper<User> { }
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-data-redis</artifactId>
-    <version>2.1.8.RELEASE</version>
 </dependency>
 ```
 

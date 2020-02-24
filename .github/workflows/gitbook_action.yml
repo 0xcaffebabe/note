@@ -10,7 +10,7 @@
 # When you make THE_GITHUB_TOKEN ,the push permission is must have，the others, you can add.
 # You can visit https://zlogs.net/gitbook-action/ for more information.
 
-name: 'Gitbook Action'
+name: '构建电子书'
 
 on:
   push:

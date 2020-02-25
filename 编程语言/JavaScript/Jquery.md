@@ -297,18 +297,107 @@ for (let i of $("div")){
 }
 ```
 
-# 事件绑定
+## 事件
 
-## 标准绑定
+### 事件绑定
+
+#### 标准绑定
 
 jq对象.事件方法(回调函数)，如果调用事件方法，不传递回调函数，则会触发浏览器默认行为。
 
-## on/off
+#### on绑定
 
+```js
 jq对象.on("事件名称",回调函数)
+```
 
+或者
+```js
+  jq对象.on({
+  事件1:处理函数,
+  事件2:处理函数
+})
+```
+
+```js
+// 事件触发一次后失效
+jq对象.one('click',fn)
+```
+
+#### 事件委托
+
+```js
+$("div").on("click","p",function(){
+  // 将子元素发生的事件委托给父元素，这样就可以实现给动态创建的元素创建点击事件
+  alert('p元素触发');
+})
+```
+
+#### 事件解绑
+
+```js
+// 解绑某个事件
 jq对象.off("事件名称")
+// 解绑所有事件
+jq对象.off()
+// 解绑事件委托
+jq对象.off('click','a')
+```
 
-- 如果off方法不传递任何参数，则将组件上的所有事件全部解绑
+#### 事件触发
 
-# 插件
+```js
+jq对象.trigger("click")
+// 不会触发元素的默认行为（比如input focus之后会光标闪烁，使用这个方法光标就不会闪烁）
+jq对象.triggerHandler("click")
+```
+
+### 事件对象
+
+与DOM中的event基本一致
+
+## 对象拷贝
+
+```js
+$.extend([deep],target,sourceObject,[sourceObjectN])
+```
+
+## 多库共存
+
+```js
+// 让jquery 释放对$ 控制权 让用自己决定
+var $x = jQuery.noConflict();
+```
+
+## 尺寸和位置操作
+
+- 尺寸
+
+```js
+// width height 获取或者设置
+$("div").width();
+// innerWidth innerHeight 包含padding
+$("div").outerWidth();
+// outerWidth outerHeight 包含padding、border,加上参数true就包含margin
+$("div").outerWidth();
+```
+
+- 位置
+
+```js
+// 绝对定位的偏移
+$("div").offset()
+// 设置
+$("div").offset({
+  top:0,
+  left:0
+})
+
+// 获取相对于父级定位盒子的偏移,只能获取不能设置
+$("div").position()
+
+// 设置或者获取被卷去的头部
+$("div").scrollTop()
+// 设置或者获取被卷去的左部
+$("div").scrollLeft()
+```

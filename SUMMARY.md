@@ -1,6 +1,4 @@
 
-## 概览
-
 - [算法与数据结构](./算法与数据结构/nav.md)
   - [排序](./算法与数据结构/排序.md)
   - [堆](./算法与数据结构/堆.md)
@@ -291,7 +289,7 @@
     - [NodeJS](./编程语言/JavaScript/NodeJs.md)
     - -第三方库/框架-
     - [jQuery](./编程语言/JavaScript/Jquery.md)
-    - [VUE](./编程语言/JavaScript/VUE/nav.md)
+    - [Vue](./编程语言/JavaScript/VUE/nav.md)
       - [数据渲染](./编程语言/JavaScript/VUE/数据渲染.md)
       - [属性操作](./编程语言/JavaScript/VUE/属性操作.md)
       - [系统指令](./编程语言/JavaScript/VUE/系统指令.md)
@@ -392,20 +390,4 @@
   - [学习方法论](./通识/学习方法论.md)
   - [代码重构](./通识/代码重构.md)
   - [代码审查](./通识/代码审查.md)
-
-### 项目开发
-
-#### 后端
-
-- [travel](https://github.com/0xcaffebabe/travel) 基于servlet与jsp的旅游网站
-- [ssm](https://github.com/0xcaffebabe/ssm) 使用纯注解配置的ssm项目
-- [pms](https://github.com/0xcaffebabe/pms) 基于ssm的多模块权限管理系统
-- [shop](https://github.com/0xcaffebabe/shop) 基于Spring Cloud框架的微服务电商网站
-- [edu](https://github.com/0xcaffebabe/edu) 基于Spring Cloud框架的微服务在线视频教育网站
-- [soc](https://github.com/0xcaffebabe/soc) 基于Spring Cloud框架的微服务社交网站
-- [sell](https://github.com/0xcaffebabe/sell) 基于Spring Boot的点餐系统
-
-#### 前端
-
-- [shop-web](https://github.com/0xcaffebabe/shop-web) 纯HTML CSS实现的电商前端
-- [travel-vue](https://github.com/0xcaffebabe/travel-vue) 基于VUE的旅游网站前端
+- [项目开发](./项目开发.md)

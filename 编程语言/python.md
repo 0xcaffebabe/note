@@ -779,3 +779,143 @@ map = {i:i**2 for i in range(10)}
 # 生成0-10的集合
 set = {i for i in range(10)}
 ```
+
+## 函数式编程
+
+```py
+def say():
+    print('say')
+# 函数可赋值给变量并调用
+f = say
+f()
+```
+
+### 函数作为参数
+
+```py
+def f(callback):
+    callback('date')
+def f1(x):
+    print(x)
+
+f(f1)
+```
+
+### lambda表达式
+
+```py
+# 上面的函数调用也可以缩写成
+f(lambda x: print(x))
+```
+
+### 函数作为返回值
+
+```py
+def f():
+    return lambda x,y: x+y
+
+print(f()(1,2))
+```
+
+### map与filter
+
+```py
+# filter函数可对一个可迭代对象做过滤，符合过滤lambda的元素会被返回
+l = filter(lambda x: x%2==0,[1,2,3,4,5])
+print(list(l))
+```
+
+```py
+l = [1,2,3,4,5]
+# map函数则是对可迭代对象中的每个元素做处理，然后返回
+ret = map(lambda x: x**2,l)
+print(list(ret))
+```
+
+## 装饰器
+
+### 自定义装饰器
+
+```py
+def aop(fun):
+    # 对fun进行包装，在其外层拦截参数
+    def wrapper(*args,**kw):
+        print("aop拦截参数:",args,kw)
+        fun(*args,**kw)
+    return wrapper
+
+class A:
+    # 加上这一行等于 m = aop(m)
+    @aop
+    def m(self):
+        print('method invoke')
+
+a = A()
+a.m()
+```
+
+## 一些语言特性
+
+### 切片
+
+```py
+l = [1,2,3,4,5]
+# 负数代表倒数第几个
+print(l[-2])
+# 起始索引跟结束索引默认不写就代表是第一个/最后一个
+print(l[:])
+# 代表从0到最后一个，步长为2取一个元素
+print(l[0:-1:2])
+```
+
+### 赋值
+
+```py
+# 连续赋值
+a = b = c = 1
+# 拆包
+x, y = 1, 2
+# 拆包一次接收多个元素
+x, *y = 1, 2, 3, 4
+# 交换两个元素
+x, y = y, x
+# or的使用
+print('' or '1') # 结果为'1' 类似于js
+```
+
+### 控制语句
+
+```py
+# 三元表达式
+# 如果1=1,ret=1 否则ret=2
+ret = 1 if 1==1 else 2
+# for...else
+# 如果可迭代对象全部都被迭代了，就会执行else语句，否则不执行else语句，while...else同理
+for i in range(5):
+    print(i)
+else:
+    print('all used')
+# try except else,没有发生异常时，else语句会被调用
+try:
+    pass
+except:
+    print('发生异常')
+else:
+    print('没有发生异常')
+```
+
+### 类
+
+```py
+# 自定义异常
+class BussinessException(Exception):
+    pass
+```
+
+### 函数
+
+```py
+#     参数类型标注   返回值类型标注
+def f(name:str) -> str:
+    return 'hello'
+```

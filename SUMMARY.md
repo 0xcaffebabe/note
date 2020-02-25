@@ -289,12 +289,12 @@
     - [NodeJS](./编程语言/JavaScript/NodeJs.md)
     - -第三方库/框架-
     - [jQuery](./编程语言/JavaScript/Jquery.md)
-    - [Vue](./编程语言/JavaScript/VUE/nav.md)
-      - [数据渲染](./编程语言/JavaScript/VUE/数据渲染.md)
-      - [属性操作](./编程语言/JavaScript/VUE/属性操作.md)
-      - [系统指令](./编程语言/JavaScript/VUE/系统指令.md)
-      - [组件](./编程语言/JavaScript/VUE/组件.md)
-      - [动画](./编程语言/JavaScript/VUE/动画.md)
+    - [Vue](./编程语言/JavaScript/Vue/nav.md)
+      - [数据渲染](./编程语言/JavaScript/Vue/数据渲染.md)
+      - [属性操作](./编程语言/JavaScript/Vue/属性操作.md)
+      - [系统指令](./编程语言/JavaScript/Vue/系统指令.md)
+      - [组件](./编程语言/JavaScript/Vue/组件.md)
+      - [动画](./编程语言/JavaScript/Vue/动画.md)
     - [ReactJS](./编程语言/JavaScript/ReactJS.md)
   - [python](./编程语言/python.md)
 

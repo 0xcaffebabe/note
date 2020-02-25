@@ -138,6 +138,23 @@ StringRedisTemplate是K,V均为String的RedisTemplate
 template.opsForValue().set("name","hello,bitch");
 ```
 
+### 事务
+
+```java
+// 开启事务支持
+template.setEnableTransactionSupport(true);
+// begin
+try{
+    template.multi();
+    template.opsForValue().set("java","langeuage");
+    template.opsForValue().set("python","langeuage");
+    // commit
+    template.exec();    
+}catch (Exception e){
+    template.discard();
+}
+```
+
 ## 实现发布订阅
 
 - 消费者订阅频道

@@ -1,19 +1,15 @@
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-
-import javax.management.RuntimeErrorException;
 
 public class Statistics {
     private static List<File> mdFiles;
@@ -30,7 +26,7 @@ public class Statistics {
     // 统计笔记文件数
     private static void fileCount() {
         var list = getMDFiles();
-        System.out.println("md file count:" + list.size());
+        System.out.println("md 文件数:" + list.size());
     }
 
     // 统计行数

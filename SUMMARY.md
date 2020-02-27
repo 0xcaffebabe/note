@@ -286,6 +286,7 @@
     - [BOM](./编程语言/JavaScript/BOM.md)
     - [面向对象](./编程语言/JavaScript/面向对象.md)
     - [AJAX](./编程语言/JavaScript/AJAX.md)
+    - [ES5](./编程语言/JavaScript/ES5.md)
     - [ES6](./编程语言/JavaScript/ES6.md)
     - [NodeJS](./编程语言/JavaScript/NodeJs.md)
     - -第三方库/框架-

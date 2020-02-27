@@ -919,3 +919,145 @@ class BussinessException(Exception):
 def f(name:str) -> str:
     return 'hello'
 ```
+
+## IO
+
+### 打开文件
+
+```py
+f = open('test.py','r')
+# 指定编码
+f = open('test.py','r',encoding='gbk')
+```
+
+**读写模式**
+
+'r'：只读，若文件不存在则抛出 FileNotFoundError 异常
+'rb': 以二进制的形式
+'w'：只写，将覆盖所有原有内容，若文件不存在则创建文件
+'a'：只写，以追加的形式写入内容，若文件不存在则创建文件
+'r+'：可读可写，若文件不存在则抛出 FileNotFoundError 异常
+'w+'：可读可写，若文件不存在则创建文件
+'a+'：可读可写，写入时使用追加模式，若文件不存在则创建文件
+
+### 文件写入
+
+```py
+f = open('a.txt','w')
+f.write('a dog')
+```
+
+### 文件读取
+
+```py
+f = open('test.py','r',encoding='utf8')
+# 读出全部内容
+print(f.read())
+# 读出文件行的列表
+print(f.readlines())
+```
+
+### 文件关闭
+
+```py
+f.close()
+```
+
+### 文件系统操作
+
+```py
+import os
+# 创建目录
+os.mkdir('./test')
+# 枚举目录下的文件
+for i in os.listdir('./'):
+    print(i)
+# 删除目录
+os.rmdir('./test')
+# 删除文件
+os.remove('a.txt')
+# 重命名文件
+os.rename('test.py','test1.py')
+```
+
+## 序列化
+
+- pickle(python独有)
+
+```py
+import pickle
+
+# 序列化成二进制
+ret = pickle.dumps([1,2,3])
+print(ret)
+# 反序列化
+print(pickle.loads(ret))
+```
+
+- json
+
+```py
+import json
+# 序列化成json
+str = json.dumps({'a':1,'b':2})
+print(str)
+# 反序列化
+print(json.loads(str))
+```
+
+## 进程与线程
+
+### 进程
+
+```py
+import multiprocessing
+import os
+def f():
+    print('子进程')
+    print('pid',os.getpid())
+    print('ppid',os.getppid())
+
+# 只有主进程才创建子进程
+if __name__ == '__main__':
+    # 创建一个子进程
+    p = multiprocessing.Process(target=f)
+    p.start()
+    # 等待子线程运行完毕才会继续往下走
+    p.join()
+```
+
+### 线程
+
+```py
+import threading
+
+def f():
+    print('sub thread')
+
+# 创建线程并启动
+t = threading.Thread(target=f)
+t.start()
+# 等待子线程执行完毕才继续往下执行
+t.join()
+print('main thread')
+```
+
+- 锁
+
+```py
+import threading
+count = 0
+# 创建一个锁
+lock = threading.Lock()
+def add():
+    for i in range(2000000):
+        global count
+        # 获取锁
+        lock.acquire()
+        count = count+1
+        # 释放锁
+        lock.release()
+    print('执行完成：当前结果:',count)
+for i in range(10):
+    threading.Thread(target=add).start()
+```

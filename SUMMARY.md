@@ -352,6 +352,8 @@
     - [ElasticSearch](./中间件/全文检索/ElasticSearch.md)
   - [缓存](./中间件/缓存/缓存.md)
     - [EhCache](./中间件/缓存/EhCache.md)
+  - [分布式](./中间件/分布式/分布式.md)
+    - [Zookeeper](./中间件/分布式/Zookeeper.md)
 
 - [移动开发](./移动开发/nav.md)
   - [安卓](./移动开发/安卓/nav.md)

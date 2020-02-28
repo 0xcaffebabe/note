@@ -160,3 +160,84 @@ public static String getServer() {
     return listServer.get(count%2);
 }
 ```
+
+## 实现分布式锁
+
+### 解决方案
+
+- 数据库
+- redis
+- zookeeper
+  - 实现简单，失效时间容易控制
+- SpringCloud内置全局锁
+
+### 原理
+
+多个jvm同时在zookeeper.上创建同一个相同的节点(/lock) , 因为zookeeper节点是唯一的，如果是唯一的话，那么同时如果有多个客户端创建相同的节点/lock的话，最终只有看谁能够快速的抢资源，谁就能创建/lock节点,这个时候节点类型应该使用临时类型。
+
+当一个JVM释放锁后（关闭zk连接），临时节点会被删除，等待锁的其他JVM会收到节点被删除的通知，这些等待的JVM会重新参与到竞争
+
+需要注意的是，要根据业务设置锁等待时间，避免死锁
+
+### 实现
+
+- 上锁
+
+```java
+public void lock() {
+    // 尝试获取锁，如果成功，就真的成功了
+    if (tryLock()) {
+        System.out.println(Thread.currentThread().getName() + "获取锁成功");
+    // 否则等待锁
+    } else {
+        waitLock(); 
+        // 当等待被唤醒后重新去竞争锁
+        lock();
+    }
+}
+private boolean tryLock() {
+    try {
+        // 通过zk创建临时节点的成功与否来表示是否获得锁
+        zkClient.createEphemeral("/lock");
+        return true;
+    } catch (Exception e) {
+        return false;
+    }
+}
+private void waitLock() {
+    // 监听节点被删除的事件
+    zkClient.subscribeDataChanges("/lock", new IZkDataListener() {
+        @Override
+        public void handleDataDeleted(String s) throws Exception {
+            // 如果节点被删除，唤醒latch
+            if (latch != null) {
+                latch.countDown();
+            }
+        }
+    });
+    // 如果zk有lock这个锁
+    if (zkClient.exists("/lock")) {
+        // 在这里进行等待，直至被上面的事件监听唤醒
+        latch = new CountDownLatch(1);
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    // 等待完成删除所有监听事件，避免监听器堆积影响性能
+    zkClient.unsubscribeAll();
+}
+```
+
+- 释放锁
+
+```java
+public void release() {
+    if (zkClient != null) {
+        // 关闭zk客户端，临时节点也随之被删除，相当于释放锁，让其他人去竞争
+        zkClient.close();
+        System.out.println(Thread.currentThread().getName()+"释放锁完成");
+    }
+}
+```

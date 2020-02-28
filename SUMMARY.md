@@ -286,6 +286,7 @@
     - [事件](./编程语言/JavaScript/事件.md)
     - [BOM](./编程语言/JavaScript/BOM.md)
     - [面向对象](./编程语言/JavaScript/面向对象.md)
+    - [函数](./编程语言/JavaScript/函数.md)
     - [AJAX](./编程语言/JavaScript/AJAX.md)
     - [ES5](./编程语言/JavaScript/ES5.md)
     - [ES6](./编程语言/JavaScript/ES6.md)

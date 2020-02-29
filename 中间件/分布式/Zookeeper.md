@@ -241,3 +241,44 @@ public void release() {
     }
 }
 ```
+
+## master选举
+
+### 原理
+
+多个服务器在启动的时候，会在Zookeeper上创建相同的临时节点，谁如果能够创建成功，谁就为主(因为节点保证唯一)，如果主服务宕机之后，会话连接也会失效，其他服务器有开始重新选举。
+
+### 实现
+
+```java
+// 创建节点成功就代表自己选举为主节点
+if (createNode()){
+    log.info("{}选举为主节点成功",serverPort);
+}else {
+    log.info("{}成为从节点",serverPort);
+}
+// 增加监听，当节点被删除（主节点挂掉了），重新竞争
+zkClient.subscribeDataChanges(path, new IZkDataListener() {
+    @Override
+    public void handleDataChange(String dataPath, Object data) throws Exception {
+    }
+    @Override
+    public void handleDataDeleted(String dataPath) throws Exception {
+        log.info("重新选举");
+        if (createNode()){
+            log.info("{}选举为主节点成功",serverPort);
+        }else {
+            log.info("{}成为从节点",serverPort);
+        }
+    }
+});
+
+private boolean createNode() {
+    try {
+        zkClient.createEphemeral(path);
+        return true;
+    } catch (Exception e) {
+        return false;
+    }
+}
+```

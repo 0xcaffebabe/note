@@ -126,3 +126,43 @@ CNAME记录，为了得到实际IP地址，浏览器需要再次对获得的CNAM
      ssl_certificate_key privkey.pem;
  }
 ```
+
+## 跨域问题
+
+同源策略限制了从同一个源加载的文档或脚本如何与来自另一个源的资源进行交互，所以通常情况下一个源无法通过ajax与另外一个源进行交互
+
+![批注 2020-02-29 141744](/assets/批注%202020-02-29%20141744.png)
+
+### 解决方案
+
+- JSONP（缺陷很多）
+
+服务端将返回数据封装成js函数调用并返回，客户端js通过动态加载script标签加载服务器的js数据，加载完成后执行封装的js函数获取数据
+
+所以jsonp这种请求方式与ajax有着本质的不同
+
+- 被调服务端设置响应头允许跨域
+
+```java
+response.setHeader("Access-Control-Allow-Origin","*");
+```
+
+- 后端请求转发
+
+前端所在的服务端调用被调服务端，将结果返回给前端
+
+- nginx反向代理
+
+```
+server {
+    listen 80;
+    server_name api.domain;
+    location /api1 {
+        proxy_pass http://outter_server;
+    }
+}
+```
+
+- 使用应用网关
+
+使可以通过一个统一入口访问各个项目

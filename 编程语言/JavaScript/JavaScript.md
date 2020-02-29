@@ -117,23 +117,6 @@ new Array(长度);
 
 - [常用方法](https://www.w3school.com.cn/jsref/jsref_obj_math.asp)
 
-## RegExp
-
-[参考资料](https://www.w3school.com.cn/js/jsref_obj_regexp.asp)
-
-- 创建
-
-```javascript
-var reg = new RegExp("正则表达式");
-var reg = /正则表达式/;
-```
-
-- 使用
-
-```javascript
-reg.test('some text');
-```
-
 ## Gloal
 
 - encodeURI

@@ -212,7 +212,7 @@
     - [输入与输出](./编程语言/C/输入与输出.md)
     - [UNIX系统接口](./编程语言/C/UNIX系统接口.md)
   - [JAVA](./编程语言/JAVA/nav.md)
-    - [JAVA运行环境](./编程语言/JAVA/语言基础.md)
+    - [语言基础](./编程语言/JAVA/语言基础.md)
     - -高级-
     - [常用API](./编程语言/JAVA/高级/常用API.md)
     - [继承与多态](./编程语言/JAVA/高级/继承与多态.md)
@@ -279,6 +279,7 @@
     - [BOM](./编程语言/JavaScript/BOM.md)
     - [面向对象](./编程语言/JavaScript/面向对象.md)
     - [函数](./编程语言/JavaScript/函数.md)
+    - [正则表达式](./编程语言/JavaScript/正则表达式.md)
     - [AJAX](./编程语言/JavaScript/AJAX.md)
     - [ES5](./编程语言/JavaScript/ES5.md)
     - [ES6](./编程语言/JavaScript/ES6.md)

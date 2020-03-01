@@ -270,6 +270,7 @@
       - [注解开发](./编程语言/JAVA/框架/mybatis/注解开发.md)
       - [分页插件](./编程语言/JAVA/框架/mybatis/分页插件.md)
     - [Mybatis-Plus](./编程语言/JAVA/框架/mybatis-plus.md)
+    - [Hibernate](./编程语言/JAVA/框架/Hibernate.md)
     - [Dubbo](./编程语言/JAVA/框架/Dubbo.md)
     - [JUnit](./编程语言/JAVA/框架/Junit.md)
     - [JAVA编程规范](./编程语言/JAVA/JAVA编程规范.md)

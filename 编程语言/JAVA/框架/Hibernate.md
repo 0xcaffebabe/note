@@ -147,3 +147,146 @@ session.delete(book);
 // 回滚事务
 tx.rollback();
 ```
+
+## 实体
+
+### 实体类注意事项
+
+- 持久类提供无参数构造方法
+- 成员变量私有,提供有get/set方法访问.需提供属性
+- 持久化类中的属性,应尽量使用包装类型
+- 持久化类需要提供id.与数据库中的主键列对应
+- 不要用final修饰class
+
+### 主键类型
+
+- 自然主键
+  - 表的业务列中,有某业务列符合,必须有,并且不重复的特征时,该列可以作为主键使用.
+- 代理主键
+  - 表的业务列中,没有某业务列符合,必须有,并且不重复的特征时,创建一个没有业务意义的列作为主键
+
+### 主键生成策略
+
+#### 代理主键
+
+identity : 主键自增.由数据库来维护主键值.录入时不需要指定主键.
+sequence: Oracle中的主键生成策略.
+increment(了解): 主键自增.由hibernate来维护.每次插入前会先查询表中id最大值.+1作为新主键值.
+hilo(了解): 高低位算法.主键自增.由hibernate来维护.开发时不使用.
+native:hilo+sequence+identity 自动三选一策略.
+uuid: 产生随机字符串作为主键. 主键类型必须为string 类型.
+
+#### 自然主键
+
+assigned:自然主键生成策略. hibernate不会管理主键值.由开发人员自己录入.
+
+## 对象状态
+
+- 瞬时状态
+  - 没有ID，没有在session缓存中
+- 持久化状态
+  - 有id,在session缓存中
+  - 持久化对象的变化会同步到数据库中
+- 游离|托管状态
+  - 有id,没有在session缓存中
+
+```java
+Book book = new Book(); // 瞬时状态
+book.setBauthor("unknown"); // 瞬时状态
+
+session.save(book); // 持久化状态
+tx.commit();
+// 关闭会话
+session.close(); // 游离|托管状态
+```
+
+![批注 2020-03-02 102153](/assets/批注%202020-03-02%20102153.png)
+
+## 一级缓存
+
+```java
+Book book = session.get(Book.class, 1);
+Book book1 = session.get(Book.class, 1);
+System.out.println(book == book1); // true
+```
+
+### 快照
+
+```java
+Book book = session.get(Book.class, 1);
+book.setBname("java learning"); 
+tx.commit(); // 与快照中对象进行对比，如果对象发生改变，则更新对象
+```
+
+## 事务
+
+### 设置事务隔离级别
+
+```xml
+<!--	1|2|4|8
+	0001 1 读未提交
+	0010 2 读已提交
+	0100 4 可重复读
+	1000 8 串行化
+-->
+<property name="hibernate.connection.isolation">4</property>
+```
+
+### 在项目中管理事务
+
+- 获取线程绑定session
+
+```xml
+<!-- 需要配置session上下文 -->
+<property name="current_session_context_class">thread</property>
+```
+
+```java
+// 获取线程绑定session
+// 注意，线程绑定的session事务提交后会自动关闭
+Session session = factory.getCurrentSession();
+```
+
+## 其他方式查询
+
+### HQL查询
+
+```java
+String hql = "FROM Book";
+Query<Book> query = session.createQuery(hql,Book.class);
+System.out.println(query.list());
+```
+
+```sql
+# 条件查询
+FROM Book where bauthor='unknown'
+```
+
+```java
+// 占位符
+String hql = "FROM Book where bauthor=:name";
+Query<Book> query = session.createQuery(hql,Book.class);
+query.setParameter("name","unknown");
+```
+
+```java
+// 分页
+query.setFirstResult(1);
+query.setMaxResults(10);
+```
+
+### Criteria查询(单表条件查询)
+
+```java
+Criteria criteria = session.createCriteria(Book.class);
+criteria.addOrder(Order.asc("bname"));
+System.out.println(criteria.list());
+```
+
+### 原生sql查询
+
+```java
+String sql = "SELECT * FROM tb_book WHERE bid = ?";
+NativeQuery<Book> query = session.createSQLQuery(sql).addEntity(Book.class);
+query.setParameter(1,1);
+```

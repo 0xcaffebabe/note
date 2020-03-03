@@ -219,3 +219,66 @@ slaveof 127.0.0.1 6379
 ![2020225163638](/assets/2020225163638.png)
 
 原理同HashMap
+
+## 实现分布式锁
+
+### 原理
+
+1.获取锁的时候，对某个key执行setnx，加锁（如果设置成功（获得锁）返回1，否则返回0），并使用expire命令为锁添加一个超时时间，超过该时间则自动释放锁，锁的value值为一个随机生成的UUID，通过此在释放锁的时候进行判断。
+
+2.获取锁的时候还设置一个获取的超时时间(防止死锁)，若超过这个时间则放弃获取锁。
+
+3.释放锁的时候，通过UUID判断是不是该锁，若是该锁，则执行delete进行锁释放
+
+### 实现
+
+```java
+public class RedisLock {
+    
+    private StringRedisTemplate template;
+
+    private static final String LOCK_KEY = "LOCK";
+
+    private String identifyValue;
+
+    public RedisLock(StringRedisTemplate template) {this.template = template;}
+
+    /**
+     * @param acquireTimeout 获取锁之前的超时时间
+     * @param expireTime     锁的过期时间
+     * @return
+     */
+    public boolean lock(long acquireTimeout, long expireTime) {
+        // 获取锁的时间
+        long inTime = System.currentTimeMillis();
+        identifyValue = UUID.randomUUID().toString();
+        for (; ; ) {
+            // 判断获取锁是否超时
+            if (System.currentTimeMillis() - inTime >= acquireTimeout) {
+                return false;
+            }
+            // 通过setnx的方式来获取锁
+            if (template.opsForValue().setIfAbsent(LOCK_KEY, identifyValue, expireTime, TimeUnit.MILLISECONDS)) {
+                // 获取锁成功
+                return true;
+            }
+            // 获取锁失败，继续自旋
+        }
+    }
+
+    public void release() {
+        if (identifyValue == null){
+            throw new IllegalStateException("没有获取锁");
+        }
+        // 删除的时候验证value，必须确保释放的锁是自己创建的
+        if (!identifyValue.equals(template.opsForValue().get(LOCK_KEY))){
+            throw new IllegalStateException("锁的value不一致");
+        }
+        template.delete(LOCK_KEY);
+    }
+}
+```
+
+### 与zookeeper比较
+
+相对比来说Redis比Zookeeper性能要好，从可靠性角度分析，Zookeeper可靠性比Redis更好。因为Redis有效期不是很好控制，可能会产生有效期延迟

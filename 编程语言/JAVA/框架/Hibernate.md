@@ -290,3 +290,150 @@ String sql = "SELECT * FROM tb_book WHERE bid = ?";
 NativeQuery<Book> query = session.createSQLQuery(sql).addEntity(Book.class);
 query.setParameter(1,1);
 ```
+
+## 多表查询
+
+### 一对多|多对一
+
+```xml
+<class name="Book" table="tb_book" >
+    <id name="bid">
+        <generator class="native"/>
+    </id>
+    <property name="bname" column="bname" />
+	<!-- 一对多 -->
+    <set name="authors">
+        <key column="book"/>
+        <one-to-many class="Author"/>
+    </set>
+</class>
+```
+```xml
+<class name="Author" table="tb_author" >
+    <id name="id">
+        <generator class="native"/>
+    </id>
+    <property name="name" column="author_name" />
+	<!-- 多对一 -->
+    <many-to-one name="book" column="book" class="Book"/>
+</class>
+```
+
+- 操作
+
+```java
+// 新增
+Book book = new Book();
+book.setBname("java");
+
+Author author1 = new Author();
+author1.setName("author1");
+author1.setBook(book);
+Author author2 = new Author();
+author2.setName("author2");
+author2.setBook(book);
+book.setAuthors(Set.of(author1,author2));
+
+session.save(book);
+session.save(author1);
+session.save(author2);
+
+// 追加一个多
+Book book = session.get(Book.class,1);
+Author author3 = new Author();
+author3.setName("author3");
+author3.setBook(book);
+book.getAuthors().add(author3);
+session.save(author3);
+
+// 移除一个多
+Book book = session.get(Book.class,1);
+book.getAuthors().removeIf(a-> "author1".equals(a.getName()));
+```
+
+- 级联操作
+
+```xml
+<!-- 
+ 	级联操作:	cascade
+ 		save-update: 级联保存更新
+ 		delete:级联删除
+ 		all:save-update+delete
+ 	级联操作: 简化操作.目的就是为了少写两行代码.
+  -->
+  <!-- inverse属性: 配置关系是否维护. 
+  		true: book不维护关系
+  		false(默认值): book维护关系
+  		
+  	inverse属性: 性能优化.提高关系维护的性能.
+  	原则: 无论怎么放弃,总有一方必须要维护关系.
+  	一对多关系中: 一的一方放弃.也只能一的一方放弃.多的一方不能放弃.
+  -->
+<set name="authors" inverse="true" cascade="save-update">
+
+<many-to-one name="book" column="book" class="Book" cascade="save-update"/>
+```
+
+```java
+Book book = new Book();
+book.setBname("python");
+
+Author author1 = new Author();
+author1.setName("authorx");
+author1.setBook(book);
+
+book.setAuthors(Set.of(author1));
+session.save(book);
+```
+
+### 多对多
+
+```xml
+<class name="Book" table="tb_book" >
+    <id name="bid">
+        <generator class="native"/>
+    </id>
+	<!-- 多对多关系一方要放弃维护关系 -->
+    <property name="bname" column="bname" inverse="true"/>
+
+    <set name="authors" table="tb_book_author">
+        <key column="bid"/>
+        <many-to-many class="Author" column="aid"/>
+    </set>
+</class>
+
+<class name="Author" table="tb_author" >
+    <id name="aid">
+        <generator class="native"/>
+    </id>
+    <property name="name" column="author_name" />
+    <set name="book" table="tb_book_author">
+        <key column="aid"/>
+        <many-to-many class="Book" column="bid"/>
+    </set>
+</class>
+```
+
+- 操作
+
+```java
+Book book1 = new Book();
+book1.setBname("clean code");
+Book book2 = new Book();
+book2.setBname("clean coder");
+
+Author author1 = new Author();
+author1.setName("martin flower");
+Author author2 = new Author();
+author2.setName("robert c");
+
+book1.setAuthors(Set.of(author1,author2));
+book2.setAuthors(Set.of(author1,author2));
+author1.setBook(Set.of(book1,book2));
+author2.setBook(Set.of(book1,book2));
+
+session.save(book1);
+session.save(book2);
+session.save(author1);
+session.save(author2);
+```

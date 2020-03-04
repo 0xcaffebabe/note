@@ -258,8 +258,23 @@ System.out.println(query.list());
 ```
 
 ```sql
-# 条件查询
+-- 条件查询
 FROM Book where bauthor='unknown'
+-- 排序
+FROM Book ORDER BY bid DESC
+-- 投影
+SELECT bname FROM Book
+-- 投影封装对象
+SELECT new Book(bname) FROM Book
+-- 连接Book与Author
+FROM Book b INNER JOIN fetch b.authors
+```
+
+```java
+// 聚合函数
+String hql = "SELECT max(bid) FROM Book";
+Query query = session.createQuery(hql);
+Number number = (Number) query.uniqueResult();
 ```
 
 ```java
@@ -270,8 +285,8 @@ query.setParameter("name","unknown");
 ```
 
 ```java
-// 分页
-query.setFirstResult(1);
+// 分页 第一页，每页10条
+query.setFirstResult(0);
 query.setMaxResults(10);
 ```
 
@@ -279,8 +294,26 @@ query.setMaxResults(10);
 
 ```java
 Criteria criteria = session.createCriteria(Book.class);
-criteria.addOrder(Order.asc("bname"));
 System.out.println(criteria.list());
+```
+
+```java
+// 根据ID查询
+criteria.add(Restrictions.idEq(2));
+// 条件查询
+criteria.add(Restrictions.eq("bname","clean code"));
+// 排序
+criteria.addOrder(Order.asc("bname"));
+// 聚合函数
+criteria.setProjection(Projections.max("bid"));
+```
+
+#### 离线查询
+
+```java
+DetachedCriteria criteria = DetachedCriteria.forClass(Book.class);
+criteria.add(Restrictions.eq("bname","clean code"));
+List list = criteria.getExecutableCriteria(session).list();
 ```
 
 ### 原生sql查询
@@ -437,3 +470,46 @@ session.save(book2);
 session.save(author1);
 session.save(author2);
 ```
+
+## 加载策略
+
+### 类级别
+
+```java
+// 立即加载
+Book book = session.get(Book.class, 1);
+
+// 延迟加载 使用时才去数据库查询（动态代理）
+// 使用懒加载时要确保,调用属性加载数据时,session还是打开的.不然会抛出异常
+Book book = session.load(Book.class, 2);
+```
+
+```xml
+<class name="Book" table="tb_book" lazy="true">
+```
+
+### 关联级别
+
+- 集合
+
+```xml
+<!-- 
+	lazy
+		true:默认值，获取集合时才加载
+		false:在get时，立即加载集合数据
+		extra:与懒加载效果一致，如果只获取集合size，那就只发起count语句
+	fetch
+		select:默认值
+		join：使用一条语句直接得到所有数据
+		subselect: 加载集合时，使用批量子查询
+ -->
+<set name="authors" table="tb_book_author" inverse="true" lazy="true" fetch="select">
+```
+
+- 关联属性
+
+为了提高效率.fetch的选择上应选择select. lazy的取值应选择 true. 全部使用默认值.
+
+### 批量抓取
+
+- batch-size

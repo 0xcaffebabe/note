@@ -98,6 +98,82 @@ nrm ls # 列出可用源
 nrm use xx # 使用某个源
 ```
 
+### gulp
+
+```shell
+npm install gulp
+npm install gulp-cli -g
+```
+
+```js
+// 执行 gulp first
+const gulp = require('gulp');
+
+gulp.task('first', () => {
+    return gulp.src('./src/index.html')
+        .pipe(gulp.dest('./dist'))
+})
+```
+
+#### 插件
+
+- 使用
+
+```js
+// 压缩html
+const htmlmin = require('gulp-htmlmin')
+
+gulp.task('htmlmin', () => {
+    return gulp.src('./src/*.html')
+        .pipe(htmlmin({collapseWhitespace:true}))
+        .pipe(gulp.dest('./dist'))
+})
+```
+
+## package.json
+
+项目描述文件,记录了当前项目信息，例如项目名称、版本、作者、github地址、 当前项目依赖了哪些第三方模块等。
+
+使用`npm init -y`命令生成。
+
+- dependencies
+- devDependencies
+- package-lock.json
+  - 锁定包的版本
+  - 记录了包以及依赖的下载地址
+
+### script
+
+```json
+"scripts": {
+   "test": "echo \"Error: no test specified\" && exit 1",
+   "build":"nodemon a.js"
+ }
+```
+
+```shell
+npm run build
+```
+
+## 模块加载机制
+
+```js
+// 如果模块后缀省略,先找同名JS文件再找同名JS文件夹
+// 如果找到了同名文件夹，找文件夹中的index.js
+// 如果文件夹中没有index.js就会去当前文件夹中的package.js文件中查找main选项中的入口文件
+// 如果再找不到就抛出异常
+require('./xx')
+
+// Node.js会假设它是 系统模块
+// Node.js会去node_ modules文件夹中
+// 首先看是否有该名字的JS文件
+// 再看是否有该名字的文件夹
+// 如果是文件夹看里面是否有index.js
+// 如果没有index.js查看 该文件夹中的package.json中的main选项确定模块入口文件
+// 否则找不到报错
+require('xx')
+```
+
 ## 创建web服务器
 
 ```js

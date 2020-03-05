@@ -130,6 +130,10 @@ gulp.task('htmlmin', () => {
 })
 ```
 
+## 全局对象
+
+- global
+
 ## package.json
 
 项目描述文件,记录了当前项目信息，例如项目名称、版本、作者、github地址、 当前项目依赖了哪些第三方模块等。
@@ -172,6 +176,107 @@ require('./xx')
 // 如果没有index.js查看 该文件夹中的package.json中的main选项确定模块入口文件
 // 否则找不到报错
 require('xx')
+```
+
+## 异步编程
+
+- 同步api
+  - 会阻塞
+  - 从返回值拿执行结果
+- 异步api
+  - 不会阻塞
+  - 从回调函数拿执行结果
+
+### 代码执行顺序
+
+```js
+console.log('代码开始执行');
+setTimeout(() => {
+    console.log('2秒后执行的代码');
+}, 2000); 
+setTimeout(() => {
+    console.log('"0秒"后执行的代码');
+}, 0);
+console.log('代码结束执行');
+```
+
+![批注 2020-03-05 145034](/assets/批注%202020-03-05%20145034.png)
+
+### Promise
+
+- 解决异步编程问题
+
+Promise 是一个对象，它代表了一个异步操作的最终完成或者失败
+
+```javascript
+var promise = new Promise((resolve, reject) => {
+
+    setTimeout(function () {
+        let condition = true;
+        if (condition) {
+            resolve('foo'); // 回调then里的函数
+        } else {
+            reject('error'); // 回调catch里的函数
+        }
+
+    }, 300);
+});
+
+promise
+    .then(value => { console.log(value); })
+    .catch(error => { console.log(error) })
+```
+
+- 解决回调地狱
+
+```js
+promise
+  .then(v=>{
+    return new Promise()
+  })
+  .then(v=>{
+    return new Promise()
+  })
+```
+
+### 异步函数
+
+```js
+// 使用async修饰，这个函数会返回一个Promise
+const fn = async () => {};
+async function fn () {}
+```
+
+```js
+async function f() {
+    return 11;
+}
+f()
+    .then(v=>console.log(v))
+```
+
+- await
+
+await关键字只能出现在异步函数中
+
+await promise await后面只能写promise对象 写其他类型的API是不不可以的
+
+await关键字可是暂停异步函数向下执行 直到promise返回结果
+
+```js
+async function f1() {
+    return 11;
+}
+async function f2(){
+    return 22;
+}
+async function f(){
+    // 可以通过await关键字将异步函数转同步执行
+    let i1 = await f1();
+    let i2 = await f2();
+    console.log(i1,i2)
+}
+f()
 ```
 
 ## web服务器

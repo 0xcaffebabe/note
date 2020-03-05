@@ -226,21 +226,3 @@ export function multiply(x, y) {
 };
 ```
 
-## Promise
-
-- 解决异步编程问题
-
-Promise 是一个对象，它代表了一个异步操作的最终完成或者失败
-
-```javascript
-var promise1 = new Promise(function(resolve, reject) {
-  setTimeout(function() {
-    resolve('foo');
-  }, 300);
-});
-
-promise1.then(function(value) {
-  console.log(value);
-  // expected output: "foo"
-});
-```

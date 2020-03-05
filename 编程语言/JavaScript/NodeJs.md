@@ -174,11 +174,13 @@ require('./xx')
 require('xx')
 ```
 
-## 创建web服务器
+## web服务器
+
+### 创建
 
 ```js
 var http = require('http')
-http.createServer(function(request,response){
+http.createServer((request,response)=>{
   const body = "hello world";
   response.writeHead(200,{
   'Content-Length':Buffer.byteLength(body),
@@ -188,10 +190,77 @@ http.createServer(function(request,response){
 }).listen(8888);
 ```
 
-- 获取请求参数
+### 请求报文
 
 ```js
-request.url
+const body = `request method:${request.method}
+              request url:${request.url}
+              request headers ua:${request.headers["user-agent"]}
+`
 ```
 
+### 响应报文
 
+```js
+response.writeHead(200,{
+    'Content-Type':'application/json'
+})
+response.end('{"result":"25"}')
+```
+
+### 请求参数
+
+- get
+
+```js
+const url = require('url')
+
+let { query } = url.parse(request.url, true)
+// 输出name参数与age参数
+response.end(query.name + "," + query.age)
+```
+
+- post
+
+```js
+let postData = ''
+request.on('data',params=>{
+    postData += params
+})
+request.on('end',()=>{
+    let i = querystring.parse(postData)
+    response.end(`name: ${i.name} address: ${i.address}`)
+})
+```
+
+### 路由
+
+```js
+let { pathname } = url.parse(req.url);
+if (pathname == '/' || pathname == '/index') {
+  response.end('欢迎来到首页');
+} else if (pathname == '/list') {
+  response.end('欢迎来到列表页页');
+} else {
+  response.end('抱歉, 您访问的页面出游了');
+}
+```
+
+### 静态资源
+
+```js
+fs.readFile(__dirname+'/static'+pathname,(error,data)=>{
+    if (!error){
+        let type = pathname.substring(pathname.lastIndexOf('.')+1)
+        response.writeHead(200,{
+            "Content-Type":mime.getType(pathname)
+        })
+        response.end(data)
+    }else{
+        response.writeHead(404,{
+            "Content-Type":"text/html;charset=utf8"
+        })
+        response.end('404 NOT FOUND')
+    }
+})
+```

@@ -1,6 +1,8 @@
+# mongodb
+
 > MongoDB 是一个跨平台的，面向文档的数据库，是当前 NoSQL 数据库产品中最热 门的一种。它介于关系数据库和非关系数据库之间，是非关系数据库当中功能最丰富，最 像关系数据库的产品。它支持的数据结构非常松散，是类似 JSON 的 BSON 格式，因此可以 存储比较复杂的数据类型。
 
-# 基础概念
+## 基础概念
 
 SQL术语/概念    | MongoDB术语/概念 | 解释/说明
 ----------- | ------------ | --------------------------
@@ -12,7 +14,7 @@ index       | index        | 索引
 table joins |              | 表连接（MongoDB不支持）
 primary key | primary key  | 主键,MongoDB自动在每个集合中添加_id的主键
 
-# 数据类型
+## 数据类型
 
 - null：用于表示空值或者不存在的字段，{“x”:null}
 - 布尔型：布尔类型有两个值true和false，{“x”:true}
@@ -27,7 +29,7 @@ primary key | primary key  | 主键,MongoDB自动在每个集合中添加_id的�
 - 二进制数据：二进制数据是一个任意字节的字符串。它不能直接在shell中使用。如果要 将非utf-字符保存到数据库中，二进制数据是唯一的方式。
 - 代码：查询和文档中可以包括任何JavaScript代码，{“x”:function(){/…/}}
 
-# 操作
+## 操作
 
 ```shell
 show dbs #列出所有数据库
@@ -63,36 +65,157 @@ db.createUser(      {       
 )
 ```
 
-# JAVA操作
+## JAVA操作
 
 - 依赖
 
 ```xml
-        <dependency>
-            <groupId>org.mongodb</groupId>
-            <artifactId>mongo-java-driver</artifactId>
-            <version>3.11.0</version>
-        </dependency>
+<dependency>
+    <groupId>org.mongodb</groupId>
+    <artifactId>mongo-java-driver</artifactId>
+    <version>3.11.0</version>
+</dependency>
 ```
 
 - 使用
 
 ```java
-        MongoClient client = new MongoClient("my-pc");
-        MongoDatabase db = client.getDatabase("db");
+MongoClient client = new MongoClient("my-pc");
+MongoDatabase db = client.getDatabase("db");
 
-        MongoCollection<Document> spit = db.getCollection("spit");
-        Document d = new Document();
-        d.append("name","jntm");
-        spit.insertOne(d);
-        for (Document document : spit.find()) {
-            System.out.println(document.getString("name"));
-        }
-        client.close();
+MongoCollection<Document> spit = db.getCollection("spit");
+Document d = new Document();
+d.append("name","jntm");
+spit.insertOne(d);
+for (Document document : spit.find()) {
+    System.out.println(document.getString("name"));
+}
+client.close();
 ```
 
-## Spring data mongodb
+### Spring data mongodb
 
+## node操作
 
-# GridFS
+- 连接
+
+```js
+const mongoose = require('mongoose')
+
+mongoose.connect('mongodb://localhost/db1', { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => {
+       console.log('连接成功')
+    })
+    .catch(e => console.log(e))
+```
+
+- 创建集合
+
+```js
+const userSchema = new mongoose.Schema({
+    name: String,
+    age: Number
+})
+// 返回一个构造函数
+const User = mongoose.model('User',userSchema)
+```
+
+- 插入文档
+
+```js
+const user = new User({
+    name:'cxk',age:18
+})
+user.save()
+```
+
+```js
+User.create({name:'gdf',age:15},(err,doc)=>{
+    if (!err){
+        console.log('插入成功',doc)
+    }
+})
+```
+
+- 查询
+
+```js
+// 查询全部
+User.find().then(result=>console.log(result))
+// 根据ID查询
+User.findById('5c09f236aeb04b22f8460967').then(result=>console.log(result))
+// 根据条件查询
+User.find({password:'123456'}).then(result=>console.log(result))
+User.find({ age: { $gt: 20, $lt: 40 } }).then(result => console.log(result))
+User.find({ hobbies: { $in: ['打豆豆'] } }).then(result => console.log(result))
+// 投影
+User.find().select('name password -_id').then(result => console.log(result))
+// 排序
+User.find().sort('age').then(result => console.log(result))
+User.find().sort('-age').then(result => console.log(result)) // 降序
+// 分页
+User.find().skip(2).limit(5).then(result => console.log(result))
+```
+
+- 删除
+
+```js
+// 删除符合条件的第一个文档
+User.findOneAndDelete({name:'cxk'}).then(res=>console.log(res))
+// 删除符合条件的全部文档
+User.deleteMany({name:'gdf'}).then(res=>console.log(res))
+```
+
+- 更新
+
+```js
+// 更新符合条件中的第一个
+User.updateOne({ name: 'gdf' }, { name: 'cxk' }).then(res => console.log(res))
+// 更新全部符合调价你的
+User.updateMany({ password: '123456' }, { name: 'cxk' }).then(res => console.log(res))
+```
+
+### 验证
+
+```js
+const userSchema = new mongoose.Schema({
+    // name必传，否则会报错
+    name: {
+        type: String,
+        required: true
+    },
+    age: Number
+})
+```
+其他的验证规则
+```
+required: true 必传字段
+minlength：3 字符串最小长度
+maxlength: 20 字符串最大长度
+min: 2 数值最小为2
+max: 100 数值最大为100
+enum: ['html', 'css', 'javascript', 'node.js']
+trim: true 去除字符串两边的空格
+validate: 自定义验证器
+default: 默认值
+```
+
+### 集合关联
+
+```js
+// 用户集合
+const User = mongoose.model('User', new mongoose.Schema({ name: { type: String } }));
+// 文章集合
+const Post = mongoose.model('Post', new mongoose.Schema({
+    title: { type: String },
+    // 使用ID将文章集合和作者集合进行关联
+    author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+}));
+```
+
+```js
+Post.find().populate('author').then(r => console.log(r))
+```
+
+## GridFS
 

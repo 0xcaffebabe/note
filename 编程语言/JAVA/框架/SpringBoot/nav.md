@@ -460,3 +460,62 @@ public class RedisTest {
     }
 }
 ```
+
+### 集成swagger
+
+- 依赖
+
+```xml
+<dependency>
+    <groupId>com.spring4all</groupId>
+    <artifactId>swagger-spring-boot-starter</artifactId>
+    <version>1.9.1.RELEASE</version>
+</dependency>
+```
+
+- 配置
+
+```properties
+swagger.base-package=wang.ismy.consume
+```
+
+```java
+@EnableSwagger2Doc
+```
+
+#### zuul整合各个微服务文档
+
+- 依赖
+
+```xml
+<dependency>
+    <groupId>com.spring4all</groupId>
+    <artifactId>swagger-spring-boot-starter</artifactId>
+    <version>1.9.1.RELEASE</version>
+</dependency>
+```
+
+- 配置
+
+```java
+@Component
+@Primary
+@EnableSwagger2Doc
+class DocumentationConfig implements SwaggerResourcesProvider {
+    @Override
+    public List<SwaggerResource> get() {
+        List resources = new ArrayList<>();
+
+        resources.add(swaggerResource("consumer", "/api-consumer/v2/api-docs", "2.0"));
+        return resources;
+    }
+
+    private SwaggerResource swaggerResource(String name, String location, String version) {
+        SwaggerResource swaggerResource = new SwaggerResource();
+        swaggerResource.setName(name);
+        swaggerResource.setLocation(location);
+        swaggerResource.setSwaggerVersion(version);
+        return swaggerResource;
+    }
+}
+```

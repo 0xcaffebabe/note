@@ -4,11 +4,11 @@
 
 ## 应用场景
 
-- 缓存（数据查询、短连接、新闻内容、商品内容等等）
-- 聊天室的在线好友列表
-- 任务队列。（秒杀、抢购、12306等等）
-- 应用排行榜
-- 网站访问统计
+- 缓存
+- 实时性要求高的数据
+- 消息队列
+- 热点数据
+- 计数器
 - 数据过期处理（可以精确到毫秒）
 - 分布式集群架构中的session分离
 - 分布式锁
@@ -63,9 +63,64 @@
 - exists key：判断指定的key是否存在
 - expire key time：指定key的生存时间，单位：秒
 
+## 数据结构
+
+### 字典
+
+```c
+typedef struct dictht {
+    dictEntry **table;
+    unsigned long size;
+    unsigned long sizemask;
+    unsigned long used;
+} dictht;
+typedef struct dictEntry {
+    void *key;
+    union {
+        void *val;
+        uint64_t u64;
+        int64_t s64;
+        double d;
+    } v;
+    struct dictEntry *next;
+} dictEntry;
+```
+
+redis使用了两张哈希表来方便扩容时的rehash操作
+
+在进行rehash时，为避免给服务器带来过大负担，并不是一次性将所有值rehash到另外一张表，而是通过渐进的方式，每次对字典执行添加、删除、查找或者更新操作时，都会执行一次渐进式 rehash。
+
+### 跳跃表
+
+![202031284446](/assets/202031284446.png)
+
+查找时，从上层开始查找，找到对应的区间后再到下一层继续查找，类似于二分查找
+
+这种查找数据结构跟红黑树相比：
+
+- 插入非常快，因为不需要在插入后进行旋转
+- 实现容易
+- 支持无锁操作
+
+## 数据淘汰策略
+
+设置内存最大使用量，当内存使用量超出时，会施行数据淘汰策略
+
+策略              | 描述
+--------------- | --------------------------
+volatile-lru    | 从已设置过期时间的数据集中挑选最近最少使用的数据淘汰
+volatile-ttl    | 从已设置过期时间的数据集中挑选将要过期的数据淘汰
+volatile-random | 从已设置过期时间的数据集中任意选择数据淘汰
+allkeys-lru     | 从所有数据集中挑选最近最少使用的数据淘汰
+allkeys-random  | 从所有数据集中任意选择数据进行淘汰
+noeviction      | 禁止驱逐数据
+
+
 ## 持久化
 
 ### RDB
+
+将某个时间点的所有数据都存放到硬盘上
 
 - 配置文件
 
@@ -87,10 +142,20 @@ save 60 10000
 ```
 appendonly no（关闭aof） --> appendonly yes （开启aof）
 
-# appendfsync always ： 每一次操作都进行持久化
+appendfsync always ： 每一次操作都进行持久化
 appendfsync everysec ： 每隔一秒进行一次持久化
-# appendfsync no     ： 不进行持久化
+appendfsync no     ： 让操作系统来决定何时同步
 ```
+
+## 事件
+
+### 文件事件
+
+![202031285728](/assets/202031285728.png)
+
+### 时间事件
+
+Redis 将所有时间事件都放在一个无序链表中，通过遍历整个链表查找出已到达的时间事件，并调用相应的事件处理器
 
 ## Jedis
 
@@ -146,6 +211,7 @@ template.setEnableTransactionSupport(true);
 // begin
 try{
     template.multi();
+    // 事务中的多个命令被一次性发送给服务器
     template.opsForValue().set("java","langeuage");
     template.opsForValue().set("python","langeuage");
     // commit
@@ -179,6 +245,13 @@ redis的复制功能是支持多个数据库之间的数据同步。一类是主
 2：主数据库接收到sync命令后会开始在后台保存快照（执行rdb操作），并将保存期间接收到的命令缓存起来
 3：当快照完成后，redis会将快照文件和所有缓存的命令发送给从数据库。
 4：从数据库收到后，会载入快照文件并执行收到的缓存的命令
+5：此后，当主服务器每执行一次写命令，就向从服务器发送相同的写命令
+
+### 主从链
+
+当从服务器过大，主服务器无法很快地更新所有从服务器，所以可以在中间创建一个从服务器中间层
+
+![20203129441](/assets/20203129441.png)
 
 ### 配置
 
@@ -212,7 +285,7 @@ slaveof 127.0.0.1 6379
 
 - 官方方案redis-cluster搭建
 - 客户端分片技术（不推荐），扩容/缩容时，必须手动调整分片程序，出现故障不能自动转移
-- 主从复制方式：但是数据冗余
+- 主从复制方式：数据冗余
 
 ### redis-cluster原理
 

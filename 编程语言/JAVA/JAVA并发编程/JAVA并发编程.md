@@ -38,6 +38,22 @@ public static Object get(){
 
 - 对持有锁的范围、时间进行良好设计
 
+### 非阻塞同步
+
+互斥同步最主要的问题就是线程阻塞和唤醒所带来的性能问题，因此这种同步也称为阻塞同步
+
+悲观的并发策略：认为只要不去做正确的同步措施，那就肯定会出现问题。无论共享数据是否真的会出现竞争，它都要进行加锁
+
+乐观并发策略：先进行操作，如果没有其它线程争用共享数据，那操作就成功了，否则采取补偿措施
+
+#### CAS
+
+乐观锁需要操作和冲突检测这两个步骤具备原子性。
+
+比较并交换（Compare-and-Swap，CAS）
+
+CAS 指令需要有 3 个操作数，分别是内存地址 V、旧的预期值 A 和新值 B。当执行操作时，只有当 V 的值等于 A，才将 V 的值更新为 B
+
 # 对象的共享
 
 ## 可见性
@@ -158,75 +174,95 @@ synchronized(obj){
 
 - CountDownLatch(闭锁)
 
-> 确保某些活动直到其他活动都完成后才继续执行(并发编程中的屏障)
+> 确保某些活动直到其他活动都完成后才继续执行
+
+![202031219448](/assets/202031219448.png)
 
 ```java
-        CountDownLatch lock = new CountDownLatch(5);
+CountDownLatch lock = new CountDownLatch(5);
 
-        for (int i = 0; i < 5; i++) {
-            int finalI = i;
-            new Thread(()->{
-                Random random = new Random();
-                try {
-                    Thread.sleep(random.nextInt(5000));
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                System.out.println("线程"+ finalI +"完成");
-                lock.countDown();
-            }).start();
+for (int i = 0; i < 5; i++) {
+    int finalI = i;
+    new Thread(()->{
+        Random random = new Random();
+        try {
+            Thread.sleep(random.nextInt(5000));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
+        System.out.println("线程"+ finalI +"完成");
+        lock.countDown();
+    }).start();
+}
 
-        lock.await();
-        System.out.println("all mission complete");
+lock.await();
+System.out.println("all mission complete");
 ```
 
 - FutureTask
 
 >用来执行一些较长时间的计算，通过get来获取结果（阻塞或者超时）
 
+用于异步获取执行结果或取消执行任务的场景
+
+```java
+FutureTask<Integer> futureTask = new FutureTask<>(() -> {
+    int result = 0;
+    for (int i = 0; i < 100; i++) {
+        Thread.sleep(10);
+        result += i;
+    }
+    return result;
+});
+new Thread(futureTask).start();
+System.out.println(futureTask.get());
+```
+
 - Semaphore(信号量)
 
 > 用来控制使用资源的主体数量
 
 ```java
-        Semaphore semaphore = new Semaphore(5);
+Semaphore semaphore = new Semaphore(5);
+// 最多只有5个线程能同时运行
+for (int i = 0; i < 10; i++) {
+    new Thread(()->{
+        Random rnd = new Random();
 
-        for (int i = 0; i < 10; i++) {
-            new Thread(()->{
-                Random rnd = new Random();
-
-                try {
-                    semaphore.acquire();
-                    System.out.println(Thread.currentThread()+"acquire lock");
-                    Thread.sleep(5000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }finally {
-                    semaphore.release();
-                }
-            }).start();
+        try {
+            semaphore.acquire();
+            System.out.println(Thread.currentThread()+"acquire lock");
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }finally {
+            semaphore.release();
+        }
+    }).start();
+}
 ```
 
 - CyclicBarrier（栅栏）
 
 >闭锁用于等待事件，而栅栏用于等待其他线程
 
+![2020312194816](/assets/2020312194816.png)
+
 ```java
-        CyclicBarrier barrier = new CyclicBarrier(5, () -> System.out.println("mission complete"));
-
-        for (int i = 0; i < 5; i++) {
-            new Thread(() -> {
-                Random rnd= new Random();
-                try {
-                    System.out.println(Thread.currentThread()+"run");
-                    Thread.sleep(rnd.nextInt(3000));
-                    barrier.await();
-                } catch (InterruptedException | BrokenBarrierException e) {
-                    e.printStackTrace();
-                }
-
-            }).start();
+CyclicBarrier barrier = new CyclicBarrier(5, () -> System.out.println("mission complete"));
+// 调用await的线程会进行等待，直到第5个线程调用await，所有线程才会继续执行
+for (int i = 0; i < 5; i++) {
+    new Thread(() -> {
+        Random rnd= new Random();
+        try {
+            System.out.println(Thread.currentThread()+"run");
+            Thread.sleep(rnd.nextInt(3000));
+            barrier.await();
+        } catch (InterruptedException | BrokenBarrierException e) {
+            e.printStackTrace();
+        }
+    }).start();
+}
 ```
 
 # 任务执行
@@ -465,7 +501,56 @@ public interface Lock {
 
 ReentrantLock是一种互斥锁，也就说在同一时间内只有一个线程能对资源读或者写，如果要对读写分别控制，考虑使用ReadWriteLock
 
+# 锁优化
 
+## 自旋锁
 
+是让一个线程在请求一个共享数据的锁时执行忙循环（自旋）一段时间，如果在这段时间内能获得锁，就可以避免进入阻塞状态
 
+## 锁消除
 
+对于被检测出不可能存在竞争的共享数据的锁进行消除
+
+## 锁粗化
+
+如果一系列的连续操作都对同一个对象反复加锁和解锁，频繁的加锁操作就会导致性能损耗
+
+如果虚拟机探测到由这样的一串零碎的操作都对同一个对象加锁，将会把加锁的范围扩展（粗化）到整个操作序列的外部
+
+```java
+synchronized(obj){
+    //...
+}
+synchronized(obj){
+    //...
+}
+synchronized(obj){
+    //...
+}
+```
+
+```java
+synchronized(obj){
+    //...
+    //..
+    //...
+}
+```
+
+## 轻量级锁
+
+轻量级锁是相对于传统的重量级锁而言，它使用 CAS 操作来避免重量级锁使用互斥量的开销
+
+## 偏向锁
+
+偏向于让第一个获取锁对象的线程，这个线程在之后获取该锁就不再需要进行同步操作，甚至连 CAS 操作也不再需要
+
+# 并发编程良好实践
+
+- 给线程起名字
+- 缩小同步范围
+- 多用同步工具少用原始的wait,notify
+- 使用阻塞队列
+- 多用 ConcurrentHashMap 而不是 Hashtable
+- 使用栈封闭以及不变性保证线程安全
+- 使用线程池

@@ -38,9 +38,109 @@ docker run -d --hostname my-rabbit --name some-rabbit -p 15672:15672 -p 5672:567
 - Queue
   - （队列）是RabbitMQ的内部对象，用于存储消息
 
-## 消息模型
+## 使用
 
-![rabbitMq的6种消息模型](https://gitee.com/caffebabee/leyou/raw/master/day15-rabbitmq%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5/assets/1527068544487.png)
+## JAVA客户端
+
+- 获取连接
+
+```java
+ConnectionFactory factory = new ConnectionFactory();
+factory.setHost("192.168.182.129");
+factory.setUsername("my");
+factory.setPassword("123");
+factory.setPort(5672);
+factory.setVirtualHost("/");
+
+Connection connection = factory.newConnection();
+```
+
+- 创建队列/绑定队列
+
+```java
+Channel channel = connection.createChannel();
+channel.queueDeclare("queue1",false,false,false,null);
+```
+
+- 生产者发送消息
+
+```java
+String msg = UUID.randomUUID().toString();
+channel.basicPublish("","queue1",null,msg.getBytes());
+```
+
+- 消费者监听
+
+```java
+DefaultConsumer consumer = new DefaultConsumer(channel){
+    @Override
+    public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+        System.out.println("接收到消息:"+new String(body));
+
+    }
+};
+channel.basicConsume("queue1",true,consumer);
+```
+
+### SpringBoot
+
+- 引入依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-amqp</artifactId>
+</dependency>
+```
+
+- 配置（生产者、消费者）
+
+```yml
+spring:
+  rabbitmq:
+    addresses: 192.168.182.129
+    username: my
+    password: 123
+    virtual-host: /
+```
+
+- 生产者发送消息
+
+```java
+@Autowired
+private RabbitTemplate rabbitTemplate;
+
+public void sendUser(User user) throws Exception{
+    CorrelationData correlationData = new CorrelationData(user.getUsername());
+    rabbitTemplate.convertAndSend("user-exchange","user.abcd",user,correlationData);
+}
+```
+
+- 消费端配置
+
+```properties
+spring.rabbitmq.listener.simple.concurrency=5
+spring.rabbitmq.listener.simple.acknowledge-mode=auto
+spring.rabbitmq.listener.simple.max-concurrency=10
+spring.rabbitmq.listener.simple.prefetch=1
+```
+
+- 消费
+
+```java
+@RabbitListener(bindings = @QueueBinding(
+        value = @Queue(value = "user-queue"),
+        exchange = @Exchange(name = "user-exchange",type = "topic"),
+        key = "user.#"
+))
+@RabbitHandler
+public void onMessage(@Payload User user){
+    // 当这里抛出异常，会自动进行重试
+    log.info("on message:{}",user);
+}
+```
+
+## 消息模型
 
 ### 点对点
 
@@ -124,10 +224,23 @@ channel.queueBind(queueName, exchangeName, "routing_key");
 
 Topic类型的Exchange与Direct相比，都是可以根据RoutingKey把消息路由到不同的队列。只不过Topic类型Exchange可以让队列在绑定Routing key 的时候使用通配符
 
-![Topic模式](https://gitee.com/caffebabee/leyou/raw/master/day15-rabbitmq%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5/assets/1532766712166.png)
+![202031311031](/assets/202031311031.png)
+
+端a
+
+```java
+channel.queueBind(queueName, exchangeName, "#.sms");
+```
+
+端b
+
+```java
+channel.queueBind(queueName, exchangeName, "#.email");
+```
+
+当生产者的routingKey为log.sms时，消息会发送到端a
 
 - `#` 可以匹配一个或多个词
-
 - `*`只能匹配一个词
 
 ## 消息确认机制（ACK）
@@ -148,110 +261,39 @@ DefaultConsumer consumer = new DefaultConsumer(channel){
 channel.basicConsume("queue1",false,consumer);
 ```
 
-## 使用
-
-## JAVA客户端
-
-- 获取连接
+### 事务
 
 ```java
-ConnectionFactory factory = new ConnectionFactory();
-factory.setHost("192.168.182.129");
-factory.setUsername("my");
-factory.setPassword("123");
-factory.setPort(5672);
-factory.setVirtualHost("/");
-
-Connection connection = factory.newConnection();
-```
-
-- 创建队列/绑定队列
-
-```java
-Channel channel = connection.createChannel();
-channel.queueDeclare("queue1",false,false,false,null);
-```
-
-- 生产者发送消息
-
-```java
-String msg = UUID.randomUUID().toString();
-channel.basicPublish("","queue1",null,msg.getBytes());
-```
-
-- 消费者监听
-
-```java
-DefaultConsumer consumer = new DefaultConsumer(channel){
-    @Override
-    public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-        System.out.println("接收到消息:"+new String(body));
-
-    }
-};
-channel.basicConsume("queue1",true,consumer);
-```
-
-### SpringBoot
-
-- 引入依赖
-
-```xml
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-amqp</artifactId>
-</dependency>
-```
-
-- 添加队列
-
-![批注 2019-07-21 105204](/assets/批注%202019-07-21%20105204.png)
-
-- 添加交换机
-
-![批注 2019-07-21 105304](/assets/批注%202019-07-21%20105304.png)
-
-- 添加绑定
-
-![批注 2019-07-21 105352](/assets/批注%202019-07-21%20105352.png)
-
-- 发送
-
-```java
-@Autowired
-private RabbitTemplate rabbitTemplate;
-
-public void sendUser(User user) throws Exception{
-    CorrelationData correlationData = new CorrelationData(user.getUsername());
-    rabbitTemplate.convertAndSend("user-exchange","user.abcd",user,correlationData);
+try{
+    channel.txSelect();
+    String msg = UUID.randomUUID().toString();
+    channel.basicPublish(exchangeName,"log.email",null,msg.getBytes());
+    channel.txCommit();
+}catch (Exception e){
+    channel.txRollback();
 }
 ```
 
-- 接收
+## 保证幂等性
 
-  - 消费端配置
+当引入异常重试机制时，如何保证同一条消息不被重复消费
 
-    ```properties
-    spring.rabbitmq.listener.simple.concurrency=5
-    spring.rabbitmq.listener.simple.acknowledge-mode=auto
-    spring.rabbitmq.listener.simple.max-concurrency=10
-    spring.rabbitmq.listener.simple.prefetch=1
-    ```
+- 重试配置
 
-  - 消费
+```yml
+spring:
+  rabbitmq:
+    listener:
+      simple:
+        retry:
+          initial-interval: 100ms
+          enabled: true
+          max-attempts: 3
+```
 
-    ```java
-    @RabbitListener(bindings = @QueueBinding(
-            value = @Queue(value = "user-queue"),
-            exchange = @Exchange(name = "user-exchange",type = "topic"),
-            key = "user.#"
-    ))
-    @RabbitHandler
-    public void onMessage(@Payload User user){
+### 全局消息ID
 
-        log.info("on message:{}",user);
-    }
-    ```
+当消费者处理完一条消息之后，将这个消息ID记录下来，当一条新消息到来之后，要判断是否记录过这条消息的ID，如果是，不再继续往下处理
 
 # 消息可靠投递方案
 

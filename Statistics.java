@@ -50,7 +50,7 @@ public class Statistics {
             fis.close();
         }
         System.out.println(
-                "note line total count:" + totalCount + ", real count:" + realCount + ", blank count:" + blankCount);
+                "笔记总行数:" + totalCount + ", 实际行数:" + realCount + ", 空白行数:" + blankCount);
     }
 
     // 统计字数
@@ -63,12 +63,12 @@ public class Statistics {
             wordCount += fileContent.length();
             fis.close();
         }
-        System.out.println("word count:" + wordCount);
+        System.out.println("笔记词汇数量:" + wordCount);
     }
 
     // 统计图片数
     private static void imgFileCount() {
-        System.out.println("image count:" + listFiles(new File("./assets")).stream().count());
+        System.out.println("图片数:" + listFiles(new File("./assets")).stream().count());
     }
 
     // 统计仓库容量
@@ -79,7 +79,7 @@ public class Statistics {
             size += f.length();
         }
         DecimalFormat df = new DecimalFormat("0.00");
-        System.out.println("repository size:" + df.format(size / 1024.0 / 1024.0) + "MB");
+        System.out.println("仓库尺寸:" + df.format(size / 1024.0 / 1024.0) + "MB");
     }
 
     // 统计代码占比

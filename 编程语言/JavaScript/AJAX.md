@@ -142,3 +142,89 @@ $.ajax({
 
 - $.get
 - $.post
+
+## FormData
+
+- 表单上传
+- 二进制文件上传
+
+### 简单使用
+
+```html
+<form id="form">
+    <input type="text" name="username"/>
+    <input type="password" name="password"/>
+    <input type="file" name="file">
+    <input type="button" id="btn"/>
+</form>
+```
+
+```js
+let form = document.querySelector("#form");
+let formData = new FormData(form);
+let xhr = new XMLHttpRequest();
+xhr.open('post','/formData');
+xhr.send(formData);
+```
+
+### 实例方法
+
+```js
+// 获取表单对象属性
+formData.get('username');
+// 设置表单对象属性
+formData.set("username","cxk");
+// 删除表单对象属性
+formData.delete("username");
+// 追加表单对象属性,属性名已存在的情况下,set会覆盖,append会保留
+formData.append("username","cxk");
+```
+
+### 文件上传进度展示
+
+```js
+xhr.upload.onprogress = function (ev) {
+    console.log(ev.loaded / ev.total)
+}
+```
+
+### 图片上传实时预览
+
+```java
+var file = document.querySelector('#file');
+file.onchange = function(){
+    var reader = new FileReader();
+    reader.readAsDataURL(this.files[0]);
+    reader.onload = function(){
+        document.querySelector('.img-thumbnail').src = reader.result;
+    }
+}
+```
+
+## 同源策略
+
+ajax受同源策略限制
+
+### JSONP
+
+原理：
+
+客户端定义一个函数：
+
+```js
+function fn (data) { // 接收到服务器data后的一些处理 }
+```
+
+服务端返回一个函数调用：
+
+```js
+const data = 'fn({name: "张三", age: "20"})';
+```
+
+客户端使用script可以跨域加载数据
+
+```js
+<script src="server_ajax_address"></script>
+```
+
+这样客户端就可以获取服务端的数据

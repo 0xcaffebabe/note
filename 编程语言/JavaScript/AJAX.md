@@ -136,12 +136,17 @@ $.ajax({
         alert("出错啦...")
     },//表示如果请求响应出现错误，会执行的回调函数
 
-    dataType:"text"//设置接受到的响应数据的格式
+    dataType:"text"//设置请求方式ajax jsonp
 });
 ```
 
 - $.get
 - $.post
+- serialize
+
+```js
+$("#form").serialize(); // 将表单输入的内容转换成如k=v&a=b这种形式
+```
 
 ## FormData
 
@@ -223,8 +228,48 @@ const data = 'fn({name: "张三", age: "20"})';
 
 客户端使用script可以跨域加载数据
 
-```js
+```html
 <script src="server_ajax_address"></script>
 ```
 
 这样客户端就可以获取服务端的数据
+
+```js
+function fn(data){
+    console.log('server res',data);
+}
+let script = document.createElement('script');
+script.src = '/jsonp?v=1';
+document.body.appendChild(script);
+```
+
+```java
+@GetMapping("/jsonp")
+public String jsonp(){
+    return "fn({name:'cxk',age:18})";
+}
+```
+
+#### 优化
+
+- 回调函数名称参数化
+- 回调函数参数化
+  - 注意回调函数覆盖问题
+- url参数化 
+- 接收到回调后删除script标签
+
+### CORS
+
+全称为 Cross-origin resource sharing，即跨域资源共享，它允许浏览器向跨域服务器发送 Ajax 请求，克服了 Ajax 只能同源使用的限制
+
+通过设置`Access-Control-Allow-Origin`和`Access-Control-Allow-Methods`响应头来允许哪些源可以使用哪些方法访问
+
+```java
+@RestController
+@CrossOrigin("*")
+public class Controller {...}
+```
+
+withCredentials：指定在涉及到跨域请求时，是否携带cookie信息，默认值为false
+
+### 使用后端服务器辅助访问

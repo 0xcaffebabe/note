@@ -135,9 +135,22 @@ $.ajax({
     error:function () {
         alert("出错啦...")
     },//表示如果请求响应出现错误，会执行的回调函数
-
-    dataType:"text"//设置请求方式ajax jsonp
 });
+```
+
+发送jsonp请求
+
+```js
+$.ajax({
+    url: 'http://www.example.com',
+    // 指定当前发送jsonp请求
+    dataType: 'jsonp',
+    // 修改callback参数名称
+    jsonp: 'cb',
+    // 指定函数名称
+    jsonCallback: 'fnName',
+    success: function (response) {} 
+})
 ```
 
 - $.get
@@ -147,6 +160,15 @@ $.ajax({
 ```js
 $("#form").serialize(); // 将表单输入的内容转换成如k=v&a=b这种形式
 ```
+
+#### 全局事件
+
+```js
+.ajaxStart()     // 当请求开始发送时触发
+.ajaxComplete()  // 当请求完成时触发
+```
+
+配合nprogress来实现页面加载进度条
 
 ## FormData
 

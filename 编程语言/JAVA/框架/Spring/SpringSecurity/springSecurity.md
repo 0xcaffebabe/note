@@ -1,23 +1,21 @@
-# 简介
+# SpringSecurity
 
-> Spring Security是一个功能强大且可高度自定义的身份验证和访问控制框架。 它是保护基于Spring的应用程序的事实标准。 
-
-Spring Security是一个专注于为Java应用程序提供身份验证和授权的框架。 与所有Spring项目一样， Spring Security的真正强大之处在于它可以轻松扩展以满足自定义要求
+> Spring Security是一个能够为基于Spring的企业应用系统提供声明式的安全访问控制解决方案的安全框架
 
 - 组成模块
 
 ![enter image description here](https://img-blog.csdn.net/20180511171241264)
 
-# 配置
+## 配置
 
 - 添加spring security 拦截链
 
 ```java
-    @Override
-    public void onStartup(ServletContext servletContext) throws ServletException {
-        var a= servletContext.addFilter("springSecurityFilterChain", DelegatingFilterProxy.class);
-        a.addMappingForUrlPatterns(null,false,"/*");
-    }
+@Override
+public void onStartup(ServletContext servletContext) throws ServletException {
+    var a= servletContext.addFilter("springSecurityFilterChain", DelegatingFilterProxy.class);
+    a.addMappingForUrlPatterns(null,false,"/*");
+}
 ```
 
 - 创建相关安全性配置
@@ -28,12 +26,10 @@ Spring Security是一个专注于为Java应用程序提供身份验证和授权�
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        System.out.println("auth pro run");
-        http
-                .authorizeRequests()
-                .anyRequest().authenticated()
-                .and()
-                .formLogin().and().httpBasic();
+        http.authorizeRequests()
+            .anyRequest().authenticated()
+            .and()
+            .formLogin().and().httpBasic();
     }
 }
 ```
@@ -43,19 +39,61 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 - 基于内存
 
 ```java
+@Override
 @Bean
-    public UserDetailsService userDetailsService() throws Exception {
-        // ensure the passwords are encoded properly
-        User.UserBuilder users = User.withDefaultPasswordEncoder();
-        InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
-        manager.createUser(users.username("user").password("password").roles("USER").build());
-        manager.createUser(users.username("admin").password("password").roles("USER","ADMIN").build());
-        return manager;
-    }
+public UserDetailsService userDetailsService() {
+    User.UserBuilder users = User.builder();
+    InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
+    manager.createUser(users.username("user")
+            .password(new BCryptPasswordEncoder().encode("123")).roles("USER")
+            .authorities("play")
+            .build()
+    );
+    manager.createUser(users.username("admin").password(new BCryptPasswordEncoder().encode("123")).roles("USER", "ADMIN").build());
+    return manager;
+}
 ```
 
 - 基于数据库
 - 基于LDAP
+
+## 限制访问
+
+```java
+@Override
+protected void configure(HttpSecurity http) throws Exception {
+    http
+            .authorizeRequests()
+            .antMatchers("/").hasAnyAuthority("play")
+            .and()
+            .httpBasic();
+}
+```
+
+## 自定义错误页面
+
+```java
+@Configuration
+public class WebServerAutoConfiguration {
+    @Bean
+    public ConfigurableServletWebServerFactory configurableServletWebServerFactory(){
+        TomcatServletWebServerFactory factory = new TomcatServletWebServerFactory();
+        factory.addErrorPages(new ErrorPage(HttpStatus.FORBIDDEN,"/error/403"));
+        return factory;
+    }
+}
+```
+
+## 自定义登录页面
+
+```java
+.formLogin().loginPage("/login").and().csrf().disable();
+```
+
+## 自定义认证成功失败处理
+
+AuthenticationFailureHandler 认证失败接口
+AuthenticationSuccessHandler 认证成功接口
 
 ## 添加自定义用户服务
 
@@ -88,7 +126,7 @@ public interface UserDetails extends Serializable {
 }                                            
 ```
 
-# 自定义拦截请求
+## 自定义拦截请求
 
 ```java
     @Override
@@ -102,7 +140,7 @@ public interface UserDetails extends Serializable {
     }
 ```
 
-## 使用Spring表达式
+### 使用Spring表达式
 
 ```java
     @Override
@@ -116,23 +154,23 @@ public interface UserDetails extends Serializable {
     }
 ```
 
-## 强制使用Https
+### 强制使用Https
 
 ```java
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        System.out.println("auth pro run");
-        http
-                .authorizeRequests()
-                .antMatchers("/home").access("hasRole('ADMIN') and hasIpAddress('::1')").and().formLogin().and()
-                .authorizeRequests()
-                .anyRequest().permitAll().and().requiresChannel().anyRequest().requiresSecure();
-    }
+@Override
+protected void configure(HttpSecurity http) throws Exception {
+    System.out.println("auth pro run");
+    http
+            .authorizeRequests()
+            .antMatchers("/home").access("hasRole('ADMIN') and hasIpAddress('::1')").and().formLogin().and()
+            .authorizeRequests()
+            .anyRequest().permitAll().and().requiresChannel().anyRequest().requiresSecure();
+}
 ```
 
-## CSRF防御
+### CSRF防御
 
-## 使用HTTP Basic认证
+### 使用HTTP Basic认证
 ```java
  http
                 .authorizeRequests()
@@ -140,7 +178,7 @@ public interface UserDetails extends Serializable {
                 .authorizeRequests()
                 .anyRequest().permitAll();
 ```
-## 启用记住我功能
+### 启用记住我功能
 ```java
 .and().httpBasic().and().rememberMe()
 ```
@@ -149,3 +187,68 @@ public interface UserDetails extends Serializable {
 - Spring Security的jsp标签库
 - 使用thymeleaf的spring security 方言
 
+## 保护方法调用
+
+### 使用注解保护方法
+
+- 配置
+
+```java
+@Configuration
+@EnableGlobalMethodSecurity(securedEnabled = true)
+class Config1 extends GlobalMethodSecurityConfiguration{
+
+}
+```
+
+### @Secured
+
+```java
+@Secured("ROLE_ADMIN")
+@RequestMapping("/home")
+@ResponseBody
+public String home(){
+    return "home";
+}
+```
+
+### 使用表达式保护方法
+
+- 启用相关配置支持
+
+  ```java
+  @EnableGlobalMethodSecurity(prePostEnabled = true)
+  ```
+
+- 相关注解
+
+  - @PreAuthorize :在方法调用前进行验证
+  - @PostAuthorize：在方法调用后进行验证
+  - @PreFilter :调用前对参数进行过滤
+  - @PostFilter ：调用后对返回结果进行过滤
+
+```java
+@PreAuthorize("#id == 10")
+public void invoke(Integer id){
+
+}
+```
+
+#### 定义许可计算器
+
+- 实现该接口
+
+```java
+public interface PermissionEvaluator extends AopInfrastructureBean {
+
+    boolean hasPermission(Authentication authentication, Object targetDomainObject,
+            Object permission);
+
+    boolean hasPermission(Authentication authentication, Serializable targetId,
+            String targetType, Object permission);
+}
+```
+
+- 注册到Spring Security 中
+
+![批注 2019-06-22 153017](/assets/批注%202019-06-22%20153017.png)

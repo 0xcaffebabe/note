@@ -340,3 +340,8 @@ Queue queue = new Queue("user_queue", true, false, false, args);
 创建的 queue，无论元数据还是 queue 里的消息都会存在于多个实例上，就是说，每个 RabbitMQ 节点都有这个 queue 的一个完整镜像，写消息到 queue 的时候，都会自动把消息同步到多个实例的 queue 上
 
 ![批注 2020-03-18 194849](/assets/批注%202020-03-18%20194849.png)
+
+## 顺序性
+
+当多个consumer同时消费一个queue时，很有可能造成消费的顺序和存入的顺序不一致，解决方法是：
+拆分多个 queue，每个 queue 一个 consumer

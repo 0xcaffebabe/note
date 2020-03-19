@@ -1,6 +1,12 @@
+# ElasticSearch
+
 > ElasticSearch是一个基于Lucene的搜索服务器。它提供了一个分布式多用户能力的全文搜索引擎，基于RESTful web接口
 
-# 安装
+- Near Realtime
+  - 从写入数据到数据可以被搜索到有一个小延迟，大概是 1s
+  - 基于 es 执行搜索和分析可以达到秒级
+
+## 安装
 
 > 使用 docker
 
@@ -13,11 +19,15 @@ docker network create somenetwork;
 docker run -d --name elasticsearch --net somenetwork -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" elasticsearch:7.3.1
 ```
 
-# 图形化管理界面
+## 图形化管理界面
 
 - [head](https://github.com/mobz/elasticsearch-head)
 
-# 概念
+## 概念
+
+集群(cluster)--------多个节点组成
+
+节点(node)----------服务器实例
 
 索引（indices）--------------------------------Databases 数据库
 
@@ -27,20 +37,56 @@ docker run -d --name elasticsearch --net somenetwork -p 9200:9200 -p 9300:9300 -
 
 ​字段（Field）-------------------Columns 列
 
+shard----es 可以将一个索引中的数据切分为多个 shard，分布在多台服务器上存储
+
+replica----任何一个服务器随时可能故障或宕机，此时 shard 可能就会丢失，因此可以为每个 shard 创建多个 replica 副本。replica 可以在 shard 故障时提供备用服务
+
+![批注 2020-03-19 081056](/assets/批注%202020-03-19%20081056.png)
+
 - 索引 index
 - 类型 type
 - 字段 field
 - 映射 mapping
-- 文档 document
-- 集群 cluster
-- 节点 node
-- 分片与复制
 
-# 索引结构
+## 架构
+
+es 集群多个节点，会自动选举一个节点为 master 节点
+master 节点宕机了，那么会重新选举一个节点为 master 节点
+
+非 master节点宕机了，那么会由 master 节点，让那个宕机节点上的 primary shard 的身份转移到其他机器上的 replica shard
+
+![批注 2020-03-19 081559](/assets/批注%202020-03-19%20081559.png)
+
+## 索引结构
 
 ![批注 2019-10-18 145410](/assets/批注%202019-10-18%20145410.png)
 
 - 倒排索引：根据词找文章
+
+DocId | Doc
+----- | -------------------------------
+1     | 谷歌地图之父跳槽 Facebook
+2     | 谷歌地图之父加盟 Facebook
+3     | 谷歌地图创始人拉斯离开谷歌加盟 Facebook
+4     | 谷歌地图之父跳槽 Facebook 与 Wave 项目取消有关
+5     | 谷歌地图之父拉斯加盟社交网站 Facebook
+
+对这些doc进行分词之后，以词为主键，记录哪些doc出现了这些词
+
+WordId | Word     | DocIds
+------ | -------- | ---------
+1      | 谷歌       | 1,2,3,4,5
+2      | 地图       | 1,2,3,4,5
+3      | 之父       | 1,2,4,5
+4      | 跳槽       | 1,4
+5      | Facebook | 1,2,3,4,5
+6      | 加盟       | 2,3,5
+7      | 创始人      | 3
+8      | 拉斯       | 3,5
+9      | 离开       | 3
+10     | 与        | 4
+..     | ..       | ..
+
 - 正排索引：根据文章找词
 
 # 创建索引
@@ -416,31 +462,96 @@ SearchResponse response = client.prepareSearch("index")
 
 ```java
 HighlightBuilder highlightBuilder = new HighlightBuilder();
-        highlightBuilder.field(highlight);
-        highlightBuilder.preTags("<em>");
-        highlightBuilder.postTags("</em>");
+highlightBuilder.field(highlight);
+highlightBuilder.preTags("<em>");
+highlightBuilder.postTags("</em>");
 
-        SearchResponse response = client.prepareSearch("index")
-                .setTypes("article")
-                .setQuery(queryBuilder)
-                .highlighter(highlightBuilder)
-                .get();
-        SearchHits hits = response.getHits();
+SearchResponse response = client.prepareSearch("index")
+        .setTypes("article")
+        .setQuery(queryBuilder)
+        .highlighter(highlightBuilder)
+        .get();
+SearchHits hits = response.getHits();
 
-        System.out.println("总记录:"+hits.getTotalHits());
-        SearchHit[] ret = hits.getHits();
+System.out.println("总记录:"+hits.getTotalHits());
+SearchHit[] ret = hits.getHits();
 
-        for (SearchHit documentFields : ret) {
-            Map<String, Object> map = documentFields.getSourceAsMap();
+for (SearchHit documentFields : ret) {
+    Map<String, Object> map = documentFields.getSourceAsMap();
 
-            System.out.println("id:"+map.get("id"));
-            System.out.println("content:"+map.get("content"));
-            Map<String, HighlightField> highlightFields = documentFields.getHighlightFields();
-            System.out.println(highlightFields.get(highlight).getFragments()[0]);
-            System.out.println("-------------------");
+    System.out.println("id:"+map.get("id"));
+    System.out.println("content:"+map.get("content"));
+    Map<String, HighlightField> highlightFields = documentFields.getHighlightFields();
+    System.out.println(highlightFields.get(highlight).getFragments()[0]);
+    System.out.println("-------------------");
 
-        }
+}
 ```
+
+## es操作过程
+
+### 写过程
+
+客户端选择一个协调节点（coordinating node）发送请求，协调节点将请求转发给对应的node
+对应的node在primary shard上处理请求，并同步到replica shard上
+
+![批注 2020-03-19 082208](/assets/批注%202020-03-19%20082208.png)
+
+#### 写过程原理
+
+![批注 2020-03-19 083304](/assets/批注%202020-03-19%20083304.png)
+
+数据先写入内存 buffer，然后每隔 1s，将数据 refresh 到 os cache，到了 os cache 数据就能被搜索到
+
+每隔 5s，将数据写入 translog 文件（这样如果机器宕机，内存数据全没，最多会有 5s 的数据丢失），translog 大到一定程度，或者默认每隔 30mins，会触发 commit 操作，将缓冲区的数据都 flush 到 segment file 磁盘文件中
+
+### 读过程
+
+客户端选择一个协调节点（coordinating node）发送根据ID查询请求，协调节点会根据id进行哈希，将请求转发到对应的node
+这个node然后会在primary shard与replica中使用随机轮询，进行负载均衡，返回document给协调节点
+协调节点再把document返回给客户端
+
+### 搜索过程
+
+客户端发送搜索请求给协调节点，协调节点将这个请求发送给所有的shard
+每个shard将自己的搜索结构返回给协调节点
+由协调节点进行数据的合并、排序、分页等操作，产出最终结果
+接着协调节点根据id再去查询对应的document的数据，返回给客户端
+
+### 删除/更新过程
+
+删除操作，会生成一个对应document id的.del文件，标识这个document被删除
+如果是更新操作，就是将原来的 doc 标识为 deleted 状态，然后新写入一条数据
+
+每refresh一次，会生成一个segment file，系统会定期合并这些文件，合并这些文件的时候，会物理删除标记.del的document
+
+## 性能优化
+
+### 杀手锏：filesystem cache
+
+![批注 2020-03-19 085001](/assets/批注%202020-03-19%20085001.png)
+
+在es中，doc的字段尽量只存储要被搜索的字段，这样可以节省内存，存放更多数据，做缓存效果更好
+
+### 数据预热
+
+对于一些热点数据，也要通过一些方式让它在缓存中
+
+### 冷热分离
+
+保证热点数据都在缓存里，提高系统性能
+
+### doc模型设计
+
+对于一些复杂的关联，最好在应用层面就做好，对于一些太复杂的操作，比如 join/nested/parent-child 搜索都要尽量避免，性能都很差的
+
+### 分页性能优化
+
+由于分页操作是由协调节点来完成的，所以翻页越深，性能越差
+解决：
+
+- 不允许深度翻页
+- 将翻页设计成不允许跳页，只能一页一页翻
 
 # kibana
 

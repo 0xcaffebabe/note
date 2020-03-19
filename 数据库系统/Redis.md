@@ -16,16 +16,21 @@
 ## 数据结构
 
 - 字符串类型 string
+  - 做简单的KV缓存
 - 哈希类型 hash
+  - 做对象属性读写
 - 列表类型 list
+  - 可以做消息队列或者可以来存储列表信息，进行分页查询
 - 集合类型 set
+  - 自动去重
 - 有序集合类型 sortedset
+  - 排序
 
 ## 命令操作
 
 ### 字符串类型
 
-- 存储：`set key value`
+- 存储 `set key value`
 - 获取 `get key`
 - 删除 `del key`
 
@@ -108,19 +113,22 @@ redis使用了两张哈希表来方便扩容时的rehash操作
 
 策略              | 描述
 --------------- | --------------------------
-volatile-lru    | 从已设置过期时间的数据集中挑选最近最少使用的数据淘汰
+volatile-lru    | 从已设置过期时间的数据集中挑选最近最少使用的数据淘汰（**最常用**）
 volatile-ttl    | 从已设置过期时间的数据集中挑选将要过期的数据淘汰
 volatile-random | 从已设置过期时间的数据集中任意选择数据淘汰
 allkeys-lru     | 从所有数据集中挑选最近最少使用的数据淘汰
 allkeys-random  | 从所有数据集中任意选择数据进行淘汰
-noeviction      | 禁止驱逐数据
-
+noeviction      | 禁止驱逐数据，当内存不足时，写入操作会被拒绝
 
 ## 持久化
+
+不要只使用某一持久化机制
+要充分利用两种持久化机制的优点并避免它们的缺点
 
 ### RDB
 
 将某个时间点的所有数据都存放到硬盘上
+是对 redis 中的数据执行周期性的持久化
 
 - 配置文件
 
@@ -135,9 +143,18 @@ save 300 10 # 在300秒内做了 10次写操作 才会触发
 save 60 10000
 ```
 
+**优缺点**
+
+是某个时刻的全部数据，非常适合做冷备
+对redis性能的影响较小
+恢复比较迅速
+会丢失一定数据
+在生成rdb文件时，可能会暂停对客户端的服务一段时间
+
 ### AOF
 
-- 以日志的形式保存每次操作
+以日志的形式保存每次操作
+对每条写入命令作为日志
 
 ```
 appendonly no（关闭aof） --> appendonly yes （开启aof）
@@ -146,6 +163,14 @@ appendfsync always ： 每一次操作都进行持久化
 appendfsync everysec ： 每隔一秒进行一次持久化
 appendfsync no     ： 让操作系统来决定何时同步
 ```
+
+**优缺点**
+
+更好地保护数据不丢失
+append-only没有磁盘寻址开销
+适合做灾备
+aof文件比rdb大
+aof对性能有一定的影响
 
 ## 事件
 
@@ -162,27 +187,27 @@ Redis 将所有时间事件都放在一个无序链表中，通过遍历整个�
 ### 基本使用
 
 ```java
-        Jedis jedis = new Jedis("127.0.0.1");
+Jedis jedis = new Jedis("127.0.0.1");
 
-        jedis.set("name","my");
-        System.out.println(jedis.get("name"));
-        jedis.close();
+jedis.set("name","my");
+System.out.println(jedis.get("name"));
+jedis.close();
 ```
 
 ### 连接池
 
 ```java
-        JedisPoolConfig config = new JedisPoolConfig();
-        config.setMaxIdle(15);
-        config.setMaxTotal(30);
+JedisPoolConfig config = new JedisPoolConfig();
+config.setMaxIdle(15);
+config.setMaxTotal(30);
 
-        JedisPool pool = new JedisPool(config);
+JedisPool pool = new JedisPool(config);
 
-        Jedis resource = pool.getResource();
-        System.out.println(resource.ping());
-        resource.close();
+Jedis resource = pool.getResource();
+System.out.println(resource.ping());
+resource.close();
 
-        pool.close();
+pool.close();
 ```
 
 ## Spring Data Redis
@@ -237,11 +262,15 @@ try{
 
 ## 主从复制
 
+![批注 2020-03-19 165905](/assets/批注%202020-03-19%20165905.png)
+
 redis的复制功能是支持多个数据库之间的数据同步。一类是主数据库（master）一类是从数据库（slave），主数据库可以进行读写操作，当发生写操作的时候自动将数据同步到从数据库，而从数据库一般是只读的，并接收主数据库同步过来的数据，一个主数据库可以有多个从数据库，而一个从数据库只能有一个主数据库
+
+从 redis2.8 开始，就支持主从复制的断点续传
 
 过程：
 
-1：当一个从数据库启动时，会向主数据库发送sync命令，
+1：当一个从数据库启动时，会向主数据库发送PSYNC命令，
 2：主数据库接收到sync命令后会开始在后台保存快照（执行rdb操作），并将保存期间接收到的命令缓存起来
 3：当快照完成后，redis会将快照文件和所有缓存的命令发送给从数据库。
 4：从数据库收到后，会载入快照文件并执行收到的缓存的命令
@@ -275,11 +304,40 @@ slaveof 127.0.0.1 6379
 
 ## Redis哨兵机制
 
-哨兵(sentinel) 是一个分布式系统,你可以在一个架构中运行多个哨兵(sentinel) 进程,这些进程使用流言协议(gossipprotocols)来接收关于Master是否下线的信息,并使用投票协议(agreement protocols)来决定是否执行自动故障迁移,以及选择哪个Slave作为新的Master
+- 集群监控：负责监控 redis master 和 slave 进程是否正常工作。
+- 消息通知：如果某个 redis 实例有故障，那么哨兵负责发送消息作为报警通知给管理员。
+- 故障转移：如果 master node 挂掉了，会自动转移到 slave node 上。
+- 配置中心：如果故障转移发生了，通知 client 客户端新的 master 地址
+
+哨兵至少需要 3 个实例，来保证自己的健壮性
+
+哨兵(sentinel) 是一个分布式系统,你可以在一个架构中运行多个哨兵(sentinel) 进程,这些进程使用流言协议(gossip protocols)来接收关于Master是否下线的信息,并使用投票协议(agreement protocols)来决定是否执行自动故障迁移,以及选择哪个Slave作为新的Master
 
 ![2020224134359](/assets/2020224134359.png)
 
+### 数据丢失
+
+- 主备切换时，master异步向salve同步的命令丢失导致数据丢失
+- 网络异常，导致master暂时失联，当master重新连接上网络时，变成了slave，数据丢失
+
+解决：拒绝客户端的写请求
+
+### sdown与odown
+
+- sdown：主观宕机，某一哨兵发现无法连接master
+- odown，一定数量的哨兵发现无法连接master
+
+### 哨兵集群的自动发现
+
+通过 redis 的 pub/sub 系统实现的，每个哨兵都会往 `__sentinel__`:hello 这个 channel 里发送一个消息，内容是自己的 host、ip 和 runid 还有对这个 master 的监控配置,这时候所有其他哨兵都可以消费到这个消息，并感知到其他的哨兵的存在
+
 ## 集群
+
+- 自动将数据进行分片，每个 master 上放一部分数据
+- 提供内置的高可用支持，部分 master 不可用时，还是可以继续工作的
+
+6379：对外服务
+16379：节点间通信
 
 ### 场景集群方案
 
@@ -291,4 +349,36 @@ slaveof 127.0.0.1 6379
 
 ![2020225163638](/assets/2020225163638.png)
 
-原理同HashMap
+redis cluster 有固定的 16384 个 hash slot，集群中的每个node平均分配得到一定的slot
+
+增加一个 master，就将其他 master 的 hash slot 移动部分过去，减少一个 master，就将它的 hash slot 移动到其他 master 上去
+
+### 节点间的通信
+
+redis 维护集群元数据采用了gossip协议，所有节点都持有一份元数据，不同的节点如果出现了元数据的变更，就不断将元数据发送给其它的节点
+
+但是元数据的更新有延时，可能导致集群中的一些操作会有一些滞后
+
+### gossip协议
+
+- meet：某个节点发送 meet 给新加入的节点，让新节点加入集群中，然后新节点就会开始与其它节点进行通信
+- ping：每个节点都会频繁给其它节点发送 ping，其中包含自己的状态还有自己维护的集群元数据，互相通过 ping 交换元数据
+- pong：返回 ping 和 meeet，包含自己的状态和其它信息，也用于信息广播和更新
+- fail：某个节点判断另一个节点 fail 之后，就发送 fail 给其它节点，通知其它节点说，某个节点宕机了
+
+## 线程模型
+
+redis采用 IO 多路复用机制同时监听多个 socket，将产生事件的 socket 压入内存队列中，事件分派器根据 socket 上的事件类型来选择对应的事件处理器进行处理
+
+### 单线程模型也能高效率的原因
+
+- 纯内存操作
+- C语言实现
+- 基于非阻塞IO多路复用
+- 单线程避免了频繁上下文切换带来的性能损失以及多线程的锁竞争问题
+
+## redis vs memcached
+
+- redis支持复杂的数据结构
+- redis支持原生集群
+- redis 只使用单核，而 memcached 可以使用多核

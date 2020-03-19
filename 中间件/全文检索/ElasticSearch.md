@@ -6,6 +6,12 @@
   - 从写入数据到数据可以被搜索到有一个小延迟，大概是 1s
   - 基于 es 执行搜索和分析可以达到秒级
 
+## 优势
+
+- 横向可扩展
+- 分片机制提供更好的分布性
+- 高可用
+
 ## 安装
 
 > 使用 docker
@@ -19,33 +25,34 @@ docker network create somenetwork;
 docker run -d --name elasticsearch --net somenetwork -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" elasticsearch:7.3.1
 ```
 
+9300端口： ES节点之间通讯使用
+9200端口： ES节点 和 外部 通讯使用
+
 ## 图形化管理界面
 
 - [head](https://github.com/mobz/elasticsearch-head)
 
 ## 概念
 
-集群(cluster)--------多个节点组成
-
-节点(node)----------服务器实例
-
-索引（indices）--------------------------------Databases 数据库
-
-​类型（type）-----------------------------Table 数据表
-
-​文档（Document）----------------Row 行
-
-​字段（Field）-------------------Columns 列
-
-shard----es 可以将一个索引中的数据切分为多个 shard，分布在多台服务器上存储
-
-replica----任何一个服务器随时可能故障或宕机，此时 shard 可能就会丢失，因此可以为每个 shard 创建多个 replica 副本。replica 可以在 shard 故障时提供备用服务
+- 集群(cluster)
+  - 多个节点组成
+- 节点(node)
+  - 服务器实例
+- 索引（index）
+  - Databases 数据库
+- ​类型（type）
+  - Table 数据表
+- ​文档（Document）
+  - Row 行
+- ​字段（Field）
+  - Columns 列
+- shard
+  - es 可以将一个索引中的数据切分为多个 shard，分布在多台服务器上存储
+- replica
+  - 任何一个服务器随时可能故障或宕机，此时 shard 可能就会丢失，因此可以为每个 shard 创建多个replica 副本。replica 可以在 shard 故障时提供备用服务
 
 ![批注 2020-03-19 081056](/assets/批注%202020-03-19%20081056.png)
 
-- 索引 index
-- 类型 type
-- 字段 field
 - 映射 mapping
 
 ## 架构
@@ -89,7 +96,9 @@ WordId | Word     | DocIds
 
 - 正排索引：根据文章找词
 
-# 创建索引
+## 操作
+
+### 创建索引
 
 ```json
 PUT /blog
@@ -109,7 +118,7 @@ PUT /blog
 
 `DELETE /blog`
 
-# 添加映射
+### 添加映射
 
 ```json
 PUT /索引库名/_mapping/类型名称
@@ -125,6 +134,15 @@ PUT /索引库名/_mapping/类型名称
 }
 ```
 
+**数据类型**
+
+text：该类型被用来索引长文本，在创建索引前会将这些文本进行分词，转化为词的组合，建立索引；允许es来检索这些词，text类型不能用来排序和聚合。
+keyword：该类型不需要进行分词，可以被用来检索过滤、排序和聚合，keyword类型自读那只能用本身来进行检索（不可用text分词后的模糊检索）
+数值型：long、integer、short、byte、double、float
+日期型：date
+布尔型：boolean
+二进制型：binary
+
 - 查看映射关系
 
 `GET /索引库名/_mapping`
@@ -133,7 +151,7 @@ PUT /索引库名/_mapping/类型名称
 
 `POST http://my-pc:9200/blog/{indexName}`
 
-# 添加文档
+### 添加文档
 
 ```json
 POST /索引库名/类型名
@@ -146,22 +164,20 @@ POST /索引库名/类型名
 
 ```json
 POST /索引库名/类型/id值
-{
-    ...
-}
+{...}
 ```
 
-# 删除文档
+### 删除文档
 
 `DELETE http://my-pc:9200/blog/hello/1`
 
-# 修改文档
+### 修改文档
 
 `UPDATE http://my-pc:9200/blog/hello/1`
 
-# 查询
+### 查询
 
-## 基本查询
+#### 基本查询
 
 ```json
 GET /索引库名/_search
@@ -207,7 +223,7 @@ GET /shop/_search
 }
 ```
 
-### 过滤
+**过滤**
 
 - includes：来指定想要显示的字段
 - excludes：来指定不想要显示的字段
@@ -226,10 +242,10 @@ GET /shop/_search
 }
 ```
 
-### 排序
+**排序**
 
 ```json
-GET /heima/_search
+GET /shop/_search
 {
   ...
   "sort": [
@@ -242,7 +258,7 @@ GET /heima/_search
 }
 ```
 
-### 模糊查询
+**模糊查询**
 
 ```json
 GET /heima/_search
@@ -258,9 +274,11 @@ GET /heima/_search
 }
 ```
 
-# 测试分词
+## 分词
 
-`GET http://my-pc:9200/_analyze`
+### 测试分词
+
+`GET /_analyze`
 
 ```json
 {
@@ -269,7 +287,7 @@ GET /heima/_search
 }
 ```
 
-## 中文分词器
+### 中文分词器
 
 [下载](https://github.com/medcl/elasticsearch-analysis-ik)
 

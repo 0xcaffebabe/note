@@ -228,6 +228,30 @@ file.onchange = function(){
 }
 ```
 
+### 使用Promise发送ajax
+
+```js
+function query() {
+    return new Promise((resolve, reject) => {
+        let xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState != 4) {
+                return;
+            }
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                resolve(xhr.responseText);
+            } else {
+                reject(xhr.status);
+            }
+        };
+        xhr.open('get', '/home');
+        xhr.send();
+    });
+}
+
+query().then(r => console.log(r)).catch(r => console.error(r))
+```
+
 ## 同源策略
 
 ajax受同源策略限制

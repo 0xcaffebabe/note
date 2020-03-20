@@ -232,11 +232,22 @@ promise
 ```js
 promise
   .then(v=>{
+    // 如果返回Promise，则这个promise是调用下一个then的promise
+    // 如果不是promise，则就是下一个then的回调函数参数v
     return new Promise()
   })
   .then(v=>{
     return new Promise()
   })
+```
+
+**all与race**
+
+```js
+// 所有任务都完成才返回结果
+Promise.all([query(),query(),query()]).then(()=>console.log('all mission complete'));
+// 任一任务都完成就返回结果
+Promise.race([query(),query(),query()]).then(()=>console.log('mission complete'));
 ```
 
 ### 异步函数

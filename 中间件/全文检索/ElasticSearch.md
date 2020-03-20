@@ -49,20 +49,11 @@ docker run -d --name elasticsearch --net somenetwork -p 9200:9200 -p 9300:9300 -
 - shard
   - es 可以将一个索引中的数据切分为多个 shard，分布在多台服务器上存储
 - replica
-  - 任何一个服务器随时可能故障或宕机，此时 shard 可能就会丢失，因此可以为每个 shard 创建多个replica 副本。replica 可以在 shard 故障时提供备用服务
+  - 任何一个服务器随时可能故障或宕机，此时 shard 可能就会丢失，因此可以为每个 shard 创建多个replica 副本。replica 可以在 shard 故障时提供备用服务，所以同一片shard跟replica不能存放在同一节点
 
 ![批注 2020-03-19 081056](/assets/批注%202020-03-19%20081056.png)
 
 - 映射 mapping
-
-## 架构
-
-es 集群多个节点，会自动选举一个节点为 master 节点
-master 节点宕机了，那么会重新选举一个节点为 master 节点
-
-非 master节点宕机了，那么会由 master 节点，让那个宕机节点上的 primary shard 的身份转移到其他机器上的 replica shard
-
-![批注 2020-03-19 081559](/assets/批注%202020-03-19%20081559.png)
 
 ## 索引结构
 
@@ -304,15 +295,26 @@ docker run --name elasticsearch --net somenetwork -v /root/plugin:/usr/share/ela
 }
 ```
 
-# 聚合
+## 聚合
 
 >桶
 
-# ES集群
+## ES集群
 
-_集群_
+采用ES集群，将单个索引的分片到多个不同分布式物理机器上存储，从而可以实现高可用、容错性
 
-## 搭建
+### 架构
+
+es 集群多个节点，会自动选举一个节点为 master 节点
+master 节点宕机了，那么会重新选举一个节点为 master 节点
+
+非 master节点宕机了，那么会由 master 节点，让那个宕机节点上的 primary shard 的身份转移到其他机器上的 replica shard
+
+![批注 2020-03-19 081559](/assets/批注%202020-03-19%20081559.png)
+
+可以使用三个节点，将索引分成三份，每个节点存放一份primary shard，两份replica，这样就算只剩下一台节点，也能保证服务可用
+
+### 搭建
 
 - 配置
 
@@ -340,16 +342,16 @@ cluster.initial_master_nodes: ["node-1","node-2","node-3"]
 
 ```xml
 <dependency>
-            <groupId>org.elasticsearch</groupId>
-            <artifactId>elasticsearch</artifactId>
-            <version>7.3.1</version>
-        </dependency>
+    <groupId>org.elasticsearch</groupId>
+    <artifactId>elasticsearch</artifactId>
+    <version>7.3.1</version>
+</dependency>
 
-        <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>transport</artifactId>
-            <version>7.3.1</version>
-        </dependency>
+<dependency>
+    <groupId>org.elasticsearch.client</groupId>
+    <artifactId>transport</artifactId>
+    <version>7.3.1</version>
+</dependency>
 ```
 
 - 连接
@@ -394,10 +396,10 @@ XContentBuilder builder = XContentFactory.jsonBuilder()
                 .endObject()
                 .endObject()
                 .endObject();
-        client.admin().indices().preparePutMapping("index")
-                .setType("article")
-                .setSource(builder)
-                .get();
+  client.admin().indices().preparePutMapping("index")
+          .setType("article")
+          .setSource(builder)
+          .get();
 ```
 
 - 添加文档
@@ -409,9 +411,9 @@ XContentBuilder builder = XContentFactory.jsonBuilder()
                     .field("title","央视快评：勇做敢于斗争善于斗争的战士")
                     .field("content","9月3日，习近平总书记在中央党校（国家行政学院）中青年干部培训班开班式上发表重要讲话强调，广大干部特别是年轻干部要经受严格的思想淬炼、政治历练、实践锻炼，发扬斗争精神，增强斗争本领，为实现“两个一百年”奋斗目标、实现中华民族伟大复兴的中国梦而顽强奋斗。")
                 .endObject();
-        client.prepareIndex("index","article","1")
-                .setSource(builder)
-                .get();
+client.prepareIndex("index","article","1")
+        .setSource(builder)
+        .get();
 ```
 
 - POJO添加文档
@@ -423,9 +425,9 @@ Article article = new Article();
         article.setContent("9月3日3333，（国家行政学院）中青年干部培训班开班式上发表重要讲话强调，广大干部特别是年");
         String json = new ObjectMapper().writeValueAsString(article);
 
-        client.prepareIndex("index","article","3")
-                .setSource(json, XContentType.JSON)
-                .get();
+client.prepareIndex("index","article","3")
+        .setSource(json, XContentType.JSON)
+        .get();
 ```
 
 ## 查询
@@ -434,22 +436,22 @@ Article article = new Article();
 
 ```java
 QueryBuilder queryBuilder = QueryBuilders.idsQuery().addIds("1","2");
-        SearchResponse response = client.prepareSearch("index")
-                .setTypes("article")
-                .setQuery(queryBuilder)
-                .get();
-        SearchHits hits = response.getHits();
+SearchResponse response = client.prepareSearch("index")
+        .setTypes("article")
+        .setQuery(queryBuilder)
+        .get();
+SearchHits hits = response.getHits();
 
-        System.out.println("总记录:"+hits);
-        SearchHit[] ret = hits.getHits();
+System.out.println("总记录:"+hits);
+SearchHit[] ret = hits.getHits();
 
-        for (SearchHit documentFields : ret) {
-            Map<String, Object> map = documentFields.getSourceAsMap();
-            System.out.println("id:"+map.get("id"));
-            System.out.println("title:"+map.get("title"));
-            System.out.println("content:"+map.get("content"));
-            System.out.println("-------------------");
-        }
+for (SearchHit documentFields : ret) {
+    Map<String, Object> map = documentFields.getSourceAsMap();
+    System.out.println("id:"+map.get("id"));
+    System.out.println("title:"+map.get("title"));
+    System.out.println("content:"+map.get("content"));
+    System.out.println("-------------------");
+}
 ```
 
 - 根据term
@@ -525,7 +527,7 @@ for (SearchHit documentFields : ret) {
 
 ### 读过程
 
-客户端选择一个协调节点（coordinating node）发送根据ID查询请求，协调节点会根据id进行哈希，将请求转发到对应的node
+客户端选择一个协调节点（coordinating node）发送根据ID查询请求，协调节点会根据id进行哈希，得到doc所在的分片，将请求转发到对应的node
 这个node然后会在primary shard与replica中使用随机轮询，进行负载均衡，返回document给协调节点
 协调节点再把document返回给客户端
 

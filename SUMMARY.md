@@ -359,7 +359,7 @@
     - [ElasticSearch](./中间件/全文检索/ElasticSearch.md)
   - [缓存中间件](./中间件/缓存/缓存.md)
     - [EhCache](./中间件/缓存/EhCache.md)
-  - [分布式](./中间件/分布式/分布式.md)
+  - [分布式中间件](./中间件/分布式/分布式.md)
     - [Zookeeper](./中间件/分布式/Zookeeper.md)
     - [xxl-job](./中间件/分布式/xxl-job.md)
     - [Apollo](./中间件/分布式/Apollo.md)

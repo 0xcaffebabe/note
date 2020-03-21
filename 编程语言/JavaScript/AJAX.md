@@ -252,6 +252,97 @@ function query() {
 query().then(r => console.log(r)).catch(r => console.error(r))
 ```
 
+## fetch
+
+Fetch API是新的ajax解决方案
+
+**fetch不是ajax的进一步封装，而是原生js，没有使用XMLHttpRequest对象**
+
+```js
+fetch('/home').then(data=>{
+    return data.text();
+})
+.then(data=>{
+    console.log(data);
+});
+```
+
+data是一个response对象，其中包括返回的一堆原始字节，这些字节需要在收到后，需要我们通过调用方法将其转换为相应格式的数据，比如`JSON`，`BLOB`或者`TEXT`等等
+
+- 传递参数
+
+```js
+let formData = new FormData();
+formData.append('username','cxk');
+formData.append('password','jntm');
+fetch('/formData',{
+    method:'post',
+    body:formData
+})
+```
+
+## axios
+
+```js
+axios.get('/home')
+    .then(res=>{
+        console.log(res);
+    })
+```
+```js
+let formData = new FormData();
+formData.append('username','cxk');
+formData.append('password','jntm');
+// 默认传递的是json
+axios.post('/formData',formData)
+ .then(res=>{
+     console.log(res);
+ })
+```
+
+- 同步调用
+
+```js
+async function f(){
+    let res =  await axios.post('/formData',formData);
+    console.log(res);
+}
+```
+
+### 全局参数
+
+```js
+// 配置公共的请求头 
+axios.defaults.baseURL = 'https://api.example.com';
+// 配置 超时时间
+axios.defaults.timeout = 2500;
+// 配置公共的请求头
+axios.defaults.headers.common['Authorization'] = AUTH_TOKEN;
+// 配置公共的 post 的 Content-Type
+axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
+```
+
+### 拦截器
+
+```js
+// 请求拦截器
+axios.interceptors.request.use(function(config) {
+    console.log(config.url)
+    // 这里一定要return   否则配置不成功
+    return config;
+}, function(err){
+    // 对请求错误做点什么
+    console.log(err)
+})
+// 响应拦截器
+axios.interceptors.response.use(function(res) {
+    console.log(res.data);
+    return res.data;
+}, function(err){
+    console.log(err)
+});
+```
+
 ## 同源策略
 
 ajax受同源策略限制

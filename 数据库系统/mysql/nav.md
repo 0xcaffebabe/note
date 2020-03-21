@@ -183,6 +183,33 @@ grant all on *.* to 'user2'@'%';
 
 由于这个特性，所以做主从分离写代码可能需要注意插入的数据，可能不一定能马上查到
 
+**搭建**
+
+- master配置
+
+```conf
+server_id=177  ###服务器id
+log-bin=mysql-bin   ###开启日志文件
+```
+
+- slave配置
+
+```conf
+server_id=178  ###从服务器server_id
+log-bin=mysql-bin  ###日志文件同步方式
+binlog_do_db=test   ###同步数据库
+```
+
+- 从服务器执行
+
+```sh
+change master to master_host='192.168.182.131',master_user='root',master_password='123',   master_log_file='mysql-bin.000002',master_log_pos=1;
+```
+
+```sh
+start slave
+```
+
 ### 读写分离
 
 主服务器处理写操作以及实时性要求比较高的读操作，而从服务器处理读操作

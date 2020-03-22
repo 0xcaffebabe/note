@@ -1,55 +1,78 @@
-![](https://pic2.zhimg.com/v2-d4b5a3feff3c7168c718dc00d4c40e73_r.jpg)
+# webpack
 
-# 全局安装
+webpack提供了模块化支持，代码压缩混淆，解决js兼容问题，性能优化等特性，提高了开发效率和项目的可维护性
+
+![2020322114140](/assets/2020322114140.jpg)
+
+## 全局安装
 
 ```shell
 npm install webpack -g 
 npm install webpack-cli -g 
 ```
 
-# 使用
+## 使用
 
-- 模块导出
-
-```js
-let tip = function () {
-    alert("hello,world");
-};
-
-module.exports.tip=tip;
-```
-
-- 模块引入
+- 编写代码
 
 ```js
-let {tip} = require("./model1");
+import $ from 'jquery'
 
-tip();
+$(function(){
+    $('li:odd').css('backgroundColor','pink');
+    $('li:even').css('backgroundColor','lightblue');
+})
 ```
 
-- 打包
+- 编写webpack.config.js
 
-```shell
-webpack main.js build.js
+```js
+module.exports = {
+    mode:"development"//可以设置为development(开发模式)，production(发布模式)
+}
 ```
 
-# 使用webpack-dev-server
+- package.json增加一个脚本
+
+```json
+"scripts": {
+    "dev":"webpack"
+  }
+```
+
+- 执行`npm run dev`
+
+### 自定义打包入口与出口
+
+```js
+const path = require("path");
+module.exports = {
+    mode:"development",
+    //设置入口文件路径
+    entry: path.join(__dirname,"./src/xx.js"),
+    //设置出口文件
+    output:{
+        //设置路径
+        path:path.join(__dirname,"./dist"),
+        //设置文件名
+        filename:"res.js"
+    }
+}
+```
+
+## 使用webpack-dev-server
 
 - 安装
 
 ```shell
-cnpm install webpack@3.6.0 webpack-dev-server@2.9.1 html-webpack-plugin@2.30.1 --save-dev
+npm install webpack webpack-dev-server html-webpack-plugin --save-dev
 ```
 
-- 配置
+- package.json
 
 ```json
 {
-  "devDependencies": {
-    "html-webpack-plugin": "^2.30.1",
-    "webpack": "^3.6.0",
-    "webpack-dev-server": "^2.9.1"
-  },
+  ...
   "scripts": {
     "dev":"webpack-dev-server --inline --hot --open --port 5008"
   }
@@ -85,7 +108,66 @@ module.exports={
 npm run dev
 ```
 
-- 调试
+## loader
+
+通过loader打包非js模块：默认情况下，webpack只能打包js文件，如果想要打包非js文件，需要调用loader加载器才能打包
+
+### css loader
+
+```js
+{
+  ...
+   module : {
+        rules:[
+            {
+                //test设置需要匹配的文件类型，支持正则
+                test:/\.css$/,
+                //use表示该文件类型需要调用的loader
+                use:['style-loader','css-loader']
+            }
+        ]
+    }
+}
+```
+
+- 可以直接在js中引入css
+
+```js
+import './style.less'
+```
+
+### babel loader
+
+将高级js语法转为低级语法
+
+- 安装
+
+```js
+npm install babel-loader @babel/core @babel/runtime -D
+npm install @babel/preset-env @babel/plugin-transform-runtime @babel/plugin-proposal-class-properties -D
+```
+
+- babel.config.js
+
+```js
+module.exports = {
+    presets:["@babel/preset-env"],
+    plugins:[ "@babel/plugin-transform-runtime", "@babel/plugin-proposal-class-properties" ]
+}
+```
+
+- 添加
+
+```js
+{
+    test:/\.js$/,
+    use:"babel-loader",
+    //exclude为排除项，意思是不要处理node_modules中的js文件
+    exclude:/node_modules/
+}
+```
+
+## 调试
 
 ```js
 var add = function (x, y) {

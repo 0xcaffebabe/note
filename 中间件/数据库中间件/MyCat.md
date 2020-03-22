@@ -68,3 +68,59 @@ MyCAT原理MyCAT主要是通过对SQL的拦截，然后经过一定规则的分�
         </writeHost>
     </dataHost>
 ```
+
+## 分片枚举
+
+分片枚举算法就是根据不同的枚举(常量)，分类存储。
+
+- schema.xml
+
+```xml
+<schema name="mycat_testdb" checkSQLschema="false" sqlMaxLimit="100" dataNode="dn1">
+ 
+  <table name="order_info"  dataNode="dn1,dn2,dn3" rule="role2" /> 
+
+</schema>
+<!-- database 是MySQL数据库的库名 -->
+<dataNode name="dn1" dataHost="localhost1" database="db1" />
+<dataNode name="dn2" dataHost="localhost1" database="db2" />
+<dataNode name="dn3" dataHost="localhost1" database="db3" />
+```
+
+- rule.xml
+
+```xml
+<tableRule name="role2">
+         <rule>
+              <columns>name</columns>
+            <algorithm>hash-int</algorithm>
+            </rule>
+</tableRule>
+
+<function name="hash-int" class="io.mycat.route.function.PartitionByFileMap">
+	<property name="mapFile">partition-hash-int.txt</property>
+	<property name="type">1</property>
+    <!-- 如果mapfile没有满足的条件，则使用节点 -->
+	<property name="defaultNode">1</property>
+</function>
+```
+
+- partition-hash-int.txt
+
+```text
+wuhan=0
+shanghai=1
+suzhou=2
+```
+
+## 取模
+
+使用根据ID对节点数量取余，得到存放节点
+这种方式数据库节点一开始就是固定的，如果节点数量发生变更，需要迁移数据rehash
+
+## 查询原理
+
+如果含有分片字段，则根据字段计算出数据所在DB，向DB发送查询请求并返回给客户端
+
+否则向所有DB节点发送查询请求，汇总结果后拼接返回给客户端
+所以如果没有排序，会发现同样的条件查询，会有不同的顺序

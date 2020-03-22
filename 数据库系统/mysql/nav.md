@@ -203,7 +203,7 @@ binlog_do_db=test   ###同步数据库
 - 从服务器执行
 
 ```sh
-change master to master_host='192.168.182.131',master_user='root',master_password='123',   master_log_file='mysql-bin.000002',master_log_pos=1;
+change master to master_host='192.168.182.131',master_user='root',master_password='123',   master_log_file='mysql-bin.000002',master_log_pos=0;
 ```
 
 ```sh

@@ -39,6 +39,8 @@ var vm = new Vue({
 
 ## vue-cli
 
+Vue脚手架可以快速生成Vue项目基础的架构
+
 ### 安装
 
 ```shell
@@ -54,6 +56,17 @@ vue create project-name
 ### 工程结构
 
 ![批注 2020-02-05 095145](/assets/批注%202020-02-05%20095145.png)
+
+### 配置
+
+```js
+// vue.config.js
+module.exports = {
+    devServer:{
+        port:9001
+    }
+}
+```
 
 ## 集成vue
 

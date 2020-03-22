@@ -213,16 +213,3 @@ set.clear() // 清空集合
 set.forEach(v => console.log(v))
 ```
 
-## 模块导入导出
-
-```javascript
-import { stat, exists, readFile } from 'fs';
-```
-
-```javascript
-export { firstName, lastName, year };
-export function multiply(x, y) {
-  return x * y;
-};
-```
-

@@ -176,4 +176,8 @@ var add = function (x, y) {
 }
 ```
 
+## 打包发布
 
+```json
+"build":"webpack -p"
+```

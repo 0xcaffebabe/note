@@ -192,12 +192,20 @@ server_id=177  ###服务器id
 log-bin=mysql-bin   ###开启日志文件
 ```
 
+```sh
+show master status; # 查看master日志与当前日志位置
+```
+
 - slave配置
 
 ```conf
 server_id=178  ###从服务器server_id
 log-bin=mysql-bin  ###日志文件同步方式
 binlog_do_db=test   ###同步数据库
+```
+
+```sh
+show slave status;
 ```
 
 - 从服务器执行

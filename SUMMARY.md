@@ -368,6 +368,7 @@
     - [Apollo](./中间件/分布式/Apollo.md)
   - [数据库中间件](./中间件/数据库中间件/数据库中间件.md)
     - [MyCat](./中间件/数据库中间件/MyCat.md)
+    - [ShardingJDBC](./中间件/数据库中间件/ShardingJDBC.md)
 
 - [移动开发](./移动开发/nav.md)
   - [安卓](./移动开发/安卓/nav.md)

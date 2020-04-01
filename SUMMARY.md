@@ -130,6 +130,7 @@
         - [服务网关](./软件工程/微服务/SpringCloud/服务网关.md)
         - [链路追踪](./软件工程/微服务/SpringCloud/链路追踪.md)
         - [开放平台](./软件工程/微服务/SpringCloud/开放平台.md)
+      - [SpringCloudAlibaba](./软件工程/微服务/SpringCloudAlibaba/SpringCloudAlibaba.md)
 
 - [计算机系统](./计算机系统/nav.md)
   - -程序结构和执行-

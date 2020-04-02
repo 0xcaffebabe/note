@@ -12,9 +12,7 @@
 客户端软负载均衡|	Ribbon	|spring-cloud-loadbalancer
 熔断器|	Hystrix	|spring-cloud-r4j(Resilience4J)，阿里Sentinel
 
-## Nacos
-
-- 注册中心
+## Nacos注册中心
 
 ### 安装
 
@@ -61,3 +59,31 @@ public static class Api {
     }
 }
 ```
+
+## Nacos配置中心
+
+```xml
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+</dependency>
+```
+
+- bootstrap.properties
+
+```properties
+spring.cloud.nacos.config.server-addr=127.0.0.1:8848
+spring.cloud.nacos.config.name=provider-config
+```
+
+![批注 2020-04-02 143345](/assets/批注%202020-04-02%20143345.png)
+
+- 使用
+
+```java
+applicationContext.getEnvironment().getProperty("app.name")
+```
+
+### 配置中心集群
+
+![批注 2020-04-02 151146](/assets/批注%202020-04-02%20151146.png)

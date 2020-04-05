@@ -14,7 +14,7 @@
 
 ## Nacos注册中心
 
-### 安装
+### 安装启动
 
 ```sh
 git clone https://gitee.com/mirrors/Nacos.git
@@ -25,8 +25,6 @@ ls -al distribution/target/
 // change the $version to your actual path
 cd distribution/target/nacos-server-$version/nacos/bin
 ```
-
-### 启动
 
 - startup
 
@@ -59,6 +57,20 @@ public static class Api {
     }
 }
 ```
+
+### vs Zookeeper & Eureka
+
+相同点:都可以实现分布式服务注册中心。
+
+不同点:
+Zookeeper采用CP保证数据的一致性的问题，原理采用Zab原子广播协议，当zk领导者因为某种原因宕机的情况下，会自动重新选一个新的领导角色，整个选举的过程为了保证数据的一致性的问题，在选举的过程中整个zk环境是不可以使用。I
+注意:可运行的节点必须数量过半，整个zk集群才可以正常使用。
+
+Eureka采用ap的设计理念架构注册中心，完全去中心化思想，也就是没有主从之分。。每个节点都是均等，采用相互注册原理，你中有我我中你，只要最后有一个eureka节点存在就可以保证整个微服务可以实现通讯。
+
+Nacos.从1.0版本支持CP和AP混合模式集群，默认是采用Ap保证服务可用性，CP的形式底层集群raft协议保证数据的一致性的问题。
+如果我们采用Ap模式注册服务的实例仅支持临时注册形式，在网络分区产生抖动的情况下任然还可以继续注册我们的服务列表。
+如果选择CP模式的情况下会保证数据的强一致性，如果网络分区产生抖动的情况下，是无法注册我们的服务列表。选择CP模式可以支持注册实例持久。
 
 ## Nacos配置中心
 

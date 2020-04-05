@@ -35,3 +35,32 @@ Kafka 0.8 以后，提供了 HA 机制，replica（复制品） 副本机制
 
 写的时候，leader会将数据同步到follower上去，读的时候，就只能读leader
 当某个节点挂了，由于其他节点有冗余数据，可以保证高可用
+
+## 搭建
+
+```sh
+docker run --name kafka01 \
+-p 9092:9092 \
+-e KAFKA_BROKER_ID=0 \
+-e KAFKA_ZOOKEEPER_CONNECT=192.168.1.109:2181 \
+-e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://192.168.182.129:9092 \
+-e KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092 \
+-d  wurstmeister/kafka  
+```
+
+- 创建可视化管理界面
+
+```sh
+docker run -itd \
+--restart=always \
+--name=kafka-manager \
+-p 9000:9000 \
+-e ZK_HOSTS="192.168.1.109:2181" \
+sheepkiller/kafka-manager
+```
+
+- kafka创建topic
+
+```sh
+/opt/kafka/bin/kafka-topics.sh --create --zookeeper 192.168.1.109:2181 --replication-factor 1 --partitions 1 --topic my_log
+```

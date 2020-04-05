@@ -63,7 +63,7 @@ public static class Api {
 ## Nacos配置中心
 
 ```xml
-<dependency>
+<dependency>       
     <groupId>com.alibaba.cloud</groupId>
     <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
 </dependency>

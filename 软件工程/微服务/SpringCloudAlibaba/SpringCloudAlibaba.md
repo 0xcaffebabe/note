@@ -4,13 +4,13 @@
 
 ## SpringCloud 第二代
 
-| |Spring Cloud第一代|	Spring Cloud第二代
--|-|-
-网关|	Spring Cloud Zuul	|Spring Cloud Gateway
-注册中心|	eureka(不再更新)，Consul,ZK	|阿里Nacos，拍拍贷radar等可选
-配置中心|	spring cloud config	|阿里Nacos，携程Apollo，随行付Config Keeper
-客户端软负载均衡|	Ribbon	|spring-cloud-loadbalancer
-熔断器|	Hystrix	|spring-cloud-r4j(Resilience4J)，阿里Sentinel
+项        | Spring Cloud第一代        | Spring Cloud第二代
+-------- | ---------------------- | -----------------------------------------
+网关       | Spring Cloud Zuul      | Spring Cloud Gateway
+注册中心     | eureka(不再更新)，Consul,ZK | 阿里Nacos，拍拍贷radar等可选
+配置中心     | spring cloud config    | 阿里Nacos，携程Apollo，随行付Config Keeper
+客户端软负载均衡 | Ribbon                 | spring-cloud-loadbalancer
+熔断器      | Hystrix                | spring-cloud-r4j(Resilience4J)，阿里Sentinel
 
 ## Nacos注册中心
 
@@ -101,3 +101,31 @@ applicationContext.getEnvironment().getProperty("app.name")
 ### 配置中心集群
 
 ![批注 2020-04-02 151146](/assets/批注%202020-04-02%20151146.png)
+
+## Sentinel
+
+- 替代hystrix
+
+### vs hystrix
+
+item    | Sentinel                          | Hystrix
+------- | --------------------------------- | ----------------------------
+隔离策略    | 信号量隔离                             | 线程池隔离/信号量隔离
+熔断降级策略  | 基于响应时间或失败比率                       | 基于失败比率
+实时指标实现  | 滑动窗口                              | 滑动窗口（基于 RxJava）
+规则配置    | 支持多种数据源                           | 支持多种数据源
+扩展性     | 多个扩展点                             | 插件的形式
+基于注解的支持 | 支持                                | 支持
+限流      | 基于 QPS，支持基于调用关系的限流                | 有限的支持
+流量整形    | 支持慢启动、匀速器模式                       | 不支持
+系统负载保护  | 支持                                | 不支持
+控制台     | 开箱即用，可配置规则、查看秒级监控、机器发现等           | 不完善
+常见框架的适配 | Servlet、Spring Cloud、Dubbo、gRPC 等 | Servlet、Spring Cloud Netflix
+
+### 基本使用
+
+```java
+@GetMapping("/name")
+@SentinelResource(value = "test-resource",blockHandlerClass = {ServiceFallback.class})
+public String name() { return "provider"+port; }
+```

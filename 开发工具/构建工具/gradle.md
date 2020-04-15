@@ -1,9 +1,57 @@
 # Gradle
-[toc]
 
-## Gradle 的安装
-安装过程跟Maven类似，Gradle基于JAVA，所以下载完之后将路径添加到环境变量即可
+Gradle 的核心在于基于 Groovy 的丰富而可扩展的域描述语言(DSL)
+
+## 目录结构
+
+```
+├── build.gradle  用于配置当前项目的Gradle构建脚本
+├── gradle 
+│   └── wrapper
+│       ├── gradle-wrapper.jar  	Gradle Wrapper可执行jar 文件
+│       └── gradle-wrapper.properties  	Gradle Wrapper 配置
+├── gradlew  类unix下的Gradle Wrapper启动脚本
+├── gradlew.bat  windows下的Gradle Wrapper启动脚本
+└── settings.gradle 用于配置Gradle构建的Gradle设置脚本
+```
+
+## 构建基础
+
+- project：我们的应用
+- task：每个 project 都由多个 tasks 组成。每个 task 都代表了构建执行过程中的一个原子性操作。如编译，打包，生成
+
+### 第一个构建脚本
+
+```groovy
+// build.gradle
+task hello {
+    doLast {
+        println 'hello world'
+    }
+}
+```
+```sh
+gradle -q hello
+```
+
+- 声明任务依赖关系
+
+```groovy
+task hello {
+    doLast {
+        print 'hello,'
+    }
+}
+task world(dependsOn: hello) {
+    doLast {
+        print 'world'
+    }
+}
+// gradle -q world : hello,world
+```
+
 ## Groovy
+
 >Groovy 是JVM 的一个替代语言—替代是指可以用Groovy 在Java 平台上进行Java 编程，使用方式基本与使用Java 代码的方式相同
 
 程序示例：
@@ -28,20 +76,6 @@ class Foo {
   }
 }
 ```
-## 任务
-在Gradle,可以自定义任务。
-示例：
-```groovy
-task "create-dirs" << {
-    sourceSets*.java.srcDirs*.each {
-        it.mkdirs()
-    }
-    sourcScts*.resources.srcDirs*.each{
-        it.midirs()
-    }
-}
-```
-上面是创建一个自动创建目录的任务
 ## 生命周期
 初始化->配置->执行
 ## 依赖管理

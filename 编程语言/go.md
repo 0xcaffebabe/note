@@ -275,3 +275,14 @@ func main(){
 	fmt.Println(a,b,c,d) // 0 3 1 4
 }
 ```
+
+## 运算符
+
+```go
+a := 1
+b := 2
+a++ // ++运算符只能这样用
+println(a)
+b-- // --运算符只能这样用
+println(b)
+```

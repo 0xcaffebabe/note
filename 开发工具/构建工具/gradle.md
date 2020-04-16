@@ -159,7 +159,52 @@ repositories {
 }
 ```
 
+## 多项目
 
+```groovy
+// 查看子项目任务
+gradlew :service:tasks
+// 执行子任务测试
+gradle :service:test
+```
+
+## 构建spring boot项目
+
+```groovy
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.2.6.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+}
+
+repositories {
+    maven { url 'https://maven.aliyun.com/repository/jcenter/'}
+    maven { url 'https://maven.aliyun.com/repository/spring/'}
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-dependencies:2.2.6.RELEASE'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    components {
+        withModule('org.springframework:spring-beans') {
+            allVariants {
+                withDependencyConstraints {
+                    // Need to patch constraints because snakeyaml is an optional dependency
+                    it.findAll { it.name == 'snakeyaml' }.each { it.version { strictly '1.19' } }
+                }
+            }
+        }
+    }
+}
+
+bootJar {
+    // Define the main class for the application.
+    mainClassName = 'gradle.spring.boot.App'
+}
+```
 
 ## Groovy
 
@@ -187,19 +232,7 @@ class Foo {
   }
 }
 ```
+
 ## 生命周期
+
 初始化->配置->执行
-## 依赖管理
-### 添加依赖
-```groovy
-dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    compile group: 'com.google.guava', name: 'guava', version: '27.1-jre'
-}
-```
-### 依赖冲突
-- 排序
-- 强制
-### 多项目构建
-### 自动化测试
-### 发布

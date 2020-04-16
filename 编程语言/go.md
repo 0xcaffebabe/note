@@ -191,5 +191,87 @@ func main(){
 显式: const identifier [type] = value
 隐式: const identifier = value ( 通常叫无类型常量)
 
-常量可以使用内置表达式定义,例如: len()，unsafe.Sizeof(等 ;
+```go
+const name = "cxk"
+const age int = 18
+const (
+	habbit1 = "sing"
+	habbit2 = "rap"
+)
+```
+
+常量可以使用内置表达式定义,例如: len()，unsafe.Sizeof()等 ;
 常量范围目前只支持布尔型、数字型(整数型、浮点型和复数)和字符串型;
+
+### 特殊常量iota
+
+- iota在const关键字出现时将被重置为0
+- const中每新增一行常量 声明将使iota计数自增1次
+
+```go
+const a = iota
+const b = iota
+
+const (
+	c = iota
+	d = iota
+)
+func main(){
+	fmt.Println(a,b) // 0 0
+	fmt.Println(c,d) // 0 1
+}
+```
+
+- iota常见使用法:
+
+
+1)跳值使用法;
+
+```go
+const (
+	c = iota
+	_ = iota
+	d = iota
+)
+func main(){
+	fmt.Println(c,d) // 0 2
+}
+```
+
+2)插队使用法;
+
+```go
+const (
+	c = iota
+	d = 3
+	e = iota
+)
+func main(){
+	fmt.Println(c,d,e) // 0 3 2
+}
+```
+
+3 )表达式隐式使用法;
+
+```go
+const (
+	c = iota *2
+	d // 没有指定值，默认会继承之前的表达式
+	e
+)
+func main(){
+	fmt.Println(c,d,e) // 0 2 4
+}
+```
+
+4)单行使用法;
+
+```go
+const (
+	a ,b = iota,iota+3
+	c,d
+)
+func main(){
+	fmt.Println(a,b,c,d) // 0 3 1 4
+}
+```

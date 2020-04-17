@@ -286,3 +286,55 @@ println(a)
 b-- // --运算符只能这样用
 println(b)
 ```
+
+## 控制语句
+
+- 条件控制
+
+```go
+a := 0
+if a>=1 {
+	println("true")
+}else if a <= 0 {
+	println("false")
+}
+```
+
+- 选择语句
+
+```go
+a := 10
+switch a {
+case 1:
+	{
+		println("1")
+	}
+case 2:
+	{
+		println("2")
+	}
+default:
+	{
+		println("default")
+	}
+}
+```
+
+- 循环语句
+
+```go
+// 死循环
+for {
+	println("run")
+	time.Sleep(1*time.Second)
+}
+// 经典for循环
+for i:=1;i<10;i++ {
+	println("run",i)
+}
+// foreach
+a := []string{"cxk", "jntm"}
+for key, value := range a {
+	println(key, value)
+}
+```

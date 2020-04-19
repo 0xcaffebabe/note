@@ -364,3 +364,30 @@ for key, value := range a {
 	}
 }
 ```
+
+## 内建方法
+
+### make
+
+```go
+// slice类似于数组
+slice := make([]string,3)
+slice[0] = "cxk"
+slice[1] = "cxk2"
+slice[2] = "cxk3"
+for k,v := range slice {
+	println(k,v)
+}
+println("---")
+// map
+aMap := make(map[string]string,3)
+aMap["a"]="1"
+aMap["b"]="2"
+for k,v := range aMap {
+	println(k,v)
+}
+println("---")
+// channel 类似缓冲区
+aChan := make(chan int,3)
+close(aChan)
+```

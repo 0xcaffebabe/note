@@ -338,3 +338,29 @@ for key, value := range a {
 	println(key, value)
 }
 ```
+
+- goto
+
+```go
+if true {
+	goto label2
+}else {
+	goto label1
+}
+label1:
+	println("label1")
+label2:
+	println("label2")
+```
+
+- break
+
+```go
+a := []string{"cxk", "jntm"}
+for key, value := range a {
+	println(key, value)
+	if key == 0 {
+		break
+	}
+}
+```

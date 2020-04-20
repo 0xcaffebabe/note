@@ -391,3 +391,38 @@ println("---")
 aChan := make(chan int,3)
 close(aChan)
 ```
+
+### new
+
+```go
+// 返回一个指针
+aMap := new(map[string]string)
+fmt.Println(reflect.TypeOf(aMap)) // *map[string]string
+```
+
+### append & copy & delete
+
+```go
+slice :=make ([]string,2)
+slice[0]="1"
+slice[1]="2"
+slice = append(slice,"3")
+fmt.Println(slice) // 1 2 3
+```
+
+```go
+slice1 :=make ([]string,2)
+slice1[0]="1"
+slice1[1]="2"
+slice2 :=make([]string,2)
+copy(slice2,slice1)
+fmt.Println(slice2) // 1 2
+```
+
+```go
+aMap := make(map[string]string)
+aMap["1"]="a"
+aMap["2"]="b"
+delete(aMap,"1")
+fmt.Println(aMap) // 2:b
+```

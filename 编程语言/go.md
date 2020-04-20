@@ -426,3 +426,17 @@ aMap["2"]="b"
 delete(aMap,"1")
 fmt.Println(aMap) // 2:b
 ```
+
+## 异常
+
+```go
+func main() {
+	defer func() {
+		// 异常处理
+		msg := recover()
+		fmt.Println("msg:",msg)
+	}()
+	// 抛出异常
+	panic("异常")
+}
+```

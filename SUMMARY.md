@@ -334,6 +334,7 @@
     - [Spring集成](./编程语言/JAVA/框架/Spring/Spring集成/nav.md)
       - [使用远程服务](./编程语言/JAVA/框架/Spring/Spring集成/远程服务.md)
     - [SpringBoot](./编程语言/JAVA/框架/SpringBoot/nav.md)
+    - [SpringWebFlux](./编程语言/JAVA/框架/SpringWebFlux.md)
 
 - [DSL](./DSL/nav.md)
   - [HTML](./DSL/HTML.md)

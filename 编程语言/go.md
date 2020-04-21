@@ -427,7 +427,7 @@ delete(aMap,"1")
 fmt.Println(aMap) // 2:b
 ```
 
-## 异常
+### 异常
 
 ```go
 func main() {
@@ -438,5 +438,58 @@ func main() {
 	}()
 	// 抛出异常
 	panic("异常")
+}
+```
+
+### len && cap && close
+
+```go
+slice := make([]int,3,5)
+println(len(slice)) // 3
+println(cap(slice)) // 5
+
+aChan := make(chan int,1)
+aChan <- 1
+close(aChan)
+```
+
+## 结构体
+
+```go
+// 定义结构体
+type Person struct {
+	Name string
+	Age int
+}
+func main(){
+	var p Person // 声明结构体变量
+	p.Age = 18 // 结构体成员赋值
+	p1 := Person{Name: "cxk"} // 另外一种方式
+	p2 := new(Person) // 返回一个Person指针
+	p.Name = "cxk"
+	fmt.Println(p)
+}
+```
+
+### 属性及函数
+
+- 两种作用域，大写开头为公开，小写开头为私有
+
+```go
+// 定义Person的一个公开成员方法
+func (p *Person)Say(){
+	fmt.Println("person say")
+}
+```
+
+### 组合
+
+```go
+type Animal struct {
+	Type string
+}
+type Dog struct {
+	Animal // 组合animal，Dog继承Animal的属性
+	Name string
 }
 ```

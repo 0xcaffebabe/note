@@ -66,3 +66,133 @@ spring web基于httphandler封装了WebHandler
 ### Codecs
 
 web flux 提供了一些封装来负责数据的序列化与反序列化
+
+## DispatcherHandler
+
+类似于mvc中的DispatcherServlet
+
+负责对请求的统一控制与转发
+
+## 使用
+
+### 传统方式
+
+跟MVC一样 可以使用controller等相关注解进行使用
+
+### 函数式端点
+
+#### 概览
+
+```java
+class Handler {
+    public  Mono<ServerResponse> listPeople(ServerRequest request) {
+        // ...
+    }
+    public Mono<ServerResponse> createPerson(ServerRequest request) {
+        // ...
+    }
+    public Mono<ServerResponse> getPerson(ServerRequest request) {
+        // ...
+    }
+}
+Handler handler = new Handler();
+// 定义路由映射
+RouterFunction<ServerResponse> route = route()
+        .GET("/person/{id}", accept(APPLICATION_JSON), handler::getPerson)
+        .GET("/person", accept(APPLICATION_JSON), handler::listPeople)
+        .POST("/person", handler::createPerson)
+        .build();
+```
+
+#### ServerRequest
+
+提供了一个访问请求数据的东西
+
+```java
+Mono<String> string = request.bodyToMono(String.class);
+```
+
+#### ServerResponse
+
+这玩意是不可变的，所以需要手动来创建
+
+```java
+public  Mono<ServerResponse> listPeople(ServerRequest request) {
+    return ok().body(Mono.just("people list"), String.class);
+}
+```
+
+#### 路由判断
+
+```java
+// 只有person/1才会被处理
+route()
+.GET("/person/{id}", accept(APPLICATION_JSON).and(request-> "1".equals(request.pathVariable("id"))), handler::getPerson)
+```
+
+#### 路由优先级
+
+```java
+RouterFunction<ServerResponse> route = route()
+    .GET("/person/{id}", accept(APPLICATION_JSON), handler::getPerson) //1
+    .GET("/person", accept(APPLICATION_JSON), handler::listPeople)  // 2
+    .POST("/person", handler::createPerson)  // 3
+    .add(otherRoute)  // 添加其他路由
+    .build();
+```
+
+#### 嵌套路由
+
+```java
+RouterFunction<ServerResponse> route = route()
+    .path("/person", builder -> builder 
+        .GET("/{id}", accept(APPLICATION_JSON), handler::getPerson)
+        .GET("", accept(APPLICATION_JSON), handler::listPeople)
+        .POST("/person", handler::createPerson))
+    .build();
+```
+
+#### 运行
+
+- spring boot
+
+```java
+@EnableWebFlux
+
+@Bean
+RouterFunction<ServerResponse> routerFunction(){
+  ...
+}
+```
+
+#### 过滤器
+
+```java
+route()
+  .before(req->{
+      System.out.println(req.path()+"before");
+      return req;
+  })
+  .GET("/person/{id}", accept(APPLICATION_JSON).and(request-> "1".equals(request.pathVariable("id"))), handler::getPerson)
+  .GET("/person", accept(APPLICATION_JSON), handler::listPeople)
+  .POST("/person", handler::createPerson)
+  .after((req,res)->{
+      System.out.println(req.path()+"after");
+      return res;
+  })
+  .build();
+```
+
+或者另外一种方式：
+
+```java
+route()
+ .GET("/person/{id}", accept(APPLICATION_JSON).and(request-> "1".equals(request.pathVariable("id"))), handler::getPerson)
+ .GET("/person", accept(APPLICATION_JSON), handler::listPeople)
+ .POST("/person", handler::createPerson)
+ .filter((req,res)->{
+     System.out.println(req.path()+"before");
+     return res.handle(req);
+ })
+ .build();
+```

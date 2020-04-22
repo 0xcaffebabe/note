@@ -513,3 +513,98 @@ func main(){
 	fmt.Println(service.GetUser())
 }
 ```
+
+## 并发
+
+- 协程
+
+```go
+func main(){
+	go run()
+	go run()
+	time.Sleep(time.Second*5)
+}
+func run(){
+	for i:=1;i<10;i++ {
+		time.Sleep(time.Millisecond*2)
+		print(i)
+	}
+	println()
+}
+```
+
+- 协程通讯
+
+```go
+var chanInt = make(chan int,10)
+func main(){
+	go send()
+	go receive()
+	time.Sleep(5*time.Second)
+}
+
+func send(){
+	chanInt <- 1
+	chanInt <- 2
+	chanInt <- 3
+}
+
+func receive(){
+	num := <- chanInt
+	fmt.Println(num)
+	num = <- chanInt
+	fmt.Println(num)
+	num = <- chanInt
+	fmt.Println(num)
+}
+```
+
+- 使用select
+
+```go
+var chanInt = make(chan int,10)
+var chan1 = make(chan int,10)
+
+func send(){
+	for i:=0;i<10;i++ {
+		chanInt <- i
+		chan1 <- i*i
+	}
+}
+
+func receive(){
+	for {
+		select {
+		case num := <- chanInt:
+			fmt.Println(num)
+		case num := <- chan1:
+			fmt.Println(num)
+		}
+	}
+}
+```
+
+select可以随机在多个channel中取数据
+
+- 同步
+
+```go
+func main(){
+	makeFood(10)
+	go eatFood(10)
+	waitGroup.Wait()
+}
+var waitGroup sync.WaitGroup
+func makeFood(i int){
+	for j:=0;j<i;j++ {
+		waitGroup.Add(1)
+		fmt.Println("make food",j)
+	}
+}
+func eatFood(i int){
+	for j:=0;j<i;j++ {
+		fmt.Println("eat food",j)
+		waitGroup.Done() // countdown
+	}
+}
+```

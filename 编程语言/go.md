@@ -608,3 +608,20 @@ func eatFood(i int){
 	}
 }
 ```
+
+## 指针
+
+```go
+i:=20
+var pi *int=&i // pi指向i
+fmt.Println(*pi) // 读取pi所指向的内容
+fmt.Println(pi == nil) // 判断是否为空
+
+a,b :=1,2
+pa := [...]*int{&a,&b} // 指针数组(元素为指针的数组)
+fmt.Println(pa)
+
+arr := [...]int{1,2,3}
+ap := &arr // 数组指针（指向一个数组的指针）
+fmt.Println(ap)
+```

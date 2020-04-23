@@ -315,6 +315,7 @@
     - [ReactJS](./编程语言/JavaScript/ReactJS.md)
   - [python](./编程语言/python.md)
   - [go](./编程语言/go.md)
+  - [typescript](./编程语言/typescript.md)
 
 - [Spring](./编程语言/JAVA/框架/Spring/spring概览.md)
     - [spring概览](./编程语言/JAVA/框架/Spring/spring概览.md)

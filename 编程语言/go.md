@@ -625,3 +625,39 @@ arr := [...]int{1,2,3}
 ap := &arr // 数组指针（指向一个数组的指针）
 fmt.Println(ap)
 ```
+
+## json
+
+- 序列化
+
+```go
+setting := Setting{Menu:"menu",Count: 15}
+byte,err:=json.Marshal(setting)
+if err!=nil {
+	fmt.Println(err)
+}else {
+	fmt.Println(string(byte))
+}
+```
+
+- tag
+
+```go
+type Setting struct {
+	Menu string `json:"menu"` // 指定序列后的字段名字
+	Count int
+}
+```
+
+- 反序列化
+
+```go
+str := "{\"menu\":\"menu\",\"Count\":15}\n"
+var setting Setting
+err := json.Unmarshal([]byte(str),&setting)
+if err != nil {
+	fmt.Println(err)
+}else {
+	fmt.Println(setting)
+}
+```

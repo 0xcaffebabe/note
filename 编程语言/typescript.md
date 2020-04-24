@@ -23,3 +23,51 @@ var cxk = new Person()
 cxk.name = "cxk"
 cxk.age = 18
 ```
+
+## 参数
+
+- 默认值
+
+```ts
+function test(a: string = "default") { }
+```
+
+- 可选参数
+
+```ts
+// 调用函数test时，可不传递b
+function test(a: string,b?: string) { }
+```
+
+- 不定项参数
+
+```ts
+function test(...args) { }
+```
+
+## 函数
+
+- generator
+
+```ts
+function* test() { 
+    console.log("start");
+    yield;
+    console.log("finish");
+}
+var f1 = test();
+f1.next();//输出start
+f1.next(); // 输出 finish
+```
+
+- 解构
+
+```ts
+function test() {
+    return {
+        pname: 'cxk',
+        age: 18
+    }
+}
+const {pname,age} = test()
+```

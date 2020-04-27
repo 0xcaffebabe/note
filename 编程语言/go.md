@@ -661,3 +661,17 @@ if err != nil {
 	fmt.Println(setting)
 }
 ```
+
+## module
+
+- 初始化项目
+
+```sh
+go mod init
+```
+
+- 输出项目依赖
+
+```sh
+go mod graph
+```

@@ -83,3 +83,26 @@ for (let n of arr) {
     // 可以用在数组、字符串、对象
 }
 ```
+
+## 面向对象
+
+```ts
+class Person {
+    name;
+    run() {
+        
+    }
+}
+const p1 = new Person()
+p1.name = "cxk1"
+const p2 = new Person()
+p2.name="cxk2"
+```
+
+### 权限控制
+
+```ts
+private run() {
+        
+}
+```

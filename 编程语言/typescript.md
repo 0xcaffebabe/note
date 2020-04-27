@@ -71,3 +71,15 @@ function test() {
 }
 const {pname,age} = test()
 ```
+
+- 箭头函数
+
+## for
+
+- for of
+
+```ts
+for (let n of arr) {
+    // 可以用在数组、字符串、对象
+}
+```

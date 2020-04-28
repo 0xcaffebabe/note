@@ -106,3 +106,21 @@ private run() {
         
 }
 ```
+
+### 泛型
+
+```ts
+const list: Array<String> = []
+list[0]="1" // 只能存放string
+```
+
+### 接口
+
+```ts
+interface Runnable {
+    run();
+}
+class Thread implements Runnable {
+    run () {}
+}
+```

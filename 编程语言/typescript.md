@@ -124,3 +124,28 @@ class Thread implements Runnable {
     run () {}
 }
 ```
+
+## 模块
+
+- 暴露
+
+```ts
+export var prop1;
+
+export function data () {
+  console.log('data')
+}
+
+export class Thread{
+  run():void{
+    console.log('run')
+  }
+}
+```
+
+- 引入使用
+
+```ts
+import {data} from './module1'
+data()
+```

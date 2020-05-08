@@ -18,31 +18,20 @@
         "sharing-plus",
         "tbfed-pagefooter",
         "hide-element",
-        "page-toc-button"
+        "page-toc-button",
+        "github"
     ],
     "pluginsConfig": {
         "sharing": {
             "douban": true,
-            "facebook": true,
-            "google": true,
-            "pocket": true,
             "qq": true,
             "qzone": true,
-            "twitter": true,
             "weibo": true,
             "all": [
                 "douban",
-                "facebook",
-                "google",
-                "instapaper",
-                "linkedin",
-                "twitter",
                 "weibo",
-                "messenger",
                 "qq",
-                "qzone",
-                "viber",
-                "whatsapp"
+                "qzone"
             ]
         },
         "tbfed-pagefooter": {
@@ -58,6 +47,9 @@
         "page-toc-button": {
             "maxTocDepth": 5,
             "minTocSize": 5
-           }
+        },
+        "github": {
+            "url": "https://github.com/0xcaffebabe/note"
+        }
     }
 }

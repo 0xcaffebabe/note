@@ -247,3 +247,33 @@ PaaS 提供给开发者使用
 - ITIL
 - ISO20000
 - ITSS
+
+## 工具链
+
+- 协同开发
+  - 工作可视化。加强沟通
+  - JIRA
+  - KanBan
+  - Rally
+- 持续集成
+  - jenkins
+- 版本管理
+  - git
+  - svn
+- 编译工具
+  - ant
+  - maven
+  - gradle
+  - msbuild
+- 测试工具
+  - junit
+  - selenium（ui测试）
+  - cucumber（自动化验收）
+  - fitnesse（管理）
+- 监控
+  - nagios
+  - zabbix
+
+## 持续交付
+
+![批注 2020-05-08 202538](/assets/批注%202020-05-08%20202538.png)

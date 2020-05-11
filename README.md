@@ -10,6 +10,10 @@
 
 ![star](https://img.shields.io/github/stars/0xcaffebabe/note) ![fork](https://img.shields.io/github/forks/0xcaffebabe/note) ![license](https://img.shields.io/github/license/0xcaffebabe/note)
 
+笔记词云：
+
+![](./wordcloud.png)
+
 - [算法与数据结构](./算法与数据结构/nav.md)
   - [排序](./算法与数据结构/排序.md)
   - [堆](./算法与数据结构/堆.md)

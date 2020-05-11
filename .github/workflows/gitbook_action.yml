@@ -30,10 +30,11 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - name: run python script
+    - name: set up python env
       uses: actions/setup-python@v1
       with:
         python-version: 3.7
+    - name: run python script
       run: |
         pip install jieba
         pip install wordcloud

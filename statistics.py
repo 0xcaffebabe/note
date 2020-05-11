@@ -74,21 +74,25 @@ def generateWordCloud():
                max_words = 200000, #设置最大显示的字数
                #stopwords = "", #设置停用词
                font_path = "font.ttf",
-               width=1000, height=860, margin=2,
+               width=1000, height=500, margin=2,
         #设置中文字体，使得词云可以显示（词云默认字体是“DroidSansMono.ttf字体库”，不支持中文）
-               max_font_size = 50,  #设置字体最大值
-               random_state = 42, #设置有多少种随机生成状态，即有多少种配色方案
+               max_font_size = 120,  #设置字体最大值
+               relative_scaling=.8,
+               prefer_horizontal=90,
+               random_state = 100, #设置有多少种随机生成状态，即有多少种配色方案
     )
   text = ''
-  count = 0
+  total = 0
+  count=0
+  map = {}
+  for i,j in list:
+    total = total+j
   for i,j in list:
     count = count + 1
-    if count > 200:
-      break
     if count == 1:
       continue
-    text = text + i +' '
-  myword = wc.generate(text)#生成词云
+    map[i]=j/total*1000.0
+  myword = wc.generate_from_frequencies(map)#生成词云
   myword.to_file('./wordcloud.png')
   print(type(myword))
 

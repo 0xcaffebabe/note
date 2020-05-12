@@ -10,9 +10,13 @@
 
 ![star](https://img.shields.io/github/stars/0xcaffebabe/note) ![fork](https://img.shields.io/github/forks/0xcaffebabe/note) ![license](https://img.shields.io/github/license/0xcaffebabe/note)
 
+统计：
+
+![](https://note.ismy.wang/info.png)
+
 笔记词云：
 
-![](https://b.ismy.wang/wordcloud.png)
+![](https://note.ismy.wang/wordcloud.png)
 
 - [算法与数据结构](./算法与数据结构/nav.md)
   - [排序](./算法与数据结构/排序.md)

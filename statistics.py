@@ -2,6 +2,9 @@ import os
 import jieba
 import re
 from wordcloud import WordCloud
+
+import time
+from PIL import Image, ImageFont, ImageDraw
 def listAllFile(path):
   result = []
   for item in os.listdir(path):
@@ -96,4 +99,25 @@ def generateWordCloud():
   myword.to_file('./wordcloud.png')
   print(type(myword))
 
+def statisticNote():
+  text = ''
+  totalLineCount = 0
+  for item in listAllMdFile():
+    file = open(item,'rb')
+    text = text + str(file.read(),encoding="utf-8") + '\n'
+    file.close()
+  totalLineCount = len(text.split('\n'))
+  return totalLineCount
+
+def generateNoteInfo():
+  totalLineCount = statisticNote()
+  localtime = time.asctime( time.localtime(time.time()) )
+  text = u"生成时间:" + localtime + "\n" + '笔记总行数:' + str(totalLineCount)
+  im = Image.new("RGB", (300, 50), (255, 255, 255))
+  dr = ImageDraw.Draw(im)
+  font = ImageFont.truetype('font.ttf', 14)
+  dr.text((10, 5), text, font=font, fill="#000000")
+  im.save('info.png')
+
 generateWordCloud()
+generateNoteInfo()

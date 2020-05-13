@@ -38,6 +38,13 @@ public static Object get(){
 
 - 对持有锁的范围、时间进行良好设计
 
+### synchronized实现过程
+
+- java代码：synchronized
+- 字节码： monitorenter monitorexit
+- 执行过程中会进行锁升级
+- lock comxchg
+
 ### 非阻塞同步
 
 互斥同步最主要的问题就是线程阻塞和唤醒所带来的性能问题，因此这种同步也称为阻塞同步

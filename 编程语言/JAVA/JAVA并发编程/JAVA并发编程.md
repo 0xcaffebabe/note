@@ -92,6 +92,27 @@ while (f){
 }
 ```
 
+- volatile如何解决指令重排序
+
+JVM内存屏障 屏障两边的指令不可以重排序
+
+LoadL oad屏障:
+对于这样的语句Load1; Loadl oad; Load2,
+在Load2及后续读取操作要读取的数据被访问前，保证Loadi要读取的数据被读取完毕
+
+StoreStore屏障:
+对于这样的语句Store1; StoreStore; Store2,
+在Store2及后续写入操作执行前，保证Store1的写 入操作对其它处理器可见。
+
+LoadStore屏障:
+对于这样的语句oad1; LoadStore; Store2,
+在Store2及后续写入操作被刷出前，保证Load1要读取的数据被读取完毕。
+
+Storel oad屏障:对于这样的语句Store1; Storel oad; Load2,
+在Load2及后续所有读取操作执行前，保证Store1的写入对所有处理器可见。
+
+再低一层，虚拟机的实现是使用lock指令
+
 ## 发布与逸出
 
 发布:

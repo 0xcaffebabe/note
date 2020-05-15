@@ -112,12 +112,45 @@ def statisticNote():
 def generateNoteInfo():
   totalLineCount = statisticNote()
   localtime = time.asctime( time.localtime(time.time()) )
-  text = u"生成时间:" + localtime + "\n" + '笔记总行数:' + str(totalLineCount)
-  im = Image.new("RGB", (300, 50), (255, 255, 255))
+  text = u"生成时间:" + localtime + "\n"\
+    + '笔记总行数:' + str(totalLineCount) + '\n'\
+    + "代码统计:" + codeFrequency()
+  im = Image.new("RGB", (1000, 100), (255, 255, 255))
   dr = ImageDraw.Draw(im)
-  font = ImageFont.truetype('font.ttf', 14)
+  font = ImageFont.truetype('font.ttf', 16)
   dr.text((10, 5), text, font=font, fill="#000000")
   im.save('info.png')
 
+def codeFrequency():
+  files = listAllMdFile()
+  map = {}
+  total = 0
+  for item in files:
+    file = open(item,'rb')
+    for item1 in file.readlines():
+      text = str(item1,encoding='utf-8')
+      text = text.strip()
+      if '```' in text :
+        text = text.replace('```','')
+        if text :
+          if '`' in text or len(text) > 11:
+            continue
+          total = total + 1
+          if text == 'js' :
+            text = 'javascript'
+          if text in map :
+            map[text] = map[text] +1
+          else :
+            map[text] = 1
+  # 排序
+  map=sorted(map.items(),key=lambda item:item[1],reverse=True)
+  text = ''
+  count = 0
+  for i,j in map:
+    if count > 7:
+      break
+    text = text + i + ':' + str(int(j/total*100)) + '% '
+    count = count + 1
+  return text
 generateWordCloud()
 generateNoteInfo()

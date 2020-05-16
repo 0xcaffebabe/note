@@ -589,3 +589,8 @@ synchronized(obj){
 - 多用 ConcurrentHashMap 而不是 Hashtable
 - 使用栈封闭以及不变性保证线程安全
 - 使用线程池
+
+## unsafe类
+
+- allocateMemory0直接分配内存
+- freeMemory0 释放内存

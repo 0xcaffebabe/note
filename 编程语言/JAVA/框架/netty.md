@@ -1,3 +1,5 @@
+# Netty
+
 >Netty是由JBOSS提供的一个java开源框架。Netty提供异步的、事件驱动的网络应用程序框架和工具，用以快速开发高性能、高可靠性的网络服务器和客户端程序。
 
 # 使用场景
@@ -91,91 +93,69 @@ ChannelFuture的作用是用来保存Channel异步操作的结果
 
 操作缓冲区的工具类
 
-
-
-
-# WebSocket示例
+## 服务器示例
 
 - 依赖
 
-```xml
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
-            <version>5.0.0.Alpha2</version>
-        </dependency>
+```groovy
+compile group: 'io.netty', name: 'netty-all', version: '4.1.50.Final'
 ```
 
 - 定义服务器
 
 ```java
-// 线程池
-        NioEventLoopGroup mainGroup = new NioEventLoopGroup();
-        NioEventLoopGroup subGroup = new NioEventLoopGroup();
-        try{
+// 接收到来的连接
+EventLoopGroup bossGroup = new NioEventLoopGroup();
+// 处理已建立连接的流量
+EventLoopGroup workerGroup = new NioEventLoopGroup();
+try {
+    // 复制启动服务器
+    ServerBootstrap b = new ServerBootstrap();
+    b.group(bossGroup, workerGroup)
+            // 使用 NioServerSocketChannel 将到来的连接实例化为Channel
+            .channel(NioServerSocketChannel.class)
+            // 指定处理器来处理 channel 与 channel 的事件
+            .childHandler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                public void initChannel(SocketChannel ch) throws Exception {
+                    ch.pipeline().addLast(new DiscardServerHandler());
+                }
+            })
+            // 指定一些参数（针对到来的连接）
+            .option(ChannelOption.SO_BACKLOG, 128)
+            // 指定一些参数（针对channel）
+            .childOption(ChannelOption.SO_KEEPALIVE, true);
 
-            // 启动对象
-            ServerBootstrap serverBootstrap = new ServerBootstrap();
+    // Bind and start to accept incoming connections.
+    ChannelFuture f = b.bind(port).sync();
 
-            serverBootstrap
-                    .group(mainGroup,subGroup)
-                    // 通道类型
-                    .channel(NioServerSocketChannel.class)
-                    // 业务处理
-                    .childHandler(new WebSocketChannelInitializer());
-            ChannelFuture sync = serverBootstrap.bind(9090).sync();
-
-            // 等待关闭
-            sync.channel().closeFuture().sync();
-        }catch (Exception e){
-            e.printStackTrace();
-        }finally {
-            mainGroup.shutdownGracefully();
-            subGroup.shutdownGracefully();
-        }
-```
-
-- 定义handler
-
-```java
-public class WebSocketChannelInitializer extends ChannelInitializer<SocketChannel> {
-
-    @Override
-    protected void initChannel(SocketChannel channel) throws Exception {
-        // 获取管道，添加ChannelHandler
-        ChannelPipeline pipeline = channel.pipeline();
-        pipeline.addLast(new HttpServerCodec());
-        pipeline.addLast(new ChunkedWriteHandler());
-        pipeline.addLast(new HttpObjectAggregator(1024*64));
-        pipeline.addLast(new WebSocketServerProtocolHandler("/ws"));
-
-        pipeline.addLast(new ChatHandler());
-    }
+    // Wait until the server socket is closed.
+    // In this example, this does not happen, but you can do that to gracefully
+    // shut down your server.
+    f.channel().closeFuture().sync();
+} finally {
+    workerGroup.shutdownGracefully();
+    bossGroup.shutdownGracefully();
 }
 ```
 
-- ChatHandler，处理请求建立以及消息到达
+- 处理请求建立以及消息到达
 
 ```java
-public class ChatHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
-
-    private static ChannelGroup clients = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
-
-
+public class DiscardServerHandler extends ChannelInboundHandlerAdapter {
     @Override
-    protected void messageReceived(ChannelHandlerContext ctx, TextWebSocketFrame msg) throws Exception {
-        String text = msg.text();
-
-        System.out.println("接收到消息：" + text);
-        for (Channel client : clients) {
-            // 将消息发送给所有客户端
-            client.writeAndFlush(new TextWebSocketFrame(LocalDateTime.now() + "---" + text));
-        }
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        ByteBuf buf = (ByteBuf) msg;
+        byte[] bytes = new byte[buf.readableBytes()];
+        buf.readBytes(bytes);
+        System.out.println("接收到数据:" + new String(bytes));
+        buf.release();
     }
 
     @Override
-    public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-        clients.add(ctx.channel());
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        cause.printStackTrace();
+        ctx.close();
     }
 }
 ```

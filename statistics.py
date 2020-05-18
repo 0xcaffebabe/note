@@ -111,8 +111,9 @@ def statisticNote():
 
 def generateNoteInfo():
   totalLineCount = statisticNote()
-  localtime = time.asctime( time.localtime(time.time()) )
+  localtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
   text = u"生成时间:" + localtime + "\n"\
+    + '仓库尺寸:' + str(getRepositorySize()) + 'MB' + '\n'\
     + '笔记总行数:' + str(totalLineCount) + '\n'\
     + "代码统计:" + codeFrequency()
   im = Image.new("RGB", (1000, 100), (255, 255, 255))
@@ -152,5 +153,13 @@ def codeFrequency():
     text = text + i + ':' + str(int(j/total*100)) + '% '
     count = count + 1
   return text
+
+def getRepositorySize():
+  files = listAllFile('./')
+  total = 0
+  for item in files:
+    total += os.path.getsize(item)
+  return round(total/float(1024*1024),2)
+
 generateWordCloud()
 generateNoteInfo()

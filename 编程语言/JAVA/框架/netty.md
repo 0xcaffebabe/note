@@ -2,13 +2,13 @@
 
 >Netty是由JBOSS提供的一个java开源框架。Netty提供异步的、事件驱动的网络应用程序框架和工具，用以快速开发高性能、高可靠性的网络服务器和客户端程序。
 
-# 使用场景
+## 使用场景
 
 - 高性能领域
 - 多线程并发领域    
 - 异步通信领域
 
-# JAVA IO通信
+## JAVA IO通信
 
 - BIO
   - 同步阻塞IO
@@ -18,14 +18,14 @@
 - AIO
   - 异步非阻塞IO
 
-## 阻塞与非阻塞
+### 阻塞与非阻塞
 
 阻塞和非阻塞关注的是程序在等待调用结果（消息，返回值）时的状态
 
 阻塞调用是指调用结果返回之前，当前线程会被挂起。调用线程只有在得到结果之后才会返回。
 非阻塞调用指在不能立刻得到结果之前，该调用不会阻塞当前线程
 
-## 同步与异步
+### 同步与异步
 
 同步和异步关注的是消息通信机制 
 
@@ -33,40 +33,40 @@
 
 而异步则是相反，*调用*在发出之后，这个调用就直接返回了，所以没有返回结果。换句话说，当一个异步过程调用发出后，调用者不会立刻得到结果。而是在*调用*发出后，*被调用者*通过状态、通知来通知调用者，或通过回调函数处理这个调用
 
-# Reactor模型
+## Reactor模型
 
 ![](https://user-gold-cdn.xitu.io/2018/7/11/164874093c4d67ab?imageView2/0/w/1280/h/960/format/webp/ignore-error/1)
 
 - 多线程模型
   - 一个接收线程，多个处理线程
 
-# Reactor主从多线程模型
+## Reactor主从多线程模型
 
 - 处理高并发
 - 一组线程接收请求，一组线程处理IO
 
 ![](https://images2015.cnblogs.com/blog/562880/201612/562880-20161210205346726-1115531540.png)
 
-# 核心API
+## 核心API
 
-## ChannelHandler
+### ChannelHandler
 
 ChannelHandler 为 Netty 中最核心的组件，它充当了所有处理入站和出站数据的应用程序逻辑的容器。ChannelHandler 主要用来处理各种事件，这里的事件很广泛，比如可以是连接、数据接收、异常、数据转换等
 
 ![](https://img2018.cnblogs.com/blog/1322310/201812/1322310-20181220211548971-1386097414.png)
 
-## ChannelPipeline
+### ChannelPipeline
 
 ChannelPipeline 为 ChannelHandler 链提供了一个容器并定义了用于沿着链传播入站和出站事件流的 API
 
 ![](https://img-blog.csdn.net/20160504161903129?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center)
 
 
-## ChannelHandlerContext
+### ChannelHandlerContext
 
 使ChannelHandler与其ChannelPipeline和其他处理程序进行交互。处理程序可以通知ChannelPipeline中的下一个ChannelHandler，动态修改其所属的ChannelPipeline
 
-## ChannelOption
+### ChannelOption
 
 - ChannelOption.SO_BACKLOG
 
@@ -76,24 +76,64 @@ ChannelOption.SO_BACKLOG对应的是tcp/ip协议listen函数中的backlog参数�
 
 Channeloption.SO_KEEPALIVE参数对应于套接字选项中的SO_KEEPALIVE，该参数用于设置TCP连接，当设置该选项以后，连接会测试链接的状态，这个选项用于可能长时间没有数据交流的连接。当设置该选项以后，如果在两小时内没有数据的通信时，TCP会自动发送一个活动探测数据报文
 
-## ChannelFuture
+### ChannelFuture
 
 ChannelFuture的作用是用来保存Channel异步操作的结果
 
-## EventLoop
+### EventLoop
 
 ![](https://upload-images.jianshu.io/upload_images/7853175-16eb7a864ce8ea55.png?imageMogr2/auto-orient/strip|imageView2/2/w/1200/format/webp)
 
-## ServerBootStrap
+### ServerBootStrap
 
 - 使用服务器的ServerBootStrap，用于接受客户端的连接以及为已接受的连接创建子通道。
 - 用于客户端的BootStrap，不接受新的连接，并且是在父通道类完成一些操作。
 
-## Unpooled类
+### Unpooled类
 
 操作缓冲区的工具类
 
-## 服务器示例
+## 处理流式传输
+
+数据通过网络传输，最终会缓存在一个字节数组里
+
+所以就会可能出现传输：
+
+![批注 2020-05-18 160509](/assets/批注%202020-05-18%20160509.png)
+
+接收：
+
+![批注 2020-05-18 160541](/assets/批注%202020-05-18%20160541.png)
+
+### 解决方案1
+
+创建一个缓冲区，每次数据到来时，将数据放入到缓冲区，如果缓冲区超过一定大小
+则就进行处理
+
+```java
+public class TimeClientHandler extends ChannelInboundHandlerAdapter {
+    private ByteBuf buf;
+
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        ByteBuf m = (ByteBuf) msg;
+        buf.writeBytes(m); // (2)
+        m.release();
+        
+        if (buf.readableBytes() >= 4) { // (3)
+            long currentTimeMillis = (buf.readUnsignedInt() - 2208988800L) * 1000L;
+            System.out.println(new Date(currentTimeMillis));
+            ctx.close();
+        }
+    }
+}
+```
+
+### 解决方案2
+
+使用解码器
+
+## 服务端示例
 
 - 依赖
 
@@ -154,6 +194,61 @@ public class DiscardServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        cause.printStackTrace();
+        ctx.close();
+    }
+}
+```
+
+## 客户端示例
+
+```java
+String host = "127.0.0.1";
+int port = 1234;
+EventLoopGroup workerGroup = new NioEventLoopGroup();
+
+try {
+    Bootstrap b = new Bootstrap();
+    // 指定线程工作池
+    b.group(workerGroup);
+    // 指定实例化channel的方式
+    b.channel(NioSocketChannel.class);
+    // 连接参数
+    b.option(ChannelOption.SO_KEEPALIVE, true);
+    b.handler(new ChannelInitializer<SocketChannel>() {
+        @Override
+        public void initChannel(SocketChannel ch) throws Exception {
+            ch.pipeline().addLast(new TimeClientHandler());
+        }
+    });
+
+    // Start the client.
+    ChannelFuture f = b.connect(host, port).sync(); // (5)
+
+    // Wait until the connection is closed.
+    f.channel().closeFuture().sync();
+} catch (InterruptedException e) {
+    e.printStackTrace();
+} finally {
+    workerGroup.shutdownGracefully();
+}
+```
+```java
+public class TimeClientHandler extends ChannelInboundHandlerAdapter {
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        ByteBuf m = (ByteBuf) msg;
+        try {
+            long currentTimeMillis = (m.readUnsignedInt() - 2208988800L) * 1000L;
+            System.out.println(new Date(currentTimeMillis));
+            ctx.close();
+        } finally {
+            m.release();
+        }
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
         ctx.close();
     }

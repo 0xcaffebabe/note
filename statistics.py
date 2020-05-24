@@ -109,14 +109,22 @@ def statisticNote():
   totalLineCount = len(text.split('\n'))
   return totalLineCount
 
+def statisticImg():
+  count = 0
+  for item in listAllFile('./'):
+    if item.endswith('png') or item.endswith('jpg'):
+      count = count+1
+  return count
+
 def generateNoteInfo():
   totalLineCount = statisticNote()
   localtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
   text = u"生成时间:" + localtime + "\n"\
     + '仓库尺寸:' + str(getRepositorySize()) + 'MB' + '\n'\
     + '笔记总行数:' + str(totalLineCount) + '\n'\
+    + '图片数:' + str(statisticImg())  + '\n'\
     + "代码统计:" + codeFrequency()
-  im = Image.new("RGB", (1000, 100), (255, 255, 255))
+  im = Image.new("RGB", (1000, 120), (255, 255, 255))
   dr = ImageDraw.Draw(im)
   font = ImageFont.truetype('font.ttf', 16)
   dr.text((10, 5), text, font=font, fill="#000000")

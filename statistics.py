@@ -5,6 +5,7 @@ from wordcloud import WordCloud
 
 import time
 from PIL import Image, ImageFont, ImageDraw
+
 def listAllFile(path):
   result = []
   for item in os.listdir(path):
@@ -102,12 +103,14 @@ def generateWordCloud():
 def statisticNote():
   text = ''
   totalLineCount = 0
+  totalWordCount = 0
   for item in listAllMdFile():
     file = open(item,'rb')
     text = text + str(file.read(),encoding="utf-8") + '\n'
     file.close()
   totalLineCount = len(text.split('\n'))
-  return totalLineCount
+  totalWordCount = sum(1 for _ in jieba.cut_for_search(text.strip()))
+  return totalLineCount, totalWordCount
 
 def statisticImg():
   count = 0
@@ -117,14 +120,15 @@ def statisticImg():
   return count
 
 def generateNoteInfo():
-  totalLineCount = statisticNote()
+  totalLineCount,totalWordCount = statisticNote()
   localtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
   text = u"生成时间:" + localtime + "\n"\
     + '仓库尺寸:' + str(getRepositorySize()) + 'MB' + '\n'\
     + '笔记总行数:' + str(totalLineCount) + '\n'\
+    + '笔记词数:' + str(totalWordCount) + '\n'\
     + '图片数:' + str(statisticImg())  + '\n'\
     + "代码统计:" + codeFrequency()
-  im = Image.new("RGB", (1000, 120), (255, 255, 255))
+  im = Image.new("RGB", (1000, 140), (255, 255, 255))
   dr = ImageDraw.Draw(im)
   font = ImageFont.truetype('font.ttf', 16)
   dr.text((10, 5), text, font=font, fill="#000000")

@@ -10,12 +10,15 @@
 
 ![star](https://img.shields.io/github/stars/0xcaffebabe/note) ![fork](https://img.shields.io/github/forks/0xcaffebabe/note) ![license](https://img.shields.io/github/license/0xcaffebabe/note)
 
+关于转载：
+由于许多知识来源于互联网，我是将这些知识点拆散融入到自己的知识体系中，无法在页面中一一列举，所以在这里声明本文档部分内容来源：
+
+- [CS-Notes](https://github.com/CyC2018/CS-Notes)
+- [advanced-java](https://github.com/doocs/advanced-java)
+
 统计：
 
 ![](https://note.ismy.wang/info.png)
-
-笔记词云：
-
 ![](https://note.ismy.wang/wordcloud.png)
 
 - [算法与数据结构](./算法与数据结构/nav.md)

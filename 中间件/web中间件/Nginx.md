@@ -1,5 +1,12 @@
 # Nginx
 
+Nginx ("engine x") 是一个高性能的 **HTTP** 和 **反向代理** 服务器，也是一个 IMAP/POP3/SMTP 代理服务器
+
+**vs apache**
+
+最核心的区别在于apache是同步多进程模型，一个连接对应一个进程
+nginx是异步的，多个连接（万级别）可以对应一个进程
+
 ## 主要功能
 
 - http服务器
@@ -8,13 +15,25 @@
 - 动态路由
 - 请求过滤
 
+## 配置文件
+
+- `worker_processes 6;`，工作线程数，建议设置为CPU核数
+- `worker_connections  10240;`,每个工作线程最大支持连接
+- `include mime.types;` 文件扩展名与文件类型映射表
+- `sendfile on;` 开启高效文件传输模式,直接由内核读取文件发送给网卡
+- `tcp_nopush` 在linux/Unix系统中优化tcp数据传输，仅在sendfile开启时有效
+- `autoindex on; `开启目录列表访问，合适下载服务器，默认关闭。
+- `keepalive_timeout 120; `#长连接超时时间，单位是秒
+- `gzip on;` 开启gzip压缩输出
+
+
 ## 虚拟主机
 
 ### 基于端口的虚拟主机
 
 ```
 server {
-    listen       80;
+    listen 80;
     ...
 }
 ```

@@ -56,6 +56,18 @@ server {
 ~* 开头表示不区分大小写的正则匹配
 / 通用匹配, 如果没有其它匹配,任何请求都会匹配到
 
+“普通location ”与“正则 location ”之间的匹配顺序是:
+
+先匹配普通 location ，再“考虑”匹配正则 location 
+
+访问状态监控：
+
+```
+location /basic_status {
+    stub_status on;
+}
+```
+
 ## 反向代理
 
 - 正向代理：通过客户机的配置，实现让一台服务器代理客户机，客户的所有请求都交给代理服务器处理。正向代理隐藏真实客户端
@@ -134,7 +146,13 @@ weight的值越大分配到的访问概率越高，主要用于后端每台服�
 ```
 # 设置权重
 server www.baidu.com:80 weight=2;
+# 设置最大连接数
+server 127.0.0.1:8050    weight=5  max_conns=800;
+server www.163.com:80 weight=8;
 ```
+
+max_fails:失败多少次 认为主机已挂掉则，踢出
+max_fails=3 fail_timeout=30s代表在30秒内请求某一应用失败3次，认为该应用宕机，后等待30秒，这期间内不会再把新请求发送到宕机应用
 
 - ip_hash
 

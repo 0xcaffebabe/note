@@ -88,3 +88,33 @@ main = interact wordCount
 ```sh
 runghc wc < wc.hs
 ```
+
+## 类型系统
+
+- 强类型
+  - 不会进行自动转换
+- 静态
+  - 可以在编译期（而不是执行期）知道每个值和表达式的类型
+- 自动推导
+
+## 函数
+
+- 使用函数
+
+```haskell
+-- 调用compare函数 参数分别为1，2
+compare 1 2
+```
+
+- 函数定义
+
+```haskell
+-- 定义一个函数add，参数为a,b 函数体为a+b
+add a b = a+b
+```
+
+- 分支
+
+```haskell
+if age <= 18 then "cxk" else "jntm"
+```

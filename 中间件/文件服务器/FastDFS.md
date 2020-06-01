@@ -1,19 +1,24 @@
-# 分布式文件系统
+# FastDFS
+
+- 分布式文件系统
 
 >分布式文件系统（Distributed File System）是指文件系统管理的物理存储资源不一定直接连接在本地节点上，而是通过计算机网络与节点(可简单的理解为一台计算机)相连
-
-## 分类
 
 - NFS
 - GFS
 - HDFS
 
-# 架构
+## 架构
 
 - Tracker：负责调度
 - Storage：负责存储
+- group：组，也称为卷。同组内服务器上的文件是完全相同的
 
-# 安装
+## 上传流程
+
+![202061141754](/assets/202061141754.png)
+
+## 安装
 
 ```shell
 docker pull delron/fastdfs
@@ -31,16 +36,16 @@ docker run -d --network=host --name tracker -v /docker/fastdfs/tracker:/var/fdfs
 docker run -d --network=host --name storage -e TRACKER_SERVER=192.168.1.56:22122 -v /docker/fastdfs/storage:/var/fdfs -e GROUP_NAME=group1 delron/fastdfs storage
 ```
 
-# 使用
+## JAVA API
 
 - 依赖
 
 ```xml
-        <dependency>
-            <groupId>com.github.tobato</groupId>
-            <artifactId>fastdfs-client</artifactId>
-            <version>${fastDFS.client.version}</version>
-        </dependency>
+<dependency>
+    <groupId>com.github.tobato</groupId>
+    <artifactId>fastdfs-client</artifactId>
+    <version>${fastDFS.client.version}</version>
+</dependency>
 ```
 
 - 配置

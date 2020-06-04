@@ -18,3 +18,13 @@ SELECT FirstName, LastName,Address.City,Address.State
 SELECT name,population,area FROM World
 WHERE area >= 3000000 OR population >= 25000000
 ```
+
+## 查找重复的电子邮箱
+
+<https://leetcode-cn.com/problems/duplicate-emails/>
+
+```sql
+SELECT DISTINCT Email FROM Person AS t
+    WHERE EXISTS(
+        SELECT * FROM Person AS t1 WHERE t.Id <> t1.Id AND t.Email = t1.Email)
+```

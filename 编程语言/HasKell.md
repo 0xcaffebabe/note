@@ -116,6 +116,34 @@ runghc wc < wc.hs
 :type (18, "cxk")
 ```
 
+### 定义类型
+
+```haskell
+data Person = Person String Int -- 定义一个新类型，= 后面的Person是构造函数
+let man = Person "cxk" 1
+```
+
+- 类型别名
+
+```haskell
+type Age = Int
+```
+
+- 代数类型
+
+```haskell
+data Name = String String | String
+let name = Name "c" "xk"
+let name1 = Name "cxk"
+```
+
+- 枚举
+
+```haskell
+data Color = Red | Blue | Yellow
+:type Red -- Red :: Color
+```
+
 ## 函数
 
 - 使用函数

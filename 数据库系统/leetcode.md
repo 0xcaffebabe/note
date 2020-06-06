@@ -28,3 +28,13 @@ SELECT DISTINCT Email FROM Person AS t
     WHERE EXISTS(
         SELECT * FROM Person AS t1 WHERE t.Id <> t1.Id AND t.Email = t1.Email)
 ```
+
+## 超过经理收入的员工
+
+<https://leetcode-cn.com/problems/employees-earning-more-than-their-managers/>
+
+```sql
+SELECT Name AS Employee FROM Employee t1
+    WHERE Salary > 
+        (SELECT Salary FROM Employee AS t2 WHERE t2.Id = t1.ManagerId)
+```

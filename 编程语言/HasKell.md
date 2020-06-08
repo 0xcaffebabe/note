@@ -144,6 +144,13 @@ data Color = Red | Blue | Yellow
 :type Red -- Red :: Color
 ```
 
+### 参数化类型
+
+```haskell
+-- 定义一个带有泛型a参数的类型
+data Optional a = Just a | Nothing
+```
+
 ## 函数
 
 - 使用函数
@@ -196,3 +203,12 @@ isOdd (1+2)
 ```
 
 **软件的大部分风险，都来自于与外部世界进行交互**
+
+## 模式匹配
+
+```haskell
+-- Haskell 允许将函数定义为一系列等式
+-- 执行函数时，会逐个进行匹配
+myNot True = False
+myNot False = True
+```

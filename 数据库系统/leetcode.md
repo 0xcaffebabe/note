@@ -38,3 +38,13 @@ SELECT Name AS Employee FROM Employee t1
     WHERE Salary > 
         (SELECT Salary FROM Employee AS t2 WHERE t2.Id = t1.ManagerId)
 ```
+
+## 从不订购的客户
+
+<https://leetcode-cn.com/problems/customers-who-never-order/>
+
+```sql
+SELECT Name AS Customers FROM Customers 
+WHERE Customers.Id NOT IN
+    (SELECT CustomerId FROM Orders)
+```

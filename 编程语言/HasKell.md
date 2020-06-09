@@ -81,12 +81,11 @@ Prelude> :type 'a'
 ## 第一个Haskell程序
 
 ```haskell
-main = interact wordCount
-    where wordCount input = show(length (lines input)) ++ "\n"
+main = putStrLn "hello world"
 ```
 
 ```sh
-runghc wc < wc.hs
+runghc Helloworld.hs
 ```
 
 ## 类型系统
@@ -98,6 +97,8 @@ runghc wc < wc.hs
 - 自动推导
   - Haskell 编译器可以自动推断出程序中几乎所有表达式的类型
 
+函数与类型不可分离
+
 ### 一些常用类型
 
 - Char
@@ -107,7 +108,7 @@ runghc wc < wc.hs
 - Int
   - 在 32 位机器里， Int 为 32 位宽，在 64 位机器里， Int 为 64 位宽
 - Integer
-  - 不限长度的带符号整数
+  - 不限长度的带符号整数，在编写RSA加密，大数运算时很重要
 - Double
   - 用于表示浮点数。长度由机器决定
 - 元组

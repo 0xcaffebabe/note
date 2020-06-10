@@ -118,3 +118,40 @@ sequenceDiagram
 行内引用：$\LaTeX$
 
 单独引用：$$\LaTeX$$
+
+- 上标与下标
+
+$$10^2$$
+
+$$10^{2+i}$$
+
+$$A_i$$
+
+$$A_{i+1}$$
+
+- 求和
+
+$$\sum_{i=0}^n A_i$$
+
+- 上划线下划线
+
+$$P(A) = \overline{A}\overline{B}$$
+
+$$A = B \underline{B}$$
+
+- 花括号
+
+$$\underbrace{e,d}_{公钥P_k}$$
+
+- 分式
+
+$$\frac{a}{2}$$
+
+- 矩阵
+
+$$
+  \begin{matrix}
+    a && b \\
+    c && d \\ 
+  \end{matrix}
+$$

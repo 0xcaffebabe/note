@@ -22,11 +22,24 @@ Provider  | 暴露服务的服务提供方
 Consumer  | 调用远程服务的服务消费方
 Registry  | 服务注册与发现的注册中心
 Monitor   | 统计服务的调用次数和调用时间的监控中心
-Container | 服务运行容器
+Container | 容器. Dubbo技术的服务端(Provider), 在启动执行的时候, 必须依赖容器才能正常启动.
 
 ## 工作流程
 
 ![批注 2020-03-21 142738](/assets/批注%202020-03-21%20142738.png)
+
+- start: 启动Spring容器时,自动启动Dubbo的Provider
+- register: Dubbo的Provider在启动后自动会去注册中心注册内容.注册的内容包括:
+  - Provider的 IP
+  - Provider 的端口.
+  - Provider 对外提供的接口列表.哪些方法.哪些接口类
+  - Dubbo 的版本.
+  - 访问Provider的协议.
+- subscribe: 订阅.当Consumer启动时,自动去Registry获取到所已注册的服务的信息.
+- notify: 通知.当Provider的信息发生变化时, 自动由Registry向Consumer推送通知.
+- invoke: 调用. Consumer 调用Provider中方法
+  - 同步请求.消耗一定性能.但是必须是同步请求,因为需要接收调用方法后的结果.
+- count:次数. 每隔2分钟,provoider和consumer自动向Monitor发送访问次数.Monitor进行统计.
 
 ## 注册中心
 
@@ -143,3 +156,34 @@ service provider interface
 SpringCloud 和Dubbo都可以实现RPC远程调用和服务治理
 
 SpringCloud是一套目前比较完善的微服务框架，整合了分布式常用解决方案遇到了问题，Dubbo只是实现服务治理
+
+## 整合spring boot
+
+- provider
+
+```groovy
+compile group: 'org.apache.dubbo', name: 'dubbo-spring-boot-starter', version: '2.7.7'
+compile group: 'org.apache.curator', name: 'curator-recipes', version: '4.2.0'
+```
+```properties
+spring.application.name=dubbo-provider
+dubbo.scan.base-packages=wang.ismy.dubbo
+dubbo.protocol.name=dubbo
+dubbo.protocol.port=666
+dubbo.protocol.host=192.168.1.109
+dubbo.registry.address=zookeeper://local:2181
+```
+```java
+@DubboService(version = "1.0.0",timeout = 10000,interfaceClass = HelloService.class)
+@Service
+public class HelloServiceImpl implements HelloService{...}
+```
+
+- consumer
+
+依赖配置同上
+
+```java
+@DubboReference(version = "1.0.0")
+HelloService helloService;
+```

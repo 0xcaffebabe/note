@@ -187,3 +187,11 @@ public class HelloServiceImpl implements HelloService{...}
 @DubboReference(version = "1.0.0")
 HelloService helloService;
 ```
+
+## dubbo-admin
+
+可视化管理服务
+
+- 启动admin-server
+- 配置admin-ui server ip
+- npm run dev

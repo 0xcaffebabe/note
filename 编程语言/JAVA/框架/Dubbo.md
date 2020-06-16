@@ -97,6 +97,24 @@ Protocol Buffer 其实是 Google 出品的一种轻量并且高效的结构化�
 
 相同参数的请求一定分发到一个 provider 上去，provider 挂掉的时候，会基于虚拟节点均匀分配剩余的流量
 
+### 建议在 Provider 端配置的 Consumer 端属性
+
+1. `timeout`：方法调用的超时时间
+
+2. `retries`：失败重试次数，缺省是 2 
+
+3. `loadbalance`：负载均衡算法，缺省是随机 `random` + 权重。还可以配置轮询 `roundrobin`、最不活跃优先 `leastactive` 和一致性哈希 `consistenthash` 等
+
+4. `actives`：消费者端的最大并发调用限制，即当 Consumer 对一个服务的并发调用到上限后，新调用会阻塞直到超时，在方法上配置 `dubbo:method` 则针对该方法进行并发限制，在接口上配置 `dubbo:service`，则针对该服务进行并发限制
+5. `executes`服务提供方可以使用的最大线程数
+
+### 在 Provider 端配置合理的 Provider 端属性
+
+建议在 Provider 端配置的 Provider 端属性有：
+
+1. `threads`：服务线程池大小
+2. `executes`：一个服务提供者并行执行请求上限，即当 Provider 对一个服务的并发调用达到上限后，新调用会阻塞，此时 Consumer 可能会超时。在方法上配置 `dubbo:method` 则针对该方法进行并发限制，在接口上配置 `dubbo:service`，则针对该服务进行并发限制
+
 ## 集群容错策略
 
 - failover cluster 模式

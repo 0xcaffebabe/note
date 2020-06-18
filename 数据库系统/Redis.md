@@ -24,6 +24,7 @@
 
 - string
   - 字符串、数值、bit位图
+  - incr：抢购，秒杀，详情页，点赞，评论
   - 做简单的KV缓存
   - 使用位图来处理海量数据
 - 哈希类型 hash
@@ -43,6 +44,33 @@
 - 存储 `set key value`
 - 获取 `get key`
 - 删除 `del key`
+
+#### bitmap
+
+- setbit
+- bitpos
+- bitcount
+- bitop
+
+例子：
+
+统计某个时间窗口内的登录天数
+
+```sh
+setbit cxk 1 1 # 第一天登录
+setbit cxk 364 1 # 第364天登录
+bitcount cxk 0 10 # 0 - 10天这个时间窗口登录了几天
+```
+
+统计某个时间窗口活跃用户数
+
+```sh
+setbit 200618 1 1 # 18号1号用户登录
+setbit 200619 1 1 # 19号1号用户登录
+setbit 200619 7 1 # 19号7号用户登录
+bitop or ret 200618 200619 # 使用或运算合并bit
+bitcount ret 0 0 # 统计有多少位1
+```
 
 ### 哈希类型
 

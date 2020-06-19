@@ -55,63 +55,7 @@ public static Object get(){
 
 乐观并发策略：先进行操作，如果没有其它线程争用共享数据，那操作就成功了，否则采取补偿措施
 
-#### CAS
-
-乐观锁需要操作和冲突检测这两个步骤具备原子性。
-
-比较并交换（Compare-and-Swap，CAS）
-
-CAS 指令需要有 3 个操作数，分别是内存地址 V、旧的预期值 A 和新值 B。当执行操作时，只有当 V 的值等于 A，才将 V 的值更新为 B
-
 # 对象的共享
-
-## 可见性
-
-在没有同步的情况下，编译器或者处理器都会对一些上下文无关的指令进行**重排序**，这可能会导致一个线程修改了某一个数值，而另一个线程无法马上读取到修改后的数值
-
-- 失效数据
-- 非原子的64位操作
-
-  > 在java当中，一个64位大小的数值可以被分为2个32位的操作
-
-### 加锁与可见性
-
-![](https://wiki.jikexueyuan.com/project/java-concurrency/images/synchronous.jpg)
-
-之所以要在访问某个共享的可变变量时要求所有线程在锁上同步，就是为了确保读写可见性。 加锁的含义不局限与互斥行为，还包括内存可见性
-
-volatile是比synchronized更为轻量级的同步机制，它无法进行互斥操作，但能保证内存可见性
-
-- 典型用法
-
-```java
-voatile boolean f;
-...
-while (f){
-    // do something
-}
-```
-
-- volatile如何解决指令重排序
-
-JVM内存屏障 屏障两边的指令不可以重排序
-
-LoadL oad屏障:
-对于这样的语句Load1; Loadl oad; Load2,
-在Load2及后续读取操作要读取的数据被访问前，保证Loadi要读取的数据被读取完毕
-
-StoreStore屏障:
-对于这样的语句Store1; StoreStore; Store2,
-在Store2及后续写入操作执行前，保证Store1的写 入操作对其它处理器可见。
-
-LoadStore屏障:
-对于这样的语句oad1; LoadStore; Store2,
-在Store2及后续写入操作被刷出前，保证Load1要读取的数据被读取完毕。
-
-Storel oad屏障:对于这样的语句Store1; Storel oad; Load2,
-在Load2及后续所有读取操作执行前，保证Store1的写入对所有处理器可见。
-
-再低一层，虚拟机的实现是使用lock指令
 
 ## 发布与逸出
 
@@ -550,6 +494,10 @@ ReentrantLock是一种互斥锁，也就说在同一时间内只有一个线程�
 
 对于被检测出不可能存在竞争的共享数据的锁进行消除
 
+## 锁细化
+
+经历缩小锁的作用范围
+
 ## 锁粗化
 
 如果一系列的连续操作都对同一个对象反复加锁和解锁，频繁的加锁操作就会导致性能损耗
@@ -593,8 +541,3 @@ synchronized(obj){
 - 多用 ConcurrentHashMap 而不是 Hashtable
 - 使用栈封闭以及不变性保证线程安全
 - 使用线程池
-
-## unsafe类
-
-- allocateMemory0直接分配内存
-- freeMemory0 释放内存

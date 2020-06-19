@@ -74,11 +74,19 @@ bitcount ret 0 0 # 统计有多少位1
 
 ### 哈希类型
 
+```sh
+help @hash
+```
+
 - 存储：`hset key field value`
 - 获取：`hget key field`
 - 删除： `hdel key field`
 
 ### 列表类型
+
+```sh
+help @list
+```
 
 - 将元素加入列表左边：`lpush key value`
 - 将元素加入列表右边：`rpush key value`
@@ -88,11 +96,35 @@ bitcount ret 0 0 # 统计有多少位1
 
 ### 集合类型
 
+```sh
+help @set
+```
+
 - 存储：`sadd key value`
 - 获取：`smembers key`
 - 删除：`srem key value`
+- SRANDMEMBER  key  count
+  - 正数：取出一个去重的结果集（不能超过已有集）
+  - 负数：取出一个带重复的结果集，一定满足你要的数量
+  - 如果：0，不返回
+
+例子：抽奖
+
+```sh
+sadd k 1 2 3 4 5 6 7 8 9 # 9个用户
+SRANDMEMBER k 3 # 抽取三个不重复用户
+SRANDMEMBER k -3 # 抽取三个可能会重复的用户
+```
 
 ### 有序集合类型
+
+```sh
+help @sorted_set
+```
+
+![批注 2020-06-19 113509](/assets/批注%202020-06-19%20113509.png)
+
+物理内存左小右大
 
 - 存储：`zadd key score value`
 - 获取：`zrange key start end`

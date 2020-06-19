@@ -8,7 +8,7 @@
 
 --------------------------------------------------------------------------------
 
-![star](https://img.shields.io/github/stars/0xcaffebabe/note) ![fork](https://img.shields.io/github/forks/0xcaffebabe/note) ![license](https://img.shields.io/github/license/0xcaffebabe/note)
+![star](https://img.shields.io/github/stars/0xcaffebabe/note) ![fork](https://img.shields.io/github/forks/0xcaffebabe/note) ![license](https://img.shields.io/github/license/0xcaffebabe/note) ![build](https://github.com/0xcaffebabe/note/workflows/%E6%9E%84%E5%BB%BA%E7%94%B5%E5%AD%90%E4%B9%A6/badge.svg)
 
 关于转载：
 由于许多知识来源于互联网，我是将这些知识点拆散融入到自己的知识体系中，无法在页面中一一列举，所以在这里声明本文档部分内容来源：

@@ -209,6 +209,9 @@ noeviction      | 禁止驱逐数据，当内存不足时，写入操作会被�
 将某个时间点的所有数据都存放到硬盘上
 是对 redis 中的数据执行周期性的持久化
 
+使用的fork系统调用创建一个子进程来持久化数据
+由于fork出来的子进程是写时复制，所以这达到了一个性能的平衡
+
 - 配置文件
 
 > after 60 sec if at least 10000 keys changed save 60 10000
@@ -216,7 +219,6 @@ noeviction      | 禁止驱逐数据，当内存不足时，写入操作会被�
 默认开启，保存在dump.rdb
 
 ```shell
-# save时间，以下分别表示更改了1个key时间隔900s进行持久化存储；更改了10个key300s进行存储；更改10000个key60s进行存储。
 save 900 1
 save 300 10 # 在300秒内做了 10次写操作 才会触发
 save 60 10000
@@ -236,12 +238,14 @@ save 60 10000
 对每条写入命令作为日志
 
 ```
-appendonly no（关闭aof） --> appendonly yes （开启aof）
+appendonly yes 开启aof
 
-appendfsync always ： 每一次操作都进行持久化
-appendfsync everysec ： 每隔一秒进行一次持久化
-appendfsync no     ： 让操作系统来决定何时同步
+appendfsync always    每一次操作都进行持久化
+appendfsync everysec  每隔一秒进行一次持久化
+appendfsync no        让操作系统来决定何时同步
 ```
+
+4.0之后支持 AOF中包含RDB全量，增量记录新的写操作
 
 **优缺点**
 

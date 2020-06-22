@@ -15,6 +15,10 @@
 - 分布式集群架构中的session分离
 - 分布式锁
 
+### 作为缓存
+
+![批注 2020-06-22 111817](/assets/批注%202020-06-22%20111817.png)
+
 ## 数据结构
 
 二进制安全：底层没有类型概念，只有byte数组
@@ -308,8 +312,8 @@ template.opsForValue().set("name","hello,bitch");
 ```java
 // 开启事务支持
 template.setEnableTransactionSupport(true);
-// begin
 try{
+    // begin
     template.multi();
     // 事务中的多个命令被一次性发送给服务器
     template.opsForValue().set("java","langeuage");

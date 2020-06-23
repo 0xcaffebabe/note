@@ -343,7 +343,7 @@ try{
 127.0.0.1:6379> PUBLISH redisChat "Redis is a great caching technique"
 ```
 
-## 主从复制
+## 分布式
 
 通用集群方案：
 
@@ -351,7 +351,15 @@ try{
   - 全量数据同步
 - 分片集群
 
-![批注 2020-05-08 093046](/assets/批注%202020-05-08%20093046.png)
+## AKF
+
+- X：全量，镜像
+- Y：业务，功能
+- Z：优先级，逻辑再拆分
+
+![批注 2020-06-23 084747](/assets/批注%202020-06-23%20084747.png)
+
+## 主从复制
 
 ![批注 2020-03-19 165905](/assets/批注%202020-03-19%20165905.png)
 
@@ -384,6 +392,8 @@ redis的复制功能是支持多个数据库之间的数据同步。一类是主
 ```
 # 设置主服务器密码
 requirepass 123
+# 或者需要设置master bind address
+bind 0.0.0.0
 ```
 
 从服务器配置(6380)
@@ -393,9 +403,25 @@ requirepass 123
 masterauth 123
 # 设置主服务器地址端口
 slaveof 127.0.0.1 6379
+# 新版本
+replicaof 127.0.0.1 6379
 ```
 
 只能对主服务器进行写操作，从服务器只能读操作
+
+一些主从配置项
+
+```
+replica-serve-stale-data yes
+replica-read-only yes
+repl-diskless-sync no
+
+repl-backlog-size 1mb 
+#增量复制
+
+min-replicas-to-write 3
+min-replicas-max-lag 10
+```
 
 ## Redis哨兵机制
 
@@ -425,6 +451,18 @@ slaveof 127.0.0.1 6379
 ### 哨兵集群的自动发现
 
 通过 redis 的 pub/sub 系统实现的，每个哨兵都会往 `__sentinel__`:hello 这个 channel 里发送一个消息，内容是自己的 host、ip 和 runid 还有对这个 master 的监控配置,这时候所有其他哨兵都可以消费到这个消息，并感知到其他的哨兵的存在
+
+### 哨兵配置
+
+```
+port 26379
+sentinel monitor mymaster 172.17.0.5 6379 2
+```
+
+```sh
+# 启动哨兵
+redis-server ./sentinel.conf --sentinel
+```
 
 ## 集群
 

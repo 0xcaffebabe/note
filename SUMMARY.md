@@ -246,6 +246,7 @@
     - [多线程](./编程语言/JAVA/高级/多线程.md)
     - [JAVA并发编程](./编程语言/JAVA/JAVA并发编程/JAVA并发编程.md)
       - [基础概念](./编程语言/JAVA/JAVA并发编程/基础概念.md)
+      - [并发工具类](./编程语言/JAVA/JAVA并发编程/并发工具类.md)
     - [JAVA内存模型](./编程语言/JAVA/JAVA并发编程/JAVA内存模型.md)
     - [Lambda表达式](./编程语言/JAVA/高级/Lambda表达式.md)
     - [IO](./编程语言/JAVA/高级/IO.md)

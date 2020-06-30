@@ -523,6 +523,46 @@ redis采用 IO 多路复用机制同时监听多个 socket，将产生事件的 
 - 基于非阻塞IO多路复用
 - 单线程避免了频繁上下文切换带来的性能损失以及多线程的锁竞争问题
 
+## 整合Lua
+
+```sh
+redis-cli eval "return 1+1" 0
+```
+
+- 在redis-cli中
+
+```sh
+EVAL "local msg='hello world' return msg..KEYS[1]" 1 AAA BBB
+```
+
+- 独立文件
+
+```lua
+local count = redis.call("get", "count")
+redis.call("incr","count")
+return count
+```
+
+```sh
+redis-cli --eval test.lua 0
+```
+
+### 部署
+
+加载到redis
+
+```sh
+redis-cli script load "$(cat test.lua)"
+```
+
+得到sha1值
+
+执行
+
+```sh
+redis-cli evalsha "7a2054836e94e19da22c13f160bd987fbc9ef146" 0
+```
+
 ## redis vs memcached
 
 - redis支持复杂的数据结构

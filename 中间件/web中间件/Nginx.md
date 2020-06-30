@@ -241,4 +241,24 @@ server{
     .....
 ```
 
+## oprenresty
 
+### 整合lua
+
+```
+location /lua {
+  default_type text/html;
+  content_by_lua '
+     ngx.say("<p>Hello, World!</p>")
+   ';
+}
+```
+
+
+- 外部文件
+
+```
+location /lua {
+  default_type text/html;
+  content_by_lua_file /hello.lua;
+```

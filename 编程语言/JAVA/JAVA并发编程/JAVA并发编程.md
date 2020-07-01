@@ -79,15 +79,6 @@ public static Object get(){
 
   - 对象只能在局部（方法内）使用
 
-- ThreadLocal
-
-  - 使用ThreadLocal包装的对象只能在当前线程使用
-
-原理: <https://ismy.wang/java/2019/05/10/%E5%88%9D%E6%8E%A2ThreadLocal.html>
-
-ThreadLocal使用了弱引用防止内存泄漏
-注意：使用时，对象不再使用，必须手动remove，否则仍然会内存泄漏
-
 ## 不变性
 
 > 不可变对象一定是线程安全的

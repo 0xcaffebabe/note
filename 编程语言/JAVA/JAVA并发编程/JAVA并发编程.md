@@ -127,19 +127,6 @@ synchronized(obj){
 - 迭代器与ConcurrentModificationException
   - 当在迭代的时候，容器元素发生了修改，则会抛出这个异常
 
-## 并发容器
-
-- ConcurrentHashMap
-  - 分段锁
-- CopyOnWriteArrayList
-  - 在写的时候不对原集合进行修改，而是重新复制一份，修改完之后，再移动指针
-
-## 阻塞队列
-
-- BlockingQueue
-    - 该类型的队列执行take时如果没有元素则会一直阻塞，put如果超过了界限也会一直阻塞，直至有可用空间
-    - 实现类:ArrayBlockingQueue与LinkedBlockingDeque等
-
 # 任务执行
 
 - 串行执行

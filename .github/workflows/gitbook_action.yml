@@ -39,6 +39,11 @@ jobs:
         pip install jieba
         pip install wordcloud
         python ./statistics.py
+    - name: update time
+      run: |
+        git config --global core.quotepath false
+        chmod +x ./updatetime.sh
+        ./updatetime.sh | bash
     - name: install_gitbook_plugins
       run: |
         npm config set registry https://registry.npm.taobao.org

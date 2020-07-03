@@ -127,20 +127,6 @@ synchronized(obj){
 - 迭代器与ConcurrentModificationException
   - 当在迭代的时候，容器元素发生了修改，则会抛出这个异常
 
-# 任务执行
-
-- 串行执行
-- 显式创建线程执行
-
-## Executor框架
-
-```java
-public interface Executor {
-
-    void execute(Runnable command);
-}
-```
-
 ### 执行策略
 
 - 什么线程
@@ -149,49 +135,6 @@ public interface Executor {
 - 多少任务等待
 - 如何放弃以及通知放弃
 - 任务执行前操作
-
-### 线程池
-
-```java
-        Executors.newFixedThreadPool(5); // 创建固定长度的线程池
-        Executors.newCachedThreadPool(); // 可缓存线程池，动态伸缩
-        Executors.newSingleThreadExecutor(); // 单线程线程池
-        Executors.newScheduledThreadPool(5); // 可以延迟或者定时执行
-```
-
-### 生命周期
-
-ExecutorService继承了Executor，增加了一些方法
-
-```java
-public interface ExecutorService extends Executor {
-    // 平缓关闭
-    void shutdown();
-
-    // 粗暴关闭
-    List<Runnable> shutdownNow();
-
-    boolean isShutdown();
-
-    boolean isTerminated();
-
-    boolean awaitTermination(long timeout, TimeUnit unit)
-        throws InterruptedException;
-
-    <T> Future<T> submit(Callable<T> task);
-
-    <T> Future<T> submit(Runnable task, T result);
-
-    Future<?> submit(Runnable task);
-
-    <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
-        throws InterruptedException;
-
-    <T> T invokeAny(Collection<? extends Callable<T>> tasks)
-        throws InterruptedException, ExecutionException;
-}
-
-```
 
 # 取消与关闭
 

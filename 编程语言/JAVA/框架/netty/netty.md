@@ -24,19 +24,6 @@
 
 ## 核心API
 
-### ChannelHandler
-
-ChannelHandler 为 Netty 中最核心的组件，它充当了所有处理入站和出站数据的应用程序逻辑的容器。ChannelHandler 主要用来处理各种事件，这里的事件很广泛，比如可以是连接、数据接收、异常、数据转换等
-
-![](https://img2018.cnblogs.com/blog/1322310/201812/1322310-20181220211548971-1386097414.png)
-
-### ChannelPipeline
-
-ChannelPipeline 为 ChannelHandler 链提供了一个容器并定义了用于沿着链传播入站和出站事件流的 API
-
-![](https://img-blog.csdn.net/20160504161903129?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center)
-
-
 ### ChannelHandlerContext
 
 使ChannelHandler与其ChannelPipeline和其他处理程序进行交互。处理程序可以通知ChannelPipeline中的下一个ChannelHandler，动态修改其所属的ChannelPipeline
@@ -50,19 +37,6 @@ ChannelOption.SO_BACKLOG对应的是tcp/ip协议listen函数中的backlog参数�
 - ChannelOption.SO_KEEPALIVE
 
 Channeloption.SO_KEEPALIVE参数对应于套接字选项中的SO_KEEPALIVE，该参数用于设置TCP连接，当设置该选项以后，连接会测试链接的状态，这个选项用于可能长时间没有数据交流的连接。当设置该选项以后，如果在两小时内没有数据的通信时，TCP会自动发送一个活动探测数据报文
-
-### ChannelFuture
-
-ChannelFuture的作用是用来保存Channel异步操作的结果
-
-### EventLoop
-
-![](https://upload-images.jianshu.io/upload_images/7853175-16eb7a864ce8ea55.png?imageMogr2/auto-orient/strip|imageView2/2/w/1200/format/webp)
-
-### ServerBootStrap
-
-- 使用服务器的ServerBootStrap，用于接受客户端的连接以及为已接受的连接创建子通道。
-- 用于客户端的BootStrap，不接受新的连接，并且是在父通道类完成一些操作。
 
 ### Unpooled类
 

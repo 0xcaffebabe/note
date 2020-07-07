@@ -38,10 +38,6 @@ ChannelOption.SO_BACKLOG对应的是tcp/ip协议listen函数中的backlog参数�
 
 Channeloption.SO_KEEPALIVE参数对应于套接字选项中的SO_KEEPALIVE，该参数用于设置TCP连接，当设置该选项以后，连接会测试链接的状态，这个选项用于可能长时间没有数据交流的连接。当设置该选项以后，如果在两小时内没有数据的通信时，TCP会自动发送一个活动探测数据报文
 
-### Unpooled类
-
-操作缓冲区的工具类
-
 ## 处理流式传输
 
 数据通过网络传输，最终会缓存在一个字节数组里

@@ -222,14 +222,6 @@ class MyThread extends  Thread{
         });
 ```
 
-# 线程池的大小
-
-N<sub>cpu</sub> = CPU数量
-U<sub>cpu</sub> = 预期CPU使用率
-W/C = 等待时间/计算时间
-
-最优大小等于 N<sub>cpu</sub> * U<sub>cpu</sub> * (1 + W/C)
-
 # 活跃性危险
 
 - 死锁

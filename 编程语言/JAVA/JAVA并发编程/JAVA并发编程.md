@@ -1,10 +1,20 @@
+# 并发编程
+
+- 并发：指两个或多个事件在同一个时间段内发生。
+- 并行：指两个或多个事件在同一时刻发生（同时发生）。
+
 # 线程安全性
 
 超线程：一个ALU对应多个PC
 
 > 当多个线程访问某个类时，这个类始终都能表现出正确的行为，则称这个类是线程安全的
-
+> 线程安全问题都是由全局变量及静态变量引起的。若每个线程中对全局变量、静态变量只有读操作，而无写操作，一般来说，这个全局变量是线程安全的；若有多个线程同时执行写操作，一般都需要考虑线程同步， 否则的话就可能影响线程安全。
 - 无状态对象一定是线程安全的
+
+## JAVA API中的线程安全问题
+
+- StringBuffer
+- Vector
 
 ## 原子性
 
@@ -40,6 +50,8 @@ public static Object get(){
 
 - 对持有锁的范围、时间进行良好设计
 
+> 使用了锁对象，这个锁对象一瞬间只能被一个线程所持有
+
 ### synchronized实现过程
 
 - java代码：synchronized
@@ -54,6 +66,79 @@ public static Object get(){
 悲观的并发策略：认为只要不去做正确的同步措施，那就肯定会出现问题。无论共享数据是否真的会出现竞争，它都要进行加锁
 
 乐观并发策略：先进行操作，如果没有其它线程争用共享数据，那操作就成功了，否则采取补偿措施
+
+### 悲观锁 乐观锁
+
+- 乐观锁
+
+总是认为不会产生并发问题，每次去取数据的时候总认为不会有其他线程对数据进行修改，因此不会上锁，但是在更新时会判断其他线程在这之前有没有对数据进行修改，一般会使用版本号机制或CAS操作实现
+
+```sql
+update table set x=x+1, version=version+1 where id=${id} and version=${version};
+```
+
+- 悲观锁
+
+总是假设最坏的情况，每次取数据时都认为其他线程会修改，所以都会加锁（读锁、写锁、行锁等），当其他线程想要访问数据时，都需要阻塞挂起
+
+synchronized是悲观锁
+
+### 自旋锁
+
+>线程反复检查锁变量是否可用。由于线程在这一过程中保持执行，因此是一种忙等待
+
+### 分布式锁
+
+- zookeeper与redis实现
+
+## 线程间通信
+
+- 等待-唤醒机制
+
+![06_等待唤醒案例分析](/assets/06_等待唤醒案例分析.bmp)
+
+要注意，wait() notify() notifyAll()都需要在synchronized中
+
+wait() 会释放锁，sleep() 不会
+
+```java
+Object object = new Object();
+
+new Thread(){
+    @Override
+    public void run() {
+        synchronized (object){
+            System.out.println("要5个包子");
+            // 进入等待，这时候锁会被释放
+            try {
+                object.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("得到了5个包子");
+        }
+    }
+}.start();
+
+new Thread(){
+    @Override
+    public void run() {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        synchronized (object){
+            System.out.println("包子生产完毕，告诉顾客");
+            // 通知等待线程中的任意一个
+            object.notify();
+        }
+    }
+}.start();
+```
+
+- wait与notify一定要在线程同步中使用,并且是同一个锁的资源
+- 在调用sleep()方法的过程中，线程不会释放对象锁
 
 # 对象的共享
 

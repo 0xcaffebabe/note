@@ -24,10 +24,6 @@
 
 ## 核心API
 
-### ChannelHandlerContext
-
-使ChannelHandler与其ChannelPipeline和其他处理程序进行交互。处理程序可以通知ChannelPipeline中的下一个ChannelHandler，动态修改其所属的ChannelPipeline
-
 ### ChannelOption
 
 - ChannelOption.SO_BACKLOG

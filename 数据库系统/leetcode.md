@@ -58,3 +58,13 @@ SELECT * FROM cinema
 WHERE description <> 'boring' AND id %2 =1 
 ORDER BY rating DESC
 ```
+
+## 超过5名学生的课
+
+<https://leetcode-cn.com/problems/classes-more-than-5-students/>
+
+```sql
+-- 注意对学生姓名去重
+SELECT class FROM courses 
+GROUP BY class HAVING COUNT(DISTINCT student) >=5
+```

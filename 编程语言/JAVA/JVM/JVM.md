@@ -1,6 +1,27 @@
+# JVM
 
 - 系统虚拟机
 - 软件虚拟机
+
+![批注 2020-07-10 083948](/assets/批注%202020-07-10%20083948.png)
+
+JVM是一种规范
+
+JDK14:<https://docs.oracle.com/javase/specs/jvms/se14/jvms14.pdf>
+
+## 常见JVM实现
+
+- Hotspot
+- Jrockit
+- J9
+- Microsoft VM
+- TaobaoVM
+- LiquidVM
+- azul zing
+
+## JDK JRE JVM
+
+![批注 2020-07-10 090055](/assets/批注%202020-07-10%20090055.png)
 
 ## Hotspot构成
 

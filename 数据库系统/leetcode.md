@@ -68,3 +68,14 @@ ORDER BY rating DESC
 SELECT class FROM courses 
 GROUP BY class HAVING COUNT(DISTINCT student) >=5
 ```
+
+## 交换性别
+
+<https://leetcode-cn.com/problems/swap-salary/submissions/>
+
+```sql
+UPDATE salary 
+SET sex = CASE sex WHEN 'f' THEN 'm'
+            WHEN 'm' THEN 'f'
+           END
+```

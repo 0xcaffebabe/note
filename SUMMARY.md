@@ -264,6 +264,7 @@
       - [网络编程](./编程语言/JAVA/高级/网络爬虫.md)
       - [Netty](.//编程语言/JAVA/框架/netty/netty.md)
         - [概念及体系结构](.//编程语言/JAVA/框架/netty/概念及体系结构.md)
+        - [编解码器](.//编程语言/JAVA/框架/netty/编解码器.md)
     - [Stream流](./编程语言/JAVA/高级/Stream流.md)
     - [JAVA模块化](./编程语言/JAVA/高级/JAVA模块化.md)
     - [反射](./编程语言/JAVA/高级/反射.md)

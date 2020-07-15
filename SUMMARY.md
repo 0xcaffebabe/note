@@ -256,6 +256,7 @@
     - [IO](./编程语言/JAVA/高级/IO.md)
     - [多线程](./编程语言/JAVA/高级/多线程.md)
     - [JAVA并发编程](./编程语言/JAVA/JAVA并发编程/JAVA并发编程.md)
+      - [leetcode](./编程语言/JAVA/JAVA并发编程/leetcode.md)
       - [基础概念](./编程语言/JAVA/JAVA并发编程/基础概念.md)
       - [并发工具类](./编程语言/JAVA/JAVA并发编程/并发工具类.md)
       - [并发集合](./编程语言/JAVA/JAVA并发编程/并发集合.md)

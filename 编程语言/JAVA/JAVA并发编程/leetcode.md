@@ -34,3 +34,39 @@ class Foo {
     }
 }
 ```
+
+## 交替打印FooBar
+
+<https://leetcode-cn.com/problems/print-foobar-alternately/>
+
+- 自旋
+
+```java
+class FooBar {
+    private int n;
+    private volatile boolean f = false;
+    public FooBar(int n) {
+        this.n = n;
+    }
+
+    public void foo(Runnable printFoo) throws InterruptedException {
+        
+        for (int i = 0; i < n; i++) {
+        	// printFoo.run() outputs "foo". Do not change or remove this line.
+                while(f){Thread.yield();}
+                printFoo.run();
+                f=true;
+        }
+    }
+
+    public void bar(Runnable printBar) throws InterruptedException {
+        
+        for (int i = 0; i < n; i++) {
+            // printBar.run() outputs "bar". Do not change or remove this line.
+                while(!f){Thread.yield();}
+                printBar.run();
+                f=false;
+        }
+    }
+}
+```

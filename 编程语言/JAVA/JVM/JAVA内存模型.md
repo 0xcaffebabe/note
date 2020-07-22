@@ -1,59 +1,53 @@
 # JAVA内存模型(JMM)
 
-## 线程安全
-
-当多个线程同时操作某个对象时，这个对象始终都能表现出正确的行为，则称这个类是线程安全的
-
-### 解决方法
-
-- 内置锁
-  - 同步方法
-    - 静态：当前类的同步代码块
-    - 非静态：当前对象的同步代码块
-  - 同步代码块
-- 显式锁
-
-## 死锁
-
-两个线程互相等待对方持有的锁而陷入无限等待状态
-
-## ThreadLocal
-
->当使用ThreadLocal维护变量时，ThreadLocal为每个使用该变量的线程提供独立的变量副本，所以每一个线程都可以独立地改变自己的副本，而不会影响其它线程所对应的副本
-
-```java
-public class Main implements Runnable{
-    private ThreadLocal<String> ts = new ThreadLocal<>();
-
-    @Override
-    public void run() {
-        ts.set(Thread.currentThread().getName());
-        System.out.println(ts.get());
-    }
-}
-```
-
-### 原理
-
-```java
-public void set(T value) {
-    Thread t = Thread.currentThread();
-    ThreadLocalMap map = getMap(t);
-    if (map != null) {
-        map.set(this, value);
-    } else {
-         createMap(t, value);
-    }
-}
-```
-
-## JAVA内存模型JMM
-
 >JMM定义了线程和主内存之间的抽象关系：线程之间的共享变量存储在主内存（main memory）中，每个线程都有一个私有的本地内存（local memory），本地内存中存储了该线程以读/写共享变量的副本
 
 ![批注 2020-03-12 195705](/assets/批注%202020-03-12%20195705.png)
 
-### 内存间的交互操作
+## 硬件层数据一致性
+
+现代CPU的数据一致性实现 = 缓存锁(MESI ...) + 总线锁
+
+- 缓存行
+
+![批注 2020-07-22 144020](/assets/批注%202020-07-22%20144020.png)
+
+使用缓存行的对齐能够提高效率（disruptor）
+
+## 乱序问题
+
+CPU为了提高指令执行效率，会在一条指令执行过程中（比如去内存读数据（慢100倍）），去同时执行另一条指令，前提是，两条指令没有依赖关系
+
+### 硬件级防乱序
+
+X86
+
+sfence:  store| 在sfence指令前的写操作当必须在sfence指令后的写操作前完成。
+lfence：load | 在lfence指令前的读操作当必须在lfence指令后的读操作前完成。
+mfence：modify/mix | 在mfence指令前的读写操作当必须在mfence指令后的读写操作前完成
+
+### JVM级防乱序
+
+JVM内存屏障 屏障两边的指令不可以重排序
+
+LoadLoad屏障:
+对于这样的语句Load1; LoadLoad; Load2,
+在Load2及后续读取操作要读取的数据被访问前，保证Loadi要读取的数据被读取完毕
+
+StoreStore屏障:
+对于这样的语句Store1; StoreStore; Store2,
+在Store2及后续写入操作执行前，保证Store1的写 入操作对其它处理器可见。
+
+LoadStore屏障:
+对于这样的语句Load1; LoadStore; Store2,
+在Store2及后续写入操作被刷出前，保证Load1要读取的数据被读取完毕。
+
+StoreLoad屏障:对于这样的语句Store1; StoreLoad; Load2,
+在Load2及后续所有读取操作执行前，保证Store1的写入对所有处理器可见。
+
+再低一层，虚拟机的实现是可以依赖于 lock 指令
+
+## 内存间的交互操作
 
 ![202031219588](/assets/202031219588.png)
 
@@ -66,15 +60,15 @@ public void set(T value) {
 - lock：作用于主内存的变量
 - unlock
 
-### 三大特性
+## 三大特性
 
-#### 原子性
+### 原子性
 
 JAVA内存模型保证了以上8种内存操作具有原子性
 
 但是允许虚拟机将没有被 volatile 修饰的 64 位数据（long，double）的读写操作划分为两次 32 位的操作来进行
 
-#### 可见性
+### 可见性
 
 可见性指当一个线程修改了共享变量的值，其它线程能够立即得知这个修改
 
@@ -100,7 +94,7 @@ synchronized 也可以来保证有序性，它保证每个时刻只有一个线�
 
 如果两个操作访问同一个变量，且这两个操作中有一个为写操作，此时这两个操作之间就存在数据依赖性
 
-### as-if-serial语义
+## as-if-serial语义
 
 as-if-serial语义的意思指：不管怎么重排序（编译器和处理器为了提高并行度），（单线程）程序的执行结果不能被改变
 

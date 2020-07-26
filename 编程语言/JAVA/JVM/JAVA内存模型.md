@@ -26,7 +26,9 @@ sfence:  store| 在sfence指令前的写操作当必须在sfence指令后的写�
 lfence：load | 在lfence指令前的读操作当必须在lfence指令后的读操作前完成。
 mfence：modify/mix | 在mfence指令前的读写操作当必须在mfence指令后的读写操作前完成
 
-### JVM级防乱序
+>原子指令，如x86上的”lock …” 指令是一个Full Barrier，执行时会锁住内存子系统来确保执行顺序，甚至跨多个CPU。Software Locks通常使用了内存屏障或原子指令来实现变量可见性和保持程序顺序
+
+### JVM级防乱序(JSR133)
 
 JVM内存屏障 屏障两边的指令不可以重排序
 
@@ -46,6 +48,48 @@ StoreLoad屏障:对于这样的语句Store1; StoreLoad; Load2,
 在Load2及后续所有读取操作执行前，保证Store1的写入对所有处理器可见。
 
 再低一层，虚拟机的实现是可以依赖于 lock 指令
+
+### volatile的实现细节
+
+- 字节码层面
+
+ACC_VOLATILE 修饰符
+
+- JVM层面
+
+volatile内存区的读写 都加屏障
+
+> StoreStoreBarrier
+>
+> volatile 写操作
+>
+> StoreLoadBarrier
+
+> LoadLoadBarrier
+>
+> volatile 读操作
+>
+> LoadStoreBarrier
+
+- 硬件/OS层面
+
+内存屏障/Lock指令
+
+### synchronized实现细节
+
+- 字节码层面
+
+ACC_SYNCHRONIZED
+
+monitorenter monitorexit
+
+- JVM层面
+
+C C++ 调用了操作系统提供的同步机制
+
+- OS和硬件层面
+
+X86 : lock cmpxchg / xxx
 
 ## 内存间的交互操作
 

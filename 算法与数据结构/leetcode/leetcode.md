@@ -944,3 +944,53 @@ class Solution {
 ```
 
 耗时:1449ms
+
+## 两数之和
+
+<https://leetcode-cn.com/problems/sum-of-two-integers/submissions/>
+
+```java
+class Solution {
+    public int getSum(int a, int b) {
+        if (b >0){
+            while(b>0){
+                a++;
+                b--;
+            }
+        }else if (b<0){
+            while(b<0){
+                a--;
+                b++;
+            }
+        }
+        return a;
+    }
+}
+```
+
+耗时:946
+
+## 猜数字大小
+
+<https://leetcode-cn.com/problems/guess-number-higher-or-lower/submissions/>
+
+```java
+public class Solution extends GuessGame {
+    public int guessNumber(int n) {
+        int low = 1;
+        int high = n;
+        while(low <= high){
+            int mid = low+(high-low)/2;
+            int ret = guess(mid);
+            if (ret == 0){
+                return mid;
+            }else if (ret == 1){
+                low = mid+1;
+            }else {
+                high = mid-1;
+            }
+        }
+        return -1;
+    }
+}
+```

@@ -1,20 +1,20 @@
+# Servlets
+
 > server applet 运行在服务器端的小程序
 
-# 使用
+## WebServlet
+
+### 使用
 
 - 实现Servlet接口
 
 ```java
 public class MyServlet implements Servlet{
-
-
    ...
-
     @Override
     public void service(ServletRequest servletRequest, ServletResponse servletResponse) throws ServletException, IOException {
         servletResponse.getWriter().println("hello world");
     }
-
     ...
 }
 ```
@@ -23,17 +23,16 @@ public class MyServlet implements Servlet{
 
 ```xml
 <servlet>
-        <servlet-name>MyServlet</servlet-name>
-        <servlet-class>wang.ismy.web.MyServlet</servlet-class>
-    </servlet>
-
-    <servlet-mapping>
-        <servlet-name>MyServlet</servlet-name>
-        <url-pattern>/*</url-pattern>
-    </servlet-mapping>
+    <servlet-name>MyServlet</servlet-name>
+    <servlet-class>wang.ismy.web.MyServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>MyServlet</servlet-name>
+    <url-pattern>/*</url-pattern>
+</servlet-mapping>
 ```
 
-## 原理
+### 原理
 
 - 当服务器接受到客户端浏览器的请求后，会解析请求URL路径，获取访问的Servlet的资源路径
 - 查找web.xml文件，是否有对应的`<url-pattern>`标签体内容。
@@ -41,7 +40,7 @@ public class MyServlet implements Servlet{
 - tomcat会将字节码文件加载进内存，并且创建其对象
 - 调用其方法
 
-# 生命周期方法
+## 生命周期方法
 
 被创建：执行init方法，只执行一次
 
@@ -76,7 +75,7 @@ public class MyServlet implements Servlet{
 
 ![](http://static.oschina.net/uploads/space/2015/0403/112707_yOnu_120166.jpg)
 
-## Servlet3.0
+### Servlet3.0
 
 - 加上注解后不用配置web.xml
 
@@ -84,11 +83,11 @@ public class MyServlet implements Servlet{
 @WebServlet("/*")
 ```
 
-# 体系结构
+## 体系结构
 
 ![批注 2019-08-09 093125](/assets/批注%202019-08-09%20093125.png)
 
-# 配置
+## 配置
 
 路径定义规则：
 
@@ -209,4 +208,149 @@ System.out.println(getServletContext().getMimeType("a.jpg"));
 
 - String getRealPath(String path)
 
+## Servlet 过滤器(Filter)
 
+> 一般用于完成通用的操作。如：登录验证、统一编码处理、敏感字符过滤
+
+```java
+@WebFilter
+public class LoggingFilter implements Filter {
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+        //...
+    }
+}
+```
+
+也可以不适用注解使用如下xml配置
+
+```xml
+<filter>
+    <filter-name>demo1</filter-name>
+    <filter-class>wang.ismy.javaee.LoggingFilter</filter-class>
+</filter>
+<filter-mapping>
+    <filter-name>demo1</filter-name>
+    <!-- 拦截路径 -->
+    <url-pattern>/*</url-pattern>
+</filter-mapping>
+```
+
+### 执行流程
+
+- 执行过滤器
+- 执行放行后的资源
+- 回来执行过滤器放行代码下边的代码
+
+### 生命周期方法
+
+- init:在服务器启动后，会创建Filter对象，然后调用init方法。只执行一次。用于加载资源
+- doFilter:每一次请求被拦截资源时，会执行。执行多次
+- destroy:在服务器关闭后，Filter对象被销毁。如果服务器是正常关闭，则会执行destroy方法。只执行一次。用于释放资源
+
+### 拦截方式配置：资源被访问的方式
+
+- REQUEST：默认值。浏览器直接请求资源
+- FORWARD：转发访问资源
+- INCLUDE：包含访问资源
+- ERROR：错误跳转资源
+- ASYNC：异步访问资源
+
+```java
+@WebFilter(value = "/*",dispatcherTypes = DispatcherType.ERROR)
+```
+
+### 过滤器链
+
+- 注解配置
+
+  - 按照类名字符串排序
+
+- web.xml配置
+
+  - 按照filter-mapping排序
+
+## 事件监听器(Listener)
+
+- ServletContextListener
+- HttpSessionListener
+- ServletRequestListener
+
+## 异步支持
+
+```java
+@WebServlet(urlPatterns = "/hello",asyncSupported = true)
+public class MyServlet extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        AsyncContext async = req.startAsync();
+        async.addListener(new AsyncListener() {
+            @Override
+            public void onComplete(AsyncEvent asyncEvent) throws IOException {
+                asyncEvent.getSuppliedResponse().getWriter().write("jntm");
+            }
+            //...
+        });
+        new Thread(()->{
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            async.complete();
+        }).start();
+    }
+}
+```
+
+## 非阻塞IO
+
+```java
+AsyncContext async = req.startAsync();
+ServletInputStream inputStream = req.getInputStream();
+inputStream.setReadListener(new ReadListener() {
+    @Override
+    public void onDataAvailable() throws IOException {
+        byte[] bytes = new byte[1024];
+        while (inputStream.isReady() && inputStream.read(bytes)!=-1){
+            System.out.println(new String(bytes));
+        }
+        async.complete();
+    }
+    @Override
+    public void onAllDataRead() throws IOException {
+        async.complete();
+    }
+    @Override
+    public void onError(Throwable throwable) {
+        throwable.printStackTrace();
+        async.complete();
+    }
+});
+```
+
+## WebFragment
+
+可以对XML配置进行分区
+
+## 安全
+
+- @ServletSecurity
+
+## 错误映射
+
+```xml
+<error-page>
+    <error-code>404</error-code>
+    <location>/404.html</location>
+</error-page>
+<error-page>
+    <exception-type>java.lang.RuntimeException</exception-type>
+    <location>/500.html</location>
+</error-page>
+```
+
+## 文件上传
+
+- @MultiPartConfig

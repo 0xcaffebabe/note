@@ -321,7 +321,6 @@
       - [Servlet](./编程语言/JAVA/JakartaEE/Servlet.md)
       - [JSP](./编程语言/JAVA/JakartaEE/JSP.md)
       - [Cookie&Session](./编程语言/JAVA/JakartaEE/Cookie&Session.md)
-      - [Filter&Listener](./编程语言/JAVA/JakartaEE/Filter&Listener.md)
       - [JNDI](./编程语言/JAVA/JakartaEE/JNDI.md)
       - [JPA](./编程语言/JAVA/JakartaEE/JPA.md)
       - [Freemarker](./编程语言/JAVA/JakartaEE/Freemarker.md)

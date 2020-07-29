@@ -65,7 +65,9 @@ def filterSpecialSymbol(str):
 def isStopWord(str):
   if len(str) <= 1:
     return True
-  stopWords = ['的','是','在','一个','和','与','批注']
+  stopWords = ['的','是','在','一个','和',
+  '与','批注','可以','使用','通过','md','据库','这个'
+  ]
   for item in stopWords:
     if item == str:
       return True

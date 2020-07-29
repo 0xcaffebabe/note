@@ -994,3 +994,31 @@ public class Solution extends GuessGame {
     }
 }
 ```
+
+## 多数元素
+
+<https://leetcode-cn.com/problems/majority-element/submissions/>
+
+```java
+class Solution {
+    public int majorityElement(int[] nums) {
+        int n = nums.length/2;
+        Map<Integer,Integer> map = new HashMap<>();
+        for(int i :nums){
+            if (map.containsKey(i)){
+                map.put(i,map.get(i)+1);
+            }else{
+                map.put(i,1);
+            }
+        }
+        for(int i:map.keySet()){
+            if (map.get(i)>n){
+                return i;
+            }
+        }
+        return -1;
+    }
+}
+```
+
+耗时：16ms

@@ -19,8 +19,6 @@
   - -关系数据库-
   - [SQL](./数据库系统/关系数据库/SQL.md)
   - [形式化关系查询语言](./数据库系统/关系数据库/形式化关系查询语言.md)
-  - [MySQL](./数据库系统/mysql/mysql.md)
-    - [索引](./数据库系统/mysql/索引.md)
   - [Oracle](./数据库系统/oracle/nav.md)
   - -数据库设计-
   - [数据库设计和ER模型](./数据库系统/数据库设计/数据库设计和ER模型.md)
@@ -395,6 +393,12 @@
   - [GraphQL](./DSL/GraphQL.md)
 
 - [中间件](./中间件/nav.md)
+  - [数据库](./中间件/数据库/数据库.md)
+    - [MySQL](./中间件/数据库/mysql/mysql.md)
+      - [索引](./中间件/数据库/mysql/索引.md)
+      - [优化](./中间件/数据库/mysql/数据库优化.md)
+        - [performance schema](./中间件/数据库/mysql/performance.md)
+        - [schema与数据类型优化](./中间件/数据库/mysql/schema与数据类型优化.md)
   - [消息队列](./中间件/消息队列/消息队列.md)
     - [ActiveMQ](./中间件/消息队列/activeMQ.md)
     - [RabbitMQ](./中间件/消息队列/rabbitMQ.md)

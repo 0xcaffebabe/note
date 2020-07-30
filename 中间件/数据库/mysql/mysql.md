@@ -27,11 +27,13 @@ MySQL 默认的事务型存储引擎，只有在需要它不支持的特性时�
 ------ | ------ | ------ | ------ | -------
 存储限制   | 256TB  | RAM    | 64TB   | None
 支持事务   | No     | No     | Yes    | No
-支持全文索引 | Yes    | No     | No     | No
+支持全文索引 | Yes    | No     | Yes(5.6之后)    | No
 支持数索引  | Yes    | Yes    | Yes    | No
 支持哈希索引 | No     | Yes    | No     | No
 支持数据缓存 | No     | N/A    | Yes    | No
 支持外键   | No     | No     | Yes    | No
+
+![批注 2020-07-30 085703](/assets/批注%202020-07-30%20085703.png)
 
 ## 数据类型
 
@@ -60,8 +62,6 @@ FLOAT 和 DOUBLE 为浮点类型，DECIMAL 为高精度小数类型，DECIMAL �
 
 和 UNIX 时间戳相同
 应该尽量使用 TIMESTAMP，因为它比 DATETIME 空间效率更高
-
-
 
 ## 用户及权限管理
 

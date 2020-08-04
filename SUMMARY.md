@@ -401,6 +401,7 @@
         - [schema与数据类型优化](./中间件/数据库/mysql/schema与数据类型优化.md)
         - [执行计划](./中间件/数据库/mysql/执行计划.md)
         - [查询优化](./中间件/数据库/mysql/查询优化.md)
+        - [分区表](./中间件/数据库/mysql/分区表.md)
   - [消息队列](./中间件/消息队列/消息队列.md)
     - [ActiveMQ](./中间件/消息队列/activeMQ.md)
     - [RabbitMQ](./中间件/消息队列/rabbitMQ.md)

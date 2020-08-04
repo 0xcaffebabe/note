@@ -1,10 +1,12 @@
+# Stream
+
 - sequence of elements: 一个流对外提供一个接口，可以访问到一串特定的数据。流不存储元素，但是可以根据需要进行计算转化
 - source：数据来源，如数据结构，数组，文件等
 - aggregate operation：聚合操作，流支持像SQL操作或者其他函数式语言的操作，如filter/map/reduce/find/match/sorted等
 - Pipelining: 中间操作都会返回流对象本身。 这样多个操作可以串联成一个管道， 如同流式风格（ﬂuent style）。 这样做可以对操作进行优化， 比如延迟执行(laziness)和短路( short-circuiting)。 
 - Internal Iteration： 以前对集合遍历都是通过Iterator或者增强for的方式, 显式的在集合外部进行迭代， 这叫做外部迭代。 Stream提供了内部迭代的方式，流可以直接调用遍历方法。
 
-# 处理流程
+## 处理流程
 
 ![](https://www.oracle.com/ocom/groups/public/@otn/documents/digitalasset/2179051.jpg)
 
@@ -40,6 +42,7 @@ Stream<BigInteger> iterate = Stream.iterate(BigInteger.ZERO, n -> n.add(BigInteg
 ```java
 Stream<String> stream = list.stream(); 
 ```
+
 ## 根据Map获取流 
 
 ```java
@@ -47,22 +50,22 @@ Stream<String> keyStream = map.keySet().stream();
 Stream<String> valueStream = map.values().stream();
 Stream<Map.Entry<String, String>> entryStream = map.entrySet().stream();
 ```
-# 基本类型流
+## 基本类型流
 
 - IntStream，LongStream，DoubleStream
 
-# 并行流
+## 并行流
 
 - 使得所有的中间转换操作都将被并行化
 - Collections.parallelStream()将任何集合转为并行流
 - Stream.parallel()方法，产生一个并行流
 
-# 流的方法
+## 流的方法
 
 - 延迟方法：返回值类型仍然是 Stream 接口自身类型的方法，因此支持链式调用。（除了终结方法外，其余方 法均为延迟方法。） 
 - 终结方法：返回值类型不再是 Stream 接口自身类型的方法，因此不再支持类似 StringBuilder 那样的链式调 用。本小节中，终结方法包括 count 和 forEach 方法。
 
-# 转换方法
+### 转换方法
 
 ## 过滤filter
 
@@ -110,7 +113,7 @@ Stream.concat(s1,s2); // 连接两个流
 
 可以对流操作，但是不影响它
 
-# Optional
+## Optional
 
 `Optional<T>`
 
@@ -187,5 +190,3 @@ reduce，传递一个二元函数BinaryOperator，对流元素进行计算
 - 避免创建无限流
 - 注意操作顺序
 - 谨慎使用并行流
-
-

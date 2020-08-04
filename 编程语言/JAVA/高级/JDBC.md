@@ -1,6 +1,8 @@
+# JDBC
+
 > Java数据库连接，（Java Database Connectivity，简称JDBC）是Java语言中用来规范客户端程序如何来访问数据库的应用程序接口，提供了诸如查询和更新数据库中数据的方法。JDBC也是Sun Microsystems的商标。JDBC是面向关系型数据库的。
 
-# 常用类
+## 常用类
 
 接口或类                | 作用
 ------------------- | ----------------------------------------------------------------------
@@ -11,11 +13,11 @@ PreparedStatemen 接口 | 一个 SQL 语句对象，是 Statement 的子接口 R
 
 _从 JDBC3 开始，目前已经普遍使用的版本。可以不用注册驱动而直接使用。Class.forName 这句话可以省略_
 
-# 数据类型
+## 数据类型
 
 ![批注 2019-08-05 115032](/assets/批注%202019-08-05%20115032.png)
 
-# 经典查询
+## 经典查询
 
 ```java
 try(Connection connection = DriverManager.getConnection("jdbc:mysql:///test?user=root&password=123")){
@@ -28,9 +30,11 @@ try(Connection connection = DriverManager.getConnection("jdbc:mysql:///test?user
         }
 ```
 
-# SQL注入与PreparedStatement
+## SQL注入与PreparedStatement
 
-# 事务控制
+使用 PreparedStatement 避免 SQL注入
+
+## 事务控制
 
 ```java
 connection.setAutoCommit(false);
@@ -38,7 +42,7 @@ connection.setAutoCommit(false);
             connection.rollback();
 ```
 
-# 数据库连接池
+## 数据库连接池
 
 > 数据库连接池负责分配、管理和释放数据库连接，它允许应用程序重复使用一个现有的数据库连接，而不是再重新建立一个；释放空闲时间超过最大空闲时间的数据库连接来避免因为没有释放数据库连接而引起的数据库连接遗漏。这项技术能明显提高对数据库操作的性能。
 
@@ -60,5 +64,3 @@ connection.setAutoCommit(false);
   - 获取连接方法：通过数据库连接池获取连接
   - 释放资源
   - 获取连接池的方法
-
-

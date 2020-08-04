@@ -1,20 +1,8 @@
-- 面向过程程序语言：参数传递是基本类型的变量
-- 面向对象语言
-
-  - 传递基本类型的变量
-  - 传递对象变量
-
-- 函数式程序语言设计
-
-  - 传递方法/代码块
-
-# 格式
+# Lambda 表达式
 
 ```java
 (参数列表) ‐> { 代码语句 }
 ```
-
-# Lambda
 
 - 类似于匿名方法，一个没有名字的方法
 - 可以忽略写参数类型
@@ -33,14 +21,14 @@ String[] sa = {"ss","assas","sdw","11","8568"};
         System.out.println(Arrays.toString(sa));
 ```
 
-# 使用前提
+## 使用前提
 
 - 使用Lambda必须具有接口，且要求接口中有且仅有一个抽象方法。 无论是JDK内置的 Runnable 、 Comparator 接口还是自定义的接口，只有当接口中的抽象方法存在且唯一 时，才可以使用Lambda。
 - 使用Lambda必须具有上下文推断。 也就是方法的参数或局部变量类型必须为Lambda对应的接口类型，才能使用Lambda作为该接口的实例。
 
 > 有且仅有一个抽象方法的接口，称为"函数式接口"。
 
-# 函数式接口
+## 函数式接口
 
 - 是一个接口，符合Java接口的定义
 - 只包含一个抽象方法的接口
@@ -48,11 +36,10 @@ String[] sa = {"ss","assas","sdw","11","8568"};
 - 由于只有一个未实现的方法，所以Lambda表达式可以自动填上这个尚未实现的方法
 - 采用Lambda表达式，可以自动创建出一个(伪)嵌套类的对象(没有实际的嵌套类class文件产生)，然后使用，比真正嵌套类更加轻量，更加简洁高效
 
-## @FunctionalInterface注解
+- @FunctionalInterface注解
 
 > 一旦使用该注解来标记接口，编译器将会强制检查该接口是否确实有且仅有一个抽象方法，否则编译将会报错。
 
-## 定义
 
 ```java
 @FunctionalInterface
@@ -61,16 +48,13 @@ public interface SuperRunnable {
 }
 ```
 
-## 使用
-
 ```java
 public static void main(String[] args) {
-        superRun(()-> System.out.println("hello world"));
-    }
-
-    private static void superRun(SuperRunnable sr){
-        sr.superRun();
-    }
+    superRun(()-> System.out.println("hello world"));
+}
+private static void superRun(SuperRunnable sr){
+    sr.superRun();
+}
 ```
 
 - 尽量使用系统自带的函数式接口，不要自己定义
@@ -80,9 +64,9 @@ public static void main(String[] args) {
 `Predicate<T>`   | T    | Boolean | 接收一个参数，返回一个布尔值
 `Consumer<T>`    | T    | void    | 接受一个参数，无返回
 `Function<T, R>` | T    | R       | 接受一个参数，返回一个值
-`Supplier<T>`    | None | T       | 数据工厂
+`Supplier<T>`    | None | T       | 无参数 返回一个值
 
-# 方法引用
+## 方法引用
 
 - Class::staticMethod，如 Math::abs方法
   - Math::abs 等价于 x -> Math.abs(x)
@@ -97,7 +81,7 @@ public static void main(String[] args) {
 - Class[]::new，调用某类构造函数，支持数组对象构建
   - `Function<Integer,Object> ` f = Object[]::new
 
-# 应用
+## 应用
 
 - 类型信息
   - 被赋值后，可以看作是一个函数式接口的实例(对象)

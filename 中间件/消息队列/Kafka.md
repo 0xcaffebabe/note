@@ -50,8 +50,8 @@ Kafka 0.8 以后，提供了 HA 机制，replica（复制品） 副本机制
 docker run --name kafka01 \
 -p 9092:9092 \
 -e KAFKA_BROKER_ID=0 \
--e KAFKA_ZOOKEEPER_CONNECT=192.168.1.109:2181 \
--e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://192.168.182.129:9092 \
+-e KAFKA_ZOOKEEPER_CONNECT=172.17.0.1:2181 \
+-e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://172.17.0.1:9092 \
 -e KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092 \
 -d  wurstmeister/kafka  
 ```
@@ -63,12 +63,32 @@ docker run -itd \
 --restart=always \
 --name=kafka-manager \
 -p 9000:9000 \
--e ZK_HOSTS="192.168.1.109:2181" \
+-e ZK_HOSTS="172.17.0.1:2181" \
 sheepkiller/kafka-manager
 ```
 
-- kafka创建topic
+## 命令操作
+
+- 列出topic
 
 ```sh
-/opt/kafka/bin/kafka-topics.sh --create --zookeeper 192.168.1.109:2181 --replication-factor 1 --partitions 1 --topic my_log
+./kafka-topics.sh --list --zookeeper 172.17.0.1:2181
+```
+
+- 创建topic
+
+```sh
+/opt/kafka/bin/kafka-topics.sh --create --zookeeper 172.17.0.1:2181 --replication-factor 1 --partitions 2 --topic my_log
+```
+
+- 生产者
+
+```sh
+./kafka-console-producer.sh --topic first --broker-list 172.17.0.1:9092
+```
+
+- 消费者
+
+```sh
+./kafka-console-consumer.sh --topic first --bootstrap-server 172.17.0.1:9092
 ```

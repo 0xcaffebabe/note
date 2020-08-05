@@ -92,3 +92,34 @@ sheepkiller/kafka-manager
 ```sh
 ./kafka-console-consumer.sh --topic first --bootstrap-server 172.17.0.1:9092
 ```
+
+## 工作流程
+
+![屏幕截图 2020-08-05 153846](/assets/屏幕截图%202020-08-05%20153846.png)
+
+Kafka 中消息是以 topic 进行分类的，生产者生产消息，消费者消费消息，都是面向 topic的
+
+每个 partition 对应于一个 log 文件，该 log 文件中存储的就是 producer 生产的数据
+
+Producer 生产的数据会被不断追加到该log 文件末端，且每条数据都有自己的 offset。消费者组中的每个消费者，都会实时记录自己消费到了哪个 offset，以便出错恢复时，从上次的位置继续消费
+
+![屏幕截图 2020-08-05 155131](/assets/屏幕截图%202020-08-05%20155131.png)
+
+index与log文件的作用：
+
+![屏幕截图 2020-08-05 155619](/assets/屏幕截图%202020-08-05%20155619.png)
+
+## 生产者
+
+### 分区策略
+
+分区的原因：
+
+- 方便扩展
+- 提高并发
+
+分区原则：
+
+- 指明 partition 的情况下，直接将指明的值直接作为 partiton 值
+- 没有指明 partition 值但有 key 的情况下，将 key 的 hash 值与 topic 的 partition数进行取余得到 partition 值
+- 否则就是随机取一个值 然后再这个值的基础上进行轮询

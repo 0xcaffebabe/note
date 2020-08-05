@@ -70,3 +70,65 @@ class FooBar {
     }
 }
 ```
+
+## 打印零与奇偶数
+
+<https://leetcode-cn.com/problems/print-zero-even-odd/submissions/>
+
+```java
+class ZeroEvenOdd {
+    private final int n;
+    private volatile int i =1;
+    private volatile int f= 0;
+    public ZeroEvenOdd(int n) {
+        this.n = n;
+    }
+
+    // printNumber.accept(x) outputs "x", where x is an integer.
+    public void zero(IntConsumer printNumber) throws InterruptedException {
+        while(true){
+            while(f != 0){
+                Thread.yield();
+                if (i>n){
+                    return;
+                }
+            }
+            printNumber.accept(0);
+            if (i%2==1){
+                f=1;
+            }else{
+                f=2;
+            }
+        }
+        
+    }
+
+    public void odd(IntConsumer printNumber) throws InterruptedException {
+        while(true){
+            while(f != 1){
+                Thread.yield();
+                if (i>n){
+                    return;
+                }
+            }
+            printNumber.accept(i++);
+            f=0;
+        }
+        
+    }
+
+    public void even(IntConsumer printNumber) throws InterruptedException {
+        while(true){
+            while(f != 2){
+                Thread.yield();
+                if (i>n){
+                    return;
+                }
+            }
+            printNumber.accept(i++);
+            f=0;
+        }
+        
+    }
+}
+```

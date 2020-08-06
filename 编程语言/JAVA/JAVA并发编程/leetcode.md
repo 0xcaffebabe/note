@@ -132,3 +132,43 @@ class ZeroEvenOdd {
     }
 }
 ```
+
+## H20生成
+
+<https://leetcode-cn.com/problems/building-h2o/submissions/>
+
+```java
+class H2O {
+
+    private CyclicBarrier barrier;
+    volatile boolean f = false;
+    public H2O() {
+        barrier = new CyclicBarrier(2,new Runnable(){
+            public void run(){setF(false);}
+        });
+    }
+
+    private void setF(boolean val){
+        f = val;
+    }
+
+    public void hydrogen(Runnable releaseHydrogen) throws InterruptedException {
+		
+        // releaseHydrogen.run() outputs "H". Do not change or remove this line.
+        while(!f){Thread.yield();}
+        releaseHydrogen.run();
+        try {
+            barrier.await();
+        }catch(Exception e){
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void oxygen(Runnable releaseOxygen) throws InterruptedException {
+        while(f){Thread.yield();}
+        // releaseOxygen.run() outputs "O". Do not change or remove this line.
+		releaseOxygen.run();
+        f= true;
+    }
+}
+```

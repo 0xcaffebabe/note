@@ -123,3 +123,41 @@ index与log文件的作用：
 - 指明 partition 的情况下，直接将指明的值直接作为 partiton 值
 - 没有指明 partition 值但有 key 的情况下，将 key 的 hash 值与 topic 的 partition数进行取余得到 partition 值
 - 否则就是随机取一个值 然后再这个值的基础上进行轮询
+
+### 数据可靠性保证
+
+- 副本数据同步策略
+
+![屏幕截图 2020-08-06 110118](/assets/屏幕截图%202020-08-06%20110118.png)
+
+ISR：
+
+Leader 维护了一个动态的 in-sync replica set (ISR)，意为和 leader 保持同步的 follower 集合。当 ISR 中的 follower 完成数据的同步之后，leader 就会给 follower 发送 ack。如果 follower 长 时 间 未 向 leader 同 步 数 据 ， 则 该 follower 将 被 踢 出 ISR
+
+Leader 发生故障之后，就会从 ISR 中选举新的 leader
+
+ack应答机制：
+
+0：producer 不等待 broker 的 ack，这一操作提供了一个最低的延迟，broker 一接收到还没有写入磁盘就已经返回，当 broker 故障时有可能 丢失数据
+
+1：producer 等待 broker 的 ack，partition 的 leader 落盘成功后返回 ack，如果在 follower同步成功之前 leader 故障，那么将会 丢失数据；
+
+-1（all）：producer 等待 broker 的 ack，partition 的 leader 和 follower 全部落盘成功后才返回 ack。但是如果在 follower 同步完成后，broker 发送 ack 之前，leader 发生故障，那么会造成 数据重复。
+
+故障处理：
+
+![屏幕截图 2020-08-06 113738](/assets/屏幕截图%202020-08-06%20113738.png)
+
+LEO ：指的是每个副本最大的 offset
+
+HW ：指的是消费者能见到的最大的 offset ，ISR  队列中最小的 LEO 
+
+follower 发生故障后会被临时踢出 ISR，待该 follower 恢复后，follower 会读取本地磁盘记录的上次的 HW，并将 log 文件高于 HW 的部分截取掉，从 HW 开始向 leader 进行同步。等该 follower  的 LEO  大于等于该 Partition 的 的 HW，即 follower 追上 leader 之后，就可以重新加入 ISR 了
+
+leader 发生故障之后，会从 ISR 中选出一个新的 leader，之后，为保证多个副本之间的数据一致性，其余的 follower 会先将各自的 log 文件高于 HW 的部分截掉，然后从新的 leader同步数据
+
+- Ecactly Once
+
+将服务器的 ACK 级别设置为-1，可以保证 Producer 到 Server 之间不会丢失数据，即 AtLeast Once 语义
+
+At Least Once + 幂等性 = Exactly Once

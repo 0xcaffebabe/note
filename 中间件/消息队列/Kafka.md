@@ -161,3 +161,29 @@ leader 发生故障之后，会从 ISR 中选出一个新的 leader，之后，�
 将服务器的 ACK 级别设置为-1，可以保证 Producer 到 Server 之间不会丢失数据，即 AtLeast Once 语义
 
 At Least Once + 幂等性 = Exactly Once
+
+## 消费者
+
+### 消费方式
+
+采用 pull（拉）模式从 broker 中读取数据
+
+### 分区分配策略
+
+- 轮询
+- range
+
+### offset的维护
+
+Kafka 0.9 版本之前，consumer 默认将 offset 保存在 Zookeeper 中，从 0.9 版本开始，consumer 默认将 offset 保存在 Kafka 一个内置的 topic 中，该 topic为__consumer_offsets。
+
+## kafka高效读写数据
+
+- 顺序读写磁盘
+  -  producer 生产数据，要写入到 log 文件中，写的过程是一直追加到文件末端，为顺序写
+- 零拷贝
+  - 数据直接从内核到网卡
+
+## zk的作用
+
+Kafka 集群中有一个 broker 会被选举为 Controller，负责管理集群 broker 的上下线，所有 topic 的分区副本分配和 leader 选举等工作。Controller 的管理工作都是依赖于 Zookeeper 的。

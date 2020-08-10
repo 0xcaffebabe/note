@@ -3,7 +3,7 @@
 - 并发：指两个或多个事件在同一个时间段内发生。
 - 并行：指两个或多个事件在同一时刻发生（同时发生）。
 
-# 线程安全性
+线程安全性
 
 超线程：一个ALU对应多个PC
 
@@ -11,12 +11,12 @@
 > 线程安全问题都是由全局变量及静态变量引起的。若每个线程中对全局变量、静态变量只有读操作，而无写操作，一般来说，这个全局变量是线程安全的；若有多个线程同时执行写操作，一般都需要考虑线程同步， 否则的话就可能影响线程安全。
 - 无状态对象一定是线程安全的
 
-## JAVA API中的线程安全问题
+JAVA API中的线程安全问题
 
 - StringBuffer
 - Vector
 
-## 原子性
+原子性
 
 ```java
 if (condition){
@@ -40,24 +40,7 @@ public static Object get(){
 
 - 复合操作：由一系列原子操作构成
 
-## 加锁机制
-
-- 内置锁:`synchronized`关键字
-
-> 重入：某个线程试图获得一个已经由它持有的锁
-
-锁能使其保护的代码路径以串行形式访问
-
-- 对持有锁的范围、时间进行良好设计
-
-> 使用了锁对象，这个锁对象一瞬间只能被一个线程所持有
-
-### synchronized实现过程
-
-- java代码：synchronized
-- 字节码： monitorenter monitorexit
-- 执行过程中会进行锁升级
-- lock comxchg
+## 锁
 
 ### 非阻塞同步
 
@@ -140,9 +123,7 @@ new Thread(){
 - wait与notify一定要在线程同步中使用,并且是同一个锁的资源
 - 在调用sleep()方法的过程中，线程不会释放对象锁
 
-# 对象的共享
-
-## 发布与逸出
+## 对象的共享
 
 发布:
 
@@ -152,7 +133,7 @@ new Thread(){
 
 > 某个不该发布的对象被发布了
 
-## 线程封闭
+### 线程封闭
 
 > 某个对象只能在线程之内使用
 
@@ -164,7 +145,7 @@ new Thread(){
 
   - 对象只能在局部（方法内）使用
 
-## 不变性
+### 不变性
 
 > 不可变对象一定是线程安全的
 
@@ -172,14 +153,14 @@ new Thread(){
 - 对象的所有域都是final
 - 在对象创建的过程中this引用没有逸出
 
-## 安全发布
+### 安全发布
 
 - 在静态初始化函数中初始化一个对象的引用
 - 将对象的引用保存到volatile类型的域或者 Reference对象
 - 将对象的引用保存到正确初始化的对象的final域
 - 将对象的引用保存到由锁保护的域
 
-# 对象的组合
+## 对象的组合
 
 **依赖状态的操作**：某个操作包含有基于状态的先验操作
 
@@ -189,7 +170,7 @@ if (a== 1){
 }
 ```
 
-## 实例封闭
+### 实例封闭
 
 > 将线程不安全的对象封装在某个进行良好并发控制的对象内
 
@@ -203,11 +184,11 @@ synchronized(obj){
 }
 ```
 
-# 基础构建模块
+## 基础构建模块
 
 > JAVA5后自带了很多有关并发编程的类库
 
-## 同步容器类
+### 同步容器类
 
 - 迭代器与ConcurrentModificationException
   - 当在迭代的时候，容器元素发生了修改，则会抛出这个异常
@@ -221,7 +202,7 @@ synchronized(obj){
 - 如何放弃以及通知放弃
 - 任务执行前操作
 
-# 取消与关闭
+## 取消与关闭
 
 - 取消策略
 
@@ -245,69 +226,68 @@ class MyThread extends  Thread{
 }
 ```
 
-## 使用Future取消
+### 使用Future取消
 
 ```java
-        Future<Double> future = service.submit(() -> {
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            return Math.random();
-        });
-
-        try {
-            Double ret = future.get(3, TimeUnit.SECONDS);
-            System.out.println("result"+ret);
-        } catch (ExecutionException | TimeoutException e) {
-            e.printStackTrace();
-        }finally {
-            future.cancel(true);
-            System.out.println("task cancel");
-        }
+Future<Double> future = service.submit(() -> {
+    try {
+        Thread.sleep(2000);
+    } catch (InterruptedException e) {
+        e.printStackTrace();
+    }
+    return Math.random();
+});
+try {
+    Double ret = future.get(3, TimeUnit.SECONDS);
+    System.out.println("result"+ret);
+} catch (ExecutionException | TimeoutException e) {
+    e.printStackTrace();
+}finally {
+    future.cancel(true);
+    System.out.println("task cancel");
+}
 ```
 
-## 处理不可中断的阻塞
+### 处理不可中断的阻塞
 
 由于如IO等的资源一旦阻塞就无法进行中断，所以可对其做关闭处理来模拟中断
 
-# 停止基于线程的服务
+## 停止基于线程的服务
 
 - 使用生命周期管理ExecutorService
 - 毒药对象
   - 本质上就是一个flag，当队列读取到这个毒药时，就会停止相关操作
 
-# 处理非正常的线程终止
+## 处理非正常的线程终止
 
 ```java
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(Thread t, Throwable e) {
-                System.out.println(t + "something happen" + e);
-            }
-        });
+hread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+    @Override
+    public void uncaughtException(Thread t, Throwable e) {
+        System.out.println(t + "something happen" + e);
+    }
+});
 
-        new Thread(){
-            @Override
-            public void run() {
-                throw new RuntimeException("aaaa");
-            }
-        }.start();
+new Thread(){
+    @Override
+    public void run() {
+        throw new RuntimeException("aaaa");
+    }
+}.start();
 ```
 
-# JVM关闭钩子
+## JVM关闭钩子
 
 ```java
-        Runtime.getRuntime().addShutdownHook(new Thread(){
-            @Override
-            public void run() {
-                System.out.println("jvm shutdown");
-            }
-        });
+Runtime.getRuntime().addShutdownHook(new Thread(){
+    @Override
+    public void run() {
+        System.out.println("jvm shutdown");
+    }
+});
 ```
 
-# 活跃性危险
+## 活跃性危险
 
 - 死锁
     - 静态顺序死锁
@@ -315,12 +295,12 @@ class MyThread extends  Thread{
     - 资源死锁
 >死锁是指两个或两个以上的进程在执行过程中，由于竞争资源或者由于彼此通信而造成的一种阻塞的现象，若无外力作用，它们都将无法推进下去。此时称系统处于死锁状态或系统产生了死锁，这些永远在互相等待的进程称为死锁进程。
 
-## 诊断与避免
+### 诊断与避免
 
 - 定时锁
   - 获取-超时-退出
 
-## 其他活跃性危险
+### 其他活跃性危险
 
 - 饥饿
   - 无法获取到需要的资源
@@ -328,14 +308,14 @@ class MyThread extends  Thread{
 - 活锁
   - 线程不断重复某个操作
 
-# 性能与伸缩性
+## 性能与伸缩性
 
 - 引入线程的开销
   - 上下文切换
   - 内存同步
   - 阻塞
 
-# 如何减少锁的竞争
+## 如何减少锁的竞争
 
 - 缩小锁的范围
   - 缩小synchronized关键字包围的代码块
@@ -345,59 +325,34 @@ class MyThread extends  Thread{
 - 替代独占锁
   - 采取读写锁
 
-# 并发程序测试
+## 并发程序测试
 
 - 正确性测试
 - 安全性测试
 - 性能测试
 
-## 性能测试陷阱
+### 性能测试陷阱
 
 - 垃圾回收
 - 动态编译（JIT）
 - 编译优化
 - 竞争程度
 
-# 显式锁
+## 锁优化
 
-- Lock接口
-
-```java
-public interface Lock {
-    // 其中一个实现类：ReentrantLock
-    void lock();
-
-    void lockInterruptibly() throws InterruptedException;
-
-    boolean tryLock();
-
-    boolean tryLock(long time, TimeUnit unit) throws InterruptedException;
-
-    void unlock();
-
-    Condition newCondition();
-}
-```
-
-显式锁拥有比内置锁(synchronized关键字)更多的功能，但使用起来更加复杂，显式锁作为一种高级工具，只有在synchronized无法满足需求的情况下才使用
-
-ReentrantLock是一种互斥锁，也就说在同一时间内只有一个线程能对资源读或者写，如果要对读写分别控制，考虑使用ReadWriteLock
-
-# 锁优化
-
-## 自旋锁
+### 自旋锁
 
 是让一个线程在请求一个共享数据的锁时执行忙循环（自旋）一段时间，如果在这段时间内能获得锁，就可以避免进入阻塞状态
 
-## 锁消除
+### 锁消除
 
 对于被检测出不可能存在竞争的共享数据的锁进行消除
 
-## 锁细化
+### 锁细化
 
 经历缩小锁的作用范围
 
-## 锁粗化
+### 锁粗化
 
 如果一系列的连续操作都对同一个对象反复加锁和解锁，频繁的加锁操作就会导致性能损耗
 
@@ -423,15 +378,15 @@ synchronized(obj){
 }
 ```
 
-## 轻量级锁
+### 轻量级锁
 
 轻量级锁是相对于传统的重量级锁而言，它使用 CAS 操作来避免重量级锁使用互斥量的开销
 
-## 偏向锁
+### 偏向锁
 
 偏向于让第一个获取锁对象的线程，这个线程在之后获取该锁就不再需要进行同步操作，甚至连 CAS 操作也不再需要
 
-# 并发编程良好实践
+## 并发编程良好实践
 
 - 给线程起名字
 - 缩小同步范围

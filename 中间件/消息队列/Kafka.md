@@ -187,3 +187,14 @@ Kafka 0.9 版本之前，consumer 默认将 offset 保存在 Zookeeper 中，从
 ## zk的作用
 
 Kafka 集群中有一个 broker 会被选举为 Controller，负责管理集群 broker 的上下线，所有 topic 的分区副本分配和 leader 选举等工作。Controller 的管理工作都是依赖于 Zookeeper 的。
+
+## 事务
+
+- 生产者事务
+- 消费者事务
+
+## API
+
+- 发送流程
+
+![屏幕截图 2020-08-10 124605](/assets/屏幕截图%202020-08-10%20124605.png)

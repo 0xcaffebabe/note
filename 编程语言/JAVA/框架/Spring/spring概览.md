@@ -28,11 +28,11 @@
 
 ### bean的生命周期
 
-![bean的生命周期](https://image.slidesharecdn.com/springcore-110623102943-phpapp01/95/spring-framework-core-27-728.jpg?cb=1366969536)
+![202081181522](/assets/202081181522.jpg)
 
 ### Spring 模块
 
-![enter image description here](https://static.packt-cdn.com/products/9781788299459/graphics/dc3a99a7-439c-4a12-b8f2-023cc5734180.png)
+![202081181547](/assets/202081181547.png)
 
 ## Spring框架的核心
 

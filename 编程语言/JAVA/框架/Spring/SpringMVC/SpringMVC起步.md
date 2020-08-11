@@ -167,6 +167,7 @@ public @interface RequestMapping {
 #### 绑定集合
 
 ````/user/hello?names=1&names=2```
+
 ### 自定义类型转换器
 
 ```java

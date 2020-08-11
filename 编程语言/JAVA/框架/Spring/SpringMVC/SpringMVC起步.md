@@ -1,8 +1,18 @@
-# 三层架构与MVC
+# Spring MVC
 
-# SpringMVC的请求
+- 请求处理流程
 
-![enter image description here](http://static.oschina.net/uploads/space/2016/0826/204821_OC43_2665064.png)
+![202081194833](/assets/202081194833.png)
+
+Step 1: 请求会被 DispatcherServlet 接收.
+
+Step 2: DispatcherServlet 根据 HandlerMapping 查找 Controller 类名与 相对应请求路径的映射.
+
+Step 3: 请求被转发到 Controller, controller会处理请求执行相对应的方法并返回ModelAndView object (包含 Model data 和视图名称)返回 DispatcherServlet.
+
+Step 4: DispatcherServlet发送model object给 ViewResolver 获取实际的页面.
+
+Step 5: 最终 DispatcherServlet 通过 Model object 渲染页面展示结果.
 
 ## DispatcherServlet：前端控制器
 
@@ -16,10 +26,6 @@
 
 > 它就是我们开发中要编写的具体业务控制器。由DispatcherServlet把用户请求转发到Handler。由Handler对具体的用户请求进行处理。
 
-## HandlAdapter：处理器适配器
-
-> 通过HandlerAdapter对处理器进行执行，这是适配器模式的应用，通过扩展适配器可以对更多类型的处理器进行执行。
-
 ## View Resolver：视图解析器
 
 > View Resolver负责将处理结果生成View视图，View Resolver首先根据逻辑视图名解析成物理视图名即具体的页面地址，再生成View视图对象，最后对View进行渲染将处理结果通过页面展示给用户。
@@ -28,9 +34,9 @@
 
 > SpringMVC框架提供了很多的View视图类型的支持，包括：jstlView、freemarkerView、pdfView等。我们最常用的视图就是jsp。 一般情况下需要通过页面标签或页面模版技术将模型数据通过页面展示给用户，需要由程序员根据业务需求开发具体的页面。
 
-# 配置SpringMVC
+## 配置SpringMVC
 
-## 配置DispatcherServlet
+- 配置DispatcherServlet
 
 ```java
 public class Initalizer extends AbstractAnnotationConfigDispatcherServletInitializer {
@@ -53,6 +59,7 @@ public class Initalizer extends AbstractAnnotationConfigDispatcherServletInitial
 ```
 
 ```java
+// 启用web mvc 以及配置视图解析器
 @Configuration
 @EnableWebMvc
 @ComponentScan("wang.ismy.spring")
@@ -78,7 +85,7 @@ public class MVCConfig extends WebMvcConfigurationSupport {
 
 使用以上代码可以使用java代码配置dispatcherServlet 原因：servlet3.0中，容器会在类路径查找实现了ServletContainerInitializer的类 Spring提供了该实现，叫做SpringServletContainerInitializer 此类会反过来查找WebApplicationInitializer的实现,而AbstractAnnotationConfigDispatcherServletInitializer就是它的一个实现
 
-# 控制器编写
+## 控制器编写
 
 ```java
 @org.springframework.stereotype.Controller
@@ -91,7 +98,7 @@ public class Controller {
 }
 ```
 
-## @RequestMapping
+### @RequestMapping
 
 - 可用在类上以及方法上
 
@@ -121,7 +128,7 @@ public @interface RequestMapping {
 }
 ```
 
-## 向视图传递数据
+### 向视图传递数据
 
 ```java
 @RequestMapping("/home")
@@ -132,12 +139,12 @@ public @interface RequestMapping {
     }
 ```
 
-## 接收请求的输入
+### 接收请求的输入
 
 - @RequestParam
 - @PathVariable
 
-## 表单处理
+### 表单处理
 
 - 接收数据
 
@@ -157,7 +164,7 @@ public @interface RequestMapping {
   </form>
   ```
 
-### 绑定集合
+#### 绑定集合
 
 ````/user/hello?names=1&names=2```
 ### 自定义类型转换器

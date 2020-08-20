@@ -17,7 +17,7 @@ Kafka 是一个分布式的基于发布/订阅模式的消息队列（Message Qu
   - 批次是一组消息
 
 模式
-  - schema 使用额外的结构定义消息Neri
+  - schema 使用额外的结构定义消息内容
 
 主题和分区
   - 消息通过主题分类
@@ -97,26 +97,45 @@ Kafka 0.8 以后，提供了 HA 机制，replica（复制品） 副本机制
 
 ## 搭建
 
-```sh
-docker run --name kafka01 \
--p 9092:9092 \
--e KAFKA_BROKER_ID=0 \
--e KAFKA_ZOOKEEPER_CONNECT=172.17.0.1:2181 \
--e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://172.17.0.1:9092 \
--e KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092 \
--d  wurstmeister/kafka  
-```
+- 安装java zookeeper
+- 下载二进制包
+- `./kafka-server-start.sh`
 
-- 创建可视化管理界面
+## 配置
 
-```sh
-docker run -itd \
---restart=always \
---name=kafka-manager \
--p 9000:9000 \
--e ZK_HOSTS="172.17.0.1:2181" \
-sheepkiller/kafka-manager
-```
+broker 配置
+
+- broker.id
+  - 在集群中唯一
+  - 需要多少个broker
+    - 需要多少磁盘空间保留数据
+    - 集群处理请求的能力
+- port
+- zookeeper.connect
+- log.dirs
+  - 消息保存在磁盘上的位置
+- num.recovery.threads.per.data.dir
+  - 使用指定的线程池来处理日志
+- auto.create.topics.enable
+  - 自动创建主题
+    - 当一个生产者开始往主题写入消息时
+    - 当一个消费者开始读取
+    - 客户端向主题发送元数据请求
+
+主题配置
+
+- num.partitions
+  - 默认分区数量
+- log.retention.ms
+  - 数据保留多久
+- log.retention.bytes
+  - 主题保留的数据大小
+- log.segment.bytes
+  - 一个日志片段的最大大小
+- log.segment.ms
+  - 日志片段的最长打开时间
+- message.max.bytes
+  - 消息最大大小
 
 ## 命令操作
 
@@ -162,6 +181,73 @@ index与log文件的作用：
 
 ## 生产者
 
+![屏幕截图 2020-08-20 150154](/assets/屏幕截图%202020-08-20%20150154.png)
+
+发送消息：
+
+```java
+Properties props = new Properties();
+//kafka 集群，broker-list
+props.put("bootstrap.servers", "172.24.211.140:9092");
+props.put("key.serializer",
+        "org.apache.kafka.common.serialization.StringSerializer");
+props.put("value.serializer",
+        "org.apache.kafka.common.serialization.StringSerializer");
+Producer<String,  String> producer  =  new
+        KafkaProducer<>(props);
+for (int i = 0; i < 10; i++) {
+    var record =
+            new ProducerRecord<>("test", "Precision Products",
+                    "France");
+    producer.send(record, new Callback() {
+        @Override
+        public void onCompletion(RecordMetadata metadata, Exception exception) {
+            System.out.println(metadata);
+        }
+    });
+
+}
+producer.close();
+```
+
+### 配置
+
+- acks
+  - 定了必须要有多少个分区副本收到消息，生产者才会认为消息写入是成功的 
+  - acks=0 ，生产者在成功写入消息之前不会等待任何来自服务器的响应 当 broker 故障时有可能 丢失数据
+  - acks=1 ，只要集群的首领节点收到消息，生产者就会收到一个来自服务器的成功响应 如果在 follower同步成功之前 leader 故障，那么将会丢失数据
+  -  acks=all ，只有当所有参与复制的节点全部收到消息时，生产者才会收到一个来自服务器的成功响应 如果在 follower 同步完成后，broker 发送 ack 之前，leader 发生故障，那么会造成 数据重复
+- buffer.memory
+  - 设置生产者内存缓冲区的大小
+- compression.type
+   - 设置消息压缩算法
+- retries
+  - 决定了生产者可以重发消息的次数，如果达到这个次数，生产者会放弃重试并返回错误
+- batch.size
+  - 指定了一个批次可以使用的内存大小
+- linger.ms
+  -  KafkaProducer 会在批次填满或 linger.ms 达到上限时把批次发送出去。默认情况下，只要有可用的线程，生产者就会把消息发送出去
+- client.id
+- max.in.flight.requests.per.connection
+  - 指定了生产者在收到服务器响应之前可以发送多少个消息
+-  timeout.ms、request.timeout.ms 和 metadata.fetch.timeout.ms
+-  max.block.ms
+   - 调用send时最长的阻塞时间
+ - max.request.siz
+ - receive.buffer.bytes 和 send.buffer.bytes
+   - 分别指定了 TCP socket 接收和发送数据包的缓冲区大小
+
+**顺序保证**
+
+- 将max.in.flight.requests.per.connection设置为1
+
+### 序列化器
+
+- 自定义序列化器：实现`Serializer`接口
+  - 不推荐使用
+- 其他序列化
+  - avro：一种将shcema嵌入在数据里的序列化方式
+
 ### 分区策略
 
 分区的原因：
@@ -175,6 +261,10 @@ index与log文件的作用：
 - 没有指明 partition 值但有 key 的情况下，将 key 的 hash 值与 topic 的 partition数进行取余得到 partition 值
 - 否则就是随机取一个值 然后再这个值的基础上进行轮询
 
+自定义分区器：
+
+实现`Partitioner`接口
+
 ### 数据可靠性保证
 
 - 副本数据同步策略
@@ -186,14 +276,6 @@ ISR：
 Leader 维护了一个动态的 in-sync replica set (ISR)，意为和 leader 保持同步的 follower 集合。当 ISR 中的 follower 完成数据的同步之后，leader 就会给 follower 发送 ack。如果 follower 长 时 间 未 向 leader 同 步 数 据 ， 则 该 follower 将 被 踢 出 ISR
 
 Leader 发生故障之后，就会从 ISR 中选举新的 leader
-
-ack应答机制：
-
-0：producer 不等待 broker 的 ack，这一操作提供了一个最低的延迟，broker 一接收到还没有写入磁盘就已经返回，当 broker 故障时有可能 丢失数据
-
-1：producer 等待 broker 的 ack，partition 的 leader 落盘成功后返回 ack，如果在 follower同步成功之前 leader 故障，那么将会 丢失数据；
-
--1（all）：producer 等待 broker 的 ack，partition 的 leader 和 follower 全部落盘成功后才返回 ack。但是如果在 follower 同步完成后，broker 发送 ack 之前，leader 发生故障，那么会造成 数据重复。
 
 故障处理：
 

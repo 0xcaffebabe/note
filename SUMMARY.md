@@ -387,6 +387,7 @@
 - [中间件](./中间件/nav.md)
   - [数据库](./中间件/数据库/数据库.md)
     - [MySQL](./中间件/数据库/mysql/mysql.md)
+      - [存储引擎](./中间件/数据库/mysql/存储引擎.md)
       - [索引](./中间件/数据库/mysql/索引.md)
       - [优化](./中间件/数据库/mysql/数据库优化.md)
         - [performance schema](./中间件/数据库/mysql/performance.md)

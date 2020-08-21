@@ -267,28 +267,6 @@ producer.close();
 
 ### 数据可靠性保证
 
-- 副本数据同步策略
-
-![屏幕截图 2020-08-06 110118](/assets/屏幕截图%202020-08-06%20110118.png)
-
-ISR：
-
-Leader 维护了一个动态的 in-sync replica set (ISR)，意为和 leader 保持同步的 follower 集合。当 ISR 中的 follower 完成数据的同步之后，leader 就会给 follower 发送 ack。如果 follower 长 时 间 未 向 leader 同 步 数 据 ， 则 该 follower 将 被 踢 出 ISR
-
-Leader 发生故障之后，就会从 ISR 中选举新的 leader
-
-故障处理：
-
-![屏幕截图 2020-08-06 113738](/assets/屏幕截图%202020-08-06%20113738.png)
-
-LEO ：指的是每个副本最大的 offset
-
-HW ：指的是消费者能见到的最大的 offset ，ISR  队列中最小的 LEO 
-
-follower 发生故障后会被临时踢出 ISR，待该 follower 恢复后，follower 会读取本地磁盘记录的上次的 HW，并将 log 文件高于 HW 的部分截取掉，从 HW 开始向 leader 进行同步。等该 follower  的 LEO  大于等于该 Partition 的 的 HW，即 follower 追上 leader 之后，就可以重新加入 ISR 了
-
-leader 发生故障之后，会从 ISR 中选出一个新的 leader，之后，为保证多个副本之间的数据一致性，其余的 follower 会先将各自的 log 文件高于 HW 的部分截掉，然后从新的 leader同步数据
-
 - Ecactly Once
 
 将服务器的 ACK 级别设置为-1，可以保证 Producer 到 Server 之间不会丢失数据，即 AtLeast Once 语义
@@ -297,29 +275,136 @@ At Least Once + 幂等性 = Exactly Once
 
 ## 消费者
 
-### 消费方式
+![屏幕截图 2020-08-21 133318](/assets/屏幕截图%202020-08-21%20133318.png)
+
+分区的所有权从一个消费者转移到另一个消费者，这样的行为被称为再均衡
+
+消费者通过向被指派为群组协调器的 broker（不同的群组可以有不同的协调器）发送心跳来维持它们和群组的从属关系以及它们对分区的所有权关系
+
+```java
+Properties props = new Properties();
+//kafka 集群，broker-list
+props.put("bootstrap.servers", "172.24.211.140:9092");
+props.put("group.id", "consumer1");
+props.put("key.deserializer",
+        "org.apache.kafka.common.serialization.StringDeserializer");
+props.put("value.deserializer",
+        "org.apache.kafka.common.serialization.StringDeserializer");
+KafkaConsumer<String, String> consumer = new KafkaConsumer<String,
+                        String>(props);
+consumer.subscribe(List.of("test"));
+while(true){
+    ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
+    for (ConsumerRecord<String, String> record : records) {
+        System.err.println(record);
+    }
+}
+```
+
+消费方式:
 
 采用 pull（拉）模式从 broker 中读取数据
 
-### 分区分配策略
+### 配置
 
-- 轮询
-- range
+- fetch.min.bytes
+  - 指定了消费者从服务器获取记录的最小字节数
+- fetch.max.wait.ms
+  - 指定 broker 的等待时间
+- max.partition.fetch.bytes
+   - 指定了服务器从每个分区里返回给消费者的最大字节数
+- session.timeout.ms
+  - 指定了消费者在被认为死亡之前可以与服务器断开连接的时间
+- auto.offset.reset
+  - 指定了消费者在读取一个没有偏移量的分区或者偏移量无效的情况下（因消费者长时间失效，包含偏移量的记录已经过时并被删除）该作何处理
+- enable.auto.commit
+  - 指定了消费者是否自动提交偏移量
+- partition.assignment.strategy 决定哪些分区应该被分配给哪个消费者
+  - range:该策略会把主题的若干个连续的分区分配给消费者
+  - 轮询：该策略把主题的所有分区逐个分配给消费者
+- client.id
+- max.poll.records 控制单次调用 call() 方法能够返回的记录数量
+-  receive.buffer.bytes 和 send.buffer.bytes
+   -  读写数据时用到的 TCP 缓冲区也可以设置大小
 
-### offset的维护
+### 偏移量
+
+更新分区当前偏移量的操作叫作**提交**
 
 Kafka 0.9 版本之前，consumer 默认将 offset 保存在 Zookeeper 中，从 0.9 版本开始，consumer 默认将 offset 保存在 Kafka 一个内置的 topic 中，该 topic为__consumer_offsets。
+
+自动提交：
+
+- 如果 enable.auto.commit 被设为 true ，那么每过 5s，消费者会自动把从 poll() 方法接收到的最大偏移量提交上去
+
+手动提交：
+
+把 auto.commit.offset 设为 false ，使用 commitSync()
+
+异步提交 commitAsync() , 但该方法在发生错误时不会进行重试
+
+再均衡监听：
+
+订阅的时候传入 ConsumerRebalanceListener 实现相关接口
+
+从特定偏移量开始处理：`seekToBeginning(..)`
+
+读取特定偏移量：`seek(..)`
+
+### 退出
+
+其他线程调用`consumer.wakeup()` 会使consumer在poll抛出异常 然后进行close即可
+
+### 没有群组的消费者
+
+调用assign为其设置消费的分区
+
+## 深入
+
+### 集群成员关系
+
+broker通过创建临时节点把自己的 ID 注册到 Zookeeper
+
+控制器：一个特殊的broker 通过在zk创建临时节点进行选举
+
+控制器负责在节点加入或离开集群时进行分区首领选举。控制器使用epoch 来避免“脑裂”
+
+### 复制
+
+- 首领副本
+  - 所有生产者请求和消费者请求都会经过这个副本
+- 跟随者副本
+  - 从首领那里复制消息，保持与首领一致的状态
+
+### 请求处理
+
+![屏幕截图 2020-08-21 143247](/assets/屏幕截图%202020-08-21%20143247.png)
+
+生产请求：
+
+在消息被写入分区的首领之后，broker 开始检查 acks 配置参数——如果 acks 被设为 0 或 1 ，那么 broker 立即返回响应；如果 acks 被设为 all ，那么请求会被保存在一个叫作炼狱的缓冲区里，直到首领发现所有跟随者副本都复制了消息，响应才会被返回给客户端
+
+获取请求：
+
+broker 将按照客户端指定的数量上限从分区里读取消息，再把消息返回给客户端。Kafka 使用零复制技术向客户端发送消息(直接从文件系统缓存复制到网卡)
+
+![屏幕截图 2020-08-21 144218](/assets/屏幕截图%202020-08-21%20144218.png)
+
+所有同步副本复制了这些消息，才允许消费者读取它们
+
+![屏幕截图 2020-08-21 144435](/assets/屏幕截图%202020-08-21%20144435.png)
+
+### 物理存储
+
+文件管理：
+
+分区分成若干个片段 当前正在写入数据的片段叫作活跃片段
 
 ## kafka高效读写数据
 
 - 顺序读写磁盘
   -  producer 生产数据，要写入到 log 文件中，写的过程是一直追加到文件末端，为顺序写
 - 零拷贝
-  - 数据直接从内核到网卡
-
-## zk的作用
-
-Kafka 集群中有一个 broker 会被选举为 Controller，负责管理集群 broker 的上下线，所有 topic 的分区副本分配和 leader 选举等工作。Controller 的管理工作都是依赖于 Zookeeper 的。
 
 ## 事务
 

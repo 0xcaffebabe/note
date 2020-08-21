@@ -267,6 +267,17 @@ GET /heima/_search
 
 ## 分词
 
+### 内置的分词器
+
+- Standard Analyzer
+- Simple Analyzer
+- Whitespace Analyzer
+- Stop Analyzer
+- Keyword Analyzer
+- Pattern Analyzer
+- Language Analyzers
+- Fingerprint Analyzer
+
 ### 测试分词
 
 `GET /_analyze`
@@ -294,6 +305,11 @@ docker run --name elasticsearch --net somenetwork -v /root/plugin:/usr/share/ela
   "text": "中文测试分词"
 }
 ```
+
+ik 的两种模式：
+
+- max：会将文本做最细粒度的拆分 会穷尽所有的可能
+- smart：最最粗粒度的划分
 
 ## 聚合
 

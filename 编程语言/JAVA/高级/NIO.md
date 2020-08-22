@@ -184,9 +184,12 @@ while (true) {
 
 ## 系统层面的NIO
 
-BIO模型
+BIO模型：
 
 ![批注 2020-06-18 143426](/assets/批注%202020-06-18%20143426.png)
+
+- socket=3 bind(3,port) listen(3) accept(3)=block|5
+- recv(5)=block|data
 
 同步非阻塞 NIO 
 

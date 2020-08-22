@@ -1,23 +1,27 @@
+# Docker
+
 > Docker 是一个开源的应用容器引擎，让开发者可以打包他们的应用以及依赖包到一个可移植的镜像中，然后发布到任何流行的 Linux或Windows 机器上，也可以实现虚拟化。容器是完全使用沙箱机制，相互之间不会有任何接口
 
-# 容器与虚拟机
+使用场景
 
-![](https://pic2.zhimg.com/80/20006deca0fccda0d536edd626835e9e_hd.jpg)
+- 持续集成
+- 可伸缩的云服务
+- 微服务架构
 
-# Docker架构
+## 容器与虚拟机
+
+![2020822151647](/assets/2020822151647.png)
+
+虚拟机最大的缺点就是依赖其专用的操作系统
+
+## Docker架构
 
 ![](https://www.runoob.com/wp-content/uploads/2016/04/576507-docker1.png)
 
 - 镜像与容器
   - 容器是镜像的实例
 
-# 使用场景
-
-- 持续集成
-- 可伸缩的云服务
-- 微服务架构
-
-# 安装
+## 安装
 
 - 安装脚本
 
@@ -25,9 +29,40 @@
 wget https://get.docker.com
 ```
 
-# 使用
+## 引擎
 
-## 镜像相关
+Docker引擎由如下主要的组件构成：Docker客户端（Docker Client）、Docker守护进程（Docker daemon）、containerd以及runc。它们共同负责容器的创建和运行
+
+![2020822154342](/assets/2020822154342.png)
+
+LXC提供了对诸如命名空间（Namespace）和控制组（CGroup）等基础工具的操作能力，它们是基于Linux内核的容器虚拟化技术
+
+![2020822154039](/assets/2020822154039.png)
+
+Docker公司开发了名为Libcontainer的自研工具，用于替代LXC
+
+runc：
+
+- 创建容器
+
+containerd：
+
+- 容器的生命周期管理
+
+启动容器的过程：
+
+![2020822154716](/assets/2020822154716.png)
+
+容器运行时与Docker daemon是解耦的,对Docker daemon的维护和升级工作不会影响到运行中的容器
+
+shim：
+
+- 保持所有STDIN和STDOUT流是开启状态
+- 将容器的退出状态反馈给daemon
+
+## 使用
+
+### 镜像相关
 
 - 搜索镜像
 
@@ -47,7 +82,7 @@ docekr pull name<:tag>
 docker rmi 镜像ID
 ```
 
-## 容器相关
+### 容器相关
 
 - 查看容器
 
@@ -100,7 +135,7 @@ docker exec -it <name> bash
 docker inspect name
 ```
 
-# 常用软件部署
+## 常用软件部署
 
 - mysql
 
@@ -121,7 +156,7 @@ docker run -di --name=mytomcat -p 9000:8080 -v /usr/local/webapps:/usr/local/tom
 docker run -di --name=mynginx2 -p 8080:80 nginx-update 
 ```
 
-# 迁移与备份
+## 迁移与备份
 
 
 - 保存镜像
@@ -142,7 +177,7 @@ docker save -o nginx-update.tar nginx-update
 docker load -i nginx-update.tar
 ```
 
-# Dockerfile
+## Dockerfile
 
 ![批注 2019-07-25 153841](/assets/批注%202019-07-25%20153841.png)
 
@@ -158,17 +193,15 @@ ENTRYPOINT ["/usr/sbin/nginx","-g","daemon off;"]
 EXPOSE 80
 ```
 
-## 根据文件构建镜像
+### 根据文件构建镜像
 
 ```shell
 docker build -t='name' .
 ```
 
-## 镜像分层
+## 私有仓库
 
-# 私有仓库
-
-## 搭建
+### 搭建
 
 ```shell
 docekr pull registry
@@ -255,15 +288,3 @@ docker run -P <name>
 ```shell
 mvn clean package docker:build -DpushImage
 ```
-
-
-
-
-
-
-
-
-
-
-
-

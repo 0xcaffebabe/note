@@ -89,3 +89,17 @@ SELECT t2.Id FROM Weather AS t2, Weather AS t1
     WHERE DATE_SUB(t2.RecordDate, INTERVAL 1 DAY) = t1.RecordDate
     AND t2.Temperature > t1.Temperature
 ```
+
+## 部门工资最高的员工
+
+<https://leetcode-cn.com/problems/department-highest-salary/submissions/>
+
+```sql
+SELECT Department.Name AS Department, t1.Name AS Employee, Salary  FROM Employee AS t1
+    JOIN Department ON DepartmentId = Department.Id 
+WHERE t1.Salary =
+(
+    SELECT Salary FROM Employee AS t2 WHERE t1.DepartmentId = t2.DepartmentId
+    ORDER BY Salary DESC LIMIT 1
+)
+```

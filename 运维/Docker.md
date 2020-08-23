@@ -60,9 +60,11 @@ shim：
 - 保持所有STDIN和STDOUT流是开启状态
 - 将容器的退出状态反馈给daemon
 
-## 使用
+## 镜像
 
-### 镜像相关
+![2020823154249](/assets/2020823154249.png)
+
+### 镜像使用
 
 - 搜索镜像
 
@@ -80,9 +82,62 @@ docekr pull name<:tag>
 
 ```shell
 docker rmi 镜像ID
+docker image rm $(docker image ls -q) -f
 ```
 
-### 容器相关
+### 标签
+
+在镜像名后面的:xxx 代表标签
+
+没有标签的镜像被称为悬虚镜像
+
+### 分层
+
+![2020823154946](/assets/2020823154946.png)
+
+docker 会复用已存在的镜像层
+
+### 镜像仓库
+
+![2020823154458](/assets/2020823154458.png)
+
+#### 搭建
+
+```shell
+docekr pull registry
+```
+
+```shell
+docker run -di --name=registry 5000:5000 registry   
+```
+
+## 上传镜像到私服
+
+```shell
+docker tag nginx 127.0.0.1:5000/nginx 
+```
+
+```shell
+docker push 127.0.0.1:5000/nginx 
+```
+
+## 容器
+
+### 持久化
+
+容器在停止后启动写入的数据仍会存在
+
+但是volume才是持久化的首选
+
+### 重启策略
+
+在指定事件或者错误后重启来完成自我修复
+
+- always
+- unless-stoped
+- on-failed
+
+### 容器使用
 
 - 查看容器
 
@@ -112,6 +167,7 @@ docker cp name:容器文件路径 宿主路径
 
 ```shell
 docker stop name
+# 优雅关闭并删除：stop rm
 ```
 
 - 启动容器
@@ -177,11 +233,15 @@ docker save -o nginx-update.tar nginx-update
 docker load -i nginx-update.tar
 ```
 
-## Dockerfile
+## 容器化
+
+![202082316156](/assets/202082316156.png)
+
+### Dockerfile
 
 ![批注 2019-07-25 153841](/assets/批注%202019-07-25%20153841.png)
 
-示例：
+编写Dockerfile文件：
 
 ```docker
 FROM ubuntu
@@ -193,36 +253,76 @@ ENTRYPOINT ["/usr/sbin/nginx","-g","daemon off;"]
 EXPOSE 80
 ```
 
-### 根据文件构建镜像
+每一个RUN指令会新增一个镜像层。因此，通过使用&& 连接多个命令以及使用反斜杠（\ ）换行的方法，将多个命令包含在一个RUN指令中，通常来说是一种值得提倡的方式
+
+根据文件构建镜像：
 
 ```shell
 docker build -t='name' .
 ```
 
-## 私有仓库
+### 推送到仓库
 
-### 搭建
-
-```shell
-docekr pull registry
+```sh
+docker images push
 ```
 
-```shell
-docker run -di --name=registry 5000:5000 registry   
+![202082316201](/assets/202082316201.png)
+
+### 多阶段构建
+
+```Dockerfile
+FROM xxx AS T1
+
+FROM xxx AS T2
+COPY --from=T1 ...
 ```
 
-## 上传镜像到私服
+### 最佳实践
 
-```shell
-docker tag nginx 127.0.0.1:5000/nginx 
+利用构建缓存：
+
+- 执行命令时，Docker会检查构建缓存中是否存在基于同一基础镜像，并且执行了相同指令的镜像层
+
+合并镜像：
+
+- 执行docker image build 命令时，可以通过增加--squash 参数来创建一个合并的镜像
+
+![202082316289](/assets/202082316289.png)
+
+no-install-recommends：
+
+- 若使用的是APT包管理器，则应该在执行apt-get install 命令时增加no-install-recommends 参数。这能够确保APT仅安装核心依赖（Depends 中定义）包
+
+不要安装MSI包（Windows）
+
+## Compose
+
+编写docker-compose.yml:
+
+```yml
+version: "3.5"
+services:
+  redis:
+    image: "redis:alpine"
+    networks:
+      my-net:
+  nginx:
+    image: "nginx"
+    networks:
+      my-net:
+networks:
+  my-net:
+
+volumes:
+  my-net:
 ```
 
-```shell
-docker push 127.0.0.1:5000/nginx 
+启动：
+
+```sh
+docker-compose up
 ```
-
-
-# Compose
 
 # Docker 网络
 

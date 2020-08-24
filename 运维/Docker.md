@@ -191,6 +191,12 @@ docker exec -it <name> bash
 docker inspect name
 ```
 
+- 查看容器日志
+
+```sh
+docker logs name
+```
+
 ## 常用软件部署
 
 - mysql
@@ -324,13 +330,40 @@ volumes:
 docker-compose up
 ```
 
-# Docker 网络
+## Docker 网络
 
-- 网络类型
-  - Bridge：:Docker设计的NAT网络模型（默认类型）
-  - Host：与主机共享Network Namespace，--net=host
-  - None：:不为容器配置任何网络功能，没有网络 --net=none
-  - Container：与另一个运行中的容器共享Network Namespace，--net=container:containerID
+CNM: 定了Docker网络架构的基础组成要素
+
+![2020824154717](/assets/2020824154717.png)
+![2020824154742](/assets/2020824154742.png)
+
+Libnetwork是CNM标准的实现
+
+![2020824155551](/assets/2020824155551.png)
+
+```sh
+docker network ls # 列出可用网络
+docker run -d --network my-net # 指定容器网络
+```
+
+如果在相同网络中继续接入新的容器，那么在新接入容器中是可以通过的容器名称来进行网络通信的
+
+### 网络类型
+  
+- Bridge：: 单机桥接网络 Docker设计的NAT网络模型（默认类型）
+  -  只能在单个Docker主机上运行，并且只能与所在Docker主机上的容器进行连接
+
+![2020824155816](/assets/2020824155816.png)
+
+```sh
+docker network create -d bridge localnet
+```
+
+- Host：与主机共享Network Namespace，--net=host
+- overlay：多机覆盖网络
+- 接入现有网络
+- None：:不为容器配置任何网络功能，没有网络 --net=none
+- Container：与另一个运行中的容器共享Network Namespace，--net=container:containerID
 - 端口映射
 
 ```shell

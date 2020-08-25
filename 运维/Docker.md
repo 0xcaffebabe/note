@@ -267,6 +267,53 @@ EXPOSE 80
 docker build -t='name' .
 ```
 
+### DockerMaven插件
+
+- 开启docker接受远程操作
+- 添加maven插件
+
+```xml
+<plugin>
+    <groupId>com.spotify</groupId>
+    <artifactId>docker-maven-plugin</artifactId>
+    <version>0.4.12</version>
+    <configuration>
+      <!-- 注意imageName一定要是符合正则[a-z0-9-_.]的，否则构建不会成功 -->
+      <!-- 详见：https://github.com/spotify/docker-maven-plugin    Invalid repository name ... only [a-z0-9-_.] are allowed-->
+      <imageName>my-pc:5000/${project.artifactId}:${project.version}</imageName>
+        <baseImage>java</baseImage>
+        <entryPoint>["java", "-jar", "/${project.build.finalName}.jar"]</entryPoint>
+          <resources>
+              <resource>
+                  <targetPath>/</targetPath>
+                  <directory>${project.build.directory}</directory>
+                  <include>${project.build.finalName}.jar</include>
+              </resource>
+          </resources>
+        <dockerHost>http://my-pc:2375</dockerHost>
+     </configuration>
+</plugin>
+```
+
+- JDK8以上的版本需要添加如下依赖
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>javax.activation</groupId>
+        <artifactId>activation</artifactId>
+        <version>1.1.1</version>
+    </dependency>
+</dependencies>
+```
+
+- 构建并推送
+
+```shell
+mvn clean package docker:build -DpushImage
+```
+
+
 ### 推送到仓库
 
 ```sh
@@ -374,50 +421,46 @@ docker run -p 8080:80 <name>
 docker run -P <name>
 ```
 
-# 镜像制作
+## 持久化
 
-# DockerMaven插件
+每个Docker容器都有自己的非持久化存储。非持久化存储自动创建，从属于容器，生命周期与容器相同
 
-- 开启docker接受远程操作
-- 添加maven插件
+持久化是将数据存储在卷上。卷与容器是解耦的
 
-```xml
-<plugin>
-                <groupId>com.spotify</groupId>
-                <artifactId>docker-maven-plugin</artifactId>
-                <version>0.4.12</version>
-                <configuration>
-                    <!-- 注意imageName一定要是符合正则[a-z0-9-_.]的，否则构建不会成功 -->
-                    <!-- 详见：https://github.com/spotify/docker-maven-plugin    Invalid repository name ... only [a-z0-9-_.] are allowed-->
-                    <imageName>my-pc:5000/${project.artifactId}:${project.version}</imageName>
-                    <baseImage>java</baseImage>
-                    <entryPoint>["java", "-jar", "/${project.build.finalName}.jar"]</entryPoint>
-                    <resources>
-                        <resource>
-                            <targetPath>/</targetPath>
-                            <directory>${project.build.directory}</directory>
-                            <include>${project.build.finalName}.jar</include>
-                        </resource>
-                    </resources>
-                    <dockerHost>http://my-pc:2375</dockerHost>
-                </configuration>
-</plugin>
+![2020825152949](/assets/2020825152949.png)
+![2020825153020](/assets/2020825153020.png)
+
+卷类型：
+
+- 块存储
+  - 适用于对小块数据的随机访问负载
+- 文件存储
+  - 包括NFS和SMB协议的系统
+- 对象存储
+  - 适用于较大且长期存储的、很少变更的二进制数据存储。通常对象存储是根据内容寻址
+
+### 卷操作
+
+```sh
+docker volume create myv
+docker volume inspect myv
+docker run ... --mount source=bizvol,target=/vol # 指定容器存储卷
 ```
 
-- JDK8以上的版本需要添加如下依赖
+## 安全
 
-```xml
-<dependencies>
-                    <dependency>
-                        <groupId>javax.activation</groupId>
-                        <artifactId>activation</artifactId>
-                        <version>1.1.1</version>
-                    </dependency>
-</dependencies>
-```
+![202082516037](/assets/202082516037.png)
 
-- 构建并推送
+Docker 平台安全技术：
 
-```shell
-mvn clean package docker:build -DpushImage
-```
+- Swarm模式
+  - 加密节点ID。
+  - 基于TLS的认证机制。
+  - 安全准入令牌。
+  - 支持周期性证书自动更新的CA配置。
+  - 加密集群存储（配置DB）。
+  - 加密网络
+- 内容信任
+  - 通过 Docker Hub 信任内容
+- 密钥
+  - 使用`docker secret`管理密钥

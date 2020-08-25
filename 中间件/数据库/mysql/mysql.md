@@ -26,45 +26,9 @@ InnoDB存储引擎的锁的算法
 - Gap lock：间隙锁，锁定一个范围，不包括记录本身
 - Next-key lock：record+gap 锁定一个范围，包含记录本身
 
-## 事务
-
-MySQL 默认采用自动提交(AUTOCOMMIT)
-
-设置隔离级别：`SET TRANSACTION ISOLATION LEVEL`
-
-在同一个事务中混合使用不同的存储引擎是不可靠的，有的存储引擎不支持事务
-
 ## 多版本并发控制(MVCC)
 
 行级锁的变种 避免了加锁操作
-
-## 数据类型
-
-### 整型
-
-TINYINT, SMALLINT, MEDIUMINT, INT, BIGINT 分别使用 8, 16, 24, 32, 64 位存储空间，一般情况下越小的列越好
-
-### 浮点数
-
-FLOAT 和 DOUBLE 为浮点类型，DECIMAL 为高精度小数类型，DECIMAL 的计算比浮点类型需要更高的代价
-
-### 字符串
-
-一种是定长的，一种是变长的。
-变长类型能够节省空间，因为只需要存储必要的内容，但当变长类型发生UPDATE操作后，需要执行额外的操作
-存储和检索时，VARCHAR 末尾的空格会保留下来，而会 CHAR 末尾的空格会被删除
-
-### 时间和日期
-
-- DATETIME
-
-能够保存从 1000 年到 9999 年的日期和时间，精度为秒
-时区无关
-
-- TIMESTAMP
-
-和 UNIX 时间戳相同
-应该尽量使用 TIMESTAMP，因为它比 DATETIME 空间效率更高
 
 ## 用户及权限管理
 

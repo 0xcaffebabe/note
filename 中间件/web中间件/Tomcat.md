@@ -75,6 +75,16 @@ Bootstrap启动Cataina Catalina启动Server 实现了Bootstrap 与 Server进行�
 
 ![屏幕截图 2020-08-26 145856](/assets/屏幕截图%202020-08-26%20145856.png)
 
+总体流程：
+
+- `CoyoteAdapter.service`
+  - 请求映射：`CoyoteAdapter.postParseRequest`
+  - 调用容器：`connector.getService().getContainer().getPipeline().getFirst().invoke(request, response)`
+
+Catalina请求处理：
+
+![屏幕截图 2020-08-27 145924](/assets/屏幕截图%202020-08-27%20145924.png)
+
 ### 类加载器
 
 ![屏幕截图 2020-08-26 150126](/assets/屏幕截图%202020-08-26%20150126.png)
@@ -135,11 +145,89 @@ StandardWrapper：
 
 ![屏幕截图 2020-08-26 160757](/assets/屏幕截图%202020-08-26%20160757.png)
 
+### Catalina 自带的 Servlet
+
+- DefaultServlet：处理静态资源 处理目录请求
+  - 可配参数：<https://tomcat.apache.org/tomcat-7.0-doc/default-servlet.html>
+- JspServlet:编译jsp文件 处理jsp请求
+
+## Coyote
+
+- 请求连接器的实现
+
+支持的传输协议：
+
+- HTTP1.1
+- HTTP2.0
+- AJP1.3
+
+支持的IO方案：
+
+- NIO
+- NIO2
+- APR
+
+HTTP 配置：
+
+```xml
+<!-- server.xml -->
+<Connector executor="tomcatThreadPool"
+               port="8080" protocol="HTTP/1.1"
+               connectionTimeout="20000"
+               redirectPort="8443" />
+
+<!-- 使用NIO方式处理HTTP1.1 -->
+<Connector port="8443" protocol="org.apache.coyote.http11.Http11NioProtocol"
+               maxThreads="150" SSLEnabled="true">
+<!-- 
+  maxThreads:指定Connector创建请求处理线程的最大数
+  maxSpareThreads：允许空闲线程的最大数
+  minSpareThreads
+  tcpNoDelay：禁止TCP通过批量发送数据来提高网络利用率
+  maxKeepAliveRequest: 最大keepalive的连接数
+  socketBuffer
+  enableLookups：是否开启request.getRemoteHost() DNS查询
+ -->
+```
+
+### 概念
+
+- Endpoint 通信端点 负责Socekt接收处理
+- Porcessor 负责创建请求和响应 将请求转发到Catalina
+- ProtocolHandler 封装Endpoint Processor
+- UpgradeProtocol 处理HTTP协议的升级协议
+
+### 请求流程
+
+![屏幕截图 2020-08-27 152428](/assets/屏幕截图%202020-08-27%20152428.png)
+
+### AJP
+
+```xml
+<!-- server.xml -->
+<Connector protocol="AJP/1.3"
+               address="::1"
+               port="8009"
+               redirectPort="8443" />
+```
+
+>AJP（Apache JServ Protocol）是定向包协议。因为性能原因，使用二进制格式来传输可读性文本。WEB服务器通过 TCP连接 和 SERVLET容器连接
+
+包结构：
+
+![屏幕截图 2020-08-27 154533](/assets/屏幕截图%202020-08-27%20154533.png)
+
+有效载荷的前一个字节代表类型
+
+![屏幕截图 2020-08-27 155233](/assets/屏幕截图%202020-08-27%20155233.png)
+
+请求处理：
+
+![屏幕截图 2020-08-27 155429](/assets/屏幕截图%202020-08-27%20155429.png)
+
 # 优化
 
 ## 禁用AJP连接
-
->AJP（Apache JServ Protocol）是定向包协议。因为性能原因，使用二进制格式来传输可读性文本。WEB服务器通过 TCP连接 和 SERVLET容器连接
 
 ## 设置线程池
 

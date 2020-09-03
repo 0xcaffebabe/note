@@ -391,6 +391,7 @@
       - [视图和存储程序](./中间件/数据库/mysql/视图和存储程序.md)
       - [存储引擎](./中间件/数据库/mysql/存储引擎.md)
       - [索引](./中间件/数据库/mysql/索引.md)
+      - [管理](./中间件/数据库/mysql/管理.md)
       - [优化](./中间件/数据库/mysql/数据库优化.md)
         - [performance schema](./中间件/数据库/mysql/performance.md)
         - [schema与数据类型优化](./中间件/数据库/mysql/schema与数据类型优化.md)

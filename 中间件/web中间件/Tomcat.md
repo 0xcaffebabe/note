@@ -225,6 +225,118 @@ HTTP 配置：
 
 ![屏幕截图 2020-08-27 155429](/assets/屏幕截图%202020-08-27%20155429.png)
 
+## Jasper
+
+使用单独的类加载器
+
+### 编译方式
+
+运行时编译：
+
+![屏幕截图 2020-09-03 144855](/assets/屏幕截图%202020-09-03%20144855.png)
+
+编译结果：
+
+- 首选存放在 context-param 的scratchdir
+- 否则是 $CATALINA_BASE/work/Engine名称/Host名称/Context名称
+- 再否则在系统临时文件目录下
+
+预编译：
+
+jspc
+
+### 编译原理
+
+```java
+// 继承该类
+class index_jsp extends HttpJspBase
+```
+
+```java
+private static final JspFactory _jspxFactory = JspFactory.getDefaultFactory();
+private static Map<String, Long> _jspx_dependants; // 依赖的外部资源
+private static final Set<String> _jspx_imports_packages = new HashSet(); // 导入的包
+private static final Set<String> _jspx_imports_classes; // 导入的类
+```
+
+`_jspService` 处理请求：
+
+- 定义了out pageContext session application config page 等局部变量
+- 对于静态内容调用out.write
+- 处理jsp标签
+
+![屏幕截图 2020-09-03 152717](/assets/屏幕截图%202020-09-03%20152717.png)
+
+## 配置管理
+
+### JVM配置
+
+```bat
+:: JVM启动参数
+set "JAVA_OPTS=%JAVA_OPTS% %JSSE_OPTS%"
+```
+
+系统属性：略
+
+### 服务器配置
+
+catalina.properties: 容器启动阶段的配置
+
+server.xml: 服务器核心配置
+
+- Server
+- Service
+- Executor 线程池配置 默认其他组件会创建自己的线程池
+
+  ```xml
+  <Executor name="tomcatThreadPool" namePrefix="catalina-exec-"
+          maxThreads="150" minSpareThreads="4"/>
+  ```
+- Connector 默认配置了两个 HTTP 和 AJP
+  ```xml
+  <Connector port="8080" -- 监听端口
+  executor="sharedThreadPool" -- 线程池
+  enableLookups="false" -- 调用request.getRemoteHost 是否调用DNS解析获取主机名
+  redirectPort="8443" -- SSL 转发端口
+  acceptCount="100"  -- 控制 socket 排队连接的最大数
+  connectionTimeout="2000o" -- Connector 接收连接处理的超时时间
+  URIEncoding="UTF-8" -- 解码URI的编码
+  compression="on" -- 开启压缩
+  compressionMinSize="2048" -- 最小压缩尺寸
+  noCompressionUserAgents="gozilla,traviata" -- 符合表达式的UA头不压缩
+  compressableMimeType="text/html,text/xml,text/javascript,text/css,text/plain" />
+  ```
+- Engine 可以指定虚拟主机
+- Host
+  - name 域名
+  - appBase 存放应用的目录
+  - unpackWARs 是否解压war包
+  - autoDeploy 定期检测 自动部署
+  - Alias 可以配置新的域名
+- Context
+  - docBase 具体应用的目录
+  - path Context路径
+- CookieProcessor 指定cookie处理器
+- Loader 用于管理 web 应用的类加载器
+  - delegate 属性可以打破双亲委派模型
+  - reloadable 属性会监控资源变化后重新加载应用
+  - loaderClass 指定类加载器的具体实现
+- Manger 会话管理器
+  - Standard和Presistent
+- Resources 资源共享
+  ```xml
+  <Context docBase="myApp" path=" /myApp">
+    <Resources>
+      <PreResources
+      className='org.apache.catalina.webresources.FileResourceSet'
+      base=" /Users/liuguangrui/Documents/sample/app.jsp"
+      webAppMount=" /app/app.jsp"/>
+    </Resources>
+  </Context>
+  ```
+- JarScanner
+- content.xml
+
 # 优化
 
 ## 禁用AJP连接

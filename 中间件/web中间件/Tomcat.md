@@ -337,15 +337,82 @@ server.xml: 服务器核心配置
 - JarScanner
 - content.xml
 
-# 优化
+### Web 应用配置
 
-## 禁用AJP连接
+- context-param: ServerContext.getInitParameter() 可以获取到的参数
+- session-config 会话配置
+  - 三种追踪模式 COOKIE URL SSL
+- servlet 声明servlet及其映射
+- listener
+- filter
+- mime-mapping 映射文件类型与对应的content-type
+- welcome-file-list
+- error-page
+- locale-encoding-mapping-list 本地化与响应编码的关系
+- 安全配置
+- jndi配置
 
-## 设置线程池
+### 内置的 Filter
 
-## 设置运行模式
+- CorsFilter：解决跨域问题
+- CsrfPreventionFilter：防止CSRF攻击
+- ExpiresFilter：控制缓存过期与否
+- FailedRequestFilter：解析参数失败就返回错误
+- RemoteAddrFilter：只放行符合特定表达式的IP地址
+- RemoteHostFilter：只放行符合特定表达式的主机
+- RemoteIpFilter：前方有负载均衡器的情况下 将getRemoteAddr()替换为 X-Forwarded-For 中的IP
+- RequestDumperFilter：以日志形式输出请求和响应对象 主要用于调试
+- SetCharacterEncodingFilter：设置请求编码
+
+### Tomcat 管理
+
+`/host-manager/html`
+
+## 集群
+
+![屏幕截图 2020-09-04 111658](/assets/屏幕截图%202020-09-04%20111658.png)
+
+Tomcat 本身就不适合配置集群 一种通用的解决方案是 接入层为 Nginx
+
+Nginx 对后端的Tomcat进行负载均衡 
+
+Tomcat上的Web应用最好是设计成无状态的 如果仍然需要保持会话 最好使用一台独立的服务器来存储会话 比如 Redis 
+
+而不要使用Tomcat的会话同步功能
+
+## 安全
+
+安装部署：下载安全 移除自带的几个Web应用
+
+server.xml: 
+
+- 删除不必要的连接器
+- 删除UserDatabase
+- 修改关键配置：8005管理端口
+- 避免恶意web应用的自动启动：autoDeploy
+- 允许有限的客户端访问
+- 避免将异常堆栈打印到客户端
+- listing会导致目录泄漏以及DoS攻击
+
+应用安全
+
+传输安全(SSL)
+
+JAVA安全策略
+
+## 优化
+
+### 禁用AJP连接
+
+### 设置线程池
+
+### 设置运行模式
 
 - bio
 - nio
 - apr
 
+## 附加功能
+
+- 嵌入式启动
+- websocket

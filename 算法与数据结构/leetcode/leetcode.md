@@ -1252,3 +1252,87 @@ class Solution {
 ```
 
 耗时：0
+
+## LCP 06. 拿硬币
+
+<https://leetcode-cn.com/problems/na-ying-bi/>
+
+```java
+class Solution {
+    public int minCount(int[] coins) {
+        int count = 0;
+        for (int i:coins){
+            count+=i/2;
+            if (i % 2!= 0){
+                count+=1;
+            }
+        }
+        return count;
+    }
+}
+```
+
+耗时:0
+
+## 剑指 Offer 50. 第一个只出现一次的字符
+
+<https://leetcode-cn.com/problems/di-yi-ge-zhi-chu-xian-yi-ci-de-zi-fu-lcof/>
+
+```java
+class Solution {
+    public char firstUniqChar(String s) {
+        int[] map = new int[128];
+        for(char c : s.toCharArray()){
+            map[c] = map[c] + 1;
+        }
+        for(int i=0;i<s.length();i++){
+            char c = s.charAt(i);
+            if (map[c] == 1){
+                return c;
+            }
+        }
+        return ' ';
+    }
+}
+```
+
+耗时：6
+
+## 1486. 数组异或操作
+
+<https://leetcode-cn.com/problems/xor-operation-in-an-array/>
+
+```java
+class Solution {
+    public int xorOperation(int n, int start) {
+        int ret=start;
+        for(int i=1;i<n;i++){
+            ret=ret^(start+2*i);
+        }
+        return ret;
+    }
+}
+```
+
+耗时：0
+
+## 剑指 Offer 58 - II. 左旋转字符串
+
+<https://leetcode-cn.com/problems/zuo-xuan-zhuan-zi-fu-chuan-lcof/submissions/>
+
+```java
+class Solution {
+    public String reverseLeftWords(String s, int n) {
+        StringBuffer sb = new StringBuffer();
+        for(int i = n;i<s.length();i++){
+            sb.append(s.charAt(i));
+        }
+        for(int i=0;i<n;i++){
+            sb.append(s.charAt(i));
+        }
+        return sb.toString();
+    }
+}
+```
+
+耗时：5

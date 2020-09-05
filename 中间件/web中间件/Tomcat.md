@@ -402,15 +402,44 @@ JAVA安全策略
 
 ## 优化
 
-### 禁用AJP连接
+### JVM 优化
 
-### 设置线程池
+### Tomcat 配置优化
 
-### 设置运行模式
+server.xml:
 
-- bio
-- nio
-- apr
+- 链接器maxConnections 属性：超过该属性的连接会被阻塞
+- tcpNoDelay：禁止TCP缓存并发送
+- maxKeepAliveRequest
+- socketBuffer
+- enableLookups
+
+网络传输优化：
+
+- 静态文件压缩
+- 高性能链接器(NIO NIO2)
+- 禁用自动部署
+
+JSP页面配置(web.xml):
+
+- development 设置为false 不自动检测JSP页面变动
+- ...
+
+继承 web 服务器：
+
+- 动静分离
+- 负载均衡
+
+### 应用优化
+
+- 减少通信次数
+- 减少通信数据流
+- 推迟会话创建
+- 不在会话存储大对象
+- 合理定义对象作用域
+- 使用连接池提高性能
+- 使用缓存提高性能
+- 最小化日志
 
 ## 附加功能
 

@@ -2,102 +2,38 @@
 
 >Kubernetes（常简称为K8s）是用于自动部署、扩展和管理容器化（containerized）应用程序的开源系统
 
-## 特点
-
-- 轻量级
-- 开源
-- 弹性伸缩
-- 负载均衡
+![屏幕截图 2020-09-07 145646](/assets/屏幕截图%202020-09-07%20145646.png)
 
 ## 架构
 
-![屏幕截图 2020-08-11 122543](/assets/屏幕截图%202020-08-11%20122543.png)
+![屏幕截图 2020-09-07 145831](/assets/屏幕截图%202020-09-07%20145831.png)
 
-- etcd：键值对数据库，保存了整个集群的重要信息；
+master：用于控制集群
 
-![屏幕截图 2020-08-11 122855](/assets/屏幕截图%202020-08-11%20122855.png)
+- API服务器：外部访问入口
+- Scheduler：调度应用（为应用分配工作节点）
+- Controller Manager：执行集群级别的功能
+- etcd：存储集群配置的分布式数据存储
 
-- apiserver：所有服务访问的统一入口
-- controller manager：负责维护集群的状态，比如故障检测、自动扩展、滚动更新等；
-- scheduler：负责资源的调度，按照预定的调度策略将Pod调度到相应的机器上；
-- kubelet：负责维护容器的生命周期，同时也负责Volume（CSI）和网络（CNI）的管理；
-- kube-proxy负责为Service提供cluster内部的服务发现和负载均衡；
-- Container runtime负责镜像管理以及Pod和容器的真正运行（CRI）；
+工作节点：运行用户部署应用的节点
 
-### 其他插件
+- 容器运行时：Docker 或者其他容器
+- Kubelet：与API服务器通信 管理当前节点的容器
+- kube-proxy:负责组件之间的负载均衡
 
-- CoreDNS：集群中的一个域名解析系统
-- Dashboard：BS结构访问体系
-- Ingress Controller ：七层代理
-- Fedetation：跨集群统一管理
-- Prometheus：监控
-- ELK：日志收集
+### 在K8S中运行应用
 
-### Pod
+根据描述信息生成对应的pod 在pod中运行容器
 
-- RC RS
+K8S会保证集群中的容器数量实例 在容器死亡时 会启动新容器替补
 
-Replicat ionController用来确保容器应用的副本数始终保持在用户定义的副本数，即如果
-有容器异常退出，会自动创建新的Pod来替代;而如果异常多出来的容器也会自动回收。
-在新版本的Kubernetes 中建议使用ReplicaSet 来取代Replicat ionControlle
-ReplicaSet跟Rep1 icat ionController没有本质的不同，只是名字不一样，并且
-ReplicaSet支持集合式的selector
-虽然ReplicaSet可以独立使用，但- -般还是建议使用Deployment 来自动管理
-ReplicaSet，这样就无需担心跟其他机制的不兼容问题(比如ReplicaSet 不支持
-rolling -update但Deployment 支持)
+K8S 在运行时可根据需求动态调整副本数量
 
-- deployment
+通过kube-proxy能进行服务连接动态切换
 
-定义Deployment来创建Pod和Rep1 icaSet
-滚动升级和回滚应用
-扩容和缩容
-暂停和继续Deployment
+## 优点
 
-- HPA
-
-Horizontal Pod Autoscaling 仅适用于Deployment 和ReplicaSet ，在V1版本中仅支持根据Pod
-的CPU利用率扩所容，在v1alpha 版本中，支持根据内存和用户自定义的metric 扩缩容
-
-- StatefulSet
-
-*稳定的持久化存储，即Pod重新调度后还是能访问到相同的持久化数据，基于PVC来实现
-*稳定的网络标志，即Pod 重新调度后其PodName 和HostName 不变，基于Headless Service
-(即没有Cluster IP的Service )来实现
-*有序部署，有序扩展，即Pod是有顺序的，在部署或者扩展的时候要依据定义的顺序依次依次进
-行(即从0到N-1,在下一个Pod运行之前所有之前的Pod必须都是Running 和Ready状态)，
-基于init containers 来实现
-*有序收缩，有序删除(即从N-1到0)
-
-- DaemonSet
-
-DaemonSet确保全部(或者-一些) Node上运行- 一个Pod的副本。当有Node 加入集群时，也会为他们
-新增一个Pod。当有Node 从集群移除时，这些Pod也会被回收。删除DaemonSet 将会删除它创建
-的所有Pod
-使用DaemonSet 的一些 典型用法:
-*运行集群存储daemon， 例如在每个Node. 上运行 glusterd、 ceph。
-*在每个Node. 上运行日志收集daemon， 例如fluentd、logstash。
-*在每个Node. 上运行监控daemon, 例如Prometheus Node Exporter
-
-- job Cronjob
-
-Job负责批处理任务，即仅执行-次的任务，它保证批处理任务的-一个或多个Pod成功结束
-Cron Job管理基于时间的Job， 即:
-
-.在给定时间点只运行一-次
-*周期性地在给定时间点运行
-
-- 服务发现
-
-### 网络模型
-
-Kubernetes的网络模型假定了所有Pod都在-一个可以直接连通的扁平的网络空间中，这在.GCE (Google Compute Engine) 里面是现成的网络模型，Kubernetes 假定这个网络已经存在。
-
-![屏幕截图 2020-08-12 111324](/assets/屏幕截图%202020-08-12%20111324.png)
-
-- flanneld
-
-![屏幕截图 2020-08-12 110356](/assets/屏幕截图%202020-08-12%20110356.png)
-
-etcd 存储flannel 可分配的IP地址资源
-
-监控 etcd 每个pod的实际地址 内存中维护路由表
+- 简化部署
+- 充分利用硬件
+- 健康检查 自修复
+- 自动扩容

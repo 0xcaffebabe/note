@@ -1336,3 +1336,86 @@ class Solution {
 ```
 
 耗时：5
+
+## 剑指 Offer 53 - II. 0～n-1中缺失的数字
+
+<https://leetcode-cn.com/problems/que-shi-de-shu-zi-lcof/submissions/>
+
+```java
+class Solution {
+    public int missingNumber(int[] nums) {
+        int ret = nums[nums.length-1];
+        for(int i=0;i<ret;i++){
+            if (nums[i] != i) return i;
+        }
+        return ret+1;
+    }
+}
+```
+
+耗时：0
+
+## 剑指 Offer 05. 替换空格
+
+<https://leetcode-cn.com/problems/ti-huan-kong-ge-lcof/>
+
+```java
+class Solution {
+    public String replaceSpace(String s) {
+        StringBuffer sb = new StringBuffer();
+        for(int i=0;i<s.length();i++){
+            char c = s.charAt(i);
+            if (c == ' '){
+                sb.append("%20");
+            }else{
+                sb.append(c);
+            }
+        }
+        return sb.toString();
+    }
+}
+```
+
+耗时：0
+
+## 剑指 Offer 03. 数组中重复的数字
+
+<https://leetcode-cn.com/problems/shu-zu-zhong-zhong-fu-de-shu-zi-lcof/>
+
+```java
+class Solution {
+    public int findRepeatNumber(int[] nums) {
+        int[] map = new int[nums.length];
+        for(int i:nums){
+            map[i] = map[i] + 1;
+        }
+        for(int i=0;i<map.length;i++){
+            if (map[i]>1){
+                return i;
+            }
+        }
+        return -1;
+    }
+}
+```
+
+耗时：1
+
+## 剑指 Offer 17. 打印从1到最大的n位数
+
+<https://leetcode-cn.com/problems/da-yin-cong-1dao-zui-da-de-nwei-shu-lcof/>
+
+```java
+class Solution {
+    public int[] printNumbers(int n) {
+        if (n == 0) return new int[]{};
+        int[] ret = new int[(int)Math.pow(10,n)-1];
+        for(int i=0;i<ret.length;i++){
+            ret[i]=i+1;
+        }
+        return ret;
+    }
+}
+```
+
+耗时：1

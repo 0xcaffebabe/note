@@ -144,3 +144,179 @@ kubectl create -f kubia-manual.yaml -n custom-namespace # 指定命名空间
 ```sh
 kubectl delete po kubia-manual # 根据名字删除
 ```
+
+## 副本机制
+
+k8s 会保证 pod 以及 容器的健康运行
+
+### 存活探针
+
+当存活探针探测失败 容器就会重启
+
+- 创建
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kubia-liveness
+spec:
+  containers:
+  - image: luksa/kubia-unhealthy
+    name: kubia
+    livenessProbe: # 存活探针
+      httpGet: # 返回2xx 或者 3xx就代表活着
+        path: /
+        port: 8080
+```
+
+### ReplicationController
+
+创建和管理一个pod的多个副本
+
+![屏幕截图 2020-09-09 164430](/assets/屏幕截图%202020-09-09%20164430.png)
+
+- 创建
+
+```yml
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: kubia
+spec:
+  replicas: 3
+  selector:
+    app: kubia
+  template:
+    metadata:
+      labels:
+        app: kubia
+    spec:
+      containers:
+      - name: kubia
+        image: luksa/kubia
+        ports:
+        - containerPort: 8080
+```
+
+控制器通 过 创建 一 个新的替代pod来响应pod的删除操作
+
+通过更改标签的方式来实现rc与pod的关联
+
+- 扩容
+
+```sh
+kubectl scale rc kubia --replicas=10
+```
+
+- 删除
+
+```sh
+kubectl delete rc kubia
+```
+
+### ReplicaSet
+
+ReplicaSet 会 替代 rc
+
+rs 的pod 选择器的表达能力更强
+
+- 创建
+
+```yml
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: kubia
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: kubia
+  template:
+    metadata:
+      labels:
+        app: kubia
+    spec:
+      containers:
+      - name: kubia
+        image: luksa/kubia
+```
+
+### DaemonSet
+
+由DaemonSet 创建的pod 会绕过调度程序 会在所有集群节点上运行（或者也可以通过指定`nodeSelector`在其他节点运行）
+
+![屏幕截图 2020-09-09 191240](/assets/屏幕截图%202020-09-09%20191240.png)
+
+- 创建
+
+```yml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ssd-monitor
+spec:
+  selector:
+    matchLabels:
+      app: ssd-monitor
+  template:
+    metadata:
+      labels:
+        app: ssd-monitor
+    spec:
+      nodeSelector:
+        disk: ssd
+      containers:
+      - name: main
+        image: luksa/ssd-monitor
+```
+
+### Job
+
+允许运行 一 种 pod, 该 pod 在内部进程成功结束时， 不重启容器。
+
+- 创建
+
+```yml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: batch-job
+spec:
+  completions: 5 # 运行pod数
+  parallelism: 2 # 并行运行数
+  template:
+    metadata:
+      labels:
+        app: batch-job
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: main
+        image: luksa/batch-job
+```
+
+### CronJob
+
+- 创建
+
+```yml
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: cron-job
+spec:
+  schedule: "0,15,30,45 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: batch-job
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: main
+            image: luksa/batch-job
+```

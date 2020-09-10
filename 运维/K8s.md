@@ -320,3 +320,120 @@ spec:
           - name: main
             image: luksa/batch-job
 ```
+
+## 服务
+
+是一种为一组功能相同的 pod 提供单一不变的接入点的资源
+
+![屏幕截图 2020-09-10 190129](/assets/屏幕截图%202020-09-10%20190129.png)
+
+- 创建
+
+```yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubia
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: kubia
+```
+
+### 服务间的发现
+
+- 通过环境变量
+
+```sh
+kubectl exec kubia-9knkg -- env
+```
+
+- 通过DNS
+
+域名：kubia.default.svc.cluster.local
+
+如果在同一命名空间下 直接使用 kubia即可
+
+### Endpoint
+
+暴露一个服务的 IP 地址和端口的列表
+
+```sh
+kubectl get endpoints kubia
+```
+
+### 暴露服务给外部
+
+- NodePort：每个集群节点都会在节点上打开一个端口 将在该端口上接收到的流量重定向到基础服务
+
+```java
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubia-nodeport
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 8080
+    nodePort: 30123
+  selector:
+    app: kubia
+```
+
+通过nodeip:30123 访问
+
+- 负载均衡器将流量重定向到跨所有节点的节点端口。客户端通过负载均衡器的 IP 连接到服务
+
+```yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubia-loadbalancer
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: kubia
+```
+
+通过externalip:一个随机端口访问
+
+- Ingress 只需要 一 个公网 IP 就能为许多服务提供访问
+
+启用：
+
+```sh
+minikube addons enable ingress
+```
+
+### 就绪探针
+
+- 创建
+
+```yaml
+# kubia-rc.yaml
+    spec:
+      containers:
+      - name: kubia
+        image: luksa/kubia
+        readinessProbe:
+          exec:
+            command:
+            - ls
+            - /var/ready # 该文件存在 容器才被认为就绪
+```
+
+### 服务故障排除
+
+- 确保从集群内连接到服务的集群IP
+- 服务的集群IP 是虚拟IP, 是无法ping通的
+- 如果已经定义了就绪探针， 请确保 它返回成功；否则该pod不会成为服务的一部分
+- 确认某个容器是服务的 一 部分
+- 检查是否连接到服务公开的端口，而不是目标端口
+- 尝试直接连接到podIP以确认pod正在接收正确端口上的 连接
+- 法通过pod的IP 访问应用， 请确保应用不是仅绑定 到本地主机

@@ -437,3 +437,145 @@ minikube addons enable ingress
 - 检查是否连接到服务公开的端口，而不是目标端口
 - 尝试直接连接到podIP以确认pod正在接收正确端口上的 连接
 - 法通过pod的IP 访问应用， 请确保应用不是仅绑定 到本地主机
+
+## 卷
+
+卷是 pod 的 一 个组成部分， 因此像容器 一 样在 pod 的规范中定义
+
+![屏幕截图 2020-09-12 112125](/assets/屏幕截图%202020-09-12%20112125.png)
+![屏幕截图 2020-09-12 112142](/assets/屏幕截图%202020-09-12%20112142.png)
+
+### 在容器之间共享数据
+
+emptyDir：pod被删除时 卷的内容就会丢失
+
+- 创建
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fortune
+spec:
+  containers:
+  - image: luksa/fortune
+    name: html-genrator
+    volumeMounts:
+    - name: html
+      mountPath: /var/htdocs
+  - image: nginx:alpine
+    name: web-server
+    volumeMounts:
+    - name: html # 使用html卷
+      mountPath: /usr/share/nginx/html # 挂载到容器的位置
+      readOnly: true
+    ports:
+    - containerPort: 80
+      protocol: TCP
+  volumes: # 创建一个卷
+  - name: html
+    emptyDir: {}
+```
+
+gitRepo：以git仓库文件填充目录文件
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gitrepo-volume-pod
+spec:
+  containers:
+  - image: nginx:alpine
+    name: web-server
+    volumeMounts:
+    - name: html
+      mountPath: /usr/share/nginx/html
+      readOnly: true
+    ports:
+    - containerPort: 80
+      protocol: TCP
+  volumes:
+  - name: html
+    gitRepo:
+      repository: https://github.com/luksa/kubia-website-example.git
+      revision: master
+      directory: .
+```
+
+### 访问工作节点文件
+
+hostPath 卷指向节点文件系统上的特定文件或目录
+
+### 持久化存储
+
+- gce持久盘
+- aws弹性块存储
+- nfs卷
+
+### 持久卷
+
+![屏幕截图 2020-09-12 140458](/assets/屏幕截图%202020-09-12%20140458.png)
+![屏幕截图 2020-09-12 144057](/assets/屏幕截图%202020-09-12%20144057.png)
+
+- 创建持久卷
+
+```yml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mongodb-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /tmp/mongodb
+```
+
+- 创建持久卷声明
+
+```yml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-pvc
+spec:
+  resources:
+    requests:
+      storage: 1Gi
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: "" # 动态持久卷
+```
+
+- 容器使用持久卷
+
+```yml
+# ...
+  volumes:
+  - name: mongodb-data
+    persistentVolumeClaim:
+      claimName: mongodb-pvc
+```
+
+### 动态持久卷
+
+- 创建StorageClass
+
+```yml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast
+provisioner: k8s.io/minikube-hostpath
+parameters:
+  type: pd-ssd
+```
+
+声明是通过名称引用它的 方便之处主要是在不同集群之间移植
+
+![屏幕截图 2020-09-12 150052](/assets/屏幕截图%202020-09-12%20150052.png)

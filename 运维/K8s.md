@@ -579,3 +579,155 @@ parameters:
 声明是通过名称引用它的 方便之处主要是在不同集群之间移植
 
 ![屏幕截图 2020-09-12 150052](/assets/屏幕截图%202020-09-12%20150052.png)
+
+## 参数配置
+
+通过定义传递参数：
+
+```yml
+  - image: luksa/fortune:args
+    args: ["2"]
+```
+
+使用环境变量：
+
+```yml
+- image: luksa/fortune:env
+  env:
+  - name: INTERVAL
+    value: "30"
+```
+
+### ConfigMap
+
+类似于配置中心：
+
+![屏幕截图 2020-09-13 142528](/assets/屏幕截图%202020-09-13%20142528.png)
+
+- 创建
+
+```sh
+kubectl create configmap fortunes-config --from-literal=sleep-interval=25
+```
+
+- 单个环境变量使用
+
+```yml
+  - image: luksa/fortune:env
+    env:
+    - name: INTERVAL
+      valueFrom:
+        configMapKeyRef:
+          name: fortunes-config
+          key: sleep-interval
+```
+
+- 一次传递所有环境变量
+
+```yml
+  - image: luksa/fortune:env
+    env:
+    envFrom:
+    - prefix: CONFIG_
+    configMapRef:
+      name: fortunes-config
+    args: ["${CONFIG_xxx}"] # 传递到命令行
+```
+
+- 挂载到卷
+
+```yml
+volumes:
+- name: config
+  configMap:
+    name: configmap
+```
+
+- 更新配置
+
+```sh
+kubectl edit configmap xxx
+```
+
+### Secret
+
+存储与分发敏感信息
+
+- 创建
+
+```sh
+ kubectl create secret generic fortune-https --from-file=https.key
+```
+
+- 挂载卷使用
+
+```yml
+- image: xxx
+  volumeMounts:
+  - name: keys
+    mountPath: /etc/nginx/keys/
+volumes:
+- name: keys
+  secret:
+    secretName: fortune-https
+```
+
+- 环境变量使用
+
+```yml
+env:
+- name: FOO_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: fortune-https
+      key: name
+```
+
+## pod 元数据访问
+
+### Downward API
+
+![屏幕截图 2020-09-13 152325](/assets/屏幕截图%202020-09-13%20152325.png)
+
+通过环境变量：
+
+```yml
+env:
+- name: POD IP
+  valueFrom:
+    fieldRef:
+      fieldPath: status.podIP
+- name: CONTAINER CPU REQUEST MILLICORES
+  valueFrom:
+    resourceFieldRef:
+      resource: requests.cpu
+      divisor: lm
+```
+
+通过卷：
+
+```yml
+volumes:
+- name: downward
+  downwardAPI:
+    items:
+    - path: "podName"
+      fieldRef:
+        fieldPath: metadata.name
+```
+
+![屏幕截图 2020-09-13 153906](/assets/屏幕截图%202020-09-13%20153906.png)
+
+### 使用 K8S API 服务器
+
+REST API：
+
+- 启动kubectl proxy
+
+```sh
+curl http://localhost:8001/apis/batch/v1/jobs
+```
+
+在 pod 内部使用
+
+客户端API

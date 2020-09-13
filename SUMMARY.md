@@ -441,7 +441,7 @@
   - [uniapp](./移动开发/uniapp.md)
 
 - [开发工具](./开发工具/nav.md)
-  - [Linux](./开发工具/Linux.md)
+  - [Linux](./开发工具/linux/Linux.md)
   - [VIM](./开发工具/vim/vim.md)
   - [GIT](./开发工具/git.md)
   - [SVN](./开发工具/SVN.md)

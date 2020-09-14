@@ -193,6 +193,8 @@ ext3/ext4 文件系统引入了日志功能，可以利用日志来修复文件�
 
 ### 挂载
 
+利用目录作为文件系统的进入点
+
 ### 目录配置
 
 Filesystem Hierarchy Standard (FHS) 规定了 Linux 的目录结构：

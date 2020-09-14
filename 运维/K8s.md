@@ -731,3 +731,161 @@ curl http://localhost:8001/apis/batch/v1/jobs
 在 pod 内部使用
 
 客户端API
+
+## Deployment
+
+更新应用：
+
+- 删除旧版本pod 启动新版本pod
+  - 会造成短暂的服务不可用
+- 启动新版本pod 删除旧版本pod
+
+![屏幕截图 2020-09-14 135712](/assets/屏幕截图%202020-09-14%20135712.png)
+
+### 使用rc进行滚动升级
+
+书上通过rolling-update的方法已经过时
+
+### 使用 Deployment 声明式升级
+
+- 创建
+
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubia
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: kubia
+  template:
+    metadata:
+      name: kubia
+      labels:
+        app: kubia
+    spec:
+      containers:
+      - image: luksa/kubia:v1
+        name: nodejs
+```
+```sh
+kubectl create -f kubia-dep-v1.yaml --record # 加上该参数会记录历史版本号
+```
+
+- 更新版本
+
+```sh
+kubectl set image deployment kubia nodejs=luksa/kubia:v2
+```
+
+- 回滚
+
+```sh
+kubectl rollout undo deployment kubia
+```
+
+使用 - -to-revision=xxx 回滚到特定版本
+
+- 升级速率控制
+
+```yml
+rollingUpdate :
+  maxSurge: 1 # 最多允许超过的副本数
+  maxunavailable: 0 # 最多允许多少百分比pod不可用
+```
+
+- 使用rollout pause 暂停滚动升级 部分软件版本就不一样 金丝雀发布
+
+- minReadySeconds属性指定新创建的pod至少要成功运行多久之后 ， 才能 将其视为可用
+
+如果 一 个新的pod 运行出错， 并且在minReadySeconds时间内它的就绪探针出现了失败， 那么新版本的滚动升级将被阻止
+
+- 使用kubectl apply升级Deployment
+
+## StatefulSet
+
+如何复制有状态的pod？
+
+Statefulset 保证了pod在重新调度后保留它们的标识和状态
+
+每个pod都有专属于它的持久卷
+
+K8S保证不会有两个相同标识和持久卷的pod同时运行
+
+### 使用
+
+- 创建持久卷
+- 创建控制 Service
+
+```yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubia
+spec:
+  clusterIP: None
+  selector:
+    app: kubia
+  ports:
+  - name: http
+    port: 80
+```
+
+- 创建StatefulSet
+
+```yml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kubia
+spec:
+  serviceName: kubia
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kubia # has to match .spec.template.metadata.labels
+  template:
+    metadata:
+      labels:
+        app: kubia
+    spec:
+      containers:
+      - name: kubia
+        image: luksa/kubia-pet
+        ports:
+        - name: http
+          containerPort: 8080
+        volumeMounts:
+        - name: data
+          mountPath: /var/data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      resources:
+        requests:
+          storage: 1Mi
+      accessModes:
+      - ReadWriteOnce
+```
+
+- 使用一个 Service 来访问 Pod
+
+```yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubia-public
+spec:
+  selector:
+    app: kubia
+  ports:
+  -  port: 80
+     targetPort: 8080
+```
+
+### 发现伙伴节点
+
+- 容器内部通过DNS SRV 记录

@@ -1551,3 +1551,61 @@ class Solution {
 ```
 
 耗时：4
+
+## 412. Fizz Buzz
+
+<https://leetcode-cn.com/problems/fizz-buzz/>
+
+```java
+class Solution {
+    public List<String> fizzBuzz(int n) {
+        List<String> list = new ArrayList<>();
+        for(int i=1;i<=n;i++){
+            if (i % 15 == 0){
+                list.add("FizzBuzz");
+            }else if(i % 3 == 0){
+                list.add("Fizz");
+            }else if(i % 5 == 0) {
+                list.add("Buzz");
+            }else{
+                list.add(i + "");
+            }
+        }
+        return list;
+    }
+}
+```
+
+耗时：6
+
+## 173. 二叉搜索树迭代器
+
+<https://leetcode-cn.com/problems/binary-search-tree-iterator/>
+
+```java
+class BSTIterator {
+    private LinkedList<Integer> list = new LinkedList<>();
+    public BSTIterator(TreeNode root) {
+        midVisist(root);
+    }
+
+    private void midVisist(TreeNode root){
+        if (root == null) return;
+        midVisist(root.left);
+        list.add(root.val);
+        midVisist(root.right);
+    }
+    
+    /** @return the next smallest number */
+    public int next() {
+        return list.removeFirst();
+    }
+    
+    /** @return whether we have a next smallest number */
+    public boolean hasNext() {
+        return !list.isEmpty();
+    }
+}
+```
+
+耗时：24

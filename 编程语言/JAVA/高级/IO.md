@@ -232,15 +232,23 @@ FileReader reader = new FileReader("fos.txt");
 - ObjectInputStream
 
 ```java
-        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("object"));
-        oos.writeObject(new Person("jav",15));
+ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("object"));
+oos.writeObject(new Person("jav",15));
 
-        ObjectInputStream ois = new ObjectInputStream(new FileInputStream("object"));
-        Person p = (Person)ois.readObject();
-        System.out.println(p);
+ObjectInputStream ois = new ObjectInputStream(new FileInputStream("object"));
+Person p = (Person)ois.readObject();
 ```
 
-**transient关键字**
+序列化的类需要实现 `Serializable` 接口
+
+最好手动设置 serialVersionUID 的值, 类修改时根据是否兼容来调整这个值
+
+**transient关键字**修饰的变量不会被序列化
+
+其他方式的序列化：
+
+- Hessian 效率很高 跨语言
+- JSON
 
 # 打印流
 

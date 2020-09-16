@@ -206,3 +206,136 @@ System.out.println(word);
 1. nextInt最终的取值范围是0-1
 2. 创建StringBuffer传入char时会变成int 导致变成创建char大小的缓冲区
 3. case不加break
+
+## 循环
+
+- 尽情享受循环
+
+```java
+for(byte b = Byte.MIN_VALUE;b<Byte.MAX_VALUE;b++)
+    if (b  == 0x90) System.out.println("hello");
+```
+
+这段代码什么也不会打印 主要是因为0x90 是十六机制 代表的是十进制的144 这已经超出了byte的表示范围（-128 - 127）
+
+- 无情的++
+
+```java
+int j = 0;
+for (int i = 0; i < 100; i++) j = j++;
+System.out.println(j);
+```
+
+j的最终结果为0, j = j++等同于：
+
+```java
+int t = j;
+j = j + 1;
+j = t;
+```
+
+- 在循环中
+
+```java
+int count = 0;
+for (int i = 0; i <= Integer.MAX_VALUE; i++) count++;
+```
+
+循环结束时 count等于多少？
+
+答案是这个循环永远不会停止, 循环继续条件永远为真, 因为i溢出了
+
+- 变幻莫测的值
+
+```java
+int i=0;
+while(0xffffffff << i != 0 ) i++;
+System.out.println(i);
+```
+
+这个循环也会无限循环, **移位操作符只会用其右操作数的低五位做移位操作,对于long变量 是低六位** 所以不论i多大, 这里i能做移位操作的最大只能达到32
+
+**如果可能的话 移位长度应该是常量**
+
+- 循环者
+
+```java
+double i = Double.POSITIVE_INFINITY;
+while(i == i + 1); // 无限循环
+```
+
+无穷大+1还是无穷大
+
+一个浮点数值越大, 它和其后继数值间隔越大 浮点数使用了固定的有效位来表示, 所以一个很大的数+1不会改变它的值
+
+- 循环者的新娘
+
+```java
+double i = Double.NaN;
+while (i != i); // 无限循环
+```
+
+Nah != Nah
+
+- 循环者的爱子
+
+```java
+String i = "cccc";
+while (i != i + 0); // 无限循环
+```
+
+- 循环者的鬼魂
+
+```java
+short i = -1;
+while (i != 0){
+    i >>>=1;
+} // 无限循环
+```
+
+short会被提升为int 0xffffffff
+
+右移之后 变成int的0x7fffffff 后又变成short 被砍掉高4为 变成 0xffff 回到了-1 死循环
+
+- 循环者的诅咒
+
+```java
+Integer i = 129;
+Integer j = 129;
+while (i<=j && j<=i && j!=i); // 死循环
+```
+
+**当两个数都是包装类型时 比较操作符执行的是值比较 判等操作符执行的是引用比较**
+
+- 循环者遇到了狼人
+
+```java
+Integer i = Integer.MIN_VALUE;
+while (i != 0 && i == -i); // 死循环
+```
+
+还是整数溢出搞的鬼
+
+- 被计数击倒了
+
+```java
+int count = 0;
+for(float f = Integer.MAX_VALUE; f< Integer.MAX_VALUE+50;f++) count++;
+System.out.println(count); // 0
+```
+
+f的值太大了 以至于+50 还是等于f
+
+**不要使用浮点数作为循环索引**
+
+- 分分钟
+
+```java
+int count = 0;
+for (int i=0;i<60*1000*1000;i++){
+    if (i % 60*1000 == 0) count ++;
+}
+System.out.println(count); // 1000000
+```
+
+运算符优先级问题：取模与乘法优先级相同

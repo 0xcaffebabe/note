@@ -44,6 +44,28 @@ master：用于控制集群
 
 ![屏幕截图 2020-09-15 143259](/assets/屏幕截图%202020-09-15%20143259.png)
 
+#### 安全防护
+
+- pod 使用 service accounts机制进行认证
+
+![屏幕截图 2020-09-16 135815](/assets/屏幕截图%202020-09-16%20135815.png)
+
+```sh
+kubectl get sa # 获取服务账户
+kubectl create serviceaccount foo # 创建
+```
+
+![屏幕截图 2020-09-16 140540](/assets/屏幕截图%202020-09-16%20140540.png)
+
+- 使用sa:
+
+```yaml
+spec:
+  serviceAccountName: foo
+```
+
+RBAC控制：使用插件
+
 ### 调度器
 
 利用 API 服务器的监听机制等待新创建的 pod, 然后给每个新的、 没有节点集的 pod 分配节点
@@ -993,3 +1015,71 @@ spec:
 ### 发现伙伴节点
 
 - 容器内部通过DNS SRV 记录
+
+## 安全
+
+### pod 使用宿主节点的Linux命名空间
+
+- 使用宿主节点的网络命名空间
+
+```yaml
+spec:
+  hostNetwork: true
+```
+
+- 使用宿主节点的端口而不使用宿主节点的网络命名空间
+
+![屏幕截图 2020-09-16 142921](/assets/屏幕截图%202020-09-16%20142921.png)
+
+如果使用hostport 一个节点只能有一个相同的pod
+
+- 使用宿主的PID与IPC空间
+
+```yml
+spec:
+  hostPID: true
+  hostIPC: true
+```
+
+开启后 相同节点的pod的进程之间就是可见的 可通信的
+
+### 安全上下文
+
+```yml
+spec:
+  securityContext:
+    # ... pod 级别的
+  containers:
+    securityContext:
+      runAsUser: 405 # 以指定用户运行
+      runAsNonRoot: true # 禁止以root运行
+      privileged: true # 在特权模式下允许
+      capabilities:
+        add:
+        - SYS_TIME # 开放硬件时间修改权限
+        drop:
+        - CHOWN # 禁用文件所有者修改权限
+      readOnlyRootFilesystem: true # 禁止在根目录写文件
+```
+
+### pod 网络隔离
+
+- 网络策略
+
+```yml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-netpolicy
+spec:
+  podSelector:
+    matchLabels:
+      app: database # 对该标签的pod生效
+  ingress: # 只允许来自匹配下面标签的pod请求
+  - from:
+    - podSelector:
+        matchLabels:
+          app: webserver
+    ports:
+    - port: 5432
+```

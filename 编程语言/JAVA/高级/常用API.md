@@ -37,7 +37,7 @@ boolean | Boolean
   - String内部是实现byte数组实现的
 - 因为String对象是不可变的，所以它们可以被共享。
 
-StringBuilder 线程不安全
+StringBuilder 线程不安全(效率更高)
 
 StringBuffer 线程安全
 
@@ -94,6 +94,12 @@ System.out.println(sb.toString());
 
 - 装箱拆箱
   - 自动装箱拆箱
+
+选择包装类还是基本数据类型：
+
+1. POJO类属性全部使用包装类
+2. RPC方法参数与返回值全部使用包装类
+3. 局部变量尽可能使用基本类型
 
 ### 基本类型与字符串的转换
 

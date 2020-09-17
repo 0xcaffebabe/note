@@ -339,3 +339,133 @@ System.out.println(count); // 1000000
 ```
 
 运算符优先级问题：取模与乘法优先级相同
+
+## 异常
+
+- 优柔寡断
+
+```java
+boolean f(){
+    try {
+        return true;
+    }finally {
+        return false;
+    }
+}
+```
+
+这段代码返回false **finally语句总是在离开try后执行**
+
+**finally不要使用 return break continue throw**
+
+- 极端不可思议
+
+```java
+try {
+    System.out.println("hw");
+} catch (IOException e){} // 1.编译错误
+try { }catch (Exception e){} // 2. 正常编译
+
+// 3.正常编译
+interface i1{
+    void f() throws ClassNotFoundException,InterruptedException;
+}
+interface i2 {
+    void f() throws IOException,InterruptedException;
+}
+interface i3 extends i1,i2{ }
+new i3(){
+    @Override
+    public void f() throws InterruptedException {}
+};
+```
+
+1. 对于受检异常, 如果catch到的异常没有在try代码块声明, 则无法编译
+2. 但是JLS规定Exception与Throwable除外, 这些异常可以没有在try中声明
+3. **一个方法可以抛出的异常是其所有父类/父接口声明的异常类型的交集**
+
+- 不受欢迎的i
+
+```java
+private static final int i;
+
+static {
+    try {
+        f();
+    }catch (Exception e){
+        i=-1;
+    }
+    
+}
+
+static void f() throws Exception{
+    throw new Exception("eee");
+}
+```
+
+这段代码会因为编译器无法确定i是否只被赋值一次而编译失败
+
+- 不辞而别
+
+```java
+try {
+    System.out.println("hello");
+    System.exit(-1);
+}finally {
+    System.out.println("world");
+}
+```
+
+System.exit会立即停止所有的程序线程 try代码块压根就不会完成 也就不会执行finally了
+
+- 不情愿的对象
+
+```java
+class Object{
+    private Object obj = new Object();
+
+    public Object() {}
+}
+```
+
+这个对象new的时候会抛出栈溢出异常
+
+- 繁琐的流关闭
+
+```java
+FileInputStream in1 = null;
+FileInputStream in2 = null;
+try {
+    in1 = new FileInputStream("xxx");
+    in2 = new FileInputStream("xxx");
+}finally {
+    if (in1 != null) in1.close();
+    if (in2 != null) in1.close();
+}
+```
+
+这个程序的问题在于in1 close抛出异常就会导致in2不会关闭
+
+解决方法使用JDK7 的自动关闭特性
+
+- 循环中抛出异常
+
+使用异常来控制循环 不仅代码难以阅读 并且速度十分慢
+
+- 可怕的递归
+
+```java
+public static void main(String[] args){
+    work();
+    System.out.println("done");
+}
+static void work(){
+    try {
+        work();
+    }finally {
+        work();
+    }
+}
+```
+
+这个程序会的调用会从根节点生成一颗完全二叉树 树的深度为虚拟机的栈深度 这个递归虽然不是无限的 但对人类的生命而言也近乎无穷了

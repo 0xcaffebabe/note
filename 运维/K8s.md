@@ -1083,3 +1083,84 @@ spec:
     ports:
     - port: 5432
 ```
+
+## 计算资源管理
+
+### 申请资源
+
+```yaml
+spec:
+  containers:
+  - image: busybox
+    command: ["dd", "if=/dev/zero", "of=/dev/null"]
+    name: main
+    resources:
+     requests:
+       cpu: 200m # 申请200毫核 也就说20%CPU
+       memory: 10Mi # 申请10M内存
+```
+
+添加了requests对调度的影响：
+
+通过设置资源requests我们指定了pod对资源需求的最小值。
+
+调度器不关心资源的实际使用了 而是关心各pod所定义的requests资源量 
+
+![屏幕截图 2020-09-17 134722](/assets/屏幕截图%202020-09-17%20134722.png)
+
+### 限制资源
+
+```yml
+resources:
+  limits:
+    cpu: 1 # 允许最大使用1核
+    memory: 20Mi # 内存允许最大 20M
+```
+
+超过limits的情况：
+
+- cpu：进程分配到的CPU不会超过指定的
+- 内存：如果内存超过limit 则容器会被杀掉
+
+### QoS 等级
+
+通过定义优先级决定资源不足时杀谁
+
+![屏幕截图 2020-09-17 142031](/assets/屏幕截图%202020-09-17%20142031.png)
+
+- BestEffort 优先级最低
+  - 没有设置requess和limits都属于这个级别
+- Guaranteed 优先级最高
+  - cpu和内存都要设置requests 和 limits
+  - 所有容器都要设置资源量
+  - requests 与 limits必须相等
+- Burstable 其他的pod都属于这个等级
+
+### 限制命名空间中的pod
+
+- LimitRange插件
+- ResourceQuota
+
+### 监控 pod
+
+- Heapster
+
+![屏幕截图 2020-09-17 143016](/assets/屏幕截图%202020-09-17%20143016.png)
+
+## 自动伸缩与集群
+
+- 基于CPU使用率的自动伸缩
+
+```sh
+kubectl autoscale deployment kubia --cpu-percent=30 --min=1 --max=5
+```
+
+- 纵向扩容
+
+自动修改CPU与内存大小
+
+### 集群节点扩容
+
+新节点启动后，其上运行的Kubelet会联系API服务器，创建 一 个Node资源以注册该节点
+
+当一 个节点被选中下线，它首先会被标记为不可调度， 随后运行其上的pod 将被疏散至其他节点

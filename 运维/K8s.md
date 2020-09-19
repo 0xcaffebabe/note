@@ -1164,3 +1164,137 @@ kubectl autoscale deployment kubia --cpu-percent=30 --min=1 --max=5
 新节点启动后，其上运行的Kubelet会联系API服务器，创建 一 个Node资源以注册该节点
 
 当一 个节点被选中下线，它首先会被标记为不可调度， 随后运行其上的pod 将被疏散至其他节点
+
+## 高级调度
+
+### 污点和容忍度
+
+限制哪些pod可以被调度到某 一 个节点
+
+```sh
+kubectl describe node minikube | grep Taints # 查看节点污点
+```
+
+![屏幕截图 2020-09-19 134744](/assets/屏幕截图%202020-09-19%20134744.png)
+
+- NoSchedule 表示如果 pod 没有容忍这些污点， pod 则不能被调度到包含这些污点的节点上
+- PreferNoSchedule 是 NoSchedule 的 一 个宽松的版本， 表示尽量阻止pod 被调度到这个节点上， 但是如果没有其他节点可以调度， pod 依然会被调度到这个节点上
+- NoExecute会影响正在节点上运行着的 pod 。 如果在 一 个节点上添加了 NoExecute 污点， 那些在该节点上运行着的pod, 如果没有容忍这个 NoExecute 污点， 将会从这个节点去除
+
+- 添加污点
+
+```sh
+kubectl taint node minikube node-type=production:NoSchedule
+```
+
+- pod添加容忍度
+
+```yml
+spec:
+  replicas: 5
+  template:
+    spec:
+      ...
+      tolerations:
+      - key: node-type
+        operator: Equal
+        value: production
+        effect: NoSchedule
+```
+
+### 节点亲缘性
+
+这种机制允许你通知 Kubemetes将 pod 只调度到某个几点子集上面
+
+```yml
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: gpu
+            operator: In
+            values:
+            - "true"
+```
+
+![屏幕截图 2020-09-19 142905](/assets/屏幕截图%202020-09-19%20142905.png)
+
+## 最佳实践
+
+![屏幕截图 2020-09-19 143453](/assets/屏幕截图%202020-09-19%20143453.png)
+
+### pod 的生命周期
+
+1. 应用必须意识到会被杀死或者重新调度
+    - ip与主机名会发生变化
+    - 使用卷解决数据写入问题
+2. 不断重启的pod不会被重新调度
+3. 固定顺序启动pod
+    - 使用init容器
+    - 应用要处理好其他依赖没有准备好的情况
+4. 生命周期钩子
+    - postStart
+    - preStop
+5. pod的关闭
+
+![屏幕截图 2020-09-19 145717](/assets/屏幕截图%202020-09-19%20145717.png)
+
+### 客户端请求处理
+
+1. pod启动时避免客户端连接断开
+    - 使用一个就绪探针来探测pod是否准备好接受请求了
+2. pod关闭时避免请求断开
+    - 停止接受新连接
+    - 等待所有请求完成
+    - 关闭应用
+
+### 让应用方便运行与管理
+
+1. 可管理的容器镜像
+    - 镜像太大难以传输 镜像太小会缺失很多工具
+2. 合理给镜像打标签
+    - 不要使用latest 使用具体版本号
+3. 使用多维度的标签
+4. 使用注解描述额外信息
+5. 使用/dev/termination-log 写入失败信息
+6. 日志
+    - 将日志打印到标准输出方便查看
+    - 集中式日志系统
+
+## 应用扩展
+
+### CRD对象
+
+- 创建
+
+```yml
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: websites.extensions.example.com
+spec:
+  scope: Namespaced
+  group: extensions.example.com
+  version: v1
+  names:
+    kind: Website
+    singular: website
+    plural: websites
+```
+
+- 创建CRD实例
+
+```yml
+apiVersion: extensions.example.com/v1
+kind: Website
+metadata:
+  name: kubia
+spec:
+ gitRepo: https://github.com/luksa/kubia-website-example.git
+```
+
+### 服务目录
+
+服务目录就是列出所有服务的目录。 用户可以浏览目录并自行设置目录中列出的服务实例

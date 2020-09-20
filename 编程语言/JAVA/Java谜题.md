@@ -469,3 +469,135 @@ static void work(){
 ```
 
 这个程序会的调用会从根节点生成一颗完全二叉树 树的深度为虚拟机的栈深度 这个递归虽然不是无限的 但对人类的生命而言也近乎无穷了
+
+## 类
+
+- 迷惑的重载
+
+```java
+public static void main(String[] args){
+    new Main().confusing(null);
+}
+public void confusing(Object obj){
+    System.out.println("obj");
+}
+public void confusing(double[] doubles){
+    System.out.println("doubles");
+}
+```
+
+最终会打印出doubles 方法的选择是从窄到宽的
+
+- 狸猫换狗子
+
+```java
+class Animal{
+    private static int count;
+    public void incr(){count++;}
+}
+class Dog extends Animal{
+    public Dog() { incr();}
+}
+class Cat extends Animal{
+    public Cat() { incr();}
+}
+```
+
+这段程序dog与cat的count会相互影响
+
+- 会飞的复读鸭
+
+```java
+class Duck{
+    public static void fly(){ System.out.println("i fly!"); }
+}
+class RepeatDuck extends Duck{
+    public static void fly(){}
+}
+
+Duck duck = new RepeatDuck();
+duck.fly(); // print i fly!
+```
+
+静态方法的调用不存在多态
+
+**或许静态方法之所以叫静态就是因为不存在动态的分派机制**
+
+- 错误的时间
+
+```java
+public class Main {
+    private static final Main instance= new Main();
+    private static final long i = System.currentTimeMillis();
+    private final long initTime;
+    public Main() {
+        initTime = i;
+        System.out.println(initTime);
+    }
+}
+```
+
+这个类会循环初始化 导致initTime第一次是为0
+
+**当心这种情况**
+
+- 不是你的类型
+
+```java
+String s = null;
+s instanceof Object; // false 左操作符为null就会返回false
+
+new Date() instanceof String; // 编译错误 如果两个操作数都是类 其中一个必须是另外一个的子类型
+
+(String)new Object(); // 抛出运行时异常
+```
+
+- 发育不良
+
+```java
+class Father{
+    private final String name;
+
+    public Father() { name = makeName(); }
+
+    protected String makeName(){ return "i am your father"; }
+
+    @Override
+    public String toString() { return name; }
+}
+
+class Son extends Father{
+    String pname;
+    public Son(String name) {
+        this.pname = name;
+    }
+
+    @Override
+    protected String makeName() {
+        return "i am " + pname;
+    }
+
+}
+```
+
+创建一个Son对象 最终会打印出 i am null ,关键在于子类还没初始化完全 name就已经完成初始化
+
+- null
+
+```java
+class Null{
+    public static void print(){ System.out.println("hello world"); }
+}
+
+((Null)null).print(); // 可以打印
+```
+
+静态方法的调用只与类型相关 这或许是Java的设计缺陷 静态方法压根就不能通过对象实例调用
+
+- 创建对象
+
+```java
+for (int i = 0; i < 100; i++) Object object = new Object();
+```
+
+这段代码无法通过编译 一个本地变量声明作为一条语句只能出现在语句块中

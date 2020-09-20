@@ -18,7 +18,7 @@ def removeBookSuffix(name):
   return name[0:i]
 
 def readTemplate():
-  templateFile = open('./书单.md', 'r',encoding='utf8')
+  templateFile = open('./个人/书单.md', 'r',encoding='utf8')
   result = templateFile.read()
   templateFile.close()
   return result
@@ -51,7 +51,7 @@ def generateBookList():
   readedBook = getReadedBook()
   unreadBook = getUnreadBook()
   result = renderTemplate(template, readedBook, unreadBook)
-  bookListFile = open('./书单.md','w', encoding='utf8')
+  bookListFile = open('./个人/书单.md','w', encoding='utf8')
   bookListFile.write(result)
   bookListFile.close()
   print ('书单生成完毕!')

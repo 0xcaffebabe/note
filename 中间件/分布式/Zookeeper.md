@@ -268,53 +268,131 @@ private boolean createNode() {
 
 整个集群可用节点数量必须大于一半，否则无法正常使用
 
+### 服务器的构成
+
+在独立服务器模式下：
+
+![202092115855](/assets/202092115855.png)
+
+- PrepRequestProcessor接受客户端的请求并执行这个请求，处理结果则是生成一个事务
+- SyncRequestProcessor负责将事务持久化到磁盘上
+- 在FinalRequestProcessor 如果Request对象包含事务数据，该处理器将会接受对ZooKeeper数据树的修改，否则，该处理器会从数据树中读取数据并返回给客户端
+
+集群模式下的leader：
+
+![2020921151321](/assets/2020921151321.png)
+
+- ProposalRequestProcessor会准备一个提议，并将该提议发送给跟随者
+    - 对于写操作请求，还会将请求转发给SyncRequestProcessor
+    - SyncRequestProcessor执行完之后会触发AckRequestProcessor处理器，这个处理器是一个简单请求处理器，它仅仅生成确认消息并返回给自己
+- CommitRequestProcessor会将收到足够多的确认消息的提议进行提交
+- oBeAppliedRequestProcessor会做好commit消息的确认处理
+
+集群模式下的跟随者：
+
+![2020921152143](/assets/2020921152143.png)
+
+- FollowerRequestProcessor处理器之后转发请求给CommitRequestProcessor，同时也会转发写请求到群首服务器
+    - commit处理器在得到leader的commit消息之前会一直阻塞
+- SendRequestProcessor会向leader发送确认消息
+
+### 存储
+
+- 日志
+
+服务器通过事务日志来持久化事务 服务器会时不时地滚动日志，即关闭当前文件并打开一个新的文件
+
+服务器只有在强制将事务写入事务日志之后才确认对应的提议
+
+- 快照
+
+每一个服务器会经常以序列化整个数据树的方式来提取快照
+
+因为服务器在进行快照时还会继续处理请求，所以当快照完成时，数据树可能又发生了变化，我们称这样的快照是模糊的（fuzzy） 为了解决这个问题 需要记录序列化开始到序列化结束这段时间的操作 并将它重放到结果中
+
+### 会话
+
+会话状态由 leader 维护
+
+为了保证会话的存活，服务器需要接收会话的心跳信息 心跳可以是消息请求或者ping消息
+
+leader发送一个PING消息给它的追随者们，追随者们返回自从最新一次PING消息之后的一个session列表 群首服务器每半个tick就会发送一个ping消息
+
+使用过期队列来管理会话的过期 通过一个叫bucket的数据结构批量管理会话 每次会将一批过期的会话清理掉
+
+### 监视点
+
+一个WatchManager类的实例负责管理当前已被注册的监视点列表，并负责触发它们 每种类型的服务器管理监视点的方法都是一样的
+
+监视点只会保存在内存
+
 ### zk的角色
 
 角色|	说明
 -|-
 Leader(领导者)	|为客户端提供读和写的服务，负责投票的发起和决议，更新系统状态。
 Follower（跟随者）|	为客户端提供读服务，如果是写服务则转发给Leader。在选举过程中参与投票。
-Observe（观察者）|	为客户端提供读服务器，如果是写服务则转发给Leader。不参与选举过程中的投票，也不参与“过半写成功”策略。在不影响写性能的情况下提升集群的读性能。此角色于zookeeper3.3系列新增的角色。
+Observe（观察者）|	为客户端提供读服务器，如果是写服务则转发给Leader。观察者只获取一条包含已提交提议的内容的INFORM消息。不参与选举过程中的投票，也不参与“过半写成功”策略。在不影响写性能的情况下提升集群的读性能。
 client（客户端）|	连接zookeeper服务器的使用着，请求的发起者。独立于zookeeper服务器集群之外的角色。
 
 ### zab协议
 
-#### 同步数据
+zab的事务保障：
+
+- 如果leader按顺序广播了事务T1和事务T2，那么每个服务器在提交T2事务前保证事务T1已经提交完成
+- 如果某个服务器按照事务T1、事务T2的顺序提交事务，所有其他服务器也必然会在提交事务T2前提交事务T1
+
+zab的领导保障：
+
+- 一个被选举的leader确保在提交完所有之前需要提交的事务，之后才开始广播新的事务
+- 在任何时间点，都不会出现两个leader
+
+#### 读写数据
 
 - 写Leader
 
 ![2020812102252](/assets/2020812102252.jpg)
 
-客户端向Leader发起写请求
+0. 客户端向Leader发起写请求
+1. Leader将写请求 (对于这个请求的事务包括了两个重要字段：节点中**新的数据字段值**和该**节点新的版本号**) 以Proposal的形式发给所有Follower并等待ACK
+2. Follower收到Leader的Proposal后返回ACK
+3. Leader得到过半数的ACK（Leader对自己默认有一个ACK）后向所有的Follower和Observer发送Commmit (如果一条消息没有接收到commit 那么这条消息对客户端不可见)
+4. Leader将处理结果返回给客户端
 
-Leader将写请求以Proposal的形式发给所有Follower并等待ACK
+这里需要注意到的是请求的事务具有两个特性：
 
-Follower收到Leader的Proposal后返回ACK
+1. 原子性
+2. 幂等性
 
-Leader得到过半数的ACK（Leader对自己默认有一个ACK）后向所有的Follower和Observer发送Commmit 如果一条消息没有接收到commit 那么这条消息对客户端不可见
-
-Leader将处理结果返回给客户端
+每个事务都有一个zxid(事务ID), 这个id是保证事务按序执行的关键与集群选举的重要依据
 
 - 写Follower/Observer
 
 ![2020812102637](/assets/2020812102637.jpg)
 
-多了一步转发请求
+多了一步跟随者转发请求到领导者
 
 - 读操作
 
 ![2020812102720](/assets/2020812102720.jpg)
 
-Leader/Follower/Observer都可直接处理读请求，从本地内存中读取数据并返回给客户端即可
+Leader/Follower/Observer都可直接处理读请求，从本地内存中读取数据并返回给客户端即可， 所以ZooKeeper在处理以只读请求为主要负载时，性能会很高
+
+#### 同步数据
+
+当leader发生变化时 有两种方式来更新跟随者：
+
+- DIFF 发送缺失的事务点
+- SNAP 发送数据的完整快照
 
 ### 选举过程
+
+![202092114316](/assets/202092114316.png)
 
 服务器启动阶段的Leader选举：
 
 - 每台服务器启动时，都会给自己投票。
-
 - 投完票之后，会把自己的投票结果广播给集群中的每一台服务器。
-
 - 这样每台服务器都有集群所有服务器的投票，会优先比较zxid zxid最大的就是为leader 如果zxid都相同 则leader 就是myid最大的那台服务器
 
 服务器运行期间的Leader选举：

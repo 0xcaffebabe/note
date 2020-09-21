@@ -601,3 +601,148 @@ for (int i = 0; i < 100; i++) Object object = new Object();
 ```
 
 这段代码无法通过编译 一个本地变量声明作为一条语句只能出现在语句块中
+
+## 库
+
+- 大问题
+
+```java
+BigInteger one = new BigInteger("1");
+BigInteger two = new BigInteger("2");
+one.add(two);
+System.out.println(one); // print 1
+```
+
+BigInteger的实例是不可变的 算术操作只会返回新实例而非直接修改对象
+
+- 分不清人
+
+```java
+class Person {
+    public final String name;
+
+    public Person(String name) { this.name = name; }
+
+    @Override
+    public boolean equals(Object o){
+        if (o instanceof Person p) return  p.name.equals(this.name);
+        return false;
+    }
+}
+
+Set<Person> personSet = new HashSet<>();
+personSet.add(new Person("cxk"));
+System.out.println(personSet.contains(new Person("cxk"))); // false
+```
+
+任何时候 只要重写了equals方法 就必须重写hashCode方法 equals相等的对象hashCode必须相等 但hashCode相等不代表equals相等
+
+- 六亲不认
+
+```java
+class Person {
+    public final String name;
+
+    public Person(String name) { this.name = name; }
+
+    public int hashCode(){ return name.hashCode();}
+
+    public boolean equals(Person p){
+        return  p.name.equals(this.name);
+    }
+}
+```
+
+这个类声明虽然声明了hashCode 但是还是和上面一例一样 返回false
+
+原因在与我们重载了equals方法 而非重写
+
+**重载为错误和混乱提供了机会**
+
+为避免犯这种错误 加上@Override
+
+- 混乱的代价
+
+```java
+766 - 066 == 712 // true
+```
+
+以0开头的整型字面常量会被解释为八进制 不要这么做！！！
+
+- 一行代码解决
+
+```java
+// 去除list中的重复元素并保持顺序
+return new ArrayList<>(new LinkedHashSet<>(originList));
+
+// 以,后面跟随者0-n个空格分割文本
+str.split(",\\S*");
+
+// 以字符串形式展示数组
+Arrays.toString(...);
+
+// 判断一个整数的二进制表示有多少1
+Integer.bitCount(xxx);
+```
+
+了解类库可以节省大量时间与精力
+
+- 可怕的日期API
+
+```java
+Calendar cal = Calendar.getInstance();
+cal.set(2019,12,31);
+System.out.println(cal.get(Calendar.YEAR));//2020
+```
+
+Calendar 或 Date 使用时一定要注意文档
+
+- 名字游戏
+
+```java
+Map<String,String> map1 = new IdentityHashMap<>();
+map1.put(new String("111"),"kk");
+map1.put(new String("111"),"dd");
+System.out.println(map1.size()); // 2
+
+Map<String,String> map2 = new IdentityHashMap<>();
+map2.put("111","kk");
+map2.put("111","dd");
+System.out.println(map2.size()); // 1
+```
+
+IdentityHashMap 是基于引用判断两个key是否相等的
+
+Java 语言规范规定了字符串常量会进行复用 会有相同的引用
+
+- 不生效的绝对值
+
+```java
+Math.abs(Integer.MIN_VALUE) < 0 // true
+```
+
+     * <p>Note that if the argument is equal to the value of
+     * {@link Integer#MIN_VALUE}, the most negative representable
+     * {@code int} value, the result is that same value, which is
+     * negative.
+
+- 奇葩的排序
+
+```java
+Integer[] a = new Integer[100];
+Random rnd = new Random();
+ for (int i = 0; i < 100; i++) {
+     a[i] = rnd.nextInt();
+ }
+ Arrays.sort(a, new Comparator<Integer>(){
+     @Override
+     public int compare(Integer o1, Integer o2) {
+         return o1-o2;
+     }
+ });
+ System.out.println(Arrays.toString(a));
+```
+
+打印出来的数组基本是无序的(有序的可能性非常小) 原因在于使用的这个比较器 这个比较器通过减法来实现
+
+在数值比较小的情况下没有 但一旦数组元素极大或极小则会发生溢出 导致结果不正确

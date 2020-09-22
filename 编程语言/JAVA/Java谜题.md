@@ -746,3 +746,138 @@ Random rnd = new Random();
 打印出来的数组基本是无序的(有序的可能性非常小) 原因在于使用的这个比较器 这个比较器通过减法来实现
 
 在数值比较小的情况下没有 但一旦数组元素极大或极小则会发生溢出 导致结果不正确
+
+## 类(升级版)
+
+- 私人领域
+
+```java
+class Base { public String name = "cxk";}
+class D extends Base {private String name = "jntm";}
+
+System.out.println(new D().name); // 无法编译
+```
+
+对于成员变量 通过这种子类权限比父类更小的方式来隐藏
+
+但对于成员方法 这种写法是非法的
+
+违反了LSP
+
+**隐藏会带来混乱** 
+
+- 李鬼替代了李逵
+
+```java
+public class Main {
+    public static void main(String[] args) { }
+}
+
+class String{}
+```
+
+这个程序将无法启动 报错：在类 Main 中找不到 main 方法
+
+原因就是因为这个自定义的 String 
+
+**避免重用平台类的名字 并且不要复用java.lang中的类名**
+
+- 阴影中的类
+
+```java
+class X{
+    static class Y { String Z = "Z1";}
+    static C Y = new C();
+}
+class C {String Z = "Z2";}
+
+System.out.println(X.Y.Z); // print Z2
+```
+
+**当一个变量和一个类型具有相同名字 变量名的优先级更高**
+
+- 无法覆写的方法
+
+```java
+package p1;
+public class Click {
+    public void click(){print();}
+    void print(){ System.out.println("print"); }
+}
+
+package p2;
+public class Main {
+    public static void main(String[] args) {
+        new Click(){
+            void click() { System.out.println("click"); } // 无法覆写
+        }.click();
+    }
+}
+```
+
+**一个包内私有的方法不能被位于另一个包的某个方法直接覆写**
+
+- 方法遮蔽
+
+```java
+import static java.util.Arrays.toString;
+public class Main {
+    static void print(){System.out.println(toString(new int[]{1,2,3}));} // 编译错误 找不到这样的toString方法
+}
+```
+
+编译失败的原因在于本身就属于某个范围的成员的优先级比静态导入的优先级更高
+
+**静态导致使用应该十分克制**
+
+### 名字重用
+
+- 覆写
+
+```java
+class Base {public void f(){}}
+class D {public void f(){}} // 覆写Base.f
+```
+
+- 隐藏
+
+```java
+class Base {public static void f(){}}
+class D {public static void f(){}} // 隐藏Base.f
+```
+
+- 重写
+
+```java
+class Base {
+    public void f(){}
+    public void f(int i){} // 重载f
+}
+```
+
+- 遮蔽
+
+```java
+class Base {
+    static String name = "cxk";
+    static void f(){
+        String name = "jntm"; // 变量遮蔽
+    }
+}
+
+// 经常使用的遮蔽:
+class Main {
+    private String name;
+    public Main(String name){
+        this.name = name;
+    }
+}
+```
+
+- 遮掩
+
+```java
+class Main {
+    static String System; // 遮掩 java.lang.System
+}
+```

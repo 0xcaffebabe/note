@@ -12,21 +12,46 @@
 客户端软负载均衡 | Ribbon                 | spring-cloud-loadbalancer
 熔断器      | Hystrix                | spring-cloud-r4j(Resilience4J)，阿里Sentinel
 
-## Nacos注册中心
+## Nacos
 
-### 安装启动
+- 服务发现和服务健康监测
+- 动态配置服务
+- 动态DNS服务
+- 服务即其元数据管理
 
-```sh
-git clone https://gitee.com/mirrors/Nacos.git
-cd nacos/
-mvn -Prelease-nacos -Dmaven.test.skip=true clean install -U  
-ls -al distribution/target/
+### 概念
 
-// change the $version to your actual path
-cd distribution/target/nacos-server-$version/nacos/bin
-```
+- 地域 物理的数据中心，资源创建成功后不能更换
+- 可用区 同一地域内，电力和网络互相独立的物理区域
+- 接入点 地域的某个服务的入口域名
+- 命名空间 不同的命名空间下，可以存在相同的 Group 或 Data ID 的配置。Namespace 的常用场景之一是不同环境的配置的区分隔离
+- 配置
+- 配置管理 系统配置的编辑、存储、分发、变更管理、历史版本管理、变更审计等
+- 配置项 一个具体的可配置的参数与其值域，通常以 param-key=param-value 的形式存在
+- 配置集 一组相关或者不相关的配置项的集合
+- 配置集ID
+- 配置分组 
+- 配置快照 Nacos 的客户端 SDK 会在本地生成配置的快照 类似于缓存
+- 服务
+- 服务名
+- 服务注册中心
+- 服务发现 对服务下的实例的地址和元数据进行探测
+- 元信息 服务或者配置的描述信息
+- 应用
+- 服务分组
+- 虚拟集群 同一个服务下的所有服务实例组成一个默认集群
+- 实例
+- 权重
+- 健康检查
+- 健康保护阈值 止因过多实例不健康导致流量全部流向健康实例
 
-- startup
+![屏幕截图 2020-09-23 163728](/assets/屏幕截图%202020-09-23%20163728.png)
+
+### 架构
+
+![屏幕截图 2020-09-23 163102](/assets/屏幕截图%202020-09-23%20163102.png)
+
+### 注册中心
 
 ### 使用
 
@@ -46,6 +71,12 @@ spring.cloud.nacos.discovery.server-addr=127.0.0.1:8848
 - 消费者
 
 ```java
+@FeignClient("provider")
+public interface ProviderClient {
+    @GetMapping("/name")
+    String name();
+}
+
 @RestController
 public static class Api {
 
@@ -58,23 +89,17 @@ public static class Api {
 }
 ```
 
-### vs Zookeeper & Eureka
-
-相同点:都可以实现分布式服务注册中心。
+#### vs Zookeeper & Eureka
 
 不同点:
-Zookeeper采用CP保证数据的一致性的问题，原理采用Zab原子广播协议，当zk领导者因为某种原因宕机的情况下，会自动重新选一个新的领导角色，整个选举的过程为了保证数据的一致性的问题，在选举的过程中整个zk环境是不可以使用。I
-注意:可运行的节点必须数量过半，整个zk集群才可以正常使用。
 
-Eureka采用ap的设计理念架构注册中心，完全去中心化思想，也就是没有主从之分。。每个节点都是均等，采用相互注册原理，你中有我我中你，只要最后有一个eureka节点存在就可以保证整个微服务可以实现通讯。
-
-Nacos.从1.0版本支持CP和AP混合模式集群，默认是采用Ap保证服务可用性，CP的形式底层集群raft协议保证数据的一致性的问题。
-如果我们采用Ap模式注册服务的实例仅支持临时注册形式，在网络分区产生抖动的情况下任然还可以继续注册我们的服务列表。
-如果选择CP模式的情况下会保证数据的强一致性，如果网络分区产生抖动的情况下，是无法注册我们的服务列表。选择CP模式可以支持注册实例持久。
+- Zookeeper采用CP保证数据的一致性的问题
+- Eureka采用ap的设计理念架构注册中心，完全去中心化思想
+- Nacos.从1.0版本支持CP和AP混合模式集群，默认是采用Ap保证服务可用性，CP的形式底层集群raft协议保证数据的一致性的问题。
 
 **最主要的是Eureka集群中的各个节点是对等的，而Nacos则有主从之分**
 
-## Nacos配置中心
+### 配置中心
 
 ```xml
 <dependency>       
@@ -98,7 +123,7 @@ spring.cloud.nacos.config.name=provider-config
 applicationContext.getEnvironment().getProperty("app.name")
 ```
 
-### 配置中心集群
+#### 配置中心集群
 
 ![批注 2020-04-02 151146](/assets/批注%202020-04-02%20151146.png)
 

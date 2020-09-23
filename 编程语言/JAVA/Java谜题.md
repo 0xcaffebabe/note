@@ -881,3 +881,132 @@ class Main {
     static String System; // 遮掩 java.lang.System
 }
 ```
+
+## 库(升级版)
+
+- 乒乓
+
+```java
+public static synchronized void main(String[] args) {
+    new Thread(()->{
+        pong();
+    }).start();
+    System.out.println("ping");
+}
+static synchronized void pong(){
+    System.out.println("pong");
+}
+```
+
+这段程序ping pong总会按照顺序打印出来 重点就在于main与pong都是同步方法 不会并发执行
+
+- 反射的污染
+
+```java
+Iterator<Object> iterator = new HashSet<>().iterator();
+Method method = iteraor.getClass().getMethod("hasNext");
+System.out.println(method.invoke(iterator)); // IllegalAccessException
+```
+
+原因在于这个迭代器的实际实现类是某个内部类 Java语言规范规定**访问位于其他包中的非公共类型的成员是不合法的**
+
+这个问题在使用了反射之后 就更加难以发现
+
+- 吃饭睡觉打豆豆
+
+```java
+class Cat {
+    void eat(){
+        System.out.println("eat");
+    }
+    void sleep(){
+        System.out.println("sleep");
+    }
+    void live(){
+        new Thread(){
+            @Override
+            public void run() {
+                while (true){
+                    eat();
+                    sleep(); // 编译错误
+                }
+            }
+        }.start();
+    }
+}
+```
+
+这个类无法通过编译 原因在于Cat的sleep被Thread.sleep 遮蔽了
+
+**事实证明 使用Runnable创建线程比继承Thread要更方便**
+
+- 丢失的构造器
+
+```java
+class Outer {
+    public class Inner{}
+}
+
+Outer.Inner.class.newInstance(); // NoSuchMethodException: Outer$Inner.<init>()
+```
+
+如果一个类为非静态内部类 那么它的默认构造函数就会变成变成一个携带着隐藏参数的构造器 这个参数就是外围的对象实例
+
+**同时 newInstance这个方法现在也已经被废弃了 不推荐使用**
+
+应该优先使用静态成员类
+
+- hello 不 world
+
+```java
+String str = "hello world";
+for (int i = 0; i < str.length(); i++) {
+     System.out.write(str.charAt(i)); // 什么也不会输出
+}
+```
+
+这里在write的时候 char被转为int了 write(int) 这个方法只有在遇到\n的byte表示时才会自动flush
+
+- 线程中断
+
+```java
+Thread.currentThread().interrupt();
+System.out.println(Thread.interrupted()); // true
+System.out.println(Thread.interrupted()); // false
+```
+
+Thread.interrupted 会清除中断状态
+
+- 复杂的初始化
+
+```java
+public class Main {
+    private static boolean init = false;
+    static {
+        var t = new Thread(){
+            @Override
+            public void run() {
+                init = true;
+            }
+        };
+        t.start();
+        try {
+            t.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+    }
+    public static synchronized void main(String[] args) {
+        System.out.println(init);
+    }
+}
+```
+
+这段代码会造成死锁
+
+主线程使用的时候 会对类进行初始化
+
+初始化时 启动了新线程 新线程也会检查类的初始化 接着就卡死在了这里
+
+**要让类的初始化尽可能简单**

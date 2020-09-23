@@ -15,9 +15,26 @@
 - 分布式集群架构中的session分离
 - 分布式锁
 
+### redis不可以做什么
+
+不适合冷数据 大量的数据
+
 ### 作为缓存
 
 ![批注 2020-06-22 111817](/assets/批注%202020-06-22%20111817.png)
+
+## 简单使用
+
+![屏幕截图 2020-09-23 150438](/assets/屏幕截图%202020-09-23%20150438.png)
+
+```sh
+redis-server # 默认配置启动
+redis-server --port 6379 # 指定配置
+
+redis-cli -h 主机名 -p 连接端口
+redis-cli get key # 直接执行get命令
+redis-cli shutdown # 关闭redis server
+```
 
 ## 数据结构
 
@@ -41,7 +58,58 @@
 - 有序集合类型 sortedset
   - 排序
 
-## 命令操作
+### 内部数据结构
+
+![屏幕截图 2020-09-23 154040](/assets/屏幕截图%202020-09-23%20154040.png)
+
+#### 字典
+
+```c
+typedef struct dictht {
+    dictEntry **table;
+    unsigned long size;
+    unsigned long sizemask;
+    unsigned long used;
+} dictht;
+typedef struct dictEntry {
+    void *key;
+    union {
+        void *val;
+        uint64_t u64;
+        int64_t s64;
+        double d;
+    } v;
+    struct dictEntry *next;
+} dictEntry;
+```
+
+redis使用了两张哈希表来方便扩容时的rehash操作
+
+在进行rehash时，为避免给服务器带来过大负担，并不是一次性将所有值rehash到另外一张表，而是通过渐进的方式，每次对字典执行添加、删除、查找或者更新操作时，都会执行一次渐进式 rehash。
+
+#### 跳跃表
+
+![202031284446](/assets/202031284446.png)
+
+查找时，从上层开始查找，找到对应的区间后再到下一层继续查找，类似于二分查找
+
+这种查找数据结构跟红黑树相比：
+
+- 插入非常快，因为不需要在插入后进行旋转
+- 实现容易
+- 支持无锁操作
+
+## API
+
+### 通用
+
+- keys * : 查看所有的键(生产环境应禁用，原因：正则表达式可能会占用大量资源)
+- dbsize 返回当前数据库中建的总数
+- type key ： 获取键对应的value的类型
+- del key：删除指定的key(可以是多个)
+- exists key：判断指定的key是否存在
+- expire key time：指定key的生存时间，单位：秒
+- ttl key 查看键的剩余过期时间
 
 ### 字符串类型
 
@@ -133,53 +201,6 @@ help @sorted_set
 - 存储：`zadd key score value`
 - 获取：`zrange key start end`
 - 删除：`zrem key value`
-
-### 通用
-
-- keys * : 查询所有的键(生产环境应禁用，原因：正则表达式可能会占用大量资源)
-- type key ： 获取键对应的value的类型
-- del key：删除指定的key value
-- exists key：判断指定的key是否存在
-- expire key time：指定key的生存时间，单位：秒
-
-## 数据结构
-
-### 字典
-
-```c
-typedef struct dictht {
-    dictEntry **table;
-    unsigned long size;
-    unsigned long sizemask;
-    unsigned long used;
-} dictht;
-typedef struct dictEntry {
-    void *key;
-    union {
-        void *val;
-        uint64_t u64;
-        int64_t s64;
-        double d;
-    } v;
-    struct dictEntry *next;
-} dictEntry;
-```
-
-redis使用了两张哈希表来方便扩容时的rehash操作
-
-在进行rehash时，为避免给服务器带来过大负担，并不是一次性将所有值rehash到另外一张表，而是通过渐进的方式，每次对字典执行添加、删除、查找或者更新操作时，都会执行一次渐进式 rehash。
-
-### 跳跃表
-
-![202031284446](/assets/202031284446.png)
-
-查找时，从上层开始查找，找到对应的区间后再到下一层继续查找，类似于二分查找
-
-这种查找数据结构跟红黑树相比：
-
-- 插入非常快，因为不需要在插入后进行旋转
-- 实现容易
-- 支持无锁操作
 
 ## 数据淘汰策略
 
@@ -531,6 +552,8 @@ redis 维护集群元数据采用了gossip协议，所有节点都持有一份�
 redis采用 IO 多路复用机制同时监听多个 socket，将产生事件的 socket 压入内存队列中，事件分派器根据 socket 上的事件类型来选择对应的事件处理器进行处理
 
 （Redis 6.0之后引入多线程来处理IO）
+
+单线程对每个命令的执行时间是有要求的 某个命令执行过长 就会造成其他命令的阻塞
 
 ### 单线程模型也能高效率的原因
 

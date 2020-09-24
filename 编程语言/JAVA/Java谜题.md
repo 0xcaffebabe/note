@@ -1010,3 +1010,134 @@ public class Main {
 初始化时 启动了新线程 新线程也会检查类的初始化 接着就卡死在了这里
 
 **要让类的初始化尽可能简单**
+
+## 高级
+
+- 有害的括号
+
+```java
+int i = -(2147483648); // 错误：整数太大
+```
+
+2147483648 只能作为一元操作符的右操作数使用
+
+- 奇怪的关系
+
+```java
+long x = Long.MAX_VALUE;
+double y = (double) Long.MAX_VALUE;
+long z = Long.MAX_VALUE - 1;
+
+x == y; // true
+y == z; // true
+x == z; // false
+```
+
+== 运算符会进行二进制数据类型提升 也就说如果两个类型不相同 则较低的那个类型会被转换到较高的类型
+
+- 原生类型的锅
+
+```java
+class List<T>{
+    java.util.List<T> iterator(){
+        return new ArrayList<T>();
+    }
+}
+
+List list = new List<String>();
+for(String s: list.iterator()){ // 编译错误：不兼容的类型
+    System.out.println(s);
+}
+```
+
+原生类型：支持泛型但是没有使用泛型
+
+原因在于原生类型的泛型丢失了 这个时候iterator返回的是`ArrayList<Object>()`
+
+**避免编写原生类型**
+
+- 泛型遮蔽
+
+内部类中也可以访问到外部类中的泛型参数 避免这个问题
+
+- 序列化杀手
+
+HashSet 或者 HashMap 在反序列化的时候会调用对象自身的方法
+
+所以使用这些集合的时候 注意不要让这些集合的元素内部又指向这些集合 否则就会发生一些非预期结果
+
+- 剪不断理还乱
+
+```java
+public class Main {
+    private String name = "";
+
+    public Main(String name) { this.name = name; }
+
+    private String name(){return name;}
+    private void run(){
+        new Main("cxk"){
+            void print(){
+                System.out.println(name());
+            }
+        }.print();
+    }
+
+    public static void main(String[] args) {
+        new Main("main").run();
+    }
+}
+```
+
+这个程序乍一看会由于调用了Main不存在的print方法无法通过编译 但其实发现他可以访问print方法
+
+重点在于最终打印的出来是main 而非cxk 原因在于私有成员变量是无法被继承的 所以这里调用name方法打印的是main方法里Main传递的main
+
+- 类常量的编译处理
+
+```java
+public class Client {
+    public static void main(String[] args) {
+        System.out.println(Server.one);
+        System.out.println(Server.two);
+        System.out.println(Server.three);
+    }
+}
+
+public class Server {
+    public static final String one = "1";
+    public static final String two = "2";
+    public static final String three = "3";
+}
+```
+
+这里如果Server被重新编译 会打印出什么？
+
+答案还是和原来一样 Java 语言规范规定常量在编译时都会直接被转化为常量值 而不会被间接引用 这个时候就算把Server.class 删掉 Client也能正常运行
+
+- 假随机
+
+打乱数组时用Random是不正确的  使用Collection.shuffle
+
+## 餐后甜点
+
+```java
+int count = 0;
+for(int =0;i<10;i++);{
+    count++;
+}
+System.out.println(count);// print 1 for后面的分号所导致的
+```
+
+```java
+Integer[]array = {3，1，4，1，5，9 };
+Arrays.sort(array, new Comparator<Integer>({
+    public int compare(Integer i1，Integer i2）{
+    return i1<i2 ?-1: (i2 >i1 ?1:O);
+});
+System.out.println(Arrays.tostring(array));
+```
+
+```java
+true?false:true == true?false:true
+```

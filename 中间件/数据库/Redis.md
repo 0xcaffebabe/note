@@ -43,19 +43,42 @@ redis-cli shutdown # 关闭redis server
 
 ![批注 2020-06-18 132234](/assets/批注%202020-06-18%20132234.png)
 
-- string
-  - 字符串、数值、bit位图
-  - incr：抢购，秒杀，详情页，点赞，评论
-  - 做简单的KV缓存
-  - 使用位图来处理海量数据
-- 哈希类型 hash
+### string
+
+- 字符串、数值、bit位图
+
+![屏幕截图 2020-09-24 142014](/assets/屏幕截图%202020-09-24%20142014.png)
+
+内部编码：
+
+- int：8个字节的长整型
+- embstr：小于等于39个字节的字符串
+- raw：大于39个字节的字符串
+
+应用场景：
+
+- 做简单的KV缓存
+
+![屏幕截图 2020-09-24 144551](/assets/屏幕截图%202020-09-24%20144551.png)
+
+设计合理的键名，有利于防止键冲突和项目的可维护性，比较推荐的方式是使用`业务名：对象名：id：[属性]`作为键名
+
+- incr（计数）：抢购，秒杀，详情页，点赞，评论
+- session服务器
+
+![屏幕截图 2020-09-24 145419](/assets/屏幕截图%202020-09-24%20145419.png)
+
+- 限速 通过对key设置过期时间的方式限制用户请求频率
+- 使用位图来处理海量数据
+
+2. 哈希类型 hash
   - 做对象属性读写
-- 列表类型 list
+3. 列表类型 list
   - 可以做消息队列或者可以来存储列表信息，进行分页查询
-- 集合类型 set
+4. 集合类型 set
   - 自动去重
   - 推荐系统：数据交集
-- 有序集合类型 sortedset
+5. 有序集合类型 sortedset
   - 排序
 
 ### 内部数据结构
@@ -113,9 +136,34 @@ redis使用了两张哈希表来方便扩容时的rehash操作
 
 ### 字符串类型
 
-- 存储 `set key value`
-- 获取 `get key`
-- 删除 `del key`
+```sh
+set key value [ex seconds] [px milliseconds] [nx|xx] # 设置值
+# ex 以秒为单位的过期时间
+# px 毫秒单位的过期时间
+# nx：set if not exists
+# xx set if exists
+get key # 获取值
+
+mset name cxk age 18 # 批量设置值
+mget name age # 批量获取值
+
+incr a # 自增1
+incrby a 15 # 自增指定值
+decrby a 15 # 自减指定值
+incrbyfloat a 10.5 # 自增浮点数
+
+append name jntm # 字符串追加值
+strlen name # 获取字符串长度
+set name 蔡徐坤
+strlen name # redis将中文序列化为byte数组 中文的长度取决于终端的编码集
+getset name world # 设置新值并返回旧值
+setrange name 2 kd # 从指定位置设置字符串
+getrange name 0 -1 # 获取指定范围的字符串
+```
+
+![屏幕截图 2020-09-24 143108](/assets/屏幕截图%202020-09-24%20143108.png)
+
+- 在redis中 自增操作都是原子的 不用担心被别的客户端修改
 
 #### bitmap
 
@@ -147,24 +195,69 @@ bitcount ret 0 0 # 统计有多少位1
 ### 哈希类型
 
 ```sh
-help @hash
+hset user:1 name cxk age 18 # 设置field
+hsetnx user:1 name cxk # set if not exists
+hget user:1 name # 获取field
+hdel user:1 name age # 删除field
+hlen user:1 # 计算field个数
+hmget user:1 name age # 批量获取field
+hexists user:1 name # 判断field是否存在
+hkeys user:1 # 获取所有field名称
+hvals user:1 # 获取所有field value
+hgetall user:1 # 获取全部kv对
+hincrby user:1 age 1 # 对指定field自增
+hincrbyfloat user:1 age 1.5 # 浮点数自增
 ```
 
-- 存储：`hset key field value`
-- 获取：`hget key field`
-- 删除： `hdel key field`
+内部编码：
+
+- ziplist 压缩列表 这种类型使用更加紧凑的结构实现多个元素的连续存储 **节省内存**
+- hashtable 读写效率比ziplist高
+
+使用场景：
+
+- 哈希类型是稀疏的，而关系型数据库是完全结构化的，哈希类型每个键可以有不同的field，而关系型数据库一旦添加新的列，所有行都要为其设置值
+- 关系型数据库可以做复杂的关系查询，而Redis去模拟关系型复杂查询开发困难
 
 ### 列表类型
 
-```sh
-help @list
-```
-
 - 将元素加入列表左边：`lpush key value`
 - 将元素加入列表右边：`rpush key value`
+- 元素插入：`linsert key before|after pivot value`
 - 范围获取：`lrange key start end`
+- 获取指定下标：`lindex key i`
+- 获取列表长度:`llen key`
 - 删除列表最左边的元素，并将元素返回:`lpop key`
 - 删除列表最右边的元素，并将元素返回:`rpop key`
+- 删除指定元素
+  - 从左到右 最多删除一个：`lrem list 1 java`
+  - 从右到左 最多删除一个：`lrem list -1 java`
+  - 删除全部：`lrem list 0 java`
+- 索引范围内的元素：`ltrim list 0 1`
+- 修改指定下标的元素：`lset list 0 java`
+- 阻塞操作
+  - 3秒内获取不到就返回:`brpop list 3`
+
+内部编码：
+
+- ziplist
+- linkedlist
+- quicklist 结合了ziplist和linkedlist两者的优势
+
+使用场景：
+
+- 消息队列 户端使用lrpush从列表左侧插入元素 多个消费者客户端使用brpop命令阻塞式的“抢”
+
+![屏幕截图 2020-09-24 153949](/assets/屏幕截图%202020-09-24%20153949.png)
+
+- 分页列表 使用lrange实现
+
+其他：
+
+·lpush+lpop=Stack
+·lpush+rpop=Queue
+·lpsh+ltrim=Capped Collection
+·lpush+brpop=Message Queue
 
 ### 集合类型
 

@@ -136,6 +136,8 @@ redis使用了两张哈希表来方便扩容时的rehash操作
 
 ### 字符串类型
 
+![屏幕截图 2020-09-26 145223](/assets/屏幕截图%202020-09-26%20145223.png)
+
 ```sh
 set key value [ex seconds] [px milliseconds] [nx|xx] # 设置值
 # ex 以秒为单位的过期时间
@@ -194,6 +196,8 @@ bitcount ret 0 0 # 统计有多少位1
 
 ### 哈希类型
 
+![屏幕截图 2020-09-26 145321](/assets/屏幕截图%202020-09-26%20145321.png)
+
 ```sh
 hset user:1 name cxk age 18 # 设置field
 hsetnx user:1 name cxk # set if not exists
@@ -220,6 +224,8 @@ hincrbyfloat user:1 age 1.5 # 浮点数自增
 - 关系型数据库可以做复杂的关系查询，而Redis去模拟关系型复杂查询开发困难
 
 ### 列表类型
+
+![屏幕截图 2020-09-26 145350](/assets/屏幕截图%202020-09-26%20145350.png)
 
 - 将元素加入列表左边：`lpush key value`
 - 将元素加入列表右边：`rpush key value`
@@ -261,17 +267,39 @@ hincrbyfloat user:1 age 1.5 # 浮点数自增
 
 ### 集合类型
 
+![屏幕截图 2020-09-26 145411](/assets/屏幕截图%202020-09-26%20145411.png)
+
 ```sh
-help @set
+sadd set a b c # 添加元素
+srem set b # 删除元素
+scard set # 计算元素个数(维护一个变量得到)
+sismember set c # 判断元素是否在集合内
+srandmember set 2 # 随机从集合返回指定个数元素
+# 正数：取出一个去重的结果集（不能超过已有集）
+# 负数：取出一个带重复的结果集，一定满足你要的数量
+# 如果：0，不返回
+spop set 1 # 随机弹出元素
+smembers set # 获取所有元素
+
+sinter s1 s2 # 求交集
+sunion s1 s2 # 求并集
+sdiff s1 s2 # 求差集
+sinterstore s3 s1 s2 # 交集结果存储到s3
+# ...
 ```
 
-- 存储：`sadd key value`
-- 获取：`smembers key`
-- 删除：`srem key value`
-- SRANDMEMBER  key  count
-  - 正数：取出一个去重的结果集（不能超过已有集）
-  - 负数：取出一个带重复的结果集，一定满足你要的数量
-  - 如果：0，不返回
+内部编码：
+
+- intset 占用内存小
+- hashtable
+
+例子：用户标签
+
+```sh
+sadd user1 food movie sport music
+sadd user2 food music network
+sinter user1 user2 # 计算用户共同感兴趣的标签
+```
 
 例子：抽奖
 
@@ -281,7 +309,13 @@ SRANDMEMBER k 3 # 抽取三个不重复用户
 SRANDMEMBER k -3 # 抽取三个可能会重复的用户
 ```
 
+- sadd=Tagging（标签）
+- spop/srandmember=Random item（生成随机数，比如抽奖）
+- sadd+sinter=Social Graph（社交需求）
+
 ### 有序集合类型
+
+![屏幕截图 2020-09-26 145503](/assets/屏幕截图%202020-09-26%20145503.png)
 
 ```sh
 help @sorted_set
@@ -291,9 +325,75 @@ help @sorted_set
 
 物理内存左小右大
 
-- 存储：`zadd key score value`
-- 获取：`zrange key start end`
-- 删除：`zrem key value`
+```sh
+zadd users 251 tom # 添加成员 分数251
+zcard users # 计算成员个数
+zscore users tom # 获取某个成员分数
+zrank users tom # 计算某个成员排名
+zrem users tom # 删除成员
+zincrby users 8 jerry # 增加某个成员的分数
+zrange users 0 10 # 正序返回指定排名范围的成员
+zrevrange users 0 10 # 倒序返回指定排名范围的成员
+zrangebyscore users 0 255 # 正序返回指定分数范围的成员
+zrevrangebyscore users 0 255 # 正序返回指定分数范围的成员
+zcount users 0 255 # 计算指定分数范围的成员个数
+zremrangebyrank users 0 1 # 删除指定排名范围内的成员
+zremrangebyscore users 0 10 # 删除指定分数范围内的成员
+
+zinterstore user:ranking:1_inter_2 2 user:ranking:1 user:ranking:2 weights 1 0.5 aggregate max # 并集
+```
+
+内部数据结构：
+
+- ziplist
+- skiplist
+
+例子：点赞
+
+```sh
+zadd video 0 cxk # cxk发布了一个视频 0赞
+zincrby video 1 cxk # 有人给cxk视频点了一个赞
+zrem video cxk # 清空cxk的视频点赞
+zrevrange video 0 9 # 获取点赞排行榜
+```
+
+### 键管理
+
+单键管理：
+
+```sh
+rename name newname # 键重命名
+randomkey # 随机返回数据库里的一个键
+expire name 10 # 设置键10秒后过期
+expireat name timestamp # 设置键在指定时间戳后过期
+# 对于字符串 set 会清除其过期时间
+# Redis不支持二级数据结构（例如哈希、列表）内部元素的过期功能
+persist name # 去除键的过期时间
+```
+
+键迁移：
+
+- move 同一redis内
+- dump restre 通过RDB文件的方式
+- migrate 自动通过网络传输数据
+
+遍历键：
+
+```sh
+keys * # 获取所有键 如果Redis包含了大量的键，执行keys命令很可能会造成Redis阻塞
+scan 0 # 渐进式遍历 该命令返回两个部分：1. 下一个游标 2. 遍历结果
+# 如果要继续遍历 下一次scan后面接的就是返回的游标
+```
+
+数据库管理：
+
+```sh
+select 2 # 切换到2号数据库
+flushdb # 清空数据库 如果当前数据库键值数量比较多，flushdb/flushall存在阻塞Redis的可能
+flushall
+```
+
+Redis3.0后已经逐渐弱化多数据库这个功能
 
 ## 数据淘汰策略
 

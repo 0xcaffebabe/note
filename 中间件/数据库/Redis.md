@@ -169,10 +169,15 @@ getrange name 0 -1 # 获取指定范围的字符串
 
 #### bitmap
 
-- setbit
-- bitpos
-- bitcount
-- bitop
+这个数据类型适合用来处理海量数据
+
+```sh
+setbit map 5 1 # 将偏移量为5的bit设置为1 在第一次初始化Bitmaps时，假如偏移量非常大，那么整个初始化过程执行会比较慢，可能会造成Redis的阻塞
+getbit map 5 # 获取偏移量为5的值
+bitcount map 0 -1 # 获取指定范围内1的个数
+bitop and|or|not|xor ret map map1 # bitmap 集合运算
+bitpos map 1 # bitmap 第一个值为1的bit的偏移量
+```
 
 例子：
 
@@ -192,6 +197,19 @@ setbit 200619 1 1 # 19号1号用户登录
 setbit 200619 7 1 # 19号7号用户登录
 bitop or ret 200618 200619 # 使用或运算合并bit
 bitcount ret 0 0 # 统计有多少位1
+```
+
+#### HyperLogLog
+
+通过HyperLogLog可以利用极小的内存空间完成大量元素的独立总数的统计
+
+用小空间来估算如此巨大的数据，其中一定存在误差率（类似于布隆过滤器）
+
+使用这个来估算数据 可以容忍一定的误差率
+
+```sh
+pfadd users user1 user2 user3 user4 # 添加元素
+pfcount users # 统计个数
 ```
 
 ### 哈希类型
@@ -395,6 +413,94 @@ flushall
 
 Redis3.0后已经逐渐弱化多数据库这个功能
 
+## 慢查询分析
+
+一条客户端命令的生命周期：
+
+![屏幕截图 2020-09-27 134926](/assets/屏幕截图%202020-09-27%20134926.png)
+
+
+慢查询阈值设置：
+
+- slowlog-log-slower-than：超过xx微秒则记录为慢查询
+- slowlog-max-len
+
+```sh
+config set slowlog-log-slower-than 2 # 设置阈值
+slowlog get [n] # 获取慢查询日志 n 指定条数
+slowlog len # 获取慢查询日志列表长度
+slowlog reset # 清空慢查询日志
+```
+
+慢查询日志结构：
+
+1. id
+2. time
+3. duration
+4. command
+    - 参数..
+5. ip:port
+
+最佳实践：
+
+- 线上建议调大慢查询列表
+- 根据qps来配置slowlog-log-slower-than
+- 及时转储slowlog
+
+## redis shell
+
+- redos-cli
+
+```sh
+redis-cli -r 3 ping # 重复执行3次ping命令
+redis-cli -r 3 -i 1 ping # 每隔1秒发一次ping 重复3此
+echo "world" | redis-cli -x set hello # 从stdin读入 作为redis的最后一个参数
+redis-cli --scan # scan命令
+redis-cli --rdb ./bak.rdb # 生成rdb文件
+echo -en '*3\r\n$3\r\nSET\r\n$5\r\nhello\r\n$5\r\nworld\r\n*2\r\n$4\r\nincr\r\n$7\r\ncounter\r\n' | redis-cli --pipe # 直接发送命令给redis执行
+redis-cli --bigkeys  # 分析内存占用比较大的键值对
+redis-cli --latency # 查看客户端到目标redis的网络延时
+redis-cli --latency-history -i 10 # 每隔10秒查看一次网络延时
+redis-cli --latency-dist # 以统计图表的方式输出
+redis-cli --stat # 获取redis的统计信息
+redis-cli --raw get name # 返回数据不进行格式化(\xexxx)
+```
+
+- redis-server
+
+```sh
+redis-server --test-memory 1024 # 测试是否有足够的内存
+```
+
+- redis-benchmark
+
+```sh
+redis-benchmark -c 100 -n 20000 # 100个客户 共请求20000次
+redis-benchmark -c 100 -n 20000  -q # 只显示 requests per second
+redis-benchmark -c 100 -n 20000 -r 10000 # -r选项会在key、counter键上加一个12位的后缀，-r10000代表只对后四位做随机处理
+redis-benchmark -c 100 -n 20000 -P 10 # 每隔请求的pipline数据量
+redis-benchmark -c 100 -n 20000 -q -k 1 # k为1代表启用客户端连接keepalive
+redis-benchmark -t get,set -q # 只对指定的命令测试
+redis-benchmark -t get,set -q --csv # 按照csv文件格式输出
+```
+
+## Pipeline
+
+Pipeline（流水线）机制能将一组Redis命令进行组装，通过一次RTT传输给Redis，再将这组Redis命令的执行结果按顺序返回给客户端
+
+- redis-cli 的--pipeline选项
+- 各种语言客户端的pipeline
+
+客户端和服务端的网络延时越大，Pipeline的效果越明显
+
+如果pipeline传递的数据过大 也会增加客户端的等待时间及网络阻塞
+
+vs. 原生批量命令：
+
+- 原生批量命令是原子的，Pipeline是非原子的
+- 原生批量命令是一个命令对应多个key，Pipeline支持多个命令
+- 原生批量命令是Redis服务端支持实现的，而Pipeline需要服务端和客户端的共同实现
+
 ## 数据淘汰策略
 
 设置内存最大使用量，当内存使用量超出时，会施行数据淘汰策略
@@ -537,6 +643,24 @@ template.opsForValue().set("name","hello,bitch");
 
 ### 事务
 
+```sh
+multi # 开启事务
+set name hello
+set hello world
+exec # 提交事务
+# discard 停止事务执行
+```
+
+命令语法错误导致的错误整个事务会回滚
+
+```sh
+set key java
+watch key
+multi
+set key cxk
+exec # 如果key在这个事务过程中别其他客户端修改 这个事务就不会执行
+```
+
 ```java
 // 开启事务支持
 template.setEnableTransactionSupport(true);
@@ -553,19 +677,51 @@ try{
 }
 ```
 
-## 实现发布订阅
+## 发布订阅
 
-- 消费者订阅频道
+![屏幕截图 2020-09-27 154059](/assets/屏幕截图%202020-09-27%20154059.png)
 
-```shell
-127.0.0.1:6379> SUBSCRIBE redisChat
+新开启的订阅客户端，无法收到该频道之前的消息
+
+```sh
+pubsub channels # 查看活跃的频道(至少一个订阅者)
+pubsub numsub chat # 查看频道订阅数
+pubsub numpat # 查看模式订阅数
+```
+
+- 消费者
+
+```sh
+SUBSCRIBE redisChat # 订阅
+unsubscribe redisChat # 取消订阅
+psubscribe pattern # 按照给定模式订阅
+punsubscribe pattern # 按照给定模式取消订阅
 ```
 
 - 生产者向频道发送数据
 
-```shell
-127.0.0.1:6379> PUBLISH redisChat "Redis is a great caching technique"
+```sh
+PUBLISH redisChat "Redis is a great caching technique"
 ```
+
+## GEO
+
+地理信息定位功能
+
+```sh
+geoadd locations 116.38 39.55 beijing # 添加成员
+geopos locations beijing # 获取
+geodist locations beijing tianjin [m|km|mi|ft] # 计算两地距离
+georadiusbymember locations beijing 150 km # 获取北京方圆150km内的成员
+geohash locations beijing # 将二维经纬度转换为一维字符串
+```
+
+关于geohash：
+
+- 字符串越长，表示的位置更精确
+- 两个字符串越相似，它们之间的距离越近，Redis利用字符串前缀匹配
+算法实现相关的命令
+- Redis正是使用有序集合并结合geohash的特性实现了GEO的若干命令
 
 ## 分布式
 
@@ -794,6 +950,13 @@ redis-cli script load "$(cat test.lua)"
 ```sh
 redis-cli evalsha "7a2054836e94e19da22c13f160bd987fbc9ef146" 0
 ```
+
+### lua脚本管理
+
+- script load
+- script exists
+- script flush
+- script kill
 
 ## redis vs memcached
 

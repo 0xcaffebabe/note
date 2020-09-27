@@ -108,20 +108,47 @@ public static class Api {
 </dependency>
 ```
 
-- bootstrap.properties
-
 ```properties
+# bootstrap.properties
 spring.cloud.nacos.config.server-addr=127.0.0.1:8848
 spring.cloud.nacos.config.name=provider-config
+# 指定配置文件后缀名
+spring.cloud.nacos.config.file-extension=properties
 ```
 
 ![批注 2020-04-02 143345](/assets/批注%202020-04-02%20143345.png)
+
+默认格式：${config-name}-${profile}.#{file-extension}
 
 - 使用
 
 ```java
 applicationContext.getEnvironment().getProperty("app.name")
 ```
+
+#### 自定义namespace
+
+不同的命名空间下，可以存在相同的 Group 或 Data ID 的配置。Namespace 的常用场景之一是不同环境的配置的区分隔离
+
+通过指定 ${spring.cloud.nacos.config.namespace} 配置来实现
+
+#### 自定义Group
+
+${spring.cloud.nacos.config.group}
+
+#### 自定义data-id
+
+```properties
+spring.cloud.nacos.config.extension-configs[0].data-id=xxx
+# 配置支持刷新
+spring.cloud.nacos.config.extension-configs[0].refresh=true
+```
+
+### 配置的优先级
+
+- 高：通过内部相关规则(应用名、应用名+ Profile )自动生成相关的 Data Id 配置
+- 中：通过 spring.cloud.nacos.config.extension-configs[n].data-id 的方式支持多个扩展 Data Id 的配置
+- 低：通过 spring.cloud.nacos.config.shared-dataids 支持多个共享 Data Id 的配置
 
 #### 配置中心集群
 

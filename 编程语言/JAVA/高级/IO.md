@@ -21,58 +21,68 @@
 
 1个监听线程 N个IO线程 M个worker线程
 
-## 类图
+## 架构
 
 ![2020527165937](/assets/2020527165937.png)
 ![20205271703](/assets/20205271703.png)
-# File类
 
-## 构造方法
+大体分为两类：
+
+- 字节操作流 InputStream 与 OutputStream等 
+- 字符操作流 Writer 与 Reader
+- 磁盘IO File
+- 网络操作 Socekt等
+
+字节到字符的转换十分耗时 非常容易出现乱码问题 这是字符流的用处
+
+InputStreamReader 与 OutputStreamWriter 是字节流与字符流之间的桥梁
+
+## File类
+
+File并不代表一个真实存在的真实对象
+
+FileDescriptor才是代表一个真实文件对象
+
+从磁盘读取文件：
+
+![屏幕截图 2020-09-28 133112](/assets/屏幕截图%202020-09-28%20133112.png)
+
+构造方法
 
 - public File(String pathname) ：通过将给定的路径名字符串转换为抽象路径名来创建新的 File实例。
 - public File(String parent, String child) ：从父路径名字符串和子路径名字符串创建新的 File实例。
 - public File(File parent, String child) ：从父抽象路径名和子路径名字符串创建新的 File实例
 
-## 静态成员变量
+静态成员变量
 
 ![批注 2019-08-03 083724](/assets/批注%202019-08-03%20083724.png)
 
-## 获取
+### 获取
 
 - public String getAbsolutePath() ：返回此File的绝对路径名字符串。
 - public String getPath() ：将此File转换为路径名字符串。
 - public String getName() ：返回由此File表示的文件或目录的名称。
 - public long length() ：返回由此File表示的文件的长度。
 
-## 判断
+### 判断
 
 - public boolean exists() ：此File表示的文件或目录是否实际存在。
 - public boolean isDirectory() ：此File表示的是否为目录。
 - public boolean isFile() ：此File表示的是否为文件。
 
-## 创建删除
+### 创建删除
 
 - public boolean createNewFile() ：当且仅当具有该名称的文件尚不存在时，创建一个新的空文件。
 - public boolean delete() ：删除由此File表示的文件或目录。
 - public boolean mkdir() ：创建由此File表示的目录。
 - public boolean mkdirs() ：创建由此File表示的目录，包括任何必需但不存在的父目录。
 
-## 目录遍历
+### 目录遍历
 
 - public String[] list() ：返回一个String数组，表示该File目录中的所有子文件或目录。
 - public File[] listFiles() ：返回一个File数组，表示该File目录中的所有的子文件或目录。
 
-## 路径
-
-- 绝对路径
-- 相对路径
-
-# 递归
-
-- 直接递归
-- 间接递归
-
-# 文件过滤器
+### 文件过滤器
 
 - FileFilter
 - FileNameFilter
@@ -147,12 +157,10 @@ FileInputStream fis = new FileInputStream("fos.txt");
 
 ```java
 FileReader reader = new FileReader("fos.txt");
-
-        int c = -1;
-        while ((c = reader.read()) != -1){
-
-            System.out.print((char)c);
-        }
+int c = -1;
+while ((c = reader.read()) != -1){
+    System.out.print((char)c);
+}
 ```
 
 ### Writer
@@ -180,23 +188,23 @@ FileReader reader = new FileReader("fos.txt");
 ## JDK7中IO的异常处理
 
 ```java
-        // JDK7
-        try (FileWriter writer = new FileWriter("fos.txt")) {
-            writer.append("hh种");
-            writer.flush();
-            
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        // JDK9
-        FileWriter writer = new FileWriter("fos.txt");
-        try (writer) {
-            writer.append("hh种");
-            writer.flush();
+// JDK7
+try (FileWriter writer = new FileWriter("fos.txt")) {
+    writer.append("hh种");
+    writer.flush();
+    
+} catch (IOException e) {
+    e.printStackTrace();
+}
+// JDK9
+FileWriter writer = new FileWriter("fos.txt");
+try (writer) {
+    writer.append("hh种");
+    writer.flush();
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+} catch (IOException e) {
+    e.printStackTrace();
+}
 ```
 
 # Properties
@@ -235,7 +243,7 @@ FileReader reader = new FileReader("fos.txt");
 ```
 
 
-# 序列化
+## 序列化
 
 - ObjectOutputStream
 - ObjectInputStream
@@ -259,11 +267,10 @@ Person p = (Person)ois.readObject();
 - Hessian 效率很高 跨语言
 - JSON
 
-# 打印流
+序列化一些复杂对象：
 
-
-
-
-
-
-
+- 父类继承Serializable接口 所有子类都可以序列化
+- 子类实现Serializable接口 序列化后父类的属性会丢失
+- 成员变量如果要被序列化 需要实现Serializable接口 否则会报错
+- 反序列化时 成员如果发生修改 则发生修改的这些成员变量数据会丢失
+- 如果 serialVersionUID 被修改 反序列化会失败

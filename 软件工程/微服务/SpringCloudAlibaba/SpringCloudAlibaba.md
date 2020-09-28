@@ -156,7 +156,37 @@ spring.cloud.nacos.config.extension-configs[0].refresh=true
 
 ## Sentinel
 
-- 替代hystrix
+### 基本概念
+
+- 资源：可以是 Java 应用程序中的任何内容
+- 规则：包括流量控制规则、熔断降级规则以及系统保护规则
+
+流量控制：Sentinel 作为一个调配器，可以根据需要把随机的请求调整成合适的形状
+
+![屏幕截图 2020-09-28 160547](/assets/屏幕截图%202020-09-28%20160547.png)
+
+流量控制可以从以下角度切入：
+
+- 资源的调用关系，例如资源的调用链路，资源和资源之间的关系
+- 运行指标，例如 QPS、线程池、系统负载等
+- 控制的效果，例如直接限流、冷启动、排队等
+
+熔断降级：
+
+Hystrix 通过线程池的方式，来对依赖(在我们的概念中对应资源)进行了隔离。这样做的好处是资源和资源之间做到了最彻底的隔离。缺点是除了增加了线程切换的成本
+
+sentinel 通过使用以下方式限制：
+
+- 并发线程数 同计数器 当线程数达到一定数量 新的请求就会被拒绝
+- 响应时间 当资源响应时间超过阈值 对该资源的访问会直接拒绝
+
+### 基本原理
+
+所有的资源都对应一个资源名称以及一个 Entry。Entry 可以通过对主流框架的适配自动创建，也可以通过注解的方式或调用 API 显式创建
+
+通过一系列的Slot来实现相对应的功能
+
+![屏幕截图 2020-09-28 163146](/assets/屏幕截图%202020-09-28%20163146.png)
 
 ### vs hystrix
 
@@ -176,8 +206,21 @@ item    | Sentinel                          | Hystrix
 
 ### 基本使用
 
+```xml
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+</dependency>
+```
+
 ```java
 @GetMapping("/name")
-@SentinelResource(value = "test-resource",blockHandlerClass = {ServiceFallback.class})
+@SentinelResource(value = "resource1",blockHandlerClass = {ServiceFallback.class})
 public String name() { return "provider"+port; }
 ```
+
+#### sentinel-dashboard
+
+- 添加流控规则
+
+![屏幕截图 2020-09-28 162556](/assets/屏幕截图%202020-09-28%20162556.png)

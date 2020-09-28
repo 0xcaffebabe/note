@@ -595,9 +595,36 @@ AOF重写可以产生一个新的AOF文件，这个新的AOF文件和原有的AO
 
 Redis 将所有时间事件都放在一个无序链表中，通过遍历整个链表查找出已到达的时间事件，并调用相应的事件处理器
 
-## Jedis
+## 客户端
 
-### 基本使用
+### RESP(redis 序列化协议)
+
+- 发送命令
+
+```
+*< 参数数量 > CRLF
+$< 参数 1 的字节数量 > CRLF
+< 参数 1> CRLF
+...
+$< 参数 N 的字节数量 > CRLF
+< 参数 N> CRLF
+```
+
+- 返回结果
+
+状态回复：在RESP中第一个字节为"+"。
+
+错误回复：在RESP中第一个字节为"-"。
+
+整数回复：在RESP中第一个字节为"："。
+
+字符串回复：在RESP中第一个字节为"$"。
+
+多条字符串回复：在RESP中第一个字节为"*"。
+
+###  java 客户端 Jedis
+
+基本使用
 
 ```java
 Jedis jedis = new Jedis("127.0.0.1");
@@ -607,7 +634,7 @@ System.out.println(jedis.get("name"));
 jedis.close();
 ```
 
-### 连接池
+连接池
 
 ```java
 JedisPoolConfig config = new JedisPoolConfig();
@@ -623,9 +650,9 @@ resource.close();
 pool.close();
 ```
 
-## Spring Data Redis
+### Spring Data Redis
 
-### RedisTemplate基本操作
+RedisTemplate基本操作
 
 - redisTemplate.opsForValue() ：操作字符串
 - redisTemplate.opsForHash() ：操作hash
@@ -635,7 +662,7 @@ pool.close();
 
 StringRedisTemplate是K,V均为String的RedisTemplate
 
-### 使用
+使用
 
 ```java
 template.opsForValue().set("name","hello,bitch");
@@ -676,6 +703,102 @@ try{
     template.discard();
 }
 ```
+
+### 客户端管理
+
+```sh
+client list
+```
+```
+id=10733 addr=127.0.0.1:42158 fd=9 name= age=84021 idle=0 flags=N db=0 sub=0 psub=0 multi=-1 qbuf=26 qbuf-free=32742 obl=0 oll=0 omem=0 events=r cmd=client user=default
+```
+
+![屏幕截图 2020-09-28 153101](/assets/屏幕截图%202020-09-28%20153101.png)
+
+标识：
+
+- id
+- addr
+- fd
+- name
+
+输入缓冲区：
+
+Redis为每个客户端分配了输入缓冲区，它的作用是将客户端发送的命令临时保存，同时Redis从会输入缓冲区拉取命令并执行
+
+- qbuf 缓冲区的总容量
+- qbuf-free 剩余容量
+
+如果Redis的处理速度跟不上输入缓冲区的输入速度 机会造成缓冲区十分大
+
+输出缓冲区：
+
+Redis为每个客户端分配了输出缓冲区，它的作用是保存命令执行的结果返回给客户端
+
+输出缓冲区由两部分组成：固定缓冲区（16KB）和动态缓冲区，其中固定缓冲区返回比较小的执行结果，而动态缓冲区返回比较大的结果。 固定缓冲区使用的是字节数组，动态缓冲区使用的是列表
+
+- obl 固定缓冲区的长度
+- oll 动态缓冲区列表的长度
+- omem 代表使用的字节数
+
+客户端存活状态：
+
+单位为秒
+
+- age 客户端已经连接的时间
+- idle 最近一次的空闲时间
+
+客户端类型：
+
+- flag
+
+![屏幕截图 2020-09-28 152911](/assets/屏幕截图%202020-09-28%20152911.png)
+
+#### setName getName
+
+设置名称方便管理
+
+```sh
+client setName cxk
+client getName
+```
+
+#### 杀掉客户
+
+```sh
+client kill ip:port
+```
+
+#### 阻塞客户
+
+```sh
+client pause timeout # 阻塞当前客户端指定毫秒数
+```
+
+#### 监控客户端命令执行
+
+```sh
+monitor
+```
+
+### 客户端相关配置
+
+- timeout 检测客户端空闲连接的超时时间，一旦idle时间达到了
+timeout，客户端将会被关闭，如果设置为0就不进行检测
+- maxclients 客户端最大连接数
+- tcp-keepalive 检测TCP连接活性的周期
+- tcp-backlog TCP三次握手后，会将接受的连接放入队列中，tcp-backlog就是队列的大小
+
+### 客户端统计
+
+```sh
+info clients
+```
+
+- connected_clients：代表当前Redis节点的客户端连接数
+- client_recent_max_input_buffer：当前所有输出缓冲区中队列对象个数的最大值
+- client_recent_max_output_buffer: 前所有输入缓冲区中占用的最大容量
+- locked_clients：正在执行阻塞命令（例如blpop、brpop、brpoplpush）的客户端个数
 
 ## 发布订阅
 

@@ -87,16 +87,16 @@ FileDescriptor才是代表一个真实文件对象
 - FileFilter
 - FileNameFilter
 
-# IO
+## IO
 
-## 顶级父类
+### 顶级父类
 
 -   | 输入流               | 输出流
 --- | ----------------- | ------------------
 字节流 | 字节输入流 InputStream | 字节输出流 OutputStream
 字符流 | 字符输入流 Reader      | 字符输出流 Writer
 
-## 字节输出流【OutputStream】
+### 字节输出流【OutputStream】
 
 - public void close() ：关闭此输出流并释放与此流相关联的任何系统资源。
 - public void flush() ：刷新此输出流并强制任何缓冲的输出字节被写出。
@@ -104,7 +104,7 @@ FileDescriptor才是代表一个真实文件对象
 - public void write(byte[] b, int off, int len) ：从指定的字节数组写入 len字节，从偏移量 oﬀ开始输 出到此输出流。
 - public abstract void write(int b) ：将指定的字节输出流。
 
-## FileOutputStream
+### FileOutputStream
 
 ```java
 FileOutputStream fos = new FileOutputStream("fos.txt");
@@ -123,15 +123,15 @@ FileOutputStream fos = new FileOutputStream("fos.txt");
 FileOutputStream fos = new FileOutputStream("fos.txt",true);
 ```
 
-## 字节输入流【InputStream】
+### 字节输入流【InputStream】
 
 - public void close() ：关闭此输入流并释放与此流相关联的任何系统资源。
 - public abstract int read() ： 从输入流读取数据的下一个字节。
 - public int read(byte[] b) ： 从输入流中读取一些字节数，并将它们存储到字节数组 b中 。
 
-## FileInputStream
+### FileInputStream
 
-### 构造方法
+构造方法
 
 - FileInputStream(File file) ： 通过打开与实际文件的连接来创建一个 FileInputStream ，该文件由文件系 统中的 File对象 ﬁle命名。
 - FileInputStream(String name) ： 通过打开与实际文件的连接来创建一个 FileInputStream ，该文件由文件 系统中的路径名 name命名。
@@ -145,15 +145,15 @@ FileInputStream fis = new FileInputStream("fos.txt");
         fis.close();
 ```
 
-## 字符流
+### 字符流
 
-### Reader
+Reader
 
 - public void close() ：关闭此流并释放与此流相关联的任何系统资源。
 - public int read() ： 从输入流读取一个字符。
 - public int read(char[] cbuf) ： 从输入流中读取一些字符，并将它们存储到字符数组 cbuf中 。
 
-### FileReader
+FileReader
 
 ```java
 FileReader reader = new FileReader("fos.txt");
@@ -163,7 +163,7 @@ while ((c = reader.read()) != -1){
 }
 ```
 
-### Writer
+Writer
 
 - void write(int c) 写入单个字符。
 - void write(char[] cbuf) 写入字符数组。
@@ -173,7 +173,7 @@ while ((c = reader.read()) != -1){
 - void flush() 刷新该流的缓冲。
 - void close() 关闭此流，但要先刷新它。
 
-### FileWriter
+FileWriter
 
 ```java
         FileWriter writer = new FileWriter("fos.txt");
@@ -207,23 +207,23 @@ try (writer) {
 }
 ```
 
-# Properties
+## Properties
 
 - public Object setProperty(String key, String value) ： 保存一对属性。 
 - public String getProperty(String key) ：使用此属性列表中指定的键搜索属性值。 
-- public Set<String> stringPropertyNames() ：所有键的名称的集合。
+- `public Set<String> stringPropertyNames()` ：所有键的名称的集合。
 
-## 与流相关的方法
+### 与流相关的方法
 
 - store
 - load
 
-# 缓冲流
+## 缓冲流
 
 - 字节缓冲流： BufferedInputStream ， BufferedOutputStream 
 - 字符缓冲流： BufferedReader ， BufferedWriter
 
-# 字符集与字符编码
+## 编码
 
 >字符编码 Character Encoding : 就是一套自然语言的字符与二进制数之间的对应规则。 
 
@@ -231,17 +231,104 @@ try (writer) {
 
 ![02_转换流的原理](/assets/02_转换流的原理.bmp)
 
-```java
-        InputStreamReader reader = new InputStreamReader(new FileInputStream("gbk.txt"),"gbk");
+### 常用编码
 
-        OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream("utf8.txt"), StandardCharsets.UTF_8);
-        int c = -1;
-        while ((c= reader.read()) != -1){
-            writer.write(c);
-        }
-        writer.close();
+- ASCII 码 使用7bit来表示 范围从0-127
+- ISO-8859-1 单字节编码 总共能表示256字符
+- GB2312 双字节编码
+- GBK 扩展了GB2312 增加了更多的汉字
+- UTF-16 两个字节表示一个字符 大大简化了字符串操作 是Java内存的存储格式
+- UTF-8 使用变长存储 不同的字符可以由1~6个字符组成
+
+GBK与GB2312对比：GBK范围更大
+
+UTF8与UTF16对比：16编码效率高 但不适合网络传输 8的容错性比16强
+
+### IO 操作中的编解码
+
+```java
+InputStreamReader reader = new InputStreamReader(new FileInputStream("gbk.txt"),"gbk");
+
+OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream("utf8.txt"), StandardCharsets.UTF_8);
+int c = -1;
+while ((c= reader.read()) != -1){
+    writer.write(c);
+}
+writer.close();
 ```
 
+### 内存编解码
+
+```java
+"蔡徐坤".getBytes("gbk");
+new String(new byte[]{ -78, -52, -48, -20, -64, -92 },"gbk");
+```
+
+String 编码时序图：
+
+![屏幕截图 2020-09-29 112623](/assets/屏幕截图%202020-09-29%20112623.png)
+
+### Web 中的编解码
+
+![屏幕截图 2020-09-29 113656](/assets/屏幕截图%202020-09-29%20113656.png)
+
+#### URL编解码
+
+`/页面?name=页面`
+
+这个URL被编码成`%2f%e9%a1%b5%e9%9d%a2%3fname%3d%e9%a1%b5%e9%9d%a2`
+
+不同浏览器的编码可能并不一致 那么服务端是如何解析的？
+
+tomcat中有一个配置：
+
+```xml
+<Connector URLEncoding="UTF-8"> 
+```
+
+这个配置就是用来对路径部分进行解码的
+
+至于queryString 要不是body中的charset 要不就是ISO-8859-1
+
+并且如果使用要body的charset的话 需要配置
+
+```xml
+<Connector useBodyEncodingForURI="true"/>
+```
+
+#### HTTP header 编解码
+
+对于request.getHeader() 默认是使用的ISO-8859-1编码 且无法指定编码 不要再Header中传递非ASCII 字符
+
+#### 表单编解码
+
+浏览器会根据ContentType的Charset对表单参数进行编码
+
+服务端可以在Servlet容器中获取参数之前调用request.setCharacterEncoding()来指定服务器解码方式 如果没有调用此方法 那么会按照系统默认的编码方式解析
+
+#### Body 编解码
+
+服务端通过response.setCharacterEncoding来设置 这个方法的本质是设置响应头ContentType
+
+浏览器端按照以下顺序进行解码：
+
+- ContentType的charset
+- html meta标签的charset属性
+- 浏览器默认方式
+
+#### js文件编码问题
+
+如果外部引入的js文件与当前html不一致 需要
+
+```html
+<script charset="utf8" src="xxx"></script>
+```
+
+#### 常见编码问题
+
+![屏幕截图 2020-09-29 131724](/assets/屏幕截图%202020-09-29%20131724.png)
+![屏幕截图 2020-09-29 131741](/assets/屏幕截图%202020-09-29%20131741.png)
+![屏幕截图 2020-09-29 131801](/assets/屏幕截图%202020-09-29%20131801.png)
 
 ## 序列化
 

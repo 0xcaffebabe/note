@@ -90,14 +90,58 @@ ssize_t write(int fd,const void *buf,size_t n);
 
 ## RIO包
 
-- 无缓冲的输入输出函数
-- 带缓冲的输入函数
+自动处理 EOF 终端读取文本行 socket读取等
+
+- 无缓冲的输入输出函数 直接将内存与文件之间传送数据 没有应用缓存
+
+```c
+ssize_t rio_readn(int fd, void *usrbuf, size_t n);
+ssize_t rio_writen(int fd, void *usrbuf, size_t n);
+```
+
+- 带缓冲的输入函数 拥有应用级缓存
+
+```c
+void rio_readinitb(rio_t *rp, int fd); 
+ssize_t	rio_readnb(rio_t *rp, void *usrbuf, size_t n);
+ssize_t	rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen);
+```
+
+```c
+#include "csapp.h"
+#include "csapp.c"
+
+// 读取标准输入写到标准输出
+void main(){
+  int n;
+  rio_t rio;
+  char buf[100];
+
+  Rio_readinitb(&rio, STDIN_FILENO);
+  while((n = Rio_readlineb(&rio, buf, 100)) != 0){
+    Rio_writen(STDOUT_FILENO, buf, n);
+  }
+}
+```
+
+rio_read 是核心函数 语义同Linux read函数
 
 ## 读取文件元数据
 
 ```c
-int stat(const char *filename,struct stat *buf);
+int Stat(const char *filename,struct stat *buf);
 int fstat(int fd,struct stat *buf);
+```
+
+```c
+struct stat stat;
+char *fileName = "foo.txt";
+Stat(fileName, &stat);
+if (S_ISREG(stat.st_mode)) printf("普通文件");
+if (S_ISDIR(stat.st_mode)) printf("目录");
+
+if (stat.st_mode & S_IRUSR) printf("可以访问");
+else printf("无法访问");
 ```
 
 ## 读取目录内容

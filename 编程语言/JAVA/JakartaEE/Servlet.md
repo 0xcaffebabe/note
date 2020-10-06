@@ -354,3 +354,34 @@ inputStream.setReadListener(new ReadListener() {
 ## 文件上传
 
 - @MultiPartConfig
+
+## 工作原理
+
+### Servlet
+
+体系结构：
+
+![屏幕截图 2020-10-06 105912](/assets/屏幕截图%202020-10-06%20105912.png)
+
+ServletContexnt：贯穿请求的上下文
+
+ServletConfig：传递参数集合
+
+- 创建
+
+StandardWrapper.loadServlet() 方法创建Servlet实例
+
+```java
+InstanceManager instanceManager = ((StandardContext)getParent()).getInstanceManager();
+try {
+    servlet = (Servlet) instanceManager.newInstance(servletClass;
+...
+```
+
+- 初始化
+
+StandardWrapper.initServlet() 调用Servlet.init()
+
+```java
+servlet.init(facade);
+```

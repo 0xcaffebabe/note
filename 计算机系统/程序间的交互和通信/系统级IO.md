@@ -151,6 +151,39 @@ DIR *opendir(const char *name);
 struct dirent*readdir(DIR *dirp);
 ```
 
+```c
+#include <sys/types.h>
+#include <dirent.h>
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <csapp.h>
+#include <csapp.c>
+
+int main(){
+    DIR *streamp;
+    struct dirent *dep;
+
+    //调用函数返回DIR* 指针
+    streamp = opendir("./");
+
+    //设置错误号为0
+    errno = 0;
+
+    //不断调用readdir函数, 然后打印结构中的文件名和inode, inode是long类型
+    while ((dep = readdir(streamp)) != NULL) {
+        printf("Found file: %s, INODE is %ld\n", dep->d_name, dep->d_ino);
+    }
+    //循环结束后检查错误号
+    if (errno != 0) {
+        printf("readdir error");
+    }
+
+    closedir(streamp);
+    exit(0);
+}
+```
+
 ## 共享文件
 
 ![](https://upload-images.jianshu.io/upload_images/7380023-7ccfa65788df8862.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/611/format/webp)
@@ -164,6 +197,15 @@ int dup2(int ofd,int nfd);
 ```
 
 ![](https://images.cnblogs.com/cnblogs_com/mydomain/201107/201107032229433652.png)
+
+## C语言标准IO
+
+标准IO库将一个打开的文件看做一个流 某种意义上这个流式全双工的
+
+你可以在这个流上读写 所以在进行读或写后 必须执行一些操作 切换流的模式 才能进行另外一种操作 所以socket编程不适合用标准IO库 而是使用RIO
+
+- 如果有可能 就使用标准IO
+- 不要使用scanf readline等读二进制文件
 
 ## IO调优
 

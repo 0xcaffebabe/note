@@ -1032,18 +1032,21 @@ min-replicas-to-write 3
 min-replicas-max-lag 10
 ```
 
-## Redis哨兵机制
+## 哨兵
 
 - 集群监控：负责监控 redis master 和 slave 进程是否正常工作。
-- 消息通知：如果某个 redis 实例有故障，那么哨兵负责发送消息作为报警通知给管理员。
-- 故障转移：如果 master node 挂掉了，会自动转移到 slave node 上。
-- 配置中心：如果故障转移发生了，通知 client 客户端新的 master 地址
+- 消息通知：Sentinel节点会将故障转移的结果通知给应用方。
+- 故障转移：如果 master node 挂掉了，sentinel会自动选出一个新的redis master node
+- 配置中心：客户端在初始化的时候连接的是Sentinel节点集合，从中获取主节点 信息如果故障转移发生了，通知 client 客户端新的 master 地址
 
 哨兵至少需要 3 个实例，来保证自己的健壮性
+
+当大多数Sentinel节点都认为主节点不可达时，它们会选举出一个Sentinel节点来完成自动故障转移的工作，同时会将这个变化实时通知给Redis应用方
 
 哨兵(sentinel) 是一个分布式系统,你可以在一个架构中运行多个哨兵(sentinel) 进程,这些进程使用流言协议(gossip protocols)来接收关于Master是否下线的信息,并使用投票协议(agreement protocols)来决定是否执行自动故障迁移,以及选择哪个Slave作为新的Master
 
 ![2020224134359](/assets/2020224134359.png)
+![屏幕截图 2020-10-07 155936](/assets/屏幕截图%202020-10-07%20155936.png)
 
 ### 数据丢失
 
@@ -1063,14 +1066,82 @@ min-replicas-max-lag 10
 
 ### 哨兵配置
 
-```
+```config
+# sentinel.conf
 port 26379
 sentinel monitor mymaster 172.17.0.5 6379 2
 ```
 
+这个配置代表需要监控127.0.0.1：6379这个主节点，2代表判断主节点失败至少需要2个Sentinel节点同意，mymaster是主节点的别名
+
 ```sh
 # 启动哨兵
-redis-server ./sentinel.conf --sentinel
+redis-sentinel sentinel.conf
+```
+
+哨兵的一些配置项：
+
+```properties
+# 如果超过了down-after-milliseconds配置的时间且没有有效的回复，则判定节点不可达
+sentinel down-after-milliseconds <master-name> <times>
+# 用来限制在一次故障转移之后，每次向新的主节点发起复制操作的从节点个数
+sentinel parallel-syncs <master-name> <nums>
+# slaveof no one一直失败（例如该从节点此时出现故障），当此过程超过failover-timeout时，则故障转移失败
+sentinel failover-timeout <master-name> <times>
+# 主节点通信密码
+sentinel auth-pass <master-name> <password>
+# 当一些警告级别的Sentinel事件发生（指重要事件，例如-sdown：客观下线、-odown：主观下线）时，会触发对应路径的脚本
+sentinel notification-script <master-name> <script-path>
+# 故障转移结束后，会触发对应路径的脚本
+sentinel client-reconfig-script <master-name> <script-path>
+```
+
+动态调整配置：`sentinel set` 命令
+
+### 监控多个主节点
+
+```properties
+sentinel monitor master-business-1 10.10.xx.1 6379 2
+sentinel monitor master-business-2 10.16.xx.2 6380 2
+```
+
+![屏幕截图 2020-10-07 161029](/assets/屏幕截图%202020-10-07%20161029.png)
+
+### 部署
+
+- Sentinel节点不应该部署在一台物理机器上
+- 部署至少三个且奇数个的Sentinel节点
+- 一套sentinel还是多套sentinel
+  - 一套Sentinel，很明显这种方案在一定程度上降低了维护成本 但如果这套Sentinel节点集合出现异常，可能会对多个Redis数据节点造成影响
+  - 多套Sentinel会造成资源浪费。但是优点也很明显，每套Redis Sentinel都是彼此隔离的
+
+### API
+
+```sh
+# 查看所有被监控的主节点状态以及相关的统计信息
+sentinel masters
+# 查看指定主节点
+sentinel master <master name>
+# 查看指定主节点的从节点
+sentinel slaves <master name>
+# 列出指定的主从集群sentinel节点（不包含本节点）
+sentinel sentinels <master name>
+# 返回指定的主节点地址和端口
+sentinel get-master-addr-by-name <master name>
+# 对符合<pattern>（通配符风格）主节点的配置进行重置
+sentinel reset <pattern>
+# 强制对集群进行故障转移
+sentinel failover <master name>
+# 检测当前可达的Sentinel节点总数是否达到<quorum>的个数
+sentinel ckquorum <master name>
+# 将Sentinel节点的配置强制刷到磁盘上
+sentinel flushconfig
+# 取消当前sentinel节点对指定master的监控那个
+sentinel remove <master name>
+# 监控指定master
+sentinel monitor <master name> <ip> <port> <quorum>
+# Sentinel节点之间用来交换对主节点是否下线的判断
+sentinel is-master-down-by-addr
 ```
 
 ## 集群

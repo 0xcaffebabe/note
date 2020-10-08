@@ -1048,17 +1048,43 @@ min-replicas-max-lag 10
 ![2020224134359](/assets/2020224134359.png)
 ![屏幕截图 2020-10-07 155936](/assets/屏幕截图%202020-10-07%20155936.png)
 
+高可用读写分离：
+
+![屏幕截图 2020-10-08 144313](/assets/屏幕截图%202020-10-08%20144313.png)
+
+### 原理
+
+三个定时任务：
+
+- 每隔10秒，每个Sentinel节点会向主节点和从节点发送info命令获取最新的拓扑结构
+- 每隔2秒，每个Sentinel节点会向Redis数据节点的__sentinel__：hello频道上发送该Sentinel节点对于主节点的判断以及当前Sentinel节点的信息 每个Sentinel节点也会订阅该频道
+- 每隔1秒，每个Sentinel节点会向主节点、从节点、其余Sentinel节点
+发送一条ping命令做一次心跳检测
+
+sdown与odown：
+
+- sdown：主观宕机，某一哨兵发现无法连接master
+- odown，一定数量的哨兵发现无法连接master
+
+sentinel领导节点选举：通过raft算法 由sentienl领导节点进行故障转移的操作
+
+#### 故障转移
+
+- 选择一个新主节点
+
+![屏幕截图 2020-10-08 143210](/assets/屏幕截图%202020-10-08%20143210.png)
+
+- Sentinel领导者节点会对第一步选出来的从节点执行slaveof no one命
+令让其成为主节点
+- Sentinel领导者节点会向剩余的从节点发送命令，让它们成为新主节点的从节点
+- Sentinel节点集合会将原来的主节点更新为从节点，并保持着对其关注，当其恢复后命令它去复制新的主节点
+
 ### 数据丢失
 
 - 主备切换时，master异步向salve同步的命令丢失导致数据丢失
 - 网络异常，导致master暂时失联，当master重新连接上网络时，变成了slave，数据丢失
 
 解决：拒绝客户端的写请求
-
-### sdown与odown
-
-- sdown：主观宕机，某一哨兵发现无法连接master
-- odown，一定数量的哨兵发现无法连接master
 
 ### 哨兵集群的自动发现
 
@@ -1115,6 +1141,18 @@ sentinel monitor master-business-2 10.16.xx.2 6380 2
   - 一套Sentinel，很明显这种方案在一定程度上降低了维护成本 但如果这套Sentinel节点集合出现异常，可能会对多个Redis数据节点造成影响
   - 多套Sentinel会造成资源浪费。但是优点也很明显，每套Redis Sentinel都是彼此隔离的
 
+### 运维
+
+节点下线：
+
+- 主节点下线 使用sentienl failover命令选出一个新主节点 将原来的主节点下线
+- 从节点或者sentienl节点下线 保证客户端能感受到从节点的变化 避免发送无效请求
+
+节点上线：
+
+- 添加从节点 添加slaveof配置启动即可
+- 添加sentienl节点 添加sentienl monitor配置启动即可
+
 ### API
 
 ```sh
@@ -1142,6 +1180,26 @@ sentinel remove <master name>
 sentinel monitor <master name> <ip> <port> <quorum>
 # Sentinel节点之间用来交换对主节点是否下线的判断
 sentinel is-master-down-by-addr
+```
+
+### 客户端连接
+
+1）遍历Sentinel节点集合获取一个可用的Sentinel节点
+
+2）通过sentinel get-master-addr-by-name master-name这个API来获取对应主节点的相关信息
+
+3）验证当前获取的“主节点”是真正的主节点，这样做的是为了防止获取之后主节点又发生了变化
+
+4）保持和Sentinel节点集合的“联系”，时刻获取关于主节点的相关“信息”
+
+Java 客户端：
+
+```java
+JedisSentinelPool pool =
+    new JedisSentinelPool("mymaster", Set.of("192.168.1.101:26379","192.168.1.101:26380","192.168.1.101:26381"));
+Jedis resource = pool.getResource();
+System.out.println(resource.ping());
+resource.close();
 ```
 
 ## 集群

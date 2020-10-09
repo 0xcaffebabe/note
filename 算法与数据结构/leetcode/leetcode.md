@@ -1665,3 +1665,257 @@ class Solution {
 ```
 
 耗时：0
+
+## 66. 加一
+
+<https://leetcode-cn.com/problems/plus-one/>
+
+```java
+class Solution {
+    public int[] plusOne(int[] digits) {
+        int[] ret = new int[digits.length+1];
+        for(int i=0;i<digits.length;i++){
+            ret[i+1] = digits[i];
+        }
+        ret[ret.length-1] = ret[ret.length-1] + 1;
+        boolean f = false;
+        for(int i=ret.length-1;i>=0;i--){
+            if (ret[i] == 10) {
+                ret[i] = 0;
+                f = true;
+                continue;
+            }
+            if (f) {
+                if (ret[i] == 9) {
+                    ret[i] = 0;
+                    f = true;
+                }else {
+                    ret[i]++;
+                    f= false;
+                }
+            }
+        }
+        if (ret[0] == 0) {
+            int[] trimArr = new int[ret.length-1];
+            System.arraycopy(ret,1,trimArr,0,trimArr.length);
+            return trimArr;
+        }
+        return ret;
+    }
+}
+```
+
+耗时：0
+
+## 110. 平衡二叉树
+
+<https://leetcode-cn.com/problems/balanced-binary-tree/>
+
+```java
+class Solution {
+    public boolean isBalanced(TreeNode root) {
+        if (root == null) return true;
+        if (root.left == null && root.right == null) return true;
+        
+        if (Math.abs(treeHeight(root.left, 0) - treeHeight(root.right, 0)) > 1) return false;
+        return isBalanced(root.left) && isBalanced(root.right);
+    }
+
+    private int treeHeight(TreeNode root, int i){
+        if (root == null) return i;
+        i++;
+        int l = treeHeight(root.left, i);
+        int r = treeHeight(root.right, i);
+        return l > r ? l : r;
+    }
+}
+```
+
+耗时：1
+
+## 349. 两个数组的交集
+
+<https://leetcode-cn.com/problems/intersection-of-two-arrays/>
+
+```java
+class Solution {
+    public int[] intersection(int[] nums1, int[] nums2) {
+        HashSet<Integer> s1 = new HashSet<>();
+        HashSet<Integer> s2 = new HashSet<>();
+        for(int i : nums1) {
+            s1.add(i);
+        }
+        for(int i : nums2) {
+            s2.add(i);
+        }
+        if (s1.size() < s2.size()) {
+            var t = s1;
+            s1 = s2;
+            s2 = t;
+        }
+
+        Iterator<Integer> it = s1.iterator();
+        while(it.hasNext()){
+            var e = it.next();
+            if (!s2.contains(e)) it.remove();
+        }
+
+        int[] ret = new int[s1.size()];
+        int count = 0;
+        for(int i :s1){
+            ret[count] = i;
+            count++;
+        }
+        return ret;
+    }
+}
+```
+
+耗时：3
+
+## 557. 反转字符串中的单词 III
+
+<https://leetcode-cn.com/problems/reverse-words-in-a-string-iii/>
+
+```java
+class Solution {
+    public String reverseWords(String s) {
+        if (s.length() == 0) return "";
+        StringBuffer sb = new StringBuffer();
+        for(int i =s.length()-1;i>=0;i--){
+            sb.append(s.charAt(i));
+        }
+        String[] strs = sb.toString().split(" ");
+        sb = new StringBuffer();
+        for(int i = strs.length-1;i>=0;i--){
+            sb.append(strs[i]);
+            if (i != 0) sb.append(" ");
+        }
+        return sb.toString();
+    }
+}
+```
+
+耗时：10
+
+## 145. 二叉树的后序遍历
+
+<https://leetcode-cn.com/problems/binary-tree-postorder-traversal/>
+
+```java
+class Solution {
+    public List<Integer> postorderTraversal(TreeNode root) {
+        List<Integer> list = new ArrayList<>();
+        postOrder(root, list);
+        return list;
+    }
+
+    private void postOrder(TreeNode root, List<Integer> list){
+        if (root == null) return;
+        postOrder(root.left, list);
+        postOrder(root.right, list);
+        list.add(root.val);
+    }
+}
+```
+
+耗时：0
+
+## 230. 二叉搜索树中第K小的元素
+
+<https://leetcode-cn.com/problems/kth-smallest-element-in-a-bst/>
+
+```java
+class Solution {
+    public int kthSmallest(TreeNode root, int k) {
+        return getKMin(root,k,new int[]{0});
+    }
+
+    public int getKMin(TreeNode root,int k,int[] i){
+        if (root == null) return -1;
+        int l = getKMin(root.left, k,i);
+        i[0]++;
+        if (i[0] == k) {
+            return root.val;
+        }
+        
+        int r = getKMin(root.right, k,i);
+        if (l != -1) {
+            return l;
+        }
+        if (r != -1) {
+            return r;
+        }
+        
+        return -1;
+    }
+}
+```
+
+耗时：0
+
+## 811. 子域名访问计数
+
+<https://leetcode-cn.com/problems/subdomain-visit-count/>
+
+```java
+class Solution {
+    public List<String> subdomainVisits(String[] cpdomains) {
+        Map<String,Integer> map = new HashMap<>(256);
+        for (String s : cpdomains){
+            String[] a = s.split(" ");
+            int count = Integer.valueOf(a[0]);
+            String domain = a[1];
+            for(int i=domain.length()-1;i>=0;i--){
+                char c = domain.charAt(i);
+                if (c == '.') {
+                    String subDomain = domain.substring(i+1,domain.length());
+                    Integer oldCount = map.get(subDomain);
+                    if (oldCount == null){
+                        map.put(subDomain, count);
+                    }else {
+                        map.put(subDomain, oldCount + count);
+                    }
+                }
+                if (i == 0){
+                    Integer oldCount = map.get(domain);
+                    if (oldCount == null){
+                        map.put(domain, count);
+                    }else {
+                        map.put(domain, oldCount + count);
+                    }
+                }
+            }
+        }
+        List<String> ret = new ArrayList<>();
+        for (String s: map.keySet()){
+            ret.add(map.get(s) + " " + s);
+        }
+        return ret;
+    }
+}
+```
+
+耗时：21
+
+## 876. 链表的中间结点
+
+<https://leetcode-cn.com/problems/middle-of-the-linked-list/>
+
+```java
+class Solution {
+    public ListNode middleNode(ListNode head) {
+        ListNode[] map = new ListNode[101];
+        int i = 1;
+        while(head != null){
+            map[i]=head;
+            i++;
+            head = head.next;
+        }
+        if (i % 2 !=0) return map[i/2+1];
+        else return map[i/2];
+    }
+}
+```
+
+耗时：0

@@ -136,6 +136,8 @@ redis使用了两张哈希表来方便扩容时的rehash操作
 
 ### 字符串类型
 
+![屏幕截图 2020-09-26 145223](/assets/屏幕截图%202020-09-26%20145223.png)
+
 ```sh
 set key value [ex seconds] [px milliseconds] [nx|xx] # 设置值
 # ex 以秒为单位的过期时间
@@ -167,10 +169,15 @@ getrange name 0 -1 # 获取指定范围的字符串
 
 #### bitmap
 
-- setbit
-- bitpos
-- bitcount
-- bitop
+这个数据类型适合用来处理海量数据
+
+```sh
+setbit map 5 1 # 将偏移量为5的bit设置为1 在第一次初始化Bitmaps时，假如偏移量非常大，那么整个初始化过程执行会比较慢，可能会造成Redis的阻塞
+getbit map 5 # 获取偏移量为5的值
+bitcount map 0 -1 # 获取指定范围内1的个数
+bitop and|or|not|xor ret map map1 # bitmap 集合运算
+bitpos map 1 # bitmap 第一个值为1的bit的偏移量
+```
 
 例子：
 
@@ -192,7 +199,22 @@ bitop or ret 200618 200619 # 使用或运算合并bit
 bitcount ret 0 0 # 统计有多少位1
 ```
 
+#### HyperLogLog
+
+通过HyperLogLog可以利用极小的内存空间完成大量元素的独立总数的统计
+
+用小空间来估算如此巨大的数据，其中一定存在误差率（类似于布隆过滤器）
+
+使用这个来估算数据 可以容忍一定的误差率
+
+```sh
+pfadd users user1 user2 user3 user4 # 添加元素
+pfcount users # 统计个数
+```
+
 ### 哈希类型
+
+![屏幕截图 2020-09-26 145321](/assets/屏幕截图%202020-09-26%20145321.png)
 
 ```sh
 hset user:1 name cxk age 18 # 设置field
@@ -220,6 +242,8 @@ hincrbyfloat user:1 age 1.5 # 浮点数自增
 - 关系型数据库可以做复杂的关系查询，而Redis去模拟关系型复杂查询开发困难
 
 ### 列表类型
+
+![屏幕截图 2020-09-26 145350](/assets/屏幕截图%202020-09-26%20145350.png)
 
 - 将元素加入列表左边：`lpush key value`
 - 将元素加入列表右边：`rpush key value`
@@ -261,17 +285,39 @@ hincrbyfloat user:1 age 1.5 # 浮点数自增
 
 ### 集合类型
 
+![屏幕截图 2020-09-26 145411](/assets/屏幕截图%202020-09-26%20145411.png)
+
 ```sh
-help @set
+sadd set a b c # 添加元素
+srem set b # 删除元素
+scard set # 计算元素个数(维护一个变量得到)
+sismember set c # 判断元素是否在集合内
+srandmember set 2 # 随机从集合返回指定个数元素
+# 正数：取出一个去重的结果集（不能超过已有集）
+# 负数：取出一个带重复的结果集，一定满足你要的数量
+# 如果：0，不返回
+spop set 1 # 随机弹出元素
+smembers set # 获取所有元素
+
+sinter s1 s2 # 求交集
+sunion s1 s2 # 求并集
+sdiff s1 s2 # 求差集
+sinterstore s3 s1 s2 # 交集结果存储到s3
+# ...
 ```
 
-- 存储：`sadd key value`
-- 获取：`smembers key`
-- 删除：`srem key value`
-- SRANDMEMBER  key  count
-  - 正数：取出一个去重的结果集（不能超过已有集）
-  - 负数：取出一个带重复的结果集，一定满足你要的数量
-  - 如果：0，不返回
+内部编码：
+
+- intset 占用内存小
+- hashtable
+
+例子：用户标签
+
+```sh
+sadd user1 food movie sport music
+sadd user2 food music network
+sinter user1 user2 # 计算用户共同感兴趣的标签
+```
 
 例子：抽奖
 
@@ -281,7 +327,13 @@ SRANDMEMBER k 3 # 抽取三个不重复用户
 SRANDMEMBER k -3 # 抽取三个可能会重复的用户
 ```
 
+- sadd=Tagging（标签）
+- spop/srandmember=Random item（生成随机数，比如抽奖）
+- sadd+sinter=Social Graph（社交需求）
+
 ### 有序集合类型
+
+![屏幕截图 2020-09-26 145503](/assets/屏幕截图%202020-09-26%20145503.png)
 
 ```sh
 help @sorted_set
@@ -291,22 +343,163 @@ help @sorted_set
 
 物理内存左小右大
 
-- 存储：`zadd key score value`
-- 获取：`zrange key start end`
-- 删除：`zrem key value`
+```sh
+zadd users 251 tom # 添加成员 分数251
+zcard users # 计算成员个数
+zscore users tom # 获取某个成员分数
+zrank users tom # 计算某个成员排名
+zrem users tom # 删除成员
+zincrby users 8 jerry # 增加某个成员的分数
+zrange users 0 10 # 正序返回指定排名范围的成员
+zrevrange users 0 10 # 倒序返回指定排名范围的成员
+zrangebyscore users 0 255 # 正序返回指定分数范围的成员
+zrevrangebyscore users 0 255 # 正序返回指定分数范围的成员
+zcount users 0 255 # 计算指定分数范围的成员个数
+zremrangebyrank users 0 1 # 删除指定排名范围内的成员
+zremrangebyscore users 0 10 # 删除指定分数范围内的成员
 
-## 数据淘汰策略
+zinterstore user:ranking:1_inter_2 2 user:ranking:1 user:ranking:2 weights 1 0.5 aggregate max # 并集
+```
 
-设置内存最大使用量，当内存使用量超出时，会施行数据淘汰策略
+内部数据结构：
 
-策略              | 描述
---------------- | --------------------------
-volatile-lru    | 从已设置过期时间的数据集中挑选最近最少使用的数据淘汰（**最常用**）
-volatile-ttl    | 从已设置过期时间的数据集中挑选将要过期的数据淘汰
-volatile-random | 从已设置过期时间的数据集中任意选择数据淘汰
-allkeys-lru     | 从所有数据集中挑选最近最少使用的数据淘汰
-allkeys-random  | 从所有数据集中任意选择数据进行淘汰
-noeviction      | 禁止驱逐数据，当内存不足时，写入操作会被拒绝
+- ziplist
+- skiplist
+
+例子：点赞
+
+```sh
+zadd video 0 cxk # cxk发布了一个视频 0赞
+zincrby video 1 cxk # 有人给cxk视频点了一个赞
+zrem video cxk # 清空cxk的视频点赞
+zrevrange video 0 9 # 获取点赞排行榜
+```
+
+### 键管理
+
+单键管理：
+
+```sh
+rename name newname # 键重命名
+randomkey # 随机返回数据库里的一个键
+expire name 10 # 设置键10秒后过期
+expireat name timestamp # 设置键在指定时间戳后过期
+# 对于字符串 set 会清除其过期时间
+# Redis不支持二级数据结构（例如哈希、列表）内部元素的过期功能
+persist name # 去除键的过期时间
+```
+
+键迁移：
+
+- move 同一redis内
+- dump restre 通过RDB文件的方式
+- migrate 自动通过网络传输数据
+
+遍历键：
+
+```sh
+keys * # 获取所有键 如果Redis包含了大量的键，执行keys命令很可能会造成Redis阻塞
+scan 0 # 渐进式遍历 该命令返回两个部分：1. 下一个游标 2. 遍历结果
+# 如果要继续遍历 下一次scan后面接的就是返回的游标
+```
+
+数据库管理：
+
+```sh
+select 2 # 切换到2号数据库
+flushdb # 清空数据库 如果当前数据库键值数量比较多，flushdb/flushall存在阻塞Redis的可能
+flushall
+```
+
+Redis3.0后已经逐渐弱化多数据库这个功能
+
+## 慢查询分析
+
+一条客户端命令的生命周期：
+
+![屏幕截图 2020-09-27 134926](/assets/屏幕截图%202020-09-27%20134926.png)
+
+
+慢查询阈值设置：
+
+- slowlog-log-slower-than：超过xx微秒则记录为慢查询
+- slowlog-max-len
+
+```sh
+config set slowlog-log-slower-than 2 # 设置阈值
+slowlog get [n] # 获取慢查询日志 n 指定条数
+slowlog len # 获取慢查询日志列表长度
+slowlog reset # 清空慢查询日志
+```
+
+慢查询日志结构：
+
+1. id
+2. time
+3. duration
+4. command
+    - 参数..
+5. ip:port
+
+最佳实践：
+
+- 线上建议调大慢查询列表
+- 根据qps来配置slowlog-log-slower-than
+- 及时转储slowlog
+
+## redis shell
+
+- redos-cli
+
+```sh
+redis-cli -r 3 ping # 重复执行3次ping命令
+redis-cli -r 3 -i 1 ping # 每隔1秒发一次ping 重复3此
+echo "world" | redis-cli -x set hello # 从stdin读入 作为redis的最后一个参数
+redis-cli --scan # scan命令
+redis-cli --rdb ./bak.rdb # 生成rdb文件
+echo -en '*3\r\n$3\r\nSET\r\n$5\r\nhello\r\n$5\r\nworld\r\n*2\r\n$4\r\nincr\r\n$7\r\ncounter\r\n' | redis-cli --pipe # 直接发送命令给redis执行
+redis-cli --bigkeys  # 分析内存占用比较大的键值对
+redis-cli --latency # 查看客户端到目标redis的网络延时
+redis-cli --latency-history -i 10 # 每隔10秒查看一次网络延时
+redis-cli --latency-dist # 以统计图表的方式输出
+redis-cli --stat # 获取redis的统计信息
+redis-cli --raw get name # 返回数据不进行格式化(\xexxx)
+```
+
+- redis-server
+
+```sh
+redis-server --test-memory 1024 # 测试是否有足够的内存
+```
+
+- redis-benchmark
+
+```sh
+redis-benchmark -c 100 -n 20000 # 100个客户 共请求20000次
+redis-benchmark -c 100 -n 20000  -q # 只显示 requests per second
+redis-benchmark -c 100 -n 20000 -r 10000 # -r选项会在key、counter键上加一个12位的后缀，-r10000代表只对后四位做随机处理
+redis-benchmark -c 100 -n 20000 -P 10 # 每隔请求的pipline数据量
+redis-benchmark -c 100 -n 20000 -q -k 1 # k为1代表启用客户端连接keepalive
+redis-benchmark -t get,set -q # 只对指定的命令测试
+redis-benchmark -t get,set -q --csv # 按照csv文件格式输出
+```
+
+## Pipeline
+
+Pipeline（流水线）机制能将一组Redis命令进行组装，通过一次RTT传输给Redis，再将这组Redis命令的执行结果按顺序返回给客户端
+
+- redis-cli 的--pipeline选项
+- 各种语言客户端的pipeline
+
+客户端和服务端的网络延时越大，Pipeline的效果越明显
+
+如果pipeline传递的数据过大 也会增加客户端的等待时间及网络阻塞
+
+vs. 原生批量命令：
+
+- 原生批量命令是原子的，Pipeline是非原子的
+- 原生批量命令是一个命令对应多个key，Pipeline支持多个命令
+- 原生批量命令是Redis服务端支持实现的，而Pipeline需要服务端和客户端的共同实现
 
 ## 持久化
 
@@ -316,15 +509,19 @@ noeviction      | 禁止驱逐数据，当内存不足时，写入操作会被�
 - 日志
 
 不要只使用某一持久化机制
+
 要充分利用两种持久化机制的优点并避免它们的缺点
 
 ### RDB
 
-将某个时间点的所有数据都存放到硬盘上
-是对 redis 中的数据执行周期性的持久化
+将某个时间点的所有数据都存放到硬盘上, 是对 redis 中的数据执行周期性的持久化
 
-使用的fork系统调用创建一个子进程来持久化数据
-由于fork出来的子进程是写时复制，所以这达到了一个性能的平衡
+`bgsave`命令：使用的fork系统调用创建一个子进程来持久化数据, 由于fork出来的子进程是写时复制，所以这达到了一个性能的平衡
+
+![屏幕截图 2020-09-29 132917](/assets/屏幕截图%202020-09-29%20132917.png)
+
+可以在redis-cli执行config set dir{newDir}和config set
+dbfilename{newFileName} 来改变持久化文件位置
 
 - 配置文件
 
@@ -342,23 +539,27 @@ save 60 10000        #在60秒(1分钟)之后，如果至少有10000个key发生
 
 **优缺点**
 
-是某个时刻的全部数据，非常适合做冷备
-对redis性能的影响较小
-恢复比较迅速
-会丢失一定数据
-在生成rdb文件时，可能会暂停对客户端的服务一段时间
+- 是某个时刻的全部数据，非常适合做冷备 全量备份等
+- 恢复比较迅速
+- **bgsave每次运行都要执行fork操作创建子进程，属于重量级操作**
+- **会丢失一定数据**
 
 ### AOF
 
-以日志的形式保存每次操作
-对每条写入命令作为日志
+- 以日志的形式保存每次操作
+- 对每条写入命令作为日志
+
+![屏幕截图 2020-09-29 133711](/assets/屏幕截图%202020-09-29%20133711.png)
+
+为什么使用AOF缓冲：Redis使用单线程响应命令，如果每次写AOF文件命令都直接追加到硬盘，那么性能完全取决于当前硬盘负载
+载
 
 ```
 appendonly yes 开启aof
 
-appendfsync always    每一次操作都进行持久化
-appendfsync everysec  每隔一秒进行一次持久化
-appendfsync no        让操作系统来决定何时同步
+appendfsync always    每一次操作都进行持久化 （每次写操作都执行fsync 性能极差）
+appendfsync everysec  每隔一秒进行一次持久化 (折中的方案)
+appendfsync no        让操作系统来决定何时同步 （让操作系统决定何时写到磁盘 数据不安全）
 ```
 
 Redis 4.0 开始支持 RDB 和 AOF 的混合持久化（默认关闭，可以通过配置项 aof-use-rdb-preamble 开启）。
@@ -367,17 +568,53 @@ Redis 4.0 开始支持 RDB 和 AOF 的混合持久化（默认关闭，可以通
 
 **优缺点**
 
-更好地保护数据不丢失
-append-only没有磁盘寻址开销
-适合做灾备
-aof文件比rdb大
-aof对性能有一定的影响
+- 更好地保护数据不丢失
+- append-only没有磁盘寻址开销
+- 适合做灾备
+- **aof文件比rdb大**
+- **aof对性能有一定的影响**
 
 #### AOF重写
 
-AOF重写可以产生一个新的AOF文件，这个新的AOF文件和原有的AOF文件所保存的数据库状态一样，但体积更小
+随着AOF文件越来越大，需要定期对AOF文件进行重写，达到压缩的目的
 
-执行 BGREWRITEAOF 命令时，Redis 服务器会维护一个 AOF 重写缓冲区，该缓冲区会在子进程创建新AOF文件期间，记录服务器执行的所有写命令。当子进程完成创建新AOF文件的工作之后，服务器会将重写缓冲区中的所有内容追加到新AOF文件的末尾，使得新旧两个AOF文件所保存的数据库状态一致
+- 手动触发：bgrewriteaof
+- 自动触发：根据auto-aof-rewrite-min-sizeauto-aof-rewrite-percentage参数确定自动触发时机
+
+![屏幕截图 2020-09-29 135550](/assets/屏幕截图%202020-09-29%20135550.png)
+
+执行 BGREWRITEAOF 命令时，Redis 服务器会维护一个 AOF 重写缓冲区，该缓冲区会在子进程创建新AOF文件期间，记录服务器执行的所有写命令。
+
+当子进程完成创建新AOF文件的工作之后，服务器会将重写缓冲区中的所有内容追加到新AOF文件的末尾，使得新旧两个AOF文件所保存的数据库状态一致
+
+#### 重启恢复流程
+
+![屏幕截图 2020-09-29 135820](/assets/屏幕截图%202020-09-29%20135820.png)
+
+如果aof文件损坏 可以尝试使用redis-check-aof --fix进行修复
+
+### 问题定位与优化
+
+fork的问题：
+
+- 重量级操作 如果使用虚拟化技术 fork会比物理机更耗时
+- fork虽然是写时复制 但是还是需要复制内存页表
+
+持久化时各类资源的消耗：
+
+- CPU：子进程负责把进程内的数据分批写入文件，这个过程
+属于CPU密集操作
+- 内存：子进程通过fork操作产生，占用内存大小等同于父进程，理论上需要两倍的内存来完成持久化操作，但Linux有写时复制机制
+（copy-on-write）
+- 磁盘：写入时硬盘压力很大 避免将redis和其他高硬盘负载的服务部署在一起
+
+AOFfsync策略：
+
+![屏幕截图 2020-09-29 142515](/assets/屏幕截图%202020-09-29%20142515.png)
+
+使用everysec这种同步策略 当一个命令写入缓冲区后发现上次同步到磁盘的时间大于2秒 就会阻塞住 直至同步磁盘完成
+
+这意味着使用这种策略至多会丢失2秒的数据
 
 ## 事件
 
@@ -389,9 +626,36 @@ AOF重写可以产生一个新的AOF文件，这个新的AOF文件和原有的AO
 
 Redis 将所有时间事件都放在一个无序链表中，通过遍历整个链表查找出已到达的时间事件，并调用相应的事件处理器
 
-## Jedis
+## 客户端
 
-### 基本使用
+### RESP(redis 序列化协议)
+
+- 发送命令
+
+```
+*< 参数数量 > CRLF
+$< 参数 1 的字节数量 > CRLF
+< 参数 1> CRLF
+...
+$< 参数 N 的字节数量 > CRLF
+< 参数 N> CRLF
+```
+
+- 返回结果
+
+状态回复：在RESP中第一个字节为"+"。
+
+错误回复：在RESP中第一个字节为"-"。
+
+整数回复：在RESP中第一个字节为"："。
+
+字符串回复：在RESP中第一个字节为"$"。
+
+多条字符串回复：在RESP中第一个字节为"*"。
+
+###  java 客户端 Jedis
+
+基本使用
 
 ```java
 Jedis jedis = new Jedis("127.0.0.1");
@@ -401,7 +665,7 @@ System.out.println(jedis.get("name"));
 jedis.close();
 ```
 
-### 连接池
+连接池
 
 ```java
 JedisPoolConfig config = new JedisPoolConfig();
@@ -417,9 +681,9 @@ resource.close();
 pool.close();
 ```
 
-## Spring Data Redis
+### Spring Data Redis
 
-### RedisTemplate基本操作
+RedisTemplate基本操作
 
 - redisTemplate.opsForValue() ：操作字符串
 - redisTemplate.opsForHash() ：操作hash
@@ -429,13 +693,31 @@ pool.close();
 
 StringRedisTemplate是K,V均为String的RedisTemplate
 
-### 使用
+使用
 
 ```java
 template.opsForValue().set("name","hello,bitch");
 ```
 
 ### 事务
+
+```sh
+multi # 开启事务
+set name hello
+set hello world
+exec # 提交事务
+# discard 停止事务执行
+```
+
+命令语法错误导致的错误整个事务会回滚
+
+```sh
+set key java
+watch key
+multi
+set key cxk
+exec # 如果key在这个事务过程中别其他客户端修改 这个事务就不会执行
+```
 
 ```java
 // 开启事务支持
@@ -453,19 +735,147 @@ try{
 }
 ```
 
-## 实现发布订阅
+### 客户端管理
 
-- 消费者订阅频道
+```sh
+client list
+```
+```
+id=10733 addr=127.0.0.1:42158 fd=9 name= age=84021 idle=0 flags=N db=0 sub=0 psub=0 multi=-1 qbuf=26 qbuf-free=32742 obl=0 oll=0 omem=0 events=r cmd=client user=default
+```
 
-```shell
-127.0.0.1:6379> SUBSCRIBE redisChat
+![屏幕截图 2020-09-28 153101](/assets/屏幕截图%202020-09-28%20153101.png)
+
+标识：
+
+- id
+- addr
+- fd
+- name
+
+输入缓冲区：
+
+Redis为每个客户端分配了输入缓冲区，它的作用是将客户端发送的命令临时保存，同时Redis从会输入缓冲区拉取命令并执行
+
+- qbuf 缓冲区的总容量
+- qbuf-free 剩余容量
+
+如果Redis的处理速度跟不上输入缓冲区的输入速度 机会造成缓冲区十分大
+
+输出缓冲区：
+
+Redis为每个客户端分配了输出缓冲区，它的作用是保存命令执行的结果返回给客户端
+
+输出缓冲区由两部分组成：固定缓冲区（16KB）和动态缓冲区，其中固定缓冲区返回比较小的执行结果，而动态缓冲区返回比较大的结果。 固定缓冲区使用的是字节数组，动态缓冲区使用的是列表
+
+- obl 固定缓冲区的长度
+- oll 动态缓冲区列表的长度
+- omem 代表使用的字节数
+
+客户端存活状态：
+
+单位为秒
+
+- age 客户端已经连接的时间
+- idle 最近一次的空闲时间
+
+客户端类型：
+
+- flag
+
+![屏幕截图 2020-09-28 152911](/assets/屏幕截图%202020-09-28%20152911.png)
+
+#### setName getName
+
+设置名称方便管理
+
+```sh
+client setName cxk
+client getName
+```
+
+#### 杀掉客户
+
+```sh
+client kill ip:port
+```
+
+#### 阻塞客户
+
+```sh
+client pause timeout # 阻塞当前客户端指定毫秒数
+```
+
+#### 监控客户端命令执行
+
+```sh
+monitor
+```
+
+### 客户端相关配置
+
+- timeout 检测客户端空闲连接的超时时间，一旦idle时间达到了
+timeout，客户端将会被关闭，如果设置为0就不进行检测
+- maxclients 客户端最大连接数
+- tcp-keepalive 检测TCP连接活性的周期
+- tcp-backlog TCP三次握手后，会将接受的连接放入队列中，tcp-backlog就是队列的大小
+
+### 客户端统计
+
+```sh
+info clients
+```
+
+- connected_clients：代表当前Redis节点的客户端连接数
+- client_recent_max_input_buffer：当前所有输出缓冲区中队列对象个数的最大值
+- client_recent_max_output_buffer: 前所有输入缓冲区中占用的最大容量
+- locked_clients：正在执行阻塞命令（例如blpop、brpop、brpoplpush）的客户端个数
+
+## 发布订阅
+
+![屏幕截图 2020-09-27 154059](/assets/屏幕截图%202020-09-27%20154059.png)
+
+新开启的订阅客户端，无法收到该频道之前的消息
+
+```sh
+pubsub channels # 查看活跃的频道(至少一个订阅者)
+pubsub numsub chat # 查看频道订阅数
+pubsub numpat # 查看模式订阅数
+```
+
+- 消费者
+
+```sh
+SUBSCRIBE redisChat # 订阅
+unsubscribe redisChat # 取消订阅
+psubscribe pattern # 按照给定模式订阅
+punsubscribe pattern # 按照给定模式取消订阅
 ```
 
 - 生产者向频道发送数据
 
-```shell
-127.0.0.1:6379> PUBLISH redisChat "Redis is a great caching technique"
+```sh
+PUBLISH redisChat "Redis is a great caching technique"
 ```
+
+## GEO
+
+地理信息定位功能
+
+```sh
+geoadd locations 116.38 39.55 beijing # 添加成员
+geopos locations beijing # 获取
+geodist locations beijing tianjin [m|km|mi|ft] # 计算两地距离
+georadiusbymember locations beijing 150 km # 获取北京方圆150km内的成员
+geohash locations beijing # 将二维经纬度转换为一维字符串
+```
+
+关于geohash：
+
+- 字符串越长，表示的位置更精确
+- 两个字符串越相似，它们之间的距离越近，Redis利用字符串前缀匹配
+算法实现相关的命令
+- Redis正是使用有序集合并结合geohash的特性实现了GEO的若干命令
 
 ## 分布式
 
@@ -483,35 +893,104 @@ try{
 
 ![批注 2020-06-23 084747](/assets/批注%202020-06-23%20084747.png)
 
-## 主从复制
+## 复制
 
-![批注 2020-03-19 165905](/assets/批注%202020-03-19%20165905.png)
-
-强一致性与弱一致性
-
-![批注 2020-05-08 093718](/assets/批注%202020-05-08%20093718.png)
+- slaveof命令建立复制
+- slaveof no one命令断开复制
 
 redis的复制功能是支持多个数据库之间的数据同步。一类是主数据库（master）一类是从数据库（slave），主数据库可以进行读写操作，当发生写操作的时候自动将数据同步到从数据库，而从数据库一般是只读的，并接收主数据库同步过来的数据，一个主数据库可以有多个从数据库，而一个从数据库只能有一个主数据库
 
-从 redis2.8 开始，就支持主从复制的断点续传
+### 拓扑结构
 
-过程：
+- 一主一从
 
-1：当一个从数据库启动时，会向主数据库发送PSYNC命令
+![屏幕截图 2020-10-04 133321](/assets/屏幕截图%202020-10-04%20133321.png)
 
-2：主数据库接收到sync命令后会开始在后台保存快照（执行rdb操作），并将保存期间接收到的命令缓存起来
+用于主节点出现宕机时从节点提供故障转移支持
 
-3：当快照完成后，redis会将快照文件和所有缓存的命令发送给从数据库
+- 一主多从
 
-4：从数据库收到后，会载入快照文件并执行收到的缓存的命令
+![屏幕截图 2020-10-04 133416](/assets/屏幕截图%202020-10-04%20133416.png)
 
-5：此后，当主服务器每执行一次写命令，就向从服务器发送相同的写命令
+对于读占比较大的场景，可以把读命令发送到从节点来分担主节点压力
 
-### 主从链
+或者从节点用来执行一些如keys 等比较耗时的命令
 
-当从服务器过大，主服务器无法很快地更新所有从服务器，所以可以在中间创建一个从服务器中间层
+**对于写并发量较高的场景，多个从节点会导致主节点写命令的多次发送从而过度消耗网络带宽**
+
+- 主从链
 
 ![20203129441](/assets/20203129441.png)
+
+通过引入复制中间层，可以有效降低主节点负载和需要传送给从节点的数据量
+
+### 原理
+
+#### 复制过程
+
+![屏幕截图 2020-10-04 134259](/assets/屏幕截图%202020-10-04%20134259.png)
+
+1. 执行slaveof后从节点只保存主节点的地址信息便直接返回
+2. 从节点会建立一个socket套接字 门用于接受主节点发送的复制命令
+3. 连接建立成功后从节点发送ping请求进行首次通信用于检测主从之间网络套接字是否可用以及节点当前是否可接受处理命令
+4. 如果主节点设置了requirepass参数，则需要密码验证
+5. 主从复制连接正常通信后，主节点会把持有的数据全部发送给从节点
+6. 接下来主节点会持续地把写命令发送给从节点，保证主从
+数据一致性
+
+#### 数据同步
+
+全量复制：
+
+一般用于初次复制场景，会把主节点全部数据一次性发送给从节点
+
+![屏幕截图 2020-10-04 135504](/assets/屏幕截图%202020-10-04%20135504.png)
+
+部分复制：
+
+- psync命令
+
+![屏幕截图 2020-10-04 135617](/assets/屏幕截图%202020-10-04%20135617.png)
+
+异步复制：
+
+写命令的发送过程是异步完成，也就是说主节点自身处理完写命令后直接返回给客户端，并不等待从节点复制完成
+
+### 问题
+
+读写分离带来的问题：
+
+- 数据延迟 写入master的数据无法马上在salve上读到
+- 读到过期数据  Redis在3.2版本从节点读取数据之前会检查键的过期时间来决定是否返回数据
+- 从节点故障 需要在客户端维护可用从节点列表，当从节点故障时立刻切换到其他从节点或主节点上
+
+主从配置不一致的问题：
+
+如最大限制内存如果不一致 导致从节点部分数据被淘汰 造成从节点数据与主节点不一致
+
+避免全量复制：
+
+- 从节点启动后会进行一次全量复制 这个无法避免
+- 如果主节点重启 会导致运行ID改变 此时从节点也会进行一次全量复制
+- 主从节点网络断开 如果连接后复制挤压缓冲区不足 也会触发全量复制
+
+避免复制风暴：
+
+复制风暴指大量从节点对同一主节点或者对同一台机器的多个主节点短时间内发起全量复制的过程
+
+- 单主节点复制风暴
+
+使用主从链代替一主多从来解决这个问题
+
+![屏幕截图 2020-10-04 141732](/assets/屏幕截图%202020-10-04%20141732.png)
+
+- 单机器复制风暴
+
+避免将所有主节点放在同一台机器
+
+![屏幕截图 2020-10-04 141808](/assets/屏幕截图%202020-10-04%20141808.png)
+
+如果此时机器A网络挂掉 那么重新启动时 就会导致其他机器的流量全部压向机器A
 
 ### 配置
 
@@ -541,8 +1020,10 @@ replicaof 127.0.0.1 6379
 
 ```
 replica-serve-stale-data yes
-replica-read-only yes
+replica-read-only yes # 从节点的任何修改主节点都无法感知
 repl-diskless-sync no
+
+repl-disable-tcp-nodelay #用于控制是否关闭TCP_NODELAY，默认关闭
 
 repl-backlog-size 1mb 
 #增量复制
@@ -551,18 +1032,52 @@ min-replicas-to-write 3
 min-replicas-max-lag 10
 ```
 
-## Redis哨兵机制
+## 哨兵
 
 - 集群监控：负责监控 redis master 和 slave 进程是否正常工作。
-- 消息通知：如果某个 redis 实例有故障，那么哨兵负责发送消息作为报警通知给管理员。
-- 故障转移：如果 master node 挂掉了，会自动转移到 slave node 上。
-- 配置中心：如果故障转移发生了，通知 client 客户端新的 master 地址
+- 消息通知：Sentinel节点会将故障转移的结果通知给应用方。
+- 故障转移：如果 master node 挂掉了，sentinel会自动选出一个新的redis master node
+- 配置中心：客户端在初始化的时候连接的是Sentinel节点集合，从中获取主节点 信息如果故障转移发生了，通知 client 客户端新的 master 地址
 
 哨兵至少需要 3 个实例，来保证自己的健壮性
+
+当大多数Sentinel节点都认为主节点不可达时，它们会选举出一个Sentinel节点来完成自动故障转移的工作，同时会将这个变化实时通知给Redis应用方
 
 哨兵(sentinel) 是一个分布式系统,你可以在一个架构中运行多个哨兵(sentinel) 进程,这些进程使用流言协议(gossip protocols)来接收关于Master是否下线的信息,并使用投票协议(agreement protocols)来决定是否执行自动故障迁移,以及选择哪个Slave作为新的Master
 
 ![2020224134359](/assets/2020224134359.png)
+![屏幕截图 2020-10-07 155936](/assets/屏幕截图%202020-10-07%20155936.png)
+
+高可用读写分离：
+
+![屏幕截图 2020-10-08 144313](/assets/屏幕截图%202020-10-08%20144313.png)
+
+### 原理
+
+三个定时任务：
+
+- 每隔10秒，每个Sentinel节点会向主节点和从节点发送info命令获取最新的拓扑结构
+- 每隔2秒，每个Sentinel节点会向Redis数据节点的__sentinel__：hello频道上发送该Sentinel节点对于主节点的判断以及当前Sentinel节点的信息 每个Sentinel节点也会订阅该频道
+- 每隔1秒，每个Sentinel节点会向主节点、从节点、其余Sentinel节点
+发送一条ping命令做一次心跳检测
+
+sdown与odown：
+
+- sdown：主观宕机，某一哨兵发现无法连接master
+- odown，一定数量的哨兵发现无法连接master
+
+sentinel领导节点选举：通过raft算法 由sentienl领导节点进行故障转移的操作
+
+#### 故障转移
+
+- 选择一个新主节点
+
+![屏幕截图 2020-10-08 143210](/assets/屏幕截图%202020-10-08%20143210.png)
+
+- Sentinel领导者节点会对第一步选出来的从节点执行slaveof no one命
+令让其成为主节点
+- Sentinel领导者节点会向剩余的从节点发送命令，让它们成为新主节点的从节点
+- Sentinel节点集合会将原来的主节点更新为从节点，并保持着对其关注，当其恢复后命令它去复制新的主节点
 
 ### 数据丢失
 
@@ -571,25 +1086,120 @@ min-replicas-max-lag 10
 
 解决：拒绝客户端的写请求
 
-### sdown与odown
-
-- sdown：主观宕机，某一哨兵发现无法连接master
-- odown，一定数量的哨兵发现无法连接master
-
 ### 哨兵集群的自动发现
 
 通过 redis 的 pub/sub 系统实现的，每个哨兵都会往 `__sentinel__`:hello 这个 channel 里发送一个消息，内容是自己的 host、ip 和 runid 还有对这个 master 的监控配置,这时候所有其他哨兵都可以消费到这个消息，并感知到其他的哨兵的存在
 
 ### 哨兵配置
 
-```
+```config
+# sentinel.conf
 port 26379
 sentinel monitor mymaster 172.17.0.5 6379 2
 ```
 
+这个配置代表需要监控127.0.0.1：6379这个主节点，2代表判断主节点失败至少需要2个Sentinel节点同意，mymaster是主节点的别名
+
 ```sh
 # 启动哨兵
-redis-server ./sentinel.conf --sentinel
+redis-sentinel sentinel.conf
+```
+
+哨兵的一些配置项：
+
+```properties
+# 如果超过了down-after-milliseconds配置的时间且没有有效的回复，则判定节点不可达
+sentinel down-after-milliseconds <master-name> <times>
+# 用来限制在一次故障转移之后，每次向新的主节点发起复制操作的从节点个数
+sentinel parallel-syncs <master-name> <nums>
+# slaveof no one一直失败（例如该从节点此时出现故障），当此过程超过failover-timeout时，则故障转移失败
+sentinel failover-timeout <master-name> <times>
+# 主节点通信密码
+sentinel auth-pass <master-name> <password>
+# 当一些警告级别的Sentinel事件发生（指重要事件，例如-sdown：客观下线、-odown：主观下线）时，会触发对应路径的脚本
+sentinel notification-script <master-name> <script-path>
+# 故障转移结束后，会触发对应路径的脚本
+sentinel client-reconfig-script <master-name> <script-path>
+```
+
+动态调整配置：`sentinel set` 命令
+
+### 监控多个主节点
+
+```properties
+sentinel monitor master-business-1 10.10.xx.1 6379 2
+sentinel monitor master-business-2 10.16.xx.2 6380 2
+```
+
+![屏幕截图 2020-10-07 161029](/assets/屏幕截图%202020-10-07%20161029.png)
+
+### 部署
+
+- Sentinel节点不应该部署在一台物理机器上
+- 部署至少三个且奇数个的Sentinel节点
+- 一套sentinel还是多套sentinel
+  - 一套Sentinel，很明显这种方案在一定程度上降低了维护成本 但如果这套Sentinel节点集合出现异常，可能会对多个Redis数据节点造成影响
+  - 多套Sentinel会造成资源浪费。但是优点也很明显，每套Redis Sentinel都是彼此隔离的
+
+### 运维
+
+节点下线：
+
+- 主节点下线 使用sentienl failover命令选出一个新主节点 将原来的主节点下线
+- 从节点或者sentienl节点下线 保证客户端能感受到从节点的变化 避免发送无效请求
+
+节点上线：
+
+- 添加从节点 添加slaveof配置启动即可
+- 添加sentienl节点 添加sentienl monitor配置启动即可
+
+### API
+
+```sh
+# 查看所有被监控的主节点状态以及相关的统计信息
+sentinel masters
+# 查看指定主节点
+sentinel master <master name>
+# 查看指定主节点的从节点
+sentinel slaves <master name>
+# 列出指定的主从集群sentinel节点（不包含本节点）
+sentinel sentinels <master name>
+# 返回指定的主节点地址和端口
+sentinel get-master-addr-by-name <master name>
+# 对符合<pattern>（通配符风格）主节点的配置进行重置
+sentinel reset <pattern>
+# 强制对集群进行故障转移
+sentinel failover <master name>
+# 检测当前可达的Sentinel节点总数是否达到<quorum>的个数
+sentinel ckquorum <master name>
+# 将Sentinel节点的配置强制刷到磁盘上
+sentinel flushconfig
+# 取消当前sentinel节点对指定master的监控那个
+sentinel remove <master name>
+# 监控指定master
+sentinel monitor <master name> <ip> <port> <quorum>
+# Sentinel节点之间用来交换对主节点是否下线的判断
+sentinel is-master-down-by-addr
+```
+
+### 客户端连接
+
+1）遍历Sentinel节点集合获取一个可用的Sentinel节点
+
+2）通过sentinel get-master-addr-by-name master-name这个API来获取对应主节点的相关信息
+
+3）验证当前获取的“主节点”是真正的主节点，这样做的是为了防止获取之后主节点又发生了变化
+
+4）保持和Sentinel节点集合的“联系”，时刻获取关于主节点的相关“信息”
+
+Java 客户端：
+
+```java
+JedisSentinelPool pool =
+    new JedisSentinelPool("mymaster", Set.of("192.168.1.101:26379","192.168.1.101:26380","192.168.1.101:26381"));
+Jedis resource = pool.getResource();
+System.out.println(resource.ping());
+resource.close();
 ```
 
 ## 集群
@@ -624,7 +1234,6 @@ redis cluster 有固定的 16384 个 hash slot，集群中的每个node平均分
 1，问题，击穿，压到mysql
 2，方案：每次取离我最近的2个物理节点
 
-
 更倾向于 作为缓存，而不是数据库用！！！！
 
 ### 节点间的通信
@@ -644,9 +1253,59 @@ redis 维护集群元数据采用了gossip协议，所有节点都持有一份�
 
 redis采用 IO 多路复用机制同时监听多个 socket，将产生事件的 socket 压入内存队列中，事件分派器根据 socket 上的事件类型来选择对应的事件处理器进行处理
 
-（Redis 6.0之后引入多线程来处理IO）
+Redis 单线程模型指的是只有一条线程来处理命令
 
 单线程对每个命令的执行时间是有要求的 某个命令执行过长 就会造成其他命令的阻塞
+
+### 发现阻塞
+
+- 当Redis阻塞时，线上应用服务应该最先感知到，这时应用方会收到大量Redis超时异常，比如Jedis客户端会抛出JedisConnectionException异常
+
+此时可以进行日志记录 监控系统通过日志来进行监控报警 需要注意的是要改造Redis客户端 使其记录具体的Redis实例
+
+开源的监控系统：CacheCloud
+
+### 阻塞原因
+
+#### 内在原因
+
+- API或数据结构使用不合理
+
+有些操作的时间复杂度为O(n) 这在高并发场景是不能接受的
+
+这种情况需要重点注意**慢查询**以及**大对象** 针对它们进行优化
+
+- CPU饱和
+
+请求量很大 需要进行水平扩容来降低单实例的压力
+
+- 持久化阻塞
+
+fork阻塞：如避免使用过大的内存实例和规避fork缓慢的操作系统等
+
+AOF刷盘阻塞：当硬盘压力过大 fsync命令可能会导致阻塞
+
+HugePage写阻塞：对于开启Transparent HugePages的操作系统，每次写命令引起的复制内存页单位由4K变为2MB 会拖慢写操作的速度
+
+#### 外在原因
+
+- CPU竞争
+
+进程竞争：当其他进程过度消耗CPU时，将严重影响Redis吞吐量
+
+CPU绑定：如果将Redis绑定在某个核上 那么在持久化的时候子进程与父进程共存 会导致父进程可用CPU不足
+
+- 内存交换
+
+内存与硬盘读写速度差几个数量级，会导致发生交换后的Redis性能急剧下降
+
+- 网络问题：
+
+连接拒绝：网络闪断 连接数超过redis的最大连接数 linux文件符限制或者back_log限制导致的连接溢出
+
+网络延迟：避免物理具体过远
+
+网卡软中断：单个网卡队列只能使用一个CPU，高并发下网卡数据交互都集中在同一个CPU，导致无法充分利用多核CPU的情况
 
 ### 单线程模型也能高效率的原因
 
@@ -654,6 +1313,113 @@ redis采用 IO 多路复用机制同时监听多个 socket，将产生事件的 
 - C语言实现
 - 基于非阻塞IO多路复用
 - 单线程避免了频繁上下文切换带来的性能损失以及多线程的锁竞争问题
+
+## Redis的内存
+
+### 内存消耗
+
+内存使用统计：info memory命令
+
+![屏幕截图 2020-10-06 134150](/assets/屏幕截图%202020-10-06%20134150.png)
+
+内存消耗划分：
+
+1. 对象内存 内存占用最大的一块 简单理解为sizeof（keys）+sizeof（values） 应当避免使用过长的键
+2. 缓冲内存 客户端缓存 复制积压缓冲 AOF缓冲等
+3. 内存碎片 默认的内存分配器采用jemalloc，可选的分配器还有：glibc、tcmalloc 频繁更新以及过期键的删除会使碎片率上升 使用整齐的是数据结构减少碎片 或者使用高可用架构重启服务器来整理内存碎片
+
+子进程内存消耗：
+
+Redis产生的子进程并不需要消耗1倍的父进程内存，实际消耗根据期间写入命令量决定，但是依然要预留出一些内存防止溢出
+
+### 内存管理
+
+**Redis默认无限使用服务器内存**
+
+设置内存上限：maxmemory配置项 限制的是Redis实际使用的内存量，也就是used_memory统计项对应的内存
+
+动态调整内存上限：`config set maxmemory`
+
+#### 内存回收
+
+删除过期键对象：
+
+- 惰性删除 当客户端读取带有超时属性的键时，如果已经超过键设置的过期时间，会执行删除操作并返回空 虽然节省CPU 但存在过期对象无法及时回收 内存泄漏的问题
+- 定时任务删除 Redis内部维护一个定时任务，默认每秒运行10次
+![屏幕截图 2020-10-06 141625](/assets/屏幕截图%202020-10-06%20141625.png)
+
+循环执行指的是执行回收逻辑 直到不足25%或运行超时为止
+
+内存溢出淘汰策略：
+
+设置内存最大使用量，当内存使用量超出时，会施行数据淘汰策略
+
+策略              | 描述
+--------------- | --------------------------
+volatile-lru    | 从已设置过期时间的数据集中挑选最近最少使用的数据淘汰（**最常用**）
+volatile-ttl    | 从已设置过期时间的数据集中挑选将要过期的数据淘汰
+volatile-random | 从已设置过期时间的数据集中任意选择数据淘汰
+allkeys-lru     | 从所有数据集中挑选最近最少使用的数据淘汰
+allkeys-random  | 从所有数据集中任意选择数据进行淘汰
+noeviction      | 禁止驱逐数据，当内存不足时，写入操作会被拒绝
+
+内存溢出淘汰策略可以采用config set maxmemory-policy{policy}动态配置
+
+### 内存优化
+
+redisObject：
+
+Redis存储的所有值对象在内部定义为redisObject结构体
+
+```c
+struct {
+  type // 表示当前对象使用的数据类型
+  encoding // 代表当前对象内部采用哪种数据结构实现
+  lru // 记录对象最后一次被访问的时间
+  refcount // 记录当前对象被引用的次数 Redis可以使用共享对象的方式来节省内存
+  *ptr // 如果是整数，直接存储数据；否则表示指向数据的指针 3.0之后对值对象是字符串且长度<=39字节的会直接存储在这 避免间接内存操作
+}
+```
+
+#### 缩减键值对象
+
+设计键时，在完整描述业务情况下，键值越短越好 值对象尽量选择更高效的序列化工具进行压缩
+
+#### 共享对象池
+
+当数据大量使用[0-9999]的整数时，共享对象池可以节约大量内存
+
+当启用LRU相关淘汰策略如：volatile-lru，allkeys-lru时，Redis禁止使用共享对象池
+
+#### 字符串优化
+
+字符串结构：
+
+```c
+struct {
+  int len; // 已用字节长度
+  int free; // 未用字节长度
+  char buf[]; // 字节数组
+}
+```
+
+内部实现空间预分配机制，降低内存再分配次数，字符串缩减后的空间不释放，作为预分配空间保留 这就导致如果对字符串进行 append setrange等操作 就会有内存碎片的产生
+
+可以使用hash来代替字符串类型存储json 不仅支持部分存取 数据量一大时也更节省内存
+
+#### 编码优化
+
+通过不同编码实现效率和空间的平衡
+
+编码转换的流程：
+
+![屏幕截图 2020-10-06 145220](/assets/屏幕截图%202020-10-06%20145220.png)
+
+#### 控制键的数量
+
+对于存储相同的数据内容利用Redis的数据结构降低外层键的数量，也可以节省大量内存
+
+对于需要对如hash的内部数据进行过期处理 就必须通过外部定时任务扫描的方式来进行过期处理
 
 ## 整合Lua
 
@@ -694,6 +1460,13 @@ redis-cli script load "$(cat test.lua)"
 ```sh
 redis-cli evalsha "7a2054836e94e19da22c13f160bd987fbc9ef146" 0
 ```
+
+### lua脚本管理
+
+- script load
+- script exists
+- script flush
+- script kill
 
 ## redis vs memcached
 

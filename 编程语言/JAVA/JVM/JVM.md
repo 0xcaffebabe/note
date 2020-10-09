@@ -23,7 +23,27 @@ JDK14:<https://docs.oracle.com/javase/specs/jvms/se14/jvms14.pdf>
 
 ![批注 2020-07-10 090055](/assets/批注%202020-07-10%20090055.png)
 
-## Hotspot构成
+## JVM 体系结构
 
-![](https://img-blog.csdn.net/20170921211514799?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbmV3Y2hlbnhm/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+![202010510539](/assets/202010510539.png)
 
+- 类加载器
+- 内存区
+- 执行引擎
+
+基于栈的架构：
+
+- 平台无关 不同的平台寄存器各不相同
+- 基于栈的寄存器指令更加紧凑
+
+执行引擎的架构：
+
+![屏幕截图 2020-10-05 103533](/assets/屏幕截图%202020-10-05%20103533.png)
+
+执行引擎的执行过程：
+
+![屏幕截图 2020-10-05 105134](/assets/屏幕截图%202020-10-05%20105134.png)
+
+方法调用：
+
+执行方法调用指令时 会创建一个新栈帧 这个栈帧会存储传递过来的参数

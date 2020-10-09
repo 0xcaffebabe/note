@@ -108,14 +108,17 @@ public static class Api {
 </dependency>
 ```
 
-- bootstrap.properties
-
 ```properties
+# bootstrap.properties
 spring.cloud.nacos.config.server-addr=127.0.0.1:8848
 spring.cloud.nacos.config.name=provider-config
+# 指定配置文件后缀名
+spring.cloud.nacos.config.file-extension=properties
 ```
 
 ![批注 2020-04-02 143345](/assets/批注%202020-04-02%20143345.png)
+
+默认格式：${config-name}-${profile}.#{file-extension}
 
 - 使用
 
@@ -123,13 +126,67 @@ spring.cloud.nacos.config.name=provider-config
 applicationContext.getEnvironment().getProperty("app.name")
 ```
 
+#### 自定义namespace
+
+不同的命名空间下，可以存在相同的 Group 或 Data ID 的配置。Namespace 的常用场景之一是不同环境的配置的区分隔离
+
+通过指定 ${spring.cloud.nacos.config.namespace} 配置来实现
+
+#### 自定义Group
+
+${spring.cloud.nacos.config.group}
+
+#### 自定义data-id
+
+```properties
+spring.cloud.nacos.config.extension-configs[0].data-id=xxx
+# 配置支持刷新
+spring.cloud.nacos.config.extension-configs[0].refresh=true
+```
+
+### 配置的优先级
+
+- 高：通过内部相关规则(应用名、应用名+ Profile )自动生成相关的 Data Id 配置
+- 中：通过 spring.cloud.nacos.config.extension-configs[n].data-id 的方式支持多个扩展 Data Id 的配置
+- 低：通过 spring.cloud.nacos.config.shared-dataids 支持多个共享 Data Id 的配置
+
 #### 配置中心集群
 
 ![批注 2020-04-02 151146](/assets/批注%202020-04-02%20151146.png)
 
 ## Sentinel
 
-- 替代hystrix
+### 基本概念
+
+- 资源：可以是 Java 应用程序中的任何内容
+- 规则：包括流量控制规则、熔断降级规则以及系统保护规则
+
+流量控制：Sentinel 作为一个调配器，可以根据需要把随机的请求调整成合适的形状
+
+![屏幕截图 2020-09-28 160547](/assets/屏幕截图%202020-09-28%20160547.png)
+
+流量控制可以从以下角度切入：
+
+- 资源的调用关系，例如资源的调用链路，资源和资源之间的关系
+- 运行指标，例如 QPS、线程池、系统负载等
+- 控制的效果，例如直接限流、冷启动、排队等
+
+熔断降级：
+
+Hystrix 通过线程池的方式，来对依赖(在我们的概念中对应资源)进行了隔离。这样做的好处是资源和资源之间做到了最彻底的隔离。缺点是除了增加了线程切换的成本
+
+sentinel 通过使用以下方式限制：
+
+- 并发线程数 同计数器 当线程数达到一定数量 新的请求就会被拒绝
+- 响应时间 当资源响应时间超过阈值 对该资源的访问会直接拒绝
+
+### 基本原理
+
+所有的资源都对应一个资源名称以及一个 Entry。Entry 可以通过对主流框架的适配自动创建，也可以通过注解的方式或调用 API 显式创建
+
+通过一系列的Slot来实现相对应的功能
+
+![屏幕截图 2020-09-28 163146](/assets/屏幕截图%202020-09-28%20163146.png)
 
 ### vs hystrix
 
@@ -149,8 +206,21 @@ item    | Sentinel                          | Hystrix
 
 ### 基本使用
 
+```xml
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+</dependency>
+```
+
 ```java
 @GetMapping("/name")
-@SentinelResource(value = "test-resource",blockHandlerClass = {ServiceFallback.class})
+@SentinelResource(value = "resource1",blockHandlerClass = {ServiceFallback.class})
 public String name() { return "provider"+port; }
 ```
+
+#### sentinel-dashboard
+
+- 添加流控规则
+
+![屏幕截图 2020-09-28 162556](/assets/屏幕截图%202020-09-28%20162556.png)

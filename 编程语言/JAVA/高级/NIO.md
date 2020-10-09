@@ -53,14 +53,28 @@ NIO 的线程模型
 
 ## 核心类
 
-- Buffer
-  - byte容器
-  - position limit capacity
-- Channel
+![屏幕截图 2020-09-28 140403](/assets/屏幕截图%202020-09-28%20140403.png)
 
 ### ByteBuffer
 
-- HeapByteBuffer
+属性：
+
+- capacity 缓冲区数组总长度
+- position 下一个要操作的数据元素位置
+- limit 缓冲区不可操作的下一个元素的位置 limit<=capacity
+- mark 类似于书签
+
+![屏幕截图 2020-09-28 141745](/assets/屏幕截图%202020-09-28%20141745.png)
+
+![屏幕截图 2020-09-28 141838](/assets/屏幕截图%202020-09-28%20141838.png)
+
+### NIO的文件读写
+
+FileChannel.transferXXX:
+
+![屏幕截图 2020-09-28 142245](/assets/屏幕截图%202020-09-28%20142245.png)
+
+FileChannel.map: 将文件映射为内存区域
 
 ### 文件输出例子
 

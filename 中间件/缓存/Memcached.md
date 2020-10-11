@@ -88,3 +88,29 @@ echo "stats settings" | nc localhost 11211
 压缩：客户端都支持压缩大数据 小数据压缩得不偿失
 
 管理连接对象：注意连接的管理 如果不注意 每次操作都打开一个连接 会造成连接泄漏
+
+## Java 客户端
+
+```xml
+<dependency>
+    <groupId>com.googlecode.xmemcached</groupId>
+    <artifactId>xmemcached</artifactId>
+    <version>2.4.6</version>
+</dependency>
+```
+```java
+MemcachedClient client = new XMemcachedClient("192.168.1.101", 11211);
+
+//同步存储value到memcached，缓存超时为1小时，3600秒。
+client.set("key", 3600, "jntm");
+//从memcached获取key对应的value
+Object someObject = client.get("key");
+System.out.println(someObject);
+//从memcached获取key对应的value,操作超时2秒
+someObject = client.get("key", 2000);
+//更新缓存的超时时间为10秒。
+boolean success = client.touch("key", 10);
+System.out.println(success);
+//删除value
+client.delete("key");
+```

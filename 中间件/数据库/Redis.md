@@ -1625,6 +1625,57 @@ redis-cli evalsha "7a2054836e94e19da22c13f160bd987fbc9ef146" 0
 - script flush
 - script kill
 
+## redis运维
+
+### Linux配置优化
+
+- vm.overcommit_memory：内存分配策略
+
+![屏幕截图 2020-10-13 135525](/assets/屏幕截图%202020-10-13%20135525.png)
+
+- swappiness：值越大，说明操作系统可能使用swap的概率越高
+
+![屏幕截图 2020-10-13 135746](/assets/屏幕截图%202020-10-13%20135746.png)
+
+- THP特性：支持大内存页（2MB）分配，默认开启。当开启时可以降低fork子进程的速度，但fork操作之后，每个内存页从原来4KB变为2MB，会大幅增加重写期间父进程内存消耗 **建议关闭**
+
+- OOM killer会在可用内存不足时选择性地杀掉用户进程 会为每个用户进
+程设置一个权值，这个权值越高，被“下手”的概率就越高
+
+- 使用NTP（网络时间协议）来避免异常情况下的日志排查困难
+- ulimit 设置同时打开的最大文件个数
+- TCP backlog 
+
+### 删库补救
+
+持久化文件是恢复数据的媒介
+
+误操作之后大AOF重写参数auto-aof-rewrite-percentage和auto-aof-rewrite-min-size，让Redis不能产生AOF自动重写
+
+以及拒绝手动bgrewriteaof
+
+### 安全
+
+- requirepass配置为Redis提供密码功能
+- rename-command伪装危险命令
+- bind指定的Redis和哪个网卡进行绑定
+
+### bigkey处理
+
+bigkey是指key对应的value所占的内存空间比较大
+
+- 可能造成内存倾斜
+- 大key会造成操作阻塞或者网络阻塞
+
+使用redis-cli --bigkeys统计bigkey
+
+### 热点key
+
+- 客户端计数
+- 代理端计数
+- 服务端monitor命令输出统计 高并发情况下会有性能问题
+- 通过TCP网络抓包进行统计
+
 ## redis vs memcached
 
 - redis支持复杂的数据结构

@@ -1996,3 +1996,42 @@ class Solution {
 ```
 
 耗时：2
+
+## 222. 完全二叉树的节点个数
+
+<https://leetcode-cn.com/problems/count-complete-tree-nodes/>
+
+```java
+class Solution {
+    public int countNodes(TreeNode root) {
+        if (root == null) return 0;
+        if (root.left == null && root.right == null) return 1;
+        int l = countNodes(root.left);
+        int r = countNodes(root.right);
+        return l + r + 1;
+    }
+}
+```
+
+耗时：0
+
+## 747. 至少是其他数字两倍的最大数
+
+<https://leetcode-cn.com/problems/largest-number-at-least-twice-of-others/>
+
+```java
+class Solution {
+    public int dominantIndex(int[] nums) {
+        int maxIndex = 0;
+        for(int i = 0;i<nums.length;i++){
+            if (nums[i] > nums[maxIndex]) maxIndex = i;
+        }
+        for(int i = 0;i<nums.length;i++){
+            if (nums[i] * 2 > nums[maxIndex] && i != maxIndex) return -1;
+        }
+        return maxIndex;
+    }
+}
+```
+
+耗时：0

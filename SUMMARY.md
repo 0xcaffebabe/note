@@ -295,6 +295,7 @@
       - [运行参数](./编程语言/JAVA/JVM/运行参数.md)
       - [内存结构](./编程语言/JAVA/JVM/内存结构.md)
       - [垃圾回收](./编程语言/JAVA/JVM/垃圾回收.md)
+      - [工具](./编程语言/JAVA/JVM/工具.md)
       - [类加载机制](./编程语言/JAVA/JVM/类加载机制.md)
       - [JAVA内存模型](./编程语言/JAVA/JVM/JAVA内存模型.md)
     - [Jakara EE](./编程语言/JAVA/JakartaEE/nav.md)

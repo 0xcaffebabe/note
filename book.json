@@ -19,7 +19,8 @@
         "tbfed-pagefooter",
         "hide-element",
         "page-toc-button",
-        "github"
+        "github",
+        "lightbox"
     ],
     "pluginsConfig": {
         "sharing": {

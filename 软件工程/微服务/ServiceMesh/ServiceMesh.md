@@ -47,3 +47,35 @@ SpringCloud Dubbo 等微服务框架的痛点：
 - 对运维要求更高
 - 增加了一个中间层 肯定会有延迟问题
 - 平台适配的侵入性
+
+## ServiceMesh K8S Istio
+
+### Kubernetes vs Service Mesh
+
+![20201024153146](/assets/20201024153146.png)
+![20201024153524](/assets/20201024153524.png)
+
+- K8S通过kube-proxy组件进行流量转发
+- Istio Service Mesh 可以沿用 Kubernetes 中的 service 做服务注册，还可以通过控制平面的平台适配器对接其他服务发现系统
+
+Service Mesh的劣势：为了细粒度地进行流量管理，必将添加一系列新的抽象，从而会进一步增加用户的学习成本
+
+Service Mesh的优势：kube-proxy 的设置都是全局生效的，无法对每个服务做细粒度的控制， Service Mesh 通过 sidecar proxy 的方式将 Kubernetes 中对流量的控制从 service 一层抽离出来，可以做更多的扩展
+
+### xDS 协议
+
+![20201024154155](/assets/20201024154155.png)
+
+### Envoy
+
+Envoy 是 Istio Service Mesh 中默认的 Sidecar
+
+![20201024154334](/assets/20201024154334.png)
+
+### Istio Service Mesh
+
+![20201024154437](/assets/20201024154437.png)
+
+## Istio
+
+>它是一个完全开源的服务网格，以透明的方式构建在现有的分布式应用中。它也是一个平台，拥有可以集成任何日志、遥测和策略系统的 API 接口。Istio 多样化的特性使你能够成功且高效地运行分布式微服务架构，并提供保护、连接和监控微服务的统一方法。

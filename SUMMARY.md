@@ -350,6 +350,7 @@
   - [go](./编程语言/go.md)
   - [typescript](./编程语言/typescript.md)
   - [HasKell](./编程语言/HasKell.md)
+  - [Ruby](./编程语言/Ruby.md)
 
 - [Spring](./编程语言/JAVA/框架/Spring/spring概览.md)
     - [spring概览](./编程语言/JAVA/框架/Spring/spring概览.md)

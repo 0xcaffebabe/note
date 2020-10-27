@@ -1,5 +1,7 @@
 # 模块化
 
+模块化的访问控制通过类加载过程来完成
+
 JDK8之前jar的缺陷
 
 - jar文件无法控制别人访问其内部的public的类
@@ -7,6 +9,24 @@ JDK8之前jar的缺陷
 - Java运行时，无法判定classpath路径上的jar中有多少个不同版本
 的文件。Java加载第一个符合名字的类
 - Java运行时，无法预判classpath路径上是否缺失了一些关键类
+
+## 兼容Java9 之前
+
+- 所有类路径下的JAR文件及其他资源文件，都被视为自动打包在一个匿名模块（Unnamed Module）里，这个匿名模块几乎是没有任何隔离的，它可以看到和使用类路径上所有的包、JDK系统模块中所有的导出包，以及模块路径上所有模块中导出的包
+- 模块路径下的具名模块（Named Module）只能访问到它依赖定义中列明依赖的模块和包，匿名模块里所有的内容对具名模块来说都是不可见的
+- 如果把一个传统的、不包含模块定义的JAR文件放置到模块路径中，它就会变成一个自动模块（Automatic Module）。尽管不包含module-info.class，但自动模块将默认依赖于整个模块路径中的所有模块
+
+## 模块化下的类加载器
+
+扩展类加载器（Extension Class Loader）被平台类加载器（Platform Class Loader）取代
+
+新版的JDK也没了jre 现在可以用过jlink打包出一个jre：
+
+```sh
+jlink -p $JAVA_HOME/jmods --add-modules java.base --output jre
+```
+
+平台类加载器和应用程序类加载器都不再派生自java.net.URLClassLoader
 
 ## 模块化原则
 

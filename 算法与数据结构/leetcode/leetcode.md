@@ -2116,3 +2116,43 @@ class Solution {
 ```
 
 耗时：12
+
+## 744. 寻找比目标字母大的最小字母
+
+<https://leetcode-cn.com/problems/find-smallest-letter-greater-than-target/>
+
+```java
+class Solution {
+    public char nextGreatestLetter(char[] letters, char target) {
+        for(int i = 0;i<letters.length;i++){
+            if (letters[i] > target) return letters[i];
+        }
+        return letters[0];
+    }
+}
+```
+
+耗时：0
+
+## 144. 二叉树的前序遍历
+
+<https://leetcode-cn.com/problems/binary-tree-preorder-traversal/>
+
+```java
+class Solution {
+    public List<Integer> preorderTraversal(TreeNode root) {
+        List<Integer> list = new ArrayList<>();
+        preTravel(root,list);
+        return list;
+    }
+
+    private void preTravel(TreeNode root, List<Integer> list){
+        if (root == null) return;
+        list.add(root.val);
+        preTravel(root.left, list);
+        preTravel(root.right, list);
+    }
+}
+```
+
+耗时：0

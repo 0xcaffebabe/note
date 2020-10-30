@@ -1919,3 +1919,240 @@ class Solution {
 ```
 
 耗时：0
+
+## 118. 杨辉三角
+
+<https://leetcode-cn.com/problems/pascals-triangle/>
+
+```java
+class Solution {
+    public List<List<Integer>> generate(int numRows) {
+        List<List<Integer>> list = new ArrayList<>();
+        for(int i=0;i<numRows;i++){
+            List<Integer> seq = new ArrayList<>();
+            for(int j = 0;j<=i;j++){
+                if (j == 0 || j == i) {
+                    seq.add(1);
+                    continue;
+                }
+                seq.add(list.get(i-1).get(j-1) + list.get(i-1).get(j));
+            }
+            list.add(seq);
+        }
+        return list;
+    }
+}
+```
+
+耗时：1
+
+## 231. 2的幂
+
+<https://leetcode-cn.com/problems/power-of-two/>
+
+```java
+class Solution {
+    public boolean isPowerOfTwo(int n) {
+        int k = 1;
+        while (true){
+            if (n == k) return true;
+            if (k > n) return false;
+            if (k < 0) break;
+            k <<= 1;
+        }
+        return false;
+    }
+}
+```
+
+耗时：1
+
+## 844. 比较含退格的字符串
+
+<https://leetcode-cn.com/problems/backspace-string-compare/>
+
+```java
+class Solution {
+    public boolean backspaceCompare(String S, String T) {
+        LinkedList<Character> s1 = new LinkedList<>();
+        LinkedList<Character> s2 = new LinkedList<>();
+        for(int i = 0;i<S.length();i++){
+            char c = S.charAt(i);
+            if (c == '#' && !s1.isEmpty()) s1.pop();
+            else if(c != '#') s1.push(c);
+        }
+        for(int i = 0;i<T.length();i++){
+            char c = T.charAt(i);
+            if (c == '#' && !s2.isEmpty()) s2.pop();
+            else if(c != '#') s2.push(c);
+        }
+        if (s1.size() != s2.size()) return false;
+        while(!s1.isEmpty() && !s2.isEmpty()){
+            if (s1.pop() != s2.pop()) return false;
+        }
+        return true;
+    }
+}
+```
+
+耗时：2
+
+## 222. 完全二叉树的节点个数
+
+<https://leetcode-cn.com/problems/count-complete-tree-nodes/>
+
+```java
+class Solution {
+    public int countNodes(TreeNode root) {
+        if (root == null) return 0;
+        if (root.left == null && root.right == null) return 1;
+        int l = countNodes(root.left);
+        int r = countNodes(root.right);
+        return l + r + 1;
+    }
+}
+```
+
+耗时：0
+
+## 747. 至少是其他数字两倍的最大数
+
+<https://leetcode-cn.com/problems/largest-number-at-least-twice-of-others/>
+
+```java
+class Solution {
+    public int dominantIndex(int[] nums) {
+        int maxIndex = 0;
+        for(int i = 0;i<nums.length;i++){
+            if (nums[i] > nums[maxIndex]) maxIndex = i;
+        }
+        for(int i = 0;i<nums.length;i++){
+            if (nums[i] * 2 > nums[maxIndex] && i != maxIndex) return -1;
+        }
+        return maxIndex;
+    }
+}
+```
+
+耗时：0
+
+## 234. 回文链表
+
+<https://leetcode-cn.com/problems/palindrome-linked-list/>
+
+```java
+class Solution {
+    private ListNode origin;
+    public boolean isPalindrome(ListNode head) {
+        origin = head;
+        return travel(head);
+    }
+    private boolean travel(ListNode head){
+        if (head == null) return true;
+        if (!travel(head.next)){
+            return false;
+        }
+        if (head.val == origin.val){
+            origin = origin.next;
+            return true;
+        }else {
+            return false;
+        }
+    }
+}
+```
+
+耗时：2
+
+## 938. 二叉搜索树的范围和
+
+<https://leetcode-cn.com/problems/range-sum-of-bst/>
+
+```java
+class Solution {
+    public int rangeSumBST(TreeNode root, int L, int R) {
+        int[] sum = new int[]{0};
+        midTravel(root,sum,L,R);
+        return sum[0];
+    }
+    private void midTravel(TreeNode root,int[] sum,int l,int r){
+        if (root == null) return;
+        midTravel(root.left, sum,l,r);
+        if (root.val >=l && root.val <=r ) sum[0] += root.val;
+        midTravel(root.right, sum,l,r);
+    }
+}
+```
+
+耗时：1
+
+## 929. 独特的电子邮件地址
+
+<https://leetcode-cn.com/problems/unique-email-addresses/>
+
+```java
+class Solution {
+    public int numUniqueEmails(String[] emails) {
+        List<String> list = new ArrayList<>();
+        for(String s: emails){
+            String[] a = s.split("@");
+            String name = a[0];
+            String domain = a[1];
+            StringBuilder sb = new StringBuilder();
+            for(int i = 0;i<name.length();i++){
+                char c = name.charAt(i);
+                if (c == '+') break;
+                if (c != '.') sb.append(c);
+            }
+            sb.append("@");
+            sb.append(domain);
+            if (!list.contains(sb.toString())){
+                list.add(sb.toString());
+            }
+        }
+        return list.size();
+    }
+}
+```
+
+耗时：12
+
+## 744. 寻找比目标字母大的最小字母
+
+<https://leetcode-cn.com/problems/find-smallest-letter-greater-than-target/>
+
+```java
+class Solution {
+    public char nextGreatestLetter(char[] letters, char target) {
+        for(int i = 0;i<letters.length;i++){
+            if (letters[i] > target) return letters[i];
+        }
+        return letters[0];
+    }
+}
+```
+
+耗时：0
+
+## 144. 二叉树的前序遍历
+
+<https://leetcode-cn.com/problems/binary-tree-preorder-traversal/>
+
+```java
+class Solution {
+    public List<Integer> preorderTraversal(TreeNode root) {
+        List<Integer> list = new ArrayList<>();
+        preTravel(root,list);
+        return list;
+    }
+
+    private void preTravel(TreeNode root, List<Integer> list){
+        if (root == null) return;
+        list.add(root.val);
+        preTravel(root.left, list);
+        preTravel(root.right, list);
+    }
+}
+```
+
+耗时：0

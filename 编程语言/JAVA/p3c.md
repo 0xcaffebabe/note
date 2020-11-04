@@ -92,6 +92,7 @@
 - <span style="color:red">【强制】</span>外部正在调用或者二方库依赖的接口，不允许修改方法签名，避免对接口调用方产生影响。接口过时必须加@ Deprecated 注解，并清晰地说明采用的新接口或者新服务是什么
 - <span style="color:red">【强制】</span>不能使用过时的类或方法
 - <span style="color:red">【强制】</span> Object 的 equals 方法容易抛空指针异常，应使用常量或确定有值的对象来调用equals 
+- <span style="color:red">【强制】</span> 任何货币金额，均以最小货币单位且整型类型来进行存储
 - <span style="color:red">【强制】</span>所有整型包装类对象之间值的比较，全部使用 equals 方法比较
 - <span style="color:red">【强制】</span>浮点数之间的等值判断，基本数据类型不能用==来比较，包装数据类型不能用equals 来判断
 - <span style="color:red">【强制】</span>定义数据对象 DO 类时，属性类型要与数据库字段类型相匹配
@@ -112,6 +113,22 @@
 - <span style="color:yellow">【推荐】</span>慎用 Object 的 clone 方法来拷贝对象，该方法默认为浅拷贝
 - <span style="color:yellow">【推荐】</span>类成员与方法访问控制从严
 
+### 日期时间
+
+- <span style="color:red">【强制】</span>日期格式化时，传入 pattern 中表示年份统一使用小写的 y
+- <span style="color:red">【强制】</span>在日期格式中分清楚大写的 M 和小写的 m，大写的 H 和小写的 h 分别指代的意义
+  - 表示月份是大写的 M；
+  - 表示分钟则是小写的 m；
+  - 24 小时制的是大写的 H；
+  - 12 小时制的则是小写的 h
+- <span style="color:red">【强制】</span>获取当前毫秒数：System.currentTimeMillis(); 而不是 new Date().getTime() JDK8以上可以使用 Instant
+- <span style="color:red">【强制】</span>不允许在程序任何地方中使用：1）java.sql.Date。 2）java.sql.Time。3）java.sql.Timestamp
+- <span style="color:red">【强制】</span>不要在程序中写死一年为 365 天
+- <span style="color:yello">【推荐】</span>避免公历闰年 2 月问题。闰年的 2 月份有 29 天，一年后的那一天不可能是 2 月 29日
+- <span style="color:yello">【推荐】</span>使用枚举值来指代月份。如果使用数字，注意 Date，Calendar 等日期相关类的月份month 取值在 0-11 之间
+
+
+
 ### 集合处理
 
 - <span style="color:red">【强制】</span>关于 hashCode 和 equals 的处理，遵循如下规则
@@ -119,6 +136,9 @@
   -  因为 Set 存储的是不重复的对象，依据 hashCode 和 equals 进行判断，所以 Set 存储的对象必须覆
 写这两个方法。
   -  如果自定义对象作为 Map 的键，那么必须覆写 hashCode 和 equals。
+- <span style="color:red">【强制】</span>判断所有集合内部的元素是否为空，使用 isEmpty()方法，而不是 size()==0 的方式
+- <span style="color:red">【强制】</span>在使用 java.util.stream.Collectors 类的 toMap()方法转为 Map 集合时，一定要使用含有参数类型为 BinaryOperator，参数名为 mergeFunction 的方法，否则当出现相同 key值时会抛出 IllegalStateException 异常
+- <span style="color:red">【强制】</span>在使用 java.util.stream.Collectors 类的 toMap()方法转为 Map 集合时，一定要注意当 value 为 null 时会抛 NPE 异常
 - <span style="color:red">【强制】</span>ArrayList 的 subList 结果不可强转成 ArrayList subList返回的是原来List的一个映射 在subList上所做的修改都会反映到原List
 - <span style="color:red">【强制】</span>使用 Map 的方法 keySet() / values() / entrySet() 返回集合对象时，不可以对其进行添加元素操作，否则会抛出 UnsupportedOperationException 异常
 - <span style="color:red">【强制】</span>Collections 类返回的对象，如： emptyList() / singletonList() 等都是 immutablelist，不可对其进行添加或者删除元素的操作
@@ -137,3 +157,106 @@
 - <span style="color:yellow">【推荐】</span>高度注意 Map 类集合 K/V 能不能存储 null 值的情况
 - <span style="color:green">【参考】</span>合理利用好集合的有序性(sort)和稳定性(order)，避免集合的无序性(unsort)和不稳定性(unorder)带来的负面影响
 - <span style="color:green">【参考】</span>利用 Set 元素唯一的特性，可以快速对一个集合进行去重操作
+
+### 并发处理
+
+- <span style="color:red">【强制】</span>获取单例对象需要保证线程安全，其中的方法也要保证线程安全
+- <span style="color:red">【强制】</span>创建线程或线程池时请指定有意义的线程名称，方便出错时回溯
+- <span style="color:red">【强制】</span>线程资源必须通过线程池提供，不允许在应用中自行显式创建线程
+- <span style="color:red">【强制】</span>线程池不允许使用 Executors 去创建，而是通过 ThreadPoolExecutor 的方式，这样的处理方式让写的同学更加明确线程池的运行规则，规避资源耗尽的风险
+- <span style="color:red">【强制】</span>SimpleDateFormat 是线程不安全的类，一般不要定义为 static 变量，如果定义为static ，必须加锁，或者使用 DateUtils 工具类
+- <span style="color:red">【强制】</span>必须回收自定义的 ThreadLocal 变量，尤其在线程池场景下，线程经常会被复用，如果不清理自定义的 ThreadLocal 变量，可能会影响后续业务逻辑和造成内存泄露等问题。尽量在代理中使用 try-finally 块进行回收
+- <span style="color:red">【强制】</span>高并发时，同步调用应该去考量锁的性能损耗。能用无锁数据结构，就不要用锁 ；能锁区块，就不要锁整个方法体 ； 能用对象锁，就不要用类锁
+- <span style="color:red">【强制】</span>对多个资源、数据库表、对象同时加锁时，需要保持一致的加锁顺序，否则可能会造成死锁
+- <span style="color:red">【强制】</span>在使用阻塞等待获取锁的方式中，必须在 try 代码块之外，并且在加锁方法与 try 代码块之间没有任何可能抛出异常的方法调用，避免加锁成功后，在 finally 中无法解锁
+- <span style="color:red">【强制】</span>在使用尝试机制来获取锁的方式中，进入业务代码块之前，必须先判断当前线程是否持有锁
+- <span style="color:red">【强制】</span>并发修改同一记录时，避免更新丢失，需要加锁。要么在应用层加锁，要么在缓存加锁，要么在数据库层使用乐观锁，使用 version 作为更新依据
+- <span style="color:red">【强制】</span>多线程并行处理定时任务时， Timer 运行多个 TimeTask 时，只要其中之一没有捕获抛出的异常，其它任务便会自动终止运行，如果在处理定时任务时使用ScheduledExecutorService 则没有这个问题
+- <span style="color:yellow">【推荐】</span>资金相关的金融敏感信息，使用悲观锁策略
+- <span style="color:yellow">【推荐】</span>使用 CountDownLatch 进行异步转同步操作，每个线程退出前必须调用 countDown 方法，线程执行代码注意 catch 异常，确保 countDown 方法被执行到，避免主线程无法执行至await 方法，直到超时才返回结果
+- <span style="color:yellow">【推荐】</span>避免 Random 实例被多线程使用
+- <span style="color:yellow">【推荐】</span>通过双重检查锁 （double - checked locking）在并发场景仍然会有问题 此时可以通过配合volatile关键字的方式解决
+- <span style="color:green">【参考】</span>volatile无法解决线程安全问题
+- <span style="color:green">【参考】</span>HashMap 在容量不够进行 resize 时由于高并发可能出现死链，导致 CPU 飙升，在开发过程中注意规避此风险
+- <span style="color:green">【参考】</span>ThreadLocal 对象使用 static 修饰，ThreadLocal 无法解决共享对象的更新问题
+
+### 控制语句
+
+- <span style="color:red">【强制】</span>在一个 switch 块内，每个 case 要么通过 continue/break/return 等来终止，要么注释说明程序将继续执行到哪一个 case 为止；在一个 switch 块内，都必须包含一个 default
+- <span style="color:red">【强制】</span>在一个 switch 块内，每个 case 要么通过 continue/break/return 等来终止，要么注释说明程序将继续执行到哪一个 case 为止；在一个 switch 块内，都必须包含一个 default
+- <span style="color:red">【强制】</span>当 switch 括号内的变量类型为 String 并且此变量为外部参数时，必须先进行 null判断
+- <span style="color:red">【强制】</span>在 if / else / for / while / do 语句中必须使用大括号
+- <span style="color:red">【强制】</span>三目运算符 condition? 表达式 1 : 表达式 2 中，高度注意表达式 1 和 2 在类型对齐时，可能抛出因自动拆箱导致的 NPE 异常
+- <span style="color:red">【强制】</span>在高并发场景中，避免使用”等于”判断作为中断或退出的条件
+- <span style="color:yellow">【推荐】</span>当某个方法的代码总行数超过 10 行时，return / throw 等中断逻辑的右大括号后均需要加一个空行
+- <span style="color:yellow">【推荐】</span>表达异常的分支时，少用 if-else 方式 ，这种方式可以用卫语句 策略模式 状态模式等实现
+- <span style="color:yellow">【推荐】</span>除常用方法（如 getXxx/isXxx ）等外，不要在条件判断中执行其它复杂的语句，将复杂逻辑判断的结果赋值给一个有意义的布尔变量名，以提高可读性
+- <span style="color:yellow">【推荐】</span>不要在其它表达式（尤其是条件表达式）中，插入赋值语句
+- <span style="color:yellow">【推荐】</span>不循环体中的语句要考量性能，以下操作尽量移至循环体外处理，如定义对象、变量、获取数据库连接，进行不必要的 try - catch 操作 （ 这个 try - catch 是否可以移至循环体外 ）
+- <span style="color:yellow">【推荐】</span>避免采用取反逻辑运算符
+- <span style="color:yellow">【推荐】</span>公开接口需要进行入参保护，尤其是批量操作的接口
+- <span style="color:green">【参考】</span>需要进行参数校验的情形
+  - 调用频次低的方法。
+  - 执行时间开销很大的方法。此情形中，参数校验时间几乎可以忽略不计，但如果因为参数错误导致中间执行回退，或者错误，那得不偿失。
+  - 需要极高稳定性和可用性的方法。
+  - 对外提供的开放接口，不管是 RPC/API/HTTP 接口。
+  - 敏感权限入口
+- <span style="color:green">【参考】</span>不需要进行参数校验的情形
+  - 极有可能被循环调用的方法。但在方法说明里必须注明外部参数检查。
+  - 底层调用频度比较高的方法。毕竟是像纯净水过滤的最后一道，参数错误不太可能到底层才会暴露问题。一般 DAO 层与 Service 层都在同一个应用中，部署在同一台服务器中，所以 DAO 的参数校验，可以省略。
+  - 被声明成 private 只会被自己代码所调用的方法，如果能够确定调用方法的代码传入参数已经做过检查或者肯定不会有问题，此时可以不校验参数。
+
+### 注释规约
+
+- <span style="color:red">【强制】</span>类、类属性、类方法的注释必须使用 Javadoc 规范
+- <span style="color:red">【强制】</span>所有的抽象方法 （ 包括接口中的方法 ） 必须要用 Javadoc 注释、除了返回值、参数、异常说明外，还必须指出该方法做什么事情，实现什么功能
+- <span style="color:red">【强制】</span>所有的类都必须添加创建者和创建日期
+- <span style="color:red">【强制】</span>方法内部单行注释，在被注释语句上方另起一行，使用//注释
+- <span style="color:red">【强制】</span>所有的枚举类型字段必须要有注释，说明每个数据项的用途
+- <span style="color:yellow">【推荐】</span>与其“半吊子”英文来注释，不如用中文注释把问题说清楚
+- <span style="color:yellow">【推荐】</span>与其“半吊子”英文来注释，不如用中文注释把问题说清楚
+- <span style="color:yellow">【推荐】</span>代码修改的同时，注释也要进行相应的修改，尤其是参数、返回值、异常、核心逻辑等的修改
+- <span style="color:yellow">【推荐】</span>在类中删除未使用的任何字段、方法、内部类；在方法中删除未使用的任何参数声明与内部变量
+- <span style="color:green">【参考】</span>谨慎注释掉代码。在上方详细说明，而不是简单地注释掉。如果无用，则删除
+- <span style="color:green">【参考】</span>对于注释的要求：第一、能够准确反映设计思想和代码逻辑 ； 第二、能够描述业务含义，使别的程序员能够迅速了解到代码背后的信息。完全没有注释的大段代码对于阅读者形同天书，注释是给自己看的，即使隔很长时间，也能清晰理解当时的思路 ； 注释也是给继任者看的，使其能够快速接替自己的工作
+- <span style="color:green">【参考】</span>好的命名、代码结构是自解释的，注释力求精简准确、表达到位。避免出现注释的一个极端：过多过滥的注释，代码的逻辑一旦修改，修改注释又是相当大的负担
+- <span style="color:green">【参考】</span>特殊注释标记，请注明标记人与标记时间。注意及时处理这些标记，通过标记扫描，经常清理此类标记
+  - todo
+  - fixme
+
+### 前后端规约
+
+- <span style="color:red">【强制】</span>API规范
+  - 协议：生产环境必须使用 HTTPS。
+  - 路径：每一个 API 需对应一个路径，表示 API 具体的请求地址：
+    - 代表一种资源，只能为名词，推荐使用复数，不能为动词，请求方法已经表达动作意义。
+    - URL 路径不能使用大写，单词如果需要分隔，统一使用下划线。
+    - 路径禁止携带表示请求内容类型的后缀，比如".json",".xml"，通过 accept 头表达即可。
+  - 请求方法：对具体操作的定义，常见的请求方法如下：
+    - GET：从服务器取出资源。
+    - POST：在服务器新建一个资源。
+    - PUT：在服务器更新资源。
+    - DELETE：从服务器删除资源。
+  - 请求内容：URL 带的参数必须无敏感信息或符合安全要求；body 里带参数时必须设置 Content-Type。
+  - 响应体：响应体 body 可放置多种数据类型，由 Content-Type 头来确定
+- <span style="color:red">【强制】</span>前后端数据列表相关的接口返回，如果为空，则返回空数组[]或空集合{}
+- <span style="color:red">【强制】</span>服务端发生错误时，返回给前端的响应信息必须包含 HTTP 状态码，errorCode、errorMessage、用户提示信息四个部分
+- <span style="color:red">【强制】</span>在前后端交互的 JSON 格式数据中，所有的 key 必须为小写字母开始的lowerCamelCase 风格
+- <span style="color:red">【强制】</span>errorMessage 是前后端错误追踪机制的体现，可以在前端输出到 type="hidden"文字类控件中，或者用户端的日志中
+- <span style="color:red">【强制】</span>对于需要使用超大整数的场景，服务端一律使用 String 字符串类型返回，禁止使用Long 类型
+- <span style="color:red">【强制】</span>HTTP 请求通过 URL 传递参数时，不能超过 2048 字节
+- <span style="color:red">【强制】</span>HTTP 请求通过 body 传递内容时，必须控制长度，超出最大长度后，后端解析会出错
+- <span style="color:red">【强制】</span>在翻页场景中，用户输入参数的小于 1，则前端返回第一页参数给后端；后端发现用户输入的参数大于总页数，直接返回最后一页
+- <span style="color:red">【强制】</span>服务器内部重定向必须使用 forward；外部重定向地址必须使用 URL 统一代理模块生成，否则会因线上采用 HTTPS 协议而导致浏览器提示“不安全”，并且还会带来 URL 维护不一致的问题
+- <span style="color:yellow">【推荐】</span>服务器返回信息必须被标记是否可以缓存，如果缓存，客户端可能会重用之前的请求结果
+- <span style="color:yellow">【推荐】</span>服务端返回的数据，使用 JSON 格式而非 XML
+- <span style="color:yellow">【推荐】</span>前后端的时间格式统一为"yyyy-MM-dd HH:mm:ss"，统一为 GMT
+- <span style="color:green">【参考】</span>在接口路径中不要加入版本号，版本控制在 HTTP 头信息中体现，有利于向前兼容
+
+### 其他
+
+- <span style="color:red">【强制】</span>在使用正则表达式时，利用好其预编译功能，可以有效加快正则匹配速度
+- <span style="color:red">【强制】</span>避免用 Apache Beanutils 进行属性的 copy
+- <span style="color:red">【强制】</span>注意  Math . random() 这个方法返回是 double 类型，注意取值的范围 0 ≤ x < 1 （ 能够取到零值，注意除零异常 ）
+- <span style="color:yellow">【推荐】</span>不要在视图模板中加入任何复杂的逻辑
+- <span style="color:yellow">【推荐】</span>不任何数据结构的构造或初始化，都应指定大小，避免数据结构无限增长吃光内存

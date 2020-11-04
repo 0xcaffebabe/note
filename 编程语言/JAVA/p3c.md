@@ -260,3 +260,92 @@
 - <span style="color:red">【强制】</span>注意  Math . random() 这个方法返回是 double 类型，注意取值的范围 0 ≤ x < 1 （ 能够取到零值，注意除零异常 ）
 - <span style="color:yellow">【推荐】</span>不要在视图模板中加入任何复杂的逻辑
 - <span style="color:yellow">【推荐】</span>不任何数据结构的构造或初始化，都应指定大小，避免数据结构无限增长吃光内存
+
+## 异常日志
+
+### 错误码
+
+- <span style="color:red">【强制】</span>错误码的制定原则：快速溯源、沟通标准化
+- <span style="color:red">【强制】</span>错误码不体现版本号和错误等级信息
+- <span style="color:red">【强制】</span>全部正常，但不得不填充错误码时返回五个零：00000
+- <span style="color:red">【强制】</span>错误码为字符串类型，共 5 位，分成两个部分：错误产生来源+四位数字编号
+  - 前1位代表来源 后4位代表类型
+- <span style="color:red">【强制】</span>编号不与公司业务架构，更不与组织架构挂钩，以先到先得的原则在统一平台上进行，审批生效，编号即被永久固定
+- <span style="color:red">【强制】</span>编号不与公司业务架构，更不与组织架构挂钩，以先到先得的原则在统一平台上进行，审批生效，编号即被永久固定
+- <span style="color:red">【强制】</span>错误码使用者避免随意定义新的错误码
+- <span style="color:red">【强制】</span>错误码不能直接输出给用户作为提示信息使用
+- <span style="color:yellow">【推荐】</span>错误码之外的业务独特信息由 error_message 来承载，而不是让错误码本身涵盖过多具体业务属性
+- <span style="color:yellow">【推荐】</span>在获取第三方服务错误码时，向上抛出允许本系统转义，将错误来源进行转换 并附带原来的错误码
+- <span style="color:green">【参考】</span>错误码的后三位编号与 HTTP 状态码没有任何关系
+- <span style="color:green">【参考】</span>错误码有利于不同文化背景的开发者进行交流与代码协作
+- <span style="color:green">【参考】</span>错误码即人性，感性认知+口口相传，使用纯数字来进行错误码编排不利于感性记忆和分类
+
+### 日志
+
+- <span style="color:red">【强制】</span>Java 类库中定义的可以通过预检查方式规避的 RuntimeException 异常不应该通过catch 的方式来处理，比如：NullPointerException，IndexOutOfBoundsException 等等
+- <span style="color:red">【强制】</span>异常捕获后不要用来做流程控制，条件控制
+- <span style="color:red">【强制】</span>catch 时请分清稳定代码和非稳定代码，稳定代码指的是无论如何不会出错的代码。对于非稳定代码的 catch 尽可能进行区分异常类型，再做对应的异常处理
+- <span style="color:red">【强制】</span>如果不处理异常 就不要捕获 随它由调用链抛出
+- <span style="color:red">【强制】</span>事务场景中，抛出异常被 catch 后，如果需要回滚，一定要注意手动回滚事务
+- <span style="color:red">【强制】</span>finally 块必须对资源对象、流对象进行关闭，有异常也要做 try-catch JDK7 可以使用try-with-resources语法
+- <span style="color:red">【强制】</span>不要在 finally 块中使用 return
+- <span style="color:red">【强制】</span>在调用 RPC、二方包、或动态生成类的相关方法时，捕捉异常必须使用 Throwable类来进行拦截
+- <span style="color:yellow">【推荐】</span>方法的返回值可以为 null，不强制返回空集合，或者空对象等，必须添加注释充分说明什么情况下会返回 null 值
+- <span style="color:red">【强制】</span>注意NPE的产生场景
+  - 返回类型为基本数据类型，return 包装数据类型的对象时，自动拆箱有可能产生 NPE。
+  - 数据库的查询结果可能为 null。
+  - 集合里的元素即使 isNotEmpty，取出的数据元素也可能为 null。
+  - 远程调用返回对象时，一律要求进行空指针判断，防止 NPE。
+  - 对于 Session 中获取的数据，建议进行 NPE 检查，避免空指针。
+  - 级联调用 obj.getA().getB().getC()；一连串调用，易产生 NPE
+- <span style="color:yellow">【推荐】</span>避免直接抛出 new RuntimeException()，更不允许抛出 Exception 或者 Throwable，应使用有业务含义的自定义异常。推荐业界已定义过的自定义异常
+- <span style="color:green">【参考】</span>对于公司外的 http/api 开放接口必须使用 errorCode；而应用内部推荐异常抛出；跨应用间 RPC 调用优先考虑使用 Result 方式，封装 isSuccess()方法、errorCode、errorMessage
+
+### 日志规约
+
+- <span style="color:red">【强制】</span>应用中不可直接使用日志系统 （Log 4 j 、 Logback） 中的 API ，而应依赖使用日志框架（SLF4J、JCL--Jakarta Commons Logging） 中的 API 
+- <span style="color:red">【强制】</span>所有日志文件至少保存 15 天，对于当天日志，以“应用名.log”来保存 过往日志格式为: {logname}.log.{yyyy-MM-dd}
+- <span style="color:red">【强制】</span>应用中的扩展日志 （ 如打点、临时监控、访问日志等 ） 命名方式：appName_logType_logName.log
+- <span style="color:red">【强制】</span>在日志输出时，字符串变量之间的拼接使用占位符的方式
+- <span style="color:red">【强制】</span>对于 trace / debug / info 级别的日志输出，必须进行日志级别的开关判断
+- <span style="color:red">【强制】</span>避免重复打印日志，浪费磁盘空间，务必在日志配置文件中设置 additivity = false 
+- <span style="color:red">【强制】</span>生产环境禁止直接使用 System.out 或 System.err 输出日志或使用e.printStackTrace()打印异常堆栈
+- <span style="color:red">【强制】</span>异常信息应该包括两类信息：案发现场信息和异常堆栈信息。如果不处理，那么通过关键字 throws 往上抛出
+- <span style="color:red">【强制】</span>日志打印时禁止直接用 JSON 工具将对象转换成 String
+- <span style="color:yellow">【推荐】</span>谨慎地记录日志。生产环境禁止输出 debug 日志 ； 有选择地输出 info 日志；注意日志输出量
+- <span style="color:yellow">【推荐】</span>可以使用 warn 日志级别来记录用户输入参数错误的情况，避免用户投诉时，无所适从
+
+## 单元测试
+
+- <span style="color:red">【强制】</span>好的单元测试必须遵FIRST原则
+- <span style="color:red">【强制】</span>对于单元测试，要保证测试粒度足够小，有助于精确定位问题。单测粒度至多是类级别，一般是方法级别
+- <span style="color:red">【强制】</span>核心业务、核心应用、核心模块的增量代码确保单元测试通过
+- <span style="color:red">【强制】</span>单元测试代码必须写在如下工程目录： src/test/java
+- <span style="color:yellow">【推荐】</span>单元测试的基本目标：语句覆盖率达到 70% ；核心模块的语句覆盖率和分支覆盖率都要达到 100%
+- <span style="color:yellow">【推荐】</span>编写单元测试代码遵守 BCDE 原则
+  - B：Border，边界值测试，包括循环边界、特殊取值、特殊时间点、数据顺序等。
+  - C：Correct，正确的输入，并得到预期的结果。
+  - D：Design，与设计文档相结合，来编写单元测试。
+  - E：Error，强制错误信息输入（如：非法数据、异常流程、业务允许外等），并得到预期的结果
+- <span style="color:yellow">【推荐】</span>对于数据库相关的查询，更新，删除等操作，使用程序插入或者导入数据的方式来准备数据
+- <span style="color:yellow">【推荐】</span>和数据库相关的单元测试，可以设定自动回滚机制，不给数据库造成脏数据
+- <span style="color:yellow">【推荐】</span>对于不可测的代码在适当的时机做必要的重构，使代码变得可测，避免为了达到测试要求而书写不规范测试代码
+- <span style="color:yellow">【推荐】</span>在设计评审阶段，开发人员需要和测试人员一起确定单元测试范围
+- <span style="color:yellow">【推荐】</span>单元测试作为一种质量保障手段，在项目提测前完成单元测试
+- <span style="color:green">【参考】</span>为了更方便地进行单元测试，业务代码应避免以下情况
+  - 构造方法中做的事情过多。
+  - 存在过多的全局变量和静态方法。
+  - 存在过多的外部依赖。
+  - 存在过多的条件语句
+
+## 安全规约
+
+- <span style="color:red">【强制】</span>隶属于用户个人的页面或者功能必须进行权限控制校验
+- <span style="color:red">【强制】</span>用户敏感数据禁止直接展示，必须对展示数据进行脱敏
+- <span style="color:red">【强制】</span>用户输入的 SQL 参数严格使用参数绑定或者 METADATA 字段值限定，防止 SQL 注入，禁止字符串拼接 SQL 访问数据库
+- <span style="color:red">【强制】</span>用户请求传入的任何参数必须做有效性验证
+- <span style="color:red">【强制】</span>禁止向 HTML 页面输出未经安全过滤或未正确转义的用户数据
+- <span style="color:red">【强制】</span>表单、 AJAX 提交必须执行 CSRF 安全验证
+- <span style="color:red">【强制】</span>URL 外部重定向传入的目标地址必须执行白名单过滤
+- <span style="color:red">【强制】</span>在使用平台资源，譬如短信、邮件、电话、下单、支付，必须实现正确的防重放的机制，如数量限制、疲劳度控制、验证码校验，避免被滥刷而导致资损
+- <span style="color:yellow">【推荐】</span>发贴、评论、发送即时消息等用户生成内容的场景必须实现防刷、文本内容违禁词过滤等风控策略

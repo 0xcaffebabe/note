@@ -349,3 +349,133 @@
 - <span style="color:red">【强制】</span>URL 外部重定向传入的目标地址必须执行白名单过滤
 - <span style="color:red">【强制】</span>在使用平台资源，譬如短信、邮件、电话、下单、支付，必须实现正确的防重放的机制，如数量限制、疲劳度控制、验证码校验，避免被滥刷而导致资损
 - <span style="color:yellow">【推荐】</span>发贴、评论、发送即时消息等用户生成内容的场景必须实现防刷、文本内容违禁词过滤等风控策略
+
+## MySQL 规约
+
+### 建表规约
+
+- <span style="color:red">【强制】</span>表达是与否概念的字段，必须使用 is_xxx 的方式命名，数据类型是 unsigned tinyint（1 表示是，0 表示否）
+- <span style="color:red">【强制】</span>表名、字段名必须使用小写字母或数字 ， 禁止出现数字开头，禁止两个下划线中间只出现数字。数据库字段名的修改代价很大，因为无法进行预发布，所以字段名称需要慎重考虑
+- <span style="color:red">【强制】</span>表名、字段名禁用保留字
+- <span style="color:red">【强制】</span>主键索引名为 pk_ 字段名；唯一索引名为 uk _字段名 ； 普通索引名则为 idx _字段名
+- <span style="color:red">【强制】</span>小数类型为 decimal，禁止使用 float 和 double
+- <span style="color:red">【强制】</span>如果存储的字符串长度几乎相等，使用 char 定长字符串类型
+- <span style="color:red">【强制】</span>如果存储的字符串长度几乎相等，使用 char 定长字符串类型
+- <span style="color:red">【强制】</span>varchar 是可变长字符串，不预先分配存储空间，长度不要超过 5000，如果存储长度大于此值，定义字段类型为 text ，独立出来一张表，用主键来对应，避免影响其它字段索引效率
+- <span style="color:red">【强制】</span>表必备三字段：id, create_time, update_time
+- <span style="color:yellow">【推荐】</span>表的命名最好是遵循“业务名称_表的作用”
+- <span style="color:yellow">【推荐】</span>库名与应用名称尽量一致
+- <span style="color:yellow">【推荐】</span>如果修改字段含义或对字段表示的状态追加时，需要及时更新字段注释
+- <span style="color:yellow">【推荐】</span>冗余字段应遵循的原则
+  - 不是频繁修改的字段。
+  - 不是唯一索引的字段。
+  - 不是 varchar 超长字段，更不能是 text 字段
+- <span style="color:yellow">【推荐】</span>单表行数超过 500 万行或者单表容量超过 2GB，才推荐进行分库分表
+- <span style="color:green">【参考】</span>合适的字符存储长度，不但节约数据库表空间、节约索引存储，更重要的是提升检索速度
+
+### 索引规约
+
+- <span style="color:red">【强制】</span>业务上具有唯一特性的字段，即使是组合字段，也必须建成唯一索引
+- <span style="color:red">【强制】</span>超过三个表禁止 join 。需要 join 的字段，数据类型保持绝对一致 ； 多表关联查询时，保证被关联的字段需要有索引
+- <span style="color:red">【强制】</span>在 varchar 字段上建立索引时，必须指定索引长度
+- <span style="color:red">【强制】</span>页面搜索严禁左模糊或者全模糊 可以使用搜索引擎解决
+- <span style="color:yellow">【推荐】</span>如果有 order by 的场景，请注意利用索引的有序性。order by 最后的字段是组合索引的一部分，并且放在索引组合顺序的最后
+- <span style="color:yellow">【推荐】</span>利用覆盖索引来进行查询操作，避免回表 覆盖索引就是直接根据索引就得到数据 不用回到表上在进行查询
+- <span style="color:yellow">【推荐】</span>利用延迟关联或者子查询优化超多分页场景 通过子查询来对数据进行初步筛选 避免分页数据过大
+- <span style="color:yellow">【推荐】</span>SQL 性能优化的目标：至少要达到  range 级别，要求是 ref 级别，如果可以是 consts最好
+  - consts 单表中最多只有一个匹配行（主键或者唯一索引），在优化阶段即可读取到数据。
+  - ref 指的是使用普通的索引（normal index）。
+  - range 对索引进行范围检索
+- <span style="color:yellow">【推荐】</span>建组合索引的时候，区分度最高的在最左边
+- <span style="color:yellow">【推荐】</span>防止因字段类型不同造成的隐式转换，导致索引失效
+
+### SQL 语句
+
+- <span style="color:red">【强制】</span>不要使用 count(列名)或 count(常量)来替代 count(*), count(*) 会统计null
+- <span style="color:red">【强制】</span>count(distinct col) 计算该列除 NULL 之外的不重复行数，注意 count(distinct col1,col2) 如果其中一列全为 NULL，那么即使另一列有不同的值，也返回为 0
+- <span style="color:red">【强制】</span>当某一列的值全是 NULL 时，count(col)的返回结果为 0，但 sum(col)的返回结果为NULL
+- <span style="color:red">【强制】</span>使用 ISNULL() 来判断是否为 NULL 值
+- <span style="color:red">【强制】</span>代码中写分页查询逻辑时，若 count 为 0 应直接返回，避免执行后面的分页语句
+- <span style="color:red">【强制】</span>不得使用外键与级联，一切外键概念必须在应用层解决
+- <span style="color:red">【强制】</span>禁止使用存储过程，存储过程难以调试和扩展，更没有移植性
+- <span style="color:red">【强制】</span>数据订正（特别是删除或修改记录操作）时，要先 select 
+- <span style="color:red">【强制】</span>对于数据库中表记录的查询和变更，只要涉及多个表，都需要在列名前加表的别名（或表名）进行限定
+- <span style="color:yellow">【推荐】</span>SQL 语句中表的别名前加 as，并且以 t1、t2、t3、...的顺序依次命名
+- <span style="color:yellow">【推荐】</span> in 操作能避免则避免，若实在避免不了，需要仔细评估 in 后边的集合元素数量，控制在 1000 个之内
+- <span style="color:green">【参考】</span>因国际化需要，所有的字符存储与表示，均采用 utf 8 字符集，如果存储emoji标签 使用utf8mb4
+- <span style="color:green">【参考】</span> TRUNCATE TABLE 比  DELETE 速度快，且使用的系统和事务日志资源少，但 TRUNCATE无事务且不触发 trigger
+
+### ORM 映射(mybatis/ibatis)
+
+- <span style="color:red">【强制】</span>在表查询中，一律不要使用 * 作为查询的字段列表，需要哪些字段必须明确写明
+- <span style="color:red">【强制】</span>不要用 resultClass 当返回参数，即使所有类属性名与数据库字段一一对应，也需要定义 resultMap ；反过来，每一个表也必然有一个resultMap与之对应
+- <span style="color:red">【强制】</span>sql. xml 配置参数使用：#{}
+- <span style="color:red">【强制】</span>不允许直接拿 HashMap 与 Hashtable 作为查询结果集的输出
+- <span style="color:red">【强制】</span>更新数据表记录时，必须同时更新记录对应的 update_time 字段值为当前时间
+- <span style="color:yellow">【推荐】</span>不要写一个大而全的数据更新接口,执行 SQL 时，不要更新无改动的字段
+- <span style="color:green">【参考】</span> 事务不要滥用。事务会影响数据库的 QPS,使用事务的地方需要考虑各方面的回滚方案，包括缓存回滚、搜索引擎回滚、消息补偿、统计修正等
+
+
+## 工程结构
+
+### 应用分层
+
+- <span style="color:yellow">【推荐】</span>分层参考架构
+
+  ![屏幕截图 2020-11-05 104027](/assets/屏幕截图%202020-11-05%20104027.png)
+  - 开放 API 层：可直接封装 Service 接口暴露成 RPC 接口；通过 Web 封装成 http 接口；网关控制层等。
+  - 终端显示层：各个端的模板渲染并执行显示的层。当前主要是 velocity 渲染，JS 渲染，JSP 渲染，移
+动端展示等。
+  - Web 层：主要是对访问控制进行转发，各类基本参数校验，或者不复用的业务简单处理等。
+  - Service 层：相对具体的业务逻辑服务层。
+  - Manager 层：通用业务处理层，它有如下特征：
+    - 对第三方平台封装的层，预处理返回结果及转化异常信息，适配上层接口。
+    - 对 Service 层通用能力的下沉，如缓存方案、中间件通用处理。
+    - 与 DAO 层交互，对多个 DAO 的组合复用。
+  - DAO 层：数据访问层，与底层 MySQL、Oracle、Hbase、OB 等进行数据交互。
+  - 第三方服务：包括其它部门 RPC 服务接口，基础平台，其它公司的 HTTP 接口，如淘宝开放平台、支
+付宝付款服务、高德地图服务等。
+  - 外部数据接口：外部（应用）数据存储服务提供的接口，多见于数据迁移场景中
+- <span style="color:green">【参考】</span> 在 DAO 层，无法用细粒度的异常进行 catch，使用 catch(Exception e) 方式，并 throw new DAOException(e) ， Service 层出现异常时，必须记录出错日志到磁盘，尽可能带上参数信息， Web 层绝不应该继续往上抛异常
+- <span style="color:green">【参考】</span>分层领域模型规约：
+  - DO（Data Object）：此对象与数据库表结构一一对应，通过 DAO 层向上传输数据源对象。
+  - DTO（Data Transfer Object）：数据传输对象，Service 或 Manager 向外传输的对象。
+  - BO（Business Object）：业务对象，可以由 Service 层输出的封装业务逻辑的对象。
+  - Query：数据查询对象，各层接收上层的查询请求。注意超过 2 个参数的查询封装，禁止使用 Map 类来传输。
+  - VO（View Object）：显示层对象，通常是 Web 向模板渲染引擎层传输的对象
+
+### 二方库依赖
+
+- <span style="color:red">【强制】</span>定义 GAV 遵从以下规则
+  - GroupID 格式：com.{公司/BU }.业务线 [.子业务线]，最多 4 级
+  - ArtifactID 格式：产品线名-模块名。语义不重复不遗漏
+- <span style="color:red">【强制】</span>二方库版本号命名方式：主版本号.次版本号.修订号
+  - 主版本号：产品方向改变，或者大规模 API 不兼容，或者架构不兼容升级。
+  - 次版本号：保持相对兼容性，增加主要功能特性，影响范围极小的 API 不兼容修改。
+  - 修订号：保持完全兼容性，修复 BUG、新增次要功能特性等
+- <span style="color:red">【强制】</span>线上应用不要依赖 SNAPSHOT 版本 （ 安全包除外 ） ；正式发布的类库必须先去中央仓库进行查证，使 RELEASE 版本号有延续性，且版本号不允许覆盖升级
+- <span style="color:red">【强制】</span>二方库的新增或升级，保持除功能点之外的其它 jar 包仲裁结果不变。如果有改变，必须明确评估和验证
+- <span style="color:red">【强制】</span>二方库里可以定义枚举类型，参数可以使用枚举类型，但是接口返回值不允许使用枚举类型或者包含枚举类型的 POJO 对象
+- <span style="color:red">【强制】</span>依赖于一个二方库群时，必须定义一个统一的版本变量，避免版本号不一致
+- <span style="color:red">【强制】</span>禁止在子项目的 pom 依赖中出现相同的 GroupId ，相同的 ArtifactId ，但是不同的Version 
+- <span style="color:yellow">【推荐】</span>底层基础技术框架、核心数据管理平台、或近硬件端系统谨慎引入第三方实现
+- <span style="color:yellow">【推荐】</span>二方库不要有配置项，最低限度不要再增加配置项
+- <span style="color:green">【参考】</span>为避免应用二方库的依赖冲突问题
+  - 如果依赖其它二方库，尽量是 provided 引入，让二方库使用者去依赖具体版本号
+  - 每个版本的变化应该被记录
+
+### 服务器
+
+- <span style="color:yellow">【推荐】</span>高并发服务器建议调小 TCP 协议的 time _ wait 超时时间
+- <span style="color:yellow">【推荐】</span>调大服务器所支持的最大文件句柄数
+- <span style="color:yellow">【推荐】</span>给JVM环境参数设置-XX:+HeapDumpOnOutOfMemoryError 参数
+- <span style="color:yellow">【推荐】</span>线上生产环境， JVM 的 Xms 和 Xmx 设置一样大小的内存容量
+
+## 设计规约
+
+- <span style="color:red">【强制】</span>存储方案和底层数据结构的设计获得评审一致通过，并沉淀成为文档
+- <span style="color:red">【强制】</span>在需求分析阶段，如果与系统交互的 User 超过一类并且相关的 User Case 超过 5 个，使用用例图来表达更加清晰的结构化需求
+- <span style="color:red">【强制】</span>如果某个业务对象的状态超过 3 个，使用状态图来表达并且明确状态变化的各个触发条件
+- <span style="color:red">【强制】</span>如果系统中某个功能的调用链路上的涉及对象超过 3 个，使用时序图来表达并且明确各调用环节的输入与输出
+- <span style="color:red">【强制】</span>如果系统中模型类超过 5 个，并且存在复杂的依赖关系，使用类图来表达并且明确类之间的关系
+- <span style="color:red">【强制】</span>如果系统中超过 2 个对象之间存在协作关系，并且需要表示复杂的处理流程，使用活动图来表示

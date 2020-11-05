@@ -55,6 +55,12 @@ git commit
 git reset -- files
 ```
 
+- 将某个分支的操作添加到某个分支
+
+```sh
+git rebase branch1 branch2 # 1 添加的分支 2 被添加的分支
+```
+
 -  使用暂存区的修改覆盖工作目录
 
 ```shell
@@ -82,7 +88,8 @@ git log
 ## 回滚到某一次提交
 
 ```shell
-git reset --hard 33ea7586bfe2d14e9ddbe9b07c5653159541338c
+git reset --hard 33ea7586bfe2d14e9ddbe9b07c5653159541338c # 通过将HEAD指向某一提交记录实现
+git revert ... # 通过创建一个新提交记录实现
 ```
 
 ## 添加远程仓库

@@ -455,11 +455,10 @@
 
 - [开发工具](./开发工具/nav.md)
   - [Linux](./开发工具/linux/Linux.md)
-  - [VIM](./开发工具/vim/vim.md)
-  - [GIT](./开发工具/git.md)
+  - [Vim](./开发工具/vim/vim.md)
+  - [Git](./开发工具/git.md)
   - [SVN](./开发工具/SVN.md)
-  - [idea](./开发工具/idea.md)
-  - -构建工具-
+  - [Idea](./开发工具/idea.md)
   - [Gradle](./开发工具/构建工具/gradle.md)
   - [Maven](./开发工具/构建工具/maven.md)
     - [分模块构建](./开发工具/构建工具/maven/分模块构建.md)

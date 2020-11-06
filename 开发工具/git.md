@@ -79,6 +79,18 @@ git commit -a
 git checkout HEAD -- files
 ```
 
+- 将一些提交添加到当前分支
+
+```sh
+git cheery-pick hash1 hash2 hash3...
+```
+
+- 交互式rebase
+
+```sh
+git rebase -i HEAD~4 # 通过UI界面的方式调整提交记录顺序
+```
+
 ## 查看提交日志
 
 ```shell

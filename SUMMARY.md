@@ -302,6 +302,7 @@
       - [字节码执行引擎](./编程语言/JAVA/JVM/字节码执行引擎.md)
       - [运行参数](./编程语言/JAVA/JVM/运行参数.md)
       - [类加载机制](./编程语言/JAVA/JVM/类加载机制.md)
+      - [前端编译与优化](./编程语言/JAVA/JVM/前端编译与优化.md)
       - [JAVA内存模型](./编程语言/JAVA/JVM/JAVA内存模型.md)
     - [Jakara EE](./编程语言/JAVA/JakartaEE/nav.md)
       - [Servlet](./编程语言/JAVA/JakartaEE/Servlet.md)

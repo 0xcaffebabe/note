@@ -304,7 +304,7 @@
       - [类加载机制](./编程语言/JAVA/JVM/类加载机制.md)
       - [前端编译与优化](./编程语言/JAVA/JVM/前端编译与优化.md)
       - [后端编译与优化](./编程语言/JAVA/JVM/后端编译与优化.md)
-      - [JAVA内存模型](./编程语言/JAVA/JVM/JAVA内存模型.md)
+      - [Java 内存模型](./编程语言/JAVA/JVM/JAVA内存模型.md)
     - [Jakara EE](./编程语言/JAVA/JakartaEE/nav.md)
       - [Servlet](./编程语言/JAVA/JakartaEE/Servlet.md)
       - [JSP](./编程语言/JAVA/JakartaEE/JSP.md)

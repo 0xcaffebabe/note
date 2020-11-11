@@ -357,6 +357,7 @@
   - [Ruby](./编程语言/Ruby.md)
   - [Io](./编程语言/Io.md)
   - [Prolog](./编程语言/Prolog.md)
+  - [Scala](./编程语言/Scala.md)
 
 - [Spring](./编程语言/JAVA/框架/Spring/spring概览.md)
     - [spring概览](./编程语言/JAVA/框架/Spring/spring概览.md)

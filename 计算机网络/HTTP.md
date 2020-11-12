@@ -218,6 +218,14 @@ Cache-Control: no-store
 Cache-Control: no-cache
 ```
 
+- 禁止修改
+
+```http
+Cache-Control: no-transform
+```
+
+禁止代理服务器修改HTTP响应头或者响应体
+
 - 私有缓存
 
 只能单独给用户使用，一般用在浏览器
@@ -234,6 +242,14 @@ Cache-Control: private
 Cache-Control: public
 ```
 
+- min-fresh和only-if-cached
+
+仅用于客户端的请求Header。min-fresh后续跟随一个以秒为单位的数字，用于建议服务器能返回一个不少于该时间的缓存资源 only-if-cached表示要求客户端要求不发送网络请求，只使用缓存来进行响应
+
+- must-revalidate和proxy-revalidate
+
+must-revalidate表示在资源过期后，一定需要从服务器中进行获取 proxy-revalidate用于提示代理、CDN等设备资源过期后的缓存行为
+
 - 缓存过期
 
 出现在响应报文，超过这个时间 缓存就被认为过期
@@ -248,11 +264,17 @@ Expires 首部字段也可以用于告知缓存服务器该资源什么时候会
 Expires: Wed, 04 Jul 2012 08:26:05 GMT
 ```
 
+但Expires有如下问题：
+
+1. 受限于客户端的时间
+2. 无法缓存客户私有资源
+3. 无法描述“不缓存”，如js文件引用后面要加个版本号
+
 ### 缓存验证
 
 ETag 是资源的唯一标识
 
-```html
+```http
 If-None-Match: "82e22293907ce725faf67773957acd12"
 ```
 

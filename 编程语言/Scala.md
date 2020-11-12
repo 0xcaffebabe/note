@@ -125,3 +125,75 @@ trait Part {
 class Person extends Object with Part{}
 new Person().say
 ```
+
+## 函数定义
+
+```scala
+def add(a: Int, b: Int): Int = a+b
+println(add(1,2))
+```
+
+## 集合
+
+- list
+
+```scala
+val list = List(1,2,3)
+println(list(2))
+println(list == List(1,2,3))
+```
+
+- set
+
+```scala
+val set = Set(1,2,3)
+println(set - 2) // 集合运算
+println(set + 5)
+println(set -- Set(1,2)) // 集合间运算
+println(set ++ Set(5,6))
+println(set == Set(1,2,3))
+```
+
+- map
+
+```scala
+val map = Map("name" -> "cxk","age" -> 18) // 不可变map
+println(map("name"))
+val mMap = new mutable.HashMap[String, Any] // 可变map
+mMap += "name" -> "cxk"
+mMap += "age" -> 18
+```
+
+### 集合函数
+
+- 高阶函数：以函数作为输入或以函数作为输出
+
+```scala
+val list = List(1,2,3)
+println(list.isEmpty)
+println(list.length)
+println(list.size)
+println(list.head)
+println(list.tail) // 返回去除第一个元素的list
+println(list.last)
+println(list.init) // 返回去除最后一个元素的list
+println(list.reverse) // 都不会修改原列表
+println(list.drop(1))
+println(list.count(i => i >= 2)) // 计算符合条件的元素个数
+println(list.filter(i => i >=2)) // 将符合条件的元素拿出来
+println(list.map(i => i *2))
+println(list.exists(i => i > 2)) // 是否存在这一的一个元素
+println(list.sortWith((a,b) => a > b))
+println((0 /: list){(sum, i) => sum+i}) // 从初始值0开始累加
+println(list.foldLeft(0)((sum,i) => sum + i))
+list.foreach(i => println(i))
+
+val map = Map("name" -> "cxk", "age" -> 18)
+map.foreach(entry => println(entry._1 + entry._2))
+```
+
+## Any 和 Nothing
+
+Any是所有类型的父类 Nothing是所有类型的子类 Null是一个Trait null是Null的实例
+
+![屏幕截图 2020-11-12 085642](/assets/屏幕截图%202020-11-12%20085642.png)

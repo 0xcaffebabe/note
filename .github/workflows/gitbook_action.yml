@@ -46,7 +46,6 @@ jobs:
         ./scripts/updatetime.sh | bash
     - name: install_gitbook_plugins
       run: |
-        npm config set registry https://registry.npm.taobao.org
         npm install gitbook-cli  -g
         gitbook -v
         gitbook install

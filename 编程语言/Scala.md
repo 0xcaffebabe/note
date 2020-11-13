@@ -197,3 +197,41 @@ map.foreach(entry => println(entry._1 + entry._2))
 Any是所有类型的父类 Nothing是所有类型的子类 Null是一个Trait null是Null的实例
 
 ![屏幕截图 2020-11-12 085642](/assets/屏幕截图%202020-11-12%20085642.png)
+
+## 模式匹配
+
+- switch
+
+```scala
+def switch(i: String): String = i match {
+  case "1" => "one"
+  case "2" => "two"
+  case _ => "none"
+}
+println(switch("1"))
+println(switch("ss"))
+```
+
+- 正则表达式
+
+```scala
+val reg = """\w""".r // 创建一个正则
+println(reg.findFirstIn("i am your"))
+```
+
+## 并发
+
+...
+
+## 核心优势
+
+- 并发
+- 继承了 Java 的生态
+- 语法灵活 有望自定义为DSL
+- 内置的XML支持
+
+## 不足
+
+- 静态类型不适合OOP
+- 虽然继承了 Java ，但某些语法还是很奇怪
+- 引入了可变性

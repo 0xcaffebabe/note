@@ -66,7 +66,8 @@ def isStopWord(str):
   if len(str) <= 1:
     return True
   stopWords = ['的','是','在','一个','和',
-  '与','批注','可以','使用','通过','md','据库','这个'
+  '与','批注','可以','使用','通过','md','据库','这个', '截图', '没有',
+  '进行', '如果', '需要', '务器'
   ]
   for item in stopWords:
     if item == str:
@@ -85,7 +86,7 @@ def generateWordCloud():
                max_font_size = 120,  #设置字体最大值
                relative_scaling=.8,
                prefer_horizontal=90,
-               random_state = 100, #设置有多少种随机生成状态，即有多少种配色方案
+               random_state = 256, #设置有多少种随机生成状态，即有多少种配色方案
     )
   text = ''
   total = 0
@@ -118,18 +119,19 @@ def statisticImg():
   count = 0
   for item in listAllFile('./'):
     if item.endswith('png') or item.endswith('jpg'):
-      count = count+1
+      count = count + 1
   return count
 
 def generateNoteInfo():
   totalLineCount,totalWordCount = statisticNote()
   localtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-  text = u"生成时间:" + localtime + "\n"\
+  text = \
+      u'生成时间:' + localtime + "\n"\
     + '仓库尺寸:' + str(getRepositorySize()) + 'MB' + '\n'\
-    + '笔记总行数:' + str(totalLineCount) + '\n'\
-    + '笔记词数:' + str(totalWordCount) + '\n'\
-    + '图片数:' + str(statisticImg())  + '\n'\
-    + "代码统计:" + codeFrequency()
+    + '笔记总行数:' + str(totalLineCount) + '行\n'\
+    + '笔记词数:' + str(totalWordCount) + '个词\n'\
+    + '图片数:' + str(statisticImg())  + '张图片\n'\
+    + '代码统计:' + codeFrequency()
   im = Image.new("RGB", (1000, 140), (255, 255, 255))
   dr = ImageDraw.Draw(im)
   font = ImageFont.truetype('font.ttf', 16)
@@ -139,6 +141,7 @@ def generateNoteInfo():
 def codeFrequency():
   files = listAllMdFile()
   map = {}
+  alias = { 'js': 'javascript', 'sh': 'shell', 'py': 'python'}
   total = 0
   for item in files:
     file = open(item,'rb')
@@ -151,8 +154,8 @@ def codeFrequency():
           if '`' in text or len(text) > 11:
             continue
           total = total + 1
-          if text == 'js' :
-            text = 'javascript'
+          if text in alias:
+            text = alias[text]
           if text in map :
             map[text] = map[text] +1
           else :

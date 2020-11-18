@@ -45,3 +45,47 @@ sum(0) -> 0;
 sum(1) -> 1;
 sum(N) -> N + sum(N-1). % 递归
 ```
+
+## 控制结构
+
+- case
+
+```erlang
+Animal = "dog".
+case Animal of
+  "dog" -> "bark";
+  "cat" -> "mow";
+  _ -> "unknow"
+end.
+```
+
+- if
+
+```erlang
+X = 0.
+if
+  X >=0 -> positive;
+  X <0 -> negative
+end.
+```
+
+## 匿名函数
+
+```erlang
+Add = fun(A, B) -> A+B end.
+Add(1,2).
+```
+
+## 列表与高阶函数
+
+```erlang
+Numbers = [1,2,3].
+lists:foreach(fun(I) -> io:format("~p~n",[I]) end, Numbers). % 迭代
+lists:map(fun(I) -> I * I end, Numbers). % 映射\
+
+lists:filter(fun(I) -> I > 1 end, Numbers).
+lists:all(fun(I) -> I > 1 end, Numbers).
+lists:any(fun(I) -> I > 1 end, Numbers).
+
+lists:foldl(fun(I,SUM) -> I + SUM end, 0, [1,2,3,4,5]). % reduce
+```

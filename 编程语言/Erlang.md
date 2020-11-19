@@ -89,3 +89,74 @@ lists:any(fun(I) -> I > 1 end, Numbers).
 
 lists:foldl(fun(I,SUM) -> I + SUM end, 0, [1,2,3,4,5]). % reduce
 ```
+
+## 并发
+
+- 基本的接收循环
+
+```erlang
+-module(translate).
+-export([loop/0]).
+
+loop() ->
+  receive % 接收消息
+    "chinese" ->
+      io:format("中文"),
+      loop();
+    "dog" ->
+      io:format("狗"),
+      loop();
+    _ ->
+      io:format("未知"),
+      loop
+end.
+```
+
+- 使用
+
+```erlang
+Pid = spawn(fun translate:loop/0). % 启动轻量级进程
+Pid ! "chinese". % 发送消息
+```
+
+- 同步发送与接收
+
+```erlang
+-module(translate).
+-export([loop/0,translate/2]).
+
+loop() ->
+  receive
+    { Form, "chinese"} ->
+      Form ! "ccc",
+      loop();
+    { Form, "dog"} ->
+      Form ! "ddd",
+      loop();
+    { Form, _ } ->
+      Form ! "uuu", % 发送
+      loop
+end.
+
+translate(Pid, Word) ->
+  Pid ! {self(), Word}, % 同步发送
+  receive
+    Trans -> Trans
+  end.
+```
+
+```erl
+translate:translate(Pid, "dog").
+```
+
+## 核心优势
+
+- 可靠
+- 轻量 无共享的进程
+- OTP 企业级别的库
+- 随他崩溃
+
+## 不足
+
+- 语法
+- 继承于prolog

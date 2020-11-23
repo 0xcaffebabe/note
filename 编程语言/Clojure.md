@@ -104,3 +104,97 @@ Clojure 列表是代码
 (defn gt2 [i] (> i 2))
 (println (filter gt2 [1 2 3])) ; 使用指定函数过滤元素
 ```
+
+## 递归
+
+- 使用传统方式
+
+```clojure
+(defn size [v]
+  (if (empty? v)
+    0
+    (inc (size (rest v))))
+)
+(println (size [1 2 3])) 
+```
+
+- 使用loop和recur
+
+```clojure
+(defn size1 [v]
+  (loop [l v, c 0]
+    (if (empty? l)
+      c
+      (recur (rest l) (inc c))
+    )
+  )
+)
+(println (size1 [1 2 3]))
+```
+
+## 序列
+
+一个与具体实现无关的抽象层
+
+```clojure
+; 测试
+(println (some nil? [1 2 3]))
+(println (every? number? [1 2 3]))
+
+; 修改
+(println (map (fn [x] (* x x)) [1 2 3 4]))
+(println (filter (fn [x] (> x 2)) [1 2 3 4]))
+
+; 列表解析
+(def people ["蔡徐坤" "徐雪莉" "张无忌"])
+(def object ["篮球" "蛋糕" "游戏"])
+(println (for [x people, y object] (str x "喜欢" y)))
+; 列表解析过滤
+(println (for [x people, y object, :when(= y "篮球")] (str x "喜欢" y)))
+
+; reduce
+(println (reduce + [1 2 3 4]))
+(println (reduce * [1 2 3 4]))
+
+; 排序
+(
+  println 
+  (
+    sort-by (fn [x] (if (< x 0) (- x) x))
+    [-1 2 3 -2 -6 -7]
+  )
+)
+```
+
+## 延迟计算
+
+- 有穷序列
+
+```clojure
+(println (range 1 10)) ; [1,10)
+(println (range 10)) ; [0,10)
+```
+
+- 无穷序列
+
+```clojure
+(println (take 3 (repeat 100))) ; 从无限重复100的序列取出3个
+(println (take 5 (cycle ["徐工" "张无忌" "低修"]))) ; 从这个列表的无限循环取5个
+(println (take 5 (interpose "和" (cycle ["徐工" "张无忌" "低修"])))) ; 元素之间加入分隔符
+(defn sum [x] (+ x 1))
+(println (take 100 (iterate sum 0))) ; 使用自定义函数
+```
+
+## 协议
+
+- defrecord和protocol
+
+## 宏
+
+```clojure
+(defmacro unless [test body]
+  (list 'if(list 'not test) body)
+) ; 定义宏
+
+(unless (= 1 2) (println "done"))
+```

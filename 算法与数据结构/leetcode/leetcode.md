@@ -2262,3 +2262,37 @@ class Solution {
 ```
 
 耗时：0
+
+## 49. 字母异位词分组
+
+<https://leetcode-cn.com/problems/group-anagrams/>
+
+```java
+class Solution {
+    public List<List<String>> groupAnagrams(String[] strs) {
+        HashMap<String,Integer> map = new HashMap<>(128);
+        int i = 0;
+        for(String s : strs) {
+            var arr = s.toCharArray();
+            Arrays.sort(arr);
+            String key = Arrays.toString(arr);
+            if (!map.containsKey(key)){
+                map.put(key, i);
+                i++;
+            }
+        }
+        List<List<String>> list = new ArrayList<>();
+        for(int j = 0;j<map.size();j++) list.add(new ArrayList<>());
+        for(String s : strs) {
+            var arr = s.toCharArray();
+            Arrays.sort(arr);
+            String key = Arrays.toString(arr);
+            int index = map.get(key);
+            list.get(index).add(s);
+        }
+        return list;
+    }
+}
+```
+
+耗时：18

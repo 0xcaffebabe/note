@@ -198,3 +198,58 @@ Clojure 列表是代码
 
 (unless (= 1 2) (println "done"))
 ```
+
+## 并发
+
+### 引用与事务
+
+```clojure
+; 引用
+(def name (ref "cxk")) ; 定义
+(println @name) ; 使用
+(dosync (ref-set name "jntm")) ; 只能在事务(dosync)里面修改
+(println @name)
+```
+
+### 原子
+
+```clojure
+(def person (atom "电影人")) ; 定义
+(println person)
+(reset! person "打工人") ; 设置新原子
+(println person)
+```
+
+### 代理
+
+```clojure
+(defn calc [x] (* 2 2))
+(def proxy (agent 1))
+(send proxy calc) ; 让代理去调用函数
+(println @proxy) ; 这里读取会很快返回 即使calc函数阻塞
+```
+
+### future
+
+```clojure
+; future 基本跟代理一样
+(def result (future (Thread/sleep 1000) "got it"))
+(println @result) ; 只有结果返回才能获取 否则就阻塞住了
+```
+
+## 核心优势
+
+- 括号相比其他Lisp方言少
+- 庞大的Java生态系统支持
+- 限制了宏的部分能力
+- 并发
+- 延迟计算
+- 列表即代码
+
+## 不足
+
+- 语法
+  - 前缀表达式
+  - 括号带来的可读性问题
+- 学习曲线陡
+- 在JVM上 受到了一些限制

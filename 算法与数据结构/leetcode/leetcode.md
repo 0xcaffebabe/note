@@ -2280,8 +2280,92 @@ class Solution {
             if (i != 0) return false;
         }
         return true;
+```
+
+耗时：0
+
+## 49. 字母异位词分组
+
+<https://leetcode-cn.com/problems/group-anagrams/>
+
+```java
+class Solution {
+    public List<List<String>> groupAnagrams(String[] strs) {
+        HashMap<String,Integer> map = new HashMap<>(128);
+        int i = 0;
+        List<List<String>> list = new ArrayList<>();
+        for(String s : strs) {
+            var arr = s.toCharArray();
+            Arrays.sort(arr);
+            String key = Arrays.toString(arr);
+            if (!map.containsKey(key)){
+                map.put(key, i);
+                i++;
+                list.add(new ArrayList<>());
+                list.get(list.size() -1).add(s);
+            }else{
+                int index = map.get(key);
+                list.get(index).add(s);
+            }
+        }
+        return list;
     }
 }
 ```
 
-耗时：0
+耗时：10
+
+## 804. 唯一摩尔斯密码词
+
+<https://leetcode-cn.com/problems/unique-morse-code-words/>
+
+```java
+class Solution {
+    public int uniqueMorseRepresentations(String[] words) {
+        String[] map = {".-","-...","-.-.","-..",".","..-.","--.","....","..",
+        ".---","-.-",".-..","--","-.","---",".--.","--.-",".-.","...","-","..-",
+        "...-",".--","-..-","-.--","--.."};
+        Set<String> set = new HashSet<>();
+        for(String s : words){
+            StringBuffer sb = new StringBuffer();
+            for(int i = 0;i<s.length();i++){
+                sb.append(map[s.charAt(i) - 97]);
+            }
+            set.add(sb.toString());
+        }
+        return set.size();
+    }
+}
+```
+
+耗时：2
+
+## 238. 除自身以外数组的乘积
+
+<https://leetcode-cn.com/problems/product-of-array-except-self/submissions/>
+
+```java
+class Solution {
+    public int[] productExceptSelf(int[] nums) {
+        int[] lMap = new int[nums.length];
+        int[] rMap = new int[nums.length];
+        int lAll = 1;
+        int rAll = 1;
+        for(int i = 0;i<nums.length;i++){
+            lMap[i] = lAll;
+            lAll *= nums[i];
+        }
+        for(int i = nums.length - 1;i>=0;i--){
+            rMap[i] = rAll;
+            rAll *= nums[i];
+        }
+        for(int i = 0;i<nums.length;i++){
+            lMap[i] *= rMap[i];
+        }
+        return lMap;
+
+    }
+}
+```
+
+耗时：1

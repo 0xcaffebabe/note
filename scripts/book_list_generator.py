@@ -1,9 +1,9 @@
 import os
 def getUnreadBook():
-  return getBook('d:/学习/ebook/')
+  return getBook('d:/learning/ebook/')
 
 def getReadedBook():
-  return getBook('d:/学习/ebook/已读/')
+  return getBook('d:/learning/ebook/已读/')
 
 def getBook(path):
   result = set()

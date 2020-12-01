@@ -33,6 +33,10 @@ Prelude> 1/=2
 True
 ```
 
+```haskell
+if (5 /= 4) then "got it" else "oh no"
+```
+
 - 变量定义
 
 ```sh

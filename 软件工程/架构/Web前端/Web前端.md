@@ -28,3 +28,51 @@
 - cacheStorage
   - ServiceWorker规范中的Cache对象
 - Flash缓存
+
+### 浏览器Web安全
+
+- X-XSS-Protection
+  - 控制浏览器对反射型XSS的防护
+- Strict-Transport-Security
+  - 强制所有通信使用HTTPS
+- Content-Security-Policy
+  - 控制浏览器只信任来自指定源的内容
+- Access-Control-Allow-Origin
+
+## 前端与协议
+
+- HTTP
+
+### 实时协议
+
+- WebSocket
+- Poll（轮询）：实时性差 影响性能
+- Long-poll（长轮询）：比上面好一点
+- 前端DDP（分布式数据协议）
+  - meteor：服务端-客户端双向数据更新
+
+### Native交互协议
+
+混血应用特性：
+
+- 可用系统资源少
+- 浏览器内核支持较新的特性
+- 可实现离线应用
+- 机型兼容（屏幕兼容）
+- 支持与Native交互
+
+Web到Native协议调用：
+
+- 通过URI
+  - Web应用通过发起一个URI请求 Native会进行捕获
+- addJavascriptInterface
+  - Native会注入一个全局对象给Web调用
+
+Native到Web：
+
+- Native通过loadURL调用Web暴露的全局对象或者方法
+
+#### JSBridge协议规范
+
+- Native注册一个自定义JSBridge Schema头
+  - 协议URL由几部分组成：欲被调用的类名、回调方法、欲被调用的方法、json对象（调用方法的参数）

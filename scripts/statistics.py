@@ -67,7 +67,7 @@ def isStopWord(str):
     return True
   stopWords = ['的','是','在','一个','和',
   '与','批注','可以','使用','通过','md','据库','这个', '截图', '没有',
-  '进行', '如果', '需要', '务器'
+  '进行', '如果', '需要', '务器', '屏幕', '不会', '就是'
   ]
   for item in stopWords:
     if item == str:

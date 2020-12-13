@@ -2543,6 +2543,7 @@ class Solution {
 
 耗时：1
 
+
 ## 217. 存在重复元素
 
 <https://leetcode-cn.com/problems/contains-duplicate/>
@@ -2555,8 +2556,28 @@ class Solution {
         Set<Integer> set = new HashSet<>(nums.length);
         for(int i: nums) set.add(i);
         return set.size() != nums.length;
+```
+
+耗时：6
+
+## 338. 比特位计数
+
+<https://leetcode-cn.com/problems/counting-bits/>
+
+```java
+class Solution {
+    public int[] countBits(int num) {
+        int[] ret = new int[num+1];
+        for(int i=0;i<=num;i++){
+            int k = i;
+            while(k > 0) {
+                ret[i]+=k%2;
+                k/=2;
+            }
+        }
+        return ret;
     }
 }
 ```
 
-耗时：6
+耗时：12

@@ -25,3 +25,9 @@ li.chapter a:hover {
   color: #008cff!important;
   text-decoration: none!important;
 }
+/* 引用框 */
+.markdown-section blockquote {
+  color: #2c3e50;
+  border-left: 4px solid skyblue;
+  background-color: #f3f5f7;
+}

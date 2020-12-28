@@ -31,3 +31,10 @@ li.chapter a:hover {
   border-left: 4px solid skyblue;
   background-color: #f3f5f7;
 }
+/* back to top */
+.back-to-top {
+  background: skyblue!important;
+}
+.back-to-top:hover {
+  background: #009afe!important;
+}

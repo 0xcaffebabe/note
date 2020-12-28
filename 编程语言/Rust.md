@@ -167,3 +167,32 @@ let x = 1;
 let y = x; // 栈上复制
 println!("{} {}", x, y); // 正常使用y
 ```
+
+## 引用
+
+![20201228204829](/assets/20201228204829.svg)
+
+```rust
+// 使用引用并不拥有这个值 离开这个作用域后也不会被丢弃
+fn length(s: &String) -> usize{
+    s.len()
+}
+fn modify_str(s: &mut String) {
+    s.push_str("kkk");
+}
+fn main() {
+    let s = String::from("jntm");
+    println!("{}", length(&s));
+    println!("{}", s); // 仍然能继续使用
+
+    let mut s1 = String::from("jntm");
+    modify_str(&mut s1); // 引用不能直接修改值 使用借用（借用的变量必须为 mut）
+
+    let mut s = String::from("jntm");
+    let r1 = &s;
+    let r2 = &mut s;
+    // 在任意时候 只能出现一个可变引用 运行多个不可变引用
+    //println!("{} {}", r1 ,r2); // 不允许引用后出现借用
+
+}
+```

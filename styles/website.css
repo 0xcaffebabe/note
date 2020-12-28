@@ -38,3 +38,7 @@ li.chapter a:hover {
 .back-to-top:hover {
   background: #009afe!important;
 }
+/* toc */
+.page-toc-button {
+  background: skyblue!important;
+}

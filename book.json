@@ -65,7 +65,8 @@
                 "erl": "erlang",
                 "yml": "yaml",
                 "ts": "typescript",
-                "gql": "graphql"
+                "gql": "graphql",
+                "shell": "bash"
             }
         }
     }

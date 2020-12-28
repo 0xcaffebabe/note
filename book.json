@@ -56,8 +56,17 @@
         },
         "prism": {
             "css": [
-              "prismjs/themes/prism-vsc-dark-plus.css"
-            ]
+              "prismjs/themes/prism-okaidia.css"
+            ],
+            "lang": {
+                "asm": "nasm",
+                "assembly": "nasm",
+                "el": "erlang",
+                "erl": "erlang",
+                "yml": "yaml",
+                "ts": "typescript",
+                "gql": "graphql"
+            }
         }
     }
 }

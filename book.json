@@ -56,7 +56,7 @@
         },
         "prism": {
             "css": [
-              "prismjs/themes/prism-vsc-dark-plus.css"
+              "./prismjs/themes/prism-vsc-dark-plus.css"
             ]
         }
     }

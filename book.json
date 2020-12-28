@@ -20,7 +20,9 @@
         "hide-element",
         "page-toc-button",
         "github",
-        "lightbox"
+        "lightbox",
+        "-highlight",
+        "prism"
     ],
     "pluginsConfig": {
         "sharing": {
@@ -51,6 +53,20 @@
         },
         "github": {
             "url": "https://github.com/0xcaffebabe/note"
+        },
+        "prism": {
+            "css": [
+              "prismjs/themes/prism-okaidia.css"
+            ],
+            "lang": {
+                "asm": "nasm",
+                "assembly": "nasm",
+                "el": "erlang",
+                "erl": "erlang",
+                "yml": "yaml",
+                "ts": "typescript",
+                "gql": "graphql"
+            }
         }
     }
 }

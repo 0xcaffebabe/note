@@ -20,7 +20,9 @@
         "hide-element",
         "page-toc-button",
         "github",
-        "lightbox"
+        "lightbox",
+        "-highlight",
+        "prism"
     ],
     "pluginsConfig": {
         "sharing": {

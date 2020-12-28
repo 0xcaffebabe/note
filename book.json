@@ -53,6 +53,11 @@
         },
         "github": {
             "url": "https://github.com/0xcaffebabe/note"
+        },
+        "prism": {
+            "css": [
+              "prismjs/themes/prism-vsc-dark-plus.css"
+            ]
         }
     }
 }

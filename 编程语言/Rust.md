@@ -196,3 +196,66 @@ fn main() {
 
 }
 ```
+
+## slice
+
+```rust
+fn main() {
+    let s = String::from("disa");
+    println!("{}", &s[0..2]);
+    println!("{}", &s[0..=2]);
+    println!("{}", &s[..=2]); // 默认从0开始
+    // println!("{}", "你好"[..1]); // 索引要注意UTF8字节边界 切片是基于字节的
+    // 其他类型的slice
+    let a = [1, 2, 3, 4];
+    println!("{}", &a[1..2][0]);
+}
+```
+
+## 结构体
+
+```rust
+fn main() {
+    // 定义
+    #[derive(Debug)] // 加了这个可以打印
+    struct User {
+        name: String,
+        age: u8,
+    }
+    // 创建
+    let mut cxk = User {name: String::from("cxk"), age: 18};
+    println!("{:?}", cxk); // 打印
+    // 修改
+    cxk.age = 24;
+    // 字段名与参数名同名简写
+    let name = String::from("bili");
+    let age = 15;
+    let bili = User {name, age};
+    // 从其他结构体创建
+    let jame = User{name: String::from("jame"), ..cxk};
+    // 匿名参数结构体
+    struct Point(i32, i32);
+    let p = Point(5, 5);
+    println!("{} {}", p.0, p.1);
+    // 空结构体
+    struct Null{};
+}
+```
+
+### 方法
+
+```rust
+struct Dog {
+    name: String
+}
+impl Dog {
+    fn bark(&self) -> &Dog{
+        println!("{} wolf wolf", self.name);
+        &self
+    }
+}
+fn main() {
+    let dog = Dog{name: String::from("boy")};
+    dog.bark();
+}
+```

@@ -8,8 +8,6 @@
 
 note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
 
-相关计划：<https://github.com/0xcaffebabe?tab=projects>
-
 - [参考文献](./参考文献.md)
 
 --------------------------------------------------------------------------------

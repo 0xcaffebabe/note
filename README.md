@@ -8,13 +8,11 @@
 
 note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
 
-相关计划：<https://github.com/0xcaffebabe?tab=projects>
-
 - [参考文献](./参考文献.md)
 
 --------------------------------------------------------------------------------
 
-![star](https://img.shields.io/github/stars/0xcaffebabe/note) ![fork](https://img.shields.io/github/forks/0xcaffebabe/note) ![license](https://img.shields.io/github/license/0xcaffebabe/note) ![build](https://github.com/0xcaffebabe/note/workflows/buildbook/badge.svg)
+![star](https://img.shields.io/github/stars/0xcaffebabe/note) ![fork](https://img.shields.io/github/forks/0xcaffebabe/note) ![license](https://img.shields.io/github/license/0xcaffebabe/note) ![build](https://github.com/0xcaffebabe/note/workflows/%E6%9E%84%E5%BB%BA%E7%94%B5%E5%AD%90%E4%B9%A6/badge.svg)
 
 统计：
 
@@ -79,6 +77,7 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
   - [多处理机系统](./操作系统/多处理机系统.md)
   - [安全](./操作系统/安全.md)
   - [虚拟化](./操作系统/虚拟化.md)
+  - [云原生](./操作系统/云原生.md)
 
 - [软件工程](./软件工程/软件工程概论.md)
   - [软件过程](./软件工程/软件过程.md)
@@ -120,21 +119,29 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
         - [分布式事务](./软件工程/架构/系统设计/分布式事务.md)
       - [高并发](./软件工程/架构/系统设计/高并发.md)
       - [可用性](./软件工程/架构/系统设计/可用性.md)
+        - [服务容错](./软件工程/架构/系统设计/服务容错.md)
+        - [流量控制](./软件工程/架构/系统设计/流量控制.md)
       - [集群](./软件工程/架构/系统设计/集群.md)
       - [缓存](./软件工程/架构/系统设计/缓存.md)
         - [静态化](./软件工程/架构/系统设计/静态化.md)
+      - [🔭服务发现](./软件工程/架构/系统设计/服务发现.md)
       - [网关](./软件工程/架构/系统设计/网关.md)
       - [架构安全](./软件工程/架构/系统设计/架构安全.md)
+        - [零信任网络](./软件工程/架构/系统设计/零信任网络.md)
+        - [服务安全](./软件工程/架构/系统设计/服务安全.md)
+      - [可观测性](./软件工程/架构/系统设计/可观测性.md)
       - [开放平台设计](./软件工程/架构/系统设计/开放平台设计.md)
         - [SSO](./软件工程/架构/系统设计/SSO.md)
       - [支付系统设计](./软件工程/架构/系统设计/支付系统设计.md)
+    - [编程范式](./软件工程/架构/中台.md)
     - [组件构建原则](./软件工程/架构/组件构建原则.md)
     - [软件架构](./软件工程/架构/软件架构.md)
     - [实现细节](./软件工程/架构/实现细节.md)
     - [网站架构演进](./软件工程/架构/网站架构演进.md)
     - [服务架构演进](./软件工程/架构/服务架构演进.md)
-    - [前后端分离](./软件工程/架构/前后端分离.md)
-    - [前端工程化](./软件工程/架构/前端工程化.md)
+    - [Web 前端](./软件工程/架构/Web前端/Web前端.md)
+      - [前后端分离](./软件工程/架构/Web前端/前后端分离.md)
+      - [前端工程化](./软件工程/架构/Web前端/前端工程化.md)
     - [架构模式](./软件工程/架构模式/架构模式.md)
       - [概览](./软件工程/架构模式/概览.md)
       - [领域逻辑模式](./软件工程/架构模式/领域逻辑模式.md)
@@ -246,7 +253,7 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
     - [安全开发与安全运营](./网络安全/Web安全/安全开发与安全运营.md)
   - [密码学](./网络安全/密码学/密码学.md)
 
-- [计算机网络](./计算机网络/计算机网络与因特网.md)
+- [☁️计算机网络](./计算机网络/计算机网络与因特网.md)
   - [应用层](./计算机网络/应用层.md)
     - [RPC](./计算机网络/rpc.md)
     - [HTTP](./计算机网络/HTTP.md)
@@ -258,8 +265,10 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
   - [网络安全](./计算机网络/网络安全.md)
   - [多媒体网络](./计算机网络/多媒体网络.md)
   - [云计算](./计算机网络/云计算.md)
+  - [Linux 虚拟化](./计算机网络/Linux虚拟化.md)
 
-- [编程语言](./编程语言/编程语言.md)
+- [👨‍💻编程语言](./编程语言/编程语言.md)
+  - [并发模型](./编程语言/并发模型.md)
   - [C语言](./编程语言/C/nav.md)
     - [类型运算符与表达式](./编程语言/C/类型运算符与表达式.md)
     - [函数与程序结构](./编程语言/C/函数与程序结构.md)
@@ -267,7 +276,7 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
     - [结构](./编程语言/C/结构.md)
     - [输入与输出](./编程语言/C/输入与输出.md)
     - [UNIX系统接口](./编程语言/C/UNIX系统接口.md)
-  - [Java](./编程语言/JAVA/nav.md)
+  - [☕Java](./编程语言/JAVA/nav.md)
     - [语言基础](./编程语言/JAVA/语言基础.md)
     - [Java谜题](./编程语言/JAVA/Java谜题.md)
     - [JAVA编程规范](./编程语言/JAVA/JAVA编程规范.md)
@@ -384,6 +393,8 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
   - [Prolog](./编程语言/Prolog.md)
   - [Scala](./编程语言/Scala.md)
   - [Erlang](./编程语言/Erlang.md)
+  - [Clojure](./编程语言/Clojure.md)
+  - [Rust](./编程语言/Rust.md)
 
 - [Spring](./编程语言/JAVA/框架/Spring/spring概览.md)
     - [spring概览](./编程语言/JAVA/框架/Spring/spring概览.md)
@@ -519,6 +530,5 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
   - [区块链](./通识/区块链.md)
   - [markdown写作](./通识/markdown写作.md)
   - [概率论与数理统计](./通识/概率论与数理统计.md)
-- [项目开发](./个人/项目开发.md)
 - [参考文献](./参考文献.md)
 - [个人简历](./个人/个人简历.md)

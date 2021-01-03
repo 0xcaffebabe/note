@@ -259,3 +259,65 @@ fn main() {
     dog.bark();
 }
 ```
+
+## 枚举与匹配
+
+```rust
+enum MsgInfo {
+    ERROR, SUCCESS, UNKNOW
+}
+impl MsgInfo {
+    // 匹配
+    fn print(&self) {
+        match *self {
+            MsgInfo::ERROR => println!("error"),
+            MsgInfo::SUCCESS => println!("success"),
+            _ => println!("unknow")
+        }
+    }
+}
+fn main() {
+    struct Response {
+        status: MsgInfo,
+        msg: String
+    }
+    let response = Response {status: MsgInfo::SUCCESS, msg: String::from("成功")};
+    // 官方推荐的定义方式
+    enum Ip {
+        V4(u8,u8,u8,u8),
+        V6(String)
+    }
+    let ip = Ip::V4(127,0,0,1);
+
+}
+```
+
+### Option
+
+标准库定义的枚举
+
+```rust
+fn main() {
+    let some_number: Option<i32> = Some(5);
+    let null_str: Option<String> = None;
+    // 打印some里面的值
+    match some_number {
+        Some(i) => println!("{}", i),
+        _ => {},
+    }
+    match incr(some_number){
+        None => {},
+        Some(x) => println!("{}", x)
+    }
+    // 使用if处理
+    if let Some(value) = incr(some_number) {
+        println!("{}", value);
+    }
+}
+fn incr(x: Option<i32>) -> Option<i32> {
+    match x {
+        None => None,
+        Some(x) => Some(x + 1)
+    }
+}
+```

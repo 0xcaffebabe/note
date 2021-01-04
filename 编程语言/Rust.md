@@ -321,3 +321,26 @@ fn incr(x: Option<i32>) -> Option<i32> {
     }
 }
 ```
+
+## Vector
+
+```rust
+let mut v: Vec<i32> = Vec::new();
+v.push(1);
+let v = vec![1, 2, 3]; // 创建带有初始值的vector
+println!("{}", &v[0]); // 引用访问
+match v.get(1) { // match访问
+    Some(value) => println!("{}", value),
+    None => {}
+}
+let mut v = Vec::new();
+v.push(1);v.push(2);v.push(3);
+// 不可变遍历
+for i in &v {
+    println!("{}", i);
+}
+// 可变遍历
+for i in &mut v {
+    *i += 1; // 对每个值加1
+}
+```

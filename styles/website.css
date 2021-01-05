@@ -25,6 +25,9 @@ li.chapter a:hover {
   color: #008cff!important;
   text-decoration: none!important;
 }
+.chapter > span {
+  color: #aaa!important;
+}
 /* 引用框 */
 .markdown-section blockquote {
   color: #2c3e50;
@@ -41,4 +44,24 @@ li.chapter a:hover {
 /* toc */
 .page-toc-button {
   background: skyblue!important;
+}
+/* 文章标题 */
+.markdown-section h1::before{
+  content: "📕";
+}
+.markdown-section h1 {
+    border-bottom: 1px solid #ccc
+}
+.markdown-section h2::before{
+  content: "📖";
+}
+.markdown-section h2 {
+    border-bottom: 1px solid #ccc;
+}
+.markdown-section h3::before{
+  content: "📃";
+}
+/* 底部更新时间 */
+.footer-modification::before {
+  content: "⏰"
 }

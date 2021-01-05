@@ -31,7 +31,7 @@ class Bean{
 
 ## AOP简介
 
-![enter image description here](https://ss2.bdstatic.com/70cFvnSh_Q1YnxGkpoWK1HF6hhy/it/u=764221332,501156740&fm=26&gp=0.jpg)
+![20211520172](/assets/20211520172.png)
 
 ## AOP术语
 
@@ -55,7 +55,19 @@ _使用xml时，后置通知与返回通知以及异常通知的执行顺序取�
 
 - AspectJ指示器
 
-![enter image description here](https://oscimg.oschina.net/oscnet/48381d18d1889691ae28357968adbfa3408.jpg)
+Spring借助AspectJ的切点表达式语言来定义切面
+
+AspectJ指示器  | 描述
+----------- | ----------------------------------------------------
+arg()       | 限制连接点匹配参数为指定类型的执行方法
+@args()     | 限制连接点匹配参数由指定注解标注的执行方法
+execution() | 用于匹配是连接点的执行方法
+this()      | 限制连接点匹配AOP代理的Bean引用为指定类型的类
+target()    | 限制连接点匹配目标对象为指定类型的类
+@target ()  | 限制连接点匹配特定的执行对象，这些对象对应的类要具备指定类型的注解
+within()    | 限制连接点匹配指定的类型
+@within()   | 限制连接点匹配指定注解所标注的类型( 当使用Spring AOP时，方法定义在由指定的注解所标注的类里)
+@annotation | 限制匹配带有指定注解连接点
 
 - 一个简单的切点实例
 

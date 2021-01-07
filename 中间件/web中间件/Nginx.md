@@ -4,6 +4,8 @@ Nginx ("engine x") 是一个高性能的 **HTTP** 和 **反向代理** 服务器
 
 **vs apache**
 
+- 重量级 不支持高并发
+
 最核心的区别在于apache是同步多进程模型，一个连接对应一个进程
 nginx是异步的，多个连接（万级别）可以对应一个进程
 
@@ -14,6 +16,22 @@ nginx是异步的，多个连接（万级别）可以对应一个进程
 - 负载均衡
 - 动态路由
 - 请求过滤
+
+## 手动编译nginx
+
+依赖项（Ubuntu）：libpcre3 libpcre3-dev  zlib1g-dev openssl libssl-dev
+
+```sh
+./configure
+make
+make install
+```
+
+```sh
+/usr/local/nginx/sbin/nginx
+/usr/local/nginx/sbin/nginx -s stop # 停止
+/usr/local/nginx/sbin/nginx -s quit # 优雅退出
+```
 
 ## 配置文件
 

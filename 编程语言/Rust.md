@@ -344,3 +344,27 @@ for i in &mut v {
     *i += 1; // 对每个值加1
 }
 ```
+
+## 字符串
+
+```rust
+let mut s = String::new(); // 空字符串
+s.push_str("hello "); // 更新
+let s = String::from("init"); // 字面量
+let mut s = "123".to_string();
+let ss = "123".to_string();
+s.push_str(&ss);
+println!("{}", ss); // 仍然可以使用
+s.push('m'); // push 只能添加字符
+let s1 = String::from("hello");
+let s2 = String::from(" world");
+let s3 = s1 + &s2; // 字符串合并 s1不能再使用
+let str = format!("{} {}", s2, s3); // 字符串格式化
+let length = "你好".to_string().len(); // 编码为utf8 长度为6
+for c in str.chars() { // 遍历
+    println!("{}", c);
+}
+for b in str.bytes() {
+    println!("{}", b);
+}
+```

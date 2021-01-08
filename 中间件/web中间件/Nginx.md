@@ -9,7 +9,7 @@ Nginx ("engine x") 是一个高性能的 **HTTP** 和 **反向代理** 服务器
 最核心的区别在于apache是同步多进程模型，一个连接对应一个进程
 nginx是异步的，多个连接（万级别）可以对应一个进程
 
-## 主要功能
+**主要功能**
 
 - http服务器
 - 反向代理
@@ -31,6 +31,91 @@ make install
 /usr/local/nginx/sbin/nginx
 /usr/local/nginx/sbin/nginx -s stop # 停止
 /usr/local/nginx/sbin/nginx -s quit # 优雅退出
+```
+
+## 配置
+
+nginx目录结构
+
+```
+|---sbin
+| |---nginx
+|---conf
+| |---koi-win
+| |---koi-utf
+| |---win-utf
+| |---mime.types
+| |---mime.types.default
+| |---fastcgi_params
+| |---fastcgi_params.default
+| |---fastcgi.conf
+| |---fastcgi.conf.default
+| |---uwsgi_params
+| |---uwsgi_params.default
+| |---scgi_params
+| |---scgi_params.default
+| |---nginx.conf
+| |---nginx.conf.default
+|---logs
+| |---error.log
+| |---access.log
+| |---nginx.pid
+|---html
+| |---50x.html
+| |---index.html
+|---client_body_temp
+|---proxy_temp
+|---fastcgi_temp
+|---uwsgi_temp
+|---scgi_temp
+```
+
+### 进程关系
+
+- worker进程：处理用户请求，worker进程可以同时处理的请求数只受限于内存大小，一般设置为CPU核心数
+- master进程：管理wroker进程
+
+### 通用语法
+
+- 块配置
+
+```nginx
+http {
+    key value1 value2;
+    # 注释
+    server {...}
+}
+```
+
+当内外层块中的配置发生冲突时，究竟是以内层块还是外层块的配置为准，包括配置值有几个，都取决于解析这个配置项的模块。
+
+如果配置项值中包括语法符号，比如空格符，那么需要使用单引号或双引号括住配置项值
+
+- 配置项单位
+
+空间单位：k m
+
+时间单位：ms s h d...
+
+- 使用变量
+
+```nginx
+log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+```
+
+只有少数模块才支持变量
+
+### 基本配置
+
+```nginx
+daemon on|off; # 是否以守护进程方式运行Nginx 默认为on 一般在调试时关闭
+master_process on|off; # 是否以master/worker方式工作 默认为on
+error_log pathfile level; # 设置日志输出的级别及位置位置 默认为logs/error.log error
+events {
+    debug_connection 10.224.66.14; # 仅仅来自该IP地址的请求才会输出debug级别的日志
+}
+worker_rlimit_core size; # 限制coredump核心转储文件的大小
+working_directory path; # 指定coredump文件生成目录
 ```
 
 ## 配置文件

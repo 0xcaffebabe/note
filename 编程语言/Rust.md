@@ -368,3 +368,77 @@ for b in str.bytes() {
     println!("{}", b);
 }
 ```
+
+## HashMap
+
+```rust
+use std::collections::HashMap;
+fn main() {
+    let mut map = HashMap::new();
+    map.insert("name", "cxk");
+
+    // 使用两个vector创建hashmap
+    let keys = vec!["name","age"];
+    let values = vec!["cxk","18"];
+    let map:HashMap<_,_> = keys.iter().zip(values.iter()).collect();
+
+    let mut map:HashMap<String,String> = HashMap::new();
+    map.insert(String::from("name"), String::from("cxk"));
+    map.insert(String::from("age"), String::from("18"));
+    // 读取元素
+    match map.get(&String::from("name")) {
+        Some(v) => println!("{}", v),
+        None => {}
+    }
+    // 遍历元素
+    for (k,v) in &map {
+        println!("{} {}",k,v);
+    }
+
+    // putIfAbsent
+    map.entry(String::from("name")).or_insert(String::from("kd"));
+}
+```
+
+## 模块
+
+- 创建模块
+
+```sh
+cargo new --lib mylib
+```
+
+- 在mylib/src创建factory.rs
+
+```rust
+mod factory {
+  pub mod socket_produder {
+      pub fn new_socket(){
+          println!("socket new");
+      }
+  }
+
+  mod log_producer {
+      fn new_log(){
+          println!("log new");
+      }
+  }
+}
+```
+
+-lib.rs导出
+
+```rust
+pub mod factory;
+```
+
+- main.rs引用
+
+```toml
+[dependencies]
+mylib = {path = "./mylib"}
+```
+
+```rust
+use mylib::factory::socket_produder;
+```

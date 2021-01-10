@@ -4,7 +4,6 @@
 .page-inner{
   max-width: 80%!important;
 }
-
 /* 滚动槽 */
 ::-webkit-scrollbar {
   width: 6px;
@@ -34,17 +33,6 @@ li.chapter a:hover {
   color: #2c3e50;
   border-left: 4px solid skyblue;
   background-color: #f3f5f7;
-}
-/* back to top */
-.back-to-top {
-  background: skyblue!important;
-}
-.back-to-top:hover {
-  background: #009afe!important;
-}
-/* toc */
-.page-toc-button {
-  background: skyblue!important;
 }
 /* 文章标题 */
 .markdown-section h1::before{

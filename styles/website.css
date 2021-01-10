@@ -41,15 +41,6 @@ li.chapter a:hover {
 .markdown-section h1 {
     border-bottom: 1px solid #ccc
 }
-.markdown-section h2::before{
-  content: "📖";
-}
-.markdown-section h2 {
-    border-bottom: 1px solid #ccc;
-}
-.markdown-section h3::before{
-  content: "📃";
-}
 /* 底部更新时间 */
 .footer-modification::before {
   content: "⏰"

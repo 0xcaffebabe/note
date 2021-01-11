@@ -55,6 +55,10 @@ jobs:
     - name: add site statistics
       run: |
         echo "<div style='display:none'><script type='text/javascript' src='https://s4.cnzz.com/z_stat.php?id=1279055178&web_id=1279055178'></script></div>" >> ./_book/index.html
+    - name: update md links
+      run: |
+        chmod +x ./scripts/update_links.sh
+        sh ./scripts/update_links.sh
     - name: push_to_pages
       run: |
         cd ./_book

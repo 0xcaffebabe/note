@@ -107,6 +107,8 @@ log_format main '$remote_addr - $remote_user [$time_local] "$request" '
 
 ### 基本配置
 
+- 调试与定位问题
+
 ```nginx
 daemon on|off; # 是否以守护进程方式运行Nginx 默认为on 一般在调试时关闭
 master_process on|off; # 是否以master/worker方式工作 默认为on
@@ -118,62 +120,133 @@ worker_rlimit_core size; # 限制coredump核心转储文件的大小
 working_directory path; # 指定coredump文件生成目录
 ```
 
-## 配置文件
+- 运行配置
 
-- `worker_processes 6;`，工作线程数，建议设置为CPU核数
-- `worker_connections  10240;`,每个工作线程最大支持连接
-- `include mime.types;` 文件扩展名与文件类型映射表
-- `sendfile on;` 开启高效文件传输模式,直接由内核读取文件发送给网卡
-- `tcp_nopush` 在linux/Unix系统中优化tcp数据传输，仅在sendfile开启时有效
-- `autoindex on; `开启目录列表访问，合适下载服务器，默认关闭。
-- `keepalive_timeout 120; `#长连接超时时间，单位是秒
-- `gzip on;` 开启gzip压缩输出
-
-
-## 虚拟主机
-
-### 基于端口的虚拟主机
-
+```nginx
+env TESTPATH=/tmp/; # 设置操作系统环境变量
+# 切入其他配置文件 可以使单个配置文件或者是通配符
+include mime.types;
+include vhost/*.conf;
+pid path/file; # 设置pid文件路径 默认为logs/nginx.pid
+user username[groupname]; # 设置worker进程运行的用户及用户组 默认为nobody
+worker_rlimit_nofile limit; # 设置一个worker进程可以打开的最大文件句柄数
 ```
+
+- 优化性能配置
+
+```nginx
+worker_processes 6; # 工作线程数，建议设置为CPU核数
+worker_connections  10240; # 每个工作线程最大支持连接
+worker_cpu_affinity cpumask[cpumask...]; # 绑定worker进程到指定的CPU内核
+tcp_nopush; # 在linux/Unix系统中优化tcp数据传输，仅在sendfile开启时有效
+sendfile on; # 开启高效文件传输模式,直接由内核读取文件发送给网卡
+ssl_engine device; # SSL硬件加速
+timer_resolution t; # 系统调用gettimeofday的执行频率
+worker_priority nice; # worker进程优先级设置
+keepalive_timeout 120; # 长连接超时时间，单位是秒
+gzip on; # 开启gzip压缩输出
+```
+
+- 事件类
+
+```nginx
+accept_mutex[on|off]; # 是否打开accept锁,ccept_mutex这把锁可以让多个worker进程轮流地、序列化地与新的客户端建立TCP连接,当某个worker的连接数很多时，新到来的连接与该wroker连接的可能性就会减小
+lock_file path/file; # lock文件路径 默认在logs/nginx.lock 若由于底层不支持原子锁 则nginx才会使用该文件实现accept锁
+accept_mutex_delay Nms; # 使用accept锁后到真正建立连接之间的延迟时间
+multi_accept[on|off]; # 默认为off 若开启当事件模型通知有新连接时，尽可能地对本次调度中客户端发起的所有TCP请求都建立连接
+use[kqueue|rtsig|epoll|/dev/poll|select|poll|eventport]; # 选择事件模型 nginx会自动选择最合适的模型
+```
+
+- `autoindex on; `开启目录列表访问，合适下载服务器，默认关闭。
+
+## Web服务器配置
+
+### 虚拟主机
+
+每个server块就是一个虚拟主机，它只处理与之相对应的主机域名请求
+
+- 基于端口的虚拟主机
+
+```nginx
 server {
     listen 80;
+    listen 127.0.0.1:8000;
+    listen 127.0.0.1; 默认为80端口
+    listen [::]:8000; ipv6
     ...
 }
 ```
 
-### 基于域名的虚拟主机
+- 基于主机名的虚拟主机
 
-```
+处理一个HTTP请求时，Nginx会取出header头中的Host，与每个server中的server_name进行匹配，以此决定到底由哪一个server块来处理这个请求
+
+```nginx
 server {
     listen       80;
-    server_name  www.itmayiedu.com;
+    server_name  www.ismy.wang;
+    server_names_hash_bucket_size; # Nginx使用散列表来存储server name。server_names_hash_bucket_size设置了每个散列桶占用的内存大小
+    server_names_hash_max_size; # server_names_hash_max_size越大，消耗的内存就越多，但散列key的冲突率则会降低，检索速度也更快
+    server_name_in_redirect on|off; # 在使用on打开时，表示在重定向请求时会使用server_name里配置的第一个主机名代替原先请求中的Host头部
     ...
 }
 ```
 
-### location语法
+匹配优先级：www.baidu.com -> `*.baidu.com` ->  `baidu.*` -> 使用正则表达式的主机名
+
+- location语法
+
+尝试根据用户请求中的URI来匹配上面的/uri表达式
 
 =开头表示精确匹配
 
-`^~` 开头表示uri以某个`~`字符串开头，不是正则匹配
+`^~ images` 开头表示uri以某个`images`字符串开头
 
-`~` 开头表示区分大小写的正则匹配
+`~` 开头表示区分大小写的匹配
 
-`~*` 开头表示不区分大小写的正则匹配
+`~*` 开头表示不区分大小写的匹配
 
 `/` 通用匹配, 如果没有其它匹配,任何请求都会匹配到
 
-“普通location ”与“正则 location ”之间的匹配顺序是:
+“普通location ”与“表达式 location ”之间的匹配顺序是:
 
-先匹配普通 location ，再“考虑”匹配正则 location 
+先匹配普通 location ，再“考虑”匹配表达式 location 
+
+使用正则表达式
+
+```nginx
+location ~* \.(gif|jpg)$ {
+    # 匹配.gif .jpg结尾的请求
+}
+```
+
+为了表示如果都不匹配，则到这里 可以在最后一个location中使用/作为参数，它会匹配所有的HTTP请求，这样就可以表示如果不能匹配前面的所有location，则由“/”这个location处理
 
 访问状态监控：
 
-```
+```nginx
 location /basic_status {
     stub_status on;
 }
 ```
+
+### 文件路径
+
+```nginx
+location / {
+    root usr/local; # 若访问/index.html nginx会读取usr/local/index.html文件返回
+    index index.html; # 首页配置
+    error_page 404 404.html; # 错误码重定向
+    error_page 500 @fallback; # 重定向到location
+    recursive_error_pages[on|off]; # 是否允许递归使用error_page
+    try_files path1[path2]uri; # 尝试按顺序根据路径列表读取 如果读取成功就返回 否则依次尝试
+}
+location @fallback {
+    proxy_pass http://backend
+}
+```
+
+另外一个配置项是alias，/conf/nginx.conf请求将根据alias path映射为path/nginx.conf
 
 ## 反向代理
 

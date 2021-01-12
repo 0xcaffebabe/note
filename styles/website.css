@@ -20,6 +20,11 @@
   background: rgba(0,0,0,0.12);
   box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
 }
+/* toc btn */
+.page-toc-menu a:hover {
+  text-decoration: none!important;
+  color: #008cff!important;
+}
 /* 左侧章节 */
 li.chapter a:hover {
   color: #008cff!important;

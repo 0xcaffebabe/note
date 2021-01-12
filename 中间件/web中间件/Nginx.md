@@ -248,6 +248,29 @@ location @fallback {
 
 另外一个配置项是alias，/conf/nginx.conf请求将根据alias path映射为path/nginx.conf
 
+### 内存及磁盘资源分配
+
+```nginx
+client_body_in_file_only on|clean|off; # HTTP包体只存储到磁盘文件中 一般用于调试
+client_body_in_single_buffer on|off; # HTTP包体尽量写入到一个内存buffer中
+client_header_buffer_size size; # 存储HTTP头部的内存buffer大小 默认为1k
+large_client_header_buffers number size; # 存储超大HTTP头部的内存buffer大小 默认48k
+client_body_buffer_size size; # 存储HTTP包体的内存buffer大小 HTTP包体会先接收到指定的这块缓存中，之后才决定是否写入磁盘
+client_body_temp_path dir-path[level1[level2[level3]]] # 定义HTTP包体存放的临时目录 防止目录文件过多影响性能 后边的level可以指定继续创建子目录来存放
+connection_pool_size; # 对于每个建立成功的TCP连接预先分配的内存池大小
+request_pool_size; # 处理HTTP请求时为请求分配的内存池大小
+```
+
+### 网络连接设置
+
+### MIME类型设置
+
+### 对客户端请求限制
+
+### 文件操作优化
+
+### 客户端请求处理
+
 ## 反向代理
 
 - 正向代理：通过客户机的配置，实现让一台服务器代理客户机，客户的所有请求都交给代理服务器处理。正向代理隐藏真实客户端
@@ -257,15 +280,45 @@ location @fallback {
 
 反向代理隐藏真实内部ip地址，请求先访问nginx代理服务器,nginx服务器再转发到真实服务器中
 
-nginx反向代理配置
+Nginx对于用户发送来的请求会完整缓存到nginx再转发到上游服务器，但对上游服务器的响应，则会边接收边转发给客户端。这样的设计由于客户端的请求走公网，质量可能会较差，但上游服务器到nginx则是内网，这可以有效降低上游服务器的负载，但也增加了处理请求的时长。
 
+### 负载均衡基本配置
+
+- upstream
+
+```nginx
+upstream so {
+    ip_hash; # 不可与weight同时使用 来自某一个用户的请求始终落到固定的一台上游服务器中
+    server www.baidu.com:80 weight=5; # 转发权重为5
+    server www.163.com:80 max_fails=3 fail_timeout=30s; # 转发次数超过max_fails 次，则在fail_timeout时间内认为这个服务器不可用
+}
+server {
+    listen 8080;
+    location / {
+        proxy_pass http://so/;
+    }
+}
 ```
+
+- upstream支持的相关日志变量
+
+变量                      | 意义
+----------------------- | -----------------------------------------------
+$upstream_addr          | 处理请求的上游服务器地址
+$upstream_cache_status  | 表示是否命中缓存，取值范围: MISS、 EXPIRED、UPDATING、STALE、HIT
+$upstream_status        | 上游服务器返回的响应中的HTTP响应码
+$upstream_response_time | 上游服务器的响应时间，精度到毫秒
+$upstream_http_$HEADER  | HTTP的头部，如upstream http_ host
+
+### nginx反向代理配置
+
+```nginx
 http{
     ...
     server {
         listen       80;
         server_name  hostname;
-
+        # 默认情况下反向代理是不会转发请求中的Host头部的 需要手动配置
         proxy_set_header X-Forwarded-Host $host;
         proxy_set_header X-Forwarded-Server $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -277,6 +330,15 @@ http{
         }
     }
 }
+```
+```nginx
+proxy_method POST; # 配置转发时的方法名
+proxy_hide_header the_header; #指定哪些HTTP头部字段不能被转发
+proxy_pass_header; # 会将原来禁止转发的header设置为允许转发
+proxy_pass_request_body on|off; # 是否向上游服务器发送HTTP包体部分
+proxy_pass_request_headers; # 确定是否转发HTTP头部
+proxy_redirect[default|off|redirect replacement]; # 重设HTTP头部的location或refresh字段
+proxy_next_upstream[error|timeout|invalid_header|http_500|http_502|http_503|http_504|http_404|off]; # 满足某些情况下，允许一台上游服务器发生错误时换一台上游服务器来处理
 ```
 
 ## 负载均衡
@@ -293,25 +355,6 @@ http{
 - 分布式Session一致性问题
 - 分布式定时任务调度幂等性问题
 - 分布式生成全局ID
-
-### Upstream Server
-
-上游服务器，就是被nginx代理最后真实访问的服务器
-
-### nginx配置负载均衡
-
-```
-upstream so {
-    server www.baidu.com:80;
-    server www.163.com:80;
-}
-server {
-    listen 8080;
-    location / {
-            proxy_pass http://so/;
-    }
-}
-```
 
 ### 轮询算法
 

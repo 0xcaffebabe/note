@@ -25,10 +25,17 @@ iOS, Android基本都将这个视口分辨率设置为 980px，所以PC上的网
 ### meta标签
 
 ```html
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, minimum-scale=1.0">
 ```
 
-![202001180933](/assets/202001180933.png)
+属性            | 解释说明
+------------- | ------------------------------------
+width         | 宽度设置的是viewport宽度，可以设置device-width特殊值
+initial-scale | 初始缩放比，大于0的数字
+maximum-scale | 最大缩放比，大于0的数字
+minimum-scale | 最小缩放比，大于0的数字
+user-scalable | 用户是否可以缩放，yes或no (1或0)
+
 
 标准设置
 
@@ -151,11 +158,22 @@ flex 是 flexible Box 的缩写，意为"弹性布局"，用来为盒状模型�
 flex-direction: value;
 ```
 
-![202001190842](/assets/202001190842.jpg)
+值              | 说明
+-------------- | -------
+**row**        | 默认值从左到右
+row-reverse    | 从右到左
+**column**     | 从上到下
+column-reverse | 从下到上
 
 -  justify-content 设置主轴上的子元素排列方式
 
-![202001190846](/assets/202001190846.jpg)
+值                 | 说明
+----------------- | ---------------------
+**flex-start**    | 默认值从头部开始如果主轴是x轴，则从左到右
+flex-end          | 从尾部开始排列
+**center**        | 在主轴居中对齐(如果主轴是x轴则水平居中)
+**space-around**  | 平分剩余空间
+**space-between** | 先两边贴边再平分剩余空间(重要)
 
 - flex-wrap设置是否换行
 
@@ -171,7 +189,14 @@ stretch 拉伸
 
 - align-content  设置侧轴上的子元素的排列方式（多行）
 
-![202001190916](/assets/202001190916.jpg)
+值             | 说明
+------------- | -------------------
+flex-start    | 默认值在侧轴的头部开始排列
+flex-end      | 在侧轴的尾部开始排列
+center        | 在侧轴中间显示
+space-around  | 子项在侧轴平分剩余空间
+space-between | 子项在侧轴先分布在两头，再平分剩余空间
+stretch       | 设置子项元素高度平分父元素高度
 
 -  flex-flow 属性是 flex-direction 和 flex-wrap 属性的复合属性
 
@@ -216,7 +241,11 @@ rem (root em)是一个相对单位，类似于em，em是父元素字体大小。
 
 mediatype 查询类型
 
-![202001200904](/assets/202001200904.jpg)
+值     | 解释说明
+----- | -----------------
+all   | 用于所有设备
+print | 用于打印机和打印预览
+scree | 用于电脑屏幕，平板电脑，智能手机等
 
 关键字
 
@@ -224,7 +253,11 @@ mediatype 查询类型
 
 媒体特性
 
-![202001200906](/assets/202001200906.jpg)
+值         | 解释说明
+--------- | -----------------
+width     | 定义输出设备中页面可见区域的宽度
+min-width | 定义输出设备中页面最小可见区域宽度
+max-width | 定义输出设备中页面最大可见区域宽度
 
 为了防止混乱，媒体查询我们要按照从小到大或者从大到小的顺序来写,但是我们最喜欢的还是从小到大来写，这样代码更简洁
 

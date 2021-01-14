@@ -50,3 +50,7 @@ li.chapter a:hover {
 .footer-modification::before {
   content: "⏰"
 }
+/* 阅读数 */
+.page-view-counter::before{
+  content:"⚡"
+}

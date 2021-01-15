@@ -72,7 +72,7 @@ def write_count_css(css):
 
 def main():
     # html = httpx.get("https://b.ismy.wang").text # 测试用
-    html_file = open("./_book/index.html")
+    html_file = open("./_book/index.html", 'rb')
     html = str(html_file.read(), encoding="utf-8")
     html_file.close()
     soup = BeautifulSoup(html, features="html.parser")

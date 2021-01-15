@@ -36,7 +36,7 @@ jobs:
         python-version: 3.7
     - name: 安装python依赖
       run: |
-        pip install jieba wordcloud beautifulsoup4
+        pip install jieba wordcloud beautifulsoup4 httpx
     - name: 运行统计脚本
       run: |
         python ./scripts/statistics.py

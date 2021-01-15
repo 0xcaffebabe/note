@@ -65,14 +65,14 @@ def build_chapter_count_css(chapters, level):
 
 
 def write_count_css(css):
-    css_file = open("./docs/styles/count.css")
+    css_file = open("./_book/styles/count.css")
     css_file.write(css)
     css_file.close()
 
 
 def main():
     # html = httpx.get("https://b.ismy.wang").text # 测试用
-    html_file = open("./docs/index.html")
+    html_file = open("./_book/index.html")
     html = str(html_file.read(), encoding="utf-8")
     html_file.close()
     soup = BeautifulSoup(html, features="html.parser")

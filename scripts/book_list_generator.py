@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*
 import os
 def getUnreadBook():
   return getBook('d:/learning/ebook/')

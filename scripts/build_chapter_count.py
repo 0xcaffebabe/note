@@ -1,18 +1,19 @@
+# -*- coding: utf-8 -*
 from bs4 import BeautifulSoup
 import httpx
 
 class ChapterNode:
-    def __init__(self) -> None:
+    def __init__(self):
         self.name = ""
         self.data_level = ""
         self.children = []
 
-    def size(self) -> int:
+    def size(self):
         size = len(self.children)
         return size
 
 
-def process(nodes) -> list:
+def process(nodes):
     result = []
     for node in nodes:
         n = ChapterNode()

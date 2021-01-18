@@ -14,7 +14,7 @@ echo "安装gitbook依赖"
 gitbook install
 
 echo "构建书籍"
-gitbook build ./ d
+gitbook build
 
 echo "运行更新html文件md链接脚本"
 chmod +x ./scripts/update_links.sh

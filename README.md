@@ -16,8 +16,8 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
 
 统计：
 
-![](https://note.ismy.wang/info.png)
-![](https://note.ismy.wang/wordcloud.png)
+![](./info.png)
+![](./wordcloud.png)
 
 
 - [算法与数据结构](./算法与数据结构/算法与数据结构.md)
@@ -157,7 +157,7 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
     - [微服务](./软件工程/微服务/微服务.md)
       - [服务建模](./软件工程/微服务/服务建模.md)
       - [集成](./软件工程/微服务/集成.md)
-      - [分解单块系统](./软件工程/微服务/分解单块系统.md)
+      - [拆分](./软件工程/微服务/拆分.md)
       - [部署](./软件工程/微服务/部署.md)
       - [测试](./软件工程/微服务/测试.md)
       - [监控](./软件工程/微服务/监控.md)

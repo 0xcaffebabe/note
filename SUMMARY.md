@@ -157,7 +157,7 @@
         - [开放平台](./软件工程/微服务/SpringCloud/开放平台.md)
       - [SpringCloudAlibaba](./软件工程/微服务/SpringCloudAlibaba/SpringCloudAlibaba.md)
 
-- [计算机系统](./计算机系统/nav.md)
+- [💻计算机系统](./计算机系统/nav.md)
   - 程序结构和执行
   - [数据的表示](./计算机系统/程序结构和执行/数据的表示.md)
   - [运算方法与运算器](./计算机系统/程序结构和执行/运算方法与运算器.md)
@@ -376,7 +376,7 @@
   - [Clojure](./编程语言/Clojure.md)
   - [Rust](./编程语言/Rust.md)
 
-- [Spring](./编程语言/JAVA/框架/Spring/spring概览.md)
+- [🍃Spring](./编程语言/JAVA/框架/Spring/spring概览.md)
     - [spring概览](./编程语言/JAVA/框架/Spring/spring概览.md)
     - [装配Bean](./编程语言/JAVA/框架/Spring/装配Bean.md)
     - [高级装配](./编程语言/JAVA/框架/Spring/高级装配.md)
@@ -467,7 +467,7 @@
   - [文件服务器](./中间件/文件服务器/文件服务器.md)
     - [FastDFS](./中间件/文件服务器/FastDFS.md)
 
-- [移动开发](./移动开发/nav.md)
+- [📱移动开发](./移动开发/nav.md)
   - [安卓](./移动开发/安卓/nav.md)
     - [Activity](./移动开发/安卓/Activity.md)
     - [Intent](./移动开发/安卓/Intent.md)

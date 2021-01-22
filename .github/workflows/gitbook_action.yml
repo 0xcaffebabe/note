@@ -60,6 +60,9 @@ jobs:
     - name: 运行构造章节文章数脚本
       run: |
         python ./scripts/build_chapter_count.py
+    - name: 运行统计文章字数脚本
+      run: |
+        python ./scripts/build_page_word_count.py
     - name: 推送到github pages
       run: |
         cd ./_book

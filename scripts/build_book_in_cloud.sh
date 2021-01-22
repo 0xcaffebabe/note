@@ -22,3 +22,6 @@ chmod +x ./scripts/update_links.sh
 
 echo "运行构造章节文章数脚本"
 python ./scripts/build_chapter_count.py
+
+echo "运行统计文章字数脚本"
+python ./scripts/build_page_word_count.py

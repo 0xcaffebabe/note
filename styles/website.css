@@ -68,3 +68,34 @@ li.chapter a:hover {
 .page-view-counter::before{
   content:"⚡"
 }
+/* 搜索栏 */
+#book-search-input input, #book-search-input input:focus, #book-search-input input:hover{
+  width:auto!important;
+  transition: all .3s;
+}
+#book-search-input input:focus{
+  border: 1px solid #008cff;
+
+}
+#book-search-input::before{
+  display: inline-block;
+  content: "🔍";
+}
+/* 搜索高亮 */
+#book-search-results span.search-highlight-keyword {
+  color: #008cff;
+  font-weight: 700;
+}
+/* 搜索结果标题 */
+#book-search-results .search-results .has-results .search-results-item a:hover{
+  text-decoration: none;
+  color: #72b0ec;
+}
+/* 文章页内高亮 */
+mark {
+  background: #008cff;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 0 2px;
+}

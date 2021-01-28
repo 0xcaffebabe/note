@@ -10,6 +10,9 @@ git config --global core.quotepath false
 chmod +x ./scripts/updatetime.sh
 ./scripts/updatetime.sh | bash
 
+echo "运行更新README脚本"
+python ./scripts/update_readme.py
+
 echo "安装gitbook依赖"
 gitbook install
 

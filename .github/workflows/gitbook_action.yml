@@ -45,6 +45,9 @@ jobs:
         git config --global core.quotepath false
         chmod +x ./scripts/updatetime.sh
         ./scripts/updatetime.sh | bash
+    - name: 运行更新README脚本
+      run: |
+        python ./scripts/update_readme.py
     - name: 安装gitbook依赖
       run: |
         npm install gitbook-cli  -g

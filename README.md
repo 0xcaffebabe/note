@@ -16,8 +16,8 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
 
 统计：
 
-![](./info.png)
-![](./wordcloud.png)
+![](https://b.ismy.wang/info.png)
+![](https://b.ismy.wang/wordcloud.png)
 
 
 - [算法与数据结构](./算法与数据结构/算法与数据结构.md)
@@ -32,7 +32,7 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
   - [图](./算法与数据结构/图.md)
   - [字符串](./算法与数据结构/字符串.md)
 
-- [数据库系统](./数据库系统/关系数据库/引言.md)
+- [💾数据库系统](./数据库系统/关系数据库/引言.md)
   - [leetcode](./数据库系统/leetcode.md)
   - 关系数据库
   - [形式化关系查询语言](./数据库系统/关系数据库/形式化关系查询语言.md)
@@ -79,7 +79,7 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
   - [虚拟化](./操作系统/虚拟化.md)
   - [云原生](./操作系统/云原生.md)
 
-- [软件工程](./软件工程/软件工程概论.md)
+- [🏙软件工程](./软件工程/软件工程概论.md)
   - [软件过程](./软件工程/软件过程.md)
   - [软件需求](./软件工程/软件需求.md)
   - [结构化分析方法](./软件工程/结构化分析方法.md)
@@ -159,6 +159,8 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
       - [集成](./软件工程/微服务/集成.md)
       - [事务](./软件工程/微服务/事务.md)
       - [拆分](./软件工程/微服务/拆分.md)
+      - [业务逻辑](./软件工程/微服务/业务逻辑.md)
+      - [查询](./软件工程/微服务/查询.md)
       - [部署](./软件工程/微服务/部署.md)
       - [测试](./软件工程/微服务/测试.md)
       - [监控](./软件工程/微服务/监控.md)
@@ -208,7 +210,7 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
   - [可编程逻辑器件](./数字逻辑电路/可编程逻辑器件.md)
   - [数模与模数转换](./数字逻辑电路/数模与模数转换.md)
 
-- [网络安全](./网络安全/网络安全.md)
+- [🔐网络安全](./网络安全/网络安全.md)
   - [网络协议安全](./网络安全/网络协议安全.md)
   - [网络安全隔离技术](./网络安全/网络安全隔离技术.md)
   - [网络安全技术](./网络安全/网络安全技术.md)
@@ -439,7 +441,7 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
   - [GraphQL](./DSL/GraphQL.md)
   - [SQL](./DSL/SQL.md)
 
-- [中间件](./中间件/nav.md)
+- [🍚中间件](./中间件/nav.md)
   - [数据库](./中间件/数据库/数据库.md)
     - [MySQL](./中间件/数据库/mysql/mysql.md)
       - [基本使用](./中间件/数据库/mysql/基本使用.md)
@@ -503,7 +505,7 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
   - [小程序开发](./移动开发/小程序开发/nav.md)
   - [uniapp](./移动开发/uniapp.md)
 
-- [开发工具](./开发工具/nav.md)
+- [🛠开发工具](./开发工具/nav.md)
   - [Linux](./开发工具/linux/Linux.md)
   - [Vim](./开发工具/vim/vim.md)
   - [Git](./开发工具/git.md)
@@ -521,7 +523,7 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
   - [K8s](./运维/K8s.md)
   - [容器管理](./运维/容器管理.md)
 
-- [通识](./通识/nav.md)
+- [🥽通识](./通识/nav.md)
   - [技术与世界](./通识/技术与世界.md)
   - [专业素养](./通识/专业素养.md)
   - [设计](./通识/设计.md)

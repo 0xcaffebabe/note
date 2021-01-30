@@ -99,3 +99,7 @@ mark {
   border-radius: 4px;
   padding: 0 2px;
 }
+/* 左侧章节 */
+.book-summary ul.summary li.active > a {
+  border-right: 4px #008cff; solid;
+}

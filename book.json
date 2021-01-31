@@ -15,7 +15,6 @@
         "search-pro",
         "pageview-count",
         "-sharing",
-        "sharing-plus",
         "tbfed-pagefooter",
         "hide-element",
         "page-toc-button",
@@ -25,18 +24,6 @@
         "prism"
     ],
     "pluginsConfig": {
-        "sharing": {
-            "douban": true,
-            "qq": true,
-            "qzone": true,
-            "weibo": true,
-            "all": [
-                "douban",
-                "weibo",
-                "qq",
-                "qzone"
-            ]
-        },
         "tbfed-pagefooter": {
             "copyright": "MY",
             "modify_label": "该页面最后修改于：",

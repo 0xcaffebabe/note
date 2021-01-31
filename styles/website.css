@@ -101,5 +101,9 @@ mark {
 }
 /* 左侧章节 */
 .book-summary ul.summary li.active > a {
-  border-right: 4px #008cff; solid;
+  border-right: 4px #008cff solid;
+}
+/* 底部版权 */
+.copyright{
+  display:none;
 }

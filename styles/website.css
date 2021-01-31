@@ -60,9 +60,10 @@ li.chapter a:hover {
 .footer-wordcount {
   float: right;
   margin-right: 10px;
+  color: #333;
 }
 .footer-wordcount::before {
-    content: "✏";
+    content: "📍";
 }
 /* 阅读数 */
 .page-view-counter::before{

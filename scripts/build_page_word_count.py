@@ -32,7 +32,9 @@ def write_count_to_html(html_file, count):
   if (len(soup.select('.markdown-section .page-footer')) == 0): 
     print(item + "跳过")
     return
-  soup.select('.markdown-section .page-footer')[0].append(BeautifulSoup('<span class="footer-wordcount"> 本页字数:%s</span>'%(count),'html.parser'))
+  soup.select('.markdown-section .page-footer')[0]\
+    .append(BeautifulSoup('<span class="footer-wordcount"> 本页字数: \
+      <span style="color: #ccc">%s</span> 字</span>'%(count),'html.parser'))
   html = soup.prettify()
   result_file = open(html_file, 'w')
   result_file.write(html)

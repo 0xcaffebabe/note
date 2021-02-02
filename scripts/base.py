@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 
 def listAllFile(path):
     if path.startswith(".git"): return []
+    if path.startswith("node_modules"): return []
     result = []
     for item in os.listdir(path):
         if not path.startswith('./'):
@@ -32,12 +33,19 @@ def replace_html_node(html, selector, content):
   return soup.prettify()
 
 def write_text_to_file(file_name, text):
-  result_file = open(file_name, 'w')
-  result_file.write(text)
-  result_file.close()
+  try:
+    result_file = open(file_name, 'w')
+    result_file.write(text)
+    result_file.close()
+  except:
+    print("write file" + file_name + "except exception!!")
 
 def read_text_from_file(file_name):
-  html_file = open(file_name, 'rb')
-  html = str(html_file.read(), encoding="utf-8")
-  html_file.close()
-  return html
+  try:
+    html_file = open(file_name, 'rb')
+    html = str(html_file.read(), encoding="utf-8")
+    html_file.close()
+    return html
+  except:
+    print("read file " + file_name + "happen exception")
+    return "" 

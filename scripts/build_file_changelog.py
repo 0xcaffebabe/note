@@ -16,9 +16,9 @@ def process():
 
 def write_recent_commits(file_name, commit_list):
   file_name = "_book/" + file_name
-  html = '<div class="copyright">recent update:<ul>'
+  html = '<div class="copyright"><p>更新历史:</p><ul>'
   for item in commit_list:
-    html = html + '<li><a href="#">%s %s</a></li>'%(item['msg'], item['date'])
+    html += '<li><a href="#">%s %s</a></li>'%(item['msg'], item['date'])
   html += '</ul></div>'
   file_html = read_text_from_file(file_name)
   if (file_html == ''): 

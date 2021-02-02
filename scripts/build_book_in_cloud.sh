@@ -1,6 +1,4 @@
 #!/bin/sh
-echo "配置git时间格式"
-git config --global log.date format:’%Y-%m-%d %H:%M:%S’
 
 echo "安装python依赖"
 pip install jieba wordcloud beautifulsoup4 httpx
@@ -31,3 +29,6 @@ python ./scripts/build_chapter_count.py
 
 echo "运行统计文章字数脚本"
 python ./scripts/build_page_word_count.py
+
+echo "运行页面更新历史构建脚本"
+python ./scripts/build_file_changelog.py

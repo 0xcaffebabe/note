@@ -2,3 +2,4 @@ out/
 *.class
 .vscode
 node_modules
+*.pyc

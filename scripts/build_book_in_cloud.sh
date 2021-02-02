@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo "安装python依赖"
-pip install jieba wordcloud beautifulsoup4 httpx
+pip install jieba wordcloud beautifulsoup4 httpx pydriller
 
 echo "运行统计脚本"
 python ./scripts/statistics.py

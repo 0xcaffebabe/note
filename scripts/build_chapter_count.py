@@ -10,6 +10,8 @@ class ChapterNode:
 
     def size(self):
         size = len(self.children)
+        for i in self.children:
+            size = size + i.size()
         return size
 
 
@@ -78,7 +80,7 @@ def main():
     html_file.close()
     soup = BeautifulSoup(html, features="html.parser")
     chapter_list = process(soup.select(".summary > li[data-level]"))
-    # print_chapter_tree(chapter_list, 0)
+    print_chapter_tree(chapter_list, 0)
     build_chapter_count_css(chapter_list, 0)
     write_count_css(count_css)
     # print(count_css)

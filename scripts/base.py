@@ -38,7 +38,7 @@ def write_text_to_file(file_name, text):
     result_file.write(text)
     result_file.close()
   except:
-    print("write file" + file_name + "except exception!!")
+    print("写入文件 " + file_name + " 发生异常")
 
 def read_text_from_file(file_name):
   try:
@@ -47,5 +47,5 @@ def read_text_from_file(file_name):
     html_file.close()
     return html
   except:
-    print("read file " + file_name + "happen exception")
+    print("读取文件 " + file_name + " 发生异常")
     return "" 

@@ -104,7 +104,24 @@ mark {
 .book-summary ul.summary li.active > a {
   border-right: 4px #008cff solid;
 }
-/* 底部版权 */
+/* 底部更新历时 */
 .copyright{
   float: left;
+}
+.copyright ul{
+  border-left: 4px solid #ccc;
+  list-style:none;
+  padding-left:10px;
+}
+.copyright li {
+  margin-top:4px;
+}
+.copyright ul li::before{
+  content:"📃"
+}
+.copyright ul a{
+  text-decoration:none!important;
+}
+.copyright ul a:hover{
+  color: #008cff!important;
 }

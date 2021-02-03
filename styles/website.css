@@ -112,8 +112,6 @@ mark {
   border-left: 4px solid #ccc;
   list-style:none;
   padding-left:10px;
-  max-height: 400px;
-  overflow-y: scroll;
 }
 .copyright li {
   margin-top:4px;

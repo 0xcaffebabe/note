@@ -1,4 +1,6 @@
 #!/bin/sh
+startTime=`date +%Y%m%d-%H:%M`
+startTime_s=`date +%s`
 
 echo "安装python依赖"
 pip install jieba wordcloud beautifulsoup4 httpx pydriller
@@ -32,3 +34,9 @@ python ./scripts/build_page_word_count.py
 
 echo "运行页面更新历史构建脚本"
 python ./scripts/build_file_changelog.py
+
+endTime=`date +%Y%m%d-%H:%M`
+endTime_s=`date +%s`
+sumTime=$[ $endTime_s - $startTime_s ]
+
+echo "构建总消耗时间:$sumTime 秒"

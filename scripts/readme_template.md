@@ -16,7 +16,7 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
 
 统计：
 
-![](https://b.ismy.wang/info.png)
-![](https://b.ismy.wang/wordcloud.png)
+![](https://note.ismy.wang/info.png)
+![](https://note.ismy.wang/wordcloud.png)
 
 ${category}

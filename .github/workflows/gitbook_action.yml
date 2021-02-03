@@ -26,49 +26,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: 使用 Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - name: set up python env
+    - name: 设置python环境
       uses: actions/setup-python@v1
       with:
         python-version: 3.7
-    - name: 安装python依赖
+    - name: 执行书籍构建脚本
       run: |
-        pip install jieba wordcloud beautifulsoup4 httpx pydriller
-    - name: 运行统计脚本
-      run: |
-        python ./scripts/statistics.py
-    - name: 运行更新仓库文件时间脚本
-      run: |
-        git config --global core.quotepath false
-        chmod +x ./scripts/updatetime.sh
-        ./scripts/updatetime.sh | bash
-    - name: 运行更新README脚本
-      run: |
-        python ./scripts/update_readme.py
-    - name: 安装gitbook依赖
-      run: |
-        npm install gitbook-cli  -g
-        gitbook -v
-        gitbook install
-    - name: build_gitbook
-      run: |
-        gitbook build
-    - name: 运行更新html文件md链接脚本
-      run: |
-        chmod +x ./scripts/update_links.sh
-        sh ./scripts/update_links.sh
-    - name: 运行构造章节文章数脚本
-      run: |
-        python ./scripts/build_chapter_count.py
-    - name: 运行统计文章字数脚本
-      run: |
-        python ./scripts/build_page_word_count.py
-    - name: 运行页面更新历史构建脚本
-      run: |
-        python ./scripts/build_file_changelog.py
+         chmod +x ./scripts/build_book_in_cloud.sh
+         sh ./scripts/build_book_in_cloud.sh
     - name: 推送到github pages
       run: |
         cd ./_book

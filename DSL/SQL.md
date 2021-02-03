@@ -54,19 +54,46 @@ CREATE TABLE department(
 - FOREIGN KEY:外键约束
 - NOT NULL :非空约束
 
-## SQL查询的基本结构
+## SQL查询
 
 ### 单关系查询
 
-示例：
-
 ```sql
-SELECT name FROM instructor
+SELECT prod_name FROM products; -- 查询单列
+SELECT prod_name, prod_price FROM products; -- 查询多列
+SELECT * FROM products; -- 检索所有列
+SELECT DISTINCT vend_id FROM products; -- 结果去重（DISTINCT作用在整行上，不针对某个具体列）
 ```
 
-- distnct 去除重复元组
+SQL关键字不区分大小写，但对象名区分，在不同的DBMS跟操作系统区分大小写可能会有不同。
+
+*通配符通常会降低检索性能，但好处就是能匹配未知列。
+
 - SELECT子句还可进行加减乘除运算
 - WHERE子句选出满足条件的元组
+
+#### 分页
+
+不同的数据库分页不尽相同
+
+```sql
+SELECT TOP 5 * FROM products; -- SQL Server
+SELECT * FROM products FETCH FIRST 5 ROWS ONLY; -- DB2
+SELECT * FROM products WHERE ROWNUM <= 5; -- Oracle
+SELECT * FROM products LIMIT 0,5; -- MySQL
+```
+
+#### 排序
+
+```sql
+SELECT * FROM products ORDER BY prod_name; -- 单列排序
+SELECT * FROM products ORDER BY prod_price, prod_name; -- 多列排序
+SELECT * FROM products ORDER BY 1,2; -- 使用列的相对位置指定排序 使用这种方式只能针对出现在SELECT中的列进行排序
+SELECT * FROM products ORDER BY prod_price DESC; -- 降序排序 默认为ASC升序排序
+SELECT * FROM products ORDER BY prod_price DESC, prod_name DESC; -- 多列降序排序需要每列都指定DESC
+```
+
+使用ORDER BY 子句时，应该保证其实SELECT 语句的最后一条子句。
 
 ### 多关系查询
 

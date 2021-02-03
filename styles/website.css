@@ -127,3 +127,10 @@ mark {
 .copyright ul a:hover{
   color: #008cff!important;
 }
+/* 首页章节字数 */
+.chapter-wordcount{
+  float:right;
+  color:#ccc;
+  font-size:14px;
+  text-align:left;
+}

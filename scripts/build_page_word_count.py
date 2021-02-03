@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*
+import bs4
+import base
 from bs4 import BeautifulSoup
 import httpx
 import os
@@ -40,7 +42,21 @@ def write_count_to_html(html_file, count):
   result_file.write(html)
   result_file.close()
 
+def agg_home_count(count_map):
+  html = base.read_text_from_file('_book/index.html')
+  soup = bs4.BeautifulSoup(html, features='html.parser')
+  node_list = soup.select('.markdown-section a[href$=".html"]')
+  for i in node_list:
+    i.append(bs4.BeautifulSoup("<span class='chapter-wordcount'>字数：%s</span>"%(count_map['_book/' + i['href']]), features='html.parser'))
+  base.write_text_to_file('_book/index.html',soup.prettify())
+
 html_list = travel_html_file('./')
+count_map={}
 for item in html_list:
-  write_count_to_html(item, get_word_count(item))
+  count = get_word_count(item)
+  write_count_to_html(item, count)
+  count_map[item] = count
   print(item + '字数统计完成')
+print("首页字数聚合")
+
+agg_home_count(count_map)

@@ -619,77 +619,6 @@ class Solution {
 
 耗时：0ms
 
-## 相同的树
-
-给定两个二叉树，编写一个函数来检验它们是否相同
-
-<https://leetcode-cn.com/problems/same-tree/>
-
-- 解法
-
-对两棵树做前序遍历，结果存到两个list，比较两个lsit即可
-需要注意的是，需要特别处理左树为空，但右树不为空的情况
-
-```java
-class Solution {
-    public boolean isSameTree(TreeNode p, TreeNode q) {
-        ArrayList<Integer> list1 = new ArrayList<>();
-        ArrayList<Integer> list2 = new ArrayList<>();
-        preWalk(p,list1);
-        preWalk(q,list2);
-        return list1.equals(list2);
-    }
-    public void preWalk(TreeNode p, List<Integer> list){
-        if (p == null){
-            return ;
-        }
-        list.add(p.val);
-        if (p.left == null && p.right != null) {
-            list.add(null);
-        }
-        preWalk(p.left,list);
-        preWalk(p.right,list);
-    }
-}
-```
-
-耗时:0ms
-
-## 二叉树的最大深度
-
-给定一个二叉树，找出其最大深度。
-
-<https://leetcode-cn.com/problems/maximum-depth-of-binary-tree/>
-
-- 解法
-
-同上题，传入根节点，如果根节点为空，返回0
-否则i++
-接下来递归获取左右子树的深度，获取最大深度，累加到i即可
-
-```java
-class Solution {
-    public int maxDepth(TreeNode root) {
-        return getDepth(root,0);
-    }
-    public int getDepth(TreeNode root,int i) {
-        if (root == null) {
-            return 0;
-        }
-        i++;
-        int left = getDepth(root.left,0);
-        int right = getDepth(root.right,0);
-        if (left > right) {
-            return i + left;
-        }else {
-            return i + right;
-        }
-    }
-}
-```
-
-耗时：0ms
-
 ## 求1+2+…+n
 
 求 1+2+...+n ，要求不能使用乘除法、for、while、if、else、switch、case等关键字及条件判断语句（A?B:C）。
@@ -760,40 +689,6 @@ public class Solution {
 ```
 
 耗时：5ms
-
-## 二叉树的层次遍历
-
-给定一个二叉树，返回其节点值自底向上的层次遍历。 （即按从叶子节点所在层到根节点所在的层，逐层从左向右遍历）
-
-<https://leetcode-cn.com/problems/binary-tree-level-order-traversal-ii/>
-
-- 解法
-
-对树做前序遍历，将结果写到list里，再对list进行reverse
-
-```java
-class Solution {
-    public List<List<Integer>> levelOrderBottom(TreeNode root) {
-        ArrayList<List<Integer>> list = new ArrayList<>();
-        walk(root,list,0);
-        Collections.reverse(list);
-        return list;
-    }
-    public void walk(TreeNode root,ArrayList<List<Integer>> list,int p) {
-        if (root == null) {
-            return;
-        }
-        if (list.size()<=p) {
-            list.add(p,new ArrayList<>());
-        }
-        list.get(p).add(root.val);
-        walk(root.left,list,p+1);
-        walk(root.right,list,p+1);
-    }
-}
-```
-
-耗时：1ms
 
 ## 一维数组的动态和
 
@@ -1169,28 +1064,6 @@ class Solution {
 
 耗时：2
 
-## 二叉树的最小深度
-
-<https://leetcode-cn.com/problems/minimum-depth-of-binary-tree/submissions/>
-
-```java
-class Solution {
-    public int minDepth(TreeNode root) {
-        if (root == null) return 0;
-        if (root.left == null && root.right == null) return 1;
-        int l = minDepth(root.left)+1;
-        int r = minDepth(root.right)+1;
-        if (root.left == null || root.right == null){
-            return Math.max(l,r);
-        }else{
-            return Math.min(l,r);
-        }
-    }
-}
-```
-
-耗时：0
-
 ## 移动零
 
 <https://leetcode-cn.com/problems/move-zeroes/submissions/>
@@ -1449,28 +1322,6 @@ class Solution {
 
 耗时：4
 
-## 二叉树的中序遍历
-
-<https://leetcode-cn.com/problems/binary-tree-inorder-traversal/>
-
-```java
-class Solution {
-    public List<Integer> inorderTraversal(TreeNode root) {
-        List<Integer> list = new ArrayList<>();
-        walk(root, list);
-        return list;
-    }
-    private void walk(TreeNode root, List<Integer> list){
-        if (root == null) return;
-        walk(root.left, list);
-        list.add(root.val);
-        walk(root.right, list);
-    }
-}
-```
-
-耗时：0
-
 ## 反转链表
 
 <https://leetcode-cn.com/problems/reverse-linked-list/>
@@ -1499,31 +1350,6 @@ class Solution {
 ```
 
 耗时：0
-
-## 226. 翻转二叉树
-
-<https://leetcode-cn.com/problems/invert-binary-tree/>
-
-```java
-class Solution {
-    public TreeNode invertTree(TreeNode root) {
-        invertTree0(root);
-        return root;
-    }
-    private void invertTree0(TreeNode root){
-        if (root == null) return;
-        
-        TreeNode t = root.left;
-        root.left = root.right;
-        root.right = t;
-
-        if (root.left !=null) invertTree0(root.left);
-        if (root.right !=null) invertTree0(root.right);
-    }
-}
-```
-
-耗时：０
 
 ## 389. 找不同
 
@@ -1707,32 +1533,6 @@ class Solution {
 
 耗时：0
 
-## 110. 平衡二叉树
-
-<https://leetcode-cn.com/problems/balanced-binary-tree/>
-
-```java
-class Solution {
-    public boolean isBalanced(TreeNode root) {
-        if (root == null) return true;
-        if (root.left == null && root.right == null) return true;
-        
-        if (Math.abs(treeHeight(root.left, 0) - treeHeight(root.right, 0)) > 1) return false;
-        return isBalanced(root.left) && isBalanced(root.right);
-    }
-
-    private int treeHeight(TreeNode root, int i){
-        if (root == null) return i;
-        i++;
-        int l = treeHeight(root.left, i);
-        int r = treeHeight(root.right, i);
-        return l > r ? l : r;
-    }
-}
-```
-
-耗时：1
-
 ## 349. 两个数组的交集
 
 <https://leetcode-cn.com/problems/intersection-of-two-arrays/>
@@ -1797,62 +1597,6 @@ class Solution {
 ```
 
 耗时：10
-
-## 145. 二叉树的后序遍历
-
-<https://leetcode-cn.com/problems/binary-tree-postorder-traversal/>
-
-```java
-class Solution {
-    public List<Integer> postorderTraversal(TreeNode root) {
-        List<Integer> list = new ArrayList<>();
-        postOrder(root, list);
-        return list;
-    }
-
-    private void postOrder(TreeNode root, List<Integer> list){
-        if (root == null) return;
-        postOrder(root.left, list);
-        postOrder(root.right, list);
-        list.add(root.val);
-    }
-}
-```
-
-耗时：0
-
-## 230. 二叉搜索树中第K小的元素
-
-<https://leetcode-cn.com/problems/kth-smallest-element-in-a-bst/>
-
-```java
-class Solution {
-    public int kthSmallest(TreeNode root, int k) {
-        return getKMin(root,k,new int[]{0});
-    }
-
-    public int getKMin(TreeNode root,int k,int[] i){
-        if (root == null) return -1;
-        int l = getKMin(root.left, k,i);
-        i[0]++;
-        if (i[0] == k) {
-            return root.val;
-        }
-        
-        int r = getKMin(root.right, k,i);
-        if (l != -1) {
-            return l;
-        }
-        if (r != -1) {
-            return r;
-        }
-        
-        return -1;
-    }
-}
-```
-
-耗时：0
 
 ## 811. 子域名访问计数
 
@@ -1997,24 +1741,6 @@ class Solution {
 
 耗时：2
 
-## 222. 完全二叉树的节点个数
-
-<https://leetcode-cn.com/problems/count-complete-tree-nodes/>
-
-```java
-class Solution {
-    public int countNodes(TreeNode root) {
-        if (root == null) return 0;
-        if (root.left == null && root.right == null) return 1;
-        int l = countNodes(root.left);
-        int r = countNodes(root.right);
-        return l + r + 1;
-    }
-}
-```
-
-耗时：0
-
 ## 747. 至少是其他数字两倍的最大数
 
 <https://leetcode-cn.com/problems/largest-number-at-least-twice-of-others/>
@@ -2128,29 +1854,6 @@ class Solution {
             if (letters[i] > target) return letters[i];
         }
         return letters[0];
-    }
-}
-```
-
-耗时：0
-
-## 144. 二叉树的前序遍历
-
-<https://leetcode-cn.com/problems/binary-tree-preorder-traversal/>
-
-```java
-class Solution {
-    public List<Integer> preorderTraversal(TreeNode root) {
-        List<Integer> list = new ArrayList<>();
-        preTravel(root,list);
-        return list;
-    }
-
-    private void preTravel(TreeNode root, List<Integer> list){
-        if (root == null) return;
-        list.add(root.val);
-        preTravel(root.left, list);
-        preTravel(root.right, list);
     }
 }
 ```
@@ -2754,30 +2457,6 @@ class Solution {
 
 耗时：10
 
-## 872. 叶子相似的树
-
-<https://leetcode-cn.com/problems/leaf-similar-trees/>
-
-```java
-class Solution {
-    public boolean leafSimilar(TreeNode root1, TreeNode root2) {
-        List<Integer> list1 = new ArrayList<>();
-        List<Integer> list2 = new ArrayList<>();
-        getLeafNodes(root1, list1);
-        getLeafNodes(root2, list2);
-        return list1.equals(list2);
-    }
-    private void getLeafNodes(TreeNode root, List<Integer> list){
-        if (root == null) return ;
-        if (root.left == null && root.right == null) list.add(root.val);
-        getLeafNodes(root.left, list);
-        getLeafNodes(root.right, list);
-    }
-}
-```
-
-耗时：0
-
 ## 228. 汇总区间
 
 <https://leetcode-cn.com/problems/summary-ranges/>
@@ -2815,37 +2494,6 @@ class Solution {
 ```
 
 耗时：8
-
-## 897. 递增顺序查找树
-
-<https://leetcode-cn.com/problems/increasing-order-search-tree/>
-
-```java
-class Solution {
-    public TreeNode increasingBST(TreeNode root) {
-        if (root == null) return null;
-        List<Integer> list = new ArrayList<>();
-        travel(root, list);
-        TreeNode ret = new TreeNode();
-        TreeNode origin = ret;
-        for(int i=0;i<list.size();i++){
-            ret.val = list.get(i);
-            if (i == list.size() -1) break;
-            ret.right = new TreeNode();
-            ret = ret.right;
-        }
-        return origin;
-    }
-    private void travel(TreeNode root, List<Integer> list){
-        if (root == null) return;
-        travel(root.left, list);
-        list.add(root.val);
-        travel(root.right, list);
-    }
-}
-```
-
-耗时：0
 
 ## 674. 最长连续递增序列
 

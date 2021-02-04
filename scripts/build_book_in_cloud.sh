@@ -3,7 +3,7 @@ startTime=`date +%Y%m%d-%H:%M`
 startTime_s=`date +%s`
 
 echo "安装python依赖"
-pip install jieba wordcloud beautifulsoup4 httpx pydriller
+pip install jieba wordcloud beautifulsoup4 httpx pydriller htmlmin
 
 echo "运行统计脚本"
 python ./scripts/statistics.py

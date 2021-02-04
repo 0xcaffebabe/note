@@ -83,6 +83,8 @@ li.chapter a:hover {
 #book-search-results span.search-highlight-keyword {
   color: #008cff;
   font-weight: 700;
+  background: none;
+  padding: 0 2px;
 }
 /* 搜索结果标题 */
 #book-search-results .search-results .has-results .search-results-item a:hover{
@@ -94,8 +96,7 @@ mark {
   background: #008cff;
   color: #fff;
   font-weight: 700;
-  border-radius: 4px;
-  padding: 0 2px;
+  padding: 1px 2px;
 }
 /* 左侧章节 */
 .book-summary ul.summary li.active > a {

@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*
-import os
-import jieba
-import re
-import base
+import os, _thread, jieba, re, base
 from wordcloud import WordCloud
-
 from PIL import Image, ImageFont, ImageDraw
 
 all_file_list = base.listAllFile('./')
@@ -90,7 +86,7 @@ def generateWordCloud():
         map[i] = j/total*1000.0
     myword = wc.generate_from_frequencies(map)  # 生成词云
     myword.to_file('./wordcloud.png')
-    print(type(myword))
+    base.log('笔记词云生成成功')
 
 
 def statisticNote():
@@ -128,6 +124,7 @@ def generateNoteInfo():
     font = ImageFont.truetype('font.ttf', 16)
     dr.text((10, 5), text, font=font, fill="#000000")
     im.save('info.png')
+    base.log('笔记统计信息生成成功')
 
 
 def codeFrequency():

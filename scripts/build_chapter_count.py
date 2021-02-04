@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 from bs4 import BeautifulSoup
-import httpx
+import httpx,base
 
 class ChapterNode:
     def __init__(self):
@@ -68,9 +68,8 @@ def build_chapter_count_css(chapters, level):
 
 
 def write_count_css(css):
-    css_file = open("./_book/styles/count.css",'w')
-    css_file.write(css)
-    css_file.close()
+    base.write_text_to_file("./_book/styles/count.css", css)
+    base.write_text_to_file("./styles/count.css", css)
 
 
 def main():

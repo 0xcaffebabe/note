@@ -56,8 +56,6 @@ CREATE TABLE department(
 
 ## SQL查询
 
-### 单关系查询
-
 ```sql
 SELECT prod_name FROM products; -- 查询单列
 SELECT prod_name, prod_price FROM products; -- 查询多列
@@ -72,7 +70,7 @@ SQL关键字不区分大小写，但对象名区分，在不同的DBMS跟操作�
 - SELECT子句还可进行加减乘除运算
 - WHERE子句选出满足条件的元组
 
-#### 分页
+### 分页
 
 不同的数据库分页不尽相同
 
@@ -83,7 +81,7 @@ SELECT * FROM products WHERE ROWNUM <= 5; -- Oracle
 SELECT * FROM products LIMIT 0,5; -- MySQL
 ```
 
-#### 排序
+### 排序
 
 ```sql
 SELECT * FROM products ORDER BY prod_name; -- 单列排序
@@ -94,6 +92,61 @@ SELECT * FROM products ORDER BY prod_price DESC, prod_name DESC; -- 多列降序
 ```
 
 使用ORDER BY 子句时，应该保证其实SELECT 语句的最后一条子句。
+
+### 数据过滤
+
+```sql
+SELECT * FROM products WHERE prod_price=3.49;
+```
+
+WHERE子句操作符
+
+操作符      | 说明
+-------- | ------
+= or ==  | 等于
+<> or != | 不等于
+<        | 小于
+<=       | 小于等于
+!<       | 不小于
+>        | 大于
+>=       | 大于等于
+!>       | 不大于
+BETWEEN  | 在两个值之间
+IS NULL  | 为NULL值
+
+#### 高级数据过滤
+
+```sql
+SELECT * FROM products WHERE prod_price=3.49 OR prod_price = 5.99; -- 逻辑OR
+SELECT * FROM products WHERE prod_price=3.49 AND prod_price < 5.99; -- 逻辑AND
+SELECT * FROM products WHERE prod_price IN (3.49, 5.99); -- IN操作符 相比OR更清晰同时有更好的性能 也可以动态包含SELECT语句
+SELECT * FROM products WHERE NOT prod_price IN (3.49, 5.99); -- 逻辑NOT
+```
+
+SQL处理AND的优先级比OR高，所以同时使用OR和AND有必要使用括号来明确求值顺序。
+
+#### 通配符过滤
+
+LIKE 关键字：
+
+- %表示匹配任何字符（包括什么都没有，但不匹配NULL）,在ACCESS中使用*
+- _表示匹配一个字符，DB2不支持，ACCESS使用?
+
+示例：
+
+```sql
+SELECT name FROM user WHERE name LIKE 'user%'; --查找用户名以user开头的用户
+```
+
+escape :用来标志逃逸字符
+
+```sql
+LIKE 'ab\\cd%' escape '\' #匹配所有以ab\cd开头的字符串
+```
+
+SQL1999 中提供了similar to操作，语法类似于正则表达式。
+
+这些通配符匹配在一定程度上会影响性能，这点需要注意。
 
 ### 多关系查询
 
@@ -163,60 +216,6 @@ AS 关键字：可以修改列名
 - upper()
 - lower()
 - trim()
-
-LIKE 关键字：
-
-- %表示匹配任何字符（包括什么都没有）
-- _表示匹配一个字符
-
-示例：
-
-```sql
-SELECT name FROM user WHERE name LIKE 'user%' 
-# 查找用户名以user开头的用户
-```
-
-escape :用来标志逃逸字符
-
-```sql
-LIKE 'ab\\cd%' escape '\' #匹配所有以ab\cd开头的字符串
-```
-
-SQL1999 中提供了similar to操作，语法类似于正则表达式
-
-### SELECT子句中的属性说明
-
-可以用*代表所有列
-
-### 排列元组的显示次序
-
-ORDER BY 子句
-
-- DESC 降序
-- ASC 升序
-
-```sql
-SELECT name,age FROM student ORDER BY age DESC
-# 根据学生的年龄进行降序排序
-```
-
-### WHERE 子句谓词
-
-BETWEEN ... AND ...
-
-```sql
-money BETWEEN 9000 AND 10000
-```
-
-等价于
-
-```sql
-money >= 9000 AND money <= 10000
-```
-
-NOT BETWEEN ... AND ...
-
-上面的取反
 
 ## 集合运算
 

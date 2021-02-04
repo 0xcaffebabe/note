@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 import os
 from bs4 import BeautifulSoup
-
+import datetime,time
 def listAllFile(path):
     if path.startswith(".git"): return []
     if path.startswith("node_modules"): return []
@@ -49,3 +49,10 @@ def read_text_from_file(file_name):
   except:
     print("读取文件 " + file_name + " 发生异常")
     return "" 
+
+def current_time():
+    return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+
+def log(content):
+  t = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+  print('[log]:%s---%s'%(t, str(content)))

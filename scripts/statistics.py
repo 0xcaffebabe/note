@@ -2,46 +2,25 @@
 import os
 import jieba
 import re
+import base
 from wordcloud import WordCloud
 
-import time
 from PIL import Image, ImageFont, ImageDraw
 
-
-def listAllFile(path):
-    result = []
-    for item in os.listdir(path):
-        if not path.startswith('./'):
-            item = path + "/" + item
-        if os.path.isdir(item):
-            result.extend(listAllFile(item))
-        else:
-            result.append(item)
-    return result
-
-
-def listAllMdFile():
-    files = listAllFile("./")
-    result = []
-    for item in files:
-        if (item.endswith(".md")):
-            result.append(item)
-    return result
-
+all_file_list = base.listAllFile('./')
+md_file_list = base.listAllMdFile()
 
 def noteLineCount():
-    files = listAllMdFile()
     count = 0
-    for item in files:
+    for item in md_file_list:
         file = open(item, 'rb')
         count = count + len(file.readlines())
     print("笔记行数:", count)
 
 
 def noteWorldFrequency():
-    files = listAllMdFile()
     map = {}
-    for item in files:
+    for item in md_file_list:
         file = open(item, 'rb')
         text = str(file.read(), encoding="utf-8")
         text = filterSpecialSymbol(text)
@@ -116,33 +95,32 @@ def generateWordCloud():
 
 def statisticNote():
     text = ''
-    totalLineCount = 0
-    totalWordCount = 0
-    for item in listAllMdFile():
+    chapterCount = len(md_file_list)
+    for item in md_file_list:
         file = open(item, 'rb')
-        text = text + str(file.read(), encoding="utf-8") + '\n'
+        text += str(file.read(), encoding="utf-8") + '\n'
         file.close()
-    totalLineCount = len(text.split('\n'))
-    totalWordCount = sum(1 for _ in jieba.cut_for_search(text.strip()))
-    return totalLineCount, totalWordCount
+    text = filterSpecialSymbol(text)
+    wordNum = len(text.strip())
+    return chapterCount, wordNum
 
 
 def statisticImg():
     count = 0
-    for item in listAllFile('./'):
-        if item.endswith('png') or item.endswith('jpg') or item.endswith('svg') or item.endswith('jpeg') or item.endswith('bmp'):
-            count = count + 1
+    suffix = ['png', 'jpg', 'svg', 'jpeg', 'jiff', 'bmp']
+    for item in all_file_list:
+        if item[item.rfind('.')+1:] in suffix:
+            count += 1
     return count
 
 
 def generateNoteInfo():
-    totalLineCount, totalWordCount = statisticNote()
-    localtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    chapterCount, wordNum = statisticNote()
     text = \
-        u'生成时间:' + localtime + "\n"\
+        u'生成时间:' + base.current_time() + "\n"\
         + '仓库尺寸:' + str(getRepositorySize()) + 'MB' + '\n'\
-        + '笔记总行数:' + str(totalLineCount) + '行\n'\
-        + '笔记词数:' + str(totalWordCount) + '个词\n'\
+        + '章节数:' + str(chapterCount) + '章' + '\n'\
+        + '总字数:' + "{:,}".format(wordNum) + '字' + '\n'\
         + '图片数:' + str(statisticImg()) + '张图片\n'\
         + '代码统计:' + codeFrequency()
     im = Image.new("RGB", (1000, 140), (255, 255, 255))
@@ -153,11 +131,10 @@ def generateNoteInfo():
 
 
 def codeFrequency():
-    files = listAllMdFile()
     map = {}
     alias = {'js': 'javascript', 'sh': 'shell', 'py': 'python'}
     total = 0
-    for item in files:
+    for item in md_file_list:
         file = open(item, 'rb')
         for item1 in file.readlines():
             text = str(item1, encoding='utf-8')
@@ -187,9 +164,8 @@ def codeFrequency():
 
 
 def getRepositorySize():
-    files = listAllFile('./')
     total = 0
-    for item in files:
+    for item in all_file_list:
         total += os.path.getsize(item)
     return round(total/float(1024*1024), 2)
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 import re,sys,base
 
-css_files=['./styles/website.css', './styles/code-hl-vsc.css', './styles/count.css']
+css_files=['./_book/styles/website.css', './_book/styles/code-hl-vsc.css', './_book/styles/count.css']
 
 css = ''
 for item in css_files:

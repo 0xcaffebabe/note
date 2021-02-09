@@ -69,7 +69,6 @@ def build_chapter_count_css(chapters, level):
 
 def write_count_css(css):
     base.write_text_to_file("./_book/styles/count.css", css)
-    base.write_text_to_file("./styles/count.css", css)
 
 
 def main():

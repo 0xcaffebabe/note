@@ -16,12 +16,6 @@ chmod +x ./scripts/updatetime.sh
 echo "运行更新README脚本"
 python ./scripts/update_readme.py
 
-echo "运行构造章节文章数脚本"
-python ./scripts/build_chapter_count.py
-
-echo "运行css预处理脚本"
-python ./scripts/css_processor.py
-
 echo "安装gitbook依赖"
 gitbook install
 
@@ -37,6 +31,12 @@ python ./scripts/build_page_word_count.py
 
 echo "运行页面更新历史构建脚本"
 python ./scripts/build_file_changelog.py
+
+echo "运行构造章节文章数脚本"
+python ./scripts/build_chapter_count.py
+
+echo "运行css预处理脚本"
+python ./scripts/css_processor.py
 
 echo "运行html压缩脚本"
 python ./scripts/html_processor.py

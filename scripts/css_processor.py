@@ -9,6 +9,6 @@ for item in css_files:
 
 css = re.sub("\s*([{};,:])\s*", "\\1", re.sub("/\*.*?\*/", "", re.sub("\s+", " ", css)))
 
-base.write_text_to_file('./styles/website.css', css)
+base.write_text_to_file('./_book/styles/website.css', css)
 
 base.log('css预处理成功')

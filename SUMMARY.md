@@ -1,5 +1,5 @@
 
-- [算法与数据结构](./算法与数据结构/算法与数据结构.md)
+- [💎算法与数据结构](./算法与数据结构/算法与数据结构.md)
   - [leetcode](./算法与数据结构/leetcode/leetcode.md)
     - [leetcode](./算法与数据结构/leetcode/树相关.md)
   - [基本数据结构](./算法与数据结构/基本数据结构.md)
@@ -47,7 +47,7 @@
 - [数据技术](./数据技术/数据技术.md)
   - [数据挖掘](./数据技术/数据挖掘.md)
 
-- [操作系统](./操作系统/nav.md)
+- [💽操作系统](./操作系统/nav.md)
   - [进程与线程](./操作系统/进程与线程.md)
   - [内存管理](./操作系统/内存管理.md)
   - [文件管理](./操作系统/文件管理.md)
@@ -401,7 +401,7 @@
     - [SpringBoot](./编程语言/JAVA/框架/SpringBoot/nav.md)
     - [SpringWebFlux](./编程语言/JAVA/框架/SpringWebFlux.md)
 
-- [DSL](./DSL/nav.md)
+- [🔨DSL](./DSL/nav.md)
   - [HTML](./DSL/HTML.md)
   - [CSS](./DSL/CSS/nav.md)
     - [选择器](./DSL/CSS/选择器.md)
@@ -497,7 +497,7 @@
   - [NPM](./开发工具/构建工具/NPM.md)
   - [WebPack](./开发工具/构建工具/WebPack.md)
 
-- [运维](./运维/nav.md)
+- [🔋运维](./运维/nav.md)
   - [持续集成](./运维/持续集成.md)
   - [Docker](./运维/Docker.md)
   - [K8s](./运维/K8s.md)

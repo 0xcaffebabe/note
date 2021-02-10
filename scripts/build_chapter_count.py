@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*
+"""
+构建左侧章节栏子节点数量脚本
+"""
 from bs4 import BeautifulSoup
 import httpx,base
 
@@ -72,7 +75,6 @@ def write_count_css(css):
 
 
 def main():
-    # html = httpx.get("https://b.ismy.wang").text # 测试用
     html_file = open("./_book/index.html", 'rb')
     html = str(html_file.read(), encoding="utf-8")
     html_file.close()
@@ -81,7 +83,6 @@ def main():
     print_chapter_tree(chapter_list, 0)
     build_chapter_count_css(chapter_list, 0)
     write_count_css(count_css)
-    # print(count_css)
 
 
 main()

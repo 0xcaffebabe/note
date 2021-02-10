@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*
-templateFile = open('./scripts/readme_template.md', 'r',encoding='utf8')
-summaryFile = open('./SUMMARY.md','r', encoding='utf8')
-readmeFile = open('./README.md','w',encoding='utf8')
+import base
+templateFile = open('./scripts/readme_template.md', 'r', encoding='utf8')
+summaryFile = open('./SUMMARY.md', 'r', encoding='utf8')
+readmeFile = open('./README.md', 'w', encoding='utf8')
 
 template = templateFile.read()
 summary = summaryFile.read()
@@ -12,4 +13,4 @@ readmeFile.close()
 summaryFile.close()
 templateFile.close()
 
-print('done')
+base.log('更新首页完成')

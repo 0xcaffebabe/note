@@ -8,8 +8,6 @@ from bs4 import BeautifulSoup
 import datetime
 import time
 
-from soupsieve.util import upper
-
 
 def list_all_files(path):
     ignore_prefixs = ['.git', "node_modules"]

@@ -148,6 +148,23 @@ SQL1999 中提供了similar to操作，语法类似于正则表达式。
 
 这些通配符匹配在一定程度上会影响性能，这点需要注意。
 
+#### 计算字段
+
+```sql
+-- 字符串连接
+SELECT vend_name + '(' + vend_country + ')' AS name FROM vendors; -- Access SqlServer
+SELECT vend_name || '(' || vend_country || ')' AS name FROM vendors; -- DB2 Oracle...
+SELECT CONCAT(vend_name,'(',vend_country,')') AS name FROM vendors; -- MySQL
+```
+
+使用AS关键字被视为最佳实践。别名也被称为导出列
+
+```sql
+-- 数值计算
+SELECT prod_id, quantity * item_price AS total FROM orderitems;
+SELECT 2 * 6; -- 当省略子句时，就代表计算这个表达式并展现
+```
+
 ### 多关系查询
 
 示例：

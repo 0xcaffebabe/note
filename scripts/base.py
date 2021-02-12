@@ -84,7 +84,7 @@ def log_err(content):
 
 
 def log_inf(content):
-    print('[log-info]:%s---%s' % (current_time, str(content)))
+    print('[log-info]:%s---%s' % (current_time(), str(content)))
 
 
 def log(content):

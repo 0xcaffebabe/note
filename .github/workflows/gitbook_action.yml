@@ -34,6 +34,9 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.7
+    - name: python别名设置
+      run: |
+        alias python python3
     - name: 安装gitbook依赖
       run: |
         npm install gitbook-cli  -g

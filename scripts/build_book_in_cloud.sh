@@ -6,7 +6,7 @@ echo "安装python依赖"
 pip install jieba wordcloud beautifulsoup4 httpx pydriller htmlmin
 
 echo "运行统计脚本"
-python ./scripts/statistics.py
+python3 ./scripts/statistics.py
 
 echo "运行更新仓库文件时间脚本"
 git config --global core.quotepath false
@@ -14,7 +14,7 @@ chmod +x ./scripts/updatetime.sh
 ./scripts/updatetime.sh | bash
 
 echo "运行更新README脚本"
-python ./scripts/update_readme.py
+python3 ./scripts/update_readme.py
 
 echo "安装gitbook依赖"
 gitbook install
@@ -27,19 +27,19 @@ chmod +x ./scripts/update_links.sh
 ./scripts/update_links.sh | bash
 
 echo "运行统计文章字数脚本"
-python ./scripts/build_page_word_count.py
+python3 ./scripts/build_page_word_count.py
 
 echo "运行页面更新历史构建脚本"
-python ./scripts/build_file_changelog.py
+python3 ./scripts/build_file_changelog.py
 
 echo "运行构造章节文章数脚本"
-python ./scripts/build_chapter_count.py
+python3 ./scripts/build_chapter_count.py
 
 echo "运行css预处理脚本"
-python ./scripts/css_processor.py
+python3 ./scripts/css_processor.py
 
 echo "运行html压缩脚本"
-python ./scripts/html_processor.py
+python3 ./scripts/html_processor.py
 
 endTime=`date +%Y%m%d-%H:%M`
 endTime_s=`date +%s`

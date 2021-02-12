@@ -36,7 +36,7 @@ jobs:
         python-version: 3.7
     - name: python别名设置
       run: |
-        alias python3 python
+        alias python3='python'
     - name: 安装gitbook依赖
       run: |
         npm install gitbook-cli  -g

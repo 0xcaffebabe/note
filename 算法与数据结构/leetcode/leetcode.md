@@ -2695,3 +2695,62 @@ public class Solution {
 ```
 
 time:9 beat:15
+
+## 448. 找到所有数组中消失的数字
+
+<https://leetcode-cn.com/problems/find-all-numbers-disappeared-in-an-array/>
+
+- 解法1：使用bitmap存储数字是否出现 这个方法使用了额外的存储空间
+
+```java
+class Solution {
+    public List<Integer> findDisappearedNumbers(int[] nums) {
+        if (nums.length <=1) return List.of();
+        int[] map = new int[nums.length + 1];
+        for(int i : nums){
+            map[i] = 1;
+        }
+        List<Integer> ret = new ArrayList<>();
+        for(int i = 1;i<map.length;i++){
+            if (map[i] == 0 ) ret.add(i);
+        }
+        return ret;
+    }
+}
+```
+
+time: 4 beat: 98
+
+## 剑指 Offer 09. 用两个栈实现队列
+
+<https://leetcode-cn.com/problems/yong-liang-ge-zhan-shi-xian-dui-lie-lcof/>
+
+使用一个辅助栈来实现FIFO的效果
+
+```java
+class CQueue {
+
+    private LinkedList<Integer> main = new LinkedList<>();
+    private LinkedList<Integer> help = new LinkedList<>();
+    
+    public void appendTail(int value) {
+        main.push(value);
+    }
+    
+    public int deleteHead() {
+        if (main.isEmpty()) return -1;
+        int ret = -1;
+        while(!main.isEmpty()){
+            ret = main.pop();
+            help.push(ret);
+        }
+        help.pop();
+        while(!help.isEmpty()){
+            main.push(help.pop());
+        }
+        return ret;
+    }
+}
+```
+
+time:220 beat:11

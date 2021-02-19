@@ -37,11 +37,6 @@ li.chapter a:hover {
   border-left: 4px solid skyblue;
   background-color: #f3f5f7;
 }
-/* 文章内部图片 */
-.markdown-section img {
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  border-radius:4px;
-}
 /* 文章标题 */
 .markdown-section h1::before{
   content: "📕";
@@ -102,7 +97,7 @@ mark {
 .book-summary ul.summary li.active > a {
   border-right: 4px #008cff solid;
 }
-/* 底部更新历时 */
+/* 底部更新历史 */
 .copyright{
   float: left;
 }
@@ -136,6 +131,4 @@ mark {
   padding: 2px;
   border-radius:3px;
   font-size:14px;
-  margin-top:-2px;
-  vertical-align: top;
 }

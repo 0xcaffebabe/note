@@ -32,6 +32,9 @@ python3 ./scripts/build_page_word_count.py
 echo "运行页面更新历史构建脚本"
 python3 ./scripts/build_file_changelog.py
 
+echo "运行构造首页章节最后更新时间脚本"
+ python3 ./scripts/build_home_change_time.py
+
 echo "运行构造章节文章数脚本"
 python3 ./scripts/build_chapter_count.py
 

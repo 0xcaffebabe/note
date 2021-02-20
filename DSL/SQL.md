@@ -165,6 +165,63 @@ SELECT prod_id, quantity * item_price AS total FROM orderitems;
 SELECT 2 * 6; -- 当省略子句时，就代表计算这个表达式并展现
 ```
 
+#### 函数
+
+- 文本处理函数
+
+```sql
+SELECT SOUNDEX("meet"), SOUNDEX("meat"); -- SOUNDEX函数将字母描述为字母数字模式 Access和PostgreSQL不支持
+```
+
+函数                           | 作用
+---------------------------- | ----------
+LEFT ( 或使用子字符串函数)            | 返回字符串左边的字符
+LENGTH (也使用DATALENGTH或LEN) ) | 返回字符串的长度
+LOWER ( Access使用LCASE )      | 将字符串转换为小写
+LTRIM                        | 去掉字符串左边的空格
+RICHT (或使用子字符串函数)            | 返回字符串右边的字符
+RTRIM                        | 去掉字符串右边的空格
+UPPER ( Access使用UCASE )      | 将字符串转换为大写
+
+- 日期和时间处理函数
+
+不同DBMS很不一致 可移植性最差
+
+```sql
+SELECT YEAR(NOW()); -- MySQL
+SELECT to_char(CURRENT_DATE,'YYYY') FROM dual; -- Oracle
+```
+
+- 数值计算函数
+
+函数   | 作用
+---- | ---------
+ABS  | 返回一个数的绝对值
+COS  | 返回一个角度的余弦
+EXP  | 返回一个数的指数值
+PI   | 返回圆周率
+SIN  | 返回一个角度的正弦
+SQRT | 返回一个数的平方根
+TAN  | 返回一个角度的正切
+
+#### 聚合数据
+
+- 聚合函数
+
+```sql
+SELECT AVG(prod_price) FROM products; -- 求平均值，AVG函数忽略NULL
+
+SELECT COUNT(cust_email) FROM customers; -- 对列计算，忽略NULL
+SELECT COUNT(*) FROM customers; -- 对列计算，不忽略NULL
+
+SELECT MAX(prod_price) FROM products; -- 求最大值 忽略NULL
+SELECT MIN(prod_price) FROM products; -- 求最小值 忽略NULL
+
+SELECT SUM(item_price * quantity) FROM orderitems; -- 求和，忽略NULL
+
+SELECT SUM(DISTINCT item_price) FROM orderitems; -- 只对不同的结果进行求和
+```
+
 ### 多关系查询
 
 示例：

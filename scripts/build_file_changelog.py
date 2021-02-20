@@ -13,8 +13,10 @@ def process():
     files = base.listAllMdFile()
     for file in files:
         commit_list = []
-        commit_log = reversed(list(pydriller.RepositoryMining(
-            "./", filepath=file).traverse_commits()))
+        commit_log_origin = list(pydriller.RepositoryMining(
+            "./", filepath=file).traverse_commits())
+        show_more = len(commit_log_origin) > 10
+        commit_log = reversed(commit_log_origin)
         # 只取最近10条
         commit_log = list(commit_log)[0:10]
         for commit in commit_log:
@@ -25,16 +27,19 @@ def process():
             key = page_alias[file]
         else:
             key = file.replace('.md', '.html')
-        write_recent_commits(key, commit_list)
+        write_recent_commits(key, commit_list, show_more)
         base.log("章节历史构建 " + key + " 处理完成")
 
 
-def write_recent_commits(file_name, commit_list):
+def write_recent_commits(file_name, commit_list, show_more):
     file_name = "_book/" + file_name
     html = '<div class="copyright"><p>更新历史:</p><ul>'
     for item in commit_list:
         html += '<li><a href="https://github.com/0xcaffebabe/note/commit/%s" target="_blank">%s %s</a></li>' % (
             item['hash'], item['date'], item['msg'])
+    if show_more:
+        git_file = file_name.replace("_book/","").replace(".html",".md")
+        html += '<li><a href="https://github.com/0xcaffebabe/note/commits/master/%s" target="_blank">更多历史</a></li>'%(git_file)
     html += '</ul></div>'
     file_html = base.read_text_from_file(file_name)
     if (file_html == ''):

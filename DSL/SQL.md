@@ -148,7 +148,7 @@ SQL1999 中提供了similar to操作，语法类似于正则表达式。
 
 这些通配符匹配在一定程度上会影响性能，这点需要注意。
 
-#### 计算字段
+### 计算字段
 
 ```sql
 -- 字符串连接
@@ -165,7 +165,7 @@ SELECT prod_id, quantity * item_price AS total FROM orderitems;
 SELECT 2 * 6; -- 当省略子句时，就代表计算这个表达式并展现
 ```
 
-#### 函数
+### 函数
 
 - 文本处理函数
 
@@ -204,7 +204,7 @@ SIN  | 返回一个角度的正弦
 SQRT | 返回一个数的平方根
 TAN  | 返回一个角度的正切
 
-#### 聚合数据
+### 聚合数据
 
 - 聚合函数
 
@@ -222,48 +222,110 @@ SELECT SUM(item_price * quantity) FROM orderitems; -- 求和，忽略NULL
 SELECT SUM(DISTINCT item_price) FROM orderitems; -- 只对不同的结果进行求和
 ```
 
-### 多关系查询
+### 分组查询
 
-示例：
+- GROUP BY 子句
+
+根据后面的列进行分组
+
+```sql
+SELECT TO_DAYS(create_time),COUNT(1) FROM web_log GROUP BY TO_DAYS(create_time)
+-- 查询每天的访问次数
+```
+
+GROUP BY子句的一些规则：
+
+可以包含任意数目的列
+
+子句的每一列都必须是检索列或者有效的表达式（但不能使聚集函数），除了聚集函数，SELECT 中的每一列，GROUP BY子句中都必须有
+
+NULL会被分为一组
+
+GROUP BY必须在WHERE之后 ORDER BY之前
+
+HAVING子句：
+
+WHERE在分组前过滤 HAVING在分组后过滤行，满足HAVING后的条件的分组才会被选择
+
+```sql
+SELECT TO_DAYS(create_time),COUNT(1) 
+FROM web_log GROUP BY TO_DAYS(create_time) HAVING COUNT(1)>1000
+-- 查询访问次数1000的那些天
+```
+
+### 子查询
+
+*MySQL4.1后才支持子查询*
+
+```sql
+SELECT username FROM user WHERE user_id IN 
+(SELECT user FROM state);
+-- 查询发表过动态的用户
+```
+
+作为子查询的SQL只能查询单个列
+
+```sql
+SELECT cust_name,
+  (SELECT COUNT(*) FROM orders WHERE orders.cust_id = customers.cust_id)
+FROM customers;
+-- 将子查询作为计算字段
+```
+
+### 联结
+
+联结是一种机制，用来在一条SELECT语句中关联表
 
 ```sql
 SELECT name,instructor.dept_name,building
 FROM instructor , department
-WHERE instructor.dept_name = department.dept_name
+WHERE instructor.dept_name = department.dept_name; -- 在联结中，特别需要注意列的全限定名
 ```
 
-典型的SQL查询语句形式：
+上面的这种联结叫做等值联结，等值联结等同于内联结：
 
 ```sql
-SELECT A1,A2,A3,...,AN
-FROM R1,R2,...,RN
-WHERE P
+SELECT name,instructor.dept_name,building
+FROM instructor INNER JOIN department
+ON instructor.dept_name = department.dept_name;
 ```
 
 笛卡尔积：
 
 表1：
 
-name|age
-----|----
-小明|15
-小红|16
+name | age
+---- | ---
+小明   | 15
+小红   | 16
+
 
 表2：
 
-grade|school
-----|----
-5|中心小学
-6|中心小学
+grade | school
+----- | ------
+5     | 中心小学
+6     | 中心小学
+
 
 两张表的笛卡尔积是：
 
-name|age|grade|school
-----|----|----|----
-小明|15|5|中心小学
-小红|16|6|中心小学
-小明|15|6|中心小学
-小红|16|5|中心小学
+name | age | grade | school
+---- | --- | ----- | ------
+小明   | 15  | 5     | 中心小学
+小红   | 16  | 6     | 中心小学
+小明   | 15  | 6     | 中心小学
+小红   | 16  | 5     | 中心小学
+
+笛卡尔积也被称为叉联结(cross join)
+
+联结可以跨多张表：
+
+```sql
+SELECT * FROM orderitems, products, vendors;
+```
+
+但联结表越多，性能下降越厉害，基于此，许多DBMS都对联结的表数量做了限制，[阿里的p3c中也规定联结表的数量不得超过3张](编程语言/JAVA/p3c.md#索引规约)
 
 ### 自然连接
 
@@ -279,17 +341,6 @@ WHERE instructor.dept_name = department.dept_name
 SELECT name,instructor.dept_name,building
 FROM instructor NATURAL JOIN department
 ```
-### 附加的基本运算
-
-### 更名运算
-
-AS 关键字：可以修改列名
-
-### 字符串运算
-
-- upper()
-- lower()
-- trim()
 
 ## 集合运算
 
@@ -317,43 +368,6 @@ EXCEPT 关键字
 
 - IS NULL 判断是空值
 - IS NOT NULL 判断非空
-
-## 聚集函数
-
-- AVG:求平均值
-- MIN:求最小值
-- MAX:求最大值
-- SUM:求和
-- COUNT:计数
-
-### 分组聚集
-
-GROUP BY 子句：
-根据后面的列进行分组
-
-```sql
-select TO_DAYS(create_time),COUNT(1) 
-FROM web_log GROUP BY TO_DAYS(create_time)
-# 查询每天的访问次数
-```
-
-### HAVING子句
-
-满足HAVING后的条件才会被选择
-
-```sql
-select TO_DAYS(create_time),COUNT(1) 
-FROM web_log GROUP BY TO_DAYS(create_time) HAVING COUNT(1)>1000
-# 查询访问次数1000的那些天
-```
-
-## 嵌套子查询
-
-```sql
-SELECT username FROM user WHERE user_id IN 
-(SELECT user FROM state);
-# 查询发表过动态的用户
-```
 
 ### 集合比较
 

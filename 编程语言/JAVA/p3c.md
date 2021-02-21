@@ -389,7 +389,7 @@
 - <span style="color:yellow">【推荐】</span>建组合索引的时候，区分度最高的在最左边
 - <span style="color:yellow">【推荐】</span>防止因字段类型不同造成的隐式转换，导致索引失效
 
-### SQL 语句
+### SQL语句
 
 - <span style="color:red">【强制】</span>不要使用 count(列名)或 count(常量)来替代 count(*), count(*) 会统计null
 - <span style="color:red">【强制】</span>count(distinct col) 计算该列除 NULL 之外的不重复行数，注意 count(distinct col1,col2) 如果其中一列全为 NULL，那么即使另一列有不同的值，也返回为 0

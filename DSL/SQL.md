@@ -157,7 +157,7 @@ SELECT vend_name || '(' || vend_country || ')' AS name FROM vendors; -- DB2 Orac
 SELECT CONCAT(vend_name,'(',vend_country,')') AS name FROM vendors; -- MySQL
 ```
 
-使用AS关键字被视为最佳实践。别名也被称为导出列
+使用AS关键字被视为最佳实践。别名也被称为导出列，Oracle不支持AS关键字
 
 ```sql
 -- 数值计算
@@ -327,7 +327,17 @@ SELECT * FROM orderitems, products, vendors;
 
 但联结表越多，性能下降越厉害，基于此，许多DBMS都对联结的表数量做了限制，[阿里的p3c中也规定联结表的数量不得超过3张](编程语言/JAVA/p3c.md#索引规约)
 
-### 自然连接
+#### 自连接
+
+```sql
+SELECT * FROM customers AS c1, customers AS c2
+WHERE C1.cust_name = c2.cust_name
+AND c2.cust_contact = 'Jim Jones'; -- 查出与Jim Jones同公司的顾客
+```
+
+许多DBMS处理自联结往往比子查询快得多
+
+#### 自然连接
 
 ```sql
 SELECT name,instructor.dept_name,building
@@ -342,11 +352,29 @@ SELECT name,instructor.dept_name,building
 FROM instructor NATURAL JOIN department
 ```
 
-## 集合运算
+#### 外连接
 
-### 并运算
+- 左外连接：只保留出现在左外连接左边的关系中的元组（如果没有符合连接条件的元组，左表的元组还是会被展示出来）
+- 右外连接：只保留出现在右外连接运算右边关系中的元组
+- 全外连接：保留出现在两个关系中的元组
 
-UNION关键字
+左外连接：
+
+```sql
+select * from user  
+left outer join state on user.user_id = state.user;
+-- 把user和state进行连接，如果用户没有发表state，则仍保留用户，只是state相关列为NULL
+```
+
+右外连接如上取反
+
+全外连接可以包含两个表中不关联的行，许多DBMS不支持
+
+natural join等价于natural inner join
+
+### 集合运算
+
+- 并运算
 
 ```sql
 SELECT name FROM student WHERE age = 15
@@ -354,12 +382,17 @@ UNION
 SELECT name FROM student WHERE age = 16
 ```
 
-### 交运算
+每个UNION SELECT语句的列都必须相同，类型必须兼容
 
-INTERSECT关键字
-用法同上
+UNION会自动去除重复行，如果需要保留重复行，则使用UNION ALL
 
-### 差运算
+如果UNION语句需要排序，则在最后一条SELECT语句加上ORDER BY子句，ORDER BY作用于所有UNION语句
+
+- 交运算
+
+INTERSECT关键字 用法同上
+
+- 差运算
 
 EXCEPT 关键字
 同上
@@ -457,45 +490,6 @@ UPDATE user
 SET username = 'abc'
 WHERE username = 'root'
 ```
-
-## 连接表达式
-
-### 连接条件
-
-JOIN...ON...
-
-```sql
-SELECT * FROM 
-user JOIN user_info 
-ON user.user_info = user_info.user_info_id;
-# 连接两个表，查询出用户所有信息
-```
-
-上面的查询等价于:
-```sql
-SELECT * FROM user,user_info
-WHERE user.user_info = user_info.user_info_id
-```
-
-### 外连接
-- 左外连接：只保留出现在左外连接左边的关系中的元组（如果没有符合连接条件的元组，左表的元组还是会被展示出来）
-- 右外连接：只保留出现在右外连接运算右边关系中的元组
-- 全外连接：保留出现在两个关系中的元组
-
-左外连接：
-
-```sql
-select * from user  
-left outer join state on user.user_id = state.user;
-# 把user和state进行连接，如果用户没有发表state，则仍保留用户，只是state相关列为NULL
-```
-
-右外连接如上取反
-全外连接：原理同上，不详细解释（mysql不支持）
-
-### 连接类型和条件
-
-natural join等价于natural inner join
 
 ## 视图
 

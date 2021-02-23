@@ -449,7 +449,7 @@ SELECT * FROM (SELECT username FROM user) AS T;
 ```sql
 SELECT username,(SELECT COUNT(1) 
 FROM state WHERE state.user = user.user_id) FROM user;
-# 查询每个用户的用户名及其发表的动态条数
+-- 查询每个用户的用户名及其发表的动态条数
 ```
 
 ## 数据库的修改
@@ -471,15 +471,16 @@ WHERE username = 'root'
 ### 插入
 
 ```sql
-INSERT INTO user VALUES(1,'username',15);
-# 这种方式需要指定全部列
-INSERT INTO user(username,age) VALUES('username',15);
-# 这种方式不需要指定全部列
-INSERT INTO user SELECT * FROM user;
-# 插入查询出来的元组
+INSERT INTO user VALUES(1,'username',15);-- 这种方式需要指定全部列，每次插入数据，应尽可能提供所有列名
+INSERT INTO user(username,age) VALUES('username',15);-- 这种方式不需要指定全部列，允许为NULL值或者表定义有默认值的列可以被省略
+INSERT INTO user SELECT * FROM user;-- 插入查询出来的数据，根据列的位置进行插入，列名可以不匹配
+-- 某些SQL实现INTO是可选的
+SELECT * INTO cust_copy FROM customers; -- 复制数据到新表
+CREATE TABLE cust_copy AS  SELECT * FROM customers; -- MySQL Oracle PostgreSQL的语法
 ```
 
 ### 更新
+
 ```sql
 UPDATE r
 SET k1=v1,k2=v2,...,kn=vn

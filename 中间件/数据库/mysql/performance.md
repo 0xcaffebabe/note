@@ -242,8 +242,6 @@ performance_schema_max_sql_text_length=1024
 
 ​		配置表之间存在相互关联关系，按照配置影响的先后顺序，可添加为
 
-![image-20191203125003597](C:\Users\63198\AppData\Roaming\Typora\typora-user-images\image-20191203125003597.png)
-
 ```sql
 /*
 performance_timers表中记录了server中有哪些可用的事件计时器

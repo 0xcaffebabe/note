@@ -22,7 +22,7 @@
 - real，double，precision：浮点数与双精度浮点数，精度与机器相关
 - float(n)：精度至少为n位的浮点数
 
-### 基本模式定义
+### 表定义
 
 create table 命令的通用形式
 
@@ -41,12 +41,33 @@ CREATE TABLE r
 
 ```sql
 CREATE TABLE department(
-    dept_name VARCHAR(20),
-    building VARCHAR(15),
-    budget NUMERIC(12,2),
+    dept_name VARCHAR(20) NOT NULL,
+    building VARCHAR(15), -- 如果不指定 默认为NULL
+    budget NUMERIC(12,2) DEFAULT 999, -- 指定默认值
     PRIMARY KEY(dept_name)
 );
 ```
+
+### 表更新
+
+DBMS对表更新的约束既复杂又不统一
+
+```sql
+ALTER TABLE vendors ADD vend_phone CHAR(20); -- 增加字段
+ALTER TABLE vendors DROP COLUMN vend_phone; -- 删除字段
+```
+
+SQLite不支持使用ALTER TABLE 语句定义主键跟外键。在使用ALTER TABLE语句应极为小心，使用前应对表进行备份
+
+### 删除表
+
+```sql
+DROP TABLE cust_copy;
+```
+
+### 重命名表
+
+RENAME/sp_rename/ALTER TABLE
 
 #### 完整性约束
 

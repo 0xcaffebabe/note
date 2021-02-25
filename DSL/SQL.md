@@ -768,9 +768,13 @@ GRANT REFERENCES (dept_name) ON department TO user1
 
 存储过程可以看成是对一系列 SQL 操作的批处理
 
+Access 与 SQLite 不支持，MySQL5之后才支持
+
 - 代码复用
 - 比较安全
 - 性能较高
+
+不同DBMS存储和调用存储过程的方式都很不一致
 
 ## 使用程序设计语言访问数据库
 

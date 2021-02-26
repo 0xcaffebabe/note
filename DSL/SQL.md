@@ -570,6 +570,45 @@ SELECT * FROM user_part
 - Commit work:提交当前事务
 - Rollback work：回滚当前事务
 
+MySQL：
+
+```sql
+START TRANSACTION; -- 开始一个事务
+DELETE FROM orderitems; -- 执行事务操作
+ROLLBACK; -- 回滚事务
+COMMIT; -- 提交事务
+```
+
+Oracle:
+
+```sql
+SET TRANSACTION;
+...
+COMMIT;
+```
+
+对于没有明确标志事务结束的语句，事务将一直存在。
+
+默认没有开启的事务的执行语句都是隐式提交
+
+为了实现部分回滚的功能，这里引入一个叫做保存点的东西，回滚可以回滚到保存点，放弃回滚点后的所有更改
+
+```sql
+START TRANSACTION;
+SAVEPOINT p1;
+DELETE FROM orderitems;
+ROLLBACK TO p1;
+COMMIT;
+```
+
+## 游标
+
+在检索出来的行中前进或者后退。
+
+Access不支持 MySQL5之后才支持 SQLite的游标称为步骤。
+
+相较而言，游标对对于Web应用用处不大
+
 ## 完整性约束
 
 完整性约束防止的是对数据的意外破坏。

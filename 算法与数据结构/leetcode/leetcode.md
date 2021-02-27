@@ -2945,3 +2945,18 @@ class Solution {
 ```
 
 time: 1 beat: 38
+
+## 面试题 16.01. 交换数字
+
+<https://leetcode-cn.com/problems/swap-numbers-lcci/>
+
+```py
+class Solution(object):
+    def swapNumbers(self, numbers):
+        numbers[0] = numbers[1] + numbers[0]
+        numbers[1] = numbers[0] - numbers[1]
+        numbers[0] = numbers[0] - numbers[1]
+        return numbers
+```
+
+time:12 beat:91

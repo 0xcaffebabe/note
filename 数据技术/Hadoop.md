@@ -30,3 +30,16 @@ Lucene -> Nutch -> Haddop
 
 ![屏幕截图 2021-02-27 162140](/assets/屏幕截图%202021-02-27%20162140.png)
 
+### MapReduce
+
+分任务 计算任务 汇总任务
+
+## 安装
+
+<https://github.com/big-data-europe/docker-hadoop>
+
+测试集群：
+
+```sh
+adoop fs -mkdir /test # 创建文件夹
+```

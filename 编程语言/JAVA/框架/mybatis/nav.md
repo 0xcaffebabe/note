@@ -1,4 +1,4 @@
-# NAV
+# Mybatis
 
 ## 框架
 
@@ -9,6 +9,8 @@
 - 持久层框架
 - 动态sql
 - ORM
+
+Mapper 注册中心 -> 执行器 -> StatementHadnler -> ResultsetHandler
 
 ## 搭建
 

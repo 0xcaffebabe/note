@@ -2945,3 +2945,45 @@ class Solution {
 ```
 
 time: 1 beat: 38
+
+## 面试题 16.01. 交换数字
+
+<https://leetcode-cn.com/problems/swap-numbers-lcci/>
+
+```py
+class Solution(object):
+    def swapNumbers(self, numbers):
+        numbers[0] = numbers[1] + numbers[0]
+        numbers[1] = numbers[0] - numbers[1]
+        numbers[0] = numbers[0] - numbers[1]
+        return numbers
+```
+
+time:12 beat:91
+
+## 896. 单调数列
+
+<https://leetcode-cn.com/problems/monotonic-array/>
+
+```java
+class Solution {
+    public boolean isMonotonic(int[] A) {
+        if (A.length == 1) return true;
+        boolean lastIncr = false;
+        boolean lastDecr = false;
+        for(int i = 1;i<A.length;i++){
+            int q = A[i] - A[i - 1];
+            if (q > 0) { // 递增
+                if (lastDecr) return false;
+                lastIncr = true;
+            }else if (q < 0) { // 递减
+                if (lastIncr) return false;
+                lastDecr = true;
+            }
+        }
+        return true;
+    }
+}
+```
+
+time: 1 beat: 100

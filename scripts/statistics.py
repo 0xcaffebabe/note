@@ -20,7 +20,7 @@ def noteWorldFrequency():
         file = open(item, 'rb')
         text = str(file.read(), encoding="utf-8")
         text = filterSpecialSymbol(text)
-        seg_list = jieba.cut_for_search(text.strip())  # 默认是精确模式
+        seg_list = jieba.cut(text.strip())  # 默认是精确模式
         for j in seg_list:
             if j == '':
                 continue

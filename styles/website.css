@@ -118,6 +118,9 @@ mark {
 .copyright ul a:hover{
   color: #008cff!important;
 }
+.page-footer ul li:last-child a {
+  color: #3e90e8!important;
+}
 /* 首页章节字数 */
 .chapter-wordcount{
   float:right;

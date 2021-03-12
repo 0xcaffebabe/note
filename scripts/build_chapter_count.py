@@ -12,11 +12,13 @@ class ChapterNode:
         self.children = []
 
     def size(self):
-        size = len(self.children)
+        size = 1
+        if (len(self.children) == 0):
+            return size
         for i in self.children:
-            size = size + i.size()
+            size += i.size()
         return size
-
+        
 
 def process(nodes):
     result = []

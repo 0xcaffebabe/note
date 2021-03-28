@@ -3095,3 +3095,24 @@ class Solution {
 ```
 
 time:1 beat:81
+
+## 面试题 02.03. 删除中间节点
+
+<https://leetcode-cn.com/problems/delete-middle-node-lcci/>
+
+```java
+class Solution {
+    public void deleteNode(ListNode node) {
+        ListNode prev = null;
+        while(node != null){
+            if (prev != null) prev.val = node.val;
+            if (node.next == null) break;
+            prev = node;
+            node = node.next;
+        }
+        if (prev != null) prev.next = null;
+    }
+}
+```
+
+time:0 beat: 100

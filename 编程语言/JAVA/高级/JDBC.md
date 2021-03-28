@@ -15,19 +15,30 @@ _从 JDBC3 开始，目前已经普遍使用的版本。可以不用注册驱动
 
 ## 数据类型
 
-![批注 2019-08-05 115032](/assets/批注%202019-08-05%20115032.png)
+SQL 类型          | JDBC 对应方法           | 返回类型
+--------------- | ------------------- | -----------------------
+BIT(1),bit(n)   | getBoolean()        | boolean
+TINYINT         | getByte()           | byte
+SAMLLINT        | getShort()          | short
+INT             | getInt()            | int
+BIGINT          | getLong()           | long
+CHAR,VHARCHAR   | getString()         | String
+Text(Clob),Blob | getClob(),getBlob() | Clob,Blob
+DATE            | getDate()           | java.sql.Date 日期
+TIME            | getTime()           | java.sql.time 时间
+TIMESTAMP       | getTime()           | java.sql.TimeStamp 日期时间
 
 ## 经典查询
 
 ```java
 try(Connection connection = DriverManager.getConnection("jdbc:mysql:///test?user=root&password=123")){
-            ResultSet rs = connection.createStatement().executeQuery("select * from account");
-            while (rs.next()){
-                System.out.println(rs.getString("name")+"|"+rs.getDouble("balance"));
-            }
-        }catch (SQLException e){
-            e.printStackTrace();
-        }
+ResultSet rs = connection.createStatement().executeQuery("select * from account");
+while (rs.next()){
+    System.out.println(rs.getString("name")+"|"+rs.getDouble("balance"));
+}
+}catch (SQLException e){
+    e.printStackTrace();
+}
 ```
 
 ## SQL注入与PreparedStatement

@@ -4,6 +4,18 @@
 (参数列表) ‐> { 代码语句 }
 ```
 
+```java
+// Lambda表达式的书写形式
+Runnable run = () -> System.out.println("Hello World");// 1
+ActionListener listener = event -> System.out.println("button clicked");// 2
+Runnable multiLine = () -> {// 3 代码块
+    System.out.print("Hello");
+    System.out.println(" Hoolee");
+};
+BinaryOperator<Long> add = (Long x, Long y) -> x + y;// 4
+BinaryOperator<Long> addImplicit = (x, y) -> x + y;// 5 类型推断
+```
+
 - 类似于匿名方法，一个没有名字的方法
 - 可以忽略写参数类型
 - 坚决不声明返回值类型
@@ -13,17 +25,9 @@
 - 无参数，仅保留括号
 - 一个参数，可省略括号
 
-## 带返回值
-
-```java
-String[] sa = {"ss","assas","sdw","11","8568"};
-        Arrays.sort(sa,(s1,s2)->s1.compareTo(s2));
-        System.out.println(Arrays.toString(sa));
-```
-
 ## 使用前提
 
-- 使用Lambda必须具有接口，且要求接口中有且仅有一个抽象方法。 无论是JDK内置的 Runnable 、 Comparator 接口还是自定义的接口，只有当接口中的抽象方法存在且唯一 时，才可以使用Lambda。
+- 使用Lambda必须具有接口，且要求接口中有且仅有一个抽象方法(称之为函数式接口)。 无论是JDK内置的 Runnable 、 Comparator 接口还是自定义的接口，只有当接口中的抽象方法存在且唯一 时，才可以使用Lambda。
 - 使用Lambda必须具有上下文推断。 也就是方法的参数或局部变量类型必须为Lambda对应的接口类型，才能使用Lambda作为该接口的实例。
 
 > 有且仅有一个抽象方法的接口，称为"函数式接口"。
@@ -65,6 +69,10 @@ private static void superRun(SuperRunnable sr){
 `Consumer<T>`    | T    | void    | 接受一个参数，无返回
 `Function<T, R>` | T    | R       | 接受一个参数，返回一个值
 `Supplier<T>`    | None | T       | 无参数 返回一个值
+
+## Lambda JVM层实现
+
+Java编译器将Lambda表达式编译成使用表达式的类的一个私有方法，然后通过invokedynamic指令调用该方法。所以在Lambda表达式内，this引用指向的仍是使用表达式的类。
 
 ## 方法引用
 

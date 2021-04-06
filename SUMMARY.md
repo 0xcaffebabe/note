@@ -441,6 +441,7 @@
     - [RabbitMQ](./中间件/消息队列/rabbitMQ.md)
     - [RocketMQ](./中间件/消息队列/RocketMQ.md)
     - [Kafka](./中间件/消息队列/Kafka/Kafka.md)
+      - [消费者](./中间件/消息队列/Kafka/消费者.md)
   - [web容器/服务器](./中间件/web中间件/web中间件.md)
     - [Tomcat](./中间件/web中间件/Tomcat.md)
     - [Nginx](./中间件/web中间件/Nginx.md)

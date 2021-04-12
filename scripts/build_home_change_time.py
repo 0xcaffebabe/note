@@ -15,8 +15,9 @@ def process():
             "./", filepath=file_name).traverse_commits()))
         # 只取最近10条
         commit_log = list(commit_log)[0:10]
-        i.append(BeautifulSoup("<span class='page-lastupdate'>%s天前更新</span>" %
-                                   ((datetime.datetime.now() - commit_log[0].author_date.replace(tzinfo=None)).days), features='html.parser'))
+        days = (datetime.datetime.now() - commit_log[0].author_date.replace(tzinfo=None)).days
+        i.append(BeautifulSoup("<span class='page-lastupdate' date-time='%s'>%s天前更新</span>" %
+                                   (days, days), features='html.parser'))
         base.log(file_name + " 章节最后更新时间处理完成")
     base.write_text_to_file('_book/index.html', soup.prettify())
 

@@ -262,3 +262,7 @@ ssh: connect to host xxx.com port 22: Connection refused
 - 及时合并到master
 
 开发周期较长时，要及时合并到master，避免最后大量冲突
+
+## Pull Request 与 Merge Request
+
+这两种方式本质上是一样的，都是利用了git merge来合并两个分支。

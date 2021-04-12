@@ -59,7 +59,7 @@ JVM内存屏障 屏障两边的指令不可以重排序
 
 LoadLoad屏障:
 对于这样的语句Load1; LoadLoad; Load2,
-在Load2及后续读取操作要读取的数据被访问前，保证Loadi要读取的数据被读取完毕
+在Load2及后续读取操作要读取的数据被访问前，保证Load1要读取的数据被读取完毕
 
 StoreStore屏障:
 对于这样的语句Store1; StoreStore; Store2,

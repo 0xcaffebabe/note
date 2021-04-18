@@ -3221,3 +3221,48 @@ public class Codec {
 ```
 
 time:2 beat: 68
+
+## 删除有序数组中的重复项
+
+<https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array/>
+
+```java
+class Solution {
+    public int removeDuplicates(int[] nums) {
+        if (nums.length == 0) return 0;
+        int i = 0;
+        for (int j = 1; j < nums.length; j++) {
+            if (nums[j] != nums[i]) {
+                i++;
+                nums[i] = nums[j];
+            }
+        }
+        return i + 1;
+    }
+}
+```
+
+time:1 beat: 81
+
+## 5734. 判断句子是否为全字母句
+
+<https://leetcode-cn.com/problems/check-if-the-sentence-is-pangram/>
+
+```java
+class Solution {
+    public boolean checkIfPangram(String sentence) {
+        if (sentence.length() < 26) return false;
+        boolean[] map = new boolean[26];
+        for(int i = 0;i< sentence.length();i++){
+            char c = sentence.charAt(i);
+            map[c - 97] = true;
+        }
+        for(boolean i : map){
+            if (!i) return false;
+        }
+        return true;
+    }
+}
+```
+
+time:2 beat:100

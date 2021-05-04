@@ -519,3 +519,10 @@ class DocumentationConfig implements SwaggerResourcesProvider {
     }
 }
 ```
+
+## 高级
+
+### @ConditionOnXX
+
+条件化注入bean
+

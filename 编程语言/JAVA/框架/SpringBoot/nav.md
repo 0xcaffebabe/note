@@ -519,3 +519,44 @@ class DocumentationConfig implements SwaggerResourcesProvider {
     }
 }
 ```
+
+## 高级
+
+### @ConditionOnXX
+
+条件化注入bean
+
+### 切换内置服务器
+
+- 排除tomcat依赖
+- 引入其他内置服务器依赖
+
+### @EnableXX原理
+
+此类注解使用了@Import修饰，通过@Import注解来导入一些配置类
+
+@Import使用：
+
+1. 导入Bean
+2. 导入配置类
+3. ImportSelector的实现类
+    - 自定义需要导入的类逻辑（返回全限定类名）
+4. ImportBeanDefinitionRegistrar 实现类
+    - 自定义（编程式向IOC容器注册）
+
+### @EnableAutoConfiguration原理
+
+1. @Import AutoConfigurationImportSelector 加载配置类
+2. AutoConfigurationImportSelector读取META-INF/spring.factories 加载配置类
+
+### 自定义starter
+
+1. 定义autoconfigure模块
+2. 定义starter模块依赖autoconfigure模块
+3. 在autoconfigure模块定义META-INF/spring.factories
+
+### 事件监听
+
+- SpringApplicationRunListener
+- CommandLineRunner 项目启动后执行（放入ioc容器即可被识别）
+- ApplicationRunner 项目启动后执行（放入ioc容器即可被识别）

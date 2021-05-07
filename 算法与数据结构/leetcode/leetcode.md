@@ -3452,6 +3452,57 @@ class Solution {
 
 time:1 beat:100
 
+## 1304. 和为零的N个唯一整数
+
+```java
+class Solution {
+    public int[] sumZero(int n) {
+        if (n == 2) return new int[]{1, -1};
+        int preSum = 0;
+        int[] ret = new int[n];
+        for(int i = 0;i<n - 1;i++){
+            preSum += i;
+            ret[i] = i;
+        }
+        ret[n - 1] = -preSum;
+        return ret;
+    }
+}
+```
+
+time:0 beat: 100
+
+## 面试题 02.02. 返回倒数第 k 个节点
+
+<https://leetcode-cn.com/problems/kth-node-from-end-of-list-lcci/>
+
+```java
+class Solution {
+
+    private int ret;
+
+    private int cnt;
+
+    public int kthToLast(ListNode head, int k) {
+        cnt = 0;
+        process(head, k);
+        return ret;
+    }
+
+    public void process(ListNode head, int k){
+        if (head == null) {
+            return;
+        }
+        process(head.next, k);
+        cnt++;
+        if (cnt == k) ret = head.val;
+    }
+}
+```
+
+time:0 beat:100
+
+
 ## 1261. 在受污染的二叉树中查找元素
 
 <https://leetcode-cn.com/problems/find-elements-in-a-contaminated-binary-tree/>
@@ -3525,8 +3576,6 @@ class FindElements {
 
         recover(root.left);
         recover(root.right);
-    }
-}
 ```
 
 time:28 beat:84

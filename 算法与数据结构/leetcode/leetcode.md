@@ -3579,3 +3579,35 @@ class FindElements {
 ```
 
 time:28 beat:84
+
+## 1678. 设计 Goal 解析器
+
+<https://leetcode-cn.com/problems/goal-parser-interpretation/>
+
+```java
+class Solution {
+    public String interpret(String command) {
+        StringBuilder sb = new StringBuilder();
+        int p = 0,q = 1;
+        for(;p<command.length();p++,q++){
+            char c = command.charAt(p);
+            if (c == 'G') sb.append('G');
+            if (c == '(') {
+                if (command.charAt(q) == ')') {
+                    sb.append("o");
+                    p++;
+                    q++;
+                }
+                else {
+                    sb.append("al");
+                    p += 2;
+                    q += 2;
+                }
+            }
+        }
+        return sb.toString();
+    }
+}
+```
+
+time: 0

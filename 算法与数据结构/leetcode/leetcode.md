@@ -3632,3 +3632,56 @@ class Solution {
 ```
 
 time:1 beat:100
+
+## 1773. 统计匹配检索规则的物品数量
+
+<https://leetcode-cn.com/problems/count-items-matching-a-rule/>
+
+```java
+class Solution {
+    public int countMatches(List<List<String>> items, String ruleKey, String ruleValue) {
+        return (int)items
+                .stream()
+                .filter(list -> {
+                    if ("type".equals(ruleKey)) return list.get(0).equals(ruleValue);
+                    else if ("color".equals(ruleKey)) return list.get(1).equals(ruleValue);
+                    else if ("name".equals(ruleKey)) return list.get(2).equals(ruleValue);
+                    return false;
+                })
+                .count();
+    }
+}
+```
+
+time:5 beat: 57
+
+## 1848. 到目标元素的最小距离
+
+<https://leetcode-cn.com/problems/minimum-distance-to-the-target-element/>
+
+```java
+class Solution {
+    public int getMinDistance(int[] nums, int target, int start) {
+        int min = -1;
+        int minVal = 0;
+        int tmp = 0;
+        for(int i = 0;i<nums.length;i++) {
+            if (nums[i] == target) {
+                tmp = Math.abs(i - start);
+                if (min == -1) {
+                    min = i;
+                    minVal = tmp;
+                    continue;
+                }
+                if (tmp < minVal) {
+                    min = i;
+                    minVal = tmp;
+                }
+            }
+        }
+        return minVal;
+    }
+}
+```
+
+time: 1 beat:62

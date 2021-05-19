@@ -3685,3 +3685,46 @@ class Solution {
 ```
 
 time: 1 beat:62
+
+## 1450. 在既定时间做作业的学生人数
+
+<https://leetcode-cn.com/problems/number-of-students-doing-homework-at-a-given-time/>
+
+```java
+class Solution {
+    public int busyStudent(int[] startTime, int[] endTime, int queryTime) {
+        int cnt = 0;
+        for(int i = 0;i<startTime.length;i++){
+            if (startTime[i] <= queryTime && queryTime <= endTime[i]) cnt++;
+        }
+        return cnt;
+    }
+}
+```
+
+time: 0
+
+## 1859. 将句子排序
+
+<https://leetcode-cn.com/problems/sorting-the-sentence/>
+
+```java
+class Solution {
+    public String sortSentence(String s) {
+        String[] a = s.split(" ");
+        String[] ret = new String[a.length];
+        for(String str : a){
+            int index = Integer.parseInt(str.charAt(str.length() - 1) + "");
+            ret[index - 1] = str.substring(0, str.length() - 1);
+        }
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0;i<ret.length;i++){
+            sb.append(ret[i]);
+            if (i != ret.length - 1) sb.append(" ");
+        }
+        return sb.toString();
+    }
+}
+```
+
+time:4 beat:28

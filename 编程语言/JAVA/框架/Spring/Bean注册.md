@@ -421,19 +421,3 @@ public class Bean {
   }
 }
 ```
-
-## 生命周期方法
-
-```java
-@Component
-public class Bean {
-
-    //创建后执行
-    @PostConstruct
-    public void init(){ System.out.println("init"); }
-
-    //销毁前执行
-    @PreDestroy
-    public void destroy(){ System.out.println("destroy"); }
-}
-```

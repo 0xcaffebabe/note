@@ -373,8 +373,6 @@
 - [🍃Spring](./编程语言/JAVA/框架/Spring/spring概览.md)
     - [spring概览](./编程语言/JAVA/框架/Spring/spring概览.md)
     - [Bean注册](./编程语言/JAVA/框架/Spring/Bean注册.md)
-    - [装配Bean](./编程语言/JAVA/框架/Spring/装配Bean.md)
-    - [高级装配](./编程语言/JAVA/框架/Spring/高级装配.md)
     - [AOP](./编程语言/JAVA/框架/Spring/AOP.md)
     - [事务](./编程语言/JAVA/框架/Spring/事务.md)
     - [源码解析](./编程语言/JAVA/框架/Spring/源码解析.md)

@@ -1,6 +1,8 @@
-# 动态代理
+# AOP
 
-- 基于接口
+## 动态代理
+
+- 基于接口 JDK
 - 基于子类
 
 ```java
@@ -27,13 +29,11 @@ class Bean{
 }
 ```
 
-# AOP
-
 ## AOP简介
 
 ![20211520172](/assets/20211520172.png)
 
-## AOP术语
+AOP术语:
 
 - 通知(Advice):所谓通知是指拦截到Joinpoint之后所要做的事情就是通知
 
@@ -51,7 +51,7 @@ _使用xml时，后置通知与返回通知以及异常通知的执行顺序取�
 - 引入(Introduction):引介是一种特殊的通知在不修改类代码的前提下, Introduction可以在运行期为类动态地添加一些方法或Field。
 - 织入(Weaving):是指把增强应用到目标对象来创建新的代理对象的过程。
 
-## 编写切点
+### 编写切点
 
 - AspectJ指示器
 
@@ -75,11 +75,11 @@ within()    | 限制连接点匹配指定的类型
 execution(* wang.ismy.spring.service.Service.doSth(..))
 ```
 
-### execution
+#### execution
 
 ![](https://img2018.cnblogs.com/blog/475392/201810/475392-20181031104431559-1365885037.png)
 
-## 创建切面
+### 创建切面
 
 ```java
 @Aspect
@@ -107,7 +107,7 @@ public class ErrorPageAspect {
 }
 ```
 
-### 使用xml
+#### 使用xml
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -131,5 +131,10 @@ public class ErrorPageAspect {
 </beans>
 ```
 
+## AOP 原理
 
+AbstractAutoProxyCreator 实现了BeanPostProcessor 
 
+通过在Bean 实例化后，通过动态代理的方式 createProxy 对 Bean进行一层包裹 返回代理完成后的Bean
+
+AopProxy 目前Spring 有2种方式 ...

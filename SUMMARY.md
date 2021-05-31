@@ -376,7 +376,6 @@
     - [Bean生命周期](./编程语言/JAVA/框架/Spring/Bean生命周期.md)
     - [AOP](./编程语言/JAVA/框架/Spring/AOP.md)
     - [事务](./编程语言/JAVA/框架/Spring/事务.md)
-    - [源码解析](./编程语言/JAVA/框架/Spring/源码解析.md)
     - [SpringMVC](./编程语言/JAVA/框架/Spring/SpringMVC/SpringMVC起步.md)
       - [渲染WEB视图](./编程语言/JAVA/框架/Spring/SpringMVC/渲染WEB视图.md)
       - [SpringMVC高级特性](./编程语言/JAVA/框架/Spring/SpringMVC/SpringMVC高级特性.md)

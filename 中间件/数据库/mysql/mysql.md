@@ -77,6 +77,16 @@ MySQL设置隔离级别：
 SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
 ```
 
+### 问题
+
+#### Lock wait timeout exceeded
+
+该问题是由于某个事务执行时间过长，而导致其他事务无法获取相对应的锁，其他事务再等待一定时间后，则会出现这个问题。
+
+可通过调高innodb_lock_wait_timeout 变量来增加超时时间。
+
+但为了解决根本问题，还是要避免在事务里执行耗时的操作，如大量调用远程接口。
+
 ## 复制
 
 ### 主从复制

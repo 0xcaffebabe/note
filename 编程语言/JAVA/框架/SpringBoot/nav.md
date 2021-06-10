@@ -560,3 +560,16 @@ class DocumentationConfig implements SwaggerResourcesProvider {
 - SpringApplicationRunListener
 - CommandLineRunner 项目启动后执行（放入ioc容器即可被识别）
 - ApplicationRunner 项目启动后执行（放入ioc容器即可被识别）
+
+为了在应用启动成功之后执行某些操作，某些情况下使用InitializingBean接口并不能满足请求，其回调方法afterPropertiesSet在Bean属性被设置后被调用，此时系统的部分组件可能仍处于未初始化状态。
+
+为解决这个问题，可使用Spring的事件监听机制，监听SpringBoot的`AvailabilityChangeEvent<ReadinessState>` 当状态为ReadinessState.ACCEPTING_TRAFFIC，表示应用可以开始准备接收请求了，此时再启动所需要的操作
+
+```java
+@EventListener
+public void onSystemReady(AvailabilityChangeEvent<ReadinessState> event) {
+    if (event.getState().equals(ReadinessState.ACCEPTING_TRAFFIC)) {
+        // do something
+    }
+}
+```

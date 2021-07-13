@@ -3991,3 +3991,36 @@ class Solution {
 ```
 
 time:1 beat:100
+
+## 1920. 基于排列构建数组
+
+<https://leetcode-cn.com/problems/build-array-from-permutation/>
+
+```java
+class Solution {
+    public int[] buildArray(int[] nums) {
+        int[] ans = new int[nums.length];
+        for(int i = 0;i<nums.length;i++) ans[i] = nums[nums[i]];
+        return ans;
+    }
+}
+```
+
+## 1720. 解码异或后的数组
+
+<https://leetcode-cn.com/problems/decode-xored-array/>
+
+```java
+class Solution {
+    public int[] decode(int[] encoded, int first) {
+        int[] ans = new int[encoded.length + 1];
+        ans[0] = first;
+        for (int i = 1;i<ans.length;i++){
+            ans[i] = encoded[i - 1] ^ ans[i - 1];
+        }
+        return ans;
+    }
+}
+```
+
+time:1 beat:100

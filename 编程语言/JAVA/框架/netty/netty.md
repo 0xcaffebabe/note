@@ -8,13 +8,6 @@
 - 多线程并发领域    
 - 异步通信领域
 
-## Reactor模型
-
-![](https://user-gold-cdn.xitu.io/2018/7/11/164874093c4d67ab?imageView2/0/w/1280/h/960/format/webp/ignore-error/1)
-
-- 多线程模型
-  - 一个接收线程，多个处理线程
-
 ## Reactor主从多线程模型
 
 - 处理高并发

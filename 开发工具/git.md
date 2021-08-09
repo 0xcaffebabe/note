@@ -266,3 +266,18 @@ ssh: connect to host xxx.com port 22: Connection refused
 ## Pull Request 与 Merge Request
 
 这两种方式本质上是一样的，都是利用了git merge来合并两个分支。
+
+同步fork过来的仓库与源仓库：
+
+方法1：
+
+```sh
+git remote add upstream 源仓库 # 添加源仓库
+git fetch upstream # 同步源仓库的内容
+git reset --hard upstream/main # 将本地仓库设置为源仓库的内容
+git push -f # 将本地内容推送到远程仓库
+```
+
+方法2：
+
+在 Github 删除后重新 fork

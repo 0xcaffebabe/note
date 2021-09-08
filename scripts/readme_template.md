@@ -4,9 +4,13 @@
 
 本知识框架大部分内容都是前期建立框架大纲，后期不断完善细节，呈一个螺旋上升的结构，如果发现任何不足/错误，或者需要补充的，都欢迎提交issue/PR ! 谢谢！！！
 
-在线阅读:<https://note.ismy.wang>
+在线阅读:
+
+<https://note.ismy.wang>
 
 <https://b.ismy.wang>(国内服务器)
+
+<https://0xcafebabe.gitbook.io/note>(gitbook)
 
 note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
 

@@ -271,8 +271,6 @@
         - [List](./编程语言/JAVA/JAVA源码解析/List.md)
         - [Map](./编程语言/JAVA/JAVA源码解析/Map.md)
         - [Set](./编程语言/JAVA/JAVA源码解析/Set.md)
-      - [并发集合](./编程语言/JAVA/JAVA源码解析/并发集合.md)
-      - [队列](./编程语言/JAVA/JAVA源码解析/队列.md)
       - [线程](./编程语言/JAVA/JAVA源码解析/线程.md)
       - [锁](./编程语言/JAVA/JAVA源码解析/锁.md)
       - [线程池](./编程语言/JAVA/JAVA源码解析/线程池.md)

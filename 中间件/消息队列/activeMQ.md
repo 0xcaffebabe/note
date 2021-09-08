@@ -9,7 +9,7 @@
 ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
 Connection connection = connectionFactory.createConnection();
 connection.start();
-// 创建会话
+// 创建会话 自动确认消息
 Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 // 创建目的
 Destination destination = session.createQueue(queueName);
@@ -17,7 +17,7 @@ Destination destination = session.createQueue(queueName);
 
 ## 队列模式
 
-- 生产消息
+### 生产消息
 
 ```java
 MessageProducer producer = session.createProducer(destination);
@@ -29,27 +29,42 @@ for (int i = 0; i < 100; i++) {
 }
 ```
 
-- 消费消息
+### 消费消息
+
+- 使用消息监听器
 
 ```java
 MessageConsumer consumer = session.createConsumer(destination);
 
-        consumer.setMessageListener(new MessageListener() {
-            public void onMessage(Message message) {
-                System.out.println(message);
-            }
-        });
+consumer.setMessageListener(new MessageListener() {
+    public void onMessage(Message message) {
+        System.out.println(message);
+    }
+});
+```
+
+- 同步消费消息模式
+
+```java
+ActiveMQTextMessage msg = (ActiveMQTextMessage) consumer.receive();
+System.out.println(msg);
+```
+
+#### 队列模式
+
+```java
+destination = session.createQueue(sourceQueue);
 ```
 
 > 在队列模式下，消费者会平均消费生产者生产的消息
 
-## 主题模式
+#### 主题模式
 
 ```java
 Destination destination = session.createTopic(topicName);
 ```
 
-> 主题模式下，订阅之后才能收到消息 生产者生产消息会推送给所有消费者
+> 主题模式也被称为订阅通知模式，订阅之后才能收到消息 生产者生产消息会推送给所有消费者
 
 ## 消息持久化
 
@@ -68,7 +83,7 @@ JMS消息只有在被确认之后，才认为已经被成功的消费了
 - Session.CLIENT_ACKNOWLEDGE:客户通过调用消息的acknowledge方法确认消息
 - Session.DUPS_ACKNOWLEDGE:该选择只是会话迟钝的确认消息的提交
 
-## 集成Spring jms
+## 集成Spring JMS
 
 - 配置
 

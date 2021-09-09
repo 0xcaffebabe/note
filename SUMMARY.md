@@ -272,7 +272,6 @@
     - [Java 源码解析](./编程语言/JAVA/JAVA源码解析/JAVA源码解析.md)
       - [基础](./编程语言/JAVA/JAVA源码解析/基础.md)
       - [锁](./编程语言/JAVA/JAVA源码解析/锁.md)
-      - [线程池](./编程语言/JAVA/JAVA源码解析/线程池.md)
       - [编译原理](./编程语言/JAVA/JAVA源码解析/编译原理.md)
     - [JVM](./编程语言/JAVA/JVM/JVM.md)
       - [自动内存管理](./编程语言/JAVA/JVM/自动内存管理/自动内存管理.md)

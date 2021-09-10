@@ -2,8 +2,6 @@
 
 来源于平时学习/工作，包含 算法与数据结构 / 操作系统 / 数据库 / 计算机系统 / 网络 / 中间件 / Java / 软件工程 / 前端 / 运维 / 网络安全
 
-本知识框架大部分内容都是前期建立框架大纲，后期不断完善细节，呈一个螺旋上升的结构，如果发现任何不足/错误，或者需要补充的，都欢迎提交issue/PR ! 谢谢！！！
-
 在线阅读:
 
 <https://note.ismy.wang>
@@ -260,7 +258,10 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
     - [常用API](./编程语言/JAVA/高级/常用API.md)
     - [继承与多态](./编程语言/JAVA/高级/继承与多态.md)
     - [嵌套类](./编程语言/JAVA/高级/嵌套类.md)
-    - [集合](./编程语言/JAVA/高级/集合.md)
+    - [集合](./编程语言/JAVA/高级/集合/集合.md)
+      - [List](./编程语言/JAVA/高级/集合/List.md)
+      - [Map](./编程语言/JAVA/高级/集合/Map.md)
+      - [Set](./编程语言/JAVA/高级/集合/Set.md)
     - [异常](./编程语言/JAVA/高级/异常.md)
     - [日志](./编程语言/JAVA/高级/日志.md)
     - [IO](./编程语言/JAVA/高级/IO.md)
@@ -271,6 +272,7 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
       - [并发编程设计模式](./编程语言/JAVA/JAVA并发编程/并发编程设计模式.md)
       - [leetcode](./编程语言/JAVA/JAVA并发编程/leetcode.md)
       - [基础概念](./编程语言/JAVA/JAVA并发编程/基础概念.md)
+      - [线程](./编程语言/JAVA/JAVA并发编程/线程.md)
       - [并发工具类](./编程语言/JAVA/JAVA并发编程/并发工具类.md)
       - [并发集合](./编程语言/JAVA/JAVA并发编程/并发集合.md)
       - [线程池](./编程语言/JAVA/JAVA并发编程/线程池.md)
@@ -294,15 +296,6 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
     - [Java 运行管理](./编程语言/JAVA/高级/JAVA运行管理.md)
     - [Java 源码解析](./编程语言/JAVA/JAVA源码解析/JAVA源码解析.md)
       - [基础](./编程语言/JAVA/JAVA源码解析/基础.md)
-      - [集合](./编程语言/JAVA/JAVA源码解析/集合.md)
-        - [List](./编程语言/JAVA/JAVA源码解析/List.md)
-        - [Map](./编程语言/JAVA/JAVA源码解析/Map.md)
-        - [Set](./编程语言/JAVA/JAVA源码解析/Set.md)
-      - [并发集合](./编程语言/JAVA/JAVA源码解析/并发集合.md)
-      - [队列](./编程语言/JAVA/JAVA源码解析/队列.md)
-      - [线程](./编程语言/JAVA/JAVA源码解析/线程.md)
-      - [锁](./编程语言/JAVA/JAVA源码解析/锁.md)
-      - [线程池](./编程语言/JAVA/JAVA源码解析/线程池.md)
       - [编译原理](./编程语言/JAVA/JAVA源码解析/编译原理.md)
     - [JVM](./编程语言/JAVA/JVM/JVM.md)
       - [自动内存管理](./编程语言/JAVA/JVM/自动内存管理/自动内存管理.md)

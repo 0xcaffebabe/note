@@ -494,26 +494,6 @@ type Dog struct {
 }
 ```
 
-## 接口
-
-```go
-// 定义接口
-type Service interface {
-	GetUser() string
-}
-// 实现类
-type UserService struct {}
-// 隐式实现接口方法
-func (us *UserService)GetUser() string{
-	return "user"
-}
-func main(){
-	// 多态
-	var service Service = new(UserService)
-	fmt.Println(service.GetUser())
-}
-```
-
 ## 并发
 
 - 协程

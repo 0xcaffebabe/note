@@ -339,6 +339,7 @@
   - [go](./编程语言/Go/go.md)
     - [数组字符串切片](./编程语言/Go/数组字符串切片.md)
     - [函数方法和接口](./编程语言/Go/函数方法和接口.md)
+    - [内存模型](./编程语言/Go/内存模型.md)
   - [typescript](./编程语言/typescript.md)
   - [HasKell](./编程语言/HasKell.md)
   - [Ruby](./编程语言/Ruby.md)

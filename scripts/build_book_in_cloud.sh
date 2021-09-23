@@ -38,6 +38,9 @@ python3 ./scripts/build_home_change_time.py
 echo "运行构造章节文章数脚本"
 python3 ./scripts/build_chapter_count.py
 
+echo "运行首页js追加脚本"
+python3 ./scripts/append_js_index.py
+
 echo "运行css预处理脚本"
 python3 ./scripts/css_processor.py
 

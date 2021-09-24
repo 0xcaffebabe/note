@@ -27,11 +27,11 @@ def process():
             key = page_alias[file]
         else:
             key = file.replace('.md', '.html')
-        write_recent_commits(key, commit_list, show_more)
+        write_recent_commits(key, commit_list, show_more, len(commit_log_origin))
         base.log("章节历史构建 " + key + " 处理完成")
 
 
-def write_recent_commits(file_name, commit_list, show_more):
+def write_recent_commits(file_name, commit_list, show_more, commit_count):
     file_name = "_book/" + file_name
     html = '<div class="copyright"><p>更新历史:</p><ul>'
     for item in commit_list:
@@ -39,7 +39,7 @@ def write_recent_commits(file_name, commit_list, show_more):
             item['hash'], item['date'], item['msg'])
     if show_more:
         git_file = file_name.replace("_book/","").replace(".html",".md")
-        html += '<li><a href="https://github.com/0xcaffebabe/note/commits/master/%s" target="_blank">更多历史</a></li>'%(git_file)
+        html += '<li><a href="https://github.com/0xcaffebabe/note/commits/master/%s" target="_blank">全部历史(%s条)</a></li>'%(git_file, commit_count)
     html += '</ul></div>'
     file_html = base.read_text_from_file(file_name)
     if (file_html == ''):

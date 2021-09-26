@@ -2,6 +2,8 @@
 import os, _thread, jieba, re, base
 from wordcloud import WordCloud
 from PIL import Image, ImageFont, ImageDraw
+from pydriller import RepositoryMining
+import datetime
 
 all_file_list = base.listAllFile('./')
 md_file_list = base.listAllMdFile()
@@ -113,14 +115,16 @@ def statisticImg():
 
 def generateNoteInfo():
     chapterCount, wordNum = statisticNote()
+    commit_count, commit_perday, commit_line_perday = getCommitInfo()
     text = \
         u'生成时间:' + base.current_time() + "\n"\
         + '仓库尺寸:' + str(getRepositorySize()) + 'MB' + '\n'\
+        + '提交统计:' + '%.2f次/天, %d行/天'%(commit_perday, commit_line_perday) + '\n'\
         + '章节数:' + str(chapterCount) + '章' + '\n'\
         + '总字数:' + "{:,}".format(wordNum) + '字' + '\n'\
         + '图片数:' + str(statisticImg()) + '张图片\n'\
         + '代码统计:' + codeFrequency()
-    im = Image.new("RGB", (1000, 140), (255, 255, 255))
+    im = Image.new("RGB", (1000, 160), (255, 255, 255))
     dr = ImageDraw.Draw(im)
     font = ImageFont.truetype('font.ttf', 16)
     dr.text((10, 5), text, font=font, fill="#000000")
@@ -167,6 +171,15 @@ def getRepositorySize():
         total += os.path.getsize(item)
     return round(total/float(1024*1024), 2)
 
+def getCommitInfo():
+
+    to_first_commit_days = (datetime.datetime.now() - datetime.datetime.strptime('2019-05-20 23:32:29', '%Y-%m-%d %H:%M:%S')).days
+    commits = list(RepositoryMining('./').traverse_commits())
+    commit_count = len(list(filter(lambda c: c.in_main_branch, commits)))
+    commit_total_line = sum(list(map(lambda c: c.insertions, commits))) - sum(list(map(lambda c: c.deletions, commits)))
+    commit_perday = commit_count / to_first_commit_days
+    commit_line_perday = int(commit_total_line / to_first_commit_days)
+    return commit_count, commit_perday, commit_line_perday
 
 generateWordCloud()
 generateNoteInfo()

@@ -44,3 +44,27 @@ Authenticator 及 AuthenticationStrategy
 
 - Authenticator 的职责是验证用户帐号
 - AuthenticationStrategy 指定了当多个账号符合时 该怎么处理
+
+## 授权
+
+- RBAC
+
+`:表示资源/操作/实例的分割；,表示操作的分割；*表示任意资源/操作/实例`
+
+`*可以匹配所有，不加*可以进行前缀匹配`
+
+### 角色权限判断
+
+```java
+System.out.println(subject.hasRole("admin")); // true
+System.out.println(subject.isPermitted("user:create")); // true
+System.out.println(subject.isPermitted("user:delete")); // false
+subject.checkPermission("user:*"); // 失败抛异常
+```
+
+### 授权流程
+
+![屏幕截图 2021-09-26 162705](/assets/屏幕截图%202021-09-26%20162705.png)
+
+- Authorizer 是权限判断的接口
+- PermissionResolver 将字符串形式的权限解析成权限对象

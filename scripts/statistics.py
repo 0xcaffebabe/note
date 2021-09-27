@@ -175,7 +175,7 @@ def getCommitInfo():
 
     to_first_commit_days = (datetime.datetime.now() - datetime.datetime.strptime('2019-05-20 23:32:29', '%Y-%m-%d %H:%M:%S')).days
     commits = list(RepositoryMining('./').traverse_commits())
-    commit_count = len(list(filter(lambda c: c.in_main_branch, commits)))
+    commit_count = len(commits)
     commit_total_line = sum(list(map(lambda c: c.insertions, commits))) - sum(list(map(lambda c: c.deletions, commits)))
     commit_perday = commit_count / to_first_commit_days
     commit_line_perday = int(commit_total_line / to_first_commit_days)

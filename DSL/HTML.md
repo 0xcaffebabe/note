@@ -107,7 +107,7 @@
 - `aside` --- 侧边栏标签
 - `footer` --- 尾部标签
 
-![](https://www.runoob.com/wp-content/uploads/2013/07/html5-layout.jpg)
+![2021927165247](/assets/2021927165247.jpg)
 
 - 语义化标签主要针对搜索引擎
 - 新标签可以使用一次或者多次
@@ -161,19 +161,40 @@ Opera    | YES      | (从 Opera 25 起) | YES | YES
 </video>
 ```
 
-![](https://images2015.cnblogs.com/blog/275644/201707/275644-20170724094159180-147147374.png)
+属性          | 值               | 描述
+----------- | --------------- | ---------------------------------------------------
+autoplay    | autoplay        | 如果出现该属性,则视频在就绪后马上播放。
+controls    | controls        | 如果出现该属性,则向用户显示控件,比如播放按钮。
+height      | px              | 设置视频播放器的高度。
+loop        | loop            | 如果出现该属性，则当媒介文件完成播放后再次开始播放。
+muted muted | 规定视频的音频输出应该被静音。
+poster      | url             | 规定视频下载时显示的图像，或者在用户点击播放按钮前显示的图像。
+preload     | preload         | 如果出现该属性,则视频在页面加载时进行加载,并预备播放。如果使用"autoplay" ,则忽略该属性。
+src         | url             | 要播放的视频的URL。
+width       | px              | 设置视频播放器的宽度。
 
 - 音频标签与视频标签使用基本一致
 - 多媒体标签在不同浏览器下情况不同，存在兼容性问题
 - 谷歌浏览器把音频和视频标签的自动播放都禁止了
 - 谷歌浏览器中视频添加 muted 标签可以自己播放
 
-## 新增 input 标签
+## 新增 input 标签类型
 
-![](https://codebridgeplus.com/public/wp-content/uploads/html_input.jpg)
+- color
+- date
+- datetime
+- datetime-local
+- email
+- month
+- number
+- range
+- search
+- tel
+- time
+- url
+- week
 
 ## 新增表单属性
 
-![](http://image.mamicode.com/info/201901/20190106005941629009.png)
-
-
+- autocomplete：用户在自动完成域种输入时，浏览器会在该域显示填写的选项
+- novalidate：指定是否验证input域或者提交表单时是否检查表单数据符合要求

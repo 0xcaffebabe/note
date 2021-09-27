@@ -5,7 +5,15 @@
 
 #### 属性选择器
 
-![](https://images2017.cnblogs.com/blog/1199008/201711/1199008-20171108095116481-170436080.png)
+选择器                 | 描述
+------------------- | ------------------
+[attribute ]        | 用于选取带有指定属性的元素。
+[attribute=value]   | 用于选取带有指定属性和值的元素。
+[attribute~=value]  | 用于选取属性值中包含指定词汇的元素。
+[attribute          | =value]            | 用于选取带有以指定值开头的属性值的元素，该值必须是整个单词。
+[attribute^=valuel  | 匹配属性值以指定值开头的每个元素。
+[attribute$ =value] | 匹配属性值以指定值结尾的每个元素。
+[attribute* =value] | 匹配属性值中包含指定值的每个元素。
 
 ```css
 input[type=search] {
@@ -15,7 +23,31 @@ input[type=search] {
 
 #### 结构伪类选择器
 
-![](http://www.sunpcn.cn/wp-content/uploads/2015/08/wysxzq.jpg)
+伪类元素选择器               | 说明
+--------------------- | ----------------------------------------------------------------------
+E:first-line          | 选择某标签中第一行的元素
+E:first-letter        | 伪类选择器将某标签中第一行的元素首字符
+E:before              | 伪类选择器:将某标签之前加入内容
+E:after               | 伪类选择器将某标签之后加入内容
+E:root                | 将样式绑定到页面根元素中
+E:not                 | 对某个结构元素使用样式但想排除结构下的子结构元素
+E:empty               | 指定当元素样式为空白时使用的样式
+E.target              | 对页面中target元素指定样式此样式只在用户点击了页面中的链接，并且跳转到target元素后才生效
+E:first-child         | 选择同级别此元素的第一个元素
+E:last-child          | 选择同级别此元素的最后一个元素
+E:nth-child           | 对元素中指定序号的子元素设置样式(正数)，:nth-child(n)/nth-child(odd/even) -奇/偶数
+E:nth-last-child      | 对元素中指定序号的子元素设置样式(倒数)，nth-last- child(n)- nth-last-child(odd/even)-奇/偶数
+E:nth-of-type(n)      | 与nth-childO作用类似，但是仅匹配使用同种标签的元素:
+E:nth-last-of-type(n) | 与nth-last-child作用类似但是仅匹配使用同种标签的元素
+E:nth-child(an+b)     | a表示每次循环中包括几张样式b表示指定的样式在循环中的所在位置
+E:only-child          | 匹配父元素下仅有的一个子元素
+E:only-of-type        | 匹配父元素 下使用同种标签的唯一个子元素
+E:enable              | 匹配表单中激活的元素
+E:disabled            | 匹配表单中禁用的元素
+E:checked             | 匹配表单中被选中的radio(单选)或checkbox(复选)元素
+E:selection           | 匹配用户当前选中的元素
+
+
 
 nth-child 详解
 

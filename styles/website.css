@@ -1,3 +1,19 @@
+/* 复用元素 */
+.color-info {
+  background-color: #909399;
+}
+.color-danger {
+  background-color: #F56C6C;
+}
+.color-warning {
+  background-color: #E6A23C;
+}
+.color-succcess {
+  background-color: #67C23A;
+}
+.color-main {
+  background-color: #409EFF;
+}
 /* 顶部栏 */
 .book-header {
   position: fixed!important;
@@ -146,8 +162,16 @@ mark {
 }
 /* 首页章节最后更新时间 */
 .page-lastupdate{
-  color:#bbb;
-  padding: 2px;
-  border-radius:3px;
-  font-size:14px;
+  border-radius: 10px;
+  color: #fff;
+  display: inline-block;
+  font-size: 10px;
+  height: 18px;
+  line-height: 18px;
+  padding: 0px 6px;
+  text-align: center;
+  white-space: nowrap;
+  border: 1px solid #fff;
+  top: 0;
+  vertical-align: super;
 }

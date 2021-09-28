@@ -51,8 +51,7 @@ def agg_home_count(count_map):
     soup = bs4.BeautifulSoup(html, features='html.parser')
     node_list = soup.select('.markdown-section a[href$=".html"]')
     for i in node_list:
-        i.append(bs4.BeautifulSoup("<span class='chapter-wordcount'>字数：%s</span>" %
-                                   (count_map['_book/' + i['href']]), features='html.parser'))
+        i.append(bs4.BeautifulSoup("<span class='chapter-wordcount'>{:,} 字</span>".format(count_map['_book/' + i['href']]), features='html.parser'))
     base.write_text_to_file('_book/index.html', soup.prettify())
 
 

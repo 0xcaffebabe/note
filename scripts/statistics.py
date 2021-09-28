@@ -4,6 +4,7 @@ from wordcloud import WordCloud
 from PIL import Image, ImageFont, ImageDraw
 from pydriller import RepositoryMining
 import datetime
+import numpy as np
 
 all_file_list = base.listAllFile('./')
 md_file_list = base.listAllMdFile()
@@ -65,12 +66,14 @@ def isStopWord(str):
 
 def generateWordCloud():
     list = noteWorldFrequency()
+    mask = np.array(Image.open('./mask.png'))
     # 设置词云
     wc = WordCloud(background_color="white",  # 设置背景颜色
                    # mask = "图片",  #设置背景图片
                    max_words=200000,  # 设置最大显示的字数
                    # stopwords = "", #设置停用词
                    font_path="font.ttf",
+                   mask=mask,
                    width=1000, height=500, margin=2,
                    # 设置中文字体，使得词云可以显示（词云默认字体是“DroidSansMono.ttf字体库”，不支持中文）
                    max_font_size=120,  # 设置字体最大值

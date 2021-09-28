@@ -3,7 +3,7 @@ startTime=`date +%Y%m%d-%H:%M`
 startTime_s=`date +%s`
 
 echo "安装python依赖"
-pip install jieba==0.42.1 wordcloud==1.8.1 beautifulsoup4==4.9.3 httpx==0.16.1 pydriller==1.15.5 htmlmin==0.1.12
+pip install jieba==0.42.1 wordcloud==1.8.1 beautifulsoup4==4.9.3 httpx==0.16.1 pydriller==1.15.5 htmlmin==0.1.12 numpy==1.19.5
 
 echo "运行统计脚本"
 python3 ./scripts/statistics.py

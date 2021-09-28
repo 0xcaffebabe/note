@@ -1,3 +1,22 @@
+/* 顶部栏 */
+.book-header {
+  position: fixed!important;
+  background-color: #fff!important;
+  width: 100%!important;
+  border-bottom: solid 1px #ddd!important;
+  height: 51px!important;
+}
+.book-header h1 {
+  padding: 0!important;
+  width: 200px!important;
+  margin: 0!important;
+}
+.book-header a[aria-label='GitHub'] {
+  float: left!important;
+}
+.page-wrapper {
+  margin-top: 40px!important;
+}
 /* 文章主体部分宽度 */
 .page-inner{
   max-width: 80%!important;
@@ -40,9 +59,6 @@ li.chapter a:hover {
 /* 文章标题 */
 .markdown-section h1::before{
   content: "📕";
-}
-.markdown-section h1 {
-    border-bottom: 1px solid #ccc
 }
 /* 底部更新时间 */
 .footer-modification::before {

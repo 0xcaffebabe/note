@@ -31,7 +31,8 @@
         },
         "hide-element": {
             "elements": [
-                ".gitbook-link"
+                ".gitbook-link",
+                " .book-body > .navigation"
             ]
         },
         "page-toc-button": {

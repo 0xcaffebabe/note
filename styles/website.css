@@ -33,9 +33,10 @@
 .page-wrapper {
   margin-top: 40px!important;
 }
-/* 文章主体部分宽度 */
+/* 文章主体部分 */
 .page-inner{
-  max-width: 80%!important;
+	margin: none!important;
+  max-width: 68%!important;
 }
 /* 滚动槽 */
 ::-webkit-scrollbar {
@@ -179,4 +180,23 @@ mark {
   border: 1px solid #fff;
   top: 0;
   vertical-align: super;
+}
+/* 针对toc插件的扩展 */
+.page-toc-menu1{
+	display: block!important;
+	position: absolute;
+	margin-top:40px;
+	width: 240px;
+	max-height:768px;
+	overflow-y:auto;
+	right: 20px;
+	border-left: 1px solid #ccc;
+}
+.page-toc-menu1 a {
+    color: rgb(116, 129, 141)!important;
+    font-weight: 550;
+}
+.page-toc-menu1 a:hover {
+    text-decoration: none;
+    color: #000;
 }

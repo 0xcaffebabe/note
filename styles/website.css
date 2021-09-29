@@ -193,9 +193,12 @@ mark {
 	border-left: 1px solid #ccc;
 }
 .page-toc-menu1 a {
-    color: rgb(116, 129, 141)!important;
+    color: rgb(116, 129, 141);
     font-weight: 550;
 }
 .page-toc-menu1 a:hover {
   color: #3E90E8!important;
+}
+.page-toc-menu1 .active {
+  color:#3e90e8!important;
 }

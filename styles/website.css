@@ -76,6 +76,11 @@ li.chapter a:hover {
 .markdown-section h1::before{
   content: "📕";
 }
+/* 主页链接样式 */
+.markdown-section a:hover {
+  text-decoration:none!important;
+  font-weight:600!important;
+}
 /* 底部更新时间 */
 .footer-modification::before {
   content: "⏰"

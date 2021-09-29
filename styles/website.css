@@ -197,6 +197,5 @@ mark {
     font-weight: 550;
 }
 .page-toc-menu1 a:hover {
-    text-decoration: none;
-    color: #000;
+  color: #3E90E8!important;
 }

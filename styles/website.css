@@ -202,3 +202,26 @@ mark {
 .page-toc-menu1 .active {
   color:#3e90e8!important;
 }
+.page-toc-menu1 ul {
+  padding: 0 24px;
+  list-style:none;
+}
+.page-toc-menu1 li {
+  padding: 5px 0;
+}
+.page-toc-menu1 li a:hover:before {
+  position:absolute;
+  left:0;
+  content:"🔎";
+  border-left:3px solid #3E90E8;
+}
+.page-toc-menu1 li .active:before {
+  position:absolute;
+  left:0;
+  content:"🔎";
+  border-left:3px solid #3E90E8;
+}
+.page-toc-menu1 ul:first-child:before{
+  content:"📋 目录列表";
+  color: rgb(116, 129, 141);
+}

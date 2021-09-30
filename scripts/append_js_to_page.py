@@ -6,7 +6,7 @@ import re,sys,base
 from bs4 import BeautifulSoup
 
 
-js_files = ['/scripts/js/page.js']
+js_files = ['/scripts/js/page.js', 'https://cdn.jsdelivr.net/npm/algoliasearch@4.5.1/dist/algoliasearch-lite.umd.js']
 
 for html_file in base.list_files_by_suffix('html'):
   html = base.read_text_from_file(html_file)

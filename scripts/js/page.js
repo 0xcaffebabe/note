@@ -2,6 +2,7 @@ console.log("hello page");
 
 gitbook.events.on('page.change', replaceTocMenu);
 gitbook.events.on('page.change', dirNavigate);
+gitbook.events.on('page.change', hijackSearch);
 
 
 /**
@@ -42,6 +43,116 @@ function dirNavigate() {
       document.querySelector(`.page-toc-menu1 a[href='#${node.id}']`).classList.add("active");
     }
   });
+}
+
+let searchTimer = null;
+
+/**
+ * 劫持已有的搜索功能 覆写实现
+ *
+ */
+function hijackSearch(){
+  let elm = document.querySelector('#book-search-input')
+  if (elm) {
+    $(elm.querySelector("input")).replaceWith("<input placeholder='键入以搜索' type='text'/>")
+    elm.id = 'book-search-input1';
+    $(elm.querySelector("input")).on("keyup", function(e){
+      clearTimeout(searchTimer);
+      const kw = $(elm.querySelector("input")).val();
+      searchTimer = setTimeout(() => {
+        search(kw)
+        .then(results => {
+          displayResults({
+            count: results.length,
+            query: kw,
+            results: results.map(v => {
+              v.title = v.hurl;
+              v.body = v.hbody;
+              return v;
+            })
+          })
+        })
+      }, 1000);
+    });
+  }
+}
+
+/**
+ * 展示搜索结果
+ * @param {*} res
+ * {count: 搜索得到的数量, query: 搜索关键词, results: [
+ *  {
+ *    title: 页面标题
+ *    url: 页面url
+ *    body: 页面内容
+ *  }
+ * ] }
+ */
+function displayResults(res) {
+  const MAX_DESCRIPTION_SIZE = 500;
+  $bookSearchResults = $('#book-search-results');
+  $searchList = $bookSearchResults.find('.search-results-list');
+  $searchTitle = $bookSearchResults.find('.search-results-title');
+  $searchResultsCount = $searchTitle.find('.search-results-count');
+  $searchQuery = $searchTitle.find('.search-query');
+
+  $bookSearchResults.addClass('open');
+
+  var noResults = res.count == 0;
+  $bookSearchResults.toggleClass('no-results', noResults);
+
+  // Clear old results
+  $searchList.empty();
+
+  // Display title for research
+  $searchResultsCount.text(res.count);
+  $searchQuery.text(res.query);
+
+  // Create an <li> element for each result
+  res.results.forEach(function(item) {
+      var $li = $('<li>', {
+          'class': 'search-results-item'
+      });
+
+      var $title = $('<h3>');
+
+      var $link = $('<a>', {
+          'href': gitbook.state.basePath + '/' + item.url + '?h=' + encodeURIComponent(res.query),
+          'html': item.title,
+          'data-is-search': 1
+      });
+
+      if ($link[0].href.split('?')[0] === location.href.split('?')[0]) {
+          $link[0].setAttribute('data-need-reload', 1);
+      }
+
+      var content = item.body.trim();
+      if (content.length > MAX_DESCRIPTION_SIZE) {
+          index = content.indexOf("<em>");
+          if (index != -1) {
+            content = content.substring(content.indexOf("<em>"), Math.min(MAX_DESCRIPTION_SIZE, content.length));
+          }
+          content = content + "..."
+      }
+      var $content = $('<p>').html(content);
+
+      $link.appendTo($title);
+      $title.appendTo($li);
+      $content.appendTo($li);
+      $li.appendTo($searchList);
+  });
+  $('.body-inner').scrollTop(0);
+}
+
+async function search(kw) {
+  const client = algoliasearch('K9I7PAT3CY', '8f3ec5043331dedbccce916154fc0162');
+  const index = client.initIndex('note');
+  const hits = await index.search(kw, {hitsPerPage: 200});
+  if (hits) {
+    return hits.hits.map(v => {
+      return {url: v.url, body: v.txt, hurl:v._highlightResult.url.value, hbody: v._highlightResult.txt.value}
+    })
+  }
 }
 
 replaceTocMenu();

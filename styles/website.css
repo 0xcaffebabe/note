@@ -229,6 +229,38 @@ mark {
   content:"📋 目录列表";
   color: rgb(116, 129, 141);
 }
+/* 搜索覆写 */
+#book-search-input1 {
+  background: inherit;
+}
+#book-search-input1 {
+  padding: 6px;
+  background: 0 0;
+  transition: top .5s ease;
+  background: #fff;
+  border-bottom: 1px solid rgba(0,0,0,.07);
+  border-top: 1px solid rgba(0,0,0,.07);
+  margin-bottom: 10px;
+  margin-top: -1px;
+}
+#book-search-input1 input, #book-search-input1 input:focus, #book-search-input1 input:hover {
+  width: auto!important;
+  transition: all .3s;
+}
+#book-search-input1 input, #book-search-input1 input:focus, #book-search-input1 input:hover {
+  width: 100%;
+  background: 0 0;
+  border: 1px solid transparent;
+  box-shadow: none;
+  outline: 0;
+  line-height: 22px;
+  padding: 7px 7px;
+  color: inherit;
+}
+#book-search-input1::before{
+display: inline-block;
+content: "🔍";
+}
 /* 自适应处理 */
 @media screen and (max-width : 1368px) {
   .page-inner {

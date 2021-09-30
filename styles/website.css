@@ -35,7 +35,7 @@
 }
 /* 文章主体部分 */
 .page-inner{
-	margin: none!important;
+	margin:0 88px!important;
   max-width: 68%!important;
 }
 /* 滚动槽 */
@@ -186,11 +186,15 @@ mark {
 	display: block!important;
 	position: absolute;
 	margin-top:40px;
-	width: 240px;
-	max-height:768px;
+	width:280px;
+	max-height:90%;
 	overflow-y:auto;
-	right: 20px;
+	right: 88px;
 	border-left: 1px solid #ccc;
+  overflow-y:hidden;
+}
+.page-toc-menu1:hover {
+  overflow-y:auto;
 }
 .page-toc-menu1 a {
     color: rgb(116, 129, 141);
@@ -224,4 +228,13 @@ mark {
 .page-toc-menu1 ul:first-child:before{
   content:"📋 目录列表";
   color: rgb(116, 129, 141);
+}
+/* 自适应处理 */
+@media screen and (max-width : 1368px) {
+  .page-inner {
+      max-width:62%!important;
+  }
+  .page-toc-menu1 {
+      right: 22px!important;
+  }
 }

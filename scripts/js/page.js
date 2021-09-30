@@ -26,8 +26,12 @@ function dirNavigate() {
     const idList = document.querySelectorAll('.markdown-section h1, .markdown-section h2, .markdown-section h3, .markdown-section h4 .markdown-section h5, .markdown-section h6');
     let node = null;
     for (let i = 0; i < idList.length; i++) {
-      if ($(window).scrollTop() > $(idList[i]).offset().top - 100 || $(this).scrollTop() + $(this).height() == $(document).height()) {
+      if ($(window).scrollTop() > $(idList[i]).offset().top - 100) {
         node = idList[i];
+      }
+      // 滚动到顶部特殊处理
+      if ($(this).scrollTop() + $(this).height() == $(document).height()) {
+        node = idList[0];
       }
     }
     if (node != null) {
@@ -35,7 +39,6 @@ function dirNavigate() {
       if (previousNode != null) {
         previousNode.classList.remove("active");
       }
-      console.log(node);
       document.querySelector(`.page-toc-menu1 a[href='#${node.id}']`).classList.add("active");
     }
   });

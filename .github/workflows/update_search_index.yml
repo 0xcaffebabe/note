@@ -25,7 +25,7 @@ jobs:
         ALGOLIA_INDEX_NAME: ${{ secrets.ALGOLIA_INDEX_NAME }}
     - name: python依赖安装
       run: |
-        pip install algoliasearch==2.5.0
+        pip install algoliasearch==2.5.0 beautifulsoup4==4.9.3
     - name: 执行索引全量更新
       run: |
         python ./scripts/update_index.py ${{ secrets.ALGOLIA_APP_ID }} ${{ secrets.ALGOLIA_API_KEY }} ${{ secrets.ALGOLIA_INDEX_NAME }}

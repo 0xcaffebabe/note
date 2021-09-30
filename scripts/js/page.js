@@ -117,7 +117,7 @@ function displayResults(res) {
       var $title = $('<h3>');
 
       var $link = $('<a>', {
-          'href': gitbook.state.basePath + '/' + item.url + '?h=' + encodeURIComponent(res.query),
+          'href': gitbook.state.basePath + '/' + item.url.replace(".md", ".html") + '?h=' + encodeURIComponent(res.query),
           'html': item.title,
           'data-is-search': 1
       });

@@ -42,7 +42,7 @@ def total_amount_update():
       "objectID": file,
       "txt": txt_process(base.read_text_from_file(file))
     })
-  index.save_objects(data_list)
+  index.replace_all_objects(data_list)
   base.log("全量更新索引完成")
 
 total_amount_update()

@@ -1,16 +1,19 @@
 from algoliasearch.search_client import SearchClient, SearchConfig
-import base,re,os
-import hashlib
+import base,re,sys
 
-env = os.environ
+args = sys.argv
 
-config = SearchConfig(env["ALGOLIA_APP_ID"], env["ALGOLIA_API_KEY"])
+app_id = args[1]
+api_key = args[2]
+index_name = args[3]
+
+config = SearchConfig(app_id, api_key)
 config.connect_timeout = 120
 config.read_timeout = 120
 config.write_timeout =  120
 
 client = SearchClient.create_with_config(config)
-index = client.init_index(env['ALGOLIA_INDEX_NAME'])
+index = client.init_index(index_name)
 
 md_files = base.listAllMdFile()
 ignore_files = ['算法与数据结构/leetcode/leetcode.md', '中间件/数据库/数据库系统/leetcode.md', 'README.md', 'SUMMARY.md']

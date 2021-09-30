@@ -28,6 +28,6 @@ jobs:
         pip install algoliasearch==2.5.0
     - name: 执行索引全量更新
       run: |
-        python ./scripts/update_index.py
+        python ./scripts/update_index.py ${{ secrets.ALGOLIA_APP_ID }} ${{ secrets.ALGOLIA_API_KEY }} ${{ secrets.ALGOLIA_INDEX_NAME }}
       env:
         CI: true

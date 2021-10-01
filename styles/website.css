@@ -119,10 +119,16 @@ li.chapter a:hover {
   background: none;
   padding: 0 2px;
 }
-/* 搜索结果标题 */
+/* 搜索结果 */
 #book-search-results .search-results .has-results .search-results-item a:hover{
   text-decoration: none;
   color: #72b0ec;
+}
+.search-results em {
+  background: #008cff!important;
+  color: #fff;
+  font-weight: 700;
+  font-style:normal!important;
 }
 /* 文章页内高亮 */
 mark {

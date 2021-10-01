@@ -1,11 +1,13 @@
 from algoliasearch.search_client import SearchClient, SearchConfig
-import base,re,sys
+import base,re,sys,markdown,json
+from bs4 import BeautifulSoup
 
 args = sys.argv
 
 app_id = args[1]
 api_key = args[2]
 index_name = args[3]
+mode = args[4]
 
 config = SearchConfig(app_id, api_key)
 config.connect_timeout = 120
@@ -28,6 +30,13 @@ def filterSpecialSymbol(str):
     str = re.sub('\t', '', str)
     return str
 
+def markdown_2_text(text):
+  html = markdown.markdown(text)
+  text = BeautifulSoup(html, features="html.parser").text
+  text = re.sub('\n', '', text)
+  text = re.sub('\t', '', text)
+  return text
+
 def txt_process(txt):
   txt = filterSpecialSymbol(txt)
   return txt
@@ -40,9 +49,45 @@ def total_amount_update():
     data_list.append({
       "url": file,
       "objectID": file,
-      "txt": txt_process(base.read_text_from_file(file))
+      "txt": markdown_2_text(base.read_text_from_file(file))
     })
   index.replace_all_objects(data_list)
   base.log("全量更新索引完成")
 
-total_amount_update()
+def list_all_index():
+  return index.get_objects(base.listAllMdFile())
+
+def list_all_index_map():
+  data = list_all_index()
+  index_map = {}
+  for item in data['results']:
+    if item is None:
+      continue
+    index_map[item['objectID']] = item['txt']
+  return index_map
+
+def increment_update():
+  data_list = []
+  for file in md_files:
+    if file in ignore_files:
+      continue
+    data_list.append({
+      "url": file,
+      "objectID": file,
+      "txt": markdown_2_text(base.read_text_from_file(file))
+    })
+  index_map = list_all_index_map()
+  skip_num = 0
+  for item in data_list:
+    mapping = index_map[item['objectID']]
+    if (mapping == item['txt']):
+      base.log("增量索引更新 %s 跳过" % item['objectID'])
+      skip_num += 1
+    else:
+      index.save_object(item)
+  base.log("增量索引更新 原 %s 现 %s 不更新数 %s"%(len(index_map), len(data_list), skip_num))
+
+if mode is 'total':
+  total_amount_update()
+if mode is 'increment':
+  increment_update()

@@ -1,9 +1,10 @@
-name: 'UpdateSearchIndex'
+name: '全量更新搜索索引'
 
 on:
   push:
-    branches:    
-      - master
+  workflow_dispatch:
+  schedule:
+    - cron:  '30 12 */5 * *'
 
 jobs:
   build:
@@ -25,9 +26,9 @@ jobs:
         ALGOLIA_INDEX_NAME: ${{ secrets.ALGOLIA_INDEX_NAME }}
     - name: python依赖安装
       run: |
-        pip install algoliasearch==2.5.0 beautifulsoup4==4.9.3
+        pip install algoliasearch==2.5.0 beautifulsoup4==4.9.3 markdown==3.3.4
     - name: 执行索引全量更新
       run: |
-        python ./scripts/update_index.py ${{ secrets.ALGOLIA_APP_ID }} ${{ secrets.ALGOLIA_API_KEY }} ${{ secrets.ALGOLIA_INDEX_NAME }}
+        python ./scripts/update_index.py ${{ secrets.ALGOLIA_APP_ID }} ${{ secrets.ALGOLIA_API_KEY }} ${{ secrets.ALGOLIA_INDEX_NAME }} total
       env:
         CI: true

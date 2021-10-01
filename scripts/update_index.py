@@ -87,7 +87,7 @@ def increment_update():
       index.save_object(item)
   base.log("增量索引更新 原 %s 现 %s 不更新数 %s"%(len(index_map), len(data_list), skip_num))
 
-if mode is 'total':
+if mode == 'total':
   total_amount_update()
-if mode is 'increment':
+if mode == 'increment':
   increment_update()

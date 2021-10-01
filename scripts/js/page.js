@@ -46,6 +46,7 @@ function dirNavigate() {
 }
 
 let searchTimer = null;
+const MAX_DESCRIPTION_SIZE = 500;
 
 /**
  * 劫持已有的搜索功能 覆写实现
@@ -89,7 +90,7 @@ function hijackSearch(){
  * ] }
  */
 function displayResults(res) {
-  const MAX_DESCRIPTION_SIZE = 500;
+  
   $bookSearchResults = $('#book-search-results');
   $searchList = $bookSearchResults.find('.search-results-list');
   $searchTitle = $bookSearchResults.find('.search-results-title');
@@ -126,15 +127,15 @@ function displayResults(res) {
           $link[0].setAttribute('data-need-reload', 1);
       }
 
-      var content = item.body.trim();
-      if (content.length > MAX_DESCRIPTION_SIZE) {
-          index = content.indexOf("<em>");
-          if (index != -1) {
-            content = content.substring(content.indexOf("<em>"), Math.min(MAX_DESCRIPTION_SIZE, content.length));
-          }
-          content = content + "..."
+      const contentList = splitContent(item.body.trim());
+      let $content = $("<p>");
+      for(let content of contentList) {
+        if (content.length == MAX_DESCRIPTION_SIZE) {
+          $("<p>").html(content + "...").appendTo($content);
+        }else{
+          $("<p>").html(content).appendTo($content);
+        }
       }
-      var $content = $('<p>').html(content);
 
       $link.appendTo($title);
       $title.appendTo($li);
@@ -142,6 +143,20 @@ function displayResults(res) {
       $li.appendTo($searchList);
   });
   $('.body-inner').scrollTop(0);
+}
+
+function splitContent(content){
+  if (!content) {
+    return [""];
+  }
+  if (content.length < MAX_DESCRIPTION_SIZE) {
+    return [content];
+  }
+  let strs = []
+  for(let i = 0; i < content.length; i+= 500) {
+    strs.push(content.substring(i, Math.min(i + 500, content.length)))
+  }
+  return strs.filter(s => s.indexOf("<em>") !== -1);
 }
 
 async function search(kw) {

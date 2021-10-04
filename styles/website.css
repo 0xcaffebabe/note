@@ -267,6 +267,17 @@ mark {
 display: inline-block;
 content: "🔍";
 }
+#book-search-input1:after {
+  content: "";
+  width: 24px;
+  height: 24px;
+  background-image: url(https://res.cloudinary.com/hilnmyskv/image/upload/q_auto/v1631888269/Algolia_com_Website_assets/images/shared/algolia_logo/algolia-blue-mark.svg);
+  background-size: 24px 24px;
+  position: absolute;
+  vertical-align: middle;
+  top: 12px;
+  right: 20px;
+}
 /* 自适应处理 */
 @media screen and (max-width : 1368px) {
   .page-inner {

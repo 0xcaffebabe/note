@@ -35,7 +35,7 @@ def markdown_2_text(text):
   text = BeautifulSoup(html, features="html.parser").text
   # text = re.sub('\n', '', text)
   text = re.sub('\t', '', text)
-  return text
+  return "\n".join(list(filter(lambda v : not '```' in v, text.split('\n'))))
 
 def txt_process(txt):
   txt = filterSpecialSymbol(txt)

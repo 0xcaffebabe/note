@@ -33,7 +33,7 @@ def filterSpecialSymbol(str):
 def markdown_2_text(text):
   html = markdown.markdown(text)
   text = BeautifulSoup(html, features="html.parser").text
-  text = re.sub('\n', '', text)
+  # text = re.sub('\n', '', text)
   text = re.sub('\t', '', text)
   return text
 

@@ -1,5 +1,5 @@
 
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 
 const routes = [
   { path: "/", component: () => import("@/pages/home/HomePage.vue") },
@@ -8,7 +8,7 @@ const routes = [
 ]
 export default function () {
   return createRouter({
-    history: createWebHistory(),
+    history: createWebHashHistory(),
     routes
   })
 }

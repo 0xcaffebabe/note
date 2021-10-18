@@ -1,5 +1,8 @@
-out/
-*.class
-.vscode
 node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+.vscode
+package-lock.json
 *.pyc

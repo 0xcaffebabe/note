@@ -4,5 +4,4 @@ dist
 dist-ssr
 *.local
 .vscode
-package-lock.json
 *.pyc

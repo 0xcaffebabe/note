@@ -1,6 +1,6 @@
 export default {
   // 站点名称
-  siteName: 'my-book',
+  siteName: '个人知识框架',
   // 仓库地址 用于更改、编辑等的跳转
   repositoryUrl: 'https://github.com/0xcaffebabe/note',
   // 左上方链接路由

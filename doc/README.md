@@ -18,12 +18,6 @@ note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
 
 [![wakatime](https://wakatime.com/badge/github/0xcaffebabe/note.svg)](https://wakatime.com/badge/github/0xcaffebabe/note) ![star](https://img.shields.io/github/stars/0xcaffebabe/note) ![fork](https://img.shields.io/github/forks/0xcaffebabe/note) ![license](https://img.shields.io/github/license/0xcaffebabe/note) ![build](https://github.com/0xcaffebabe/note/workflows/%E6%9E%84%E5%BB%BA%E7%94%B5%E5%AD%90%E4%B9%A6/badge.svg)
 
-统计：
-
-![](https://note.ismy.wang/info.png)
-![](https://note.ismy.wang/wordcloud.png)
-
-
 - [💎算法与数据结构](./算法与数据结构/算法与数据结构.md)
   - [leetcode](./算法与数据结构/leetcode/leetcode.md)
     - [树相关算法题](./算法与数据结构/leetcode/树相关.md)

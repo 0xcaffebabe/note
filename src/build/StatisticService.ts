@@ -44,7 +44,7 @@ class StatisticService extends BaseService {
     const pastDays = Math.ceil((currentDate.getTime() - minDate) / (3600 * 24 * 1000))
     return {
       commitPerDay: parseFloat((commitList.length / pastDays).toFixed(2)),
-      linePerDay: Math.ceil(commitList.map(v => v.insertions - v.deletions).filter(Boolean).reduce((a, b) => a + b, 0))
+      linePerDay: Math.ceil(commitList.map(v => v.insertions - v.deletions).filter(Boolean).reduce((a, b) => a + b, 0) / pastDays)
     }
   }
 

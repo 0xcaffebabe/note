@@ -1,6 +1,6 @@
 <template>
   <li :key="value.link" v-for="value in this.contentsList">
-    <a :href="'#' + value.name">{{ value.name }}</a>
+    <a :href="'#' + value.link" @click.prevent="handleTocItemClick(value.link)">{{ value.name }}</a>
     <ul v-if="value.chidren.length != 0">
       <contents-tree :contentsList="value.chidren" />
     </ul>
@@ -13,6 +13,12 @@ import { defineComponent } from "vue";
 export default defineComponent({
   props: {
     contentsList: Array,
+  },
+  methods: {
+    handleTocItemClick(id: string){
+      const elm : HTMLElement = document.querySelector('#' + id)!
+      window.scrollTo(0, elm.offsetTop - 80)
+    }
   },
   setup() {},
 });

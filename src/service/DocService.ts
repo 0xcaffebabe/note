@@ -173,6 +173,12 @@ class DocService implements Cacheable{
     return DocUtils.docId2Url(id)
   }
 
+  @cache
+  public async getContentByDocId(id: string): Promise<Content[]> {
+    const fileInfo = await api.getDocFileInfo(id)
+    const html = this.renderMd(fileInfo.content)
+    return this.getContent(html)
+  }
 
   /**
    *

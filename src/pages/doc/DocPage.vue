@@ -47,6 +47,7 @@
       </div>
       <div style="position:fixed;right:160px;top:60px">
         <el-button @click="$refs.readingHistory.show()" type="primary" size="mini">阅读历史</el-button>
+        <el-button @click="$router.push('/mind/' + doc)" type="success" size="mini">思维导图</el-button>
       </div>
     </el-main>
   </el-container>

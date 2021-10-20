@@ -1,6 +1,6 @@
 <template>
   <el-container>
-    <el-aside width="280px" v-show="showAside">
+    <el-aside width="280px" v-show="showAside" :lock-scroll="false">
       <div class="category-wrapper">
         <keep-alive>
           <category-list ref="categoryList" :doc="doc" />
@@ -47,12 +47,13 @@
       </div>
       <div style="position:fixed;right:160px;top:60px">
         <el-button @click="$refs.readingHistory.show()" type="primary" size="mini">阅读历史</el-button>
-        <el-button @click="$router.push('/mind/' + doc)" type="success" size="mini">思维导图</el-button>
+        <el-button @click="$refs.mindGraph.show()" type="success" size="mini">思维导图</el-button>
       </div>
     </el-main>
   </el-container>
   <el-backtop :bottom="40" :right="366" />
   <reading-history ref="readingHistory" />
+  <mind-graph ref="mindGraph" />
 </template>
 
 <script lang="ts">
@@ -65,6 +66,7 @@ import CategoryList from "./category/CategoryList.vue";
 import ContentsList from "./contents/ContentsList.vue";
 import HistoryList from "./commit/HistoryList.vue";
 import ReadingHistory from "./history/ReadingHistory.vue"
+import MindGraph from './mind/MindGraph.vue'
 import api from "@/api";
 import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
@@ -79,6 +81,7 @@ export default defineComponent({
     ContentsList,
     HistoryList,
     ReadingHistory,
+    MindGraph,
     ArrowLeftBold,
     ArrowRightBold
   },
@@ -125,7 +128,7 @@ export default defineComponent({
       this.doc = doc;
       try {
         this.file = await api.getDocFileInfo(doc);
-      } catch (err) {
+      } catch (err: any) {
         ElMessage.error(err.message)
       }
       this.generateTOC();

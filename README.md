@@ -4,13 +4,13 @@
 
 在线阅读:
 
-<https://note.ismy.wang>
+<https://note.ismy.wang>(github pages)
 
 <https://b.ismy.wang>(国内服务器)
 
-<https://0xcafebabe.gitbook.io/note>(gitbook)
+<https://notev.ismy.wang>(vercel app, 比github pages快)
 
-note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>
+~~note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>~~(已集成到笔记页面中)
 
 - [参考文献](./参考文献.md)
 

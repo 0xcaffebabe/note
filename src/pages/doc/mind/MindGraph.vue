@@ -25,7 +25,7 @@ export default defineComponent({
       let counter: number = 0;
       return toc.map((i) => {
         return {
-          id: i.name,
+          id: i.link,
           topic: i.name,
           children: this.mindConvert(i.chidren),
           direction: counter++ % 2 == 0 ? "right" : "left",

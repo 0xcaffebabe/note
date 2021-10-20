@@ -6,7 +6,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-const jsMind = require("jsmind");
+import jsMind from "jsmind";
 import "jsmind/style/jsmind.css";
 import Content from "@/dto/Content";
 import MindItem from "@/dto/MindItem";

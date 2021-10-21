@@ -1,9 +1,9 @@
 <template>
-  <el-dialog v-model="showDialog" width="25%">
+  <el-dialog v-model="showDialog" width="25%" @opened="$refs.autoComplete.focus()">
     <el-autocomplete
     v-model="kw"
     :fetch-suggestions="querySearch"
-    placeholder="Please input"
+    placeholder="搜索目录"
     popper-class="popper-list"
     :popper-append-to-body="false"
     ref="autoComplete"
@@ -40,7 +40,6 @@ export default defineComponent({
   methods: {
     show(){
       this.showDialog = true;
-      (this.$refs.autoComplete as any).focus()
     },
     docUrl2Id: DocUtils.docUrl2Id,
     flatMapCategoryList(list: Category[]): Category[]{

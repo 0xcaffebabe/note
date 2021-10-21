@@ -9,13 +9,25 @@
         </div>
         <div class="content">
           <div>
-            <el-button
+            <el-button-group>
+              <el-button
               icon="el-icon-search"
               class="search"
               @click="$emit('search')"
               size="mini"
               round
-            ></el-button>
+            >
+            Ctrl + K 全文搜索
+            </el-button>
+            <el-button
+              icon="el-icon-search"
+              class="search"
+              size="mini"
+              round
+            >
+            Ctrl + D 目录搜索
+            </el-button>
+            </el-button-group>
           </div>
           <el-menu mode="horizontal" :router="true">
             <template v-for="(menu, index) in navMenu" :key="index">

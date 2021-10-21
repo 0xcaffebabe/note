@@ -10,23 +10,34 @@
     </el-main>
   </el-container>
   <Search ref="search"/>
+  <category-search ref="categorySearch" />
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
 import Header from './components/header/Header.vue'
 import Search from '@/components/search/Search.vue'
+import CategorySearch from '@/components/search/CategorySearch.vue'
 
 export default defineComponent({
   components: {
     Header,
-    Search
+    Search,
+    CategorySearch
   },
   setup() {
 
   },
   data() {
     return {}
+  },
+  created(){
+    document.addEventListener('keydown',(e) => {
+      if (e.ctrlKey && e.key == 'd') {
+        (this.$refs.categorySearch as any).show()
+        e.preventDefault()
+      }
+    })
   }
 })
 </script>

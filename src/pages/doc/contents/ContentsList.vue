@@ -72,7 +72,7 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .toc {
-  max-width: 300px;
+  width: 220px;
   overflow-y: auto;
   border-left: 1px solid #ccc;
   overflow-y: hidden;
@@ -80,7 +80,7 @@ export default defineComponent({
 }
 .toc:hover {
   overflow-y: auto;
-  max-width: 306px;
+  // max-width: 306px;
 }
 .toc :deep(a) {
   color: rgb(116, 129, 141);
@@ -98,11 +98,16 @@ export default defineComponent({
 }
 ul,
 :deep(ul) {
-  padding: 0 24px;
+  padding: 0 12px;
   list-style: none;
 }
 :deep(li) {
   padding: 4px 0;
+  white-space:nowrap;
+  word-wrap:break-word;
+  word-break:break-all;
+  text-overflow:ellipsis; 
+  overflow:hidden;
 }
 .toc:first-child:before {
   content: "📋 目录列表";

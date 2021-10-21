@@ -45,15 +45,17 @@
           <contents-list :contentsList="contentsList" />
         </keep-alive>
       </div>
-      <div style="position:fixed;right:160px;top:60px">
-        <el-button @click="$refs.readingHistory.show()" type="primary" size="mini">阅读历史</el-button>
-        <el-button @click="$refs.mindGraph.show()" type="success" size="mini">思维导图</el-button>
-        <el-button @click="$refs.bookMark.showAdder()" type="danger" size="mini">添加书签</el-button>
-        <el-button @click="$refs.bookMark.showMarkList()" type="warn" size="mini">书签列表</el-button>
+      <div style="position:fixed;right:20px;top:60px">
+        <el-button-group>
+          <el-button @click="$refs.readingHistory.show()" type="primary" size="mini">阅读历史</el-button>
+          <el-button @click="$refs.mindGraph.show()" type="success" size="mini">思维导图</el-button>
+          <el-button @click="$refs.bookMark.showAdder()" type="danger" size="mini">添加书签</el-button>
+          <el-button @click="$refs.bookMark.showMarkList()" type="warn" size="mini">书签列表</el-button>
+        </el-button-group>
       </div>
     </el-main>
   </el-container>
-  <el-backtop :bottom="40" :right="366" />
+  <el-backtop :bottom="40" :right="326" />
   <reading-history ref="readingHistory" />
   <mind-graph ref="mindGraph" />
   <book-mark ref="bookMark" :doc="doc" />

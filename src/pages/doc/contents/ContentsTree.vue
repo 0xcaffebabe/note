@@ -1,6 +1,6 @@
 <template>
   <li :key="value.link" v-for="value in this.contentsList">
-    <a :href="'#' + value.link" @click.prevent="handleTocItemClick(value.link)">{{ value.name }}</a>
+    <a :href="'#' + value.link" @click.prevent="handleTocItemClick(value.link)" :title="value.name">{{ value.name }}</a>
     <ul v-if="value.chidren.length != 0">
       <contents-tree :contentsList="value.chidren" />
     </ul>

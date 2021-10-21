@@ -9,7 +9,13 @@
         </div>
         <div class="content">
           <div>
-            <el-button-group>
+            <el-switch
+              v-model="showMode"
+              active-text="黑暗模式"
+              inactive-text="正常模式"
+            >
+            </el-switch>
+            <el-button-group style="margin-left:20px">
               <el-button
               icon="el-icon-search"
               class="search"
@@ -54,6 +60,7 @@ export default defineComponent({
   data() {
     return {
       name: "my-book" as string,
+      showMode: false as boolean,
     };
   },
   computed: {

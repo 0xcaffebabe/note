@@ -43,6 +43,17 @@ export default defineComponent({
       const doc = this.$route.params.doc.toString();
       const toc = await DocService.getContentByDocId(doc);
       const minds = this.mindConvert(toc);
+      let mindData : MindItem;
+      if (minds.length > 1) {
+        mindData = {
+          id: 'root',
+          topic: 'root',
+          children: minds,
+          direction: 'left'
+        }
+      }else {
+        mindData = minds[0]
+      }
       const mind = {
         /* 元数据，定义思维导图的名称、作者、版本等信息 */
         meta: {
@@ -53,7 +64,7 @@ export default defineComponent({
         /* 数据格式声明 */
         format: "node_tree",
         /* 数据内容 */
-        data: minds[0],
+        data: mindData,
       };
       const options = {
         container: "jsmind_container",

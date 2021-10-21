@@ -141,8 +141,25 @@ export default defineComponent({
       this.generateTOC();
       this.$nextTick(() => {
         this.registerLinkRouter();
+        console.log(this.$route)
+        this.syncCategoryListScrollBar()
       });
       this.loading = false;
+    },
+    // 移动目录的滚动条 让当前选中菜单项处于可视区域
+    syncCategoryListScrollBar(){
+      const categoryWrapper :HTMLElement = document.querySelector('.category-wrapper')!;
+      const activeMenu :HTMLElement = (document.querySelector('.el-menu-item.is-active') as HTMLElement);
+      const activeMenuPos: number = activeMenu.getBoundingClientRect().y;
+      const amount = activeMenuPos < 350? -20: 20;
+      let timer = setInterval(() => {
+        const activeMenuPos1: number = activeMenu.getBoundingClientRect().y;
+        if ((activeMenuPos1 >= 350 && activeMenuPos1 <= categoryWrapper.offsetHeight) || categoryWrapper.scrollTop + amount < 0) {
+          clearInterval(timer)
+          return
+        }
+        categoryWrapper.scrollTo(0, categoryWrapper.scrollTop + amount)
+      }, 16)
     },
     generateTOC() {
       this.contentsList = docService.getContent(this.contentHtml);

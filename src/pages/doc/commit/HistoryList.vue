@@ -12,7 +12,7 @@
         </p>
       </el-timeline-item>
       <el-timeline-item v-if="file.hasMoreCommit">
-        <p class="history-message"><a href="#">全部历史({{file.totalCommits}}条)</a></p>
+        <p class="history-message"><a target="_blank" :href="config.repositoryUrl + '/tree/master/doc/' + docId2Url(doc)" class="all">全部历史({{file.totalCommits}}条)</a></p>
       </el-timeline-item>
     </el-timeline>
   </div>
@@ -22,16 +22,24 @@
 import DocFileInfo from '@/dto/DocFileInfo'
 import { defineComponent } from 'vue'
 import config from '@/config'
+import DocUtils from '@/util/DocUtils'
 
 export default defineComponent({
   props: {
     file: {
       type: DocFileInfo,
       required: true
+    },
+    doc: {
+      type: String,
+      required: true
     }
   },
   setup() {
     
+  },
+  methods: {
+    docId2Url: DocUtils.docId2Url
   },
   data() {
     return {
@@ -53,6 +61,9 @@ export default defineComponent({
     font-size: 14px;
   }
   a:hover {
+    color: #3E90E8 !important;
+  }
+  .all {
     color: #3E90E8 !important;
   }
 }

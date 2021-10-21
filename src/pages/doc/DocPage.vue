@@ -35,7 +35,7 @@
           <div style="text-align: center">
             <el-divider style="width:72%" />
             <div class="footer-wrapper">
-              <history-list :file="file" />
+              <history-list :file="file" :doc="doc" />
             </div>
           </div>
         </template>

@@ -1,7 +1,7 @@
 <template>
   <el-drawer v-model="showDrawer" size="600px">
     <template #title>
-      <el-input v-model="kw" placeholder="搜索" @input="handleSearch"/>
+      <el-input v-model="kw" placeholder="搜索" @input="handleSearch" ref="input"/>
     </template>
     <div class="search-result" v-loading="showLoading">
       <div v-for="result in resultList" :key="result.url" class="result-item" @click="handleDocClick(result.url)">
@@ -36,7 +36,8 @@ export default defineComponent({
   },
   methods: {
     async show(){
-      this.showDrawer = true
+      this.showDrawer = true;
+      (this.$refs.input as any).focus()
     },
     hide(){this.showDrawer = false},
     handleSearch(){

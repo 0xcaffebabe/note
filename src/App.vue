@@ -2,7 +2,7 @@
   <el-container>
     <el-header>
       <el-affix :offset="0">
-        <Header @search="$refs.search.show()"/>
+        <Header @search="$refs.search.show()" @category-search="$refs.categorySearch.show()"/>
       </el-affix>
     </el-header>
     <el-main>
@@ -33,8 +33,12 @@ export default defineComponent({
   },
   created(){
     document.addEventListener('keydown',(e) => {
-      if (e.ctrlKey && e.key == 'd') {
+      if (e.ctrlKey && e.key == 'q') {
         (this.$refs.categorySearch as any).show()
+        e.preventDefault()
+      }
+      if (e.ctrlKey && e.key == 'k') {
+        (this.$refs.search as any).show()
         e.preventDefault()
       }
     })

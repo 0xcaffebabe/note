@@ -22,10 +22,11 @@
             <el-button
               icon="el-icon-search"
               class="search"
+              @click="$emit('category-search')"
               size="mini"
               round
             >
-            Ctrl + D 目录搜索
+            Ctrl + Q 目录搜索
             </el-button>
             </el-button-group>
           </div>

@@ -8,6 +8,7 @@ import SearchIndexSegment from "../dto/search/SearchIndexSegement";
 import { getMidString } from '../util/StringUtils';
 
 class DocService extends BaseService {
+  private static dom = new JSDOM()
 
   static async getFileInfo(path: string): Promise<DocFileInfo> {
     const callResult = await Promise.all([GitService.getFileCommitList(path), fs.promises.readFile(path)])
@@ -28,8 +29,8 @@ class DocService extends BaseService {
 
   static md2TextSegement(md: string): SearchIndexSegment[] {
     const html = marked(md)
-    const dom = new JSDOM(`<!DOCTYPE html><body>${html}</body></html>`)
-    const elemts = dom.window.document.body.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    DocService.dom.window.document.body.innerHTML = `<!DOCTYPE html><body>${html}</body></html>`
+    const elemts = DocService.dom.window.document.body.querySelectorAll('h1, h2, h3, h4, h5, h6');
     const segments: SearchIndexSegment[] = []
     for(let i = 0;i<elemts.length;i++){
       let text = '';
@@ -46,14 +47,12 @@ class DocService extends BaseService {
         txt: text
       })
     }
-    this.closeDom(dom)
     return segments
   }
 
   static stringify(html: string):string {
-    const dom = new JSDOM(`<!DOCTYPE html><body>${html}</body></html>`);
-    const result =  dom.window.document.body.textContent || ''
-    this.closeDom(dom)
+    DocService.dom.window.document.body.innerHTML = `<!DOCTYPE html><body>${html}</body></html>`
+    const result =  DocService.dom.window.document.body.textContent || ''
     return result
   }
 

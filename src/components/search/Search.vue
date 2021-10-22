@@ -4,9 +4,13 @@
       <el-input v-model="kw" placeholder="搜索" @input="handleSearch" ref="input"/>
     </template>
     <div class="search-result" v-loading="showLoading">
-      <div v-for="result in resultList" :key="result.url" class="result-item" @click="handleDocClick(result.url)">
-        <h3 v-html="result.hilighedUrl"></h3>
-        <p v-for="p in result.hilighedSegement" v-html="p" :key="p"/>
+      <div v-for="result in resultList" :key="result.url">
+        <!-- <span>{{result.createTime}}</span> -->
+        <h1 class="top-heading result-item" v-html="result.hilighedUrl" @click="handleDocClick(result.url)"/>
+        <div v-for="p in result.hilighedSegement" :key="p.id" class="result-item" @click="handleDocClick(result.url, p.id)">
+          <h3 v-html="p.id"></h3>
+          <p v-html="p.txt"></p>
+        </div>
       </div>
     </div>
     <el-empty v-show="showEmpty" :description="kw ? '没有搜到 ' + kw + '相关的结果': '搜索结果将在这里展示'" v-if="resultList.length == 0" />
@@ -50,12 +54,21 @@ export default defineComponent({
         this.showLoading = false
       }, 500)
     },
-    handleDocClick(doc: string){
+    handleDocClick(doc: string, headingId?: string){
       if (!doc.startsWith('./') && !doc.startsWith('/')){
         doc = '/' + doc
       }
       const id = docService.docUrl2Id(doc)
-      this.$router.push('/doc/' + id)
+      if (headingId) {
+        headingId = headingId.replace(/<mark>/gi, '').replace(/<\/mark>/gi, '')
+      }
+      console.log(headingId)
+      this.$router.push({
+        path: '/doc/' + id,
+        query: {
+          headingId
+        }
+      })
     }
   },
 })
@@ -79,12 +92,16 @@ export default defineComponent({
     }
   }
   .result-item {
+    margin: 0;
     cursor: pointer;
-    padding: 16px 24px;
+    padding: 8px 24px;
     border-bottom: 1px solid rgba(211,220,228,1.00);
   }
   .result-item:hover {
     transition: all 0.3s;
     background-color: #E9EDF2;
+  }
+  .top-heading {
+    border-left: 4px solid #409EFF;
   }
 </style>

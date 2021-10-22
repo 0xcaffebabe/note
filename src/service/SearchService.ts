@@ -1,10 +1,13 @@
 import SearchResult from '@/dto/SearchResult';
 import algoliasearch from 'algoliasearch'
 import { SearchResponse } from '@algolia/client-search';
+import SearchIndexSegment from '@/dto/search/SearchIndexSegement';
+
 
 interface DocHits {
   url: string,
-  txt: string
+  createTime: string,
+  segments: SearchIndexSegment[]
 }
 
 const hilighTag = 'mark'
@@ -18,23 +21,14 @@ class SearchService {
       return hits.hits.map(v => {
         return {
           url: v.url,
-          body: v.txt,
           hilighedUrl: v._highlightResult?.url?.value,
-          hilighedBody: v._highlightResult?.txt?.value,
-          hilighedSegement: this.splitHilighedBody(v._highlightResult?.txt?.value)
+          createTime: v.createTime,
+          hilighedSegement: v._highlightResult?.segments?.map(v => {return {id: v?.id?.value, txt: v?.txt?.value}}) // 将algolia的高亮结构体转换成我们自己的SearchIndexSegment
+                            .filter(v => v.id?.indexOf(`<${hilighTag}>`) != -1 || v.txt?.indexOf(`<${hilighTag}>`) != -1) // 过滤掉没有高亮的搜索结果
         } as SearchResult
       })
     }
     return []
-  }
-
-  private static splitHilighedBody(body :string | undefined) :string[] {
-    if (!body || body.indexOf(`<${hilighTag}>`) == -1) {
-      return []
-    }
-    const res = body.split('\n')
-               .filter(v => v.indexOf(`<${hilighTag}>`) != -1)
-    return Array.from(new Set(res))
   }
 }
 

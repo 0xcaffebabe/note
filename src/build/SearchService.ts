@@ -2,11 +2,13 @@ import BaseService from "./BaseService";
 import DocService from "./DocService";
 import fs from 'fs'
 import algoliasearch from 'algoliasearch';
+import SearchIndexSegment from "@/dto/search/SearchIndexSegement";
 
 interface IndexItem {
   url: string
   objectID: string
-  txt: string
+  segments: SearchIndexSegment[]
+  createTime: string
 }
 
 class SearchService extends BaseService {
@@ -44,7 +46,8 @@ class SearchService extends BaseService {
       return {
         url: v.file,
         objectID: v.file,
-        txt: DocService.md2text(v.content)
+        segments: DocService.md2TextSegement(v.content),
+        createTime: new Date().toISOString()
       } as IndexItem
     })
   }

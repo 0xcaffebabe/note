@@ -141,10 +141,20 @@ export default defineComponent({
       this.generateTOC();
       this.$nextTick(() => {
         this.registerLinkRouter();
-        console.log(this.$route)
+        this.syncHeading();
         this.syncCategoryListScrollBar()
       });
       this.loading = false;
+    },
+    syncHeading(){
+      const headingId = this.$route.query.headingId
+      if (headingId) {
+       const elm : HTMLElement = document.querySelector('#' + headingId)!;
+      if (elm) {
+        window.scrollTo(0, elm.offsetTop - 80)
+      } 
+    }
+      
     },
     // 移动目录的滚动条 让当前选中菜单项处于可视区域
     syncCategoryListScrollBar(){

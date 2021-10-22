@@ -65,6 +65,11 @@ class Api implements Cacheable{
     return (await axios.get('/info.json')).data
   }
 
+  @cache
+  public async getCommitHeatmap(): Promise<[string, number][]> {
+    return (await axios.get('/commitHeatmap.json')).data
+  }
+
   public static getInstance(){
     if (!this.instance) {
       this.instance = new Api()

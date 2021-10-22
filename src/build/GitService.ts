@@ -25,6 +25,13 @@ class GitService extends BaseService {
     return commitList[commitList.length - 1]
   }
 
+  public static async findRecentYearsCommits(): Promise<CommitInfo[]> {
+    const resp = await git.log({
+      '--since': "1 years ago"
+    })
+    return resp.all.map(this.convert)
+  }
+
   private static convert(v: DefaultLogFields & ListLogLine) : CommitInfo {
     return {
       date: v.date,

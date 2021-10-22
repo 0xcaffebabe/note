@@ -30,6 +30,20 @@ class StatisticService extends BaseService {
     return info
   }
 
+  public static async generateYearsCommitHeatmap(): Promise<[string, number][]> {
+    const commitList = (await  GitService.findRecentYearsCommits()).reverse();
+    const map = new Map<string, number>()
+    for(let i of commitList) {
+      const date = new Date(i.date).toISOString().split('T')[0]
+      if (map.has(date)) {
+        map.set(date, map.get(date)! + 1)
+      }else {
+        map.set(date, 1)
+      }
+    }
+    return Array.from(map)
+  }
+
   private static async getRepositorySize(): Promise<number> {
     const statList = await Promise.all(this.listAllFile('./').map(v => fs.promises.stat(v)))
     return statList

@@ -18,6 +18,7 @@ import {
 } from "echarts/components";
 import { HeatmapChart, HeatmapSeriesOption } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
+import api from "@/api";
 
 echarts.use([
   TitleComponent,
@@ -49,6 +50,25 @@ function getVirtulData(year: string, maxValue: any) {
     ]);
   }
   return data;
+}
+
+function fillTimeRange(data: [string, number][]): [string, number][] {
+  console.log(data)
+  const map = new Map<string, number>(data)
+  console.log(map)
+  const range = [data[0][0],data[data.length - 1][0]]
+  const start = +echarts.number.parseDate(range[0]);
+  const end = +echarts.number.parseDate(range[1]);
+  const dayTime = 3600 * 24 * 1000;
+  const results: [string, number][] = []
+  for (let time = start; time < end; time += dayTime) {
+    const date = echarts.format.formatTime("yyyy-MM-dd", time)
+    results.push([
+      date,
+      map.get(date) || 0
+    ]);
+  }
+  return results
 }
 
 /**
@@ -83,12 +103,18 @@ function generatePieces(maxValue: number, colorBox: string[]) {
 
 export default defineComponent({
   setup() {},
-  mounted() {
-    var chartDom = document.getElementById("heatmap")!;
-    var myChart = echarts.init(chartDom);
-    var option: EChartsOption;
-    var colorBox = ["#EBEDF0", "#98E9A8", "#40C403", "#30A14E", "#216E39", "#1A572D"];
-    const maxValue = Math.ceil(Math.random() * 100)
+  methods: {
+  },
+  async mounted() {
+    const heatmapData = fillTimeRange(await api.getCommitHeatmap());
+    const chartDom = document.getElementById("heatmap")!;
+    const myChart = echarts.init(chartDom);
+    let option: EChartsOption;
+    const colorBox = ["#EBEDF0", "#98E9A8", "#40C403", "#30A14E", "#216E39", "#1A572D"];
+    const maxValue = heatmapData.map(v => v[1]).sort().reverse()[0]
+    const range = [heatmapData[0][0],heatmapData[heatmapData.length - 1][0]]
+    console.log(range, maxValue)
+    console.log(heatmapData)
     option = {
       title: {
         top: 30,
@@ -115,7 +141,7 @@ export default defineComponent({
         left: 30,
         right: 30,
         cellSize: ["auto", 20],
-        range: ["2020-02","2021-02"],
+        range,
         itemStyle: {
           borderWidth: 0.5,
         },
@@ -126,7 +152,7 @@ export default defineComponent({
       series: {
         type: "heatmap",
         coordinateSystem: "calendar",
-        data: getVirtulData("2020", maxValue),
+        data: heatmapData,
       },
     };
 

@@ -12,6 +12,7 @@ import StatisticService from '../build/StatisticService'
 
 let wordcloud: [string, number][] = []
 let statisticInfo : StatisticInfo
+let commitHeatmap : [string, number][] = []
 interface DocFileInfo {
   content: string,
   commitList: CommitInfo[]
@@ -80,6 +81,20 @@ export default function DocServer(){
           }
           res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
           res.write(JSON.stringify(statisticInfo))
+          res.end()
+        }else{
+          next()
+        }
+      })
+      // 提交记录统计信息
+      server.middlewares.use(async (req, res, next) => {
+        if (req.originalUrl && req.originalUrl == '/commitHeatmap.json') {
+          if (commitHeatmap.length == 0) {
+            console.log('提交日历图数据为空 生成')
+            commitHeatmap = await StatisticService.generateYearsCommitHeatmap()
+          }
+          res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
+          res.write(JSON.stringify(commitHeatmap))
           res.end()
         }else{
           next()

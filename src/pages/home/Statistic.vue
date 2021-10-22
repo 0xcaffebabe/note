@@ -75,6 +75,7 @@
         </el-progress>
       </el-descriptions-item>
     </el-descriptions>
+    <heat-map />
   </div>
 </template>
 
@@ -83,6 +84,7 @@ import { Coin, Check, Document, Notebook, PictureFilled, Aim, Clock } from "@ele
 import { defineComponent } from "vue";
 import api from "@/api";
 import { CodeFrequencyItem, StatisticInfo } from "@/dto/StatisticInfo";
+import HeatMap from './statistic/HeatMap.vue'
 
 export default defineComponent({
   components: {
@@ -92,7 +94,8 @@ export default defineComponent({
     Notebook,
     PictureFilled,
     Aim,
-    Clock
+    Clock,
+    HeatMap
   },
   setup() {},
   data() {

@@ -128,7 +128,7 @@ export default defineComponent({
       }
       return chainList.reverse();
     },
-    async showDoc(doc: string) {
+    async showDoc(doc: string, headingId?: string) {
       // 将滚动条设置为上一次的状态
       document.body.scrollTo(0, docService.getDocReadRecord(doc))
       this.loading = true;
@@ -141,13 +141,12 @@ export default defineComponent({
       this.generateTOC();
       this.$nextTick(() => {
         this.registerLinkRouter();
-        this.syncHeading();
+        this.syncHeading(headingId);
         this.syncCategoryListScrollBar()
       });
       this.loading = false;
     },
-    syncHeading(){
-      const headingId = this.$route.query.headingId
+    syncHeading(headingId?: string){
       if (headingId) {
        const elm : HTMLElement = document.querySelector('#' + headingId)!;
       if (elm) {
@@ -204,13 +203,13 @@ export default defineComponent({
   },
   beforeRouteUpdate(to, from) {
     const doc = to.params.doc.toString();
-    this.showDoc(doc);
+    this.showDoc(doc, to.query.headingId?.toString());
     const categoryListRef: any = this.$refs.categoryList;
     categoryListRef.updateCurrentCategory(doc);
   },
   async created() {
     this.registerScrollListener();
-    this.showDoc(this.$route.params.doc.toString());
+    this.showDoc(this.$route.params.doc.toString(), this.$route.query.headingId?.toString());
     this.cateList = await categoryService.getCategoryList();
   },
   unmounted(){

@@ -62,7 +62,6 @@ export default defineComponent({
       if (headingId) {
         headingId = headingId.replace(/<mark>/gi, '').replace(/<\/mark>/gi, '')
       }
-      console.log(headingId)
       this.$router.push({
         path: '/doc/' + id,
         query: {

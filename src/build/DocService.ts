@@ -46,15 +46,20 @@ class DocService extends BaseService {
         txt: text
       })
     }
-    dom.window.close()
+    this.closeDom(dom)
     return segments
   }
 
   static stringify(html: string):string {
     const dom = new JSDOM(`<!DOCTYPE html><body>${html}</body></html>`);
     const result =  dom.window.document.body.textContent || ''
-    dom.window.close()
+    this.closeDom(dom)
     return result
+  }
+
+  static closeDom(dom :JSDOM) {
+    dom.window.document.body.innerHTML = '<html></html>'
+    dom.window.close()
   }
 
   static cleanText(text: string):string {

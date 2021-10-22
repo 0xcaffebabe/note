@@ -2,7 +2,8 @@ import SearchResult from '@/dto/SearchResult';
 import algoliasearch from 'algoliasearch'
 import { SearchResponse } from '@algolia/client-search';
 import SearchIndexSegment from '@/dto/search/SearchIndexSegement';
-
+import Cacheable from '@/decorator/Cacheable';
+import Cache from '@/decorator/Cache'
 
 interface DocHits {
   url: string,
@@ -11,9 +12,26 @@ interface DocHits {
 }
 
 const hilighTag = 'mark'
+const cache = Cache()
 
-class SearchService {
-  static async search(kw: string): Promise<SearchResult[]> {
+class SearchService implements Cacheable{
+  private static instance: SearchService;
+
+  private constructor(){}
+
+  public static getInstance(){
+    if(!this.instance) {
+      this.instance = new SearchService();
+    }
+    return this.instance;
+  }
+
+  name(): string {
+    return 'search-service'
+  }
+
+  @cache
+  public async search(kw: string): Promise<SearchResult[]> {
     const client = algoliasearch('K9I7PAT3CY', '8f3ec5043331dedbccce916154fc0162');
     const index = client.initIndex('note');
     const hits : SearchResponse<DocHits> = await index.search(kw, { hitsPerPage: 200, highlightPreTag: `<${hilighTag}>`, highlightPostTag: `</${hilighTag}>` });
@@ -32,4 +50,4 @@ class SearchService {
   }
 }
 
-export default SearchService
+export default SearchService.getInstance()

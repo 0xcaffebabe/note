@@ -76,7 +76,7 @@
       <el-descriptions-item :span="12">
         <template #label>
           <el-icon>
-            <aim />
+            <calendar />
           </el-icon>
           提交分布
         </template>
@@ -87,11 +87,11 @@
 </template>
 
 <script lang="ts">
-import { Coin, Check, Document, Notebook, PictureFilled, Aim, Clock } from "@element-plus/icons";
+import { Coin, Check, Document, Notebook, PictureFilled, Aim, Clock, Calendar } from "@element-plus/icons";
 import { defineComponent } from "vue";
 import api from "@/api";
 import { CodeFrequencyItem, StatisticInfo } from "@/dto/StatisticInfo";
-import HeatMap from './statistic/HeatMap.vue'
+import HeatMap from './HeatMap.vue'
 
 export default defineComponent({
   components: {
@@ -102,6 +102,7 @@ export default defineComponent({
     PictureFilled,
     Aim,
     Clock,
+    Calendar,
     HeatMap
   },
   setup() {},

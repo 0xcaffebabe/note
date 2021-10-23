@@ -49,6 +49,7 @@
         <el-button-group>
           <el-button @click="$refs.readingHistory.show()" type="primary" size="mini">阅读历史</el-button>
           <el-button @click="$refs.mindGraph.show()" type="success" size="mini">思维导图</el-button>
+          <el-button @click="$refs.knowledgeNetwork.show()" type="warning" size="mini">知识网络</el-button>
           <el-button @click="$refs.bookMark.showAdder()" type="danger" size="mini">添加书签</el-button>
           <el-button @click="$refs.bookMark.showMarkList()" type="warn" size="mini">书签列表</el-button>
         </el-button-group>
@@ -59,10 +60,11 @@
   <reading-history ref="readingHistory" />
   <mind-graph ref="mindGraph" />
   <book-mark ref="bookMark" :doc="doc" />
+  <knowledge-network ref="knowledgeNetwork"/>
 </template>
 
 <script lang="ts">
-import { defineComponent, CreateComponentPublicInstance } from "vue";
+import { defineComponent } from "vue";
 import Category from "@/dto/Category";
 import Content from "@/dto/Content";
 import categoryService from "@/service/CategoryService";
@@ -73,6 +75,7 @@ import HistoryList from "./commit/HistoryList.vue";
 import ReadingHistory from "./history/ReadingHistory.vue"
 import MindGraph from './mind/MindGraph.vue'
 import BookMark from './book-mark/BookMark.vue'
+import KnowledgeNetwork from "./knowledge/KnowledgeNetwork.vue";
 import api from "@/api";
 import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
@@ -90,6 +93,7 @@ export default defineComponent({
     ReadingHistory,
     MindGraph,
     BookMark,
+    KnowledgeNetwork,
     ArrowLeftBold,
     ArrowRightBold
   },

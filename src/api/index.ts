@@ -4,6 +4,7 @@ import Cache from '@/decorator/Cache'
 import Cacheable from '@/decorator/Cacheable'
 import { StatisticInfo } from '@/dto/StatisticInfo'
 import DocUtils from '@/util/DocUtils'
+import KnowledgeNode from '@/dto/KnowledgeNode'
 
 const cache = Cache()
 
@@ -68,6 +69,18 @@ class Api implements Cacheable{
   @cache
   public async getCommitHeatmap(): Promise<[string, number][]> {
     return (await axios.get('/commitHeatmap.json')).data
+  }
+
+
+  /**
+   *
+   * 获取知识网络数据
+   * @return {*}  {Promise<KnowledgeNode[]>}
+   * @memberof Api
+   */
+  @cache
+  public async getKnowledgeNetwork(): Promise<KnowledgeNode[]> {
+    return (await axios.get('/knowledgeNetwork.json')).data
   }
 
   public static getInstance(){

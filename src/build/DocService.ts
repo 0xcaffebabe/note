@@ -6,6 +6,8 @@ import fs from 'fs'
 import marked from "marked";
 import SearchIndexSegment from "../dto/search/SearchIndexSegement";
 import { getMidString } from '../util/StringUtils';
+import KnowledgeNode from "../dto/KnowledgeNode";
+import DocUtils from "../util/DocUtils";
 
 class DocService extends BaseService {
   private static dom = new JSDOM()
@@ -25,6 +27,34 @@ class DocService extends BaseService {
     const dom =  new JSDOM(`<!DOCTYPE html><body>${html}</body></html>`)
     const text = dom.window.document.body.textContent || ''
     return this.cleanText(text)
+  }
+
+  static async getKnowledgeNode(path: string): Promise<KnowledgeNode> {
+    return fs.promises.readFile(path).then(buffer => {
+      const md = buffer.toString();
+      const html = marked(md);
+      DocService.dom.window.document.body.innerHTML = `<!DOCTYPE html><body>${html}</body></html>`;
+      const linkElemetns = DocService.dom.window.document.body.querySelectorAll('a');
+      const links: string[] = []
+      for(let i = 0;i<linkElemetns.length;i++){
+        const a = linkElemetns[i]
+        const uri = a.getAttribute('href')
+        if (uri?.endsWith('md')) {
+          links.push(DocUtils.docUrl2Id(uri))
+        }
+      }
+      return {id: DocUtils.docUrl2Id(path), links}
+    })
+  }
+
+  static async generateKnowledgeNetwork(): Promise<KnowledgeNode[]>{
+    const ignoreDoc = ['README', 'SUMMARY'];
+    const fileList = BaseService.listFilesBySuffix('md', 'doc')
+    const taskList :Promise<KnowledgeNode>[] = []
+    for(let file of fileList) {
+      taskList.push(DocService.getKnowledgeNode(file))
+    }
+    return (await Promise.all(taskList)).filter(v => ignoreDoc.indexOf(v.id) == -1).filter(v => v.links?.length != 0)
   }
 
   static md2TextSegement(md: string): SearchIndexSegment[] {

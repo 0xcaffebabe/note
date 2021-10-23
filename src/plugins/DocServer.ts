@@ -9,10 +9,12 @@ import CommitInfo from '@/dto/CommitInfo'
 import DocService from '../build/DocService'
 import { StatisticInfo } from '@/dto/StatisticInfo'
 import StatisticService from '../build/StatisticService'
+import KnowledgeNode from '@/dto/KnowledgeNode'
 
 let wordcloud: [string, number][] = []
 let statisticInfo : StatisticInfo
 let commitHeatmap : [string, number][] = []
+let knowledgeNetwork: KnowledgeNode[] = []
 interface DocFileInfo {
   content: string,
   commitList: CommitInfo[]
@@ -95,6 +97,20 @@ export default function DocServer(){
           }
           res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
           res.write(JSON.stringify(commitHeatmap))
+          res.end()
+        }else{
+          next()
+        }
+      })
+      // 知识网络
+      server.middlewares.use(async (req, res, next) => {
+        if (req.originalUrl && req.originalUrl == '/knowledgeNetwork.json') {
+          if (knowledgeNetwork.length == 0) {
+            console.log('知识网络为空 生成')
+            knowledgeNetwork = await DocService.generateKnowledgeNetwork()
+          }
+          res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
+          res.write(JSON.stringify(knowledgeNetwork))
           res.end()
         }else{
           next()

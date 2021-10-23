@@ -5,6 +5,7 @@ import DocServer from './src/plugins/DocServer'
 import DocBuildMove from './src/plugins/DocBuildMove'
 import WordCloudGenrator from './src/plugins/WordCloudGenerator'
 import StatisticInfoGenerator from './src/plugins/StatisticInfoGenerator'
+import KnowledgeNetworkGenerator from './src/plugins/KnowledgeNetworkGenerator'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -33,6 +34,10 @@ export default defineConfig({
     },
     {
       ...StatisticInfoGenerator(),
+      apply: 'build'
+    },
+    {
+      ...KnowledgeNetworkGenerator(),
       apply: 'build'
     }
   ],

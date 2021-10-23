@@ -14,7 +14,7 @@
 import { defineComponent } from 'vue'
 import api from '../../api'
 import docService from '@/service/DocService'
-import Statistic from './Statistic.vue'
+import Statistic from './statistic/Statistic.vue'
 
 export default defineComponent({
   components: {

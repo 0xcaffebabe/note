@@ -4,7 +4,6 @@
       class="margin-top"
       title="统计"
       :column="12"
-      :size="size"
       border
     >
       <el-descriptions-item>
@@ -74,8 +73,16 @@
           {{item.lang}} {{item.frequency}}%
         </el-progress>
       </el-descriptions-item>
+      <el-descriptions-item :span="12">
+        <template #label>
+          <el-icon>
+            <aim />
+          </el-icon>
+          提交分布
+        </template>
+        <heat-map />
+      </el-descriptions-item>
     </el-descriptions>
-    <heat-map />
   </div>
 </template>
 
@@ -132,6 +139,7 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .statistic-wrapper {
+  height: 100%;
   padding: 0 40px;
 }
 .percentage-value {

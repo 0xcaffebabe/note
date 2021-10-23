@@ -37,21 +37,6 @@ type EChartsOption = echarts.ComposeOption<
   | HeatmapSeriesOption
 >;
 
-function getVirtulData(year: string, maxValue: any) {
-  year = year || "2017";
-  var date = +echarts.number.parseDate(year + "-01-01");
-  var end = +echarts.number.parseDate(+year + 1 + "-01-01");
-  var dayTime = 3600 * 24 * 1000;
-  var data: [string, number][] = [];
-  for (var time = date; time < end; time += dayTime) {
-    data.push([
-      echarts.format.formatTime("yyyy-MM-dd", time),
-      Math.floor(Math.random() * maxValue),
-    ]);
-  }
-  return data;
-}
-
 function fillTimeRange(data: [string, number][]): [string, number][] {
   console.log(data)
   const map = new Map<string, number>(data)
@@ -78,7 +63,7 @@ function fillTimeRange(data: [string, number][]): [string, number][] {
  */
 function generatePieces(maxValue: number, colorBox: string[]) {
   const pieces = [];
-  const quotient = Math.floor(maxValue / 5);
+  const quotient = Math.ceil(maxValue / 4);
   let temp :any= {};
   temp.lt = 1;
   temp.label = "0";
@@ -110,7 +95,7 @@ export default defineComponent({
     const chartDom = document.getElementById("heatmap")!;
     const myChart = echarts.init(chartDom);
     let option: EChartsOption;
-    const colorBox = ["#EBEDF0", "#98E9A8", "#40C403", "#30A14E", "#216E39", "#1A572D"];
+    const colorBox = ["white", "#98E9A8", "#40C403", "#30A14E", "#216E39", "#1A572D"];
     const maxValue = heatmapData.map(v => v[1]).sort().reverse()[0]
     const range = [heatmapData[0][0],heatmapData[heatmapData.length - 1][0]]
     console.log(range, maxValue)
@@ -163,6 +148,8 @@ export default defineComponent({
 
 <style lang="less" scoped>
 #heatmap {
-  height: 600px;
+  height: 280px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 </style>

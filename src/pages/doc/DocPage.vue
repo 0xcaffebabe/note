@@ -60,7 +60,7 @@
   <reading-history ref="readingHistory" />
   <mind-graph ref="mindGraph" />
   <book-mark ref="bookMark" :doc="doc" />
-  <knowledge-network ref="knowledgeNetwork"/>
+  <knowledge-network ref="knowledgeNetwork" :doc="doc"/>
 </template>
 
 <script lang="ts">
@@ -147,7 +147,7 @@ export default defineComponent({
       this.$nextTick(() => {
         this.registerLinkRouter();
         this.syncHeading(headingId);
-        this.syncCategoryListScrollBar()
+        this.syncCategoryListScrollBar();
       });
       this.loading = false;
     },

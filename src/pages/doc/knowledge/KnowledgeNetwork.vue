@@ -25,6 +25,12 @@ type EChartsOption = echarts.ComposeOption<
 >;
 
 export default defineComponent({
+  props: {
+    doc: {
+      type: String,
+      required: true
+    }
+  },
   setup() {
 
   },
@@ -37,16 +43,14 @@ export default defineComponent({
     },
     async init() {
       const knowledgeNetwork = await api.getKnowledgeNetwork()
-
       let nodes = Array.from(new Set(knowledgeNetwork.flatMap(v =>  [ v.id, ...v.links || []])))
                         .map(v => {
                           return {
                               name: v,
-                              category: 0,
+                              category: v == this.doc ? 1: 0,
                               draggable: true
                             }
                         })
-      console.log(nodes)
       const nodeMap = new Map(nodes.map((v, i) =>[v.name, i]))
       const links :any[] = []
       for(let i of knowledgeNetwork) {
@@ -60,11 +64,15 @@ export default defineComponent({
           }
         }
       }
-      console.log(links)
-
-
-      const chartDom = document.getElementById('knowledgeNetwork')!;
-      const myChart = echarts.init(chartDom);
+      if (!this.chart) {
+        const chartDom = document.getElementById('knowledgeNetwork')!;
+        this.chart = echarts.init(chartDom);
+        this.chart.on('click',(e) => {
+          const doc = (e.data as any).name;
+          // 路由跳转后重新初始化更新图表
+          this.$router.push('/doc/' + doc).then(data => this.init())
+        })
+      }
       const option: EChartsOption = {
         title: {
           text: ''
@@ -89,7 +97,7 @@ export default defineComponent({
           {
             type: 'graph',
             layout: 'force',
-            symbolSize: 20,
+            symbolSize: 45,
             focusNodeAdjacency: true,
             roam: true,
             categories: [
@@ -99,6 +107,12 @@ export default defineComponent({
                   color: '#409EFF'
 
                 }
+              },
+              {
+                name: '主要',
+                itemStyle: {
+                  color: "#F56C6C"
+                }
               }
             ],
             label: {
@@ -106,11 +120,18 @@ export default defineComponent({
               position: 'top',
               fontSize: 14,
               color: "#666",
-              textBorderColor: "#000"
+              textBorderColor: "#000",
+              // 将文档id进行处理 提取为文档最后一个名称
+              formatter(params): string {
+                const name:string = (params.data as any).name
+                const arr = name.split('-')
+                return arr[arr.length - 1]
+              }
 
             },
             force: {
-              repulsion: 100
+              repulsion: 500,
+              edgeLength: 80
             },
             edgeSymbolSize: [4, 50],
             edgeLabel: {
@@ -130,12 +151,14 @@ export default defineComponent({
         ]
       };
 
-      option && myChart.setOption(option);
+      this.chart.setOption(option);
+      
     }
   },
   data() {
     return {
-      showDrawer: false as boolean
+      showDrawer: false as boolean,
+      chart: null as echarts.ECharts | null
     }
   },
   mounted() {

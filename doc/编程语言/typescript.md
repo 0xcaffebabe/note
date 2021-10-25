@@ -74,6 +74,20 @@ const {pname,age} = test()
 
 - 箭头函数
 
+### 安全链式调用
+
+```ts
+return person?.name?.firstName; // 等价于 person && person.name && person.name.firstName
+```
+
+```ts
+person.name!; // 强制name属性不为空
+```
+
+```ts
+name? :string; // 可选属性
+```
+
 ## for
 
 - for of

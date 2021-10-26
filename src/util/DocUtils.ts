@@ -20,6 +20,22 @@ function docUrl2Id(url :string): string {
 
 
 /**
+ * 解析文档url 得到文档id与锚点id
+ *
+ * @param {string} url
+ * @return {*}  {{id: string, headingId: string}}
+ */
+function resloveDocUrl(url: string): {id: string, headingId?: string} {
+  if (url.indexOf('#') == -1) {
+    return {id: docUrl2Id(url)}
+  }
+  const headingId = url.split("#")[1];
+  const id = docUrl2Id(url.split("#")[0]);
+  return { id, headingId }
+}
+
+
+/**
  * 将x-x形式的文档id转为/xx/xx.md形式的链接
  *
  * @export
@@ -34,5 +50,5 @@ function docId2Url(id: string): string {
 }
 
 export default {
-  docId2Url, docUrl2Id
+  docId2Url, docUrl2Id, resloveDocUrl
 }

@@ -4,7 +4,7 @@ import Cache from '@/decorator/Cache'
 import Cacheable from '@/decorator/Cacheable'
 import { StatisticInfo } from '@/dto/StatisticInfo'
 import DocUtils from '@/util/DocUtils'
-import KnowledgeNode from '@/dto/KnowledgeNode'
+import {KnowledgeNode} from '@/dto/KnowledgeNode'
 
 const cache = Cache()
 

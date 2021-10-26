@@ -6,7 +6,7 @@ import fs from 'fs'
 import marked from "marked";
 import SearchIndexSegment from "../dto/search/SearchIndexSegement";
 import { getMidString } from '../util/StringUtils';
-import KnowledgeNode from "../dto/KnowledgeNode";
+import {KnowledgeNode, KnowledgeLinkNode} from "../dto/KnowledgeNode";
 import DocUtils from "../util/DocUtils";
 
 class DocService extends BaseService {
@@ -29,18 +29,27 @@ class DocService extends BaseService {
     return this.cleanText(text)
   }
 
+
+  /**
+   *
+   * 生成某一md文件的知识网络节点
+   * @static
+   * @param {string} path md文件
+   * @return {*}  {Promise<KnowledgeNode>}
+   * @memberof DocService
+   */
   static async getKnowledgeNode(path: string): Promise<KnowledgeNode> {
     return fs.promises.readFile(path).then(buffer => {
       const md = buffer.toString();
       const html = marked(md);
       DocService.dom.window.document.body.innerHTML = `<!DOCTYPE html><body>${html}</body></html>`;
       const linkElemetns = DocService.dom.window.document.body.querySelectorAll('a');
-      const links: string[] = []
+      const links: KnowledgeLinkNode[] = []
       for(let i = 0;i<linkElemetns.length;i++){
         const a = linkElemetns[i]
         const uri = a.getAttribute('href')
-        if (uri?.endsWith('md')) {
-          links.push(DocUtils.docUrl2Id(uri))
+        if (uri?.indexOf('md') != -1) {
+          links.push(DocUtils.resloveDocUrl(uri!))
         }
       }
       return {id: DocUtils.docUrl2Id(path), links}

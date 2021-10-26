@@ -17,6 +17,7 @@ import {
 import { GraphChart, GraphSeriesOption } from 'echarts/charts';
 import { CanvasRenderer } from 'echarts/renderers';
 import api from '@/api';
+import { KnowledgeNode } from '@/dto/KnowledgeNode';
 
 echarts.use([TitleComponent, TooltipComponent, GraphChart, CanvasRenderer, LegendComponent]);
 
@@ -42,9 +43,9 @@ export default defineComponent({
       })
     },
     async init() {
-      const knowledgeNetwork = await api.getKnowledgeNetwork()
+      const knowledgeNetwork: KnowledgeNode[] = await api.getKnowledgeNetwork()
       // 提取所有节点
-      let nodes = Array.from(new Set(knowledgeNetwork.flatMap(v =>  [ v.id, ...v.links || []])))
+      let nodes = Array.from(new Set(knowledgeNetwork.flatMap(v =>  [ v.id, ...v.links?.map(ln => ln.id) || []])))
                         .map(v => {
                           return {
                               name: v,
@@ -60,9 +61,9 @@ export default defineComponent({
         if (i.links) {
           for(let j of i.links) {
             links.push({
-              target: nodeMap.get(i.id),
-              source: nodeMap.get(j),
-              value: ''
+              source: nodeMap.get(i.id),
+              target: nodeMap.get(j.id),
+              value: decodeURI(j.headingId ? '#' + j.headingId: '-')
             })
           }
         }
@@ -139,7 +140,7 @@ export default defineComponent({
             },
             edgeSymbolSize: [4, 50],
             edgeLabel: {
-              show: true,
+              show: false,
               fontSize: 10,
               formatter: '{c}'
             },

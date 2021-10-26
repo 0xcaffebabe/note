@@ -10,7 +10,7 @@ const stopWords = ['的', '是', '在', '一个', '和',
 
 class WordCloudService extends BaseService{
   
-  static async calcWordFrequency(){
+  static async calcWordFrequency(): Promise<[string, number][]>{
     const fileList = this.listAllMdFile()
     const tasks = []
     for(let file of fileList) {
@@ -30,9 +30,12 @@ class WordCloudService extends BaseService{
         map.set(i, 1)
       }
     }
-    return Array.from(map)
+    const list = Array.from(map)
                         .sort(function(a,b){return a[1] - b[1]})
-                        .reverse()
+                        .reverse();
+    // 只取前100个词
+    list.splice(100)
+    return list                        
   }
 
   static isStopWord(word: string): boolean{

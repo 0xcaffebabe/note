@@ -69,9 +69,7 @@
       </el-icon>
           代码统计
         </template>
-        <el-progress :text-inside="true" :stroke-width="26" :percentage="item.frequency" v-for="item in calcCodeFrequency()" :key="item.lang">
-          {{item.lang}} {{item.frequency}}%
-        </el-progress>
+        <code-frequency :codeFrequency="codeFrequency"/>
       </el-descriptions-item>
       <el-descriptions-item :span="12">
         <template #label>
@@ -81,6 +79,15 @@
           提交分布
         </template>
         <heat-map />
+      </el-descriptions-item>
+      <el-descriptions-item :span="12">
+        <template #label>
+          <el-icon>
+            <calendar />
+          </el-icon>
+          词云统计
+        </template>
+        <word-cloud />
       </el-descriptions-item>
     </el-descriptions>
   </div>
@@ -92,6 +99,8 @@ import { defineComponent } from "vue";
 import api from "@/api";
 import { CodeFrequencyItem, StatisticInfo } from "@/dto/StatisticInfo";
 import HeatMap from './HeatMap.vue'
+import WordCloud from './WordCloud.vue'
+import CodeFrequency from './CodeFrequency.vue'
 
 export default defineComponent({
   components: {
@@ -103,12 +112,15 @@ export default defineComponent({
     Aim,
     Clock,
     Calendar,
-    HeatMap
+    HeatMap,
+    WordCloud,
+    CodeFrequency
   },
   setup() {},
   data() {
     return {
       info: new StatisticInfo() as StatisticInfo,
+      codeFrequency: [] as CodeFrequencyItem[]
     };
   },
   methods: {
@@ -134,6 +146,7 @@ export default defineComponent({
   },
   async created() {
     this.info = await api.getStatisticInfo();
+    this.codeFrequency = this.calcCodeFrequency();
   },
 });
 </script>
@@ -143,21 +156,7 @@ export default defineComponent({
   height: 100%;
   padding: 0 40px;
 }
-.percentage-value {
-  display: block;
-  margin-top: 10px;
-  font-size: 28px;
-}
-
-.percentage-label {
-  display: block;
-  margin-top: 10px;
-  font-size: 12px;
-}
 :deep(.el-icon) {
   vertical-align: middle;
-}
-.el-progress {
-  padding-bottom: 10px;
 }
 </style>

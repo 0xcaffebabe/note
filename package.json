@@ -13,6 +13,7 @@
     "algoliasearch": "^4.10.5",
     "axios": "^0.22.0",
     "echarts": "^5.2.1",
+    "echarts-wordcloud": "^2.0.0",
     "element-plus": "^1.1.0-beta.19",
     "jsdom": "^18.0.0",
     "jsmind": "^0.4.6",
@@ -28,8 +29,7 @@
     "vue": "^3.2.19",
     "vue-class-component": "^7.2.6",
     "vue-router": "^4.0.11",
-    "vuex": "^4.0.2",
-    "wordcloud": "^1.2.2"
+    "vuex": "^4.0.2"
   },
   "devDependencies": {
     "@types/jsdom": "^16.2.13",

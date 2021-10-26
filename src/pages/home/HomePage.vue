@@ -7,7 +7,9 @@
       <el-button type="success" round size="medium" @click="handleContinueRead">继续阅读</el-button>
     </div>
   </div>
+  <keep-alive>
     <statistic />
+  </keep-alive>
 </template>
 
 <script lang="ts">

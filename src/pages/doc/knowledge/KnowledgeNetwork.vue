@@ -43,6 +43,7 @@ export default defineComponent({
     },
     async init() {
       const knowledgeNetwork = await api.getKnowledgeNetwork()
+      // 提取所有节点
       let nodes = Array.from(new Set(knowledgeNetwork.flatMap(v =>  [ v.id, ...v.links || []])))
                         .map(v => {
                           return {
@@ -51,7 +52,9 @@ export default defineComponent({
                               draggable: true
                             }
                         })
+      // 节点下标映射<节点, index>
       const nodeMap = new Map(nodes.map((v, i) =>[v.name, i]))
+      // 节点关系处理
       const links :any[] = []
       for(let i of knowledgeNetwork) {
         if (i.links) {
@@ -64,6 +67,7 @@ export default defineComponent({
           }
         }
       }
+      // 图表创建、参数设置
       if (!this.chart) {
         const chartDom = document.getElementById('knowledgeNetwork')!;
         this.chart = echarts.init(chartDom);
@@ -138,7 +142,6 @@ export default defineComponent({
               show: true,
               fontSize: 10,
               formatter: '{c}'
-
             },
             data: nodes,
             links,

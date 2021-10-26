@@ -56,7 +56,6 @@ export default defineComponent({
         this.showLoading = false
         // 动画结束
         // 重置结果详情滚动条到最顶端
-        console.log(document.querySelector('.search .el-drawer__body'))
         document.querySelector('.search .el-drawer__body')?.scrollTo(0,0)
       }, 500)
     },

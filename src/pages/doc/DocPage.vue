@@ -60,7 +60,9 @@
   <reading-history ref="readingHistory" />
   <mind-graph ref="mindGraph" />
   <book-mark ref="bookMark" :doc="doc" />
-  <knowledge-network ref="knowledgeNetwork" :doc="doc"/>
+  <keep-alive>
+    <knowledge-network ref="knowledgeNetwork" :doc="doc"/>
+  </keep-alive>
 </template>
 
 <script lang="ts">

@@ -1,5 +1,5 @@
 <template>
-  <el-drawer v-model="showDrawer" size="600px">
+  <el-drawer v-model="showDrawer" size="600px" custom-class="search">
     <template #title>
       <el-input v-model="kw" placeholder="搜索" @input="handleSearch" ref="input"/>
     </template>
@@ -48,10 +48,16 @@ export default defineComponent({
       this.showEmpty = false
       clearTimeout(searchTimer)
       searchTimer = setTimeout(async () => {
+        // 动画开始
         this.showLoading = true
+        // 拉取数据
         this.resultList = await searchService.search(this.kw)
         this.showEmpty = true
         this.showLoading = false
+        // 动画结束
+        // 重置结果详情滚动条到最顶端
+        console.log(document.querySelector('.search .el-drawer__body'))
+        document.querySelector('.search .el-drawer__body')?.scrollTo(0,0)
       }, 500)
     },
     handleDocClick(doc: string, headingId?: string){

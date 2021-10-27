@@ -6,7 +6,8 @@ import { ComponentCustomProperties } from 'vue'
 declare module '@vue/runtime-core' {
   // declare your own store states
   interface State {
-    currentCategory: Category
+    currentCategory: Category,
+    currentSearchKw: string
   }
 
   // provide typings for `this.$store`

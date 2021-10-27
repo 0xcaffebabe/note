@@ -38,6 +38,18 @@ export default defineComponent({
       resultList: [] as SearchResult[]
     }
   },
+  computed: {
+    outerKw(){
+      return this.$store.state.currentSearchKw
+    }
+  },
+  watch: {
+    outerKw(val: string){
+      this.showDrawer = true;
+      this.kw = val;
+      this.handleSearch()
+    }
+  },
   methods: {
     async show(){
       this.showDrawer = true;

@@ -25,6 +25,11 @@ echarts.use([
 
 export default defineComponent({
   setup() {},
+  data() {
+    return  {
+      chart: null as echarts.ECharts | null
+    }
+  },
   async created() {
     let list = await api.getWordCloud();
     const chart = echarts.init(document.getElementById("wordcloud")!);
@@ -67,6 +72,10 @@ export default defineComponent({
     };
 
     chart.setOption(option);
+    chart.on('click', params => {
+      const kw = (params.data as any).name
+      this.$store.commit('setSearchKw', kw)
+    })
   },
 });
 </script>

@@ -69,7 +69,7 @@
       </el-icon>
           代码统计
         </template>
-        <code-frequency :codeFrequency="codeFrequency"/>
+        <code-frequency :codeFrequency="info.codeFrequency"/>
       </el-descriptions-item>
       <el-descriptions-item :span="12">
         <template #label>

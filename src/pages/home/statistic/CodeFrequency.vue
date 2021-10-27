@@ -1,29 +1,106 @@
 <template>
   <div class="frequency-wrapper">
-    <el-progress
-      :text-inside="true"
-      :stroke-width="26"
-      :percentage="item.frequency"
-      v-for="item in codeFrequency"
-      :key="item.lang"
-    >
-      {{ item.lang }} {{ item.frequency }}%
-    </el-progress>
+    <div id="codeFrequencyChart"></div>
   </div>
 </template>
 
 <script lang="ts">
+import { defineComponent,PropType } from "vue";
+import * as echarts from "echarts/core";
+import {
+  TooltipComponent,
+  TooltipComponentOption,
+  LegendComponent,
+  LegendComponentOption,
+} from "echarts/components";
+import { PieChart, PieSeriesOption } from "echarts/charts";
+import { LabelLayout } from "echarts/features";
+import { CanvasRenderer } from "echarts/renderers";
 import { CodeFrequencyItem } from "@/dto/StatisticInfo";
-import { defineComponent } from "vue";
+
+echarts.use([
+  TooltipComponent,
+  LegendComponent,
+  PieChart,
+  CanvasRenderer,
+  LabelLayout,
+]);
+
+type EChartsOption = echarts.ComposeOption<
+  TooltipComponentOption | LegendComponentOption | PieSeriesOption
+>;
 
 export default defineComponent({
   props: {
     codeFrequency: {
-      type: Array,
+      type: Array as PropType<CodeFrequencyItem[]>,
       required: true,
     },
   },
+  data() {
+    return {
+      chart: null as echarts.ECharts | null
+    }
+  },
+  watch: {
+    codeFrequency() {
+      this.updateChart()
+    }
+  },
+  methods: {
+    updateChart(){
+      const option: EChartsOption = {
+      tooltip: {
+        trigger: "item",
+      },
+      legend: {
+        top: "5%",
+        left: "center",
+      },
+      height: 500,
+      series: [
+        {
+          name: "代码频率",
+          type: "pie",
+          radius: ["40%", "70%"],
+          avoidLabelOverlap: false,
+          itemStyle: {
+            borderRadius: 10,
+            borderColor: "#fff",
+            borderWidth: 2,
+          },
+          label: {
+            show: false,
+            position: "center",
+          },
+          emphasis: {
+            label: {
+              show: true,
+              fontSize: "40",
+              fontWeight: "bold",
+            },
+          },
+          labelLine: {
+            show: false,
+          },
+          data: this.codeFrequency.map(v => {
+            return {name: v.lang, value: v.frequency}
+          }).splice(0,10),
+        },
+      ],
+    };
+
+    option && this.chart!.setOption(option);
+    }
+  },
   setup() {},
+  mounted() {
+    const chartDom = document.getElementById("codeFrequencyChart")!;
+    if (!this.chart) {
+      this.chart = echarts.init(chartDom);
+    }
+    this.updateChart()
+  },
 });
 </script>
 
@@ -32,17 +109,7 @@ export default defineComponent({
   max-width: 1200px;
   margin: 0 auto;
 }
-.percentage-value {
-  display: block;
-  margin-top: 10px;
-  font-size: 28px;
-}
-.percentage-label {
-  display: block;
-  margin-top: 10px;
-  font-size: 12px;
-}
-.el-progress {
-  padding-bottom: 10px;
+#codeFrequencyChart {
+  height: 500px;
 }
 </style>

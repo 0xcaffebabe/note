@@ -11,6 +11,9 @@ interface IndexItem {
   createTime: string
 }
 
+// 忽略文件
+const ignoreFiles: string[] = ['doc/README.md', 'doc/SUMMARY.md']
+
 class SearchService extends BaseService {
 
 
@@ -22,9 +25,9 @@ class SearchService extends BaseService {
    * @memberof SearchService
    */
   static async generateIndex(): Promise<IndexItem[]> {
-    BaseService.listAllMdFile
     const mdFiles = BaseService.listFilesBySuffix('md', 'doc')
-    const taskList: Promise<{file:string,content: string}>[] = []
+      .filter(v => ignoreFiles.indexOf(v) == -1)
+    const taskList: Promise<{ file: string, content: string }>[] = []
     for (let file of mdFiles) {
       taskList.push(
         fs.promises.readFile(file).then(data => {
@@ -42,14 +45,14 @@ class SearchService extends BaseService {
       }
       return v
     })
-    .map(v => {
-      return {
-        url: v.file,
-        objectID: v.file,
-        segments: DocService.md2TextSegement(v.content),
-        createTime: new Date().toISOString()
-      } as IndexItem
-    })
+      .map(v => {
+        return {
+          url: v.file,
+          objectID: v.file,
+          segments: DocService.md2TextSegement(v.content),
+          createTime: new Date().toISOString()
+        } as IndexItem
+      })
   }
 
 
@@ -59,7 +62,7 @@ class SearchService extends BaseService {
    * @static
    * @memberof SearchService
    */
-  static async totalAmountUpdateIndex(appId: string, secret: string, indexName: string, indexData: IndexItem[]){
+  static async totalAmountUpdateIndex(appId: string, secret: string, indexName: string, indexData: IndexItem[]) {
     const client = algoliasearch(appId, secret);
     const index = client.initIndex(indexName)
     await index.replaceAllObjects(indexData)

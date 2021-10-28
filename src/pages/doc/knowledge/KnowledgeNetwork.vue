@@ -47,11 +47,24 @@ export default defineComponent({
       // 提取所有节点
       let nodes = Array.from(new Set(knowledgeNetwork.flatMap(v =>  [ v.id, ...v.links?.map(ln => ln.id) || []])))
                         .map(v => {
-                          return {
+                          const list = knowledgeNetwork.filter(item => item.id == v)
+                          // 默认节点渲染样式
+                          if (list.length == 0) {
+                            return {
                               name: v,
                               category: v == this.doc ? 1: 0,
+                              symbolSize: 20,
                               draggable: true
                             }
+                          // 节点扇出数越多 大小越大
+                          }else {
+                            return {
+                                name: v,
+                                category: v == this.doc ? 1: 0,
+                                symbolSize: 20 * (1 + (list[0].links?.length || 0) / 3),
+                                draggable: true
+                              }
+                          }
                         })
       // 节点下标映射<节点, index>
       const nodeMap = new Map(nodes.map((v, i) =>[v.name, i]))
@@ -147,7 +160,8 @@ export default defineComponent({
 
             },
             force: {
-              repulsion: 500,
+              repulsion: 200,
+              gravity: 0.1,
               edgeLength: 80
             },
             edgeSymbolSize: [4, 50],
@@ -160,8 +174,9 @@ export default defineComponent({
             links,
             lineStyle: {
               opacity: 0.9,
-              width: 1,
-              curveness: 0
+              width: 8,
+              curveness: 0,
+              color: '#eee'
             }
           }
         ]

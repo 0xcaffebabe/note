@@ -60,7 +60,16 @@
         </template>
         {{ info.firstCommitDate }}
       </el-descriptions-item>
-      <el-descriptions-item :span="1" v-for="item in 2" :key="item">
+      <el-descriptions-item>
+        <template #label>
+          <el-icon>
+          <clock />
+      </el-icon>
+          最后更新
+        </template>
+        {{ info.generateTime }}
+      </el-descriptions-item>
+      <el-descriptions-item :span="1" v-for="item in 1" :key="item">
       </el-descriptions-item>
       <el-descriptions-item :span="12">
         <template #label>

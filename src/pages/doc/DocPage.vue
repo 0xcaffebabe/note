@@ -51,7 +51,7 @@
           <el-button @click="$refs.mindGraph.show()" type="success" size="mini">思维导图</el-button>
           <el-button @click="$refs.knowledgeNetwork.show()" type="warning" size="mini">知识网络</el-button>
           <el-button @click="$refs.bookMark.showAdder()" type="danger" size="mini">添加书签</el-button>
-          <el-button @click="$refs.bookMark.showMarkList()" type="warn" size="mini">书签列表</el-button>
+          <el-button @click="$refs.bookMark.showMarkList()" type="info" size="mini">书签列表</el-button>
         </el-button-group>
       </div>
     </el-main>

@@ -15,35 +15,43 @@
               inactive-text="正常模式"
             >
             </el-switch>
-            <el-button-group style="margin-left:20px">
+            <el-button-group style="margin-left: 20px">
               <el-button
-              icon="el-icon-search"
-              class="search"
-              @click="$emit('search')"
-              size="mini"
-              round
-            >
-            Ctrl + K 全文搜索
-            </el-button>
-            <el-button
-              icon="el-icon-search"
-              class="search"
-              @click="$emit('category-search')"
-              size="mini"
-              round
-            >
-            Ctrl + Q 目录搜索
-            </el-button>
+                icon="el-icon-search"
+                class="search"
+                @click="$emit('search')"
+                size="mini"
+                round
+              >
+                Ctrl + K 全文搜索
+              </el-button>
+              <el-button
+                icon="el-icon-search"
+                class="search"
+                @click="$emit('category-search')"
+                size="mini"
+                round
+              >
+                Ctrl + Q 目录搜索
+              </el-button>
             </el-button-group>
           </div>
-          <el-menu mode="horizontal" :router="true">
+          <el-menu mode="horizontal" :ellipsis="false">
             <template v-for="(menu, index) in navMenu" :key="index">
-              <el-sub-menu :index="menu.router" v-if="menu.children">
-                <template #title>{{menu.title}}</template>
-                <el-menu-item :index="index + '-' + subIndex" v-for="(subMenu, subIndex) in menu.children" :key="index + '-' + subIndex">{{subMenu.title}}</el-menu-item>
+              <el-sub-menu :index="index + ''" v-if="menu.children">
+                <template #title>{{ menu.title }}</template>
+                <el-menu-item
+                  :index="index + '-' + subIndex"
+                  v-for="(subMenu, subIndex) in menu.children"
+                  :key="index + '-' + subIndex"
+                  @click="handleNavMenuClick(subMenu)"
+                  >{{ subMenu.title }}</el-menu-item
+                >
               </el-sub-menu>
-              <el-menu-item v-else :index="index + ''">{{menu.title}}</el-menu-item>
-            </template> 
+              <el-menu-item v-else :index="index + ''" @click="handleNavMenuClick(menu)">{{
+                menu.title
+              }}</el-menu-item>
+            </template>
           </el-menu>
         </div>
       </div>
@@ -53,7 +61,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import config from '@/config'
+import config from "@/config";
 
 export default defineComponent({
   setup() {},
@@ -63,13 +71,22 @@ export default defineComponent({
       showMode: false as boolean,
     };
   },
-  computed: {
-    siteName(){
-      return config.siteName
-    },
-    navMenu(){
-      return config.navMenu
+  methods: {
+    handleNavMenuClick(menu:any) {
+      if (menu.url) {
+        window.open(menu.url)
+      }else {
+        this.$router.push(menu.router)
+      }
     }
+  },
+  computed: {
+    siteName() {
+      return config.siteName;
+    },
+    navMenu() {
+      return config.navMenu;
+    },
   },
   created() {},
 });
@@ -112,5 +129,8 @@ export default defineComponent({
   .content /deep/ .el-menu {
     border-bottom: none;
   }
+}
+.el-menu {
+  width: 320px;
 }
 </style>

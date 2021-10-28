@@ -20,14 +20,14 @@
 
 <script lang="ts">
 import DocFileInfo from '@/dto/DocFileInfo'
-import { defineComponent } from 'vue'
+import { defineComponent, PropType } from 'vue'
 import config from '@/config'
 import DocUtils from '@/util/DocUtils'
 
 export default defineComponent({
   props: {
     file: {
-      type: DocFileInfo,
+      type: Object as PropType<DocFileInfo>,
       required: true
     },
     doc: {

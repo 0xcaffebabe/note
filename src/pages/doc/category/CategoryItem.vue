@@ -29,7 +29,7 @@
 
 <script lang="ts">
 import Category from "@/dto/Category";
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 import categoryService from "@/service/CategoryService";
 import api from "@/api";
 import DocFileInfo from "@/dto/DocFileInfo";
@@ -38,7 +38,7 @@ import DocService from "@/service/DocService";
 
 export default defineComponent({
   props: {
-    value: Category,
+    value: Object as PropType<Category>,
   },
   data() {
     return {

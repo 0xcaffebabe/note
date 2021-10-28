@@ -167,7 +167,7 @@ export default defineComponent({
       const categoryWrapper :HTMLElement = document.querySelector('.category-wrapper')!;
       const activeMenu :HTMLElement = (document.querySelector('.el-menu-item.is-active') as HTMLElement);
       const activeMenuPos: number = activeMenu.getBoundingClientRect().y;
-      const amount = activeMenuPos < 350? -20: 20;
+      const amount = activeMenuPos < 350? -50: 50;
       let timer = setInterval(() => {
         const activeMenuPos1: number = activeMenu.getBoundingClientRect().y;
         if ((activeMenuPos1 >= 350 && activeMenuPos1 <= categoryWrapper.offsetHeight) || categoryWrapper.scrollTop + amount < 0) {
@@ -175,7 +175,7 @@ export default defineComponent({
           return
         }
         categoryWrapper.scrollTo(0, categoryWrapper.scrollTop + amount)
-      }, 16)
+      }, 4)
     },
     generateTOC() {
       this.contentsList = docService.getContent(this.contentHtml);

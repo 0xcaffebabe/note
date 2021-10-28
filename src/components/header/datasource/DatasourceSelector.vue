@@ -55,7 +55,7 @@ export default defineComponent({
       handler(val: DatasourceItem[]) {
         console.log(val);
         for (let i of val) {
-          DatasourceService.testDelay("local").then(
+          DatasourceService.testDelay(i.id).then(
             (delay) => (this.delay[i.id] = delay)
           );
         }

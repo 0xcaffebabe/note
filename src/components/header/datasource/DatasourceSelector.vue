@@ -22,7 +22,7 @@
             color: var(--el-text-color-secondary);
             font-size: 13px;
           "
-          >{{ item.desc }}</span
+          >{{ item.desc }} <span class="delay">{{ delay[item.id] }} ms</span> </span
         >
       </el-option>
     </el-select>
@@ -30,31 +30,51 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent } from "vue";
 import DatasourceService from "@/service/DatasourceService";
 import DatasourceItem from "@/dto/DatasourceItem";
 
 export default defineComponent({
-  setup() {
-    
-  },
+  setup() {},
   computed: {
     datasourceList(): DatasourceItem[] {
       return DatasourceService.listDatasourceList();
     },
     currentDatasource(): string {
       return DatasourceService.getCurrentDatasource().id;
-    }
+    },
+  },
+  data() {
+    return {
+      delay: {} as any,
+    };
+  },
+  watch: {
+    datasourceList: {
+      immediate: true,
+      handler(val: DatasourceItem[]) {
+        console.log(val);
+        for (let i of val) {
+          DatasourceService.testDelay("local").then(
+            (delay) => (this.delay[i.id] = delay)
+          );
+        }
+      },
+    },
   },
   methods: {
-    handleDatasourceChange(id: string){
-      DatasourceService.setCurrentDatasource(this.datasourceList.filter(v => v.id == id)[0])
-      window.location.reload()
-    }
-  }
-})
+    handleDatasourceChange(id: string) {
+      DatasourceService.setCurrentDatasource(
+        this.datasourceList.filter((v) => v.id == id)[0]
+      );
+      window.location.reload();
+    },
+  },
+});
 </script>
 
 <style lang="less" scoped>
-
+  .delay {
+    color:var(--el-color-danger)
+  }
 </style>

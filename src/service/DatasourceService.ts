@@ -1,5 +1,5 @@
 import DatasourceItem from "@/dto/DatasourceItem"
-
+import axios from 'axios'
 
 class DatasourceService {
 
@@ -42,6 +42,21 @@ class DatasourceService {
 
   public static setCurrentDatasource(datasource: DatasourceItem) {
     localStorage.setItem('datasource-servier::current', datasource.id)
+  }
+
+  private static getDatasourceById(id: string): DatasourceItem {
+    const candicate =  DatasourceService.listDatasourceList().filter(v => v.id == id)
+    if (!candicate) {
+      throw new Error('指定ID的数据源不存在')
+    }
+    return candicate[0]
+  }
+
+  public static async testDelay(id: string): Promise<number> {
+    const startTime = new Date().getTime();
+    await axios.get(DatasourceService.getDatasourceById(id).url + 'SUMMARY.md')
+    const endTime = new Date().getTime();
+    return endTime - startTime;
   }
 }
 

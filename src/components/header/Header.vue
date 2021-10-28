@@ -9,34 +9,7 @@
         </div>
         <div class="content">
           <div>
-            <div style="display: inline-block">
-              <span style="color: #606266; font-size: 14px">数据源:</span>
-              <el-select
-                v-model="currentDatasource"
-                placeholder="数据源"
-                size="mini"
-                style="width: 120px; margin-left: 10px"
-                @change="handleDatasourceChange"
-              >
-                <el-option
-                  v-for="item in datasourceList"
-                  :key="item.id"
-                  :label="item.id"
-                  :value="item.id"
-                >
-                  <span style="float: left">{{ item.id }}</span>
-                  <span
-                    style="
-                      float: right;
-                      margin-left:10px;
-                      color: var(--el-text-color-secondary);
-                      font-size: 13px;
-                    "
-                    >{{ item.desc }}</span
-                  >
-                </el-option>
-              </el-select>
-            </div>
+            <datasource-selector />
             <el-divider direction="vertical" />
             <el-switch
               v-model="showMode"
@@ -96,10 +69,12 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import config from "@/config";
-import DatasourceService from "@/service/DatasourceService";
-import DatasourceItem from "@/dto/DatasourceItem";
+import DatasourceSelector from './datasource/DatasourceSelector.vue'
 
 export default defineComponent({
+  components: {
+    DatasourceSelector
+  },
   setup() {},
   data() {
     return {
@@ -115,10 +90,7 @@ export default defineComponent({
         this.$router.push(menu.router);
       }
     },
-    handleDatasourceChange(id: string){
-      DatasourceService.setCurrentDatasource(this.datasourceList.filter(v => v.id == id)[0])
-      window.location.reload()
-    }
+    
   },
   computed: {
     siteName() {
@@ -127,12 +99,7 @@ export default defineComponent({
     navMenu() {
       return config.navMenu;
     },
-    datasourceList(): DatasourceItem[] {
-      return DatasourceService.listDatasourceList();
-    },
-    currentDatasource(): string {
-      return DatasourceService.getCurrentDatasource().id;
-    }
+    
   },
   created() {},
 });

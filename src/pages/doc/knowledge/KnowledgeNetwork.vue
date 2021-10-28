@@ -61,8 +61,8 @@ export default defineComponent({
         if (i.links) {
           for(let j of i.links) {
             links.push({
-              source: nodeMap.get(i.id),
-              target: nodeMap.get(j.id),
+              source: i.id,
+              target: j.id,
               value: decodeURI(j.headingId ? '#' + j.headingId: '-')
             })
           }
@@ -73,9 +73,21 @@ export default defineComponent({
         const chartDom = document.getElementById('knowledgeNetwork')!;
         this.chart = echarts.init(chartDom);
         this.chart.on('click',(e) => {
-          const doc = (e.data as any).name;
+          console.log(e)
+          const doc = (e.data as any).name || (e.data as any).target;
+          const headingId = (e.data as any).value?.replace('#', '')
           // 路由跳转后重新初始化更新图表
-          this.$router.push('/doc/' + doc).then(data => this.init())
+          if (!headingId || headingId == '') {
+            this.$router.push('/doc/' + doc).then(data => this.init())  
+          }else {
+            // 拥有锚点
+            this.$router.push({
+              path: '/doc/' + doc,
+              query: {
+                headingId: headingId == '-' ? '': headingId
+              }
+            }).then(data => this.init())
+          }
         })
       }
       const option: EChartsOption = {

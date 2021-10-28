@@ -30,7 +30,7 @@ export default defineComponent({
       chart: null as echarts.ECharts | null
     }
   },
-  async created() {
+  async mounted() {
     let list = await api.getWordCloud();
     const chart = echarts.init(document.getElementById("wordcloud")!);
     const option = {

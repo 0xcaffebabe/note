@@ -5,6 +5,11 @@ import Cacheable from '@/decorator/Cacheable'
 import { StatisticInfo } from '@/dto/StatisticInfo'
 import DocUtils from '@/util/DocUtils'
 import {KnowledgeNode} from '@/dto/KnowledgeNode'
+import DatasourceService from '@/service/DatasourceService'
+
+const baseUrl = () => {
+  return DatasourceService.getCurrentDatasource().url
+}
 
 const cache = Cache()
 
@@ -21,7 +26,7 @@ class Api implements Cacheable{
     if (!id) {
       throw Error("doc id不得为空")
     }
-    id = "/" + DocUtils.docId2Url(id) + ".json"
+    id = baseUrl() + DocUtils.docId2Url(id) + ".json"
     const data = await axios.get(id)
     if (!data.data) {
       throw Error('无法获取文档 ' + id)
@@ -37,7 +42,7 @@ class Api implements Cacheable{
    * @memberof Api
    */
   public async getCategory() : Promise<DocFileInfo>{
-    const data = await axios.get("/SUMMARY.md.json")
+    const data = await axios.get(baseUrl() + "SUMMARY.md.json")
     return data.data;
   }
 
@@ -50,7 +55,7 @@ class Api implements Cacheable{
    * @memberof Api
    */
   public async getWordCloud(): Promise<[string, number][]>{
-    const data = await axios.get('/wordcloud.json')
+    const data = await axios.get(baseUrl() + 'wordcloud.json')
     return data.data
   }
 
@@ -63,12 +68,12 @@ class Api implements Cacheable{
    */
   @cache
   public async getStatisticInfo(): Promise<StatisticInfo> {
-    return (await axios.get('/info.json')).data
+    return (await axios.get(baseUrl() + 'info.json')).data
   }
 
   @cache
   public async getCommitHeatmap(): Promise<[string, number][]> {
-    return (await axios.get('/commitHeatmap.json')).data
+    return (await axios.get(baseUrl() + 'commitHeatmap.json')).data
   }
 
 
@@ -80,7 +85,7 @@ class Api implements Cacheable{
    */
   @cache
   public async getKnowledgeNetwork(): Promise<KnowledgeNode[]> {
-    return (await axios.get('/knowledgeNetwork.json')).data
+    return (await axios.get(baseUrl() + 'knowledgeNetwork.json')).data
   }
 
   public static getInstance(){

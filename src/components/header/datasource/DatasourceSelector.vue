@@ -13,6 +13,7 @@
         :key="item.id"
         :label="item.id"
         :value="item.id"
+        :disabled="isDisabled(item)"
       >
         <el-badge
           value="only-http"
@@ -91,6 +92,9 @@ export default defineComponent({
       );
       window.location.reload();
     },
+    isDisabled(datasource: DatasourceItem): boolean{
+      return datasource.url.startsWith('http:') && window.location.protocol == 'https:'
+    }
   },
 });
 </script>

@@ -13,12 +13,17 @@ class DatasourceService {
       {
         id: 'proxy-cf',
         url: '//proxy.ismy.wang/',
-        desc: 'cloudflare 代理'
+        desc: 'cloudflare代理'
       },
       {
         id: 'proxy-cn',
         url: 'http://proxy-cn.ismy.wang/api/',
         desc: '百度云加速'
+      },
+      {
+        id: 'jsdelivr',
+        url: '//cdn.jsdelivr.net/gh/0xcaffebabe/note@gh-pages/',
+        desc: 'jsdelivr-cdn'
       }
     ]
   }

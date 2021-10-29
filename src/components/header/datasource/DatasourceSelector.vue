@@ -14,7 +14,28 @@
         :label="item.id"
         :value="item.id"
       >
-        <span style="float: left">{{ item.id }}</span>
+        <el-badge
+          value="http"
+          class="protocol"
+          type="warning"
+          v-if="item.url.startsWith('http://')"
+        />
+        <el-badge
+          value="https"
+          class="protocol"
+          type="danger"
+          v-if="item.url.startsWith('https://')"
+        />
+        <el-badge
+          value="https+http"
+          class="protocol"
+          type="success"
+          v-if="item.url.startsWith('//')"
+        />
+        <span style="float: left">
+          {{ item.id }}
+        </span>
+
         <span
           style="
             float: right;
@@ -22,8 +43,9 @@
             color: var(--el-text-color-secondary);
             font-size: 13px;
           "
-          >{{ item.desc }} <span class="delay">{{ delay[item.id] }} ms</span> </span
-        >
+          >{{ item.desc }}
+          <span class="delay">{{ delay[item.id] }} ms</span>
+        </span>
       </el-option>
     </el-select>
   </div>
@@ -74,7 +96,10 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
-  .delay {
-    color:var(--el-color-danger)
-  }
+.delay {
+  color: var(--el-color-danger);
+}
+.protocol {
+  margin-left: 4px;
+}
 </style>

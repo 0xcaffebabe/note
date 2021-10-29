@@ -15,13 +15,13 @@
         :value="item.id"
       >
         <el-badge
-          value="http"
+          value="only-http"
           class="protocol"
           type="warning"
           v-if="item.url.startsWith('http://')"
         />
         <el-badge
-          value="https"
+          value="only-https"
           class="protocol"
           type="danger"
           v-if="item.url.startsWith('https://')"

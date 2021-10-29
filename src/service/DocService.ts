@@ -6,7 +6,13 @@ import Cacheable from '@/decorator/Cacheable'
 import Cache from '@/decorator/Cache'
 import ReadHistoryItem from '@/dto/ReadHistoryItem'
 import DocUtils from '@/util/DocUtils'
+import DatasourceService from '@/service/DatasourceService'
+
 const cache = Cache()
+
+const baseUrl = () => {
+  return DatasourceService.getCurrentDatasource().url
+}
 
 const LANGUAGE_MAP = {
   'c': 'clike',
@@ -60,6 +66,9 @@ class DocService implements Cacheable{
     }
     // 自定义图片渲染
     render.image = (href: string | null, title: string | null, text: string): string => {
+      if (href?.startsWith('/')) {
+        href = baseUrl() + href.replace('/', '')
+      }
       return `<p class="img-wrapper" style="text-align:center"><img src='${href}'/></p>`
     }
     return  marked(mdContent, {

@@ -76,6 +76,10 @@ export default defineComponent({
       }
       this.jm.show(mind);
       const elm: HTMLElement = document.querySelector("#jsmind_container")!;
+      // 选中当前标题节点
+      const currentHeading = this.$store.state.currentHeading;
+      if (currentHeading) {
+        this.jm.select_node([this.$store.state.currentHeading]);
       elm.onclick = (event) => {
         const target: any = event.target
         const id = target.getAttribute('nodeid')
@@ -84,6 +88,7 @@ export default defineComponent({
           window.scrollTo(0, elm.offsetTop - 80)
         }
       };
+      }
     },
   },
 });

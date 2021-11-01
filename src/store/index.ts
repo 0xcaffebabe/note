@@ -5,7 +5,10 @@ export default function create(){
   const store = createStore({
     state () {
       return {
+        // 当前所在的章节目录
         currentCategory: new Category() as Category,
+        // 当前所在的章节标题
+        currentHeading: '' as string,
         currentSearchKw: '' as string
       }
     },
@@ -15,6 +18,9 @@ export default function create(){
       },
       setSearchKw(state: any, kw: string) {
         state.currentSearchKw = kw
+      },
+      setCurrentHeading(state: any, heading: string) {
+        state.currentHeading = heading
       }
     }
   })

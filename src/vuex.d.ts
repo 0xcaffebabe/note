@@ -7,7 +7,8 @@ declare module '@vue/runtime-core' {
   // declare your own store states
   interface State {
     currentCategory: Category,
-    currentSearchKw: string
+    currentSearchKw: string,
+    currentHeading: string
   }
 
   // provide typings for `this.$store`

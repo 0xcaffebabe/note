@@ -1,5 +1,5 @@
 <template>
-  <el-drawer v-model="showDrawer" size="60%" title="思维导图">
+  <el-drawer v-model="showDrawer" size="40%" title="思维导图" :lock-scroll="false" :append-to-body="true">
     <div id="jsmind_container"></div>
   </el-drawer>
 </template>
@@ -19,6 +19,17 @@ export default defineComponent({
       jm: null as any,
       showDrawer: false as boolean,
     };
+  },
+  computed: {
+    currentHeading(){
+      return this.$store.state.currentHeading
+    }
+  },
+  watch: {
+    currentHeading(val) {
+      // 监听当前选中标题 映射到思维导图节点
+      this.jm.select_node([val]);
+    }
   },
   methods: {
     mindConvert(toc: Content[]): MindItem[] {
@@ -95,6 +106,9 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
+:deep(.jsmind-inner::-webkit-scrollbar) {
+  display:none
+}
 #jsmind_container {
   width: 100%;
   height: 100%;

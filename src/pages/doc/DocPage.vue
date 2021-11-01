@@ -45,18 +45,18 @@
           <contents-list :contentsList="contentsList" />
         </keep-alive>
       </div>
-      <div style="position:fixed;right:20px;top:60px">
-        <el-button-group>
-          <el-button @click="$refs.readingHistory.show()" type="primary" size="mini">阅读历史</el-button>
-          <el-button @click="$refs.mindGraph.show()" type="success" size="mini">思维导图</el-button>
-          <el-button @click="$refs.knowledgeNetwork.show()" type="warning" size="mini">知识网络</el-button>
-          <el-button @click="$refs.bookMark.showAdder()" type="danger" size="mini">添加书签</el-button>
-          <el-button @click="$refs.bookMark.showMarkList()" type="info" size="mini">书签列表</el-button>
-        </el-button-group>
-      </div>
     </el-main>
   </el-container>
   <el-backtop :bottom="40" :right="326" />
+  <!-- 工具栏开始 -->
+  <tool-box 
+    @showReadingHistory="$refs.readingHistory.show()"
+    @showMindGraph="$refs.mindGraph.show()"
+    @showKnowledgeNetwork="$refs.knowledgeNetwork.show()"
+    @showBookMarkAdder="$refs.bookMark.showAdder()"
+    @showBookMarkList="$refs.bookMark.showMarkList()"
+  />
+  <!-- 工具栏结束 -->
   <reading-history ref="readingHistory" />
   <mind-graph ref="mindGraph" />
   <book-mark ref="bookMark" :doc="doc" />
@@ -78,6 +78,7 @@ import HistoryList from "./commit/HistoryList.vue";
 import ReadingHistory from "./history/ReadingHistory.vue"
 import MindGraph from './mind/MindGraph.vue'
 import BookMark from './book-mark/BookMark.vue'
+import ToolBox from './ToolBox.vue';
 import KnowledgeNetwork from "./knowledge/KnowledgeNetwork.vue";
 import api from "@/api";
 import DocFileInfo from "@/dto/DocFileInfo";
@@ -96,6 +97,7 @@ export default defineComponent({
     ReadingHistory,
     MindGraph,
     BookMark,
+    ToolBox,
     KnowledgeNetwork,
     ArrowLeftBold,
     ArrowRightBold

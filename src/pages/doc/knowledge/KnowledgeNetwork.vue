@@ -1,5 +1,5 @@
 <template>
-  <el-drawer v-model="showDrawer" size="60%" title="知识网络">
+  <el-drawer v-model="showDrawer" size="40%" title="知识网络" @close="$emit('close')" :lock-scroll="false" modal-class="drawer-modal-class">
     <div id="knowledgeNetwork"></div>
   </el-drawer>
 </template>

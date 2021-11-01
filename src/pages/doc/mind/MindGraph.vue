@@ -1,5 +1,5 @@
 <template>
-  <el-drawer v-model="showDrawer" size="40%" title="思维导图" :lock-scroll="false" :append-to-body="true">
+  <el-drawer v-model="showDrawer" size="40%" title="思维导图" :lock-scroll="false" :append-to-body="false" @close="$emit('close')" modal-class="drawer-modal-class">
     <div id="jsmind_container"></div>
   </el-drawer>
 </template>
@@ -28,7 +28,9 @@ export default defineComponent({
   watch: {
     currentHeading(val) {
       // 监听当前选中标题 映射到思维导图节点
-      this.jm.select_node([val]);
+      if (this.jm) {
+        this.jm.select_node([val]);
+      }
     }
   },
   methods: {

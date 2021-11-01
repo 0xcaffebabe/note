@@ -51,17 +51,17 @@
   <!-- 工具栏开始 -->
   <tool-box 
     @showReadingHistory="$refs.readingHistory.show()"
-    @showMindGraph="$refs.mindGraph.show()"
-    @showKnowledgeNetwork="$refs.knowledgeNetwork.show()"
+    @showMindGraph="$refs.mindGraph.show();showAside = false"
+    @showKnowledgeNetwork="$refs.knowledgeNetwork.show();showAside = false"
     @showBookMarkAdder="$refs.bookMark.showAdder()"
     @showBookMarkList="$refs.bookMark.showMarkList()"
   />
   <!-- 工具栏结束 -->
   <reading-history ref="readingHistory" />
-  <mind-graph ref="mindGraph" />
+  <mind-graph ref="mindGraph" @close="showAside = true" />
   <book-mark ref="bookMark" :doc="doc" />
   <keep-alive>
-    <knowledge-network ref="knowledgeNetwork" :doc="doc"/>
+    <knowledge-network ref="knowledgeNetwork" :doc="doc" @close="showAside = true"/>
   </keep-alive>
   <el-image-viewer @close="showImageViewer = false" v-show="showImageViewer" :url-list="imageUrlList" :hide-on-click-modal="true"/>
 </template>

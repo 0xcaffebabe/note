@@ -63,6 +63,7 @@
   <keep-alive>
     <knowledge-network ref="knowledgeNetwork" :doc="doc"/>
   </keep-alive>
+  <el-image-viewer @close="showImageViewer = false" v-show="showImageViewer" :url-list="imageUrlList" :hide-on-click-modal="true"/>
 </template>
 
 <script lang="ts">
@@ -106,7 +107,9 @@ export default defineComponent({
       contentsList: [] as Content[],
       doc: "" as string,
       loading: true as boolean,
-      showAside: true as boolean
+      showAside: true as boolean,
+      showImageViewer: false as boolean,
+      imageUrlList: [] as string[]
     };
   },
   computed: {
@@ -148,8 +151,11 @@ export default defineComponent({
       this.generateTOC();
       this.$nextTick(() => {
         this.registerLinkRouter();
+        this.registerImageClick();
         this.syncHeading(headingId);
         this.syncCategoryListScrollBar();
+        // 更新图片链接列表
+        this.imageUrlList = DocService.getImageUrlList(this.contentHtml);
       });
       this.loading = false;
     },
@@ -193,6 +199,21 @@ export default defineComponent({
             this.$router.push(href);
             e.preventDefault();
           }
+        };
+      }
+    },
+    // 管理业内图片点击行为
+    registerImageClick(){
+      const imgList: NodeListOf<HTMLElement> = document.querySelectorAll(
+        ".markdown-section .img-wrapper"
+      );
+      for (let i = 0; i < imgList.length; i++) {
+        const img = imgList[i];
+        img.onclick = (e: Event) => {
+          // 展示大图
+          const src = img.querySelector('img')?.getAttribute('src') || '';
+          this.imageUrlList = [src];
+          this.showImageViewer = true;
         };
       }
     },
@@ -257,5 +278,9 @@ export default defineComponent({
 }
 .el-affix .active {
   margin-left: -26px;
+}
+:deep(.img-wrapper) {
+  text-align:center;
+  cursor: pointer;
 }
 </style>

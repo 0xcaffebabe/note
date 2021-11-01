@@ -69,7 +69,7 @@ class DocService implements Cacheable{
       if (href?.startsWith('/')) {
         href = baseUrl() + href.replace('/', '')
       }
-      return `<p class="img-wrapper" style="text-align:center"><img src='${href}'/></p>`
+      return `<p class="img-wrapper"><img src='${href}'/></p>`
     }
     return  marked(mdContent, {
       renderer: render
@@ -230,6 +230,24 @@ class DocService implements Cacheable{
       }
     }
     return result
+  }
+
+
+  /**
+   *
+   * 根据传入的html获取图片url列表
+   * @param {string} docHtml
+   * @return {*}  {string[]}
+   * @memberof DocService
+   */
+  public getImageUrlList(docHtml: string): string[] {
+    const document = new DOMParser().parseFromString(docHtml, 'text/html')
+      const imgList = document.querySelectorAll('.img-wrapper img');
+      const result: string[] = []
+      for(let i of imgList) {
+        result.push(i.getAttribute('src') || '')
+      }
+      return result;
   }
 }
 

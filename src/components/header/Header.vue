@@ -13,8 +13,11 @@
             <el-divider direction="vertical" />
             <el-switch
               v-model="showMode"
-              active-text="黑暗模式"
-              inactive-text="正常模式"
+              :inline-prompt="true"
+              :active-icon="activeIcon"
+              :inactive-icon="inactiveIcon"
+              active-color="#000"
+              inactive-color="#409EFF"
             >
             </el-switch>
             <el-divider direction="vertical" />
@@ -69,7 +72,8 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import config from "@/config";
-import DatasourceSelector from './datasource/DatasourceSelector.vue'
+import DatasourceSelector from './datasource/DatasourceSelector.vue';
+import {Sunny, Moon} from '@element-plus/icons';
 
 export default defineComponent({
   components: {
@@ -80,6 +84,8 @@ export default defineComponent({
     return {
       name: "my-book" as string,
       showMode: false as boolean,
+      activeIcon: Moon,
+      inactiveIcon: Sunny
     };
   },
   methods: {

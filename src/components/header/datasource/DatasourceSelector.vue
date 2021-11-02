@@ -46,6 +46,7 @@
           "
           >{{ item.desc }}
           <span class="delay">{{ delay[item.id] }} ms</span>
+          <el-badge class="last-update" :value="lastUpdateMap[item.id] ? new Date(lastUpdateMap[item.id]).toLocaleString(): '未知'" type="primary"/>
         </span>
       </el-option>
     </el-select>
@@ -70,6 +71,7 @@ export default defineComponent({
   data() {
     return {
       delay: {} as any,
+      lastUpdateMap: {} as any
     };
   },
   watch: {
@@ -79,7 +81,10 @@ export default defineComponent({
         console.log(val);
         for (let i of val) {
           DatasourceService.testDelay(i.id).then(
-            (delay) => (this.delay[i.id] = delay)
+            (data) => {
+              this.delay[i.id] = data[0];
+              this.lastUpdateMap[i.id] = data[1];
+            }
           );
         }
       },
@@ -104,6 +109,9 @@ export default defineComponent({
   color: var(--el-color-danger);
 }
 .protocol {
+  margin-left: 4px;
+}
+.last-update {
   margin-left: 4px;
 }
 </style>

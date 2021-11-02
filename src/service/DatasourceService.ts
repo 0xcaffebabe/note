@@ -1,4 +1,5 @@
 import DatasourceItem from "@/dto/DatasourceItem"
+import { StatisticInfo } from "@/dto/StatisticInfo"
 import axios from 'axios'
 
 class DatasourceService {
@@ -57,11 +58,20 @@ class DatasourceService {
     return candicate[0]
   }
 
-  public static async testDelay(id: string): Promise<number> {
+  
+  /**
+   *
+   * 测试延迟 并获取该数据源的最后更新时间
+   * @static
+   * @param {string} id
+   * @return {*}  {Promise<[number, string]>} [延迟, 最后更新时间]
+   * @memberof DatasourceService
+   */
+  public static async testDelay(id: string): Promise<[number, string]> {
     const startTime = new Date().getTime();
-    await axios.get(DatasourceService.getDatasourceById(id).url + 'SUMMARY.md')
+    const data: StatisticInfo = (await axios.get(DatasourceService.getDatasourceById(id).url + 'info.json')).data
     const endTime = new Date().getTime();
-    return endTime - startTime;
+    return [endTime - startTime, data.generateTime];
   }
 }
 

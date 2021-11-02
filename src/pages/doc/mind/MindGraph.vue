@@ -61,6 +61,20 @@ export default defineComponent({
     hide() {
       this.showDrawer = false;
     },
+    mousewheel(event: any) {
+      // ctrl键按下了 event.ctrlKey
+      if (event.ctrlKey) {
+        // 取消浏览器默认的放大缩小网页行为
+        event.preventDefault();
+        if (event.wheelDelta < 0 || event.detail < 0) {
+          // 鼠标滚轮往下滚动
+          this.jm.view.zoomOut();
+        } else if (event.wheelDelta > 0 || event.detail > 0) {
+          // 鼠标滚轮往上滚动
+          this.jm.view.zoomIn();
+        }
+      }
+    },
     async showMind() {
       const doc = this.$route.params.doc.toString();
       const toc = await DocService.getContentByDocId(doc);
@@ -95,6 +109,8 @@ export default defineComponent({
       };
       if (!this.jm) {
         this.jm = new jsMind(options);
+        // 监听ctrl + 滚轮事件
+        document.querySelector('#jsmind_container')?.addEventListener('mousewheel', this.mousewheel);
       }
       this.jm.show(mind);
       const elm: HTMLElement = document.querySelector("#jsmind_container")!;
@@ -137,20 +153,20 @@ export default defineComponent({
 /* 节点样式 */
 jmnodes.theme-primary1 jmnode {
   transition: all 0.2s;
-  background-color: #1E88E5;
+  background-color: #1e88e5;
   border-color: #357ebd;
   color: #fff;
 }
 /* 鼠标悬停的节点样式 */
 jmnodes.theme-primary1 jmnode:hover {
   transition: all 0.2s;
-  background-color: #F56C6C;
+  background-color: #f56c6c;
 }
 /* 选中的节点样式 */
 jmnodes.theme-primary1 jmnode.selected {
   transition: all 0.2s;
   font-weight: 650;
-  background-color: #F56C6C;
+  background-color: #f56c6c;
 }
 /* 根节点样式 */
 jmnodes.theme-primary1 jmnode.root {

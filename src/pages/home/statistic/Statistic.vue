@@ -58,7 +58,7 @@
       </el-icon>
           首次提交
         </template>
-        {{ info.firstCommitDate }}
+        {{ new Date(info.firstCommitDate).toLocaleString() }}
       </el-descriptions-item>
       <el-descriptions-item>
         <template #label>
@@ -67,7 +67,7 @@
       </el-icon>
           最后更新
         </template>
-        {{ info.generateTime }}
+        {{ new Date(info.generateTime).toLocaleString() }}
       </el-descriptions-item>
       <el-descriptions-item :span="1" v-for="item in 1" :key="item">
       </el-descriptions-item>

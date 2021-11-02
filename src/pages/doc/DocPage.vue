@@ -261,7 +261,7 @@ export default defineComponent({
   width: 280px;
 }
 .main {
-  padding-left: 8em;
+  padding-left: 4em;
   padding-bottom: 20px;
 }
 .toc-wrapper {

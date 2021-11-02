@@ -1,5 +1,14 @@
 <template>
-  <el-drawer v-model="showDrawer" size="40%" title="思维导图" :lock-scroll="false" :append-to-body="false" @close="$emit('close')" modal-class="drawer-modal-class">
+  <el-drawer
+    v-model="showDrawer"
+    size="44%"
+    :with-header="false"
+    title="思维导图"
+    :lock-scroll="false"
+    :append-to-body="false"
+    @close="$emit('close')"
+    modal-class="drawer-modal-class"
+  >
     <div id="jsmind_container"></div>
   </el-drawer>
 </template>
@@ -21,9 +30,9 @@ export default defineComponent({
     };
   },
   computed: {
-    currentHeading(){
-      return this.$store.state.currentHeading
-    }
+    currentHeading() {
+      return this.$store.state.currentHeading;
+    },
   },
   watch: {
     currentHeading(val) {
@@ -31,7 +40,7 @@ export default defineComponent({
       if (this.jm) {
         this.jm.select_node([val]);
       }
-    }
+    },
   },
   methods: {
     mindConvert(toc: Content[]): MindItem[] {
@@ -56,16 +65,16 @@ export default defineComponent({
       const doc = this.$route.params.doc.toString();
       const toc = await DocService.getContentByDocId(doc);
       const minds = this.mindConvert(toc);
-      let mindData : MindItem;
+      let mindData: MindItem;
       if (minds.length > 1) {
         mindData = {
-          id: 'root',
-          topic: 'root',
+          id: "root",
+          topic: "root",
           children: minds,
-          direction: 'left'
-        }
-      }else {
-        mindData = minds[0]
+          direction: "left",
+        };
+      } else {
+        mindData = minds[0];
       }
       const mind = {
         /* 元数据，定义思维导图的名称、作者、版本等信息 */
@@ -93,14 +102,14 @@ export default defineComponent({
       const currentHeading = this.$store.state.currentHeading;
       if (currentHeading) {
         this.jm.select_node([this.$store.state.currentHeading]);
-      elm.onclick = (event) => {
-        const target: any = event.target
-        const id = target.getAttribute('nodeid')
-        if (id) {
-          const elm : HTMLElement = document.querySelector('#' + id)!
-          window.scrollTo(0, elm.offsetTop - 80)
-        }
-      };
+        elm.onclick = (event) => {
+          const target: any = event.target;
+          const id = target.getAttribute("nodeid");
+          if (id) {
+            const elm: HTMLElement = document.querySelector("#" + id)!;
+            window.scrollTo(0, elm.offsetTop - 80);
+          }
+        };
       }
     },
   },
@@ -109,10 +118,16 @@ export default defineComponent({
 
 <style lang="less" scoped>
 :deep(.jsmind-inner::-webkit-scrollbar) {
-  display:none
+  display: none;
 }
 #jsmind_container {
   width: 100%;
   height: 100%;
+}
+</style>
+
+<style lang="less">
+.el-drawer__body {
+  padding: 0;
 }
 </style>

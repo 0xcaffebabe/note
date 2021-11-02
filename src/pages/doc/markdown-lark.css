@@ -40,11 +40,13 @@
 }
 
 .markdown-section {
+  transition: all 0.2s;
   line-height: 1.68;
   -webkit-text-size-adjust: 100%;
-  max-width: 60%;
+  /* max-width: 60%; */
+  width:960px;
   /* margin: 0px auto; */
-  padding: 1.6rem 3.2rem;
+  padding: 1.6rem 0.2rem;
   font-family: -apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, Segoe UI, PingFang SC, Microsoft Yahei, Hiragino Sans GB, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
   font-size: 16px;
   color: #1f2329;

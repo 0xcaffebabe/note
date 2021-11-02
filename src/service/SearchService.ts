@@ -4,6 +4,7 @@ import { SearchResponse } from '@algolia/client-search';
 import SearchIndexSegment from '@/dto/search/SearchIndexSegement';
 import Cacheable from '@/decorator/Cacheable';
 import Cache from '@/decorator/Cache'
+import SearchSuggestion from '@/dto/search/SearchSuggestion';
 
 interface DocHits {
   url: string,
@@ -48,6 +49,18 @@ class SearchService implements Cacheable{
     }
     return []
   }
+
+  @cache
+  public async getQuerySuggestions(kw: string = ''): Promise<SearchSuggestion[]> {
+    const client = algoliasearch('K9I7PAT3CY', '8f3ec5043331dedbccce916154fc0162');
+    const index = client.initIndex('note_query_suggestions');
+    const hits: SearchResponse<SearchSuggestion> = await index.search(kw, {hitsPerPage: 100});
+    if (hits) {
+      return hits.hits;
+    }
+    return [];
+  }
+
 }
 
 export default SearchService.getInstance()

@@ -90,7 +90,7 @@ export default defineComponent({
       };
       const options = {
         container: "jsmind_container",
-        theme: "primary",
+        theme: "primary1",
         editable: false,
       };
       if (!this.jm) {
@@ -129,5 +129,38 @@ export default defineComponent({
 <style lang="less">
 .el-drawer__body {
   padding: 0;
+}
+</style>
+
+<style lang="less">
+// 自定义思维导图主题
+/* 节点样式 */
+jmnodes.theme-primary1 jmnode {
+  transition: all 0.2s;
+  background-color: #1E88E5;
+  border-color: #357ebd;
+  color: #fff;
+}
+/* 鼠标悬停的节点样式 */
+jmnodes.theme-primary1 jmnode:hover {
+  transition: all 0.2s;
+  background-color: #F56C6C;
+}
+/* 选中的节点样式 */
+jmnodes.theme-primary1 jmnode.selected {
+  transition: all 0.2s;
+  font-weight: 650;
+  background-color: #F56C6C;
+}
+/* 根节点样式 */
+jmnodes.theme-primary1 jmnode.root {
+}
+/* 展开/关闭节点的控制点样式 */
+jmnodes.theme-primary1 jmexpander {
+  transition: all 0.2s;
+}
+/* 鼠标悬停展开/关闭节点的控制点样式 */
+jmnodes.theme-primary1 jmexpander:hover {
+  transition: all 0.2s;
 }
 </style>

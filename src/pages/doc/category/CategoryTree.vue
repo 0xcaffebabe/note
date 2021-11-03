@@ -68,4 +68,7 @@ export default defineComponent({
   border-left: 4px solid #409eef;
   padding-left: 36px !important;
 }
+:deep(.el-sub-menu__title *) {
+  vertical-align: middle!important;
+}
 </style>

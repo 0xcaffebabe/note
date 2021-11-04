@@ -5,6 +5,7 @@ import SearchIndexSegment from '@/dto/search/SearchIndexSegement';
 import Cacheable from '@/decorator/Cacheable';
 import Cache from '@/decorator/Cache'
 import SearchSuggestion from '@/dto/search/SearchSuggestion';
+import { text } from 'stream/consumers';
 
 interface DocHits {
   url: string,
@@ -14,6 +15,19 @@ interface DocHits {
 
 const hilighTag = 'mark'
 const cache = Cache()
+
+function kwContains(kw: string, txt: string): boolean{
+  if (!txt) {
+    return false
+  }
+  const kwList = kw.trim().split(' ').filter(v => v);
+  for(let i of kwList) {
+    if (txt.replace(/<[^>]+>/ig, '').indexOf(i) != -1) {
+      return true;
+    }
+  }
+  return false;
+}
 
 class SearchService implements Cacheable{
   private static instance: SearchService;
@@ -43,7 +57,8 @@ class SearchService implements Cacheable{
           hilighedUrl: v._highlightResult?.url?.value,
           createTime: v.createTime,
           hilighedSegement: v._highlightResult?.segments?.map(v => {return {id: v?.id?.value, txt: v?.txt?.value}}) // 将algolia的高亮结构体转换成我们自己的SearchIndexSegment
-                            .filter(v => v.id?.indexOf(`<${hilighTag}>`) != -1 || v.txt?.indexOf(`<${hilighTag}>`) != -1) // 过滤掉没有高亮的搜索结果
+          .filter(v => v.id?.indexOf(`<${hilighTag}>`) != -1 || v.txt?.indexOf(`<${hilighTag}>`) != -1) // 过滤掉没有高亮的搜索结果
+          .filter(v => kwContains(kw, v.id || '') || kwContains(kw, v.txt || '')) // 过滤掉搜索结果没有关键词的结果
         } as SearchResult
       })
     }

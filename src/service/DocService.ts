@@ -123,7 +123,9 @@ class DocService implements Cacheable{
     if (rawData) {
       readHistoryList = JSON.parse(rawData)
     }
-    return readHistoryList.reverse()
+    readHistoryList = readHistoryList.reverse();
+    readHistoryList.forEach(v => v.time = new Date(v.time).toLocaleString())
+    return readHistoryList;
   }
 
 

@@ -260,14 +260,6 @@
   border-left: 2px solid #3370ff;
   color: rgba(31, 35, 41, 0.7);
 }
-.markdown-section code {
-  border-radius: 4px;
-  margin-left: 2px;
-  margin-right: 2px;
-  word-spacing: normal;
-  line-height: 1.6;
-  padding: 0 2px;
-}
 .markdown-section pre {
   overflow-x: auto;
 }

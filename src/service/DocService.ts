@@ -69,7 +69,7 @@ class DocService implements Cacheable{
       if (href?.startsWith('/')) {
         href = baseUrl() + href.replace('/', '')
       }
-      return `<p class="img-wrapper"><img src='${href}'/></p>`
+      return `<p class="img-wrapper"><img src='${href}'/><p class="img-title">${text}</p></p>`
     }
     return  marked(mdContent, {
       renderer: render

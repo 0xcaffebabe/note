@@ -45,6 +45,7 @@
   -webkit-text-size-adjust: 100%;
   /* max-width: 60%; */
   width:960px;
+  min-height: 800px;
   /* margin: 0px auto; */
   padding: 1.6rem 0.2rem;
   font-family: -apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, Segoe UI, PingFang SC, Microsoft Yahei, Hiragino Sans GB, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;

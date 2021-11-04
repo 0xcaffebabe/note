@@ -159,8 +159,6 @@ export default defineComponent({
         this.registerImageClick();
         this.syncHeading(headingId);
         this.syncCategoryListScrollBar();
-        // 更新图片链接列表
-        this.imageUrlList = DocService.getImageUrlList(this.contentHtml);
       });
       this.loading = false;
     },

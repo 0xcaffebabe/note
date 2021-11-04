@@ -17,7 +17,7 @@
           />
         </div>
       </template>
-      <category-item :value="value" />
+      <category-item :value="value" :isParent="true"/>
 
       <category-tree :menuList="value.chidren"></category-tree>
     </el-sub-menu>

@@ -9,7 +9,7 @@
     content="this is content, this is content, this is content"
   >
     <template #reference>
-      <el-menu-item :index="convert(value.link)" @click="handleMenuItemClick(value)">
+      <el-menu-item :index="convert(value.link)" @click="handleMenuItemClick(value)" :class="{'hilight': isParent}">
         <template #title>
           <span>{{ value.name }}</span>
         </template>
@@ -39,6 +39,10 @@ import DocService from "@/service/DocService";
 export default defineComponent({
   props: {
     value: Object as PropType<Category>,
+    isParent: {
+      type: Boolean,
+      deault: false
+    }
   },
   data() {
     return {
@@ -88,4 +92,7 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
+.hilight {
+  font-weight: 650;
+}
 </style>

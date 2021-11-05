@@ -199,16 +199,24 @@
   border-color: #dee0e3;
   border-width: 1px;
   border-style: solid;
+  text-align: left;
 }
 .markdown-section th {
-  padding: 8px 8px;
-  font-size: 1em;
-  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-all;
+  line-height: 23px;
+  padding: 14px 10px;
+  color: rgb(144, 147, 153)
 }
 .markdown-section td {
   padding: 8px 8px;
   font-size: 1em;
   font-weight: normal;
+  color: rgb(96, 98, 102)
+}
+.markdown-section tr:hover {
+  background-color: #f5f7fa;
 }
 .markdown-section pre.md-fences,
 .markdown-section pre.md-meta-block,

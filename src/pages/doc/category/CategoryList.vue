@@ -1,7 +1,7 @@
 <template>
   <el-skeleton :rows="24" animated :loading="loading" :throttle="50" style="max-width: 80%; padding:20px">
     <template #default>
-      <el-menu unique-opened @open="handleOpen" :default-active="doc" :router="true">
+      <el-menu unique-opened :default-active="doc" :router="true">
         <CategoryTree :menuList="cateList" />
       </el-menu>
     </template>

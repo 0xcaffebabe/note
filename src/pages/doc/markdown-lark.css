@@ -321,3 +321,17 @@
 .markdown-section li + li, .markdown-section ul ul, .markdown-section ol ul, .markdown-section ul ol, .markdown-section ol ol, .markdown-section li ul, .markdown-section li ol {
   margin-top: 4px;
 }
+
+/* markdown 图片样式 */
+.img-wrapper {
+  text-align:center;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+}
+.img-title {
+  text-align: center;
+  color: #999;
+  padding: 0;
+  margin: 0;
+}

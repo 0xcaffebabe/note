@@ -282,16 +282,4 @@ export default defineComponent({
 .el-affix .active {
   margin-left: -26px;
 }
-:deep(.img-wrapper) {
-  text-align:center;
-  cursor: pointer;
-  padding: 0;
-  margin: 0;
-}
-:deep(.img-title) {
-  text-align: center;
-  color: #999;
-  padding: 0;
-  margin: 0;
-}
 </style>

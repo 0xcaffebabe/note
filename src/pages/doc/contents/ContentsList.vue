@@ -100,8 +100,8 @@ export default defineComponent({
   color: #3e90e8 !important;
 }
 :deep(.active) {
+  transition: all 0.2s;
   color: #3e90e8 !important;
-  font-weight: 550 !important;
 }
 ul,
 :deep(ul) {

@@ -125,7 +125,9 @@ export default defineComponent({
       }
       const option: EChartsOption = {
         title: {
-          text: "",
+          text: "知识网络",
+          top: 'bottom',
+          left: 'right'
         },
         tooltip: {},
         animationDurationUpdate: 1500,
@@ -141,7 +143,7 @@ export default defineComponent({
         legend: {
           x: "center",
           show: true,
-          data: ["联系"],
+          data: ["联系", "当前"],
         },
         series: [
           {
@@ -158,7 +160,7 @@ export default defineComponent({
                 },
               },
               {
-                name: "主要",
+                name: "当前",
                 itemStyle: {
                   color: "#F56C6C",
                 },
@@ -183,6 +185,7 @@ export default defineComponent({
               edgeLength: 80,
             },
             edgeSymbolSize: [4, 50],
+            edgeSymbol: ["arrow"],
             edgeLabel: {
               show: false,
               fontSize: 10,
@@ -192,9 +195,15 @@ export default defineComponent({
             links,
             lineStyle: {
               opacity: 0.9,
-              width: 8,
-              curveness: 0,
-              color: "#eee",
+              curveness: 0.3,
+              width: 2,
+              color: 'source',
+            },
+            emphasis: {
+              focus: "adjacency",
+              lineStyle: {
+                width: 10,
+              },
             },
           },
         ],

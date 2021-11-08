@@ -31,7 +31,7 @@
               :key="chain.name"
             >{{ chain.name }}</el-breadcrumb-item>
           </el-breadcrumb>
-          <div class="markdown-section" v-html="contentHtml" :style="{'width': isDrawerShow ? '960px': '74%'}"></div>
+          <div class="markdown-section" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '960px': '74%'}"></div>
           <!-- 提交历史开始 -->
           <div style="text-align: center">
             <el-divider style="width:72%" />
@@ -281,5 +281,17 @@ export default defineComponent({
 }
 .el-affix .active {
   margin-left: -26px;
+}
+.center {
+  transition: all 0.2s;
+  padding-left: 8rem;
+}
+@media screen and(max-width: 1366px) {
+  .center {
+    padding-left: 2rem;
+  }
+  .toc-wrapper {
+  right: 2px;
+}
 }
 </style>

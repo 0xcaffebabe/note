@@ -106,8 +106,8 @@ export default defineComponent({
         if (i.links) {
           for (let j of i.links) {
             links.push({
-              source: i.id,
-              target: j.id,
+              target: i.id,
+              source: j.id,
               value: decodeURI(j.headingId ? "#" + j.headingId : "-"),
             });
           }

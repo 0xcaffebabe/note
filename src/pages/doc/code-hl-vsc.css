@@ -17,6 +17,10 @@ code[class*="language-"] {
 	-moz-hyphens: none;
 	-ms-hyphens: none;
 	hyphens: none;
+	background-color: #282c34;
+}
+pre,code {
+	background-color: #282c34;
 }
 
 pre[class*="language-"]::selection,

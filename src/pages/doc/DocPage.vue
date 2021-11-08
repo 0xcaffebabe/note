@@ -87,7 +87,7 @@ import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
 import { ElMessage } from 'element-plus'
 import { ArrowLeftBold, ArrowRightBold } from "@element-plus/icons";
-import './markdown-lark.css'
+import './markdown-v1.css'
 import './code-hl-vsc.css'
 
 let timer: NodeJS.Timeout;

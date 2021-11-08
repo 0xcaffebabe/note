@@ -1,4 +1,7 @@
 <template>
+  <div class="progress">
+    <el-progress :text-inside="true" :stroke-width="26" :percentage="progress" />
+  </div>
   <ul class="toc">
     <contents-tree :contentsList="contentsList" />
   </ul>
@@ -14,6 +17,11 @@ export default defineComponent({
   },
   components: {
     ContentsTree,
+  },
+  data() {
+    return {
+      progress: 0 as number
+    }
   },
   methods: {
     registerWindowScrollListener() {
@@ -66,6 +74,10 @@ export default defineComponent({
           }
         }
       });
+      // 计算阅读进度
+      document.addEventListener('scroll', (e) => {
+        this.progress = Math.ceil((window.scrollY / (document.body.offsetHeight- 979)) * 100 );
+      })
     },
   },
   created() {
@@ -119,5 +131,9 @@ ul,
 .toc:first-child:before {
   content: "📋 目录列表";
   color: rgb(116, 129, 141);
+}
+
+.progress {
+  text-align: center;
 }
 </style>

@@ -8,6 +8,15 @@
     :lock-scroll="false"
     modal-class="drawer-modal-class"
   >
+  <el-select v-model="mode" placeholder="显示模式" size="mini">
+      <el-option
+      v-for="item in displayMode"
+      :key="item"
+      :label="item"
+      :value="item"
+    >
+    </el-option>
+  </el-select>
     <div id="knowledgeNetwork"></div>
   </el-drawer>
 </template>
@@ -45,6 +54,11 @@ export default defineComponent({
       type: String,
       required: true,
     },
+  },
+  watch: {
+    mode(){
+     this.init(); 
+    }
   },
   setup() {},
   methods: {
@@ -150,7 +164,7 @@ export default defineComponent({
         series: [
           {
             type: "graph",
-            layout: "force",
+            layout: this.mode,
             symbolSize: 45,
             focusNodeAdjacency: true,
             roam: true,
@@ -221,6 +235,8 @@ export default defineComponent({
     return {
       showDrawer: false as boolean,
       chart: null as echarts.ECharts | null,
+      mode: 'force' as "force" | "circular" | "none" | undefined,
+      displayMode: ['force', 'circular']
     };
   },
   mounted() {},
@@ -231,5 +247,11 @@ export default defineComponent({
 <style lang="less" scoped>
 #knowledgeNetwork {
   height: 100%;
+}
+.el-select {
+  position:fixed;
+  top:20px;
+  right: 20px;
+  z-index: 9999;
 }
 </style>

@@ -103,6 +103,7 @@ export default defineComponent({
       if (!this.chart) {
         const chartDom = document.getElementById("knowledgeNetwork")!;
         this.chart = echarts.init(chartDom);
+        // 点击事件
         this.chart.on("click", (e) => {
           console.log(e);
           const doc = (e.data as any).name || (e.data as any).target;
@@ -130,6 +131,7 @@ export default defineComponent({
           left: 'right'
         },
         tooltip: {},
+        // 数据更新动画的时长
         animationDurationUpdate: 1500,
         animationEasingUpdate: "quinticInOut",
         label: {
@@ -170,8 +172,8 @@ export default defineComponent({
               show: true,
               position: "top",
               fontSize: 14,
-              color: "#666",
-              textBorderColor: "#000",
+              color: "#555",
+              textBorderWidth: 1,
               // 将文档id进行处理 提取为文档最后一个名称
               formatter(params): string {
                 const name: string = (params.data as any).name;
@@ -180,11 +182,14 @@ export default defineComponent({
               },
             },
             force: {
-              repulsion: 200,
-              gravity: 0.1,
-              edgeLength: 80,
+              // 节点之间的斥力因子,值越大则斥力越大
+              repulsion: [nodeMap.size * 4, nodeMap.size * 6],
+              // 节点受到的向中心的引力因子。该值越大节点越往中心点靠拢
+              gravity: nodeMap.size / 800,
+              // 网络边长 节点数越多 边越长
+              edgeLength: [nodeMap.size * 1.2, nodeMap.size * 2],
             },
-            edgeSymbolSize: [4, 50],
+            edgeSymbolSize: 8,
             edgeSymbol: ["arrow"],
             edgeLabel: {
               show: false,

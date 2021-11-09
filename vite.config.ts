@@ -6,6 +6,7 @@ import DocBuildMove from './src/plugins/DocBuildMove'
 import WordCloudGenrator from './src/plugins/WordCloudGenerator'
 import StatisticInfoGenerator from './src/plugins/StatisticInfoGenerator'
 import KnowledgeNetworkGenerator from './src/plugins/KnowledgeNetworkGenerator'
+import DocTagsGenerator from './src/plugins/DocTagsGenerator'
 import VitePluginPrismjs from 'vite-plugin-prismjs'
 
 // https://vitejs.dev/config/
@@ -39,6 +40,10 @@ export default defineConfig({
     },
     {
       ...KnowledgeNetworkGenerator(),
+      apply: 'build'
+    },
+    {
+      ...DocTagsGenerator(),
       apply: 'build'
     },
     {

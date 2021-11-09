@@ -8,15 +8,34 @@ import SearchIndexSegment from "../dto/search/SearchIndexSegement";
 import { getMidString } from '../util/StringUtils';
 import {KnowledgeNode, KnowledgeLinkNode} from "../dto/KnowledgeNode";
 import DocUtils from "../util/DocUtils";
+import yaml from 'js-yaml'
+import DocMetadata from "@/dto/doc/DocMetadata";
+import Cacheable from "@/decorator/Cacheable";
 
-class DocService extends BaseService {
+
+class DocService extends BaseService implements Cacheable {
   private static dom = new JSDOM()
+  private static instance: DocService;
 
-  static async getFileInfo(path: string): Promise<DocFileInfo> {
+  private constructor(){
+    super()
+  }
+  name(): string {
+    return 'build::doc-service';
+  }
+
+  public static getInstance(): DocService {
+    if (!this.instance) {
+      this.instance = new DocService();
+    }
+    return this.instance;
+  }
+
+  public async getFileInfo(path: string): Promise<DocFileInfo> {
     const callResult = await Promise.all([GitService.getFileCommitList(path), fs.promises.readFile(path)])
     return {
       content: callResult[1].toString().replace(/^---$.*^---$/ms, ''), // 去除markdown里的元数据
-      metadata: DocService.resolveMetadata(callResult[1].toString()),
+      metadata: this.resolveMetadata(callResult[1].toString()),
       hasMoreCommit: callResult[0].length > 10,
       totalCommits: callResult[0].length,
       commitList: callResult[0].splice(0, Math.min(callResult[0].length, 10)),
@@ -32,7 +51,10 @@ class DocService extends BaseService {
    * @return {*}  {string}
    * @memberof DocService
    */
-  static resolveMetadata(content: string): string {
+  public resolveMetadata(content: string): string {
+    if (!content.trim().startsWith("---")) {
+      return "";
+    }
     const reg = new RegExp('^---$.*^---$', 'ms');
     const result = content.match(reg)
     if (result != null && result.length != 0) {
@@ -41,7 +63,49 @@ class DocService extends BaseService {
     return '';
   }
 
-  static md2text(md: string): string {
+
+  /**
+   *
+   * 构建标签映射
+   * @static
+   * @return {*}  {Promise<TagMappingItem[]>}
+   * @memberof DocService
+   */
+  public async  buildTagMapping(): Promise<Map<string, string[]>> {
+    const files = BaseService.listFilesBySuffix('md', 'doc');
+    interface TagAndFilename{
+      tags: string[]
+      filename: string
+    }
+    const taskList: Promise<TagAndFilename>[] = [];
+    // 将markdown转换为 标签列表, 文件名 映射
+    for(let file of files) {
+      taskList.push(
+        fs.promises.readFile(file)
+          .then(buffer => {
+            const metadata = yaml.load(this.resolveMetadata(buffer.toString())) as DocMetadata;
+            if (!metadata) {
+              return {tags:[], filename: file}
+            }
+            return {tags: metadata.tags, filename: file}
+          })
+      )
+    }
+    // 构建映射
+    const tagMap = new Map<string, string[]>();
+    const TagAndFilenameList = await Promise.all(taskList);
+    for(let tagAndFilename of TagAndFilenameList) {
+      for(let tag of tagAndFilename.tags) {
+        if (!tagMap.has(tag)) {
+          tagMap.set(tag, []);
+        }
+        tagMap.get(tag)?.push(tagAndFilename.filename);
+      }
+    }
+    return tagMap
+  }
+
+  public md2text(md: string): string {
     const html = marked(md)
     const dom =  new JSDOM(`<!DOCTYPE html><body>${html}</body></html>`)
     const text = dom.window.document.body.textContent || ''
@@ -57,7 +121,7 @@ class DocService extends BaseService {
    * @return {*}  {Promise<KnowledgeNode>}
    * @memberof DocService
    */
-  static async getKnowledgeNode(path: string): Promise<KnowledgeNode> {
+  public async getKnowledgeNode(path: string): Promise<KnowledgeNode> {
     return fs.promises.readFile(path).then(buffer => {
       const md = buffer.toString();
       const html = marked(md);
@@ -75,17 +139,17 @@ class DocService extends BaseService {
     })
   }
 
-  static async generateKnowledgeNetwork(): Promise<KnowledgeNode[]>{
+  public async generateKnowledgeNetwork(): Promise<KnowledgeNode[]>{
     const ignoreDoc = ['README', 'SUMMARY'];
     const fileList = BaseService.listFilesBySuffix('md', 'doc')
     const taskList :Promise<KnowledgeNode>[] = []
     for(let file of fileList) {
-      taskList.push(DocService.getKnowledgeNode(file))
+      taskList.push(this.getKnowledgeNode(file))
     }
     return (await Promise.all(taskList)).filter(v => ignoreDoc.indexOf(v.id) == -1).filter(v => v.links?.length != 0)
   }
 
-  static md2TextSegement(md: string): SearchIndexSegment[] {
+  public md2TextSegement(md: string): SearchIndexSegment[] {
     const html = marked(md)
     DocService.dom.window.document.body.innerHTML = `<!DOCTYPE html><body>${html}</body></html>`
     const elemts = DocService.dom.window.document.body.querySelectorAll('h1, h2, h3, h4, h5, h6');
@@ -108,18 +172,18 @@ class DocService extends BaseService {
     return segments
   }
 
-  static stringify(html: string):string {
+  public stringify(html: string):string {
     DocService.dom.window.document.body.innerHTML = `<!DOCTYPE html><body>${html}</body></html>`
     const result =  DocService.dom.window.document.body.textContent || ''
     return result
   }
 
-  static closeDom(dom :JSDOM) {
+  private closeDom(dom :JSDOM) {
     dom.window.document.body.innerHTML = '<html></html>'
     dom.window.close()
   }
 
-  static cleanText(text: string):string {
+  public cleanText(text: string):string {
     return text.replace(/\t/g, '')
               .split('\n') // 按行分割
               .filter(v => v.indexOf('```') == -1) // 去除代码块标记
@@ -128,4 +192,4 @@ class DocService extends BaseService {
   }
 }
 
-export default DocService
+export default DocService.getInstance()

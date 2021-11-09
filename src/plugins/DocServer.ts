@@ -9,16 +9,13 @@ import CommitInfo from '@/dto/CommitInfo'
 import DocService from '../build/DocService'
 import { StatisticInfo } from '@/dto/StatisticInfo'
 import StatisticService from '../build/StatisticService'
-import KnowledgeNode from '@/dto/KnowledgeNode'
+import {KnowledgeNode} from '@/dto/KnowledgeNode'
 
 let wordcloud: [string, number][] = []
 let statisticInfo : StatisticInfo
 let commitHeatmap : [string, number][] = []
 let knowledgeNetwork: KnowledgeNode[] = []
-interface DocFileInfo {
-  content: string,
-  commitList: CommitInfo[]
-}
+let tagMapping = new Map<string, string[]>()
 
 export default function DocServer(){
   return {
@@ -111,6 +108,20 @@ export default function DocServer(){
           }
           res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
           res.write(JSON.stringify(knowledgeNetwork))
+          res.end()
+        }else{
+          next()
+        }
+      })
+      // 标签映射
+      server.middlewares.use(async (req, res, next) => {
+        if (req.originalUrl && req.originalUrl == '/tagMapping.json') {
+          if (tagMapping.size == 0) {
+            console.log('标签映射为空 生成')
+            tagMapping = await DocService.buildTagMapping()
+          }
+          res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
+          res.write(JSON.stringify(Array.from(tagMapping.entries())))
           res.end()
         }else{
           next()

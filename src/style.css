@@ -1,3 +1,6 @@
+:root{
+  scroll-behavior: smooth;
+}
 #app {
   height: 100%;
 }

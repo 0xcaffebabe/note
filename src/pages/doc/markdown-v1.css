@@ -6,41 +6,44 @@
 /* Header
 -------------------- */
 
-.markdown-section h1, .markdown-section h2, .markdown-section h3 {
-  cursor: default;
-}
-
 .markdown-section h1 {
-  margin: 20px 0;
-  text-align: center;
   font-size: 32px;
 }
 
 .markdown-section h2 {
-  margin: 16px 0;
   padding-bottom: 8px;
   font-size: 28px;
   border-bottom: 1px solid #ddd;
 }
 
-.markdown-section h3 {
-  font-size: 22px;
+.markdown-section h1,
+.markdown-section h2,
+.markdown-section h3,
+.markdown-section h4,
+.markdown-section h5,
+.markdown-section h6 {
   position: relative;
-  margin: 10px 0;
 }
-.markdown-section h3:hover {
+.markdown-section h1:hover,
+.markdown-section h2:hover,
+.markdown-section h3:hover,
+.markdown-section h4:hover,
+.markdown-section h5:hover,
+.markdown-section h6:hover {
   cursor: pointer;
 }
-.markdown-section h3:hover::before {
+.markdown-section h1:hover::before,
+.markdown-section h2:hover::before,
+.markdown-section h3:hover::before,
+.markdown-section h4:hover::before,
+.markdown-section h5:hover::before,
+.markdown-section h6:hover::before
+{
   content: "#";
   position: absolute;
   top: 0;
-  left: -16px;
+  left: -24px;
   color: #66B1FF;
-}
-
-.markdown-section h4 {
-  margin: 10px 0;
 }
 
 /* Text Formating

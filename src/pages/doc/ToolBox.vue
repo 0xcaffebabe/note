@@ -37,6 +37,7 @@ export default defineComponent({
         {name: '知识网络', type: 'warning', action: 'showKnowledgeNetwork', hotkey: 'alt + k'},
         {name: '添加书签', type: 'danger', action: 'showBookMarkAdder'},
         {name: '书签列表', type: 'info', action: 'showBookMarkList'},
+        {name: '路径复制', type: 'success', action: 'copyDocPath'},
       ]
     }
   },

@@ -47,6 +47,7 @@
             @showKnowledgeNetwork="$refs.knowledgeNetwork.show();showAside = false;isDrawerShow = true"
             @showBookMarkAdder="$refs.bookMark.showAdder()"
             @showBookMarkList="$refs.bookMark.showMarkList()"
+            @copyDocPath="handleCopyDocPath"
           />
           <!-- 工具栏结束 -->
         </template>
@@ -89,6 +90,7 @@ import { ElMessage } from 'element-plus'
 import { ArrowLeftBold, ArrowRightBold } from "@element-plus/icons";
 import './markdown-v1.css'
 import './code-hl-vsc.css'
+import DocUtils from "@/util/DocUtils";
 
 let timer: NodeJS.Timeout;
 export default defineComponent({
@@ -143,6 +145,11 @@ export default defineComponent({
       }
       return chainList.reverse();
     },
+    async handleCopyDocPath(){
+      const url = "/" + DocUtils.docId2Url(this.doc);
+      await navigator.clipboard.writeText(url);
+      ElMessage.success('复制成功: ' + url);
+    },
     async showDoc(doc: string, headingId?: string) {
       // 将滚动条设置为上一次的状态
       document.body.scrollTo(0, docService.getDocReadRecord(doc))
@@ -157,6 +164,7 @@ export default defineComponent({
       this.$nextTick(() => {
         this.registerLinkRouter();
         this.registerImageClick();
+        this.registerHeadingClick();
         this.syncHeading(headingId);
         this.syncCategoryListScrollBar();
       });
@@ -205,7 +213,7 @@ export default defineComponent({
         };
       }
     },
-    // 管理业内图片点击行为
+    // 管理页内图片点击行为
     registerImageClick(){
       const imgList: NodeListOf<HTMLElement> = document.querySelectorAll(
         ".markdown-section .img-wrapper"
@@ -218,6 +226,26 @@ export default defineComponent({
           this.imageUrlList = [src];
           this.showImageViewer = true;
         };
+      }
+    },
+    // 管理页内heading点击行为
+    registerHeadingClick(){
+      const headingList: NodeListOf<HTMLElement> = document.querySelectorAll(
+        `.markdown-section h1,
+         .markdown-section h2,
+         .markdown-section h3,
+         .markdown-section h4,
+         .markdown-section h5,
+         .markdown-section h6`
+      );
+      for(let i = 0;i<headingList.length;i++){
+        const heading = headingList[i];
+        heading.onclick= async (e) => {
+          const id = heading.innerText;
+          const url = "/" + DocUtils.docId2Url(this.doc) + "#" + id;
+          await navigator.clipboard.writeText(url);
+          ElMessage.success('复制成功: ' + url);
+        }
       }
     },
     // 滚动监听

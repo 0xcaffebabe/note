@@ -41,6 +41,7 @@ class Api implements Cacheable{
    * @static
    * @memberof Api
    */
+  @cache
   public async getCategory() : Promise<DocFileInfo>{
     const data = await axios.get(baseUrl() + "SUMMARY.md.json")
     return data.data;
@@ -54,6 +55,7 @@ class Api implements Cacheable{
    * @return {*}  {Promise<[string, number][]>}
    * @memberof Api
    */
+  @cache
   public async getWordCloud(): Promise<[string, number][]>{
     const data = await axios.get(baseUrl() + 'wordcloud.json')
     return data.data
@@ -86,6 +88,10 @@ class Api implements Cacheable{
   @cache
   public async getKnowledgeNetwork(): Promise<KnowledgeNode[]> {
     return (await axios.get(baseUrl() + 'knowledgeNetwork.json')).data
+  }
+
+  public async getTagMapping(): Promise<[string,string[]][]> {
+    return (await axios.get(baseUrl() + "tagMapping.json")).data;
   }
 
   public static getInstance(){

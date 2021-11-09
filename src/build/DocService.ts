@@ -15,11 +15,30 @@ class DocService extends BaseService {
   static async getFileInfo(path: string): Promise<DocFileInfo> {
     const callResult = await Promise.all([GitService.getFileCommitList(path), fs.promises.readFile(path)])
     return {
-      content: callResult[1].toString(),
+      content: callResult[1].toString().replace(/^---$.*^---$/ms, ''), // 去除markdown里的元数据
+      metadata: DocService.resolveMetadata(callResult[1].toString()),
       hasMoreCommit: callResult[0].length > 10,
       totalCommits: callResult[0].length,
       commitList: callResult[0].splice(0, Math.min(callResult[0].length, 10)),
     } as DocFileInfo
+  }
+
+
+  /**
+   *
+   * 解析出markdown里的元数据
+   * @static
+   * @param {string} content
+   * @return {*}  {string}
+   * @memberof DocService
+   */
+  static resolveMetadata(content: string): string {
+    const reg = new RegExp('^---$.*^---$', 'ms');
+    const result = content.match(reg)
+    if (result != null && result.length != 0) {
+      return result[0].replace(/---/g, '');
+    }
+    return '';
   }
 
   static md2text(md: string): string {

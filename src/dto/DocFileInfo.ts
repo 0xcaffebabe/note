@@ -6,4 +6,5 @@ export default class DocFileInfo {
   // commitList默认最多只展示10个 用此字段标志是否有更多
   hasMoreCommit: boolean = false
   totalCommits: number = 0
+  metadata: string = ''
 }

@@ -7,6 +7,9 @@ import Cache from '@/decorator/Cache'
 import ReadHistoryItem from '@/dto/ReadHistoryItem'
 import DocUtils from '@/util/DocUtils'
 import DatasourceService from '@/service/DatasourceService'
+import yaml from 'js-yaml';
+import DocFileInfo from '@/dto/DocFileInfo'
+import DocMetadata from '@/dto/doc/DocMetadata'
 
 const cache = Cache()
 
@@ -231,6 +234,20 @@ class DocService implements Cacheable{
         result.push(i.getAttribute('src') || '')
       }
       return result;
+  }
+
+
+  /**
+   *
+   * 解析markdown标签列表
+   * @param {DocFileInfo} file
+   * @return {*}  {string[]}
+   * @memberof DocService
+   */
+  @cache
+  public resolveTagList(file: DocFileInfo): string[] {
+    const json = yaml.load(file.metadata) as DocMetadata;
+    return json?.tags
   }
 }
 

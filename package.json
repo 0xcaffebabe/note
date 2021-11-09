@@ -15,6 +15,7 @@
     "echarts": "^5.2.1",
     "echarts-wordcloud": "^2.0.0",
     "element-plus": "^1.2.0-beta.1",
+    "js-yaml": "^3.14.1",
     "jsdom": "^18.0.0",
     "jsmind": "^0.4.6",
     "less": "^4.1.2",
@@ -32,6 +33,7 @@
     "vuex": "^4.0.2"
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.4",
     "@types/jsdom": "^16.2.13",
     "@types/marked": "^3.0.1",
     "@types/mime": "^2.0.3",

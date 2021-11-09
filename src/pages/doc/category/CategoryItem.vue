@@ -9,7 +9,11 @@
     content="this is content, this is content, this is content"
   >
     <template #reference>
-      <el-menu-item :index="convert(value.link)" @click="handleMenuItemClick(value)" :class="{'hilight': isParent}">
+      <el-menu-item
+        :index="convert(value.link)"
+        @click="handleMenuItemClick(value)"
+        :class="{ hilight: isParent }"
+      >
         <template #title>
           <span>{{ value.name }}</span>
         </template>
@@ -19,8 +23,25 @@
       <el-skeleton :rows="1" animated :loading="loading" :throttle="500">
         <template #default>
           <p>{{ value.name }}</p>
-          <el-badge :value="lastPastDays + '天前更新'" class="item" type="warning"></el-badge>
-          <el-badge :value="wordCount + '字'" class="item" type="primary"></el-badge>
+          <el-badge
+            :value="lastPastDays + '天前更新'"
+            class="item"
+            type="warning"
+          ></el-badge>
+          <el-badge
+            :value="wordCount + '字'"
+            class="item"
+            type="primary"
+          ></el-badge>
+          <div>
+            <el-tag
+              v-for="item in tags"
+              :key="item"
+              size="mini"
+              type="success"
+              >{{ item }}</el-tag
+            >
+          </div>
         </template>
       </el-skeleton>
     </div>
@@ -41,23 +62,25 @@ export default defineComponent({
     value: Object as PropType<Category>,
     isParent: {
       type: Boolean,
-      deault: false
-    }
+      deault: false,
+    },
   },
   data() {
     return {
       loading: true as boolean,
       file: null as DocFileInfo | null,
+      // 标签
+      tags: [] as string[],
       // 离最后一次更新过去几天
       lastPastDays: 0 as number,
     };
   },
   computed: {
     wordCount() {
-      return cleanText(this.file?.content).length
-    }
+      return cleanText(this.file?.content).length;
+    },
   },
-  setup() { },
+  setup() {},
   methods: {
     // 将doc链接转为 x-x-x 形式的id
     convert(link: string): string {
@@ -65,6 +88,7 @@ export default defineComponent({
     },
     async handlePopoverShow() {
       this.file = await api.getDocFileInfo(this.convert(this.value!.link));
+      this.tags = DocService.resolveTagList(this.file);
       this.lastPastDays = this.calcLastUpdate();
       this.loading = false;
     },
@@ -72,7 +96,7 @@ export default defineComponent({
       this.loading = true;
     },
     handleMenuItemClick(value: Category) {
-      this.$store.commit('setCurrentCategory', value)
+      this.$store.commit("setCurrentCategory", value);
     },
     calcLastUpdate() {
       if (!this.file) {
@@ -94,5 +118,10 @@ export default defineComponent({
 <style lang="less" scoped>
 .hilight {
   font-weight: 650;
+}
+.el-tag {
+  cursor: pointer;
+  margin-left: 4px;
+  margin-bottom: 4px;
 }
 </style>

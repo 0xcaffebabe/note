@@ -38,7 +38,9 @@
               v-for="item in tags"
               :key="item"
               size="mini"
-              type="success"
+              :type="calcTagType(item)"
+              @click="$router.push('/tag?tag=' + item)"
+              effect="dark"
               >{{ item }}</el-tag
             >
           </div>
@@ -56,6 +58,7 @@ import api from "@/api";
 import DocFileInfo from "@/dto/DocFileInfo";
 import { cleanText } from "@/util/StringUtils";
 import DocService from "@/service/DocService";
+import TagUtils from "@/pages/tag/TagUtils";
 
 export default defineComponent({
   props: {
@@ -82,6 +85,9 @@ export default defineComponent({
   },
   setup() {},
   methods: {
+    calcTagType(tag: string): string {
+      return TagUtils.calcTagType(tag);
+    },
     // 将doc链接转为 x-x-x 形式的id
     convert(link: string): string {
       return DocService.docUrl2Id(link);

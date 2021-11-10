@@ -9,62 +9,118 @@
     </div>
     <div class="tag-zone">
       <transition-group name="list" tag="p">
-      <el-tag v-for="item in filtedTags" :key="item.tag" :type="item.type">{{
-        item.tag
-      }}</el-tag>
+        <el-tag
+          v-for="item in filtedTags"
+          :key="item.tag"
+          :type="item.type"
+          @click="handleTagClick(item.tag)"
+          :effect="checkedMap[item.tag] ? 'dark' : 'light'"
+          >{{ item.tag }}({{ item.count }})</el-tag
+        >
       </transition-group>
+    </div>
+    <!-- 数据展示区 -->
+    <div class="chapter-zone" v-show="chapters && chapters.length != 0">
+      <el-table :data="chapters" style="width: 100%">
+        <el-table-column label="匹配文章">
+          <template #default="scope">
+            <el-icon><timer /></el-icon>
+            <span style="margin-left: 10px">
+              <el-link type="primary" @click="$router.push('/doc/' + docUrl2Id(scope.row))">{{docUrl2Id(scope.row)}}</el-link>
+            </span>
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Search } from '@element-plus/icons'
+import { Search } from "@element-plus/icons";
 </script>
 
 <script lang="ts">
 import api from "@/api";
 import { defineComponent } from "vue";
+import DocUtils from "@/util/DocUtils";
+import TagUtils from './TagUtils';
 
-function hashCode(str: string) {
-  let hash = 0, i, chr;
-  if (str.length === 0) return hash;
-  for (i = 0; i < str.length; i++) {
-    chr   = str.charCodeAt(i);
-    hash  = ((hash << 5) - hash) + chr;
-    hash |= 0; // Convert to 32bit integer
-  }
-  return hash;
-}
+
 
 export default defineComponent({
   data() {
     return {
-      tags: [] as {tag: string, type: string}[],
-      kw: '' as string
+      tags: [] as { tag: string; type: string; count: number }[],
+      // 记录标签是否被选中
+      checkedMap: {} as any,
+      kw: "" as string,
     };
   },
   setup() {},
   methods: {
+    docUrl2Id(url: string): string{
+      return DocUtils.docUrl2Id(url);
+    },
     randomType(item: string) {
-      const types = ["", "info", "warning", "success", "danger"];
-      const index = hashCode(item) % 5;
-      return types[index];
+      return TagUtils.calcTagType(item);
+    },
+    handleTagClick(tag: string) {
+      if (this.checkedMap[tag]) {
+        this.checkedMap[tag] = !this.checkedMap[tag];
+      } else {
+        this.checkedMap[tag] = true;
+      }
     },
   },
   computed: {
-    filtedTags(){
-      return this.tags.filter(v => v.tag.indexOf(this.kw) != -1)
-    }
+    filtedTags() {
+      return this.tags.filter((v) => v.tag.indexOf(this.kw) != -1);
+    },
+    chapters() {
+      console.log(
+        new Set(
+          this.filtedTags
+            .filter((v) => this.checkedMap[v.tag])
+            .flatMap((v) => v.chapters)
+            .map((v) => {
+              return { chapter: v };
+            })
+        )
+      );
+      return Array.from(
+        new Set(
+          this.filtedTags
+            .filter((v) => this.checkedMap[v.tag])
+            .flatMap((v) => v.chapters)
+        )
+      );
+    },
   },
   async created() {
-    let list = (await api.getTagMapping()).map((v) => v[0]);
+    let list = (await api.getTagMapping()).map((v) => {
+      return { tag: v[0], count: v[1].length, chapters: v[1] };
+    });
     // mock to test
-    for (let i = 0; i < 8; i++) {
-      list.push(...list);
+    for (let i = 0; i < 5; i++) {
+      // list.push(...list);
     }
     this.tags = list
-        .map((v) => v + Math.ceil(Math.random() * 1000000))
-        .map(v =>{ return {tag: v, type: this.randomType(v)}})
+      // .map((v) => {return {tag: v.tag + Math.ceil(Math.random() * 1000000), count: v.count, chapters: v.chapters}})
+      .map((v) => {
+        return {
+          tag: v.tag,
+          type: this.randomType(v.tag),
+          count: v.count,
+          chapters: v.chapters,
+        };
+      });
+  },
+  mounted(){
+    // 通过url传参 确认哪些标签
+    console.log(this.$route.query);
+    if (this.$route.query.tag) {
+      this.checkedMap[this.$route.query.tag.toString()] = true
+    }
   },
 });
 </script>
@@ -93,12 +149,17 @@ export default defineComponent({
   border-radius: 50px;
   font-size: 32px;
   line-height: 48px;
-  padding: 30px 60px!important;
+  padding: 30px 60px !important;
 }
 .el-input__icon {
   vertical-align: middle;
   margin-left: 10px;
   margin-top: 14px;
+}
+.chapter-zone {
+  max-width: 60%;
+  text-align: center;
+  margin: 0 auto;
 }
 
 .list-item {

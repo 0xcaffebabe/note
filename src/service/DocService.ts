@@ -239,6 +239,24 @@ class DocService implements Cacheable{
 
   /**
    *
+   * 解析出html里面的所有 a 标签
+   * @param {string} docHtml
+   * @return {*}  {{text:string, link: string}[]}
+   * @memberof DocService
+   */
+  public resolveLinkList(docHtml: string): {text:string, link: string}[] {
+    const document = new DOMParser().parseFromString(docHtml, 'text/html');
+    const aList = document.querySelectorAll('a');
+    const result: {text:string, link: string}[] = []
+    for(let i of aList) {
+      result.push({text: i.innerText, link: i.getAttribute('href') || ''})
+    }
+    return result;
+  }
+
+
+  /**
+   *
    * 解析markdown标签列表
    * @param {DocFileInfo} file
    * @return {*}  {string[]}

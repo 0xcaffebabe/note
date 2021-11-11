@@ -48,6 +48,7 @@
             @showBookMarkAdder="$refs.bookMark.showAdder()"
             @showBookMarkList="$refs.bookMark.showMarkList()"
             @copyDocPath="handleCopyDocPath"
+            @showLinkList="$refs.linkList.show()"
           />
           <!-- 工具栏结束 -->
         </template>
@@ -62,6 +63,7 @@
   <el-backtop :bottom="40" :right="326" />
   <reading-history ref="readingHistory" />
   <mind-graph ref="mindGraph" @close="showAside = true;isDrawerShow = false" />
+  <link-list :html="contentHtml" ref="linkList"/>
   <book-mark ref="bookMark" :doc="doc" />
   <keep-alive>
     <knowledge-network ref="knowledgeNetwork" :doc="doc" @close="showAside = true;isDrawerShow = false"/>
@@ -81,6 +83,7 @@ import HistoryList from "./commit/HistoryList.vue";
 import ReadingHistory from "./history/ReadingHistory.vue"
 import MindGraph from './mind/MindGraph.vue'
 import BookMark from './book-mark/BookMark.vue'
+import LinkList from './LinkList.vue';
 import ToolBox from './ToolBox.vue';
 import KnowledgeNetwork from "./knowledge/KnowledgeNetwork.vue";
 import api from "@/api";
@@ -102,6 +105,7 @@ export default defineComponent({
     MindGraph,
     BookMark,
     ToolBox,
+    LinkList,
     KnowledgeNetwork,
     ArrowLeftBold,
     ArrowRightBold

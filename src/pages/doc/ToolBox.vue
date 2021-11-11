@@ -38,6 +38,7 @@ export default defineComponent({
         {name: '添加书签', type: 'danger', action: 'showBookMarkAdder'},
         {name: '书签列表', type: 'info', action: 'showBookMarkList'},
         {name: '路径复制', type: 'success', action: 'copyDocPath'},
+        {name: '链接列表', type: 'primary', action: 'showLinkList'},
       ]
     }
   },

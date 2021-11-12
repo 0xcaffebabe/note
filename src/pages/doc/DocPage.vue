@@ -332,11 +332,11 @@ export default defineComponent({
 }
 .center {
   transition: all 0.2s;
-  padding-left: 8rem;
+  padding-left: 4rem;
 }
 @media screen and(max-width: 1366px) {
   .center {
-    padding-left: 2rem;
+    padding-left: 0rem;
   }
   .toc-wrapper {
   right: 2px;

@@ -76,7 +76,7 @@ export default defineComponent({
       });
       // 计算阅读进度
       document.addEventListener('scroll', (e) => {
-        this.progress = Math.ceil((window.scrollY / (document.body.offsetHeight- 979)) * 100 );
+        this.progress = Math.max(0, Math.floor((window.scrollY / (document.body.offsetHeight- 979)) * 100 ));
       })
     },
   },

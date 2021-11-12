@@ -10,6 +10,8 @@ import DatasourceService from '@/service/DatasourceService'
 import yaml from 'js-yaml';
 import DocFileInfo from '@/dto/DocFileInfo'
 import DocMetadata from '@/dto/doc/DocMetadata'
+import TagService from './TagService'
+import TagSumItem from '@/dto/tag/TagSumItem'
 
 const cache = Cache()
 
@@ -20,7 +22,7 @@ const baseUrl = () => {
 
 class DocService implements Cacheable{
 
-  private static instance: DocService
+  private static instance: DocService;
 
   private constructor(){}
 
@@ -37,7 +39,8 @@ class DocService implements Cacheable{
 
   @cache
   public renderMd(mdContent: string) : string {
-    const render = new marked.Renderer()
+    const render = new marked.Renderer();
+    const tagList: TagSumItem[] = TagService.getTagSumList();
     // 自定义url渲染
     render.link = (href: string | null, title: string | null, text: string | null) : string => {
       if (!href?.startsWith('http')) {
@@ -57,6 +60,16 @@ class DocService implements Cacheable{
         href = baseUrl() + href.replace('/', '')
       }
       return `<p class="img-wrapper"><img src='${href}'/><p class="img-title">${text}</p></p>`
+    }
+    // 自定义文本渲染 若发现关键字包含标签 则插入标记
+    render.text = (text: string): string => {
+      for(let i of tagList) {
+        const reg = new RegExp(i.tag);
+        if (text.indexOf(i.tag) != -1) {
+          text = text.replace(i.tag, (str: string) =>`<u class="doc-tag-main">${str}</u><sup class="doc-tag" tag="${i.tag}">${i.count}</sup>`);
+        }
+      }
+      return text;
     }
     return  marked(mdContent, {
       renderer: render
@@ -187,7 +200,7 @@ class DocService implements Cacheable{
   @cache
   public getContent(docHtml: string): Content[] {
     const elm = new DOMParser().parseFromString(docHtml, 'text/html')
-    const allHead = elm.querySelectorAll('h1, h2, h3, h4, h5, h6')
+    const allHead:NodeListOf<HTMLElement> = elm.querySelectorAll('h1, h2, h3, h4, h5, h6')
     // 用来存储最近的Hx节点
     /* 
       算法概要：
@@ -200,8 +213,9 @@ class DocService implements Cacheable{
     for(let i = 0;i<allHead.length;i++){
       const head = allHead[i]
       let level = parseInt(head.tagName.replace('H', ''))
-      let content = new Content()
-      content.name = head.innerHTML
+      let content = new Content();
+      // 这里考虑到标题里面可能由html标签构成 若是html标签构成 取其第一个孩子元素的文本内容，否则取其本身文本内容
+      content.name = head.firstChild?.textContent || head.innerText;
       content.link = head.getAttribute("id")!
       contentMap[level] = content
       if (level == 1) {

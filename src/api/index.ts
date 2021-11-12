@@ -90,6 +90,7 @@ class Api implements Cacheable{
     return (await axios.get(baseUrl() + 'knowledgeNetwork.json')).data
   }
 
+  @cache
   public async getTagMapping(): Promise<[string,string[]][]> {
     return (await axios.get(baseUrl() + "tagMapping.json")).data;
   }

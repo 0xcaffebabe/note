@@ -29,3 +29,18 @@ body {
 .markdown-section {
   z-index: 5000;
 }
+.markdown-section .doc-tag {
+  cursor: pointer;
+  padding: 0 6px;
+  color: white;
+  font-size: 12px;
+  background-color: #F56C6C;
+  border-radius: 10px;
+}
+.markdown-section .doc-tag::selection {
+  background-color: transparent;
+}
+.markdown-section .doc-tag-main {
+  text-decoration: none;
+  border-bottom: 1px dashed #ccc;
+}

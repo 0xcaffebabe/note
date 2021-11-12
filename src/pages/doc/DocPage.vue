@@ -169,6 +169,7 @@ export default defineComponent({
         this.registerLinkRouter();
         this.registerImageClick();
         this.registerHeadingClick();
+        this.registerDocTagSupClick();
         this.syncHeading(headingId);
         this.syncCategoryListScrollBar();
       });
@@ -250,6 +251,21 @@ export default defineComponent({
           await navigator.clipboard.writeText(url);
           ElMessage.success('复制成功: ' + url);
         }
+      }
+    },
+    // 管理doc-tag角标点击行为
+    registerDocTagSupClick(){
+      const supList: NodeListOf<HTMLElement> = document.querySelectorAll(
+        ".markdown-section .doc-tag"
+      );
+      for (let i = 0; i < supList.length; i++) {
+        const sup = supList[i];
+        sup.onclick = (e: Event) => {
+          const tag = sup.getAttribute('tag') || '';
+          this.$router.push('/tag?tag=' + tag)
+          e.preventDefault();
+          e.stopPropagation();
+        };
       }
     },
     // 滚动监听

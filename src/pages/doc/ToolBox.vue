@@ -1,9 +1,12 @@
 <template>
   <div position="bottom" :offset="20" class="tool-box">
     <el-dropdown>
+      <div>
+
       <el-button type="primary" round size="mini">
         <el-icon style="vertical-align: middle"><tools /></el-icon> 工具栏
       </el-button>
+      </div>
       <template #dropdown>
         <el-dropdown-menu>
           <el-dropdown-item v-for="action in actionList" :key="action.name"

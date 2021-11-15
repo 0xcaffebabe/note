@@ -9,10 +9,10 @@
         @select="handleSearchSelect"
         ref="input"
       >
-      <template #default="{ item }">
-        <div class="search-suggestion-item">{{ item.query }}</div>
-        <el-badge :value="item.popularity" />
-    </template>
+        <template #default="{ item }">
+          <div class="search-suggestion-item">{{ item.query }}</div>
+          <el-badge :value="item.popularity" />
+        </template>
       </el-autocomplete>
     </template>
     <div class="search-result" v-loading="showLoading">
@@ -36,9 +36,7 @@
     </div>
     <el-empty
       v-show="showEmpty"
-      :description="
-        kw ? `按下回车以搜索 ${kw}` : '搜索结果将在这里展示'
-      "
+      :description="kw ? `按下回车以搜索 ${kw}` : '搜索结果将在这里展示'"
       v-if="resultList.length == 0"
     />
   </el-drawer>
@@ -121,17 +119,19 @@ export default defineComponent({
         },
       });
     },
-    handleSearchSelect(item: SearchSuggestion){
+    handleSearchSelect(item: SearchSuggestion) {
       this.kw = item.query;
       this.handleSearch();
     },
-    getSearchSuggestion(queryString: string, cb: any){
+    getSearchSuggestion(queryString: string, cb: any) {
       if (!queryString) {
-        return cb([])
+        return cb([]);
       }
-      const filtedSuggestions = this.searchSuggestionList.filter(v => v.query.toLowerCase().indexOf(queryString.toLowerCase()) != -1)
-      cb(filtedSuggestions)
-    }
+      const filtedSuggestions = this.searchSuggestionList.filter(
+        (v) => v.query.toLowerCase().indexOf(queryString.toLowerCase()) != -1
+      );
+      cb(filtedSuggestions);
+    },
   },
 });
 </script>

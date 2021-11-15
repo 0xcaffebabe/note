@@ -11,6 +11,7 @@ import DocUtils from "../util/DocUtils";
 import yaml from 'js-yaml'
 import DocMetadata from "@/dto/doc/DocMetadata";
 import Cacheable from "@/decorator/Cacheable";
+import ArrayUtils from "../util/ArrayUtils";
 
 
 class DocService extends BaseService implements Cacheable {
@@ -38,7 +39,8 @@ class DocService extends BaseService implements Cacheable {
       metadata: this.resolveMetadata(callResult[1].toString()),
       hasMoreCommit: callResult[0].length > 10,
       totalCommits: callResult[0].length,
-      commitList: callResult[0].splice(0, Math.min(callResult[0].length, 10)),
+      commitList: ArrayUtils.topN(callResult[0], 10),
+      createTime: ArrayUtils.last(callResult[0])?.date || '',
     } as DocFileInfo
   }
 

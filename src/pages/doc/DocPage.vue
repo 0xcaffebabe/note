@@ -31,6 +31,7 @@
               :key="chain.name"
             >{{ chain.name }}</el-breadcrumb-item>
           </el-breadcrumb>
+          <p class="create-time">⏰创建时间: {{file.createTime}}</p>
           <div class="markdown-section" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '960px': '74%'}"></div>
           <!-- 提交历史开始 -->
           <div style="text-align: center">
@@ -312,6 +313,12 @@ export default defineComponent({
 .main {
   padding-left: 4em;
   padding-bottom: 20px;
+}
+.create-time {
+  padding-top: 10px;
+  margin: 0;
+  font-size: 12px;
+  color: #888;
 }
 .toc-wrapper {
   position: fixed;

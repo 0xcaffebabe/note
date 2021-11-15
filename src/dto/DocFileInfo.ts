@@ -7,4 +7,5 @@ export default class DocFileInfo {
   hasMoreCommit: boolean = false
   totalCommits: number = 0
   metadata: string = ''
+  createTime: string = ''
 }

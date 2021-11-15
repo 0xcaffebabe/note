@@ -12,7 +12,7 @@
           <el-dropdown-item v-for="action in actionList" :key="action.name"
             ><el-button
               class="box-item"
-              @click="$emit(action.action)"
+              @click="action.local ? localActionDispatch(action.action) : $emit(action.action)"
               :type="action.type"
               size="mini"
               >{{action.name}} <kbd v-if="action.hotkey">{{action.hotkey}}</kbd> </el-button
@@ -22,6 +22,18 @@
       </template>
     </el-dropdown>
   </div>
+  <el-drawer
+    v-model="showDrawer"
+    title="更多设置"
+    :lock-scroll="false"
+  >
+    <div class="more-setting-container">
+      <div>
+        <span>字体大小</span>
+        <el-slider v-model="fontSize" :min="16" :max="48" :step="1" @input="handleFontSizeChange"></el-slider>
+      </div>
+    </div>
+  </el-drawer>
 </template>
 
 <script lang="ts">
@@ -34,6 +46,8 @@ export default defineComponent({
   },
   data(){
     return {
+      showDrawer: false,
+      fontSize: 1,
       actionList: [
         {name: '阅读历史', type: 'primary', action: 'showReadingHistory'},
         {name: '思维导图', type: 'success', action: 'showMindGraph', hotkey: 'alt + l'},
@@ -42,10 +56,20 @@ export default defineComponent({
         {name: '书签列表', type: 'info', action: 'showBookMarkList'},
         {name: '路径复制', type: 'success', action: 'copyDocPath'},
         {name: '链接列表', type: 'primary', action: 'showLinkList'},
+        {name: '更多设置', type: 'info', action: 'showMoreSetting', local: true},
       ]
     }
   },
   methods: {
+    localActionDispatch(action: string){
+      switch(action) {
+        case 'showMoreSetting':
+          this.showDrawer = true;
+          break;
+        default:
+          break;
+      }
+    },
     handleKeyDown(e: KeyboardEvent){
       const actions = this.actionList.filter(v => v.hotkey)
       for(let action of actions) {
@@ -62,10 +86,18 @@ export default defineComponent({
           mainKeyPressed = e.shiftKey;
         }
         if (mainKeyPressed && e.key.toUpperCase() == subKey.toUpperCase()) {
-          this.$emit(action.action);
+          if (!action.local) {
+            this.$emit(action.action);
+          }else {
+            this.localActionDispatch(action.action);
+          }
           return e.preventDefault();
         }
       }
+    },
+    handleFontSizeChange(val: number) {
+      const dom: HTMLElement = document.querySelector('.markdown-section')!;
+      dom.style.fontSize = val + 'px';
     }
   },
   setup() {},
@@ -88,5 +120,8 @@ export default defineComponent({
 }
 .box-item {
   width: 140px;
+}
+.more-setting-container {
+  padding: 10px;
 }
 </style>

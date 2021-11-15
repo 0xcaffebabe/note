@@ -3,8 +3,8 @@
     <el-header v-show="showHeader">
       <el-affix :offset="0">
         <Header
-          @search="$refs.search.show()"
-          @category-search="$refs.categorySearch.show()"
+          @search="showSearch"
+          @category-search="showCategorySearch"
         />
       </el-affix>
     </el-header>
@@ -25,7 +25,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed } from "vue";
+import { defineComponent, computed, ref } from "vue";
 import Header from "./components/header/Header.vue";
 import Search from "@/components/search/Search.vue";
 import CategorySearch from "@/components/search/CategorySearch.vue";
@@ -39,7 +39,20 @@ export default defineComponent({
     ArrowUpBold,
     ArrowDownBold,
   },
-  setup() {},
+  setup() {
+    const search = ref<InstanceType<typeof Search>>()
+    const categorySearch = ref<InstanceType<typeof CategorySearch>>()
+    const showSearch = () => {
+      search.value?.show()
+    }
+    const showCategorySearch = () => {
+      categorySearch.value?.show()
+    }
+    return {
+      search, showSearch,
+      categorySearch, showCategorySearch
+    }
+  },
   provide(){
     return {
       showHeader: computed(() => this.showHeader)

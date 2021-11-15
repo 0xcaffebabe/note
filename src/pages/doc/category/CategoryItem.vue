@@ -53,7 +53,6 @@
 <script lang="ts">
 import Category from "@/dto/Category";
 import { defineComponent, PropType } from "vue";
-import categoryService from "@/service/CategoryService";
 import api from "@/api";
 import DocFileInfo from "@/dto/DocFileInfo";
 import { cleanText } from "@/util/StringUtils";
@@ -62,7 +61,10 @@ import TagUtils from "@/pages/tag/TagUtils";
 
 export default defineComponent({
   props: {
-    value: Object as PropType<Category>,
+    value: {
+      type: Category as PropType<Category>,
+      required: true
+    },
     isParent: {
       type: Boolean,
       deault: false,

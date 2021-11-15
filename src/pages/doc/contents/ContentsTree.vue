@@ -10,11 +10,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import Category from "@/dto/Category";
+import { defineComponent, PropType  } from "vue";
 
 export default defineComponent({
   props: {
-    contentsList: Array,
+    contentsList: {
+      type: Array as PropType<Category[]>,
+      required: true,
+    }
   },
   methods: {
     handleTocItemClick(id: string){

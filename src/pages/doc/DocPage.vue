@@ -43,13 +43,13 @@
           <!-- 提交历史结束 -->
           <!-- 工具栏开始 -->
           <tool-box 
-            @showReadingHistory="$refs.readingHistory.show()"
-            @showMindGraph="$refs.mindGraph.show();showAside = false;isDrawerShow = true"
-            @showKnowledgeNetwork="$refs.knowledgeNetwork.show();showAside = false;isDrawerShow = true"
-            @showBookMarkAdder="$refs.bookMark.showAdder()"
-            @showBookMarkList="$refs.bookMark.showMarkList()"
+            @showReadingHistory="showReadingHistory"
+            @showMindGraph="showMindGraph();showAside = false;isDrawerShow = true"
+            @showKnowledgeNetwork="showKnowledgeNetwork();showAside = false;isDrawerShow = true"
+            @showBookMarkAdder="showBookmarkAdder"
+            @showBookMarkList="showBookmarkList"
             @copyDocPath="handleCopyDocPath"
-            @showLinkList="$refs.linkList.show()"
+            @showLinkList="showLinkList"
           />
           <!-- 工具栏结束 -->
         </template>
@@ -73,7 +73,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, ref } from "vue";
 import Category from "@/dto/Category";
 import Content from "@/dto/Content";
 import categoryService from "@/service/CategoryService";
@@ -120,6 +120,38 @@ export default defineComponent({
       immediate: true,
     }
     
+  },
+  setup(){
+    const readingHistory = ref<InstanceType<typeof ReadingHistory>>()
+    const mindGraph = ref<InstanceType<typeof MindGraph>>()
+    const knowledgeNetwork = ref<InstanceType<typeof KnowledgeNetwork>>()
+    const bookMark = ref<InstanceType<typeof BookMark>>()
+    const linkList = ref<InstanceType<typeof LinkList>>()
+    const showReadingHistory = () => {
+      readingHistory.value?.show()
+    }
+    const showMindGraph = () => {
+      mindGraph.value?.show()
+    }
+    const showKnowledgeNetwork = () => {
+      knowledgeNetwork.value?.show()
+    }
+    const showBookmarkAdder = () => {
+      bookMark.value?.showAdder()
+    }
+    const showBookmarkList = () => {
+      bookMark.value?.showMarkList()
+    }
+    const showLinkList = () => {
+      linkList.value?.show()
+    }
+    return {
+      readingHistory,showReadingHistory, 
+      mindGraph, showMindGraph, 
+      knowledgeNetwork, showKnowledgeNetwork,
+      bookMark, showBookmarkAdder, showBookmarkList, 
+      linkList, showLinkList
+    }
   },
   data() {
     return {

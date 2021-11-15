@@ -169,8 +169,8 @@ jmnodes.theme-primary1 jmnode.selected {
   background-color: #f56c6c;
 }
 /* 根节点样式 */
-jmnodes.theme-primary1 jmnode.root {
-}
+// jmnodes.theme-primary1 jmnode.root {
+// }
 /* 展开/关闭节点的控制点样式 */
 jmnodes.theme-primary1 jmexpander {
   transition: all 0.2s;

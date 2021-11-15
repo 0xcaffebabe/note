@@ -41,22 +41,26 @@ import { Search } from "@element-plus/icons";
 
 <script lang="ts">
 import api from "@/api";
-import { defineComponent } from "vue";
+import { defineComponent, ref } from "vue";
 import DocUtils from "@/util/DocUtils";
 import TagUtils from './TagUtils';
 
-
+interface TagItem {
+  tag: string
+  type: string
+  count: number,
+  chapters: string[]
+}
 
 export default defineComponent({
   data() {
     return {
-      tags: [] as { tag: string; type: string; count: number }[],
+      tags: [] as TagItem[],
       // 记录标签是否被选中
       checkedMap: {} as any,
       kw: "" as string,
     };
   },
-  setup() {},
   methods: {
     docUrl2Id(url: string): string{
       return DocUtils.docUrl2Id(url);
@@ -73,27 +77,14 @@ export default defineComponent({
     },
   },
   computed: {
-    filtedTags() {
+    filtedTags(): TagItem[] {
       return this.tags.filter((v) => v.tag.indexOf(this.kw) != -1);
     },
     chapters() {
-      console.log(
-        new Set(
-          this.filtedTags
+       const list: string[] = this.filtedTags
             .filter((v) => this.checkedMap[v.tag])
             .flatMap((v) => v.chapters)
-            .map((v) => {
-              return { chapter: v };
-            })
-        )
-      );
-      return Array.from(
-        new Set(
-          this.filtedTags
-            .filter((v) => this.checkedMap[v.tag])
-            .flatMap((v) => v.chapters)
-        )
-      );
+      return Array.from(new Set(list))
     },
   },
   async created() {

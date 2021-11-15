@@ -1,8 +1,8 @@
 <template>
   <div class="container">
     <div class="banner">
-      <div>This is {{ name }} homepage</div>
-      <p>For instead gitbook</p>
+      <p>{{ name }}</p>
+      <p>点击以开始</p>
       <el-button type="primary" round size="medium" @click="$router.push('/doc/README')">开始</el-button>
       <el-button type="success" round size="medium" @click="handleContinueRead">继续阅读</el-button>
     </div>
@@ -14,9 +14,9 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import api from '../../api'
 import docService from '@/service/DocService'
 import Statistic from './statistic/Statistic.vue'
+import config from '@/config'
 
 export default defineComponent({
   components: {
@@ -27,7 +27,7 @@ export default defineComponent({
   },
   data() {
     return {
-      name: "my-book"
+      name: config.siteName
     }
   },
   methods:{

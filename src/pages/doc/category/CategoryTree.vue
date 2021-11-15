@@ -1,5 +1,5 @@
 <template>
-  <template v-for="value in this.menuList">
+  <template v-for="value in menuList">
     <el-sub-menu
       :index="convert(value.link) + 'p'"
       v-if="value.chidren.length != 0"
@@ -26,8 +26,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import categoryService from "@/service/CategoryService";
+import { defineComponent, PropType } from "vue";
 import Category from "@/dto/Category";
 import CategoryItem from './CategoryItem.vue'
 import DocService from "@/service/DocService";
@@ -37,7 +36,10 @@ export default defineComponent({
     CategoryItem
   },
   props: {
-    menuList: Array,
+    menuList: {
+      type: Array as PropType<Category[]>,
+      required: true
+    },
   },
   methods: {
     uuid(): string {

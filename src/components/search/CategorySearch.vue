@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="showDialog" width="25%" @opened="$refs.autoComplete.focus()">
+  <el-dialog v-model="showDialog" width="25%" @opened="focusAutoComplete">
     <el-autocomplete
     v-model="kw"
     :fetch-suggestions="querySearch"
@@ -10,9 +10,6 @@
     @select="handleSelect"
     size="medium"
   >
-    <template #suffix>
-      <i class="el-icon-edit el-input__icon" @click="handleIconClick"></i>
-    </template>
     <template #default="{ item }">
       <div class="value" v-html="renderHilighHTML(item.name)"></div>
       <span class="link">{{ docUrl2Id(item.link) }}</span>
@@ -25,10 +22,19 @@
 import Category from '@/dto/Category'
 import CategoryService from '@/service/CategoryService'
 import DocUtils from '@/util/DocUtils'
-import { defineComponent, } from 'vue'
+import { ElAutocomplete } from 'element-plus'
+import { defineComponent, ref } from 'vue'
 
 export default defineComponent({
-  setup() {},
+  setup() {
+    const autoComplete = ref<InstanceType<typeof ElAutocomplete>>();
+    const focusAutoComplete = () => {
+      autoComplete.value?.focus()
+    }
+    return {
+      autoComplete, focusAutoComplete
+    }
+  },
   data(){
     return {
       showDialog: false as boolean,

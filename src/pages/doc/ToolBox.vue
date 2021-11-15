@@ -1,5 +1,5 @@
 <template>
-  <div position="bottom" :offset="20" class="tool-box">
+  <div position="bottom" :offset="20" class="tool-box" :style="{'top': parentShowHeader? '80px': '20px'}">
     <el-dropdown>
       <div>
 
@@ -41,13 +41,23 @@ import { defineComponent } from "vue";
 import {Tools} from '@element-plus/icons'
 
 export default defineComponent({
+  inject: ['showHeader'],
   components: {
     Tools
+  },
+  watch: {
+    showHeader: {
+      handler(val){
+        this.parentShowHeader = val;
+      },
+      immediate: true
+    }
   },
   data(){
     return {
       showDrawer: false,
       fontSize: 1,
+      parentShowHeader: true,
       actionList: [
         {name: '阅读历史', type: 'primary', action: 'showReadingHistory'},
         {name: '思维导图', type: 'success', action: 'showMindGraph', hotkey: 'alt + l'},
@@ -114,9 +124,9 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .tool-box {
+  transition: all 0.2s;
   position: fixed;
   right: 300px;
-  top: 100px;
 }
 .box-item {
   width: 140px;

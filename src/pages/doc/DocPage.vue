@@ -1,7 +1,7 @@
 <template>
   <el-container>
     <el-aside width="280px" v-show="showAside" :lock-scroll="false">
-      <div class="category-wrapper">
+      <div class="category-wrapper" :style="{'height': parentShowHeader ? 'calc(100% - 60px)': '100%'}">
         <keep-alive>
           <category-list ref="categoryList" :doc="doc" />
         </keep-alive>
@@ -54,7 +54,7 @@
           <!-- 工具栏结束 -->
         </template>
       </el-skeleton>
-      <div class="toc-wrapper">
+      <div class="toc-wrapper" :style="{'top': parentShowHeader ? '80px': '20px'}">
         <keep-alive>
           <contents-list :contentsList="contentsList" />
         </keep-alive>
@@ -98,6 +98,7 @@ import DocUtils from "@/util/DocUtils";
 
 let timer: NodeJS.Timeout;
 export default defineComponent({
+  inject: ['showHeader'],
   components: {
     CategoryList,
     ContentsList,
@@ -111,6 +112,15 @@ export default defineComponent({
     ArrowLeftBold,
     ArrowRightBold
   },
+  watch: {
+    showHeader: {
+      handler(val){
+        this.parentShowHeader = val;
+      },
+      immediate: true,
+    }
+    
+  },
   data() {
     return {
       cateList: [] as Category[],
@@ -121,7 +131,8 @@ export default defineComponent({
       showAside: true as boolean,
       showImageViewer: false as boolean,
       isDrawerShow: false as boolean,
-      imageUrlList: [] as string[]
+      imageUrlList: [] as string[],
+      parentShowHeader: true as boolean,
     };
   },
   computed: {
@@ -305,9 +316,9 @@ export default defineComponent({
   justify-content: space-between;
 }
 .category-wrapper {
+  transition: all 0.2s;
   position: fixed;
   overflow-y: scroll;
-  height: calc(100% - 60px);
   width: 280px;
 }
 .main {
@@ -321,8 +332,8 @@ export default defineComponent({
   color: #888;
 }
 .toc-wrapper {
+  transition: all 0.2s;
   position: fixed;
-  top: 80px;
   right: 16px;
   height: calc(100% - 60px);
 }

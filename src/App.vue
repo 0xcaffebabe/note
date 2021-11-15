@@ -1,61 +1,89 @@
 <template>
   <el-container>
-    <el-header>
+    <el-header v-show="showHeader">
       <el-affix :offset="0">
-        <Header @search="$refs.search.show()" @category-search="$refs.categorySearch.show()"/>
+        <Header
+          @search="$refs.search.show()"
+          @category-search="$refs.categorySearch.show()"
+        />
       </el-affix>
     </el-header>
+    <div class="header-toggle-button" :style="{'margin-top': showHeader ?'32px': ''}">
+      <el-button @click="showHeader = !showHeader" size="mini">
+        <el-icon>
+          <arrow-up-bold v-if="showHeader" />
+          <arrow-down-bold v-else />
+        </el-icon>
+      </el-button>
+    </div>
     <el-main>
       <router-view></router-view>
     </el-main>
   </el-container>
-  <Search ref="search"/>
+  <Search ref="search" />
   <category-search ref="categorySearch" />
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
-import Header from './components/header/Header.vue'
-import Search from '@/components/search/Search.vue'
-import CategorySearch from '@/components/search/CategorySearch.vue'
+import { defineComponent, computed } from "vue";
+import Header from "./components/header/Header.vue";
+import Search from "@/components/search/Search.vue";
+import CategorySearch from "@/components/search/CategorySearch.vue";
+import { ArrowUpBold, ArrowDownBold } from "@element-plus/icons";
 
 export default defineComponent({
   components: {
     Header,
     Search,
-    CategorySearch
+    CategorySearch,
+    ArrowUpBold,
+    ArrowDownBold,
   },
-  setup() {
-
+  setup() {},
+  provide(){
+    return {
+      showHeader: computed(() => this.showHeader)
+    }
   },
   data() {
-    return {}
+    return {
+      showHeader: true,
+    };
   },
-  created(){
-    document.addEventListener('keydown',(e) => {
-      if (e.ctrlKey && e.key == 'q') {
-        (this.$refs.categorySearch as any).show()
-        e.preventDefault()
+  created() {
+    document.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.key == "q") {
+        (this.$refs.categorySearch as any).show();
+        e.preventDefault();
       }
-      if (e.ctrlKey && e.key == 'k') {
-        (this.$refs.search as any).show()
-        e.preventDefault()
+      if (e.ctrlKey && e.key == "k") {
+        (this.$refs.search as any).show();
+        e.preventDefault();
       }
-    })
-  }
-})
+    });
+  },
+});
 </script>
 
 <style lang="less" scoped>
-  .el-container {
-    height: 100%;
+.el-container {
+  height: 100%;
+}
+.el-main {
+  height: 100%;
+  padding: 0;
+}
+.el-header {
+  padding: 0;
+  background-color: #fff;
+}
+.header-toggle-button {
+  position: fixed;
+  width: 100%;
+  z-index: 9998;
+  .el-button {
+    padding: 0 7px;
+    margin-left: 280px;
   }
-  .el-main {
-    height: 100%;
-    padding: 0;
-  }
-  .el-header {
-    padding: 0;
-    background-color: #fff;
-  }
+}
 </style>

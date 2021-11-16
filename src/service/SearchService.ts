@@ -22,7 +22,7 @@ function kwContains(kw: string, txt: string): boolean{
   }
   const kwList = kw.trim().split(' ').filter(v => v);
   for(let i of kwList) {
-    if (txt.replace(/<[^>]+>/ig, '').indexOf(i) != -1) {
+    if (txt.replace(/<[^>]+>/ig, '').toLowerCase().indexOf(i.toLowerCase()) != -1) {
       return true;
     }
   }

@@ -17,12 +17,16 @@
     </template>
     <div class="search-result" v-loading="showLoading">
       <div v-for="result in resultList" :key="result.url">
-        <!-- <span>{{result.createTime}}</span> -->
+        <div class="result-item top-heading">
         <h1
-          class="top-heading result-item"
+          class=""
           v-html="result.hilighedUrl"
           @click="handleDocClick(result.url)"
         />
+        <div class="index-time-wrapper">
+          <el-tag class="index-time" size="mini">⏰索引时间: {{new Date(result.createTime).toLocaleString()}}</el-tag>
+        </div>
+        </div>
         <div
           v-for="p in result.hilighedSegement"
           :key="p.id"
@@ -153,6 +157,12 @@ export default defineComponent({
     background-color: transparent;
   }
 }
+.result-item-wrapper {
+  position: relative;
+}
+.index-time-wrapper {
+  width: 100%;
+}
 .result-item {
   margin: 0;
   cursor: pointer;
@@ -165,6 +175,9 @@ export default defineComponent({
 }
 .top-heading {
   border-left: 4px solid #409eff;
+  h1 {
+    margin-bottom: 0!important;
+  }
 }
 .search-suggestion-item {
   display: inline-block;

@@ -5,6 +5,7 @@ import Cacheable from '@/decorator/Cacheable'
 import Cache from '@/decorator/Cache'
 const cache = Cache()
 
+const searchRecordKey = 'category-service::search-record-list';
 class CategoryService implements Cacheable {
 
   private static instance : CategoryService
@@ -21,6 +22,12 @@ class CategoryService implements Cacheable {
     return this.instance
   }
 
+  /**
+   *
+   * 获取当前文档的目录列表
+   * @return {*}  {Promise<Category[]>}
+   * @memberof CategoryService
+   */
   @cache
   public async getCategoryList() : Promise<Category[]>{
     const rawData = await api.getCategory()
@@ -33,6 +40,47 @@ class CategoryService implements Cacheable {
       },
       ...this.categoryParse(html)
     ]
+  }
+
+
+  /**
+   *
+   * 记录目录搜索点击记录
+   * @param {Category} cate
+   * @memberof CategoryService
+   */
+  public addCategorySearchRecord(cate: Category) {
+    const rawData = localStorage.getItem(searchRecordKey)
+    let searchRecordList :Category[] = []
+    if (rawData) {
+      searchRecordList = JSON.parse(rawData)
+    }
+    const index = searchRecordList.findIndex(v => v.link == cate.link)
+    if (index != -1) {
+      searchRecordList.splice(index, 1)
+    }
+    searchRecordList.push(cate);
+    if (searchRecordList.length > 20) {
+      searchRecordList.shift()
+    }
+    localStorage.setItem(searchRecordKey, JSON.stringify(searchRecordList))
+  }
+
+
+  /**
+   *
+   * 获取目录搜索点击记录
+   * @return {*}  {Category[]}
+   * @memberof CategoryService
+   */
+  public getCategorySearchRecords(): Category[] {
+    const rawData = localStorage.getItem(searchRecordKey)
+    let searchRecordList :Category[] = []
+    if (rawData) {
+      searchRecordList = JSON.parse(rawData)
+    }
+    searchRecordList = searchRecordList.reverse();
+    return searchRecordList;
   }
 
   private categoryParse(html: string): Category[]{

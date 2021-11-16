@@ -57,14 +57,25 @@ export default defineComponent({
       return results
     },
     querySearch(queryString: string, cb: any){
-      const results = this.flatCategoryList.filter(v => v.name?.toLowerCase().indexOf(queryString.toLowerCase()) != -1)
-      console.log(results)
-      cb(results)
+      // 如果没有搜索内容 默认展示历史记录
+      if (!queryString) {
+        cb(CategoryService.getCategorySearchRecords())
+      }else {
+        const results = this.flatCategoryList.filter(v => v.name?.toLowerCase().indexOf(queryString.toLowerCase()) != -1)
+        cb(results)
+      }
     },
     renderHilighHTML(raw: string){
       return raw.replace(new RegExp(this.kw, 'gi'), (str: string) =>`<mark>${str}</mark>`)
     },
     handleSelect(value: Category){
+      // 记录搜索点击结果
+      CategoryService.addCategorySearchRecord({
+        name: value.name,
+        link: value.link,
+        chidren: []
+      });
+
       this.$router.push('/doc/' + this.docUrl2Id(value.link))
       this.showDialog = false
     }

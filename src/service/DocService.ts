@@ -214,8 +214,8 @@ class DocService implements Cacheable{
       const head = allHead[i]
       let level = parseInt(head.tagName.replace('H', ''))
       let content = new Content();
-      // 这里考虑到标题里面可能由html标签构成 若是html标签构成 取其第一个孩子元素的文本内容，否则取其本身文本内容
-      content.name = head.firstChild?.textContent || head.innerText;
+      // 这里考虑到标题里面可能由html标签构成 排除掉sup标签 转为文本内容
+      content.name = Array.from(head.childNodes).filter(v => v.nodeName.toUpperCase() != 'SUP').map(v => v.textContent).join('');
       content.link = head.getAttribute("id")!
       contentMap[level] = content
       if (level == 1) {

@@ -196,3 +196,24 @@
   padding: 0;
   margin: 0;
 }
+
+/* 标签系统样式 */
+.doc-tag {
+  position: absolute;
+  transition: all 0.2s;
+  margin-left: -10px;
+  margin-top: -12px;
+  display:none;
+}
+.doc-tag:hover {
+  transition: all 0.2s;
+  display: inline;
+}
+.doc-tag-main {
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.doc-tag-main:hover + .doc-tag {
+  transition: all 0.2s;
+  display: inline;
+}

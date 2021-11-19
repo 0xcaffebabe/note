@@ -21,6 +21,10 @@
             >
             </el-switch>
             <el-divider direction="vertical" />
+            <el-button size="mini" @click="handleToggleFullScreen">
+              <el-icon><monitor /></el-icon>
+            </el-button>
+            <el-divider direction="vertical" />
             <el-button-group style="margin-left: 20px">
               <el-button
                 icon="el-icon-search"
@@ -73,11 +77,12 @@
 import { defineComponent } from "vue";
 import config from "@/config";
 import DatasourceSelector from './datasource/DatasourceSelector.vue';
-import {Sunny, Moon} from '@element-plus/icons';
+import {Sunny, Moon, Monitor} from '@element-plus/icons';
 
 export default defineComponent({
   components: {
-    DatasourceSelector
+    DatasourceSelector,
+    Monitor
   },
   setup() {},
   data() {
@@ -85,7 +90,8 @@ export default defineComponent({
       name: "my-book" as string,
       showMode: false as boolean,
       activeIcon: Moon,
-      inactiveIcon: Sunny
+      inactiveIcon: Sunny,
+      fullscreen: false,
     };
   },
   methods: {
@@ -96,7 +102,14 @@ export default defineComponent({
         this.$router.push(menu.router);
       }
     },
-    
+    handleToggleFullScreen(){
+      this.fullscreen = !document.fullscreenElement;
+      if (this.fullscreen) {
+        document.body.requestFullscreen();
+      }else {
+        document.exitFullscreen();
+      }
+    },
   },
   computed: {
     siteName() {

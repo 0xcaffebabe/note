@@ -83,6 +83,7 @@ export default defineComponent({
   height: 100%;
 }
 .el-main {
+  background-color: #fff;
   height: 100%;
   padding: 0;
 }

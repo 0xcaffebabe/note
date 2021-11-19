@@ -366,6 +366,7 @@ export default defineComponent({
   width: 280px;
 }
 .main {
+  background-color: #fff;
   padding-left: 4em;
   padding-bottom: 20px;
 }

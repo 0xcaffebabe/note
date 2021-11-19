@@ -12,6 +12,7 @@ import DocFileInfo from '@/dto/DocFileInfo'
 import DocMetadata from '@/dto/doc/DocMetadata'
 import TagService from './TagService'
 import TagSumItem from '@/dto/tag/TagSumItem'
+import TagUtils from '@/pages/tag/TagUtils'
 
 const cache = Cache()
 
@@ -64,9 +65,8 @@ class DocService implements Cacheable{
     // 自定义文本渲染 若发现关键字包含标签 则插入标记
     render.text = (text: string): string => {
       for(let i of tagList) {
-        const reg = new RegExp(i.tag);
         if (text.indexOf(i.tag) != -1) {
-          text = text.replace(i.tag, (str: string) =>`<u class="doc-tag-main">${str}</u><sup class="doc-tag" tag="${i.tag}">${i.count}</sup>`);
+          text = text.replace(i.tag, (str: string) =>`<u class="doc-tag-main">${str}</u><sup class="doc-tag" tag="${i.tag}" style="background-color: ${TagUtils.calcTagColor(i.tag)}">${i.count}</sup>`);
         }
       }
       return text;

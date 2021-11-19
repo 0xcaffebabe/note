@@ -12,10 +12,15 @@ function hashCode(str: string) {
 }
 
 const types = ["", "info", "warning", "success", "danger"];
+const colors = ["#409EFF", "#909399", "#E6A23C", "#67C23A", "#F56C6C"]
 
 function calcTagType(tag: string): string{
   const index = hashCode(tag) % 5;
   return types[index];
 }
 
-export default {calcTagType}
+function calcTagColor(tag: string): string {
+  return colors[hashCode(tag) % 5];
+}
+
+export default {calcTagType, calcTagColor}

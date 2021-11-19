@@ -2,7 +2,7 @@
   <div>
     <el-skeleton :rows="1" animated :loading="loading" :throttle="500">
       <template #default>
-        <p>{{ categoryName }}</p>
+        <p>{{ filename }}</p>
         <el-badge
           :value="lastPastDays + '天前更新'"
           class="item"
@@ -30,7 +30,6 @@
 </template>
 
 <script lang="ts">
-import Category from "@/dto/Category";
 import DocFileInfo from "@/dto/DocFileInfo";
 import { defineComponent, PropType } from "vue";
 import { cleanText } from "@/util/StringUtils";
@@ -43,32 +42,39 @@ export default defineComponent({
   props: {
     categoryName: {
       type: String,
-      required: true
+      required: true,
     },
     categoryLink: {
       type: String,
-      required: true
-    }
+      required: true,
+    },
   },
   computed: {
     wordCount() {
       return cleanText(this.file?.content).length;
     },
+    filename() {
+      return this.file?.name;
+    },
   },
   methods: {
     // 初始化内容
-    async init() {
-      this.file = await api.getDocFileInfo(
-        DocUtils.docUrl2Id(this.categoryLink)
-      );
+    async init(docLink?: string) {
+      this.loading = true;
+      if (docLink) {
+        this.file = await api.getDocFileInfo(DocUtils.docUrl2Id(docLink));
+      } else {
+        this.file = await api.getDocFileInfo(
+          DocUtils.docUrl2Id(this.categoryLink)
+        );
+      }
+      console.log(this.file)
       this.tags = DocService.resolveTagList(this.file);
       this.lastPastDays = this.calcLastUpdate();
       this.loading = false;
     },
     // 结束展示
-    destroy() {
-      this.loading = false;
-    },
+    destroy() {},
     // 计算最后更新于
     calcLastUpdate() {
       if (!this.file) {

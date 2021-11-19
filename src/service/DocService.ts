@@ -45,7 +45,7 @@ class DocService implements Cacheable{
     render.link = (href: string | null, title: string | null, text: string | null) : string => {
       if (!href?.startsWith('http')) {
         const {id, headingId} = DocUtils.resloveDocUrl(href!)
-        return `<a href='/doc/${id}?headingId=${headingId}'>${text}</a>`
+        return `<a href='/doc/${id}?headingId=${headingId}' origin-link='${href}'>${text}</a>`
       }else {
         return `<a href='${href}' target="_blank">${text}</a>`
       }

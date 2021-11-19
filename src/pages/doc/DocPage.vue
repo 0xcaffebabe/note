@@ -61,6 +61,7 @@
       </div>
     </el-main>
   </el-container>
+  <link-popover ref="linkPopover"/>
   <el-backtop :bottom="40" :right="326" />
   <reading-history ref="readingHistory" />
   <mind-graph ref="mindGraph" @close="showAside = true;isDrawerShow = false" />
@@ -87,6 +88,7 @@ import BookMark from './book-mark/BookMark.vue'
 import LinkList from './LinkList.vue';
 import ToolBox from './ToolBox.vue';
 import KnowledgeNetwork from "./knowledge/KnowledgeNetwork.vue";
+import LinkPopover from "./LinkPopover.vue";
 import api from "@/api";
 import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
@@ -107,6 +109,7 @@ export default defineComponent({
     MindGraph,
     BookMark,
     ToolBox,
+    LinkPopover,
     LinkList,
     KnowledgeNetwork,
     ArrowLeftBold,
@@ -246,10 +249,10 @@ export default defineComponent({
     generateTOC() {
       this.contentsList = docService.getContent(this.contentHtml);
     },
-    // 管理内页链接跳转行为
+    // 管理内页doc链接跳转 hover行为
     registerLinkRouter() {
       const aList: NodeListOf<HTMLElement> = document.querySelectorAll(
-        ".markdown-section a"
+        ".markdown-section a[origin-link]"
       );
       for (let i = 0; i < aList.length; i++) {
         const a = aList[i];
@@ -260,6 +263,13 @@ export default defineComponent({
             e.preventDefault();
           }
         };
+        a.addEventListener('contextmenu', (e: MouseEvent) => {
+          const originLink = a.getAttribute('origin-link');
+          (this.$refs.linkPopover as any).show(originLink, e.clientX, e.clientY);
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        });
       }
     },
     // 管理页内图片点击行为
@@ -321,6 +331,8 @@ export default defineComponent({
           clearTimeout(timer);
           docService.setDocReadRecrod(this.doc, window.scrollY);
         }, 1000);
+        // 滚动的同时将link-popover隐藏掉
+        (this.$refs.linkPopover as any).hide();
       });
     },
   },

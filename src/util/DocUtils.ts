@@ -13,9 +13,9 @@ function docUrl2Id(url :string): string {
   }
   url = decodeURI(url).replace(/-/g, '@@')
   if (url.startsWith('./') || url.startsWith('/') || url.startsWith('doc')) {
-    return url.split('/').splice(1).join('-').replace('.md', '')
+    return url.split('/').splice(1).join('-').replace('.md', '').split('#')[0]
   }else {
-    return url.split('/').join('-').replace('.md', '')
+    return url.split('/').join('-').replace('.md', '').split('#')[0]
   }
 }
 

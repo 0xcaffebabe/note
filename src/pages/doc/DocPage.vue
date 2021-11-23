@@ -1,26 +1,6 @@
 <template>
   <el-container>
-    <el-aside width="280px" v-show="showAside" :lock-scroll="false">
-      <div class="category-wrapper" :style="{'height': parentShowHeader ? 'calc(100% - 60px)': '100%'}">
-        <keep-alive>
-          <category-list ref="categoryList" :doc="doc" />
-        </keep-alive>
-      </div>
-    </el-aside>
-    <el-affix :offset="384" style="height:100px">
-      <el-button
-        class="cate-fix-btn"
-        type="default"
-        size="mini"
-        @click="showAside = !showAside"
-        :class="{ 'active': showAside }"
-      >
-        <el-icon>
-          <arrow-left-bold v-if="showAside" />
-          <arrow-right-bold v-else />
-        </el-icon>
-      </el-button>
-    </el-affix>
+    <doc-side-category :doc="doc" :showAside="showAside" @toggle-aside="showAside = !showAside" ref="docSideCategory" />
     <el-main class="main">
       <el-skeleton :rows="25" animated :loading="loading" :throttle="50" style="max-width: 80%">
         <template #default>
@@ -77,9 +57,7 @@
 import { defineComponent, ref } from "vue";
 import Category from "@/dto/Category";
 import Content from "@/dto/Content";
-import categoryService from "@/service/CategoryService";
 import docService from "@/service/DocService";
-import CategoryList from "./category/CategoryList.vue";
 import ContentsList from "./contents/ContentsList.vue";
 import HistoryList from "./commit/HistoryList.vue";
 import ReadingHistory from "./history/ReadingHistory.vue"
@@ -93,16 +71,14 @@ import api from "@/api";
 import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
 import { ElMessage } from 'element-plus'
-import { ArrowLeftBold, ArrowRightBold } from "@element-plus/icons";
 import './markdown-v1.css'
 import './code-hl-vsc.css'
 import DocUtils from "@/util/DocUtils";
+import DocSideCategory from './aside/DocSideCategory.vue';
 
-let timer: NodeJS.Timeout;
 export default defineComponent({
   inject: ['showHeader'],
   components: {
-    CategoryList,
     ContentsList,
     HistoryList,
     ReadingHistory,
@@ -110,10 +86,9 @@ export default defineComponent({
     BookMark,
     ToolBox,
     LinkPopover,
+    DocSideCategory,
     LinkList,
     KnowledgeNetwork,
-    ArrowLeftBold,
-    ArrowRightBold
   },
   watch: {
     showHeader: {
@@ -158,7 +133,6 @@ export default defineComponent({
   },
   data() {
     return {
-      cateList: [] as Category[],
       file: new DocFileInfo() as DocFileInfo,
       contentsList: [] as Content[],
       doc: "" as string,
@@ -218,7 +192,7 @@ export default defineComponent({
         this.registerHeadingClick();
         this.registerDocTagSupClick();
         this.syncHeading(headingId);
-        this.syncCategoryListScrollBar();
+        (this.$refs.docSideCategory as any).syncCategoryListScrollBar();
       });
       this.loading = false;
     },
@@ -229,22 +203,6 @@ export default defineComponent({
         window.scrollTo(0, elm.offsetTop - 80)
       } 
     }
-      
-    },
-    // 移动目录的滚动条 让当前选中菜单项处于可视区域
-    syncCategoryListScrollBar(){
-      const categoryWrapper :HTMLElement = document.querySelector('.category-wrapper')!;
-      const activeMenu :HTMLElement = (document.querySelector('.el-menu-item.is-active') as HTMLElement);
-      const activeMenuPos: number = activeMenu.getBoundingClientRect().y;
-      const amount = activeMenuPos < 350? -50: 50;
-      let timer = setInterval(() => {
-        const activeMenuPos1: number = activeMenu.getBoundingClientRect().y;
-        if ((activeMenuPos1 >= 350 && activeMenuPos1 <= categoryWrapper.offsetHeight) || categoryWrapper.scrollTop + amount < 0) {
-          clearInterval(timer)
-          return
-        }
-        categoryWrapper.scrollTo(0, categoryWrapper.scrollTop + amount)
-      }, 4)
     },
     generateTOC() {
       this.contentsList = docService.getContent(this.contentHtml);
@@ -339,13 +297,11 @@ export default defineComponent({
   beforeRouteUpdate(to, from) {
     const doc = to.params.doc.toString();
     this.showDoc(doc, to.query.headingId?.toString());
-    const categoryListRef: any = this.$refs.categoryList;
-    categoryListRef.updateCurrentCategory(doc);
+    (this.$refs.docSideCategory as any).updateCurrentCategory(doc);
   },
   async created() {
     this.registerScrollListener();
     this.showDoc(this.$route.params.doc.toString(), this.$route.query.headingId?.toString());
-    this.cateList = await categoryService.getCategoryList();
   },
   unmounted(){
     // 一些清理操作
@@ -358,12 +314,6 @@ export default defineComponent({
 .el-container {
   display: flex;
   justify-content: space-between;
-}
-.category-wrapper {
-  transition: all 0.2s;
-  position: fixed;
-  overflow-y: scroll;
-  width: 280px;
 }
 .main {
   background-color: #fff;
@@ -385,13 +335,6 @@ export default defineComponent({
 .footer-wrapper {
   display: flex;
   justify-content: space-between;
-}
-.cate-fix-btn {
-  padding: 7px 2px;
-  margin-left: 26px;
-}
-.el-affix .active {
-  margin-left: -26px;
 }
 .center {
   transition: all 0.2s;

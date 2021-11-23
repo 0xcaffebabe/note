@@ -68,7 +68,6 @@ export default defineComponent({
           DocUtils.docUrl2Id(this.categoryLink)
         );
       }
-      console.log(this.file)
       this.tags = DocService.resolveTagList(this.file);
       this.lastPastDays = this.calcLastUpdate();
       this.loading = false;

@@ -21,6 +21,20 @@ export default function create(){
           cateList.push(category.link)
         }
       },
+      removeFromCategoryList(state: any, link: string) {
+        const cateList :string[]= state.currentCategoryList;
+        const index = cateList.indexOf(link);
+        if (index != -1) {
+          cateList.splice(index, 1);
+        }
+      },
+      removeFromCategoryListExcept(state: any, link: string) {
+        const cateList :string[]= state.currentCategoryList;
+        const index = cateList.indexOf(link);
+        if (index != -1) {
+          state.currentCategoryList = cateList.splice(index, 1);
+        }
+      },
       setSearchKw(state: any, kw: string) {
         state.currentSearchKw = kw
       },

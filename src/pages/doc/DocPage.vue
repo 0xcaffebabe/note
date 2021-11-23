@@ -4,6 +4,7 @@
     <el-main class="main">
       <el-skeleton :rows="25" animated :loading="loading" :throttle="50" style="max-width: 80%">
         <template #default>
+          <doc-tab-nav />
           <doc-breadcrumb-nav />
           <p class="create-time">⏰创建时间: {{file.createTime}}</p>
           <!-- doc主体开始 -->
@@ -72,7 +73,8 @@ import './markdown-v1.css'
 import './code-hl-vsc.css'
 import DocUtils from "@/util/DocUtils";
 import DocSideCategory from './aside/DocSideCategory.vue';
-import DocBreadcrumbNav from "./DocBreadcrumbNav.vue";
+import DocBreadcrumbNav from "./nav/DocBreadcrumbNav.vue";
+import DocTabNav from "./nav/DocTabNav.vue";
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -88,6 +90,7 @@ export default defineComponent({
     LinkList,
     KnowledgeNetwork,
     DocBreadcrumbNav,
+    DocTabNav,
   },
   watch: {
     showHeader: {

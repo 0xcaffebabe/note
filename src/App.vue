@@ -17,7 +17,9 @@
       </el-button>
     </div>
     <el-main>
-      <router-view></router-view>
+      <keep-alive>
+        <router-view></router-view>
+      </keep-alive>
     </el-main>
   </el-container>
   <Search ref="search" />

@@ -6,7 +6,9 @@
         <template #default>
           <doc-breadcrumb-nav />
           <p class="create-time">⏰创建时间: {{file.createTime}}</p>
+          <!-- doc主体开始 -->
           <div class="markdown-section" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '960px': '74%'}"></div>
+          <!-- doc主体结束 -->
           <!-- 提交历史开始 -->
           <div style="text-align: center">
             <el-divider style="width:72%" />
@@ -15,26 +17,28 @@
             </div>
           </div>
           <!-- 提交历史结束 -->
-          <!-- 工具栏开始 -->
-          <tool-box 
-            @showReadingHistory="showReadingHistory"
-            @showMindGraph="showMindGraph();showAside = false;isDrawerShow = true"
-            @showKnowledgeNetwork="showKnowledgeNetwork();showAside = false;isDrawerShow = true"
-            @showBookMarkAdder="showBookmarkAdder"
-            @showBookMarkList="showBookmarkList"
-            @copyDocPath="handleCopyDocPath"
-            @showLinkList="showLinkList"
-          />
-          <!-- 工具栏结束 -->
+          <!-- toc开始 -->
+          <div class="toc-wrapper" :style="{'top': parentShowHeader ? '80px': '20px'}">
+            <keep-alive>
+              <contents-list :contentsList="contentsList" />
+            </keep-alive>
+          </div>
+          <!-- toc结束 -->
         </template>
       </el-skeleton>
-      <div class="toc-wrapper" :style="{'top': parentShowHeader ? '80px': '20px'}">
-        <keep-alive>
-          <contents-list :contentsList="contentsList" />
-        </keep-alive>
-      </div>
     </el-main>
   </el-container>
+  <!-- 工具栏开始 -->
+  <tool-box 
+    @showReadingHistory="showReadingHistory"
+    @showMindGraph="showMindGraph();showAside = false;isDrawerShow = true"
+    @showKnowledgeNetwork="showKnowledgeNetwork();showAside = false;isDrawerShow = true"
+    @showBookMarkAdder="showBookmarkAdder"
+    @showBookMarkList="showBookmarkList"
+    @copyDocPath="handleCopyDocPath"
+    @showLinkList="showLinkList"
+  />
+  <!-- 工具栏结束 -->
   <link-popover ref="linkPopover"/>
   <el-backtop :bottom="40" :right="326" />
   <reading-history ref="readingHistory" />

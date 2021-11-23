@@ -4,13 +4,7 @@
     <el-main class="main">
       <el-skeleton :rows="25" animated :loading="loading" :throttle="50" style="max-width: 80%">
         <template #default>
-          <el-breadcrumb separator="/">
-            <el-breadcrumb-item
-              :to="{ path: '/doc/' + docUrl2Id(chain.link) }"
-              v-for="chain in categoryChainList"
-              :key="chain.name"
-            >{{ chain.name }}</el-breadcrumb-item>
-          </el-breadcrumb>
+          <doc-breadcrumb-nav />
           <p class="create-time">⏰创建时间: {{file.createTime}}</p>
           <div class="markdown-section" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '960px': '74%'}"></div>
           <!-- 提交历史开始 -->
@@ -55,7 +49,6 @@
 
 <script lang="ts">
 import { defineComponent, ref } from "vue";
-import Category from "@/dto/Category";
 import Content from "@/dto/Content";
 import docService from "@/service/DocService";
 import ContentsList from "./contents/ContentsList.vue";
@@ -75,6 +68,7 @@ import './markdown-v1.css'
 import './code-hl-vsc.css'
 import DocUtils from "@/util/DocUtils";
 import DocSideCategory from './aside/DocSideCategory.vue';
+import DocBreadcrumbNav from "./DocBreadcrumbNav.vue";
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -89,6 +83,7 @@ export default defineComponent({
     DocSideCategory,
     LinkList,
     KnowledgeNetwork,
+    DocBreadcrumbNav,
   },
   watch: {
     showHeader: {
@@ -148,27 +143,10 @@ export default defineComponent({
     contentHtml(): string {
       return DocService.renderMd(this.file.content);
     },
-    currentCategory(): Category {
-      return this.$store.state.currentCategory;
-    },
-    categoryChainList(): Category[] {
-      if (!this.currentCategory) {
-        return [];
-      }
-      return this.getCategoryChain(this.currentCategory);
-    },
   },
   methods: {
     docUrl2Id(url: string) {
       return docService.docUrl2Id(url);
-    },
-    getCategoryChain(value: Category) {
-      const chainList: Category[] = [value];
-      while (value.parent) {
-        chainList.push(value.parent);
-        value = value.parent;
-      }
-      return chainList.reverse();
     },
     async handleCopyDocPath(){
       const url = "/" + DocUtils.docId2Url(this.doc);

@@ -7,6 +7,7 @@ declare module '@vue/runtime-core' {
   // declare your own store states
   interface State {
     currentCategory: Category,
+    currentCategoryList: string[],
     currentSearchKw: string,
     currentHeading: string
   }

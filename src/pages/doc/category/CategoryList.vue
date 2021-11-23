@@ -66,7 +66,7 @@ export default defineComponent({
       if (!currentCate) {
         console.warn(`${this.doc} 无法找寻到相关目录!`)
       } else {
-        this.$store.state.currentCategory = currentCate
+        this.$store.commit('setCurrentCategory', currentCate);
       }
     }
   },

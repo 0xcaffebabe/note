@@ -7,6 +7,7 @@ export default function create(){
       return {
         // 当前所在的章节目录
         currentCategory: new Category() as Category,
+        currentCategoryList: [] as string[],
         // 当前所在的章节标题
         currentHeading: '' as string,
         currentSearchKw: '' as string
@@ -14,7 +15,11 @@ export default function create(){
     },
     mutations: {
       setCurrentCategory (state :any, category: Category) {
-        state.currentCategory = category
+        state.currentCategory = category;
+        const cateList :string[]= state.currentCategoryList;
+        if (cateList.indexOf(category.link) == -1) {
+          cateList.push(category.link)
+        }
       },
       setSearchKw(state: any, kw: string) {
         state.currentSearchKw = kw

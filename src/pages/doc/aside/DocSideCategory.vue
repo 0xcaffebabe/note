@@ -1,6 +1,6 @@
 <template>
-  <div ref="root">
-    <el-aside width="280px" v-show="showAside" :lock-scroll="false">
+  <div ref="root" v-show="showAside">
+    <el-aside width="280px" :lock-scroll="false">
       <div
         class="category-wrapper"
         :style="{ height: parentShowHeader ? 'calc(100% - 60px)' : '100%' }"
@@ -10,6 +10,7 @@
         </keep-alive>
       </div>
     </el-aside>
+  </div>
     <el-affix :offset="384" style="height: 100px">
       <el-button
         class="cate-fix-btn"
@@ -24,7 +25,6 @@
         </el-icon>
       </el-button>
     </el-affix>
-  </div>
 </template>
 
 <script lang="ts">

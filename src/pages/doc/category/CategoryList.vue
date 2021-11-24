@@ -15,10 +15,6 @@ import docService from '@/service/DocService'
 import Category from '@/dto/Category'
 import CategoryTree from './CategoryTree.vue'
 
-interface Data {
-  cateList: Category[]
-}
-
 export default defineComponent({
   props: {
     doc: String

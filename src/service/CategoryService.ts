@@ -32,12 +32,11 @@ class CategoryService implements Cacheable {
   public async getCategoryList() : Promise<Category[]>{
     const rawData = await api.getCategory()
     const html = marked(rawData.content)
+    const home = new Category();
+    home.name = '首页';
+    home.link = './README.md';
     return [
-      {
-        name: '首页',
-        link: './README.md',
-        chidren: []
-      },
+      home,
       ...this.categoryParse(html)
     ]
   }
@@ -95,7 +94,7 @@ class CategoryService implements Cacheable {
 
   private resolveCategory(cate: Element): Category {
     const category = new Category()
-    category.name = cate.querySelector('a')?.innerText!
+    category.name = cate.firstChild?.textContent || '';
     category.link = cate.querySelector('a')?.getAttribute("href")!
     const children = cate.querySelector("ul")?.querySelectorAll(':scope > li')
     if (!children) {

@@ -40,6 +40,25 @@
 import { defineComponent } from "vue";
 import {Tools} from '@element-plus/icons'
 
+type ActionType = 
+    'showReadingHistory' |
+    'showMindGraph' |
+    'showKnowledgeNetwork' |
+    'showBookMarkAdder' |
+    'showBookMarkList' |
+    'copyDocPath' |
+    'showLinkList'
+
+type LocalActionType = ActionType & 'showMoreSetting'
+
+interface Action {
+  name: string
+  type: string
+  action: ActionType
+  hotkey?: string
+  local?: boolean
+}
+
 export default defineComponent({
   inject: ['showHeader'],
   components: {
@@ -61,7 +80,6 @@ export default defineComponent({
     'showBookMarkList',
     'copyDocPath',
     'showLinkList',
-    'showMoreSetting',
   ],
   data(){
     return {
@@ -76,8 +94,8 @@ export default defineComponent({
         {name: '书签列表', type: 'info', action: 'showBookMarkList'},
         {name: '路径复制', type: 'success', action: 'copyDocPath'},
         {name: '链接列表', type: 'primary', action: 'showLinkList'},
-        {name: '更多设置', type: 'info', action: 'showMoreSetting', local: true},
-      ]
+        {name: '更多设置', type: 'info', action: 'showMoreSetting' as LocalActionType, local: true},
+      ] as Action[]
     }
   },
   methods: {

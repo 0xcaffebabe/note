@@ -53,6 +53,16 @@ export default defineComponent({
       immediate: true
     }
   },
+  emits: [
+    'showReadingHistory',
+    'showMindGraph',
+    'showKnowledgeNetwork',
+    'showBookMarkAdder',
+    'showBookMarkList',
+    'copyDocPath',
+    'showLinkList',
+    'showMoreSetting',
+  ],
   data(){
     return {
       showDrawer: false,

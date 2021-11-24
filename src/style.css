@@ -28,7 +28,7 @@ body {
   background-color: rgba(0,0,0,0.2);
 }
 .markdown-section {
-  z-index: 5000;
+  z-index: 1;
 }
 .markdown-section .doc-tag {
   cursor: pointer;

@@ -1,5 +1,5 @@
 <template>
-  <div class="tab-container">
+  <div class="tab-container" :style="{top: parentShowHeader? 66 + 'px': 6 + 'px', position: fixed? 'fixed': 'absolute'}">
     <el-button
       size="mini"
       v-for="cate in cateList"
@@ -13,7 +13,7 @@
       {{ cateName(cate) }}
     </el-button>
   </div>
-  <tab-nav-context-menu ref="contextMenu"/>
+  <tab-nav-context-menu ref="contextMenu" @toggle-fixed="fixed = !fixed" :fixed="fixed"/>
 </template>
 
 <script lang="ts">
@@ -23,8 +23,24 @@ import { defineComponent } from "vue";
 import TabNavContextMenu from "./TabNavContextMenu.vue";
 
 export default defineComponent({
+  inject: ['showHeader'],
   components: {
     TabNavContextMenu
+  },
+  data(){
+    return {
+      parentShowHeader: true,
+      fixed: true
+    }
+  },
+  watch: {
+    showHeader: {
+      handler(val){
+        this.parentShowHeader = val;
+      },
+      immediate: true,
+    }
+    
   },
   setup() {},
   methods: {
@@ -52,12 +68,13 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .tab-container {
-  width: 72%;
+  transition: all 0.2s;
+  width: 60%;
   height: 30px;
   white-space: nowrap;
   overflow-x: hidden;
   overflow-y: hidden;
-  margin-bottom: 10px;
+  z-index: 999;
 }
 .tab-container::-webkit-scrollbar {
   width: 3px;

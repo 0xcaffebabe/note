@@ -2,29 +2,31 @@
   <el-container>
     <doc-side-category :doc="doc" :showAside="showAside" @toggle-aside="showAside = !showAside" ref="docSideCategory" />
     <el-main class="main">
+      <doc-tab-nav />
       <el-skeleton :rows="25" animated :loading="loading" :throttle="50" style="max-width: 80%">
         <template #default>
-          <doc-tab-nav />
-          <doc-breadcrumb-nav />
-          <p class="create-time">⏰创建时间: {{file.createTime}}</p>
-          <!-- doc主体开始 -->
-          <div class="markdown-section" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '960px': '74%'}"></div>
-          <!-- doc主体结束 -->
-          <!-- 提交历史开始 -->
-          <div style="text-align: center">
-            <el-divider style="width:72%" />
-            <div class="footer-wrapper">
-              <history-list :file="file" :doc="doc" />
+          <div class="main-content">
+            <doc-breadcrumb-nav />
+            <p class="create-time">⏰创建时间: {{file.createTime}}</p>
+            <!-- doc主体开始 -->
+            <div class="markdown-section" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '960px': '74%'}"></div>
+            <!-- doc主体结束 -->
+            <!-- 提交历史开始 -->
+            <div style="text-align: center">
+              <el-divider style="width:72%" />
+              <div class="footer-wrapper">
+                <history-list :file="file" :doc="doc" />
+              </div>
             </div>
+            <!-- 提交历史结束 -->
+            <!-- toc开始 -->
+            <div class="toc-wrapper" :style="{'top': parentShowHeader ? '66px': '6px'}">
+              <keep-alive>
+                <contents-list :contentsList="contentsList" />
+              </keep-alive>
+            </div>
+            <!-- toc结束 -->
           </div>
-          <!-- 提交历史结束 -->
-          <!-- toc开始 -->
-          <div class="toc-wrapper" :style="{'top': parentShowHeader ? '80px': '20px'}">
-            <keep-alive>
-              <contents-list :contentsList="contentsList" />
-            </keep-alive>
-          </div>
-          <!-- toc结束 -->
         </template>
       </el-skeleton>
     </el-main>
@@ -324,6 +326,9 @@ export default defineComponent({
 .center {
   transition: all 0.2s;
   padding-left: 4rem;
+}
+.main-content {
+  padding-top: 24px;
 }
 @media screen and(max-width: 1366px) {
   .center {

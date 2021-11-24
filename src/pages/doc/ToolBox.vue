@@ -1,5 +1,5 @@
 <template>
-  <div position="bottom" :offset="20" class="tool-box" :style="{'top': parentShowHeader? '80px': '20px'}">
+  <div position="bottom" :offset="20" class="tool-box" :style="{'top': parentShowHeader? '66px': '6px'}">
     <el-dropdown>
       <div>
 
@@ -127,6 +127,7 @@ export default defineComponent({
   transition: all 0.2s;
   position: fixed;
   right: 300px;
+  z-index: 1000;
 }
 .box-item {
   width: 140px;

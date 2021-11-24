@@ -5,6 +5,8 @@
         <el-icon><close-bold /></el-icon>
       </el-button>
       <el-button-group>
+        <el-button size="mini" class="menu-button" @click="$emit('toggleFixed');hide()" v-if="fixed">取消固定</el-button>
+        <el-button size="mini" class="menu-button" @click="$emit('toggleFixed');hide()" v-else>固定菜单</el-button>
         <el-button size="mini" class="menu-button" :disabled="cateList.length <= 1" @click="closeCurrent">关闭</el-button>
         <el-button size="mini" class="menu-button" :disabled="cateList.length <= 1" @click="closeOthers">关闭其他</el-button>
       </el-button-group>
@@ -19,9 +21,16 @@ import Category from "@/dto/Category";
 import DocUtils from "@/util/DocUtils";
 
 export default defineComponent({
+  props: {
+    fixed: {
+      type: Boolean,
+      required: true
+    }
+  },
   components: {
     CloseBold
   },
+  emits: ['toggleFixed'],
   data() {
     return {
       docLink: "",

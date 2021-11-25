@@ -20,6 +20,21 @@ const baseUrl = () => {
   return DatasourceService.getCurrentDatasource().url
 }
 
+function localImageProxy(url: string | null): string | null{
+  if (!url) {
+    return url;
+  }
+  if (url.startsWith('http') || url.startsWith('//')) {
+    return url;
+  }
+  if (url.startsWith('/')) {
+    url = url.replace('/', '');
+  }else {
+    url = url.replace('./', '');
+  }
+  return baseUrl() + url;
+}
+
 
 class DocService implements Cacheable{
 
@@ -60,7 +75,7 @@ class DocService implements Cacheable{
       if (href?.startsWith('/')) {
         href = baseUrl() + href.replace('/', '')
       }
-      return `<p class="img-wrapper"><img src='${href}'/><p class="img-title">${text}</p></p>`
+      return `<p class="img-wrapper"><img src='${localImageProxy(href)}'/><p class="img-title">${text}</p></p>`
     }
     // 自定义文本渲染 若发现关键字包含标签 则插入标记
     render.text = (text: string): string => {

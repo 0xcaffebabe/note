@@ -64,6 +64,8 @@ class DocService implements Cacheable{
     render.link = (href: string | null, title: string | null, text: string | null) : string => {
       if (!href?.startsWith('http')) {
         const {id, headingId} = DocUtils.resloveDocUrl(href!)
+        // 当text为html的情况下 取dom的第一个节点文本化
+        text = new DOMParser().parseFromString(text!, 'text/html').firstChild?.textContent!;
         return `<a href='/doc/${id}?headingId=${headingId}' origin-link='${href}'>${text}</a>`
       }else {
         return `<a href='${href}' target="_blank">${text}</a>`
@@ -88,17 +90,17 @@ class DocService implements Cacheable{
         }
       }
       // 自定义文本渲染 若发现关键字包含已存在的知识网络连接 则转为链接
-      for(let i of knowledgeLinkList) {
-        if (text.indexOf(i.name) != -1) {
-          let url = "";
-          if (i.headingId) {
-            url = `/doc/${i.id}?headingId=${i.headingId}`;
-          }else {
-            url = `/doc/${i.id}`;
-          }
-          text = text.replace(i.name, (str: string) => `<a href='${url}' class="potential-link" origin-link="${DocUtils.docId2Url(i.id)}">${str}</a>`)
+      const reg = new RegExp(knowledgeLinkList.map(v => v.name).join('|'))
+      text = text.replace(reg, (str: string) => {
+        const i = knowledgeLinkList.filter(v => v.name == str)[0];
+        let url = "";
+        if (i.headingId) {
+          url = `/doc/${i.id}?headingId=${i.headingId}`;
+        }else {
+          url = `/doc/${i.id}`;
         }
-      }
+        return `<a href='${url}' class="potential-link" origin-link="${DocUtils.docId2Url(i.id)}">${str}</a>`
+      })
       return text;
     }
     return  marked(mdContent, {

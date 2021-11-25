@@ -171,10 +171,7 @@
   text-decoration: none;
 }
 .markdown-section a.potential-link {
-  /* color: #67C23A; */
-  color: var(--text-color);
-  text-decoration: none;
-  border-top: 1px dashed #ccc;
+  color: #97cbff;
 }
 
 .markdown-section a.potential-link:hover {

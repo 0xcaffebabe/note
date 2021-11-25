@@ -20,6 +20,16 @@ export function cleanText(text: string | undefined | null): string {
 }
 
 
+/**
+ *
+ * html文本化
+ * @export
+ * @param {string} html
+ * @return {*}  {string}
+ */
+export function html2text(html: string): string {
+  return html.replace(/<[^>]+>/ig, '')
+}
 
 /**
  *

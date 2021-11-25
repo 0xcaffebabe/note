@@ -169,6 +169,16 @@
   color: #409eff;
   text-decoration: none;
 }
+.markdown-section a.potential-link {
+  /* color: #67C23A; */
+  color: var(--text-color);
+  text-decoration: none;
+  border-top: 1px dashed #ccc;
+}
+
+.markdown-section a.potential-link:hover {
+  text-decoration: none;
+}
 
 .markdown-section a:hover {
   text-decoration: underline;

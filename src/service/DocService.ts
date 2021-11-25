@@ -13,6 +13,8 @@ import DocMetadata from '@/dto/doc/DocMetadata'
 import TagService from './TagService'
 import TagSumItem from '@/dto/tag/TagSumItem'
 import TagUtils from '@/pages/tag/TagUtils'
+import { KnowledgeLinkNode } from '@/dto/KnowledgeNode'
+import KnowledgeNetworkService from './KnowledgeNetworkService'
 
 const cache = Cache()
 
@@ -57,6 +59,7 @@ class DocService implements Cacheable{
   public renderMd(mdContent: string) : string {
     const render = new marked.Renderer();
     const tagList: TagSumItem[] = TagService.getTagSumList();
+    const knowledgeLinkList: KnowledgeLinkNode[] = KnowledgeNetworkService.getAllLinks();
     // 自定义url渲染
     render.link = (href: string | null, title: string | null, text: string | null) : string => {
       if (!href?.startsWith('http')) {
@@ -77,11 +80,23 @@ class DocService implements Cacheable{
       }
       return `<p class="img-wrapper"><img src='${localImageProxy(href)}'/><p class="img-title">${text}</p></p>`
     }
-    // 自定义文本渲染 若发现关键字包含标签 则插入标记
     render.text = (text: string): string => {
+      // 自定义文本渲染 若发现关键字包含标签 则插入标记
       for(let i of tagList) {
         if (text.indexOf(i.tag) != -1) {
           text = text.replace(i.tag, (str: string) =>`<u class="doc-tag-main">${str}</u><sup class="doc-tag" tag="${i.tag}" style="background-color: ${TagUtils.calcTagColor(i.tag)}">${i.count}</sup>`);
+        }
+      }
+      // 自定义文本渲染 若发现关键字包含已存在的知识网络连接 则转为链接
+      for(let i of knowledgeLinkList) {
+        if (text.indexOf(i.name) != -1) {
+          let url = "";
+          if (i.headingId) {
+            url = `/doc/${i.id}?headingId=${i.headingId}`;
+          }else {
+            url = `/doc/${i.id}`;
+          }
+          text = text.replace(i.name, (str: string) => `<a href='${url}' class="potential-link" origin-link="${DocUtils.docId2Url(i.id)}">${str}</a>`)
         }
       }
       return text;

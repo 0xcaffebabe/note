@@ -29,6 +29,21 @@ function kwContains(kw: string, txt: string): boolean{
   return false;
 }
 
+function appendMissingKw(segement: SearchIndexSegment, kw: string): SearchIndexSegment {
+  const kwList = kw.trim().split(' ').filter(v => v);
+  for(let i of kwList) {
+    if (segement.id.replace(/<[^>]+>/ig, '').toLowerCase().indexOf(i.toLowerCase()) == -1 &&
+          segement.txt.replace(/<[^>]+>/ig, '').toLowerCase().indexOf(i.toLowerCase()) == -1) {
+      if (!segement.missingKeywords) {
+        segement.missingKeywords = [i]
+      }else {
+        segement.missingKeywords.push(i);
+      }
+    }
+  }
+  return segement;
+}
+
 class SearchService implements Cacheable{
   private static instance: SearchService;
 
@@ -56,9 +71,10 @@ class SearchService implements Cacheable{
           url: v.url,
           hilighedUrl: v._highlightResult?.url?.value,
           createTime: v.createTime,
-          hilighedSegement: v._highlightResult?.segments?.map(v => {return {id: v?.id?.value, txt: v?.txt?.value}}) // 将algolia的高亮结构体转换成我们自己的SearchIndexSegment
+          hilighedSegement: v._highlightResult?.segments?.map(v => {return {id: v?.id?.value, txt: v?.txt?.value} as SearchIndexSegment}) // 将algolia的高亮结构体转换成我们自己的SearchIndexSegment
           .filter(v => v.id?.indexOf(`<${hilighTag}>`) != -1 || v.txt?.indexOf(`<${hilighTag}>`) != -1) // 过滤掉没有高亮的搜索结果
           .filter(v => kwContains(kw, v.id || '') || kwContains(kw, v.txt || '')) // 过滤掉搜索结果没有关键词的结果
+          .map(v => appendMissingKw(v, kw)) // 添加搜索结果中没有出现的关键词
         } as SearchResult
       })
     }

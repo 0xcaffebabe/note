@@ -35,6 +35,10 @@
         >
           <h3 v-html="p.id"></h3>
           <p v-html="p.txt"></p>
+          <p v-if="p.missingKeywords">
+          <span class="font-size:12px;color:#666">缺少关键词:</span>
+          <el-tag v-for="mkw in p.missingKeywords" :key="mkw" size="mini" type="danger"><del>{{mkw}}</del></el-tag>
+          </p>
         </div>
       </div>
     </div>

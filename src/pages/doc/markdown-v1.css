@@ -42,6 +42,7 @@
   position: absolute;
   top: 0;
   color: #66B1FF;
+  padding-right: 8px;
 }
 .markdown-section h1:hover::before {
   content: '#1';

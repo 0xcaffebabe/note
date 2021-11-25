@@ -24,6 +24,12 @@ import CategoryService from '@/service/CategoryService'
 import DocUtils from '@/util/DocUtils'
 import { ElAutocomplete } from 'element-plus'
 import { defineComponent, ref } from 'vue'
+import pinyin from 'tiny-pinyin'
+
+function categoryIsMatch(category: Category, queryString: string): boolean{
+  return category.name?.toLowerCase().indexOf(queryString.toLowerCase()) != -1 || // 包含完全匹配
+          pinyin.convertToPinyin(category.name?.toLowerCase()).toLowerCase().indexOf(queryString.toLowerCase()) != -1// 包含拼音匹配
+}
 
 export default defineComponent({
   setup() {
@@ -61,7 +67,7 @@ export default defineComponent({
       if (!queryString) {
         cb(CategoryService.getCategorySearchRecords())
       }else {
-        const results = this.flatCategoryList.filter(v => v.name?.toLowerCase().indexOf(queryString.toLowerCase()) != -1)
+        const results = this.flatCategoryList.filter(v => categoryIsMatch(v, queryString))
         cb(results)
       }
     },

@@ -9,7 +9,7 @@
             <doc-breadcrumb-nav />
             <p class="create-time">⏰创建时间: {{file.createTime}}</p>
             <!-- doc主体开始 -->
-            <div class="markdown-section" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '960px': '74%'}"></div>
+            <div class="markdown-section" ref="markdownSection" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '960px': '74%'}"></div>
             <!-- doc主体结束 -->
             <!-- 提交历史开始 -->
             <div style="text-align: center">
@@ -77,6 +77,7 @@ import DocUtils from "@/util/DocUtils";
 import DocSideCategory from './aside/DocSideCategory.vue';
 import DocBreadcrumbNav from "./nav/DocBreadcrumbNav.vue";
 import DocTabNav from "./nav/DocTabNav.vue";
+import DocPageEventMnager from './DocPageEventManager';
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -146,6 +147,7 @@ export default defineComponent({
       isDrawerShow: false as boolean,
       imageUrlList: [] as string[],
       parentShowHeader: true as boolean,
+      eventManager: null as DocPageEventMnager | null
     };
   },
   computed: {
@@ -174,112 +176,18 @@ export default defineComponent({
       }
       this.generateTOC();
       this.$nextTick(() => {
-        this.registerLinkRouter();
-        this.registerImageClick();
-        this.registerHeadingClick();
-        this.registerDocTagSupClick();
-        this.syncHeading(headingId);
+        const docEl = this.$refs.markdownSection as HTMLElement;
+        this.eventManager!.registerLinkRouter(docEl);
+        this.eventManager!.registerImageClick(docEl);
+        this.eventManager!.registerHeadingClick(docEl);
+        this.eventManager!.registerDocTagSupClick(docEl);
+        this.eventManager!.syncHeading(headingId);
         (this.$refs.docSideCategory as any).syncCategoryListScrollBar();
       });
       this.loading = false;
     },
-    syncHeading(headingId?: string){
-      if (headingId) {
-       const elm : HTMLElement = document.querySelector('#' + headingId)!;
-      if (elm) {
-        window.scrollTo(0, elm.offsetTop - 80)
-      } 
-    }
-    },
     generateTOC() {
       this.contentsList = docService.getContent(this.contentHtml);
-    },
-    // 管理内页doc链接跳转 hover行为
-    registerLinkRouter() {
-      const aList: NodeListOf<HTMLElement> = document.querySelectorAll(
-        ".markdown-section a[origin-link]"
-      );
-      for (let i = 0; i < aList.length; i++) {
-        const a = aList[i];
-        a.onclick = (e: Event) => {
-          const href = a.getAttribute("href");
-          if (href?.startsWith("doc") || href?.startsWith("/doc")) {
-            this.$router.push(href);
-            e.preventDefault();
-            e.stopPropagation();
-          }
-        };
-        a.addEventListener('contextmenu', (e: MouseEvent) => {
-          const originLink = a.getAttribute('origin-link');
-          (this.$refs.linkPopover as any).show(originLink, e.clientX, e.clientY);
-          e.preventDefault();
-          e.stopPropagation();
-          return false;
-        });
-      }
-    },
-    // 管理页内图片点击行为
-    registerImageClick(){
-      const imgList: NodeListOf<HTMLElement> = document.querySelectorAll(
-        ".markdown-section .img-wrapper"
-      );
-      for (let i = 0; i < imgList.length; i++) {
-        const img = imgList[i];
-        img.onclick = (e: Event) => {
-          // 展示大图
-          const src = img.querySelector('img')?.getAttribute('src') || '';
-          this.imageUrlList = [src];
-          this.showImageViewer = true;
-        };
-      }
-    },
-    // 管理页内heading点击行为
-    registerHeadingClick(){
-      const headingList: NodeListOf<HTMLElement> = document.querySelectorAll(
-        `.markdown-section h1,
-         .markdown-section h2,
-         .markdown-section h3,
-         .markdown-section h4,
-         .markdown-section h5,
-         .markdown-section h6`
-      );
-      for(let i = 0;i<headingList.length;i++){
-        const heading = headingList[i];
-        heading.onclick= async (e) => {
-          const id = heading.innerText;
-          const url = "/" + DocUtils.docId2Url(this.doc) + "#" + id;
-          await navigator.clipboard.writeText(url);
-          ElMessage.success('复制成功: ' + url);
-        }
-      }
-    },
-    // 管理doc-tag点击
-    registerDocTagSupClick(){
-      const supList: NodeListOf<HTMLElement> = document.querySelectorAll(
-        ".markdown-section .doc-tag"
-      );
-      for (let i = 0; i < supList.length; i++) {
-        const sup = supList[i];
-        sup.onclick = (e: Event) => {
-          const tag = sup.getAttribute('tag')
-          this.$router.push('/tag?tag=' + tag)
-          e.preventDefault();
-          e.stopPropagation();
-        };
-      }
-    },
-    // 滚动监听
-    registerScrollListener() {
-      let timer: NodeJS.Timeout;
-      document.addEventListener("scroll", (e) => {
-        // 限流更新阅读位置
-        timer = setTimeout(() => {
-          clearTimeout(timer);
-          docService.setDocReadRecrod(this.doc, window.scrollY);
-        }, 1000);
-        // 滚动的同时将link-popover隐藏掉
-        (this.$refs.linkPopover as any).hide();
-      });
     },
   },
   beforeRouteUpdate(to, from) {
@@ -288,12 +196,13 @@ export default defineComponent({
     (this.$refs.docSideCategory as any).updateCurrentCategory(doc);
   },
   async created() {
-    this.registerScrollListener();
+    this.eventManager = new DocPageEventMnager(this);
+    this.eventManager!.registerScrollListener();
     this.showDoc(this.$route.params.doc.toString(), this.$route.query.headingId?.toString());
   },
   unmounted(){
     // 一些清理操作
-    document.onscroll = null
+    this.eventManager!.removeAllScrollListener();
   }
 });
 </script>

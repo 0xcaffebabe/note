@@ -135,7 +135,7 @@ class DocService extends BaseService implements Cacheable {
         const a = linkElemetns[i]
         const uri = a.getAttribute('href')
         if (uri?.indexOf('md') != -1) {
-          links.push(DocUtils.resloveDocUrl(uri!))
+          links.push({name: a.textContent || '', ...DocUtils.resloveDocUrl(uri!)})
         }
       }
       return {id: DocUtils.docUrl2Id(path), links}

@@ -1,5 +1,7 @@
 
 export interface KnowledgeLinkNode {
+  // 链接文本
+  name: string
   id: string
   headingId?: string
 }

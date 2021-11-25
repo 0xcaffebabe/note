@@ -255,12 +255,12 @@ export default defineComponent({
     // 管理doc-tag点击
     registerDocTagSupClick(){
       const supList: NodeListOf<HTMLElement> = document.querySelectorAll(
-        ".markdown-section .doc-tag-main"
+        ".markdown-section .doc-tag"
       );
       for (let i = 0; i < supList.length; i++) {
         const sup = supList[i];
         sup.onclick = (e: Event) => {
-          const tag = sup.innerText
+          const tag = sup.getAttribute('tag')
           this.$router.push('/tag?tag=' + tag)
           e.preventDefault();
           e.stopPropagation();

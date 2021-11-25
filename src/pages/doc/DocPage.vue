@@ -206,6 +206,7 @@ export default defineComponent({
           if (href?.startsWith("doc") || href?.startsWith("/doc")) {
             this.$router.push(href);
             e.preventDefault();
+            e.stopPropagation();
           }
         };
         a.addEventListener('contextmenu', (e: MouseEvent) => {

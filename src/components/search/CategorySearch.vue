@@ -26,9 +26,17 @@ import { ElAutocomplete } from 'element-plus'
 import { defineComponent, ref } from 'vue'
 import pinyin from 'tiny-pinyin'
 
+function pyFirstLetter(str: string): string {
+  return pinyin.convertToPinyin(str, '-')
+              .split('-')
+              .map(v => v.charAt(0))
+              .join("")
+}
+
 function categoryIsMatch(category: Category, queryString: string): boolean{
   return category.name?.toLowerCase().indexOf(queryString.toLowerCase()) != -1 || // 包含完全匹配
-          pinyin.convertToPinyin(category.name?.toLowerCase()).toLowerCase().indexOf(queryString.toLowerCase()) != -1// 包含拼音匹配
+          pinyin.convertToPinyin(category.name).toLowerCase().indexOf(queryString.toLowerCase()) != -1 || // 包含拼音完全匹配
+          pyFirstLetter(category.name).toLowerCase().indexOf(queryString.toLowerCase()) != -1 // 包含拼音首字母匹配
 }
 
 export default defineComponent({

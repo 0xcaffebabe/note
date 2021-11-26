@@ -25,6 +25,14 @@
               <el-icon><monitor /></el-icon>
             </el-button>
             <el-divider direction="vertical" />
+            <el-popconfirm title="确认清空缓存?" @confirm="clearCache">
+              <template #reference>
+                <el-button size="mini" >
+                  <el-icon><brush /></el-icon>
+                </el-button>
+              </template>
+            </el-popconfirm>
+            <el-divider direction="vertical" />
             <el-button-group style="margin-left: 20px">
               <el-button
                 icon="el-icon-search"
@@ -77,12 +85,14 @@
 import { defineComponent } from "vue";
 import config from "@/config";
 import DatasourceSelector from './datasource/DatasourceSelector.vue';
-import {Sunny, Moon, Monitor} from '@element-plus/icons';
+import {Sunny, Moon, Monitor, Brush} from '@element-plus/icons';
+import CacheService from "@/service/CacheService";
 
 export default defineComponent({
   components: {
     DatasourceSelector,
-    Monitor
+    Monitor,
+    Brush,
   },
   setup() {},
   data() {
@@ -101,6 +111,9 @@ export default defineComponent({
       } else {
         this.$router.push(menu.router);
       }
+    },
+    clearCache(){
+      CacheService.getInstance().clear();
     },
     handleToggleFullScreen(){
       this.fullscreen = !document.fullscreenElement;

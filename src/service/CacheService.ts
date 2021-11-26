@@ -38,6 +38,16 @@ class CacheService {
     return this.cacheMap.get(id)!.get(argsStringify)
   }
 
+
+  /**
+   *
+   * 清空缓存
+   * @memberof CacheService
+   */
+  public clear(){
+    this.cacheMap.clear();
+  }
+
   public has(id: string, argsStringify: string): boolean {
     this.ensureScopreCacheExists(id, argsStringify)
     return this.cacheMap.get(id)!.has(argsStringify)

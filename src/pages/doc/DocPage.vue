@@ -52,6 +52,7 @@
     <knowledge-network ref="knowledgeNetwork" :doc="doc" @close="showAside = true;isDrawerShow = false"/>
   </keep-alive>
   <el-image-viewer @close="showImageViewer = false" v-show="showImageViewer" :url-list="imageUrlList" :hide-on-click-modal="true"/>
+  <resource-brower ref="resourceBrower" />
 </template>
 
 <script lang="ts">
@@ -78,6 +79,7 @@ import DocSideCategory from './aside/DocSideCategory.vue';
 import DocBreadcrumbNav from "./nav/DocBreadcrumbNav.vue";
 import DocTabNav from "./nav/DocTabNav.vue";
 import DocPageEventMnager from './DocPageEventManager';
+import ResourceBrower from "./ResourceBrower.vue";
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -94,6 +96,7 @@ export default defineComponent({
     KnowledgeNetwork,
     DocBreadcrumbNav,
     DocTabNav,
+    ResourceBrower,
   },
   watch: {
     showHeader: {

@@ -3,6 +3,7 @@ import DocPage from "./DocPage.vue";
 import LinkPopover from "./LinkPopover.vue";
 import { ElMessage } from 'element-plus'
 import DocService from "@/service/DocService";
+import ResourceBrower from "./ResourceBrower.vue";
 
 class DocPageEventManager {
 
@@ -24,9 +25,12 @@ class DocPageEventManager {
    */
   public registerLinkRouter(docEl: HTMLElement) {
     const document = docEl;
-    const aList: NodeListOf<HTMLElement> = document.querySelectorAll("a[origin-link]");
-    for (let i = 0; i < aList.length; i++) {
-      const a = aList[i];
+    const docLinkList: NodeListOf<HTMLElement> = document.querySelectorAll("a[origin-link]");
+    const outterLinkList: NodeListOf<HTMLElement> = document.querySelectorAll("a:not([origin-link])");
+    console.log(outterLinkList);
+    // 文档链接
+    for (let i = 0; i < docLinkList.length; i++) {
+      const a = docLinkList[i];
       a.onclick = (e: Event) => {
         const href = a.getAttribute("href");
         if (href?.startsWith("doc") || href?.startsWith("/doc")) {
@@ -42,6 +46,16 @@ class DocPageEventManager {
         e.stopPropagation();
         return false;
       });
+    }
+    // 外部链接
+    for(let i = 0;i < outterLinkList.length;i++){
+      const a = outterLinkList[i];
+      a.onclick = (e: Event) => {
+        const href = a.getAttribute("href");
+        (this.getRef('resourceBrower') as InstanceType<typeof ResourceBrower>).show(href!);
+        e.preventDefault();
+        e.stopPropagation();
+      };
     }
   }
 

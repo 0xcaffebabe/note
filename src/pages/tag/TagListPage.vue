@@ -26,17 +26,19 @@
           <template #default="scope">
             <el-icon><timer /></el-icon>
             <span style="margin-left: 10px">
-              <el-link type="primary" @click="$router.push('/doc/' + docUrl2Id(scope.row))">{{docUrl2Id(scope.row)}}</el-link>
+              <el-link type="primary" @click="$router.push('/doc/' + docUrl2Id(scope.row))" @contextmenu="handleDocLinkContextMenu(scope.row, $event)">{{docUrl2Id(scope.row)}}</el-link>
             </span>
           </template>
         </el-table-column>
       </el-table>
     </div>
   </div>
+  <link-popover ref="linkPopover" />
 </template>
 
 <script setup lang="ts">
 import { Search } from "@element-plus/icons";
+import LinkPopover from "../doc/LinkPopover.vue";
 </script>
 
 <script lang="ts">
@@ -75,6 +77,12 @@ export default defineComponent({
         this.checkedMap[tag] = true;
       }
     },
+    handleDocLinkContextMenu(docLink: string, event: MouseEvent) {
+      (this.$refs.linkPopover as any).show(docLink, event.clientX, event.clientY);
+      event.preventDefault();
+      event.stopPropagation();
+      return false;
+    }
   },
   computed: {
     filtedTags(): TagItem[] {
@@ -91,12 +99,7 @@ export default defineComponent({
     let list = (await api.getTagMapping()).map((v) => {
       return { tag: v[0], count: v[1].length, chapters: v[1] };
     });
-    // mock to test
-    for (let i = 0; i < 5; i++) {
-      // list.push(...list);
-    }
     this.tags = list
-      // .map((v) => {return {tag: v.tag + Math.ceil(Math.random() * 1000000), count: v.count, chapters: v.chapters}})
       .map((v) => {
         return {
           tag: v.tag,
@@ -108,7 +111,6 @@ export default defineComponent({
   },
   mounted(){
     // 通过url传参 确认哪些标签
-    console.log(this.$route.query);
     if (this.$route.query.tag) {
       this.checkedMap[this.$route.query.tag.toString()] = true
     }

@@ -57,6 +57,7 @@ export default defineComponent({
   left: 400px;
   padding: 10px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  z-index: 999;
 }
 .close-button {
   float: right;

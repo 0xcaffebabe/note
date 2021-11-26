@@ -3,6 +3,7 @@
     <el-skeleton :rows="1" animated :loading="loading" :throttle="500">
       <template #default>
         <p>{{ filename }}</p>
+        <p class="full-id" :title="docId"> {{ docId }}</p>
         <el-badge
           :value="lastPastDays + '天前更新'"
           class="item"
@@ -40,10 +41,6 @@ import TagUtils from "@/pages/tag/TagUtils";
 
 export default defineComponent({
   props: {
-    categoryName: {
-      type: String,
-      required: true,
-    },
     categoryLink: {
       type: String,
       required: true,
@@ -56,6 +53,9 @@ export default defineComponent({
     filename() {
       return this.file?.name;
     },
+    docId(){
+      return DocUtils.docUrl2Id(this.categoryLink);
+    }
   },
   methods: {
     // 初始化内容
@@ -113,5 +113,13 @@ export default defineComponent({
   cursor: pointer;
   margin-left: 4px;
   margin-bottom: 4px;
+}
+.full-id {
+  font-size: 12px;
+  padding-top: 0;
+  margin-top:0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 </style>

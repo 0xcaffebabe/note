@@ -36,6 +36,7 @@ class DocService extends BaseService implements Cacheable {
     const callResult = await Promise.all([GitService.getFileCommitList(path), fs.promises.readFile(path)])
     return {
       name: path.split('/')[path.split('/').length-1].replace('.md', ''),
+      id: DocUtils.docUrl2Id(path),
       content: callResult[1].toString().replace(/^---$.*^---$/ms, ''), // 去除markdown里的元数据
       metadata: this.resolveMetadata(callResult[1].toString()),
       hasMoreCommit: callResult[0].length > 10,

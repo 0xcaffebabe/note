@@ -155,7 +155,7 @@ export default defineComponent({
   },
   computed: {
     contentHtml(): string {
-      return DocService.renderMd(this.file.content);
+      return DocService.renderMd(this.file);
     },
   },
   methods: {

@@ -56,10 +56,13 @@ class DocService implements Cacheable{
   }
 
   @cache
-  public renderMd(mdContent: string) : string {
+  public renderMd(file: DocFileInfo) : string {
+    const mdContent = file.content;
+
     const render = new marked.Renderer();
     const tagList: TagSumItem[] = TagService.getTagSumList();
     const knowledgeLinkList: KnowledgeLinkNode[] = KnowledgeNetworkService.getAllLinks();
+
     // 自定义url渲染
     render.link = (href: string | null, title: string | null, text: string | null) : string => {
       if (!href?.startsWith('http')) {
@@ -93,6 +96,10 @@ class DocService implements Cacheable{
       const reg = new RegExp(knowledgeLinkList.map(v => v.name).join('|'))
       text = text.replace(reg, (str: string) => {
         const i = knowledgeLinkList.filter(v => v.name == str)[0];
+        // 如果被插入的链接为当前渲染的文档 跳过
+        if (i.id == file.id) {
+          return str;
+        }
         let url = "";
         if (i.headingId) {
           url = `/doc/${i.id}?headingId=${i.headingId}`;
@@ -217,7 +224,7 @@ class DocService implements Cacheable{
   @cache
   public async getContentByDocId(id: string): Promise<Content[]> {
     const fileInfo = await api.getDocFileInfo(id)
-    const html = this.renderMd(fileInfo.content)
+    const html = this.renderMd(fileInfo)
     return this.getContent(html)
   }
 

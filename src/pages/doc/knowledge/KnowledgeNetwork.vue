@@ -60,6 +60,11 @@ export default defineComponent({
      this.init(); 
     }
   },
+  computed: {
+    isDark() {
+      return this.$store.state.isDarkMode;
+    }
+  },
   setup() {},
   methods: {
     show() {
@@ -144,6 +149,7 @@ export default defineComponent({
           top: 'bottom',
           left: 'right'
         },
+        darkMode: this.isDark,
         tooltip: {},
         // 数据更新动画的时长
         animationDurationUpdate: 1500,
@@ -186,7 +192,7 @@ export default defineComponent({
               show: true,
               position: "top",
               fontSize: 14,
-              color: "#555",
+              color: this.isDark ? "#eee":"#555",
               textBorderWidth: 1,
               // 将文档id进行处理 提取为文档最后一个名称
               formatter(params): string {

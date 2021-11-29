@@ -8,6 +8,7 @@ declare module '@vue/runtime-core' {
   interface State {
     currentCategory: Category,
     currentCategoryList: string[],
+    isDarkMode: boolean,
     currentSearchKw: string,
     currentHeading: string
   }

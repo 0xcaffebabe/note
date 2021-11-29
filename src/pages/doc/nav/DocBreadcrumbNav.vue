@@ -2,9 +2,9 @@
   <el-breadcrumb separator="/">
             <el-breadcrumb-item
               :to="{ path: '/doc/' + docUrl2Id(chain.link) }"
-              v-for="chain in categoryChainList"
+              v-for="(chain, index) in categoryChainList"
               :key="chain.name"
-            >{{ chain.name }}</el-breadcrumb-item>
+            ><span class="chain-name" :class="{last: index == categoryChainList.length - 1}">{{ chain.name }}</span></el-breadcrumb-item>
           </el-breadcrumb>
 </template>
 
@@ -45,5 +45,16 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
-
+body[theme=dark] {
+  .chain-name {
+    color: var(--main-dark-text-color);
+  }
+  .chain-name.last {
+    color: var(--second-dark-text-color);
+  }
+  .chain-name:hover:not(.last) {
+    transition: all 0.2s;
+    color: var(--el-color-primary);
+  }
+}
 </style>

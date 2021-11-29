@@ -70,3 +70,12 @@ export default defineComponent({
 }
 
 </style>
+
+<style lang="less">
+body[theme=dark] {
+  .el-popover {
+    background-color:var(--second-dark-bg-color);
+    color: var(--main-dark-text-color);
+  }
+}
+</style>

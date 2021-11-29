@@ -8,6 +8,7 @@ export default function create(){
         // 当前所在的章节目录
         currentCategory: new Category() as Category,
         currentCategoryList: [] as string[],
+        isDarkMode: false,
         // 当前所在的章节标题
         currentHeading: '' as string,
         currentSearchKw: '' as string
@@ -40,6 +41,9 @@ export default function create(){
       },
       setCurrentHeading(state: any, heading: string) {
         state.currentHeading = heading
+      },
+      setIsDarkMode(state: any, dark: boolean) {
+        state.isDarkMode = dark;
       }
     }
   })

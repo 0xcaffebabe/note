@@ -168,4 +168,15 @@ export default defineComponent({
 :deep(.el-icon) {
   vertical-align: middle;
 }
+
+body[theme=dark] {
+  .statistic-wrapper {
+    background-color:var(--main-dark-bg-color);
+    color: var(--main-dark-text-color);
+  }
+  :deep(.el-descriptions__body) {
+    background-color:var(--main-dark-bg-color);
+    color: var(--main-dark-text-color);
+  }
+}
 </style>

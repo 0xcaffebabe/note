@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="container">
     <el-skeleton :rows="1" animated :loading="loading" :throttle="500">
       <template #default>
         <p>{{ filename }}</p>
@@ -121,5 +121,12 @@ export default defineComponent({
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
+}
+
+body[theme=dark] {
+  .container {
+    background-color:var(--second-dark-bg-color);
+    color: var(--main-dark-text-color);
+  }
 }
 </style>

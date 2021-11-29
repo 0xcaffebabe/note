@@ -16,6 +16,7 @@
               :inline-prompt="true"
               :active-icon="activeIcon"
               :inactive-icon="inactiveIcon"
+              @click="toggleDarkMode"
               active-color="#000"
               inactive-color="#409EFF"
             >
@@ -123,6 +124,18 @@ export default defineComponent({
         document.exitFullscreen();
       }
     },
+    toggleDarkMode(){
+      const theme = document.body.getAttribute('theme');
+      if (theme == 'dark') {
+        document.body.setAttribute('theme', 'light');
+        this.$store.commit('setIsDarkMode', false);
+        localStorage.setItem('system::theme', "light");
+      }else {
+        document.body.setAttribute('theme', 'dark');
+        this.$store.commit('setIsDarkMode', true);
+        localStorage.setItem('system::theme', "dark");
+      }
+    }
   },
   computed: {
     siteName() {
@@ -131,9 +144,13 @@ export default defineComponent({
     navMenu() {
       return config.navMenu;
     },
-    
+    isDark(){
+      return this.$store.state.isDarkMode;
+    }
   },
-  created() {},
+  created() {
+    this.showMode = this.isDark;
+  },
 });
 </script>
 
@@ -177,5 +194,16 @@ export default defineComponent({
 }
 .el-menu {
   width: 320px;
+}
+body[theme=dark] {
+  .header {
+    background-color:var(--second-dark-bg-color);
+    color: var(--main-dark-text-color);
+    border-bottom: 1px solid #333;
+  }
+  .el-menu {
+    background-color:var(--second-dark-bg-color);
+    color: var(--main-dark-text-color);
+  }
 }
 </style>

@@ -72,7 +72,7 @@ import api from "@/api";
 import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
 import { ElMessage } from 'element-plus'
-import './markdown-v1.css'
+import './markdown-v1.less'
 import './code-hl-vsc.css'
 import DocUtils from "@/util/DocUtils";
 import DocSideCategory from './aside/DocSideCategory.vue';
@@ -250,5 +250,14 @@ export default defineComponent({
   .toc-wrapper {
   right: 2px;
 }
+}
+
+body[theme=dark] {
+  background-color:var(--main-dark-bg-color);
+  color: var(--main-dark-text-color);
+  .main {
+    background-color:var(--main-dark-bg-color);
+    color: var(--main-dark-text-color);
+  }
 }
 </style>

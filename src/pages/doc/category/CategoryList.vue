@@ -1,7 +1,7 @@
 <template>
   <el-skeleton :rows="24" animated :loading="loading" :throttle="50" style="max-width: 80%; padding:20px">
     <template #default>
-      <el-menu :unique-opened="false" :default-active="doc" :router="true">
+      <el-menu :unique-opened="false" :default-active="doc" :router="true" :background-color="isDark ? '323233' : ''" :text-color="isDark ? '#fff' : ''">
         <CategoryTree :menuList="cateList" />
       </el-menu>
     </template>
@@ -30,6 +30,11 @@ export default defineComponent({
       cateList: [] as Category[],
       activeMenu: '' as string,
       loading: true as boolean
+    }
+  },
+  computed: {
+    isDark(){
+      return this.$store.state.isDarkMode;
     }
   },
   methods: {

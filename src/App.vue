@@ -66,6 +66,7 @@ export default defineComponent({
     };
   },
   created() {
+    // 全局快捷键监听
     document.addEventListener("keydown", (e) => {
       if (e.ctrlKey && e.key == "q") {
         (this.$refs.categorySearch as any).show();
@@ -76,6 +77,12 @@ export default defineComponent({
         e.preventDefault();
       }
     });
+    // 设置默认主题
+    const theme = localStorage.getItem('system::theme');
+    if (theme == 'dark') {
+      this.$store.commit('setIsDarkMode', true);
+      document.body.setAttribute('theme', 'dark');
+    }
   },
 });
 </script>
@@ -100,6 +107,17 @@ export default defineComponent({
   .el-button {
     padding: 0 7px;
     margin-left: 280px;
+  }
+}
+
+body[theme=dark] {
+  .el-main {
+    background-color:var(--main-dark-bg-color);
+    color: var(--main-dark-text-color);
+  }
+  .el-header {
+    background-color:var(--main-dark-bg-color);
+    color: var(--main-dark-text-color);
   }
 }
 </style>

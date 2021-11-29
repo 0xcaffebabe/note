@@ -3,15 +3,19 @@
   font-family: sans-serif;
   color: var(--text-color);
 }
+
 /* Header
 -------------------- */
+
 .markdown-section h1 {
   font-size: 32px;
 }
+
 .markdown-section h2 {
   padding-bottom: 8px;
   font-size: 28px;
 }
+
 .markdown-section h1,
 .markdown-section h2,
 .markdown-section h3,
@@ -33,7 +37,8 @@
 .markdown-section h3:hover::before,
 .markdown-section h4:hover::before,
 .markdown-section h5:hover::before,
-.markdown-section h6:hover::before {
+.markdown-section h6:hover::before
+{
   position: absolute;
   top: 0;
   color: #66B1FF;
@@ -63,27 +68,34 @@
   content: '#6';
   left: -10px;
 }
+
 /* Text Formating
 -------------------- */
+
 .markdown-section p {
   margin: 16px 0;
 }
+
 .markdown-section code {
   padding: 4px 5px;
   margin: 2px 0;
   border-radius: 2px;
   color: #d4d4d4;
 }
+
 /* Horizontal Rule
 -------------------- */
+
 .markdown-section hr {
   height: 2px;
   margin: 16px 0;
   border: none;
   background-color: #ccc;
 }
+
 /* Cites
 -------------------- */
+
 .markdown-section blockquote {
   border-left: 4px solid #409EFF;
   color: var(--text-color);
@@ -92,26 +104,31 @@
   margin: 0;
   margin-top: 10px;
 }
+
 /* Table
 -------------------- */
+
 .markdown-section table {
   border-spacing: 0;
   border-collapse: collapse;
 }
-.markdown-section table th,
-.markdown-section table td {
+
+.markdown-section table th, .markdown-section table td {
   padding: 6px 12px;
   border: 1px solid #dfe2e5;
 }
+
 .markdown-section table tr {
   background-color: #fff;
 }
-.markdown-section table thead tr,
-.markdown-section table tbody tr:nth-child(even) {
+
+.markdown-section table thead tr, .markdown-section table tbody tr:nth-child(even) {
   background-color: #f8f8f8;
 }
+
 /* Code Block
 -------------------- */
+
 .markdown-section pre code {
   display: block;
   padding: 16px 20px;
@@ -122,26 +139,33 @@
   white-space: pre;
   overflow-x: auto;
 }
+
 .markdown-section pre {
   border-radius: 4px;
 }
+
 /* List
 -------------------- */
+
 .markdown-section ul {
   padding-left: 20px;
   list-style-type: disc;
 }
+
 .markdown-section li {
   margin: 10px 0;
 }
 .markdown-section ul ul {
   list-style-type: circle;
 }
+
 .markdown-section ul ul ul {
   list-style-type: square;
 }
+
 /* Link
 -------------------- */
+
 .markdown-section a {
   color: #409eff;
   text-decoration: none;
@@ -149,23 +173,28 @@
 .markdown-section a.potential-link {
   color: #97cbff;
 }
+
 .markdown-section a.potential-link:hover {
   text-decoration: none;
 }
+
 .markdown-section a:hover {
   text-decoration: underline;
 }
+
 /* Image
 -------------------- */
+
 .markdown-section img {
   display: block;
   max-width: 60%;
   height: auto;
   margin: 16px auto;
 }
+
 /* markdown 图片样式 */
 .img-wrapper {
-  text-align: center;
+  text-align:center;
   cursor: pointer;
   padding: 0;
   margin: 0;
@@ -176,13 +205,14 @@
   padding: 0;
   margin: 0;
 }
+
 /* 标签系统样式 */
 .doc-tag {
   position: absolute;
   transition: all 0.2s;
   margin-left: -10px;
   margin-top: -12px;
-  display: none;
+  display:none;
 }
 .doc-tag:hover {
   transition: all 0.2s;
@@ -196,17 +226,18 @@
   transition: all 0.2s;
   display: inline;
 }
+
 body[theme=dark] {
-  background-color: var(--main-dark-bg-color);
+  background-color:var(--main-dark-bg-color);
   color: var(--main-dark-text-color);
-}
-body[theme=dark] .markdown-section {
-  background-color: var(--main-dark-bg-color);
-  color: var(--main-dark-text-color);
-}
-body[theme=dark] .markdown-section blockquote {
-  background-color: #222b36;
-}
-body[theme=dark] img {
-  filter: invert(25%);
+  .markdown-section {
+    background-color:var(--main-dark-bg-color);
+    color: var(--main-dark-text-color);
+    blockquote {
+      background-color: #222b36;
+    }
+  }
+  img {
+    filter: invert(25%);
+  }
 }

@@ -38,22 +38,19 @@ type EChartsOption = echarts.ComposeOption<
 >;
 
 function fillTimeRange(data: [string, number][]): [string, number][] {
-  console.log(data)
-  const map = new Map<string, number>(data)
-  console.log(map)
-  const range = [data[0][0],data[data.length - 1][0]]
+  console.log(data);
+  const map = new Map<string, number>(data);
+  console.log(map);
+  const range = [data[0][0], data[data.length - 1][0]];
   const start = +echarts.number.parseDate(range[0]);
   const end = +echarts.number.parseDate(range[1]);
   const dayTime = 3600 * 24 * 1000;
-  const results: [string, number][] = []
+  const results: [string, number][] = [];
   for (let time = start; time < end; time += dayTime) {
-    const date = echarts.format.formatTime("yyyy-MM-dd", time)
-    results.push([
-      date,
-      map.get(date) || 0
-    ]);
+    const date = echarts.format.formatTime("yyyy-MM-dd", time);
+    results.push([date, map.get(date) || 0]);
   }
-  return results
+  return results;
 }
 
 /**
@@ -64,7 +61,7 @@ function fillTimeRange(data: [string, number][]): [string, number][] {
 function generatePieces(maxValue: number, colorBox: string[]) {
   const pieces = [];
   const quotient = Math.ceil(maxValue / 4);
-  let temp :any= {};
+  let temp: any = {};
   temp.lt = 1;
   temp.label = "0";
   temp.color = colorBox[0];
@@ -88,18 +85,32 @@ function generatePieces(maxValue: number, colorBox: string[]) {
 
 export default defineComponent({
   setup() {},
-  methods: {
+  computed: {
+    isDark() {
+      return this.$store.state.isDarkMode;
+    },
   },
+  methods: {},
   async mounted() {
     const heatmapData = fillTimeRange(await api.getCommitHeatmap());
     const chartDom = document.getElementById("heatmap")!;
     const myChart = echarts.init(chartDom);
     let option: EChartsOption;
-    const colorBox = ["white", "#98E9A8", "#40C403", "#30A14E", "#216E39", "#1A572D"];
-    const maxValue = heatmapData.map(v => v[1]).sort().reverse()[0]
-    const range = [heatmapData[0][0],heatmapData[heatmapData.length - 1][0]]
-    console.log(range, maxValue)
-    console.log(heatmapData)
+    const colorBox = [
+      this.isDark ? "#323233" : "white",
+      "#98E9A8",
+      "#40C403",
+      "#30A14E",
+      "#216E39",
+      "#1A572D",
+    ];
+    const maxValue = heatmapData
+      .map((v) => v[1])
+      .sort()
+      .reverse()[0];
+    const range = [heatmapData[0][0], heatmapData[heatmapData.length - 1][0]];
+    console.log(range, maxValue);
+    console.log(heatmapData);
     option = {
       title: {
         top: 30,
@@ -108,9 +119,9 @@ export default defineComponent({
       },
       tooltip: {
         formatter(params: any) {
-          const data :[string, number] = params.data
-          return `${data[0]} ${data[1]}次`
-        }
+          const data: [string, number] = params.data;
+          return `${data[0]} ${data[1]}次`;
+        },
       },
       visualMap: {
         min: 0,
@@ -130,9 +141,20 @@ export default defineComponent({
         itemStyle: {
           borderWidth: 0.5,
         },
-        yearLabel: { show: true },
-        dayLabel: { show: true, nameMap: 'cn', firstDay: 1 },
-        monthLabel: { show: true, nameMap: 'cn' },
+        yearLabel: {
+          show: true,
+        },
+        dayLabel: {
+          show: true,
+          nameMap: "cn",
+          firstDay: 1,
+          color: this.isDark ? "#bbb" : "",
+        },
+        monthLabel: {
+          show: true,
+          nameMap: "cn",
+          color: this.isDark ? "#bbb" : "",
+        },
       },
       series: {
         type: "heatmap",

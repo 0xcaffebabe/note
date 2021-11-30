@@ -140,4 +140,16 @@ ul,
 .progress {
   text-align: center;
 }
+
+body[theme=dark] {
+  .toc {
+    border-left: 1px solid var(--default-dark-border-color);
+  }
+  .toc :deep(a) {
+    color: var(--main-dark-text-color);
+  }
+  .progress {
+    opacity: 0.75;
+  }
+}
 </style>

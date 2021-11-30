@@ -67,4 +67,12 @@ export default defineComponent({
     color: #3E90E8 !important;
   }
 }
+
+body[theme=dark] {
+  .history-message {
+    a {
+      color: var(--main-dark-text-color);
+    }
+  }
+}
 </style>

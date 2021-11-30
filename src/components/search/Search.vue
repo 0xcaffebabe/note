@@ -6,6 +6,7 @@
         placeholder="搜索"
         :fetch-suggestions="getSearchSuggestion"
         @keydown.enter="handleSearch"
+        popper-class="popper-list"
         @select="handleSearchSelect"
         ref="input"
       >
@@ -186,5 +187,20 @@ export default defineComponent({
 .search-suggestion-item {
   display: inline-block;
   padding: 4px 0;
+}
+
+body[theme=dark] {
+  .search-suggestion-item {
+    color: var(--main-dark-text-color);
+  }
+  .result-item {
+    border-bottom: 1px solid var(--default-dark-border-color);
+  }
+  .result-item:hover {
+    background-color: var(--main-dark-bg-color);
+  }
+  .index-time {
+    opacity: 0.75;
+  }
 }
 </style>

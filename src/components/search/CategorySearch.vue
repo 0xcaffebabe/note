@@ -111,4 +111,10 @@ export default defineComponent({
   .link {
     color: #409EFF;
   }
+
+  body[theme=dark] {
+    .value {
+      color: var(--main-dark-text-color);
+    }
+  }
 </style>

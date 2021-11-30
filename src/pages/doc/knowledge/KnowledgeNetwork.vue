@@ -8,7 +8,7 @@
     :lock-scroll="false"
     modal-class="drawer-modal-class"
   >
-  <el-select v-model="mode" placeholder="显示模式" size="mini">
+  <el-select v-model="mode" placeholder="显示模式" size="mini" popper-class="popper-list">
       <el-option
       v-for="item in displayMode"
       :key="item"
@@ -150,7 +150,12 @@ export default defineComponent({
           left: 'right'
         },
         darkMode: this.isDark,
-        tooltip: {},
+        tooltip: {
+          backgroundColor: this.isDark ? 'var(--main-dark-bg-color)' :'',
+          textStyle: {
+            color: this.isDark ? 'var(--main-dark-text-color)' :'',
+          }
+        },
         // 数据更新动画的时长
         animationDurationUpdate: 1500,
         animationEasingUpdate: "quinticInOut",
@@ -179,12 +184,14 @@ export default defineComponent({
                 name: "联系",
                 itemStyle: {
                   color: "#409EFF",
+                  opacity: this.isDark ? 0.9 : 1
                 },
               },
               {
                 name: "当前",
                 itemStyle: {
                   color: "#F56C6C",
+                  opacity: this.isDark ? 0.9 : 1
                 },
               },
             ],

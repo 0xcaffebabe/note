@@ -163,4 +163,21 @@ export default defineComponent({
 .more-setting-container {
   padding: 10px;
 }
+
+body[theme=dark] {
+  .el-dropdown-menu {
+    background-color: var(--second-dark-bg-color);
+  }
+}
+</style>
+
+<style lang="less">
+body[theme=dark] {
+  .el-dropdown__popper {
+    border-color: var(--default-dark-border-color)!important;
+  }
+  .el-dropdown-menu__item:focus, .el-dropdown-menu__item:not(.is-disabled):hover {
+    background-color: var(--main-dark-bg-color);
+  }
+}
 </style>

@@ -1,10 +1,11 @@
 <template>
   <div style="display: inline-block">
-    <span style="color: #606266; font-size: 14px">数据源:</span>
+    <span class="datasource-text">数据源:</span>
     <el-select
       v-model="currentDatasource"
       placeholder="数据源"
       size="mini"
+      popper-class="popper-list"
       style="width: 120px; margin-left: 10px"
       @change="handleDatasourceChange"
     >
@@ -33,11 +34,12 @@
           type="success"
           v-if="item.url.startsWith('//')"
         />
-        <span style="float: left">
+        <span style="float: left" class="text">
           {{ item.id }}
         </span>
 
         <span
+          class="text"
           style="
             float: right;
             margin-left: 10px;
@@ -113,5 +115,27 @@ export default defineComponent({
 }
 .last-update {
   margin-left: 4px;
+}
+.datasource-text {
+  color: #606266;
+  font-size: 14px
+}
+
+body[theme=dark] {
+  .datasource-text {
+    color: var(--main-dark-text-color);
+  }
+  .el-select :deep(.el-input__inner){
+    background-color: var(--third-dark-bg-color);
+    color: var(--main-dark-text-color);
+  }
+}
+</style>
+
+<style lang="less">
+body[theme=dark] {
+  .text {
+    color: var(--main-dark-text-color)!important;
+  }
 }
 </style>

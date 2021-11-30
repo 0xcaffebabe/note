@@ -73,4 +73,13 @@ export default defineComponent({
 .fade-leave-to {
   opacity: 0;
 }
+
+body[theme=dark] {
+  #markdownLinkPopover {
+    background-color: var(--second-dark-bg-color);
+  }
+  .el-button {
+    opacity: 0.75;
+  }
+}
 </style>

@@ -205,5 +205,8 @@ body[theme=dark] {
     background-color:var(--second-dark-bg-color);
     color: var(--main-dark-text-color);
   }
+  .logo a {
+    color: var(--first-dark-text-color)
+  }
 }
 </style>

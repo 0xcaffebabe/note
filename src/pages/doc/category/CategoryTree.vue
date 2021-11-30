@@ -73,4 +73,21 @@ export default defineComponent({
 :deep(.el-sub-menu__title *) {
   vertical-align: middle!important;
 }
+
+body[theme=dark] {
+  .el-menu-item:hover {
+    background-color: var(--main-dark-bg-color);
+  }
+  :deep(.el-sub-menu .el-sub-menu__title:hover) {
+    background-color: var(--main-dark-bg-color)!important;
+  }
+}
+</style>
+
+<style lang="less">
+body[theme=dark] {
+  .el-sub-menu .el-sub-menu__title:hover {
+    background-color: var(--main-dark-bg-color)!important;
+  }
+}
 </style>

@@ -113,4 +113,10 @@ export default defineComponent({
 .fade-leave-to {
   opacity: 0;
 }
+
+body[theme=dark] {
+  .root {
+    background-color: var(--second-dark-bg-color);
+  }
+}
 </style>

@@ -69,12 +69,19 @@ export default defineComponent({
   font-weight: 650;
 }
 
+body[theme=dark] {
+  .el-menu-item:hover {
+    background-color: var(--main-dark-bg-color);
+  }
+}
+
 </style>
 
 <style lang="less">
 body[theme=dark] {
   .el-popover {
-    background-color:var(--second-dark-bg-color);
+    background-color: var(--second-dark-bg-color);
+    border: 1px solid var(--default-dark-border-color)!important;
     color: var(--main-dark-text-color);
   }
 }

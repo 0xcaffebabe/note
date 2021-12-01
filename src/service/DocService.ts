@@ -37,6 +37,17 @@ function localImageProxy(url: string | null): string | null{
   return baseUrl() + url;
 }
 
+function buildDocLink(id: string, headingId: string): string {
+  if (!id) {
+    return ""
+  }
+  let url = "/doc/" + id;
+  if (headingId) {
+    url += "?headingId=" + headingId
+  }
+  return url;
+}
+
 
 class DocService implements Cacheable{
 
@@ -67,9 +78,12 @@ class DocService implements Cacheable{
     render.link = (href: string | null, title: string | null, text: string | null) : string => {
       if (!href?.startsWith('http')) {
         const {id, headingId} = DocUtils.resloveDocUrl(href!)
-        // 当text为html的情况下 取dom的第一个节点文本化
-        text = new DOMParser().parseFromString(text!, 'text/html').firstChild?.textContent!;
-        return `<a href='/doc/${id}?headingId=${headingId}' origin-link='${href}'>${text}</a>`
+        // 当text为html的情况下 排除掉dom中sup节点 文本化
+        text = Array.from(new DOMParser().parseFromString(text!, 'text/html').body.childNodes)
+                    .filter(n => (n as HTMLElement).tagName != 'SUP')
+                    .map(n => n.textContent)
+                    .join('');
+        return `<a href='${buildDocLink(id, headingId!)}' origin-link='${href}'>${text}</a>`
       }else {
         return `<a href='${href}' target="_blank">${text}</a>`
       }
@@ -100,13 +114,7 @@ class DocService implements Cacheable{
         if (i.id == file.id) {
           return str;
         }
-        let url = "";
-        if (i.headingId) {
-          url = `/doc/${i.id}?headingId=${i.headingId}`;
-        }else {
-          url = `/doc/${i.id}`;
-        }
-        return `<a href='${url}' class="potential-link" origin-link="${DocUtils.docId2Url(i.id)}">${str}</a>`
+        return `<a href='${buildDocLink(i.id, i.headingId!)}' class="potential-link" origin-link="${DocUtils.docId2Url(i.id)}">${str}</a>`
       })
       return text;
     }

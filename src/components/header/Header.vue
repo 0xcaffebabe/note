@@ -56,26 +56,9 @@
             </el-button-group>
             <el-divider direction="vertical" />
           </div>
-          <el-menu mode="horizontal" :ellipsis="false">
-            <template v-for="(menu, index) in navMenu" :key="index">
-              <el-sub-menu :index="index + ''" v-if="menu.children">
-                <template #title>{{ menu.title }}</template>
-                <el-menu-item
-                  :index="index + '-' + subIndex"
-                  v-for="(subMenu, subIndex) in menu.children"
-                  :key="index + '-' + subIndex"
-                  @click="handleNavMenuClick(subMenu)"
-                  >{{ subMenu.title }}</el-menu-item
-                >
-              </el-sub-menu>
-              <el-menu-item
-                v-else
-                :index="index + ''"
-                @click="handleNavMenuClick(menu)"
-                >{{ menu.title }}</el-menu-item
-              >
-            </template>
-          </el-menu>
+          <div>
+            <el-link :href="link.url" v-for="link in linkList" :key="link.url" target="_blank">{{link.title}}</el-link>
+          </div>
         </div>
       </div>
     </div>
@@ -141,8 +124,8 @@ export default defineComponent({
     siteName() {
       return config.siteName;
     },
-    navMenu() {
-      return config.navMenu;
+    linkList() {
+      return config.linkList;
     },
     isDark(){
       return this.$store.state.isDarkMode;
@@ -159,10 +142,15 @@ export default defineComponent({
 .header {
   border-bottom: 1px solid #ccc;
   padding: 0;
+  height: 60px;
   background-color: #fff;
 }
 .header-wrapper {
-  padding: 0 32px;
+  padding: 16px 32px;
+}
+.el-link {
+  padding-left: 4px;
+  font-size: 16px;
 }
 .container {
   display: flex;
@@ -207,6 +195,15 @@ body[theme=dark] {
   }
   .logo a {
     color: var(--first-dark-text-color)
+  }
+}
+
+body[theme=dark] {
+  .el-link {
+    color: var(--second-dark-text-color);
+  }
+  .el-link:hover {
+    color: var(--main-dark-text-color);
   }
 }
 </style>

@@ -180,12 +180,17 @@ export default defineComponent({
       this.generateTOC();
       this.$nextTick(() => {
         const docEl = this.$refs.markdownSection as HTMLElement;
+        // 注册一些针对markdown-section的必要的事件
         this.eventManager!.registerLinkRouter(docEl);
         this.eventManager!.registerImageClick(docEl);
         this.eventManager!.registerHeadingClick(docEl);
         this.eventManager!.registerDocTagSupClick(docEl);
+        // 同步滚动markdown-section到headingId区域
         this.eventManager!.syncHeading(headingId);
+        // 同步滚动左侧目录 让当前激活目录位于可视区域
         (this.$refs.docSideCategory as any).syncCategoryListScrollBar();
+        // 更新知识网络
+        (this.$refs.knowledgeNetwork as InstanceType<typeof KnowledgeNetwork>).init();
       });
       this.loading = false;
     },

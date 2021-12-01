@@ -74,6 +74,9 @@ export default defineComponent({
       });
     },
     async init() {
+      if (!this.showDrawer) {
+        return;
+      }
       const knowledgeNetwork: KnowledgeNode[] = await api.getKnowledgeNetwork();
       // 提取所有节点
       let nodes = Array.from(

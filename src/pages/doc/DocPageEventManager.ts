@@ -108,14 +108,14 @@ class DocPageEventManager {
 
   /**
    *
-   * 管理文档主体doc-tag徽标点击
+   * 管理文档主体doc-tag徽标及主体点击
    * @param {HTMLElement} docEl
    * @memberof DocPageEventManager
    */
   public registerDocTagSupClick(docEl: HTMLElement) {
     const document = docEl;
     const supList: NodeListOf<HTMLElement> = document.querySelectorAll(
-      ".markdown-section .doc-tag"
+      ".markdown-section [tag]"
     );
     for (let i = 0; i < supList.length; i++) {
       const sup = supList[i];

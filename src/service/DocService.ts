@@ -103,7 +103,7 @@ class DocService implements Cacheable{
       // 自定义文本渲染 若发现关键字包含标签 则插入标记
       for(let i of tagList) {
         if (text.indexOf(i.tag) != -1) {
-          text = text.replace(i.tag, (str: string) =>`<u class="doc-tag-main">${str}</u><sup class="doc-tag" tag="${i.tag}" style="background-color: ${TagUtils.calcTagColor(i.tag)}">${i.count}</sup>`);
+          text = text.replace(i.tag, (str: string) =>`<u class="doc-tag-main" tag="${i.tag}">${str}</u><sup class="doc-tag" tag="${i.tag}" style="background-color: ${TagUtils.calcTagColor(i.tag)}">${i.count}</sup>`);
         }
       }
       // 自定义文本渲染 若发现关键字包含已存在的知识网络连接 则转为链接

@@ -88,9 +88,13 @@ body[theme=dark] .el-button--default {
 body[theme=dark] .el-button--default:hover {
   background-color: var(--main-dark-bg-color);
 }
-body[theme=dark] .el-tags {
+body[theme=dark] .el-tag {
+  opacity: 0.75;
   filter: invert(10%);
   border-color: var(--default-dark-border-color) !important;
+}
+body[theme=dark] .el-badge {
+  opacity: 0.75;
 }
 body[theme=dark] .el-badge__content {
   border-color: var(--default-dark-border-color);

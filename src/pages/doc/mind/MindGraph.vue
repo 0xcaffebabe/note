@@ -179,4 +179,10 @@ jmnodes.theme-primary1 jmexpander {
 jmnodes.theme-primary1 jmexpander:hover {
   transition: all 0.2s;
 }
+
+body[theme=dark] {
+  jmnodes.theme-primary1 jmnode {
+    opacity: 0.75;
+  }
+}
 </style>

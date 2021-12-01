@@ -174,6 +174,9 @@ export default defineComponent({
           x: "center",
           show: true,
           data: ["联系", "当前"],
+          textStyle: {
+            color: this.isDark ? '#eee' : '#555'
+          }
         },
         series: [
           {

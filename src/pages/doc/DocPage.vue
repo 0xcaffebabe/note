@@ -7,7 +7,7 @@
         <template #default>
           <div class="main-content">
             <doc-breadcrumb-nav />
-            <p class="create-time">⏰创建时间: {{file.createTime}}</p>
+            <p class="create-time">⏰创建时间: {{new Date(file.createTime).toLocaleString()}}</p>
             <!-- doc主体开始 -->
             <div class="markdown-section" ref="markdownSection" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '960px': '74%'}"></div>
             <!-- doc主体结束 -->

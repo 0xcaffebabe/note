@@ -5,7 +5,7 @@
       <el-timeline-item
         v-for="(commit, index) in file.commitList"
         :key="index"
-        :timestamp="commit.date"
+        :timestamp="new Date(commit.date).toLocaleString()"
       >
         <p class="history-message">
           <a :href="config.repositoryUrl + '/commit/' +commit.hash" target="_blank">{{ commit.message }}</a>
@@ -67,6 +67,9 @@ export default defineComponent({
     color: #3E90E8 !important;
   }
 }
+  :deep(.el-timeline-item__timestamp) {
+    text-align: left!important;;
+  }
 
 body[theme=dark] {
   .history-message {

@@ -33,6 +33,7 @@ import Search from "@/components/search/Search.vue";
 import CategorySearch from "@/components/search/CategorySearch.vue";
 import { ArrowUpBold, ArrowDownBold } from "@element-plus/icons";
 
+const cateListKey='system::currentCategoryList';
 export default defineComponent({
   components: {
     Header,
@@ -82,6 +83,11 @@ export default defineComponent({
     if (theme == 'dark') {
       this.$store.commit('setIsDarkMode', true);
       document.body.setAttribute('theme', 'dark');
+    }
+    // 恢复目录列表
+    const raw = localStorage.getItem(cateListKey);
+    if (raw){
+      this.$store.commit('setCurrentCategoryList', JSON.parse(raw));
     }
   },
 });

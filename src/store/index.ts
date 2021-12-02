@@ -1,6 +1,8 @@
 import Category from '@/dto/Category'
 import { createStore } from 'vuex'
 
+const cateListKey='system::currentCategoryList';
+
 export default function create(){
   const store = createStore({
     state () {
@@ -21,6 +23,7 @@ export default function create(){
         if (cateList.indexOf(category.link) == -1) {
           cateList.push(category.link)
         }
+        localStorage.setItem(cateListKey, JSON.stringify(cateList));
       },
       removeFromCategoryList(state: any, link: string) {
         const cateList :string[]= state.currentCategoryList;
@@ -28,6 +31,7 @@ export default function create(){
         if (index != -1) {
           cateList.splice(index, 1);
         }
+        localStorage.setItem(cateListKey, JSON.stringify(cateList));
       },
       removeFromCategoryListExcept(state: any, link: string) {
         const cateList :string[]= state.currentCategoryList;
@@ -35,12 +39,16 @@ export default function create(){
         if (index != -1) {
           state.currentCategoryList = cateList.splice(index, 1);
         }
+        localStorage.setItem(cateListKey, JSON.stringify(cateList));
       },
       setSearchKw(state: any, kw: string) {
         state.currentSearchKw = kw
       },
       setCurrentHeading(state: any, heading: string) {
         state.currentHeading = heading
+      },
+      setCurrentCategoryList(state: any, cateList: string[]) {
+        state.currentCategoryList = cateList
       },
       setIsDarkMode(state: any, dark: boolean) {
         state.isDarkMode = dark;

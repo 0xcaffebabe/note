@@ -138,8 +138,8 @@ class DocPageEventManager {
     let timer: NodeJS.Timeout;
     document.addEventListener("scroll", (e) => {
       // 限流更新阅读位置
+      clearTimeout(timer);
       timer = setTimeout(() => {
-        clearTimeout(timer);
         DocService.setDocReadRecrod(this.docPageInstance.doc, window.scrollY);
       }, 1000);
       // 滚动的同时将link-popover隐藏掉

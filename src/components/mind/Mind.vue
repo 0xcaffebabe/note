@@ -58,6 +58,12 @@ export default defineComponent({
           }
         });
     },
+    select(nodeId: string) {
+      if (!this.jm) {
+        throw new Error('思维导图还未初始化');
+      }
+      this.jm.select_node([nodeId]);
+    },
     init() {
       console.log(this.mindData);
       console.log(this.id);
@@ -86,11 +92,13 @@ export default defineComponent({
           pspace: 13, // 节点与连接线之间的水平间距（用于容纳节点收缩/展开控制器）
         },
       };
-      this.jm = new jsMind(options);
-      // 监听ctrl + 滚轮事件
-      document
-        .getElementById(this.id)
-        ?.addEventListener("mousewheel", this.mousewheel);
+      if (!this.jm) {
+        this.jm = new jsMind(options);
+        // 监听ctrl + 滚轮事件
+        document
+          .getElementById(this.id)
+          ?.addEventListener("mousewheel", this.mousewheel);
+      }
       this.jm.show(mind);
       this.reigseterMindClickEvent();
     },

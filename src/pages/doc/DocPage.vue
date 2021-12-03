@@ -36,6 +36,7 @@
     @showReadingHistory="showReadingHistory"
     @showMindGraph="showMindGraph();showAside = false;isDrawerShow = true"
     @showKnowledgeNetwork="showKnowledgeNetwork();showAside = false;isDrawerShow = true"
+    @showKnowledgeSystem="showKnowledgeSystem();showAside = false;isDrawerShow = true"
     @showBookMarkAdder="showBookmarkAdder"
     @showBookMarkList="showBookmarkList"
     @copyDocPath="handleCopyDocPath"
@@ -51,9 +52,13 @@
   <keep-alive>
     <knowledge-network ref="knowledgeNetwork" :doc="doc" @close="showAside = true;isDrawerShow = false"/>
   </keep-alive>
+  <keep-alive>
+    <knowledge-system ref="knowledgeSystem" @close="showAside = true;isDrawerShow = false"/>
+  </keep-alive>
   <el-image-viewer @close="showImageViewer = false" v-show="showImageViewer" :url-list="imageUrlList" :hide-on-click-modal="true"/>
   <resource-brower ref="resourceBrower" />
 </template>
+
 
 <script lang="ts">
 import { defineComponent, ref } from "vue";
@@ -78,6 +83,7 @@ import DocUtils from "@/util/DocUtils";
 import DocSideCategory from './aside/DocSideCategory.vue';
 import DocBreadcrumbNav from "./nav/DocBreadcrumbNav.vue";
 import DocTabNav from "./nav/DocTabNav.vue";
+import KnowledgeSystem from "./knowledge/KnowledgeSystem.vue";
 import DocPageEventMnager from './DocPageEventManager';
 import ResourceBrower from "./ResourceBrower.vue";
 
@@ -94,6 +100,7 @@ export default defineComponent({
     DocSideCategory,
     LinkList,
     KnowledgeNetwork,
+    KnowledgeSystem,
     DocBreadcrumbNav,
     DocTabNav,
     ResourceBrower,
@@ -111,6 +118,7 @@ export default defineComponent({
     const readingHistory = ref<InstanceType<typeof ReadingHistory>>()
     const mindGraph = ref<InstanceType<typeof MindGraph>>()
     const knowledgeNetwork = ref<InstanceType<typeof KnowledgeNetwork>>()
+    const knowledgeSystem = ref<InstanceType<typeof KnowledgeSystem>>()
     const bookMark = ref<InstanceType<typeof BookMark>>()
     const linkList = ref<InstanceType<typeof LinkList>>()
     const showReadingHistory = () => {
@@ -121,6 +129,9 @@ export default defineComponent({
     }
     const showKnowledgeNetwork = () => {
       knowledgeNetwork.value?.show()
+    }
+    const showKnowledgeSystem = () => {
+      knowledgeSystem.value?.show();
     }
     const showBookmarkAdder = () => {
       bookMark.value?.showAdder()
@@ -135,6 +146,7 @@ export default defineComponent({
       readingHistory,showReadingHistory, 
       mindGraph, showMindGraph, 
       knowledgeNetwork, showKnowledgeNetwork,
+      knowledgeSystem, showKnowledgeSystem,
       bookMark, showBookmarkAdder, showBookmarkList, 
       linkList, showLinkList
     }

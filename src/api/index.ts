@@ -90,6 +90,18 @@ class Api implements Cacheable{
     return (await axios.get(baseUrl() + 'knowledgeNetwork.json')).data
   }
 
+
+  /**
+   *
+   * 获取知识体系数据
+   * @return {*}  {Promise<any>}
+   * @memberof Api
+   */
+  @cache
+  public async getKnowledgeSystem(): Promise<any> {
+    return (await axios.get('https://cdn.jsdelivr.net/gh/apache/echarts-website@asf-site/examples/data/asset/data/flare.json')).data
+  }
+
   @cache
   public async getTagMapping(): Promise<[string,string[]][]> {
     return (await axios.get(baseUrl() + "tagMapping.json")).data;

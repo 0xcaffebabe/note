@@ -11,6 +11,7 @@
           <div>
             <datasource-selector />
             <el-divider direction="vertical" />
+            <!-- 正常/暗色模式切换按钮 -->
             <el-switch
               v-model="showMode"
               :inline-prompt="true"
@@ -21,19 +22,22 @@
               inactive-color="#409EFF"
             >
             </el-switch>
+            <!-- 全屏/缓存清空 -->
             <el-divider direction="vertical" />
-            <el-button size="mini" @click="handleToggleFullScreen">
-              <el-icon><monitor /></el-icon>
-            </el-button>
+            <el-button-group>
+              <el-button size="mini" @click="handleToggleFullScreen">
+                <el-icon><monitor /></el-icon>
+              </el-button>
+              <el-popconfirm title="确认清空缓存?" @confirm="clearCache">
+                <template #reference>
+                  <el-button size="mini" >
+                    <el-icon><brush /></el-icon>
+                  </el-button>
+                </template>
+              </el-popconfirm>
+            </el-button-group>
             <el-divider direction="vertical" />
-            <el-popconfirm title="确认清空缓存?" @confirm="clearCache">
-              <template #reference>
-                <el-button size="mini" >
-                  <el-icon><brush /></el-icon>
-                </el-button>
-              </template>
-            </el-popconfirm>
-            <el-divider direction="vertical" />
+            <!-- 搜索 -->
             <el-button-group style="margin-left: 20px">
               <el-button
                 icon="el-icon-search"

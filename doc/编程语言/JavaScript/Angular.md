@@ -4,9 +4,7 @@ tags: ['前端']
 
 # Angular
 
-## 基本概念
-
-### 组件
+## 组件
 
 ```ts
 // product-list.component.ts
@@ -55,7 +53,7 @@ export class ProductListComponent {
 </div>
 ```
 
-### 路由
+## 路由
 
 - 添加路径映射
 
@@ -93,4 +91,89 @@ export class ProductDetailComponent implements OnInit {
   }
 
 }
+```
+
+## 管理数据
+
+- 定义 service
+
+```ts
+// cart.service.ts
+import { Injectable } from '@angular/core';
+
+@Injectable(
+  {providedIn: 'root'}
+)
+export class CartService {
+
+  items: string[] = []
+
+  constructor() { }
+
+  add(item: string) {
+    this.items.push(item);
+    console.log(this.items)
+  }
+
+  getItems(): string[] {
+    return this.items
+  }
+
+}
+```
+
+- 在其他组件注入service
+
+```ts
+constructor(
+    private route: ActivatedRoute,
+    private cartService: CartService
+) { }
+```
+
+- 在组件内使用
+
+```ts
+addToCart(){
+  this.cartService.add(this.product!)
+}
+```
+
+## 表单输入
+
+```ts
+// app.module.ts
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+@NgModule({
+  imports:      [ BrowserModule, ReactiveFormsModule ],
+  declarations: [ AppComponent],
+  bootstrap:    [ AppComponent ]
+})
+```
+```ts
+export class AppComponent  {
+ loginForm: FormGroup;
+
+  constructor(
+    private fb: FormBuilder
+  ) { }
+
+  ngOnInit(): void {
+    this.loginForm = this.fb.group({
+      username: ['', Validators.required],
+      password: ['', Validators.required],
+    });
+  }
+  ...
+```
+```html
+<form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+          <input type="email" class="form-control" formControlName="username" required placeholder="username: name@example.com">
+      </div>
+      <div class="form-group">
+          <input type="password" class="form-control" formControlName="password" required placeholder="password: admin123">
+      </div>
+      <button type="submit" [disabled]="!loginForm.valid" class="btn btn-primary btn-block">Login</button>
+</form>
 ```

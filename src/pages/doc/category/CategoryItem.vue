@@ -16,11 +16,20 @@
         :disabled="!value.link"
       >
         <template #title>
-          <span>{{ value.name }}</span>
+          <div>
+            <span>{{ value.name }}</span>
+            <el-badge value="new" type="danger" v-if="pastDays <= 10" class="newly-flag"/>
+          </div>
         </template>
       </el-menu-item>
     </template>
-    <category-item-content v-if="value.link" :category-name="value.name" :category-link="value.link" ref="categoryItemContent" />
+    <category-item-content
+      v-if="value.link"
+      :category-name="value.name"
+      :category-link="value.link"
+      ref="categoryItemContent"
+      @pastdays-change="handlePastdays"
+    />
   </el-popover>
 </template>
 
@@ -32,19 +41,23 @@ import CategoryItemContent from "./CategoryItemContent.vue";
 
 export default defineComponent({
   components: {
-    CategoryItemContent
+    CategoryItemContent,
   },
   props: {
     value: {
       type: Category as PropType<Category>,
-      required: true
+      required: true,
     },
     isParent: {
       type: Boolean,
       deault: false,
     },
   },
-  setup() {},
+  data() {
+    return {
+      pastDays: 999,
+    };
+  },
   methods: {
     // 将doc链接转为 x-x-x 形式的id
     convert(link: string): string {
@@ -59,7 +72,9 @@ export default defineComponent({
     handleMenuItemClick(value: Category) {
       this.$store.commit("setCurrentCategory", value);
     },
-    
+    handlePastdays(days: number) {
+      this.pastDays = days;
+    },
   },
 });
 </script>
@@ -69,19 +84,23 @@ export default defineComponent({
   font-weight: 650;
 }
 
-body[theme=dark] {
+.newly-flag :deep(.el-badge__content) {
+  vertical-align: middle;
+  margin-left: 8px;
+}
+
+body[theme="dark"] {
   .el-menu-item:hover {
     background-color: var(--main-dark-bg-color);
   }
 }
-
 </style>
 
 <style lang="less">
-body[theme=dark] {
+body[theme="dark"] {
   .el-popover {
     background-color: var(--second-dark-bg-color);
-    border: 1px solid var(--default-dark-border-color)!important;
+    border: 1px solid var(--default-dark-border-color) !important;
     color: var(--main-dark-text-color);
   }
 }

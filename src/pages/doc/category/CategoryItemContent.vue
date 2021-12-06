@@ -7,7 +7,7 @@
         <el-badge
           :value="lastPastDays + '天前更新'"
           class="item"
-          type="warning"
+          :type="calcUpdateType(lastPastDays)"
         ></el-badge>
         <el-badge
           :value="wordCount + '字'"
@@ -46,6 +46,7 @@ export default defineComponent({
       required: true,
     },
   },
+  emits: ['pastdays-change'],
   computed: {
     wordCount() {
       return cleanText(this.file?.content).length;
@@ -55,6 +56,11 @@ export default defineComponent({
     },
     docId(){
       return DocUtils.docUrl2Id(this.categoryLink);
+    }
+  },
+  watch: {
+    lastPastDays(){
+      this.$emit('pastdays-change', this.lastPastDays);
     }
   },
   methods: {
@@ -92,6 +98,19 @@ export default defineComponent({
     calcTagType(tag: string): string {
       return TagUtils.calcTagType(tag);
     },
+    // 计算更新日期颜色
+    calcUpdateType(days: number): string {
+      if (days <= 10){
+        return 'danger'
+      }else if(days > 10 && days <= 30){
+        return 'warning'
+      }else if(days > 30 && days <= 100){
+        return 'success'
+      }else if(days > 100 && days <= 300){
+        return 'default'
+      }
+      return 'primary';
+    }
   },
   data() {
     return {

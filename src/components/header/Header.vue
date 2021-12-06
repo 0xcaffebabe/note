@@ -25,16 +25,19 @@
             <!-- 全屏/缓存清空 -->
             <el-divider direction="vertical" />
             <el-button-group>
-              <el-button size="mini" @click="handleToggleFullScreen">
+              <el-button size="mini" @click="handleToggleFullScreen" title="进入/退出全屏模式">
                 <el-icon><monitor /></el-icon>
               </el-button>
               <el-popconfirm title="确认清空缓存?" @confirm="clearCache">
                 <template #reference>
-                  <el-button size="mini" >
+                  <el-button size="mini" title="清空缓存">
                     <el-icon><brush /></el-icon>
                   </el-button>
                 </template>
               </el-popconfirm>
+              <el-button size="mini" @click="enterZenMode" title="进入专注模式">
+                <el-icon><aim /></el-icon>
+              </el-button>
             </el-button-group>
             <el-divider direction="vertical" />
             <!-- 搜索 -->
@@ -69,20 +72,21 @@
   </div>
 </template>
 
+<script setup lang="ts">
+import {Sunny, Moon, Monitor, Brush, Aim } from '@element-plus/icons';
+import EventBus from "@/components/EventBus";
+</script>
+
 <script lang="ts">
 import { defineComponent } from "vue";
 import config from "@/config";
 import DatasourceSelector from './datasource/DatasourceSelector.vue';
-import {Sunny, Moon, Monitor, Brush} from '@element-plus/icons';
 import CacheService from "@/service/CacheService";
 
 export default defineComponent({
   components: {
-    DatasourceSelector,
-    Monitor,
-    Brush,
+    DatasourceSelector
   },
-  setup() {},
   data() {
     return {
       name: "my-book" as string,
@@ -122,6 +126,9 @@ export default defineComponent({
         this.$store.commit('setIsDarkMode', true);
         localStorage.setItem('system::theme', "dark");
       }
+    },
+    enterZenMode() {
+      EventBus.emit('enter-zen-mode', null)
     }
   },
   computed: {
@@ -137,6 +144,9 @@ export default defineComponent({
   },
   created() {
     this.showMode = this.isDark;
+    EventBus.on('enter-zen-mode', () => {
+      document.body.requestFullscreen();
+    })
   },
 });
 </script>

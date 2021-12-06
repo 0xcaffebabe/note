@@ -4,6 +4,8 @@ import LinkPopover from "./LinkPopover.vue";
 import { ElMessage } from 'element-plus'
 import DocService from "@/service/DocService";
 import ResourceBrower from "./ResourceBrower.vue";
+import EventBus from "@/components/EventBus";
+import { t } from "element-plus/es/locale";
 
 class DocPageEventManager {
 
@@ -15,6 +17,18 @@ class DocPageEventManager {
 
   private getRef<T>(name: string): any {
     return this.docPageInstance.$refs[name]
+  }
+
+
+  /**
+   *
+   * 事件总线事件监听
+   * @memberof DocPageEventManager
+   */
+  public listenEventBus(){
+    EventBus.on('enter-zen-mode', () => {
+      this.docPageInstance.showAside = false;
+    })
   }
 
   /**

@@ -32,6 +32,7 @@ import Header from "./components/header/Header.vue";
 import Search from "@/components/search/Search.vue";
 import CategorySearch from "@/components/search/CategorySearch.vue";
 import { ArrowUpBold, ArrowDownBold } from "@element-plus/icons";
+import EventBus from "./components/EventBus";
 
 const cateListKey='system::currentCategoryList';
 export default defineComponent({
@@ -89,6 +90,10 @@ export default defineComponent({
     if (raw){
       this.$store.commit('setCurrentCategoryList', JSON.parse(raw));
     }
+    // 事件总线监听
+    EventBus.on('enter-zen-mode', () => {
+      this.showHeader = false
+    })
   },
 });
 </script>

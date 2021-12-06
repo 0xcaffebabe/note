@@ -218,6 +218,7 @@ export default defineComponent({
   async created() {
     this.eventManager = new DocPageEventMnager(this);
     this.eventManager!.registerScrollListener();
+    this.eventManager!.listenEventBus();
     this.showDoc(this.$route.params.doc.toString(), this.$route.query.headingId?.toString());
   },
   unmounted(){

@@ -240,4 +240,15 @@ body[theme=dark] {
   img {
     filter: invert(25%);
   }
+    /* Table
+  -------------------- */
+  .markdown-section table th, .markdown-section table td {
+    border: 1px solid var(--default-dark-border-color);
+  }
+  .markdown-section table tr {
+    background-color: var(--main-dark-bg-color);
+  }
+  .markdown-section table thead tr, .markdown-section table tbody tr:nth-child(even) {
+    background-color: var(--second-dark-bg-color);
+  }
 }

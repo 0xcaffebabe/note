@@ -6,6 +6,8 @@ import { StatisticInfo } from '@/dto/StatisticInfo'
 import DocUtils from '@/util/DocUtils'
 import {KnowledgeNode} from '@/dto/KnowledgeNode'
 import DatasourceService from '@/service/DatasourceService'
+import UrlUtils from '@/util/UrlUtils'
+import UrlConst from '@/const/UrlConst'
 
 const baseUrl = () => {
   return DatasourceService.getCurrentDatasource().url
@@ -76,6 +78,17 @@ class Api implements Cacheable{
   @cache
   public async getCommitHeatmap(): Promise<[string, number][]> {
     return (await axios.get(baseUrl() + 'commitHeatmap.json')).data
+  }
+
+  /**
+   *
+   * 获取小时提交热力图
+   * @return {*}  {Promise<[string, number][]>}
+   * @memberof Api
+   */
+  @cache
+  public async getHourCommitHeatmap(): Promise<[string, number][]> {
+    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.hourCommitHeatmap))).data
   }
 
 

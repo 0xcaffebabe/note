@@ -1,3 +1,4 @@
+import UrlConst from "../const/UrlConst";
 import fs from "fs";
 import { ResolvedConfig } from "vite"
 import statisticService from "../build/StatisticService";
@@ -16,9 +17,14 @@ export default function StatisticInfoGenerator(){
         console.log('统计信息生成完毕')
       })
       console.log('准备生成日历图数据')
-      await statisticService.generateYearsCommitHeatmap().then(heatmap => {
+      statisticService.generateYearsCommitHeatmap().then(heatmap => {
         fs.writeFileSync(config.build.outDir + "/commitHeatmap.json", JSON.stringify(heatmap))
         console.log('日历图数据生成完毕')
+      })
+      console.log('准备生成提交小时热力图数据')
+      statisticService.generateCommitHourHeatmap().then(data => {
+        fs.writeFileSync(config.build.outDir + UrlConst.hourCommitHeatmap, JSON.stringify(data))
+        console.log('提交小时热力图数据生成完毕')
       })
 
     }

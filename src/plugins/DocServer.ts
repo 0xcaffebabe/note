@@ -10,10 +10,12 @@ import DocService from '../build/DocService'
 import { StatisticInfo } from '@/dto/StatisticInfo'
 import StatisticService from '../build/StatisticService'
 import {KnowledgeNode} from '@/dto/KnowledgeNode'
+import UrlConst from '../const/UrlConst'
 
 let wordcloud: [string, number][] = []
 let statisticInfo : StatisticInfo
 let commitHeatmap : [string, number][] = []
+let hourCommitHeatmap : [string, number][] = []
 let knowledgeNetwork: KnowledgeNode[] = []
 let tagMapping = new Map<string, string[]>()
 
@@ -94,6 +96,20 @@ export default function DocServer(){
           }
           res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
           res.write(JSON.stringify(commitHeatmap))
+          res.end()
+        }else{
+          next()
+        }
+      })
+      // 小时提交热力图
+      server.middlewares.use(async (req, res, next) => {
+        if (req.originalUrl && req.originalUrl == UrlConst.hourCommitHeatmap) {
+          if (commitHeatmap.length == 0) {
+            console.log('小时提交热力图为空 生成')
+            hourCommitHeatmap = await StatisticService.generateCommitHourHeatmap()
+          }
+          res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
+          res.write(JSON.stringify(hourCommitHeatmap))
           res.end()
         }else{
           next()

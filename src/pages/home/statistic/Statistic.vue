@@ -98,9 +98,22 @@
         </template>
         <word-cloud />
       </el-descriptions-item>
+      <el-descriptions-item :span="12">
+        <template #label>
+          <el-icon>
+            <calendar />
+          </el-icon>
+          小时提交
+        </template>
+        <hour-commit-heatmap />
+      </el-descriptions-item>
     </el-descriptions>
   </div>
 </template>
+
+<script setup lang="ts">
+import HourCommitHeatmap from "./HourCommitHeatmap.vue"
+</script>
 
 <script lang="ts">
 import { Coin, Check, Document, Notebook, PictureFilled, Aim, Clock, Calendar } from "@element-plus/icons";

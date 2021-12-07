@@ -30,6 +30,13 @@ class StatisticService extends BaseService {
     return info
   }
 
+  /**
+   *
+   * 生成年度提交热力图数据
+   * @static
+   * @return {*}  {Promise<[string, number][]>}
+   * @memberof StatisticService
+   */
   public static async generateYearsCommitHeatmap(): Promise<[string, number][]> {
     const commitList = (await  GitService.findRecentYearsCommits()).reverse();
     const map = new Map<string, number>()
@@ -42,6 +49,28 @@ class StatisticService extends BaseService {
       }
     }
     return Array.from(map)
+  }
+
+
+  /**
+   *
+   * 生成提交小时热力图数据
+   * @static
+   * @return {*}  {Promise<[string, number][]>}
+   * @memberof StatisticService
+   */
+  public static async generateCommitHourHeatmap(): Promise<[string, number][]> {
+    const commitList = await GitService.listAllCommit();
+    const map = new Map<string, number>()
+    for(let i of commitList) {
+      const hour = new Date(i.date).getHours().toString()
+      if (map.has(hour)) {
+        map.set(hour, map.get(hour)! + 1)
+      }else {
+        map.set(hour, 1)
+      }
+    }
+    return Array.from(map).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
   }
 
   private static async getRepositorySize(): Promise<number> {

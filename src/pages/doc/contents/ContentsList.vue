@@ -48,10 +48,9 @@ function hightHeading(instance: InstanceType<typeof ContentList>) {
   }
 }
 
-const tocElm: HTMLElement | null = document.querySelector(".toc");
-
 // 判断激活的目录item是否不可见 不可见则滚动到可见
 function syncHeadingVisible(instance: InstanceType<typeof ContentList>) {
+  const tocElm: HTMLElement | null = document.querySelector(".toc");
   const activeTocItem: HTMLElement | null =
     document.querySelector(".toc .active");
   if (activeTocItem && tocElm) {
@@ -121,7 +120,9 @@ export default defineComponent({
   overflow-y: auto;
   border-left: 1px solid #ccc;
   overflow-y: hidden;
-  max-height: calc(100% - 100px);
+  max-height: calc(100% - 40px);
+  margin: 0;
+  margin-top: 8px;
 }
 .toc:hover {
   overflow-y: auto;
@@ -136,10 +137,12 @@ export default defineComponent({
 }
 :deep(a:hover) {
   color: #3e90e8 !important;
+  font-weight: 600;
 }
 :deep(.active) {
   transition: all 0.2s;
   color: #3e90e8 !important;
+  font-weight: 600!important;
 }
 ul,
 :deep(ul) {

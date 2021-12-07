@@ -40,7 +40,7 @@ export default defineComponent({
     currentHeading(val) {
       // 监听当前选中标题 映射到思维导图节点
       this.$nextTick(() => {
-        (this.$refs.mind as InstanceType<typeof Mind>).select(val);
+        this.$refs.mind && (this.$refs.mind as InstanceType<typeof Mind>).select(val);
       })
     },
   },

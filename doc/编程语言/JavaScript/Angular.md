@@ -4,6 +4,12 @@ tags: ['前端']
 
 # Angular
 
+cli：
+
+```sh
+npm install -g @angular/cli
+```
+
 ## 组件
 
 ```ts

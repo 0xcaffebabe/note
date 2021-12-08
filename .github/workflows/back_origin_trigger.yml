@@ -1,0 +1,37 @@
+name: 回源触发
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+  schedule:
+    - cron:  '0 0/6 * * *'
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x]
+    
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: 安装依赖
+      run: |
+        npm install
+    - name: 回源触发
+      run: |
+        npm run back-origin
+    - name: 回源快照存档
+      uses: actions/upload-artifact@v2
+      with:
+        name: snapshot
+        path: |
+          back_origin_snapshot

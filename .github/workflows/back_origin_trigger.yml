@@ -35,22 +35,3 @@ jobs:
         name: snapshot
         path: |
           back_origin_snapshot
-    - name: note.ismy.wang快照
-      uses: actions/upload-artifact@v2
-      with:
-        name: note.ismy.wang
-        path: |
-          back_origin_snapshot/note.ismy.wang0.png
-    - name: noteg.ismy.wang快照
-      uses: actions/upload-artifact@v2
-      with:
-        name: noteg.ismy.wang
-        path: |
-          back_origin_snapshot/noteg.ismy.wang0.png
-    - name: notev.ismy.wang快照
-      uses: actions/upload-artifact@v2
-      with:
-        name: notev.ismy.wang
-        path: |
-          back_origin_snapshot/notev.ismy.wang0.png
-    

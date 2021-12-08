@@ -7,7 +7,7 @@
     "serve": "vite preview",
     "update-index": "ts-node ./src/scripts/updateSearchIndex.ts",
     "build-pdf": "ts-node ./src/scripts/buildPdf.ts",
-    "back-origin": "ts-node ./src/scripts/buildPdf.ts"
+    "back-origin": "ts-node ./src/trigger/BackOriginTrigger.ts"
   },
   "dependencies": {
     "@element-plus/icons": "^0.0.11",

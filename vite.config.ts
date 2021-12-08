@@ -57,6 +57,19 @@ export default defineConfig({
   ],
   build: {
     assetsDir: "resource",
-    emptyOutDir: false
-  }
+    emptyOutDir: false,
+    rollupOptions: {
+      output: {
+        manualChunks(id: string): string {
+          if (id.includes('node_modules') && id.includes('element')) {
+            return 'element'
+          } else if (id.includes('node_modules') && id.includes('vue')) {
+            return 'vue'
+          } else if (id.includes('node_modules')) {
+            return 'vendor'
+          }
+        }
+      }
+    }
+  },
 })

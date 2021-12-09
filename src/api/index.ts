@@ -94,13 +94,18 @@ class Api implements Cacheable{
 
   /**
    *
-   * 获取知识网络数据
+   * 获取显式知识网络数据
    * @return {*}  {Promise<KnowledgeNode[]>}
    * @memberof Api
    */
   @cache
   public async getKnowledgeNetwork(): Promise<KnowledgeNode[]> {
     return (await axios.get(baseUrl() + 'knowledgeNetwork.json')).data
+  }
+
+  @cache
+  public async getPotentialKnowledgeNetwork(): Promise<KnowledgeNode[]> {
+    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.potentialKnowledgeNetwork))).data
   }
 
 

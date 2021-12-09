@@ -17,6 +17,14 @@
     >
     </el-option>
   </el-select>
+  <el-switch
+    v-model="isPotential"
+    active-color="#409EFF"
+    inactive-color="#409EFF"
+    inactive-text="显式知识网络"
+    active-text="隐式知识网络"
+    @change="init"
+  />
     <div id="knowledgeNetwork"></div>
   </el-drawer>
 </template>
@@ -77,7 +85,11 @@ export default defineComponent({
       if (!this.showDrawer) {
         return;
       }
-      const knowledgeNetwork: KnowledgeNode[] = await api.getKnowledgeNetwork();
+      // 若是潜在知识网络 默认设置为圆圈展示模式
+      if (this.isPotential) {
+        this.mode = 'circular';
+      }
+      const knowledgeNetwork: KnowledgeNode[] = this.isPotential ? await api.getPotentialKnowledgeNetwork() : await api.getKnowledgeNetwork();
       // 提取所有节点
       let nodes = Array.from(
         new Set(
@@ -235,7 +247,7 @@ export default defineComponent({
               opacity: 0.9,
               curveness: 0.3,
               width: 2,
-              color: 'source',
+              color: "#38B3FF",
             },
             emphasis: {
               focus: "adjacency",
@@ -255,7 +267,8 @@ export default defineComponent({
       showDrawer: false as boolean,
       chart: null as echarts.ECharts | null,
       mode: 'force' as "force" | "circular" | "none" | undefined,
-      displayMode: ['force', 'circular']
+      displayMode: ['force', 'circular'],
+      isPotential: false,
     };
   },
   mounted() {},
@@ -270,6 +283,12 @@ export default defineComponent({
 .el-select {
   position:fixed;
   top:20px;
+  right: 20px;
+  z-index: 9999;
+}
+.el-switch {
+  position:fixed;
+  top:60px;
   right: 20px;
   z-index: 9999;
 }

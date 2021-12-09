@@ -17,6 +17,7 @@ let statisticInfo : StatisticInfo
 let commitHeatmap : [string, number][] = []
 let hourCommitHeatmap : [string, number][] = []
 let knowledgeNetwork: KnowledgeNode[] = []
+let potentialKnowledgeNetwork: KnowledgeNode[] = []
 let tagMapping = new Map<string, string[]>()
 
 export default function DocServer(){
@@ -115,15 +116,29 @@ export default function DocServer(){
           next()
         }
       })
-      // 知识网络
+      // 显式知识网络
       server.middlewares.use(async (req, res, next) => {
         if (req.originalUrl && req.originalUrl == '/knowledgeNetwork.json') {
           if (knowledgeNetwork.length == 0) {
-            console.log('知识网络为空 生成')
+            console.log('显式知识网络为空 生成')
             knowledgeNetwork = await DocService.generateKnowledgeNetwork()
           }
           res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
           res.write(JSON.stringify(knowledgeNetwork))
+          res.end()
+        }else{
+          next()
+        }
+      })
+      // 隐式知识网络
+      server.middlewares.use(async (req, res, next) => {
+        if (req.originalUrl && req.originalUrl == UrlConst.potentialKnowledgeNetwork) {
+          if (knowledgeNetwork.length == 0) {
+            console.log('隐式知识网络为空 生成')
+            potentialKnowledgeNetwork = await DocService.generatePotentialKnowledgeNetwork()
+          }
+          res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
+          res.write(JSON.stringify(potentialKnowledgeNetwork))
           res.end()
         }else{
           next()

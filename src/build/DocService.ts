@@ -119,7 +119,7 @@ class DocService extends BaseService implements Cacheable {
 
   /**
    *
-   * 生成某一md文件的知识网络节点
+   * 生成某一md文件的显式(手动链接)知识网络节点
    * @static
    * @param {string} path md文件
    * @return {*}  {Promise<KnowledgeNode>}
@@ -143,12 +143,59 @@ class DocService extends BaseService implements Cacheable {
     })
   }
 
+
+  /**
+   *
+   * 生成某一md文件的隐式(手动链接 + 自动链接)知识网络节点
+   * @param {string} path
+   * @param {Map<string, KnowledgeLinkNode>} map
+   * @return {*}  {Promise<KnowledgeNode>}
+   * @memberof DocService
+   */
+  public async getPotentialKnowledgeNode(path: string, map: Map<string, KnowledgeLinkNode>): Promise<KnowledgeNode> {
+    return fs.promises.readFile(path).then(buffer => {
+      const md = buffer.toString()
+      const links: KnowledgeLinkNode[] = []
+      map.forEach(e => {
+        if (md.indexOf(e.name) != -1) {
+          links.push(e)
+        }
+      })
+      return {id: DocUtils.docUrl2Id(path), links}
+    })
+  }
+
+  /**
+   *
+   * 生成显式知识网络
+   * @return {*}  {Promise<KnowledgeNode[]>}
+   * @memberof DocService
+   */
   public async generateKnowledgeNetwork(): Promise<KnowledgeNode[]>{
     const ignoreDoc = ['README', 'SUMMARY'];
     const fileList = BaseService.listFilesBySuffix('md', 'doc')
     const taskList :Promise<KnowledgeNode>[] = []
     for(let file of fileList) {
       taskList.push(this.getKnowledgeNode(file))
+    }
+    return (await Promise.all(taskList)).filter(v => ignoreDoc.indexOf(v.id) == -1).filter(v => v.links?.length != 0)
+  }
+
+  public async generatePotentialKnowledgeNetwork(): Promise<KnowledgeNode[]> {
+    const explicitKnowlegeNetwork = await this.generateKnowledgeNetwork();
+    // 将显式知识网络转换为kw-知识节点结构
+    const linkList = explicitKnowlegeNetwork
+      .map(v => v.links)
+      .flatMap(v => v);
+    const kwNodeMap = new Map<string, KnowledgeLinkNode>();
+    for(let i of linkList) {
+      kwNodeMap.set(i?.name!, i!)
+    }
+    const ignoreDoc = ['README', 'SUMMARY'];
+    const fileList = BaseService.listFilesBySuffix('md', 'doc')
+    const taskList :Promise<KnowledgeNode>[] = []
+    for(let file of fileList) {
+      taskList.push(this.getPotentialKnowledgeNode(file, kwNodeMap))
     }
     return (await Promise.all(taskList)).filter(v => ignoreDoc.indexOf(v.id) == -1).filter(v => v.links?.length != 0)
   }

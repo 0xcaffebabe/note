@@ -65,7 +65,7 @@ export default defineComponent({
   },
   watch: {
     mode(){
-     this.init(); 
+     this.init(false); 
     }
   },
   computed: {
@@ -81,12 +81,12 @@ export default defineComponent({
         this.init();
       });
     },
-    async init() {
+    async init(potentialProcess : boolean = true) {
       if (!this.showDrawer) {
         return;
       }
       // 若是潜在知识网络 默认设置为圆圈展示模式
-      if (this.isPotential) {
+      if (this.isPotential && potentialProcess) {
         this.mode = 'circular';
       }
       const knowledgeNetwork: KnowledgeNode[] = this.isPotential ? await api.getPotentialKnowledgeNetwork() : await api.getKnowledgeNetwork();

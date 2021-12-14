@@ -157,7 +157,7 @@ class DocPageEventManager {
         DocService.setDocReadRecrod(this.docPageInstance.doc, window.scrollY);
       }, 1000);
       // 滚动的同时将link-popover隐藏掉
-      (this.getRef('linkPopover') as InstanceType<typeof LinkPopover>).hide();
+      this.getRef('linkPopover') && (this.getRef('linkPopover') as InstanceType<typeof LinkPopover>).hide();
     });
   }
 

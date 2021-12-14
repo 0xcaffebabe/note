@@ -47,7 +47,8 @@ type ActionType =
     'showBookMarkAdder' |
     'showBookMarkList' |
     'copyDocPath' |
-    'showLinkList'
+    'showLinkList' |
+    'showKnowledgeSystem'
 
 type LocalActionType = ActionType & 'showMoreSetting'
 
@@ -80,6 +81,7 @@ export default defineComponent({
     'showBookMarkList',
     'copyDocPath',
     'showLinkList',
+    'showKnowledgeSystem'
   ],
   data(){
     return {

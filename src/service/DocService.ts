@@ -99,6 +99,7 @@ class DocService implements Cacheable{
       }
       return `<p class="img-wrapper"><img src='${localImageProxy(href)}'/><p class="img-title">${text}</p></p>`
     }
+    const reg = new RegExp(knowledgeLinkList.map(v => v.name).join('|'))
     render.text = (text: string): string => {
       // 自定义文本渲染 若发现关键字包含标签 则插入标记
       for(let i of tagList) {
@@ -107,11 +108,14 @@ class DocService implements Cacheable{
         }
       }
       // 自定义文本渲染 若发现关键字包含已存在的知识网络连接 则转为链接
-      const reg = new RegExp(knowledgeLinkList.map(v => v.name).join('|'))
       text = text.replace(reg, (str: string) => {
         const i = knowledgeLinkList.filter(v => v.name == str)[0];
         // 如果被插入的链接为当前渲染的文档 跳过
         if (i.id == file.id) {
+          return str;
+        }
+        // 如果被替换的关键字是标签 跳过
+        if (tagList.some(v => v.tag == str)) {
           return str;
         }
         return `<a href='${buildDocLink(i.id, i.headingId!)}' class="potential-link" origin-link="${DocUtils.docId2Url(i.id)}">${str}</a>`

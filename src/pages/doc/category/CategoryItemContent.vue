@@ -3,7 +3,9 @@
     <el-skeleton :rows="1" animated :loading="loading" :throttle="500">
       <template #default>
         <p>{{ filename }}</p>
-        <p class="full-id" :title="docId"> {{ docId }}</p>
+        <p class="full-id" :title="docId">
+          <el-link :href="'/doc/' + docId" @click.prevent="$router.push('/doc/' + docId)" type="primary">{{ docId }}</el-link>
+        </p>
         <el-badge
           :value="lastPastDays + '天前更新'"
           class="item"

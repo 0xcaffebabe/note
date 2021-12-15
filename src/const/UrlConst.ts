@@ -4,4 +4,8 @@ export default {
   yearCommitHeatmapUrl: '/commitHeatmap.json',
   hourCommitHeatmap: '/hourCommitHeatmap.json',
   potentialKnowledgeNetwork: '/potentialKnowledgeNetwork.json',
+  knowledgeNetworkJson: '/knowledgeNetwork.json',
+  summaryJson: '/SUMMARY.md.json',
+  tagMappingJson: '/tagMapping.json',
+  wordcloudJson: '/wordcloud.json',
 }

@@ -45,7 +45,7 @@ class Api implements Cacheable{
    */
   @cache
   public async getCategory() : Promise<DocFileInfo>{
-    const data = await axios.get(baseUrl() + "SUMMARY.md.json")
+    const data = await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.summaryJson))
     return data.data;
   }
 
@@ -59,7 +59,7 @@ class Api implements Cacheable{
    */
   @cache
   public async getWordCloud(): Promise<[string, number][]>{
-    const data = await axios.get(baseUrl() + 'wordcloud.json')
+    const data = await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.wordcloudJson))
     return data.data
   }
 
@@ -72,12 +72,12 @@ class Api implements Cacheable{
    */
   @cache
   public async getStatisticInfo(): Promise<StatisticInfo> {
-    return (await axios.get(baseUrl() + 'info.json')).data
+    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.statisticInfoUrl))).data
   }
 
   @cache
   public async getCommitHeatmap(): Promise<[string, number][]> {
-    return (await axios.get(baseUrl() + 'commitHeatmap.json')).data
+    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.yearCommitHeatmapUrl))).data
   }
 
   /**
@@ -100,7 +100,7 @@ class Api implements Cacheable{
    */
   @cache
   public async getKnowledgeNetwork(): Promise<KnowledgeNode[]> {
-    return (await axios.get(baseUrl() + 'knowledgeNetwork.json')).data
+    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.knowledgeNetworkJson))).data
   }
 
   @cache
@@ -108,21 +108,9 @@ class Api implements Cacheable{
     return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.potentialKnowledgeNetwork))).data
   }
 
-
-  /**
-   *
-   * 获取知识体系数据
-   * @return {*}  {Promise<any>}
-   * @memberof Api
-   */
-  @cache
-  public async getKnowledgeSystem(): Promise<any> {
-    return (await axios.get('https://cdn.jsdelivr.net/gh/apache/echarts-website@asf-site/examples/data/asset/data/flare.json')).data
-  }
-
   @cache
   public async getTagMapping(): Promise<[string,string[]][]> {
-    return (await axios.get(baseUrl() + "tagMapping.json")).data;
+    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.tagMappingJson))).data;
   }
 
   public static getInstance(){

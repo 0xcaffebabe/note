@@ -15,6 +15,7 @@ import TagSumItem from '@/dto/tag/TagSumItem'
 import TagUtils from '@/pages/tag/TagUtils'
 import { KnowledgeLinkNode } from '@/dto/KnowledgeNode'
 import KnowledgeNetworkService from './KnowledgeNetworkService'
+import DocSegement from '@/dto/doc/DocSegement'
 
 const cache = Cache()
 
@@ -66,6 +67,64 @@ class DocService implements Cacheable{
     return this.instance
   }
 
+  /**
+   * 渲染doc 转为结构化数据
+   *
+   * @param {DocFileInfo} file
+   * @return {*}  {DocSegement[]}
+   * @memberof DocService
+   */
+  @cache
+  public renderMdWithStructed(file: DocFileInfo): DocSegement[] {
+    const html = this.renderMd(file)
+    const doc = new DOMParser().parseFromString(html, 'text/html').querySelector('body')!;
+    const allHead:NodeListOf<HTMLElement> = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    const HEADING_TAGS = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6'];
+
+    // 用来存储节点<id-该节点到下一节点前的html>
+    const segementMap = new Map<string, string>();
+    let previousHeading: string | null = null;
+    let htmlBuffer = "";
+    for(let i of Array.from(doc.children)) {
+      if (HEADING_TAGS.some(v => v == i.tagName)) {
+        if (!previousHeading) {
+          segementMap.set(allHead[0].id, htmlBuffer);
+        }else {
+          segementMap.set(previousHeading, htmlBuffer);
+        }
+        htmlBuffer = "";
+        previousHeading = i.id;
+      }else {
+        htmlBuffer += i.outerHTML;
+      }
+    }
+    segementMap.set(previousHeading!, htmlBuffer);
+
+    function content2DocSegement(contents: Content[]): DocSegement[] {
+      const segements: DocSegement[] = []
+      for(let i of contents) {
+        segements.push({
+          id: i.link,
+          title: i.name,
+          level: i.level,
+          content: segementMap.get(i.link) || '',
+          children: content2DocSegement(i.chidren)
+        })
+      }
+      return segements
+    }
+
+    const contents = this.getContent(html);
+    return content2DocSegement(contents)
+  }
+
+  /**
+   * 渲染doc 转为html
+   *
+   * @param {DocFileInfo} file
+   * @return {*}  {string}
+   * @memberof DocService
+   */
   @cache
   public renderMd(file: DocFileInfo) : string {
     const mdContent = file.content;
@@ -268,6 +327,7 @@ class DocService implements Cacheable{
       // 这里考虑到标题里面可能由html标签构成 排除掉sup标签 转为文本内容
       content.name = Array.from(head.childNodes).filter(v => v.nodeName.toUpperCase() != 'SUP').map(v => v.textContent).join('');
       content.link = head.getAttribute("id")!
+      content.level = level;
       contentMap[level] = content
       if (level == 1) {
         result.push(content)

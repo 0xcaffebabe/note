@@ -7,15 +7,16 @@
     />
   </div>
   <ul class="toc">
-    <contents-tree :contentsList="contentsList" />
+    <contents-tree :contentsList="contentList" @item-click="handleTocItemClick"/>
   </ul>
 </template>
 
 <script lang="ts">
 import Category from "@/dto/Category";
-import { defineComponent, PropType } from "vue";
+import { defineComponent } from "vue";
 import ContentsTree from "./ContentsTree.vue";
 import ContentList from "./ContentsList.vue";
+import DocService from "@/service/DocService";
 
 function hightHeading(instance: InstanceType<typeof ContentList>) {
   const idList = document.querySelectorAll(
@@ -70,18 +71,36 @@ function syncHeadingVisible(instance: InstanceType<typeof ContentList>) {
 
 export default defineComponent({
   props: {
-    contentsList: {
-      type: Array as PropType<Category[]>,
-      required: true,
+    doc: {
+      type: String,
+      required: true
     },
+    // 是否启用滚动事件监听
+    withEvent: {
+      type: Boolean,
+      default: true
+    }
   },
+  emits: ['item-click'],
   components: {
     ContentsTree,
   },
   data() {
     return {
       progress: 0 as number,
+      contentList: [] as Category[],
     };
+  },
+  watch: {
+    doc: {
+      immediate: true,
+      async handler(){
+        if (!this.doc) {
+          return;
+        }
+        this.contentList = await DocService.getContentByDocId(this.doc);
+      }
+    }
   },
   methods: {
     registerWindowScrollListener() {
@@ -104,9 +123,14 @@ export default defineComponent({
         lastTime = new Date().getTime();
       });
     },
+    handleTocItemClick(id: string) {
+      this.$emit('item-click', id)
+    },
   },
   created() {
-    this.registerWindowScrollListener();
+    if (this.withEvent) {
+      this.registerWindowScrollListener();
+    }
   },
   unmounted() {
     document.onscroll = null;

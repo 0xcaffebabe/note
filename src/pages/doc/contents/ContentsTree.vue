@@ -3,7 +3,7 @@
     <li :key="value.link" v-for="value in contentsList">
       <a :href="'#' + value.link" @click.prevent="handleTocItemClick(value.link)" :title="value.name">{{ value.name }}</a>
       <ul v-if="value.chidren.length != 0">
-        <contents-tree :contentsList="value.chidren" />
+        <contents-tree :contentsList="value.chidren" @item-click="handleTocItemClick" />
       </ul>
     </li>
   </transition-group>
@@ -20,10 +20,10 @@ export default defineComponent({
       required: true,
     }
   },
+  emits: ['item-click'],
   methods: {
     handleTocItemClick(id: string){
-      const elm : HTMLElement = document.querySelector('#' + id)!
-      window.scrollTo(0, elm.offsetTop - 80)
+      this.$emit('item-click', id);
     }
   },
   setup() {},

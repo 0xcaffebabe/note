@@ -22,7 +22,7 @@
             <!-- toc开始 -->
             <div class="toc-wrapper" :style="{'top': parentShowHeader ? '66px': '6px'}">
               <keep-alive>
-                <contents-list :contentsList="contentsList" />
+                <contents-list :doc="doc" @item-click="handleTocItemClick"/>
               </keep-alive>
             </div>
             <!-- toc结束 -->
@@ -178,6 +178,10 @@ export default defineComponent({
       const url = "/" + DocUtils.docId2Url(this.doc);
       await navigator.clipboard.writeText(url);
       ElMessage.success('复制成功: ' + url);
+    },
+    handleTocItemClick(id: string) {
+      const elm : HTMLElement = document.querySelector('#' + id)!
+      window.scrollTo(0, elm.offsetTop - 80)
     },
     async showDoc(doc: string, headingId?: string) {
       // 将滚动条设置为上一次的状态

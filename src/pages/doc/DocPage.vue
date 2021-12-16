@@ -41,6 +41,7 @@
     @showBookMarkList="showBookmarkList"
     @copyDocPath="handleCopyDocPath"
     @showLinkList="showLinkList"
+    @go-to-ppt="$router.push('/ppt/' + doc)"
   />
   <!-- 工具栏结束 -->
   <link-popover ref="linkPopover"/>

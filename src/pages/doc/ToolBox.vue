@@ -48,7 +48,9 @@ type ActionType =
     'showBookMarkList' |
     'copyDocPath' |
     'showLinkList' |
-    'showKnowledgeSystem'
+    'showKnowledgeSystem' | 
+    'goToDoc' | 
+    'goToPpt'
 
 type LocalActionType = ActionType & 'showMoreSetting'
 
@@ -81,7 +83,9 @@ export default defineComponent({
     'showBookMarkList',
     'copyDocPath',
     'showLinkList',
-    'showKnowledgeSystem'
+    'showKnowledgeSystem',
+    'goToDoc',
+    'goToPpt'
   ],
   data(){
     return {
@@ -97,6 +101,8 @@ export default defineComponent({
         {name: '书签列表', type: 'info', action: 'showBookMarkList'},
         {name: '路径复制', type: 'success', action: 'copyDocPath'},
         {name: '链接列表', type: 'primary', action: 'showLinkList'},
+        {name: '去到DOC', type: 'info', action: 'goToDoc'},
+        {name: '去到PPT', type: 'danger', action: 'goToPpt'},
         {name: '更多设置', type: 'info', action: 'showMoreSetting' as LocalActionType, local: true},
       ] as Action[]
     }

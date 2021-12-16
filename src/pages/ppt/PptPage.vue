@@ -1,4 +1,5 @@
 <template>
+  <tool-box @go-to-doc="$router.push('/doc/' + doc)"/>
   <div class="toc-wrapper">
     <contents-list
       :doc="doc"
@@ -14,32 +15,32 @@
     <el-button @click="next" class="next-btn">
       <el-icon><arrow-right-bold /></el-icon>
     </el-button>
-
-    <h1
-      :class="{
-        'main-heading':
-          flatContent[currentIndex] && !flatContent[currentIndex].content,
-      }"
-    >
-      {{ flatContent[currentIndex] && flatContent[currentIndex].title }}
-    </h1>
-    <div
-      class="outline markdown-section"
-      v-if="flatContent[currentIndex] && !flatContent[currentIndex].content"
-    >
-      <u>
-        <li
-          v-for="item in flatContent[currentIndex].children || []"
-          :key="item.id"
-        >
-          {{ item.title }}
-        </li>
-      </u>
+    <div class="markdown-section">
+      <h1
+        :class="{
+          'main-heading':
+            flatContent[currentIndex] && !flatContent[currentIndex].content,
+        }"
+      >
+        {{ flatContent[currentIndex] && flatContent[currentIndex].title }}
+      </h1>
+      <div
+        class="outline"
+        v-if="flatContent[currentIndex] && !flatContent[currentIndex].content"
+      >
+        <u>
+          <li
+            v-for="item in flatContent[currentIndex].children || []"
+            :key="item.id"
+          >
+            {{ item.title }}
+          </li>
+        </u>
+      </div>
+      <div
+        v-html="flatContent[currentIndex] && flatContent[currentIndex].content"
+      ></div>
     </div>
-    <div
-      v-html="flatContent[currentIndex] && flatContent[currentIndex].content"
-      class="markdown-section"
-    ></div>
   </div>
 </template>
 
@@ -53,12 +54,14 @@ import { defineComponent } from "vue";
 import "../doc/markdown-v1.less";
 import "../doc/code-hl-vsc.css";
 import ContentsList from "../doc/contents/ContentsList.vue";
+import ToolBox from "../doc/ToolBox.vue";
 
 export default defineComponent({
   components: {
     ArrowLeftBold,
     ArrowRightBold,
     ContentsList,
+    ToolBox
   },
   data() {
     return {

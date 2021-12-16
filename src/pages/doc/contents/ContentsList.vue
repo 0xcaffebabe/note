@@ -6,8 +6,11 @@
       :percentage="progress"
     />
   </div>
-  <ul class="toc">
-    <contents-tree :contentsList="contentList" @item-click="handleTocItemClick"/>
+  <ul class="toc" ref="toc">
+    <contents-tree
+      :contentsList="contentList"
+      @item-click="handleTocItemClick"
+    />
   </ul>
 </template>
 
@@ -73,15 +76,15 @@ export default defineComponent({
   props: {
     doc: {
       type: String,
-      required: true
+      required: true,
     },
     // 是否启用滚动事件监听
     withEvent: {
       type: Boolean,
-      default: true
-    }
+      default: true,
+    },
   },
-  emits: ['item-click'],
+  emits: ["item-click"],
   components: {
     ContentsTree,
   },
@@ -94,13 +97,13 @@ export default defineComponent({
   watch: {
     doc: {
       immediate: true,
-      async handler(){
+      async handler() {
         if (!this.doc) {
           return;
         }
         this.contentList = await DocService.getContentByDocId(this.doc);
-      }
-    }
+      },
+    },
   },
   methods: {
     registerWindowScrollListener() {
@@ -109,7 +112,7 @@ export default defineComponent({
         // 两次触发的间隔至少400ms
         const currentTime = new Date().getTime();
         if (currentTime < lastTime + 400) {
-          return
+          return;
         }
         hightHeading(this);
         syncHeadingVisible(this);
@@ -124,7 +127,18 @@ export default defineComponent({
       });
     },
     handleTocItemClick(id: string) {
-      this.$emit('item-click', id)
+      this.$emit("item-click", id);
+    },
+    // 高亮指定标题
+    hilight(id: string) {
+      const document = this.$refs.toc as HTMLElement;
+      const previousNode = document.querySelector(".toc .active");
+      if (previousNode !== null) {
+        previousNode.classList.remove("active");
+      }
+      // 高亮当前标题
+      document.querySelector(`.toc a[href='#${id}']`)?.classList.add("active");
+      syncHeadingVisible(this);
     },
   },
   created() {
@@ -166,7 +180,7 @@ export default defineComponent({
 :deep(.active) {
   transition: all 0.2s;
   color: #3e90e8 !important;
-  font-weight: 600!important;
+  font-weight: 600 !important;
 }
 ul,
 :deep(ul) {

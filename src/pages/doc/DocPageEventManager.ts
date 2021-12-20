@@ -5,7 +5,6 @@ import { ElMessage } from 'element-plus'
 import DocService from "@/service/DocService";
 import ResourceBrower from "./ResourceBrower.vue";
 import EventBus from "@/components/EventBus";
-import { t } from "element-plus/es/locale";
 
 class DocPageEventManager {
 

@@ -2,7 +2,7 @@
 
 ## 逻辑架构
 
-![屏幕截图 2020-08-23 142118](/assets/屏幕截图%202020-08-23%20142118.png)
+![MySQL逻辑架构](/assets/屏幕截图%202020-08-23%20142118.png)
 
 ## 日志机制
 
@@ -200,6 +200,34 @@ start slave
 常用代理方式实现，代理服务器根据传进来的请求，决定将请求转发到哪台服务器
 
 ![202031020242](/assets/202031020242.png)
+
+## 相关文件说明
+
+文件名                | 类型  | 说明
+------------------ | --- | --------------------------------------------------------------------
+performance_schema | 文件夹 | 数据库， MySQL 的数据字典
+mysql              | 文件夹 | 数据库，MySQL 的数据字典
+sys                | 文件夹 | 数据库， SQL 数据字典
+my.cnf             | 文件  | 参数文件，默认是从/etc/my.cnf中读取 也可自定义
+auto.cnf           | 文件  | MySQL 启动时如果没有UUID就会生成这个文件
+binlog.00000x      | 文件  | 二进制日志，即binlog ，数据变化都会在里面记录。如果是在从库，还会有相应的relay log
+binlog.index       | 文件  | binlog的索引文件，里面记录相应的bin log名称
+mysqld.pid         | 文件  | MySQL服务的进程号
+mysqld.log         | 文件  | MySQL日志，记录数据库启动日志、服务端日志，有的公司会将其命名为error.log
+Ibtmpx             | 文件  | 临时表的表空间，由innodb_temp_data_file_path变量控制
+ibdata1            | 文件  | 系统表空间，由innodb_data_file_path变量控制
+undo_00x           | 文件  | undo表空间
+mysql.ibd          | 文件  | mysql库中系统表与数据字典的表空间
+ib_logfilex        | 文件  | InnoDB特有，redo文件
+ib_buffer_pool     | 文件  | 关闭MySQL时，会把内存中的热数据保存在该文件中，从而提高使用率和性能
+slow.log           | 文件  | 慢查询日志
+xxx.pem            | 文件  | SSL相关文件
+mysql.sock         | 文件  | 本地服务器的套接字文件使用UNIX domain socket作为通讯协议的载体，比TCP更快 用于从客户端到本地服务器来进行交换数据。
+ib_16384_x.dblwr   | 文件  | doublewrite 文件，格式为#ib_page_size_file_number.dblwr
+
+## 内存结构
+
+[MySQL内存结构](https://www.cnblogs.com/kissdb/p/4009614.html)
 
 ## 参数设置
 

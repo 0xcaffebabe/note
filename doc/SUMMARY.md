@@ -430,6 +430,7 @@
       - [索引](./中间件/数据库/mysql/索引.md)
       - [管理](./中间件/数据库/mysql/管理.md)
       - [设计](./中间件/数据库/mysql/设计.md)
+      - [复制](./中间件/数据库/mysql/复制.md)
       - [高可用性](./中间件/数据库/mysql/高可用性.md)
       - [优化](./中间件/数据库/mysql/数据库优化.md)
         - [performance schema](./中间件/数据库/mysql/performance.md)

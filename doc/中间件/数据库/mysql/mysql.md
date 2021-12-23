@@ -1,3 +1,6 @@
+---
+tags: ['数据库']
+---
 # MYSQL
 
 ## 逻辑架构
@@ -46,8 +49,29 @@ SELECT ... LOCK IN SHARE MODE; -- 任何时候都不要手动加锁
 InnoDB存储引擎的锁的算法
 
 - Record lock：单个行记录上的锁
-- Gap lock：间隙锁，锁定一个范围，不包括记录本身
+- Gap lock：间隙锁，锁定一个范围，不包括记录本身 防止这个区间的数据插入 解决幻读问题
+	- 要有索引
 - Next-key lock：record+gap 锁定一个范围，包含记录本身
+- Insert Intention Locks: 插入意向锁 insert前执行
+- AUTO-INC Locks：自增锁
+- Predicate Locks 谓词锁
+
+### 锁分析
+
+```sql
+show status like '%innodb_row_lock%'; --可查看行锁相关的统计信息
+SHOW ENGINE INNODB STATUS; -- 关注结果中 TRANSACTIONS 段落
+```
+
+使用锁、事务相关的表
+
+INFORMATION_SCHEMA.INNODB_TRX 官方文档	
+INFORMATION_SCHEMA.INNODB_LOCKS 官方文档	
+INFORMATION_SCHEMA.INNODB_LOCK_WAITS 官方文档	
+
+INFORMATION_SCHEMA.INNODB_TRX 官方文档
+PERFORMANCE.DATA_LOCKS 官方文档
+PERFORMANCE.DATA_LOCKS_WAITS 官方文档
 
 ## 多版本并发控制(MVCC)
 

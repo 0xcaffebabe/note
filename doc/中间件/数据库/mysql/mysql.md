@@ -58,20 +58,51 @@ InnoDB存储引擎的锁的算法
 
 ### 锁分析
 
+#### 锁相关统计信息
+
 ```sql
-show status like '%innodb_row_lock%'; --可查看行锁相关的统计信息
+show status like '%innodb_row_lock%';
+```
+
+- Innodb_row_lock_current_waits：当前正在等待锁的事务数量
+- Innodb_row_lock_time：从系统启动到现在发生锁定的总时间
+- Innodb_row_lock_time_avg：从系统启动到现在发生锁等待的平均时间
+- Innodb_row_lock_time_max：从系统启动到现在发生锁等待的最大时间
+- Innodb_row_lock_waits：从系统启动到现在发生等待的次数
+
+```sql
 SHOW ENGINE INNODB STATUS; -- 关注结果中 TRANSACTIONS 段落
 ```
 
-使用锁、事务相关的表
+#### 锁、事务相关的表
 
-INFORMATION_SCHEMA.INNODB_TRX 官方文档	
-INFORMATION_SCHEMA.INNODB_LOCKS 官方文档	
-INFORMATION_SCHEMA.INNODB_LOCK_WAITS 官方文档	
+当前事务执行情况：
 
-INFORMATION_SCHEMA.INNODB_TRX 官方文档
-PERFORMANCE.DATA_LOCKS 官方文档
-PERFORMANCE.DATA_LOCKS_WAITS 官方文档
+- [INFORMATION_SCHEMA.INNODB_TRX](https://dev.mysql.com/doc/refman/5.7/en/information-schema-innodb-trx-table.html) 5.7
+- [INFORMATION_SCHEMA.INNODB_TRX](https://dev.mysql.com/doc/refman/8.0/en/information-schema-innodb-trx-table.html) 8.0
+
+锁信息：
+
+- [INFORMATION_SCHEMA.INNODB_LOCKS](https://dev.mysql.com/doc/refman/5.7/en/information-schema-innodb-locks-table.html) 5.7
+- [PERFORMANCE.DATA_LOCKS](https://dev.mysql.com/doc/refman/8.0/en/performance-schema-data-locks-table.html) 8.0
+
+锁等待信息：
+
+- [INFORMATION_SCHEMA.INNODB_LOCK_WAITS](https://dev.mysql.com/doc/refman/5.7/en/information-schema-innodb-lock-waits-table.html) 5.7	
+- [PERFORMANCE.DATA_LOCKS_WAITS](https://dev.mysql.com/doc/refman/8.0/en/performance-schema-data-lock-waits-table.html) 8.0
+
+##### 事务与锁情况分析
+
+```sql
+SELECT
+  waiting_trx_id,
+  waiting_pid,
+  waiting_query,
+  blocking_trx_id,
+  blocking_pid,
+  blocking_query
+FROM sys.innodb_lock_waits;
+```
 
 ## 多版本并发控制(MVCC)
 
@@ -260,57 +291,37 @@ ib_16384_x.dblwr   | 文件  | doublewrite 文件，格式为#ib_page_size_file_
 
 ### cache
 
-key_buffer_size
+- key_buffer_size
 	索引缓存区的大小（只对myisam表起作用）
-query cache
-	query_cache_size
-		查询缓存的大小，未来版本被删除
-			show status like '%Qcache%';查看缓存的相关属性
-			Qcache_free_blocks：缓存中相邻内存块的个数，如果值比较大，那么查询缓存中碎片比较多
-			Qcache_free_memory：查询缓存中剩余的内存大小
-			Qcache_hits：表示有多少此命中缓存
-			Qcache_inserts：表示多少次未命中而插入
-			Qcache_lowmen_prunes：多少条query因为内存不足而被移除cache
-			Qcache_queries_in_cache：当前cache中缓存的query数量
-			Qcache_total_blocks：当前cache中block的数量
-	query_cache_limit
-		超出此大小的查询将不被缓存
-	query_cache_min_res_unit
-		缓存块最小大小
-	query_cache_type
-		缓存类型，决定缓存什么样的查询
-			0表示禁用
-			1表示将缓存所有结果，除非sql语句中使用sql_no_cache禁用查询缓存
-			2表示只缓存select语句中通过sql_cache指定需要缓存的查询
-sort_buffer_size
+- sort_buffer_size
 	每个需要排序的线程分派该大小的缓冲区
-max_allowed_packet=32M
+- max_allowed_packet=32M
 	限制server接受的数据包大小
-join_buffer_size=2M
+- join_buffer_size=2M
 	表示关联缓存的大小
-thread_cache_size
-	Threads_cached：代表当前此时此刻线程缓存中有多少空闲线程
-	Threads_connected：代表当前已建立连接的数量
-	Threads_created：代表最近一次服务启动，已创建现成的数量，如果该值比较大，那么服务器会一直再创建线程
-	Threads_running：代表当前激活的线程数
+- thread_cache_size
+	- Threads_cached：代表当前此时此刻线程缓存中有多少空闲线程
+	- Threads_connected：代表当前已建立连接的数量
+	- Threads_created：代表最近一次服务启动，已创建现成的数量，如果该值比较大，那么服务器会一直再创建线程
+	- Threads_running：代表当前激活的线程数
 
 ### innodb
 
-innodb_buffer_pool_size=
+- innodb_buffer_pool_size=
 	该参数指定大小的内存来缓冲数据和索引，最大可以设置为物理内存的80%
-innodb_flush_log_at_trx_commit
+- innodb_flush_log_at_trx_commit
 	主要控制innodb将log buffer中的数据写入日志文件并flush磁盘的时间点，值分别为0，1，2
-innodb_thread_concurrency
+- innodb_thread_concurrency
 	设置innodb线程的并发数，默认为0表示不受限制，如果要设置建议跟服务器的cpu核心数一致或者是cpu核心数的两倍
-innodb_log_buffer_size
+- innodb_log_buffer_size
 	此参数确定日志文件所用的内存大小，以M为单位
-innodb_log_file_size
+- innodb_log_file_size
 	此参数确定数据日志文件的大小，以M为单位
-innodb_log_files_in_group
+- innodb_log_files_in_group
 	以循环方式将日志文件写到多个文件中
-read_buffer_size
+- read_buffer_size
 	mysql读入缓冲区大小，对表进行顺序扫描的请求将分配到一个读入缓冲区
-read_rnd_buffer_size
+- read_rnd_buffer_size
 	mysql随机读的缓冲区大小
-innodb_file_per_table
+- innodb_file_per_table
 	此参数确定为每张表分配一个新的文件

@@ -8,7 +8,7 @@ import axios from 'axios';
 import DatasourceItem from "../dto/DatasourceItem";
 
 
-const origins = ['https://note.ismy.wang', 'http://noteg.ismy.wang', 'https://notev.ismy.wang']
+const origins = ['https://note.ismy.wang', 'http://noteg.ismy.wang', 'https://notev.ismy.wang', 'https://noten.ismy.wang']
 const urls = ['/', '/#/doc/README', '/#/tag']
 const storagePath = 'back_origin_snapshot'
 

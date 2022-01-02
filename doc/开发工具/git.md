@@ -263,7 +263,27 @@ ssh: connect to host xxx.com port 22: Connection refused
 
 开发周期较长时，要及时合并到master，避免最后大量冲突
 
-## Pull Request 与 Merge Request
+## 分支管理策略
+
+### Git Flow
+
+![GitFlow概览](/assets/202212233314.svg)
+
+分支      | 说明                                          | 是否允许多条
+------- | ------------------------------------------- | ------
+master  | 存储最近发布到生产环境的代码 只允许从其他分支合并 不允许直接修改           | ×
+develop | 包含所有要发布到下一个版本的代码                            | ×
+feature | 特性分支，用来开发功能 开发完成 则合并到develop                | √
+release | 基于develop创建，完成后合并到master和develop            | √
+hotfix  | 修复生产环境紧急的问题 从master拉出来 修复完合并到master和develop | √
+
+### GitHub Flow
+
+- Pull Request
+
+![Github Flow 流程图](/assets/202212233640.png)
+
+#### Pull Request 与 Merge Request
 
 这两种方式本质上是一样的，都是利用了git merge来合并两个分支。
 

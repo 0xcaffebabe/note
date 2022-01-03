@@ -204,3 +204,11 @@ body[theme=dark] {
   }
 }
 </style>
+
+<style lang="less">
+body[theme=dark] {
+  .el-empty__image {
+    filter: invert(25%)!important;
+  }
+}
+</style>

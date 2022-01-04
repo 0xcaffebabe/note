@@ -92,34 +92,45 @@
 - 500 Internal Server Error ：服务器正在执行请求时发生错误
 - 503 Service Unavailable ：服务器暂时处于超负载或正在进行停机维护，现在无法处理请求
 
-## 具体应用
+## 连接管理
 
-### 连接管理
-
-- 短连接
+### 短连接
 
 每进行一次 HTTP 通信就要新建一个 TCP 连接
 
-- 长连接
+### 并行连接
+
+通过连续发起多个不同连接 来解决串行HTTP请求的长时延
+
+也并非并行连接就能更快 还需要考虑到带宽 服务器等因素
+
+### 长连接
+
+- 减少了TCP连接建立的开销
 
 从 HTTP/1.1 开始默认是长连接的，如果要断开连接，需要由客户端或者服务器端提出断开，使用 Connection : close
+
 在 HTTP/1.1 之前默认是短连接的，如果需要使用长连接，则使用 Connection : Keep-Alive
 
-- 流水线
+```http
+Keep-Alive: max=5, timeout=120 // 最多为5个事务保持连接状态 或最多保持120秒的空闲时间
+```
+
+### 流水线
 
 流水线是在同一条长连接上连续发出请求，而不用等待响应返回，这样可以减少延迟
 
-### Cookie
+## Cookie
 
 Cookie 是服务器发送到用户浏览器并保存在本地的一小块数据，它会在浏览器之后向同一服务器再次发起请求时被携带上，用于告知服务端两个请求是否来自同一客户端
 
-#### 用途
+### 用途
 
 - 会话状态管理
 - 个性化设置
 - 浏览器行为跟踪
 
-#### 创建过程
+### 创建过程
 
 服务的响应头Set-Cookie头部：
 
@@ -134,7 +145,7 @@ Set-Cookie: tasty_cookie=strawberry
 Cookie: yummy_cookie=choco; tasty_cookie=strawberry
 ```
 
-#### 分类
+### 分类
 
 - 会话期Cookie：浏览器关闭之后它会被自动删除，没有指定过期时间就是会话期Cookie
 - 持久性 Cookie：指定过期时间（Expires）或有效期（max-age）之后就成为了持久性的 Cookie
@@ -143,17 +154,17 @@ Cookie: yummy_cookie=choco; tasty_cookie=strawberry
 Set-Cookie: id=a3fWa; Expires=Wed, 21 Oct 2020 07:28:00 GMT;
 ```
 
-#### 作用域
+### 作用域
 
 Domain 标识Cookie在哪些域名下有效，如果不指定，默认是当前文档的主机
 
 如果指定了Domain，则一般包括子域名，如baidu.com，包含map.baidu.com
 
-#### JS访问
+### JS访问
 
 JavaScript可以通过document.cookie来创建cookie或者访问非HttpOnly的Cookie
 
-#### HttpOnly
+### HttpOnly
 
 标记为 HttpOnly 的 Cookie 不能被 JavaScript 脚本调用
 
@@ -161,11 +172,11 @@ JavaScript可以通过document.cookie来创建cookie或者访问非HttpOnly的Co
 Set-Cookie: id=a3fWa; Expires=Wed, 21 Oct 2020 07:28:00 GMT; Secure; HttpOnly
 ```
 
-#### Secure
+### Secure
 
 标记为 Secure 的 Cookie 只能通过被 HTTPS 协议加密过的请求发送给服务端
 
-#### Session
+### Session
 
 Session是通过在服务端生成一个key，使用这个key为索引在服务器端存放用户信息，后将这个key作为cookie返回给客户端，让客户端使用这个key来操作
 

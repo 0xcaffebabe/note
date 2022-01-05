@@ -19,6 +19,9 @@ async function main(){
         outList.push(outFilename)
         console.log('build-pdf ' + outFilename + ' 生成完毕')
       })
+      .catch(err => {
+        console.error(filename + '转pdf异常', err)
+      })
   }
   console.log('build-pdf 所有任务完成 准备合并')
   const merger = new PDFMerger();
@@ -27,4 +30,5 @@ async function main(){
   }
   await merger.save('book/out.pdf')
   console.log('build-pdf 合并完成')
+  process.exit()
 }

@@ -1,0 +1,41 @@
+name: 构建pdf
+
+on:
+  push:
+    branches: [ master ]
+  
+jobs:
+  build:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x]
+    
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: 安装依赖
+      run: |
+        npm install
+    - name: 构建pdf
+      run: |
+        npm run build-pdf
+    - name: 散列pdf存档
+      uses: actions/upload-artifact@v2
+      with:
+        name: pdf
+        path: |
+          book
+          !book/out.pdf
+    - name: 合并pdf存档
+      uses: actions/upload-artifact@v2
+      with:
+        name: merge_pdf
+        path: |
+          book/out.pdf

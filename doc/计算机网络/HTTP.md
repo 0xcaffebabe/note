@@ -112,6 +112,10 @@
 
 在 HTTP/1.1 之前默认是短连接的，如果需要使用长连接，则使用 Connection : Keep-Alive
 
+对于不认识Connection的代理服务器，会将Connection首部也一并转发，从而造成连接被挂住
+
+![哑代理挂住了请求](/assets/屏幕截图%202022-01-05%20181622.png)
+
 ```http
 Keep-Alive: max=5, timeout=120 // 最多为5个事务保持连接状态 或最多保持120秒的空闲时间
 ```

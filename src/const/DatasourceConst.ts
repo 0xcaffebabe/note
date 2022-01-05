@@ -11,7 +11,7 @@ export default [
   },
   {
     id: 'proxy-cn',
-    url: 'http://proxy-cn.ismy.wang/api/',
+    url: '//proxy-cn.ismy.wang/api/',
     desc: '百度云加速'
   },
   {

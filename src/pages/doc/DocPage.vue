@@ -42,6 +42,7 @@
     @copyDocPath="handleCopyDocPath"
     @showLinkList="showLinkList"
     @go-to-ppt="$router.push('/ppt/' + doc)"
+    @downloadPdf="downloadPdf"
   />
   <!-- 工具栏结束 -->
   <link-popover ref="linkPopover"/>
@@ -81,6 +82,7 @@ import { ElMessage } from 'element-plus'
 import './markdown-v1.less'
 import './code-hl-vsc.css'
 import DocUtils from "@/util/DocUtils";
+import PdfUtils from '@/util/PdfUtils';
 import DocSideCategory from './aside/DocSideCategory.vue';
 import DocBreadcrumbNav from "./nav/DocBreadcrumbNav.vue";
 import DocTabNav from "./nav/DocTabNav.vue";
@@ -214,6 +216,13 @@ export default defineComponent({
     generateTOC() {
       this.contentsList = docService.getContent(this.contentHtml);
     },
+    downloadPdf() {
+      try {
+        PdfUtils.downloadPdf(this.doc, true)
+      }catch(err: any) {
+        ElMessage.error(err.message)
+      }
+    }
   },
   beforeRouteUpdate(to, from) {
     const doc = to.params.doc.toString();

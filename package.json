@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.4",
-    "@types/jsdom": "^16.2.13",
+    "@types/jsdom": "16.2.14",
     "@types/marked": "^3.0.1",
     "@types/mime": "^2.0.3",
     "@types/node": "^16.10.3",

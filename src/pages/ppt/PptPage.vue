@@ -42,6 +42,7 @@
       ></div>
     </div>
   </div>
+  <el-image-viewer @close="showImageViewer = false" v-show="showImageViewer" :url-list="imageUrlList" :hide-on-click-modal="true"/>
 </template>
 
 <script lang="ts">
@@ -55,6 +56,7 @@ import "../doc/markdown-v1.less";
 import "../doc/code-hl-vsc.css";
 import ContentsList from "../doc/contents/ContentsList.vue";
 import ToolBox from "../doc/ToolBox.vue";
+import PptPageEventManager from "./PptPageEventManager";
 
 export default defineComponent({
   components: {
@@ -69,6 +71,9 @@ export default defineComponent({
       headingId: "",
       file: null as DocFileInfo | null,
       currentIndex: 0,
+      showImageViewer: false,
+      imageUrlList: [] as string[],
+      eventManager: null as PptPageEventManager | null
     };
   },
   watch: {
@@ -142,6 +147,10 @@ export default defineComponent({
       }
     });
   },
+  mounted() {
+    this.eventManager = new PptPageEventManager(this);
+    this.eventManager.registerImageClick(document.querySelector('.markdown-section')!);
+  }
 });
 </script>
 

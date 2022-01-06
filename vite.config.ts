@@ -8,6 +8,22 @@ import StatisticInfoGenerator from './src/plugins/StatisticInfoGenerator'
 import KnowledgeNetworkGenerator from './src/plugins/KnowledgeNetworkGenerator'
 import DocTagsGenerator from './src/plugins/DocTagsGenerator'
 import VitePluginPrismjs from 'vite-plugin-prismjs'
+import visualizer from "rollup-plugin-visualizer"
+
+const plugins = [];
+
+// 打包生产环境才引入的插件
+if (process.env.NODE_ENV === "production") {
+  // 打包依赖展示
+  plugins.push(
+      visualizer({
+          open: true,
+          gzipSize: true,
+          brotliSize: true,
+          filename: "dist/stats.html"
+      })
+  );
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -23,6 +39,7 @@ export default defineConfig({
     host: '0.0.0.0'
   },
   plugins: [
+    ...plugins,
     vue(),
     DocServer(),
     {
@@ -61,7 +78,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id: string): string {
-          const indepentDependcies = ['element-plus', 'vue', 'jspdf', 'html2canvas', 'echarts']
+          const indepentDependcies = ['element-plus', 'vue', 'jspdf', 'html2canvas', 'echarts', 'zrender']
           for(let depend of indepentDependcies) {
             if (id.includes('node_modules') && id.includes(depend)) {
               return depend

@@ -37,7 +37,7 @@
     "@types/jsdom": "16.2.14",
     "@types/marked": "^3.0.1",
     "@types/mime": "^2.0.3",
-    "@types/node": "^16.10.3",
+    "@types/node": "16.11.19",
     "@types/nprogress": "^0.2.0",
     "@types/prismjs": "^1.16.6",
     "@types/rimraf": "^3.0.2",

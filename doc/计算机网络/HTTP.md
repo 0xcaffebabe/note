@@ -413,6 +413,42 @@ HTTP/1.1 使用虚拟主机技术，使得一台服务器拥有多个域名，�
 - [PAC](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Proxy_servers_and_tunneling/Proxy_Auto-Configuration_PAC_file) 自动代理配置 通过一段js脚本确定一个url要以怎样的方式使用什么代理访问
 - WPAD 代理发现 自动发现PAC并进行下载然后为请求使用代理
 
+##### 有关代理的一些问题
+
+- 客户端向代理发送请求时 需要在HTTP请求消息里面包含完整的URI信息 这样代理服务器才知道要转发到哪里
+
+```http
+GET http://baidu.com HTTP/1.0
+```
+
+- 如果代理接收到的URI不完整 也可以通过Host确定
+
+##### 报文追踪
+
+- Via首部
+
+```http
+Via: [ <protocol-name> "/" ] <protocol-version> <host> [ ":" <port> ]
+```
+
+![经过多层代理 通过Via标识](/assets/屏幕截图%202022-01-07%20172607.png)
+
+每经过一层代理，代理都可以向该字段加入自己的标识 在多层代理的情况下，通过检查这个字段有没有自己，可以检测环路，该字段与Server的区别在于Server是源服务器信息，代理不应修改
+
+- TRACE
+
+![TRACE流程](/assets/屏幕截图%202022-01-07%20173637.png)
+
+通过指定Max-Forwards头部 每经过一层代理该值就会减1 当为0时，及时当前服务器不是源服务器，也必须马上将结果返回给客户端
+
+##### 认证
+
+- Proxy-Authenticate 首部
+
+##### 兼容性
+
+为了保证代理的兼容性，代理对于不认识的首部，必须原样转发，并且首部的顺序，也不能随意修改
+
 #### 网关
 
 网关服务器会将 HTTP 转化为其它协议进行通信，从而请求其它非 HTTP 服务器的服务

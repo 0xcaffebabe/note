@@ -13,7 +13,7 @@
     "@element-plus/icons": "^0.0.11",
     "algoliasearch": "^4.10.5",
     "axios": "0.24.0",
-    "echarts": "^5.2.1",
+    "echarts": "5.2.2",
     "echarts-wordcloud": "^2.0.0",
     "element-plus": "^1.2.0-beta.6",
     "html2canvas": "^1.4.0",

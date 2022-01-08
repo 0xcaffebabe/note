@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@element-plus/icons": "^0.0.11",
-    "algoliasearch": "^4.10.5",
+    "algoliasearch": "4.12.0",
     "axios": "0.24.0",
     "echarts": "^5.2.1",
     "echarts-wordcloud": "^2.0.0",

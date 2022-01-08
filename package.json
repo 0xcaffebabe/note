@@ -44,7 +44,7 @@
     "@types/shelljs": "^0.8.9",
     "@types/wordcloud": "^1.1.3",
     "@vitejs/plugin-vue": "^1.9.2",
-    "jsdom": "^18.0.0",
+    "jsdom": "18.1.1",
     "md-to-pdf": "^5.0.0",
     "nodejieba": "^2.5.2",
     "pdf-merger-js": "^3.2.1",

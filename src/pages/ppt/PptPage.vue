@@ -42,7 +42,7 @@
       ></div>
     </div>
   </div>
-  <el-image-viewer @close="showImageViewer = false" v-show="showImageViewer" :url-list="imageUrlList" :hide-on-click-modal="true"/>
+  <image-viewer ref="imageViewer" />
 </template>
 
 <script lang="ts">
@@ -57,14 +57,16 @@ import "../doc/code-hl-vsc.css";
 import ContentsList from "../doc/contents/ContentsList.vue";
 import ToolBox from "../doc/ToolBox.vue";
 import PptPageEventManager from "./PptPageEventManager";
+import ImageViewer from "@/components/ImageViewer.vue";
 
 export default defineComponent({
   components: {
     ArrowLeftBold,
     ArrowRightBold,
     ContentsList,
-    ToolBox
-  },
+    ToolBox,
+    ImageViewer
+},
   data() {
     return {
       doc: "",

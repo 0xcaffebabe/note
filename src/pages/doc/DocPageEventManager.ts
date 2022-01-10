@@ -5,6 +5,7 @@ import { ElMessage } from 'element-plus'
 import DocService from "@/service/DocService";
 import ResourceBrower from "./ResourceBrower.vue";
 import EventBus from "@/components/EventBus";
+import ImageViewerVue from "@/components/ImageViewer.vue";
 
 class DocPageEventManager {
 
@@ -89,8 +90,7 @@ class DocPageEventManager {
       img.onclick = (e: Event) => {
         // 展示大图
         const src = img.querySelector('img')?.getAttribute('src') || '';
-        this.docPageInstance.imageUrlList = [src];
-        this.docPageInstance.showImageViewer = true;
+        (this.getRef("imageViewer") as InstanceType<typeof ImageViewerVue>).show(src);
       };
     }
   }

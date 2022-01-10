@@ -1,3 +1,4 @@
+import ImageViewerVue from "@/components/ImageViewer.vue";
 import PptPage from "./PptPage.vue";
 
 class PptPageEventManager {
@@ -19,16 +20,11 @@ class PptPageEventManager {
    */
    public registerImageClick(docEl: HTMLElement) {
     docEl.addEventListener('click', (e : MouseEvent) => {
-      console.log(e.target)
       if (e.target && (e.target as HTMLElement).tagName == 'IMG') {
         const img: HTMLElement = e.target as HTMLElement;
-        img.onclick = (e: Event) => {
-          // 展示大图
-          const src = img.getAttribute('src') || '';
-          console.log(src);
-          this.pptPageInstance.imageUrlList = [src];
-          this.pptPageInstance.showImageViewer = true;
-        };
+        // 展示大图
+        const src = img.getAttribute('src') || '';
+        (this.getRef("imageViewer") as InstanceType<typeof ImageViewerVue>).show(src);
         e.stopPropagation();
         e.preventDefault();
       }

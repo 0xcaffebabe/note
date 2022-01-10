@@ -57,7 +57,7 @@
   <keep-alive>
     <knowledge-system ref="knowledgeSystem" @close="showAside = true;isDrawerShow = false"/>
   </keep-alive>
-  <el-image-viewer @close="showImageViewer = false" v-show="showImageViewer" :url-list="imageUrlList" :hide-on-click-modal="true"/>
+  <image-viewer ref="imageViewer" />
   <resource-brower ref="resourceBrower" />
 </template>
 
@@ -89,6 +89,7 @@ import DocTabNav from "./nav/DocTabNav.vue";
 import KnowledgeSystem from "./knowledge/KnowledgeSystem.vue";
 import DocPageEventMnager from './DocPageEventManager';
 import ResourceBrower from "./ResourceBrower.vue";
+import ImageViewer from "@/components/ImageViewer.vue";
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -107,6 +108,7 @@ export default defineComponent({
     DocBreadcrumbNav,
     DocTabNav,
     ResourceBrower,
+    ImageViewer
   },
   watch: {
     showHeader: {
@@ -161,9 +163,7 @@ export default defineComponent({
       doc: "" as string,
       loading: true as boolean,
       showAside: true as boolean,
-      showImageViewer: false as boolean,
       isDrawerShow: false as boolean,
-      imageUrlList: [] as string[],
       parentShowHeader: true as boolean,
       eventManager: null as DocPageEventMnager | null
     };

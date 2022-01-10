@@ -60,11 +60,6 @@ export default defineComponent({
       return DocUtils.docUrl2Id(this.categoryLink);
     }
   },
-  watch: {
-    lastPastDays(){
-      this.$emit('pastdays-change', this.lastPastDays);
-    }
-  },
   methods: {
     // 初始化内容
     async init(docLink?: string) {

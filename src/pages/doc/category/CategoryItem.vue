@@ -18,7 +18,6 @@
         <template #title>
           <div>
             <span>{{ value.name }}</span>
-            <el-badge value="new" type="danger" v-if="pastDays <= 10" class="newly-flag"/>
           </div>
         </template>
       </el-menu-item>
@@ -28,7 +27,6 @@
       :category-name="value.name"
       :category-link="value.link"
       ref="categoryItemContent"
-      @pastdays-change="handlePastdays"
     />
   </el-popover>
 </template>
@@ -71,10 +69,7 @@ export default defineComponent({
     },
     handleMenuItemClick(value: Category) {
       this.$store.commit("setCurrentCategory", value);
-    },
-    handlePastdays(days: number) {
-      this.pastDays = days;
-    },
+    }
   },
 });
 </script>

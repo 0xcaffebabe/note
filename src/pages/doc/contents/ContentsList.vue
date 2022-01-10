@@ -1,11 +1,4 @@
 <template>
-  <div class="progress">
-    <el-progress
-      :text-inside="true"
-      :stroke-width="26"
-      :percentage="progress"
-    />
-  </div>
   <ul class="toc" ref="toc">
     <contents-tree
       :contentsList="contentList"
@@ -90,7 +83,6 @@ export default defineComponent({
   },
   data() {
     return {
-      progress: 0 as number,
       contentList: [] as Category[],
     };
   },
@@ -109,20 +101,13 @@ export default defineComponent({
     registerWindowScrollListener() {
       let lastTime = new Date().getTime();
       document.addEventListener("scroll", (e) => {
-        // 两次触发的间隔至少400ms
+        // 两次触发的间隔至少200ms
         const currentTime = new Date().getTime();
-        if (currentTime < lastTime + 400) {
+        if (currentTime < lastTime + 200) {
           return;
         }
         hightHeading(this);
         syncHeadingVisible(this);
-        // 计算阅读进度
-        this.progress = Math.max(
-          0,
-          Math.floor(
-            (window.scrollY / (document.body.offsetHeight - 979)) * 100
-          )
-        );
         lastTime = new Date().getTime();
       });
     },

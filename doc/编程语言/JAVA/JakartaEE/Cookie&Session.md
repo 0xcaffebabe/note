@@ -2,7 +2,7 @@
 
 两者都是为了保持访问用户与后端服务器的交互状态
 
-## Cookie
+## [Cookie](/计算机网络/http/Cookie.md)
 
 > 客户端会话技术，将数据保存到客户端
 
@@ -34,24 +34,9 @@ resp.addCookie(new Cookie("time", LocalDateTime.now().toString()));
 - cookie存储数据在客户端浏览器
 - 浏览器对于单个cookie 的大小有限制(4kb) 以及 对同一个域名下的总cookie数量也有限制(20个)
 
-### cookie 压缩
-
-gzip只能对body进行压缩 cookie位于头上 需要手动编程对http header 进行处理
-
-### 作用
-
-- cookie一般用于存出少量的不太敏感的数据
-- 在不登录的情况下，完成服务器对客户端的身份识别
-
-### 注意事项
-
-- Cookie的Name不能和属性值一样 比如Doamin MaxAge等待
-- Name和Value不能设置成非ASCII字符
-- 不同的浏览器都会对Cookie的大小以及数量进行限制 需要注意
-
 ## Session
 
-> 服务器端会话技术，在一次会话的多次请求间共享数据，将数据保存在服务器端的对象中。HttpSession
+- HttpSession
 
 Session用来解决Cookie数量多传输浪费的问题
 
@@ -129,11 +114,3 @@ response.addCookie(c);
 
 - 只需要统一注册登录接口即可 前后端分离的时代这点已是常态
 - 多终端登录的话在此基础上进行开发
-
-## Session与Cookie区别
-
-比较类别 | Session | Cookie
----- | ------- | ------
-存储方式 | 服务端     | 客户端
-大小限制 | 无       | 有
-安全   | 较安全     | 较不安全

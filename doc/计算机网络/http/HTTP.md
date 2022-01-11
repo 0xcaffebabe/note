@@ -1,5 +1,10 @@
 # HTTP协议
 
+- 基于TCP/IP的高级协议
+- 默认端口号:80
+- 基于请求/响应模型的:一次请求对应一次响应
+- 无状态的：每次请求之间相互独立，不能交互数据
+
 ## 基础概念
 
 - URI
@@ -140,200 +145,27 @@ HTTP的连接可以在任意时刻关闭，针对HTTP编程要处理这种情况
 
 良好的关闭实现应该是首先关闭己方的输出，然后等待对方的输出通道关闭，这样就可以安全地关闭
 
-## Cookie
+## 内容协商
 
-Cookie 是服务器发送到用户浏览器并保存在本地的一小块数据，它会在浏览器之后向同一服务器再次发起请求时被携带上，用于告知服务端两个请求是否来自同一客户端
-
-### 用途
-
-- 会话状态管理
-- 个性化设置
-- 浏览器行为跟踪
-
-### 创建过程
-
-服务的响应头Set-Cookie头部：
-
-```html
-Set-Cookie: yummy_cookie=choco
-Set-Cookie: tasty_cookie=strawberry
-```
-
-客户端之后对同一服务器发送请求时，都会在请求头Cookie头部带上这个Cookie
-
-```html
-Cookie: yummy_cookie=choco; tasty_cookie=strawberry
-```
-
-### 分类
-
-- 会话期Cookie：浏览器关闭之后它会被自动删除，没有指定过期时间就是会话期Cookie
-- 持久性 Cookie：指定过期时间（Expires）或有效期（max-age）之后就成为了持久性的 Cookie
-
-```html
-Set-Cookie: id=a3fWa; Expires=Wed, 21 Oct 2020 07:28:00 GMT;
-```
-
-### 作用域
-
-Domain 标识Cookie在哪些域名下有效，如果不指定，默认是当前文档的主机
-
-如果指定了Domain，则一般包括子域名，如baidu.com，包含map.baidu.com
-
-### JS访问
-
-JavaScript可以通过document.cookie来创建cookie或者访问非HttpOnly的Cookie
-
-### HttpOnly
-
-标记为 HttpOnly 的 Cookie 不能被 JavaScript 脚本调用
-
-```html
-Set-Cookie: id=a3fWa; Expires=Wed, 21 Oct 2020 07:28:00 GMT; Secure; HttpOnly
-```
-
-### Secure
-
-标记为 Secure 的 Cookie 只能通过被 HTTPS 协议加密过的请求发送给服务端
-
-### Session
-
-Session是通过在服务端生成一个key，使用这个key为索引在服务器端存放用户信息，后将这个key作为cookie返回给客户端，让客户端使用这个key来操作
-
-应该注意 Session ID 的安全性问题，不能让它被恶意攻击者轻易获取，那么就不能产生一个容易被猜到的 Session ID 值。此外，还需要经常重新生成 Session ID。在对安全性要求极高的场景下，还需要使用二重验证的方式
-
-## 特点
-
-- 基于TCP/IP的高级协议
-- 默认端口号:80
-- 基于请求/响应模型的:一次请求对应一次响应
-- 无状态的：每次请求之间相互独立，不能交互数据
-
-#### 浏览器禁用cookie
-
-当浏览器无法使用Cookie，只能使用session，此外，session id也不能通过cookie来传递，而是需要通过URL传参的方式来传递，如wap时代的sid
-
-#### Cookie与Session
-
-比较类别 | Session | Cookie
----- | ------- | ------
-存储方式 | 服务端     | 客户端
-大小限制 | 无       | 有
-安全   | 较安全     | 较不安全
-
-## 缓存
-
-### 优点
-
-- 缓解服务器压力
-- 提升客户端速度
-
-### 实现方法
-
-- 代理服务器缓存
-- 客户端缓存
-
-### Cache-Control
-
-- 禁止进行缓存
-
-```html
-Cache-Control: no-store
-```
-
-- 强制确认缓存
-
-只有当缓存资源有效时，才能使用这个响应
-
-```html
-Cache-Control: no-cache
-```
-
-- 禁止修改
-
-```http
-Cache-Control: no-transform
-```
-
-禁止代理服务器修改HTTP响应头或者响应体
-
-- 私有缓存
-
-只能单独给用户使用，一般用在浏览器
-
-```html
-Cache-Control: private
-```
-
-- 公共缓存
-
-可以被多个用户使用，一般存储在代理服务器中
-
-```html
-Cache-Control: public
-```
-
-- min-fresh和only-if-cached
-
-仅用于客户端的请求Header。min-fresh后续跟随一个以秒为单位的数字，用于建议服务器能返回一个不少于该时间的缓存资源 only-if-cached表示要求客户端要求不发送网络请求，只使用缓存来进行响应
-
-- must-revalidate和proxy-revalidate
-
-must-revalidate表示在资源过期后，一定需要从服务器中进行获取 proxy-revalidate用于提示代理、CDN等设备资源过期后的缓存行为
-
-- 缓存过期
-
-出现在响应报文，超过这个时间 缓存就被认为过期
-
-```html
-Cache-Control: max-age=31536000
-```
-
-Expires 首部字段也可以用于告知缓存服务器该资源什么时候会过期
-
-```html
-Expires: Wed, 04 Jul 2012 08:26:05 GMT
-```
-
-但Expires有如下问题：
-
-1. 受限于客户端的时间
-2. 无法缓存客户私有资源
-3. 无法描述“不缓存”，如js文件引用后面要加个版本号
-
-### 缓存验证
-
-ETag 是资源的唯一标识
-
-```http
-If-None-Match: "82e22293907ce725faf67773957acd12"
-```
-
-如果服务器接收到ETage后，判断资源没有发生改变，会返回一个304
-
-Last-Modified 首部字段也可以用于缓存验证，如果响应首部字段里含有这个信息，客户端可以在后续的请求中带上 If-Modified-Since 来验证缓存。服务器只在所请求的资源在给定的日期时间之后对内容进行过修改的情况下才会将资源返回，状态码为 200 OK。如果请求的资源从那时起未经修改，那么返回一个不带有实体主体的 304 Not Modified 响应报文
-
-### 内容协商
-
-#### 服务端驱动
+### 服务端驱动
 
 客户端设置Accept、Accept-Charset、Accept-Encoding、Accept-Language等首部，服务端根据这些首部返回特定资源
 
-#### 代理驱动
+### 代理驱动
 
 服务器返回 300 Multiple Choices 或者 406 Not Acceptable，客户端从中选出最合适的那个资源
 
-#### vary
+### vary
 
 一个客户端发送了一个包含 Accept-Language 首部字段的请求之后，源服务器返回的响应包含 Vary: Accept-Language 内容，缓存服务器对这个响应进行缓存之后，在客户端下一次访问同一个 URL 资源，并且 Accept-Language 与缓存中的对应的值相同时才会返回该缓存
 
-### 内容编码
+## 内容编码
 
 内容编码有：gzip、compress、deflate、identity
 
 浏览器发送 Accept-Encoding 首部，其中包含有它所支持的压缩算法，以及各自的优先级。服务器则从中选择一种，使用该算法对响应的消息主体进行压缩，并且发送 Content-Encoding 首部来告知浏览器它选择了哪一种算法
 
-### 范围请求
+## 范围请求
 
 - Range
 
@@ -378,13 +210,9 @@ Content-Type: text/plain
 --AaB03x--
 ```
 
-### 虚拟主机
+## 通信数据转发
 
-HTTP/1.1 使用虚拟主机技术，使得一台服务器拥有多个域名，并且在逻辑上可以看成多个服务器
-
-### 通信数据转发
-
-#### 代理
+### 代理
 
 目的：
 
@@ -395,25 +223,25 @@ HTTP/1.1 使用虚拟主机技术，使得一台服务器拥有多个域名，�
 
 ![代理流量获取](/assets/屏幕截图%202022-01-06%20174916.png)
 
-##### 正向代理
+#### 正向代理
 
 用户可以察觉正向代理的存在
 
 ![2020389347](/assets/2020389347.png)
 
-##### 反向代理
+#### 反向代理
 
 反向代理一般位于内部网络中，用户察觉不到
 
 ![20203893445](/assets/20203893445.png)
 
-##### 客户端代理配置
+#### 客户端代理配置
 
 - 手动配置代理服务器地址及端口
 - [PAC](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Proxy_servers_and_tunneling/Proxy_Auto-Configuration_PAC_file) 自动代理配置 通过一段js脚本确定一个url要以怎样的方式使用什么代理访问
 - WPAD 代理发现 自动发现PAC并进行下载然后为请求使用代理
 
-##### 有关代理的一些问题
+#### 有关代理的一些问题
 
 - 客户端向代理发送请求时 需要在HTTP请求消息里面包含完整的URI信息 这样代理服务器才知道要转发到哪里
 
@@ -423,7 +251,7 @@ GET http://baidu.com HTTP/1.0
 
 - 如果代理接收到的URI不完整 也可以通过Host确定
 
-##### 报文追踪
+#### 报文追踪
 
 - Via首部
 
@@ -441,19 +269,19 @@ Via: [ <protocol-name> "/" ] <protocol-version> <host> [ ":" <port> ]
 
 通过指定Max-Forwards头部 每经过一层代理该值就会减1 当为0时，及时当前服务器不是源服务器，也必须马上将结果返回给客户端
 
-##### 认证
+#### 认证
 
 - Proxy-Authenticate 首部
 
-##### 兼容性
+#### 兼容性
 
 为了保证代理的兼容性，代理对于不认识的首部，必须原样转发，并且首部的顺序，也不能随意修改
 
-#### 网关
+### 网关
 
 网关服务器会将 HTTP 转化为其它协议进行通信，从而请求其它非 HTTP 服务器的服务
 
-#### 隧道
+### 隧道
 
 使用 SSL 等加密手段，在客户端和服务器之间建立一条安全的通信线路
 

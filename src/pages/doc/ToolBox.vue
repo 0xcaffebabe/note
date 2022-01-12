@@ -9,7 +9,7 @@
       </div>
       <template #dropdown>
         <el-dropdown-menu>
-          <el-dropdown-item v-for="action in actionList" :key="action.name"
+          <el-dropdown-item v-for="action in actionList" :key="action.name" :divided="action.divided || false"
             ><el-button
               class="box-item"
               @click="action.local ? localActionDispatch(action.action) : $emit(action.action)"
@@ -60,6 +60,7 @@ interface Action {
   type: string
   action: ActionType
   hotkey?: string
+  divided?: boolean
   local?: boolean
 }
 
@@ -98,15 +99,15 @@ export default defineComponent({
         {name: '阅读历史', type: 'primary', action: 'showReadingHistory'},
         {name: '思维导图', type: 'success', action: 'showMindGraph', hotkey: 'alt + l'},
         {name: '知识网络', type: 'warning', action: 'showKnowledgeNetwork', hotkey: 'alt + k'},
-        {name: '知识体系', type: 'success', action: 'showKnowledgeSystem'},
-        {name: '添加书签', type: 'danger', action: 'showBookMarkAdder'},
+        {name: '知识体系', type: 'success', action: 'showKnowledgeSystem', },
+        {name: '添加书签', type: 'danger', action: 'showBookMarkAdder', divided: true},
         {name: '书签列表', type: 'info', action: 'showBookMarkList'},
         {name: '路径复制', type: 'success', action: 'copyDocPath'},
-        {name: '链接列表', type: 'primary', action: 'showLinkList'},
-        {name: '去到DOC', type: 'info', action: 'goToDoc'},
+        {name: '链接列表', type: 'primary', action: 'showLinkList',},
+        {name: '去到DOC', type: 'info', action: 'goToDoc', divided: true},
         {name: '去到PPT', type: 'danger', action: 'goToPpt'},
         {name: '下载pdf', type: 'success', action: 'downloadPdf'},
-        {name: '更多设置', type: 'info', action: 'showMoreSetting' as LocalActionType, local: true},
+        {name: '更多设置', type: 'info', action: 'showMoreSetting' as LocalActionType, local: true, divided: true},
       ] as Action[]
     }
   },
@@ -171,6 +172,7 @@ export default defineComponent({
 }
 .box-item {
   width: 140px;
+  padding: 6px 0;
 }
 .more-setting-container {
   padding: 10px;
@@ -179,6 +181,9 @@ export default defineComponent({
 body[theme=dark] {
   .el-dropdown-menu {
     background-color: var(--second-dark-bg-color);
+  }
+  .el-dropdown-menu__item--divided {
+    border-top: 1px solid var(--main-dark-bg-color);
   }
 }
 </style>

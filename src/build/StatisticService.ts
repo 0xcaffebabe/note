@@ -63,7 +63,8 @@ class StatisticService extends BaseService {
     const commitList = await GitService.listAllCommit();
     const map = new Map<string, number>()
     for(let i of commitList) {
-      const hour = new Date(i.date).getHours().toString()
+      // GMT+8
+      const hour = ((new Date(i.date).getUTCHours() + 8) % 24).toString()
       if (map.has(hour)) {
         map.set(hour, map.get(hour)! + 1)
       }else {

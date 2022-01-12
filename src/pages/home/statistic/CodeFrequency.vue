@@ -12,6 +12,7 @@ import {
   TooltipComponentOption,
   LegendComponent,
   LegendComponentOption,
+  VisualMapComponentOption
 } from "echarts/components";
 import { PieChart, PieSeriesOption } from "echarts/charts";
 import { LabelLayout } from "echarts/features";
@@ -27,7 +28,7 @@ echarts.use([
 ]);
 
 type EChartsOption = echarts.ComposeOption<
-  TooltipComponentOption | LegendComponentOption | PieSeriesOption
+  TooltipComponentOption | LegendComponentOption | PieSeriesOption | VisualMapComponentOption
 >;
 
 export default defineComponent({
@@ -42,9 +43,17 @@ export default defineComponent({
       chart: null as echarts.ECharts | null
     }
   },
+  computed: {
+    isDark() {
+      return this.$store.state.isDarkMode;
+    },
+  },
   watch: {
     codeFrequency() {
       this.updateChart()
+    },
+    isDark() {
+      this.updateChart();
     }
   },
   methods: {

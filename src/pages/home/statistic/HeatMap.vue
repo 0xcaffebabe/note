@@ -90,80 +90,99 @@ export default defineComponent({
       return this.$store.state.isDarkMode;
     },
   },
-  methods: {},
-  async mounted() {
-    const heatmapData = fillTimeRange(await api.getCommitHeatmap());
-    const chartDom = document.getElementById("heatmap")!;
-    const myChart = echarts.init(chartDom);
-    let option: EChartsOption;
-    const colorBox = [
-      this.isDark ? "#323233" : "white",
-      "#98E9A8",
-      "#40C403",
-      "#30A14E",
-      "#216E39",
-      "#1A572D",
-    ];
-    const maxValue = heatmapData
-      .map((v) => v[1])
-      .sort()
-      .reverse()[0];
-    const range = [heatmapData[0][0], heatmapData[heatmapData.length - 1][0]];
-    console.log(range, maxValue);
-    console.log(heatmapData);
-    option = {
-      title: {
-        top: 30,
-        left: "center",
-        text: "提交日历图",
-      },
-      tooltip: {
-        formatter(params: any) {
-          const data: [string, number] = params.data;
-          return `${data[0]} ${data[1]}次`;
+  watch: {
+    isDark() {
+      this.init();
+    },
+  },
+  methods: {
+    async init() {
+      const heatmapData = fillTimeRange(await api.getCommitHeatmap());
+      const chartDom = document.getElementById("heatmap")!;
+      const myChart = echarts.init(chartDom);
+      let option: EChartsOption;
+      const colorBox = [
+        this.isDark ? "#323233" : "white",
+        "#98E9A8",
+        "#40C403",
+        "#30A14E",
+        "#216E39",
+        "#1A572D",
+      ];
+      const maxValue = heatmapData
+        .map((v) => v[1])
+        .sort()
+        .reverse()[0];
+      const range = [heatmapData[0][0], heatmapData[heatmapData.length - 1][0]];
+      console.log(range, maxValue);
+      console.log(heatmapData);
+      option = {
+        title: {
+          top: 30,
+          left: "center",
+          text: "提交日历图",
+          textStyle: {
+            color: this.isDark ? "#bbb" : "",
+          },
         },
-      },
-      visualMap: {
-        min: 0,
-        max: maxValue,
-        type: "piecewise",
-        orient: "horizontal",
-        left: "center",
-        top: 65,
-        pieces: generatePieces(maxValue, colorBox),
-      },
-      calendar: {
-        top: 120,
-        left: 30,
-        right: 30,
-        cellSize: ["auto", 20],
-        range,
-        itemStyle: {
-          borderWidth: 0.5,
+        tooltip: {
+          formatter(params: any) {
+            const data: [string, number] = params.data;
+            return `${data[0]} ${data[1]}次`;
+          },
+          backgroundColor: this.isDark ? "#666" : "#fff",
+          textStyle: {
+            color: this.isDark ? "#bbb" : "",
+          },
         },
-        yearLabel: {
-          show: true,
+        visualMap: {
+          min: 0,
+          max: maxValue,
+          type: "piecewise",
+          orient: "horizontal",
+          left: "center",
+          top: 65,
+          pieces: generatePieces(maxValue, colorBox),
+          textStyle: {
+            color: this.isDark ? "#bbb" : "",
+          },
         },
-        dayLabel: {
-          show: true,
-          nameMap: "cn",
-          firstDay: 1,
-          color: this.isDark ? "#bbb" : "",
+        calendar: {
+          top: 120,
+          left: 30,
+          right: 30,
+          cellSize: ["auto", 20],
+          range,
+          itemStyle: {
+            borderWidth: 0.5,
+          },
+          yearLabel: {
+            show: true,
+          },
+          dayLabel: {
+            show: true,
+            nameMap: "ZH",
+            firstDay: 1,
+            color: this.isDark ? "#bbb" : "",
+          },
+          monthLabel: {
+            show: true,
+            nameMap: "ZH",
+            color: this.isDark ? "#bbb" : "",
+          },
         },
-        monthLabel: {
-          show: true,
-          nameMap: "cn",
-          color: this.isDark ? "#bbb" : "",
+        series: {
+          type: "heatmap",
+          coordinateSystem: "calendar",
+          data: heatmapData,
         },
-      },
-      series: {
-        type: "heatmap",
-        coordinateSystem: "calendar",
-        data: heatmapData,
-      },
-    };
+      };
 
-    option && myChart.setOption(option);
+      option && myChart.setOption(option);
+    },
+  },
+  mounted() {
+    this.init();
   },
 });
 </script>

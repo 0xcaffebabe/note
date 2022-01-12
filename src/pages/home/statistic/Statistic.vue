@@ -88,6 +88,7 @@
           提交分布
         </template>
         <heat-map />
+        <hour-commit-heatmap />
       </el-descriptions-item>
       <el-descriptions-item :span="12">
         <template #label>
@@ -97,15 +98,6 @@
           词云统计
         </template>
         <word-cloud />
-      </el-descriptions-item>
-      <el-descriptions-item :span="12">
-        <template #label>
-          <el-icon>
-            <calendar />
-          </el-icon>
-          小时提交
-        </template>
-        <hour-commit-heatmap />
       </el-descriptions-item>
     </el-descriptions>
   </div>

@@ -26,56 +26,76 @@ echarts.use([
 export default defineComponent({
   setup() {},
   data() {
-    return  {
-      chart: null as echarts.ECharts | null
+    return {
+      chart: null as echarts.ECharts | null,
+    };
+  },
+  computed: {
+    isDark() {
+      return this.$store.state.isDarkMode;
+    },
+  },
+  watch: {
+    isDark() {
+      this.init();
     }
   },
-  async mounted() {
-    let list = await api.getWordCloud();
-    const chart = echarts.init(document.getElementById("wordcloud")!);
-    const option = {
-      tooltip: {},
-      series: [
-        {
-          type: "wordCloud",
-          gridSize: 2,
-          sizeRange: [12, 108],
-          rotationRange: [0, 0],
-          shape: "diamond",
-          width: '100%',
-          height: '85%',
+  methods: {
+    async init() {
+      let list = await api.getWordCloud();
+      const chart = echarts.init(document.getElementById("wordcloud")!);
+      const option = {
+        tooltip: {
+          backgroundColor: this.isDark ? "#666" : "#fff",
           textStyle: {
-            color: function () {
-              return (
-                "rgb(" +
-                [
-                  Math.round(Math.random() * 160),
-                  Math.round(Math.random() * 160),
-                  Math.round(Math.random() * 160),
-                ].join(",") +
-                ")"
-              );
-            },
-            emphasis: {
-              textStyle: {
-                shadowBlur: 10,
-                shadowColor: "#333",
-                color: "#409EFF"
-              }
-            },
+            color: this.isDark ? "#bbb" : "",
           },
-          data: list.map((v) => {
-            return { name: v[0], value: v[1] };
-          }),
         },
-      ],
-    };
+        series: [
+          {
+            type: "wordCloud",
+            gridSize: 2,
+            sizeRange: [12, 108],
+            rotationRange: [0, 0],
+            shape: "diamond",
+            width: "100%",
+            height: "85%",
+            textStyle: {
+              color: function () {
+                return (
+                  "rgb(" +
+                  [
+                    Math.round(Math.random() * 160),
+                    Math.round(Math.random() * 160),
+                    Math.round(Math.random() * 160),
+                  ].join(",") +
+                  ")"
+                );
+              },
+              emphasis: {
+                textStyle: {
+                  shadowBlur: 10,
+                  shadowColor: "#333",
+                  color: "#409EFF",
+                },
+              },
+            },
+            data: list.map((v) => {
+              return { name: v[0], value: v[1] };
+            }),
+          },
+        ],
+      };
 
-    chart.setOption(option);
-    chart.on('click', params => {
-      const kw = (params.data as any).name
-      this.$store.commit('setSearchKw', kw)
-    })
+      chart.setOption(option);
+      chart.on("click", (params) => {
+        const kw = (params.data as any).name;
+        this.$store.commit("setSearchKw", kw);
+      });
+    },
+  },
+  async mounted() {
+    this.init();
   },
 });
 </script>

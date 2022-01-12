@@ -89,7 +89,13 @@ export default defineComponent({
   methods: {
     async showPpt() {
       this.file = await api.getDocFileInfo(this.doc);
-      this.hilightCurrent();
+      if (this.headingId) {
+        const index = this.flatContent.findIndex(v => v.id == this.headingId)
+        if (index != -1) {
+          this.currentIndex = index
+        }
+      }
+      this.hilightCurrent()
     },
     hilightCurrent() {
       const segement = this.flatContent[this.currentIndex];

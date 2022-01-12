@@ -84,6 +84,7 @@ export default defineComponent({
   data() {
     return {
       contentList: [] as Category[],
+      currentId: ''
     };
   },
   watch: {
@@ -94,6 +95,12 @@ export default defineComponent({
           return;
         }
         this.contentList = await DocService.getContentByDocId(this.doc);
+        // 高亮当前heading
+        this.$nextTick(() => {
+          if (this.currentId) {
+            this.hilight(this.currentId)
+          }
+        })
       },
     },
   },
@@ -116,6 +123,7 @@ export default defineComponent({
     },
     // 高亮指定标题
     hilight(id: string) {
+      this.currentId = id;
       const document = this.$refs.toc as HTMLElement;
       const previousNode = document.querySelector(".toc .active");
       if (previousNode !== null) {

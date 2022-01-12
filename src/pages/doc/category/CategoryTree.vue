@@ -81,6 +81,9 @@ body[theme=dark] {
   :deep(.el-sub-menu .el-sub-menu__title:hover) {
     background-color: var(--main-dark-bg-color)!important;
   }
+  :deep(.el-icon.el-sub-menu__icon-arrow) {
+    background-color: var(--main-dark-text-color)!important;
+  }
 }
 </style>
 

@@ -41,7 +41,7 @@
     @showBookMarkList="showBookmarkList"
     @copyDocPath="handleCopyDocPath"
     @showLinkList="showLinkList"
-    @go-to-ppt="$router.push('/ppt/' + doc)"
+    @go-to-ppt="goToPpt"
     @downloadPdf="downloadPdf"
   />
   <!-- 工具栏结束 -->
@@ -221,6 +221,14 @@ export default defineComponent({
         PdfUtils.downloadPdf(this.doc, true)
       }catch(err: any) {
         ElMessage.error(err.message)
+      }
+    },
+    goToPpt(){
+      const heading = this.$store.state.currentHeading;
+      if (heading) {
+        this.$router.push(`/ppt/${this.doc}?headingId=${heading}`)
+      }else {
+        this.$router.push(`/ppt/${this.doc}`)
       }
     }
   },

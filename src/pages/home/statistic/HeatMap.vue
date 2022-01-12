@@ -103,11 +103,11 @@ export default defineComponent({
       let option: EChartsOption;
       const colorBox = [
         this.isDark ? "#323233" : "white",
-        "#98E9A8",
-        "#40C403",
-        "#30A14E",
-        "#216E39",
-        "#1A572D",
+        this.isDark ? "#00452b" : "#98E9A8",
+        this.isDark ? "#006f37" : "#40C403",
+        this.isDark ? "#00a84b" : "#30A14E",
+        this.isDark ? "#007534" : "#216E39",
+        this.isDark ? "#00d65f" : "#1A572D",
       ];
       const maxValue = heatmapData
         .map((v) => v[1])

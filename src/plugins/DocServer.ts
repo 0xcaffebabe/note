@@ -5,20 +5,57 @@ import path from 'path'
 import mime from 'mime'
 import WordCloudService from '../build/WordCloudService'
 import GitService from '../build/GitService'
-import CommitInfo from '@/dto/CommitInfo'
 import DocService from '../build/DocService'
-import { StatisticInfo } from '@/dto/StatisticInfo'
 import StatisticService from '../build/StatisticService'
-import {KnowledgeNode} from '@/dto/KnowledgeNode'
 import UrlConst from '../const/UrlConst'
 
-let wordcloud: [string, number][] = []
-let statisticInfo : StatisticInfo
-let commitHeatmap : [string, number][] = []
-let hourCommitHeatmap : [string, number][] = []
-let knowledgeNetwork: KnowledgeNode[] = []
-let potentialKnowledgeNetwork: KnowledgeNode[] = []
-let tagMapping = new Map<string, string[]>()
+interface DocApiItem {
+  name: string
+  path: string
+  method: Function
+}
+
+// api 请求映射
+const apiMappings: DocApiItem[] = [
+  {
+    name: '词云数据',
+    path: '/wordcloud.json',
+    method: async () => WordCloudService.calcWordFrequency()
+  },
+  {
+    name: '统计数据',
+    path: '/info.json',
+    method: async () => StatisticService.generateStatistic()
+  },
+  {
+    name: '提交日历图数据',
+    path: '/commitHeatmap.json',
+    method: async () => StatisticService.generateYearsCommitHeatmap()
+  },
+  {
+    name: '小时提交热力图',
+    path: UrlConst.hourCommitHeatmap,
+    method: async () => StatisticService.generateCommitHourHeatmap()
+  },
+  {
+    name: '显式知识网络',
+    path: '/knowledgeNetwork.json',
+    method: async () => DocService.generateKnowledgeNetwork()
+  },
+  {
+    name: '隐式知识网络',
+    path: UrlConst.potentialKnowledgeNetwork,
+    method: async () => DocService.generatePotentialKnowledgeNetwork()
+  },
+  {
+    name: '标签映射',
+    path: '/tagMapping.json',
+    method: async () => Array.from((await DocService.buildTagMapping()).entries())
+  },
+]
+
+// API请求缓存
+const apiCache = new Map<string, any>()
 
 export default function DocServer(){
   return {
@@ -60,99 +97,17 @@ export default function DocServer(){
           next()
         }
       })
-      // 处理词云数据
+      
+      // JSON API
       server.middlewares.use(async (req, res, next) => {
-        if (req.originalUrl && req.originalUrl == '/wordcloud.json') {
-          if (wordcloud.length == 0) {
-            console.log('词云数据为空 生成')
-            wordcloud = await WordCloudService.calcWordFrequency()
+        const api = apiMappings.find(v => v.path == req.originalUrl)
+        if (api) {
+          if (!apiCache.has(api.path)) {
+            console.log(`${api.name}为空 生成`)
+            apiCache.set(api.path, await api.method())
           }
           res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
-          res.write(JSON.stringify(wordcloud))
-          res.end()
-        }else{
-          next()
-        }
-      })
-      // 处理统计信息
-      server.middlewares.use(async (req, res, next) => {
-        if (req.originalUrl && req.originalUrl == '/info.json') {
-          if (!statisticInfo) {
-            console.log('统计数据为空 生成')
-            statisticInfo = await StatisticService.generateStatistic()
-          }
-          res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
-          res.write(JSON.stringify(statisticInfo))
-          res.end()
-        }else{
-          next()
-        }
-      })
-      // 提交记录统计信息
-      server.middlewares.use(async (req, res, next) => {
-        if (req.originalUrl && req.originalUrl == '/commitHeatmap.json') {
-          if (commitHeatmap.length == 0) {
-            console.log('提交日历图数据为空 生成')
-            commitHeatmap = await StatisticService.generateYearsCommitHeatmap()
-          }
-          res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
-          res.write(JSON.stringify(commitHeatmap))
-          res.end()
-        }else{
-          next()
-        }
-      })
-      // 小时提交热力图
-      server.middlewares.use(async (req, res, next) => {
-        if (req.originalUrl && req.originalUrl == UrlConst.hourCommitHeatmap) {
-          if (commitHeatmap.length == 0) {
-            console.log('小时提交热力图为空 生成')
-            hourCommitHeatmap = await StatisticService.generateCommitHourHeatmap()
-          }
-          res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
-          res.write(JSON.stringify(hourCommitHeatmap))
-          res.end()
-        }else{
-          next()
-        }
-      })
-      // 显式知识网络
-      server.middlewares.use(async (req, res, next) => {
-        if (req.originalUrl && req.originalUrl == '/knowledgeNetwork.json') {
-          if (knowledgeNetwork.length == 0) {
-            console.log('显式知识网络为空 生成')
-            knowledgeNetwork = await DocService.generateKnowledgeNetwork()
-          }
-          res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
-          res.write(JSON.stringify(knowledgeNetwork))
-          res.end()
-        }else{
-          next()
-        }
-      })
-      // 隐式知识网络
-      server.middlewares.use(async (req, res, next) => {
-        if (req.originalUrl && req.originalUrl == UrlConst.potentialKnowledgeNetwork) {
-          if (knowledgeNetwork.length == 0) {
-            console.log('隐式知识网络为空 生成')
-            potentialKnowledgeNetwork = await DocService.generatePotentialKnowledgeNetwork()
-          }
-          res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
-          res.write(JSON.stringify(potentialKnowledgeNetwork))
-          res.end()
-        }else{
-          next()
-        }
-      })
-      // 标签映射
-      server.middlewares.use(async (req, res, next) => {
-        if (req.originalUrl && req.originalUrl == '/tagMapping.json') {
-          if (tagMapping.size == 0) {
-            console.log('标签映射为空 生成')
-            tagMapping = await DocService.buildTagMapping()
-          }
-          res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
-          res.write(JSON.stringify(Array.from(tagMapping.entries())))
+          res.write(JSON.stringify(apiCache.get(api.path)))
           res.end()
         }else{
           next()

@@ -168,12 +168,12 @@ export default defineComponent({
   font-size: 4rem;
 }
 .previous-btn {
-  position: absolute;
+  position: fixed;
   left: 10px;
   top: 50%;
 }
 .next-btn {
-  position: absolute;
+  position: fixed;
   right: 10px;
   top: 50%;
 }

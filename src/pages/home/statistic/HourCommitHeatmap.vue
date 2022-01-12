@@ -75,7 +75,9 @@ export default defineComponent({
       option && myChart.setOption(option);
     },
   },
-  mounted() {},
+  mounted() {
+    this.init()
+  },
 });
 </script>
 

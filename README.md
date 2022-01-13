@@ -16,7 +16,7 @@
 
 --------------------------------------------------------------------------------
 
-[![wakatime](https://wakatime.com/badge/github/0xcaffebabe/note.svg)](https://wakatime.com/badge/github/0xcaffebabe/note) ![star](https://img.shields.io/github/stars/0xcaffebabe/note) ![fork](https://img.shields.io/github/forks/0xcaffebabe/note) ![license](https://img.shields.io/github/license/0xcaffebabe/note) ![build](https://github.com/0xcaffebabe/note/workflows/%E6%9E%84%E5%BB%BA%E7%94%B5%E5%AD%90%E4%B9%A6/badge.svg)
+[![wakatime](https://wakatime.com/badge/github/0xcaffebabe/note.svg)](https://wakatime.com/badge/github/0xcaffebabe/note) ![字数](https://cdn.jsdelivr.net/gh/0xcaffebabe/note@gh-pages/wordCountBadge.svg) ![star](https://img.shields.io/github/stars/0xcaffebabe/note) ![fork](https://img.shields.io/github/forks/0xcaffebabe/note) ![license](https://img.shields.io/github/license/0xcaffebabe/note) ![build](https://github.com/0xcaffebabe/note/workflows/%E6%9E%84%E5%BB%BA%E7%94%B5%E5%AD%90%E4%B9%A6/badge.svg)
 
 ![统计](https://repobeats.axiom.co/api/embed/24137e8c365c058184db40c146a5dc1291924862.svg "Repobeats analytics image")
 

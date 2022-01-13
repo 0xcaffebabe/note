@@ -12,7 +12,8 @@ interface IndexItem {
 }
 
 // 忽略文件
-const ignoreFiles: string[] = ['doc/README.md', 'doc/SUMMARY.md', 'doc/个人/书单.md', 'doc/个人/学习计划.md', 'doc/个人/技术栈参考.md', 'doc/参考文献.md']
+const ignoreFiles: string[] = ['doc/README.md', 'doc/SUMMARY.md', 'doc/个人/书单.md', 
+'doc/个人/学习计划.md', 'doc/个人/技术栈参考.md', 'doc/参考文献.md', 'doc/算法与数据结构/leetcode/leetcode.md']
 
 class SearchService extends BaseService {
 

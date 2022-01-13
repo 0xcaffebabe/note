@@ -19,6 +19,10 @@ async function main(){
     return;
   }
   console.log('准备进行索引更新')
-  await SearchService.totalAmountUpdateIndex(appId, secret,'note', indexData)
-  console.log(`索引更新完成 索引数量${indexData.length}`)
+  try {
+    await SearchService.totalAmountUpdateIndex(appId, secret,'note', indexData)
+    console.log(`索引更新完成 索引数量${indexData.length}`)
+  }catch(err:any) {
+    console.log('全量更新索引发生异常', err)
+  }
 }

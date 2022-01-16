@@ -1,5 +1,5 @@
 import api from '@/api'
-import marked from 'marked'
+import {marked} from 'marked'
 import prism from 'prismjs'
 import Content from '@/dto/Content'
 import Cacheable from '@/decorator/Cacheable'

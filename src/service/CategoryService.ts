@@ -1,4 +1,4 @@
-import marked from 'marked'
+import {marked} from 'marked'
 import api from '@/api'
 import Category from '@/dto/Category'
 import Cacheable from '@/decorator/Cacheable'

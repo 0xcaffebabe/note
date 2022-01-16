@@ -21,7 +21,7 @@
     "jsmind": "0.4.6",
     "jspdf": "2.5.0",
     "less": "4.1.2",
-    "marked": "3.0.8",
+    "marked": "4.0.10",
     "mime": "2.5.2",
     "nprogress": "0.2.0",
     "prismjs": "1.26.0",
@@ -34,7 +34,7 @@
   "devDependencies": {
     "@types/js-yaml": "4.0.4",
     "@types/jsdom": "16.2.14",
-    "@types/marked": "3.0.3",
+    "@types/marked": "4.0.1",
     "@types/mime": "2.0.3",
     "@types/node": "16.11.19",
     "@types/nprogress": "0.2.0",

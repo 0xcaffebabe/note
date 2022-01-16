@@ -3,7 +3,7 @@ import BaseService from "./BaseService";
 import GitService from "./GitService";
 import {JSDOM} from 'jsdom'
 import fs from 'fs'
-import marked from "marked";
+import {marked} from "marked";
 import SearchIndexSegment from "../dto/search/SearchIndexSegement";
 import { getMidString } from '../util/StringUtils';
 import {KnowledgeNode, KnowledgeLinkNode} from "../dto/KnowledgeNode";

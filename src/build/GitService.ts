@@ -5,11 +5,34 @@ const git: SimpleGit = simpleGit();
 
 class GitService extends BaseService {
 
+
+  /**
+   *
+   * 获取文件的所有提交记录
+   * @static
+   * @param {string} path
+   * @return {*}  {Promise<CommitInfo[]>}
+   * @memberof GitService
+   */
   public static async getFileCommitList(path: string): Promise<CommitInfo[]> {
     const resp = await git.log({
       file :path
     })
     return resp.all.map(this.convert)
+  }
+
+
+  /**
+   *
+   * 获取文件最近的一次提交记录
+   * @static
+   * @param {string} path
+   * @return {*}  {Promise<CommitInfo>}
+   * @memberof GitService
+   */
+  public static async getFileLastCommit(path: string): Promise<CommitInfo> {
+    const commitList = await this.getFileCommitList(path)
+    return commitList[0];
   }
 
   public static async listAllCommit(): Promise<CommitInfo[]>{

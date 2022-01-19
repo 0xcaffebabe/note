@@ -51,7 +51,8 @@ type ActionType =
     'showKnowledgeSystem' | 
     'goToDoc' | 
     'goToPpt' |
-    'downloadPdf'
+    'downloadPdf' |
+    'showKnowledgeSystem'
 
 type LocalActionType = ActionType & 'showMoreSetting'
 
@@ -88,7 +89,8 @@ export default defineComponent({
     'showKnowledgeSystem',
     'goToDoc',
     'goToPpt',
-    'downloadPdf'
+    'downloadPdf',
+    'showKnowledgeReviewer'
   ],
   data(){
     return {
@@ -100,6 +102,7 @@ export default defineComponent({
         {name: '思维导图', type: 'success', action: 'showMindGraph', hotkey: 'alt + l'},
         {name: '知识网络', type: 'warning', action: 'showKnowledgeNetwork', hotkey: 'alt + k'},
         {name: '知识体系', type: 'success', action: 'showKnowledgeSystem', },
+        {name: '知识回顾', type: 'primary', action: 'showKnowledgeReviewer'},
         {name: '添加书签', type: 'danger', action: 'showBookMarkAdder', divided: true},
         {name: '书签列表', type: 'info', action: 'showBookMarkList'},
         {name: '路径复制', type: 'success', action: 'copyDocPath'},

@@ -43,6 +43,7 @@
     @showLinkList="showLinkList"
     @go-to-ppt="goToPpt"
     @downloadPdf="downloadPdf"
+    @showKnowledgeReviewer="showKnowledgeReviewer"
   />
   <!-- 工具栏结束 -->
   <link-popover ref="linkPopover"/>
@@ -51,6 +52,7 @@
   <mind-graph ref="mindGraph" @close="showAside = true;isDrawerShow = false" />
   <link-list :html="contentHtml" ref="linkList"/>
   <book-mark ref="bookMark" :doc="doc" />
+  <knowledge-reviewer ref="knowledgeReviewer" />
   <keep-alive>
     <knowledge-network ref="knowledgeNetwork" :doc="doc" @close="showAside = true;isDrawerShow = false"/>
   </keep-alive>
@@ -90,6 +92,7 @@ import KnowledgeSystem from "./knowledge/KnowledgeSystem.vue";
 import DocPageEventMnager from './DocPageEventManager';
 import ResourceBrower from "./ResourceBrower.vue";
 import ImageViewer from "@/components/ImageViewer.vue";
+import KnowledgeReviewer from "./knowledge/KnowledgeReviewer.vue";
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -108,8 +111,9 @@ export default defineComponent({
     DocBreadcrumbNav,
     DocTabNav,
     ResourceBrower,
-    ImageViewer
-  },
+    ImageViewer,
+    KnowledgeReviewer
+},
   watch: {
     showHeader: {
       handler(val){
@@ -126,6 +130,7 @@ export default defineComponent({
     const knowledgeSystem = ref<InstanceType<typeof KnowledgeSystem>>()
     const bookMark = ref<InstanceType<typeof BookMark>>()
     const linkList = ref<InstanceType<typeof LinkList>>()
+    const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
     const showReadingHistory = () => {
       readingHistory.value?.show()
     }
@@ -147,13 +152,17 @@ export default defineComponent({
     const showLinkList = () => {
       linkList.value?.show()
     }
+    const showKnowledgeReviewer = () => {
+      knowledgeReviewer.value?.show();
+    }
     return {
       readingHistory,showReadingHistory, 
       mindGraph, showMindGraph, 
       knowledgeNetwork, showKnowledgeNetwork,
       knowledgeSystem, showKnowledgeSystem,
       bookMark, showBookmarkAdder, showBookmarkList, 
-      linkList, showLinkList
+      linkList, showLinkList,
+      knowledgeReviewer, showKnowledgeReviewer
     }
   },
   data() {

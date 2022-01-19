@@ -48,6 +48,11 @@ const apiMappings: DocApiItem[] = [
     method: async () => DocService.generatePotentialKnowledgeNetwork()
   },
   {
+    name: '倒序提交文档列表',
+    path: UrlConst.descCommitTimeDocList,
+    method: async () => DocService.generateDocListOrderByLastCommit()
+  },
+  {
     name: '标签映射',
     path: '/tagMapping.json',
     method: async () => Array.from((await DocService.buildTagMapping()).entries())

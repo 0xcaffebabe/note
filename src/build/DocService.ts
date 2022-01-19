@@ -12,6 +12,7 @@ import yaml from 'js-yaml'
 import DocMetadata from "@/dto/doc/DocMetadata";
 import Cacheable from "@/decorator/Cacheable";
 import ArrayUtils from "../util/ArrayUtils";
+import CommitInfo from "@/dto/CommitInfo";
 
 
 class DocService extends BaseService implements Cacheable {
@@ -179,6 +180,24 @@ class DocService extends BaseService implements Cacheable {
       taskList.push(this.getKnowledgeNode(file))
     }
     return (await Promise.all(taskList)).filter(v => ignoreDoc.indexOf(v.id) == -1).filter(v => v.links?.length != 0)
+  }
+
+
+  /**
+   *
+   * 生成一份根据最后提交时间正序排序的文档列表
+   * @return {*}  {Promise<[string, string]>}
+   * @memberof DocService
+   */
+  public async generateDocListOrderByLastCommit(): Promise<[string, CommitInfo][]> {
+    const fileList = BaseService.listFilesBySuffix('md', 'doc')
+    const taskList :Promise<[string,CommitInfo]>[] = []
+    for(let file of fileList) {
+      taskList.push(GitService.getFileLastCommit(file).then(commit => [file, commit]))
+    }
+    return (await Promise.all(taskList))
+      .sort((a, b) => new Date(a[1].date).getTime() - new Date(b[1].date).getTime())
+      .map(v => [DocUtils.docUrl2Id(v[0]), v[1]])
   }
 
   public async generatePotentialKnowledgeNetwork(): Promise<KnowledgeNode[]> {

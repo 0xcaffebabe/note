@@ -8,6 +8,7 @@ import {KnowledgeNode} from '@/dto/KnowledgeNode'
 import DatasourceService from '@/service/DatasourceService'
 import UrlUtils from '@/util/UrlUtils'
 import UrlConst from '@/const/UrlConst'
+import CommitInfo from '@/dto/CommitInfo'
 
 const baseUrl = () => {
   return DatasourceService.getCurrentDatasource().url
@@ -111,6 +112,11 @@ class Api implements Cacheable{
   @cache
   public async getTagMapping(): Promise<[string,string[]][]> {
     return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.tagMappingJson))).data;
+  }
+
+  @cache
+  public async getDescCommitDocList(): Promise<[string, CommitInfo][]> {
+    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.descCommitTimeDocList))).data;
   }
 
   public static getInstance(){

@@ -1,5 +1,8 @@
 <template>
-  <el-drawer v-model="showDrawer" size="25%" title="知识回顾" :lock-scroll="false" custom-class="knowledge-review">
+  <el-drawer v-model="showDrawer" size="30%" title="知识回顾" :lock-scroll="false" custom-class="knowledge-review">
+    <div class="review-range">
+      <el-slider v-model="rangeValue" range :max="20" :show-tooltip="false" :marks="marks"> </el-slider>
+    </div>
     <el-select v-model="displayMode" placeholder="选择" size="mini" class="display-mode" @change="handleDisplayModeChange">
       <el-option
         label="倒序"
@@ -13,7 +16,7 @@
     <div class="history-list">
       <el-timeline>
         <el-timeline-item
-          v-for="item in docList"
+          v-for="item in filterDocList"
           :key="item[0]"
           :timestamp="new Date(item[1].date).toLocaleString() + ' ' + item[1].message"
         >
@@ -24,24 +27,86 @@
   </el-drawer>
 </template>
 
+
 <script lang="ts">
 import api from "@/api";
 import CommitInfo from "@/dto/CommitInfo";
 import DocUtils from "@/util/DocUtils";
-import { defineComponent } from "vue";
+import { defineComponent, CSSProperties } from "vue";
+
+interface Mark {
+  style: CSSProperties
+  label: string
+}
+type Marks = Record<number, Mark | string>
 
 export default defineComponent({
-  setup() {},
   data() {
     return {
       displayMode: '倒序' as '正序' | '倒序',
       showDrawer: false as boolean,
-      docList: [] as [string, CommitInfo][]
+      rangeValue: [0, 20],
+      docList: [] as [string, CommitInfo][],
+      marks: {
+        0: '现在',
+        1: {
+          style: {
+            "margin-top": '-24px'
+          },
+          label: '1天内'
+        },
+        3: '1周内',
+        6: {
+          style: {
+            "margin-top": '-24px'
+          },
+          label: '1月内'
+        },
+        10: {
+          style: {
+          },
+          label: '6月内',
+        },
+        20: '最远'
+      } as Marks
     };
+  },
+  computed: {
+    filterDocList(){
+      const now = new Date().getTime()
+      let left = this.rangeMapping(this.rangeValue[0])
+      let right = this.rangeMapping(this.rangeValue[1])
+      const startTime = now - left * 3600 * 1000 * 24
+      const endTime = now - right * 3600 * 1000 * 24
+
+      return this.docList.filter((v : [string, CommitInfo]) => {
+        const time = new Date(v[1].date).getTime()
+        return time >= endTime && time <= startTime
+      })
+    }
   },
   methods: {
     docId2Url: DocUtils.docId2Url,
     docUrl2Id: DocUtils.docUrl2Id,
+    // 将滑动条的关键日期数字转为具体的天数
+    rangeMapping(val: number): number {
+      if (val == 0) {
+        return 0
+      }
+      if (val >= 1 && val < 3)  {
+        return 1
+      }
+      if (val >=3 && val < 6) {
+        return 7
+      }
+      if (val >= 6 && val < 10) {
+        return 30
+      }
+      if (val >= 10 && val < 20) {
+        return 180
+      }
+      return 2147483647
+    },
     show() {
       this.showDrawer = true;
     },
@@ -81,5 +146,8 @@ export default defineComponent({
   z-index: 998;
   top: 50px;
   right: 10px;
+}
+.review-range {
+  padding: 20px;
 }
 </style>

@@ -1,3 +1,6 @@
+---
+tags: ['算法', 'leetcode']
+---
 # leetcode
 
 ## 两数之和
@@ -322,66 +325,6 @@ class Solution {
 
 耗时：2ms
 
-## 合并两个有序链表
-
-输入：1->2->4, 1->3->4
-输出：1->1->2->3->4->4
-
-- 解法
-
-当两个指针都不为空时，则判断哪个指针的值比较小，
-将较小的值存入结果，结果的指针与比较小的指针后移
-
-如果只有一个指针不为空，则不断对该指针存入结果，并且将结果与该指针后移
-
-```java
-/**
- * Definition for singly-linked list.
- * public class ListNode {
- *     int val;
- *     ListNode next;
- *     ListNode(int x) { val = x; }
- * }
- */
-class Solution {
-    public ListNode mergeTwoLists(ListNode l1, ListNode l2) {
-        if (l1 == null && l2 == null) {
-            return null;
-        }
-        ListNode node = new ListNode();
-        ListNode ret = node;
-        while(l1 != null && l2 != null) {
-            if (l1.val < l2.val) {
-                node.val = l1.val;
-                l1 = l1.next;
-            }else {
-                node.val = l2.val;
-                l2 = l2.next;
-            }
-            node.next = new ListNode();
-            node = node.next;
-        }
-        ListNode tl = null;
-        if (l1 == null) {
-           tl = l2;
-        } else if (l2 == null) {
-            tl = l1;
-        }
-        while (tl != null) {
-            node.val = tl.val;
-            tl = tl.next;
-            if (tl != null) {
-                node.next = new ListNode();
-                node = node.next;
-            }
-        }
-        return ret;
-    }
-}
-```
-
-耗时：1ms
-
 ## 删除排序数组中的重复项
 
 给定数组 nums = [1,1,2], 
@@ -590,35 +533,6 @@ class Solution {
 
 耗时：0ms
 
-## 删除排序链表中的重复元素
-
-<https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list/>
-
-给定一个排序链表，删除所有重复的元素，使得每个元素只出现一次
-
-- 解法
-
-遍历链表，如果发现当前节点等于后继节点，则将当前节点的后继修改为后继节点的后继
-当当前节点或者后继节点为null，停止遍历
-
-```java
-class Solution {
-    public ListNode deleteDuplicates(ListNode head) {
-        ListNode origin = head;
-        while(head != null && head.next != null) {
-            if (head.val == head.next.val) {
-                head.next = head.next.next;
-                continue;
-            }
-            head = head.next;
-        }
-        return origin;
-    }
-}
-```
-
-耗时：0ms
-
 ## 求1+2+…+n
 
 求 1+2+...+n ，要求不能使用乘除法、for、while、if、else、switch、case等关键字及条件判断语句（A?B:C）。
@@ -660,35 +574,6 @@ class Solution {
     }
 }
 ```
-
-## 环形链表
-
-给定一个链表，判断链表中是否有环。
-
-<https://leetcode-cn.com/problems/linked-list-cycle/>
-
-- 解法
-
-使用map存储遍历过的node
-对List进行遍历，发现存在过的node即存在环
-
-```java
-public class Solution {
-    public boolean hasCycle(ListNode head) {
-        Map<ListNode,Boolean> map = new HashMap();
-        while(head != null){
-            if (map.containsKey(head)){
-                return true;
-            }
-            map.put(head,true);
-            head = head.next;
-        }
-        return false;
-    }
-}
-```
-
-耗时：5ms
 
 ## 一维数组的动态和
 
@@ -1037,33 +922,6 @@ class Solution {
 
 耗时：0
 
-## 从尾到头打印链表
-
-<https://leetcode-cn.com/problems/cong-wei-dao-tou-da-yin-lian-biao-lcof>
-
-```java
-class Solution {
-    public int[] reversePrint(ListNode head) {
-        List<Integer> list = new ArrayList<>();
-        walk(head,list);
-        int [] ret = new int[list.size()];
-        for (int i=0;i<ret.length;i++){
-            ret[i]=list.get(i);
-        }
-        return ret;
-    }
-    private void walk(ListNode head,List<Integer> list){
-        if (head == null){
-            return;
-        }
-        walk(head.next,list);
-        list.add(head.val);
-    }
-}
-```
-
-耗时：1
-
 ## Excel 表列序号
 
 <https://leetcode-cn.com/problems/excel-sheet-column-number/submissions/>
@@ -1111,36 +969,6 @@ class Solution {
         }
         for(int i=nums.length-1;i>=nums.length-numOf0;i--){
             nums[i]=0;
-        }
-    }
-}
-```
-
-耗时：0
-
-## 剑指 Offer 22. 链表中倒数第k个节点
-
-<https://leetcode-cn.com/problems/lian-biao-zhong-dao-shu-di-kge-jie-dian-lcof/>
-
-递归到尾不断对计数器+1 判断计数器等于目标值 就返回当前遍历节点
-
-```java
-class Solution {
-
-    private ListNode ret;
-
-    public ListNode getKthFromEnd(ListNode head, int k) {
-        getKthFromEnd0(head,k,new int[]{0});
-        return ret;
-    }
-    private void getKthFromEnd0(ListNode head, int k,int[] arr) {
-        if (head == null){
-            return;
-        }
-        getKthFromEnd0(head.next,k,arr);
-        arr[0]=arr[0]+1;
-        if (arr[0] == k){
-            ret = head;
         }
     }
 }
@@ -1343,35 +1171,6 @@ class Solution {
 ```
 
 耗时：4
-
-## 反转链表
-
-<https://leetcode-cn.com/problems/reverse-linked-list/>
-
-```java
-class Solution {
-    public ListNode reverseList(ListNode head) {
-        if (head == null) return null;
-        LinkedList<Integer> stack = new LinkedList<>();
-        while(head != null){
-            stack.push(head.val);
-            head = head.next;
-        }
-        ListNode root = new ListNode();
-        ListNode origin = root;
-        while(!stack.isEmpty()){
-            root.val = stack.pop();
-            if (!stack.isEmpty()){
-                root.next = new ListNode();
-                root = root.next;
-            }
-        }
-        return origin;
-    }
-}
-```
-
-耗时：0
 
 ## 389. 找不同
 
@@ -1664,28 +1463,6 @@ class Solution {
 
 耗时：21
 
-## 876. 链表的中间结点
-
-<https://leetcode-cn.com/problems/middle-of-the-linked-list/>
-
-```java
-class Solution {
-    public ListNode middleNode(ListNode head) {
-        ListNode[] map = new ListNode[101];
-        int i = 1;
-        while(head != null){
-            map[i]=head;
-            i++;
-            head = head.next;
-        }
-        if (i % 2 !=0) return map[i/2+1];
-        else return map[i/2];
-    }
-}
-```
-
-耗时：0
-
 ## 118. 杨辉三角
 
 <https://leetcode-cn.com/problems/pascals-triangle/>
@@ -1783,34 +1560,6 @@ class Solution {
 ```
 
 耗时：0
-
-## 234. 回文链表
-
-<https://leetcode-cn.com/problems/palindrome-linked-list/>
-
-```java
-class Solution {
-    private ListNode origin;
-    public boolean isPalindrome(ListNode head) {
-        origin = head;
-        return travel(head);
-    }
-    private boolean travel(ListNode head){
-        if (head == null) return true;
-        if (!travel(head.next)){
-            return false;
-        }
-        if (head.val == origin.val){
-            origin = origin.next;
-            return true;
-        }else {
-            return false;
-        }
-    }
-}
-```
-
-耗时：2
 
 ## 938. 二叉搜索树的范围和
 
@@ -2327,31 +2076,6 @@ class Solution {
 
 耗时：2
 
-## 1290. 二进制链表转整数
-
-<https://leetcode-cn.com/problems/convert-binary-number-in-a-linked-list-to-integer/>
-
-```java
-class Solution {
-    public int getDecimalValue(ListNode head) {
-        LinkedList<Integer> s = new LinkedList<>();
-        while(head != null) {
-            s.push(head.val);
-            head = head.next;
-        }
-        int ret = 0;
-        int i = 0;
-        while(!s.isEmpty()){
-            ret += s.pop() * Math.pow(2,i++);
-        }
-        return ret;
-    }
-
-}
-```
-
-耗时：1
-
 ## 1295. 统计位数为偶数的数字
 
 <https://leetcode-cn.com/problems/find-numbers-with-even-number-of-digits/>
@@ -2566,27 +2290,6 @@ class Solution {
 
 耗时：2
 
-## 237. 删除链表中的节点
-
-<https://leetcode-cn.com/problems/delete-node-in-a-linked-list/>
-
-```java
-class Solution {
-    public void deleteNode(ListNode node) {
-        ListNode previous = null;
-        while(node != null){
-            if (node.next != null) node.val = node.next.val;
-            else previous.next = null;
-            
-            previous = node;
-            node = node.next;
-        }
-    }
-}
-```
-
-耗时：0
-
 ## 1078. Bigram 分词
 
 <https://leetcode-cn.com/problems/occurrences-after-bigram/>
@@ -2672,29 +2375,6 @@ class Solution {
 ```
 
 time: 20 beat:31
-
-## 160. 相交链表
-
-<https://leetcode-cn.com/problems/intersection-of-two-linked-lists/>
-
-```java
-public class Solution {
-    public ListNode getIntersectionNode(ListNode headA, ListNode headB) {
-        Map<ListNode,Boolean> map = new HashMap<>();
-        while(headA != null){
-            map.put(headA, true);
-            headA = headA.next;
-        }
-        while(headB != null){
-            if (map.containsKey(headB)) return headB;
-            headB = headB.next;
-        }
-        return null;
-    }
-}
-```
-
-time:9 beat:15
 
 ## 448. 找到所有数组中消失的数字
 
@@ -3887,33 +3567,6 @@ class Solution {
 
 time:0 beat:100
 
-## 19. 删除链表的倒数第 N 个结点
-
-<https://leetcode-cn.com/problems/remove-nth-node-from-end-of-list/>
-
-```java
-class Solution {
-    private int cnt = 0;
-    public ListNode removeNthFromEnd(ListNode head, int n) {
-        remove(head, new int[]{n});
-        if (cnt == n) return head.next;
-        return head;
-    }
-
-    private void remove(ListNode head, int[] n) {
-        if (head == null) return;
-        cnt++;
-        remove(head.next, n);
-        if (n[0] == 0) {
-            head.next = head.next.next;
-        }
-        n[0]--;
-    }
-}
-```
-
-time:0 beat:100
-
 ## 1302. 层数最深叶子节点的和
 
 <https://leetcode-cn.com/problems/deepest-leaves-sum/>
@@ -4220,43 +3873,6 @@ class Solution {
 
 time：1 beat: 41
 
-## 24. 两两交换链表中的节点
-
-<https://leetcode-cn.com/problems/swap-nodes-in-pairs/>
-
-```java
-class Solution {
-    public ListNode swapPairs(ListNode head) {
-        if (head == null) return head;
-        List<ListNode> nodeList = new ArrayList<>();
-        while(head != null) {
-            nodeList.add(head);
-            head = head.next;
-        }
-
-        if (nodeList.size() < 2) {
-            return nodeList.get(0);
-        }
-
-        for(int i = 1;i<nodeList.size();i+=2) {
-            ListNode t = nodeList.get(i);
-            nodeList.set(i, nodeList.get(i-1));
-            nodeList.set(i-1, t);
-        }
-        head = nodeList.get(0);
-        for(int i = 0;i<nodeList.size();i++){
-            head.next = nodeList.get(i);
-            head = head.next;
-        }
-        
-        nodeList.get(nodeList.size()-1).next = null;
-        return nodeList.get(0);
-    }
-}
-```
-
-time:0 beat: 100
-
 ## 507. 完美数
 
 <https://leetcode-cn.com/problems/perfect-number/>
@@ -4417,51 +4033,6 @@ class Solution {
 
 time:3 beat:68
 
-## 142. 环形链表 II
-
-<https://leetcode-cn.com/problems/linked-list-cycle-ii/>
-
-```java
-public class Solution {
-    public ListNode detectCycle(ListNode head) {
-        Map<ListNode, Boolean> map = new HashMap<>();
-        while(head != null) {
-            if (map.containsKey(head)) return head;
-            map.put(head, true);
-            head = head.next;
-        }
-        return null;
-    }
-}
-```
-
-time:4 beat:12
-
-## 382. 链表随机节点
-
-<https://leetcode-cn.com/problems/linked-list-random-node/>
-
-```java
-class Solution {
-
-    private List<Integer> list = new ArrayList<>(16);
-
-    public Solution(ListNode head) {
-        while(head != null) {
-            list.add(head.val);
-            head = head.next;
-        }
-    }
-    
-    public int getRandom() {
-        int i = new Random().nextInt(list.size());
-        return list.get(i);
-    }
-}
-```
-
-time:11 beat:84
-
 ## 539. 最小时间差
 
 <https://leetcode-cn.com/problems/minimum-time-difference/>
@@ -4488,37 +4059,3 @@ class Solution {
 ```
 
 time:4 beat:69
-
-## 92. 反转链表 II
-
-<https://leetcode-cn.com/problems/reverse-linked-list-ii/>
-
-```java
-class Solution {
-    public ListNode reverseBetween(ListNode head, int left, int right) {
-        if (left == right) return head;
-        ListNode originHead = head;
-        List<Integer> list = new ArrayList<>(right - left + 2);
-        int counter = 1;
-        while(head != null) {
-            if (counter >= left && counter <= right) list.add(head.val);
-            head = head.next;
-            counter++;
-        }
-
-        head = originHead;
-        counter = 1;
-        while(head != null) {
-            if (counter >= left && counter <= right) {
-                int index = list.size () - (counter - left) - 1;
-                head.val = list.get(index);
-            }
-            head = head.next;
-            counter++;
-        }
-        return originHead;
-    }
-}
-```
-
-time:0 beat:100

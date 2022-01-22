@@ -19,6 +19,18 @@ export function cleanText(text: string | undefined | null): string {
   return text
 }
 
+export function octal2Chinese(str: string): string {
+  const matches = str.match(/(\\\d{3}){3}/g);
+  if (matches) matches.forEach(match => {
+    let encoded = '';
+    const splits = match.split('\\');
+    splits.forEach(code => !code || (encoded += '%' + parseInt(code, 8).toString(16)));
+    const cChar = decodeURI(encoded);
+    str = str.replace(match, cChar);
+  });
+  return str;
+}
+
 
 /**
  *

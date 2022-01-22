@@ -1,8 +1,11 @@
 import { StatisticInfo, CommitStatistic, WordStatistic, CodeFrequencyItem } from "../dto/StatisticInfo";
 import BaseService from "./BaseService";
 import GitService from "./GitService";
-import fs, { stat } from 'fs'
+import fs from 'fs'
 import { cleanText } from "../util/StringUtils";
+import CommitTotalTrendItem from "../dto/statistic/CommitTotalTrendItem";
+import BatchPromiseHelper from "../util/BatchPromiseHelper";
+import GitChangeItem from "@/dto/git/GitChangeItem";
 
 const imageSuffix = ['png', 'jpg', 'svg', 'jpeg', 'jiff', 'bmp']
 
@@ -72,6 +75,62 @@ class StatisticService extends BaseService {
       }
     }
     return Array.from(map).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+  }
+
+
+  /**
+   *
+   * 生成提交总量趋势数据
+   * @static
+   * @memberof StatisticService
+   */
+  public static async generateCommitTotalTrend(): Promise<[string, number, number][]> {
+    const commitList = await GitService.listAllRawCommit()
+    commitList.reverse()
+
+    function flatGitShowList(map: Map<string, GitChangeItem[]>): GitChangeItem[]{
+      const result = []
+      for(let entries of map) {
+        result.push(...entries[1])
+      }
+      return result
+    }
+    // [日期, 新增字数, 新增行数]
+    const helper = new BatchPromiseHelper<[string, number, number]>()
+    for(let commit of commitList) {
+
+      helper.join(
+          GitService.gitShowUseHash(commit.hash)
+            .then( map => 
+              flatGitShowList(map)
+              .map(v => [cleanText(v.insertions.join()).length - cleanText(v.deletions.join()).length, v.insertions.length - v.deletions.length])
+              .reduce((a,b) => [a[0] + b[0], a[1] + b[1]])
+            )
+            .then(total => {
+              console.log(`${commit.date}:${total}`)
+              return [commit.date, total[0], total[1]] as [string, number, number]
+            })
+            .catch(err => [commit.date, 0, 0] as [string, number, number])
+      )
+    }
+    const resp = await helper.all()
+    // 聚合日期
+    const map = new Map<string, [number,number]>()
+    for(let i of resp) {
+      const date = i[0].split("T")[0]
+      if (map.has(date)) {
+        const data = map.get(date)!
+        data[0] = data[0] + i[1]
+        data[1] = data[1] + i[2]
+      }else {
+        map.set(date, [i[1], i[2]])
+      }
+    }
+    const result: [string, number, number][] = []
+    for(let i in map) {
+      result.push([i, ...(map.get(i)!)])
+    }
+    return result
   }
 
   private static async getRepositorySize(): Promise<number> {

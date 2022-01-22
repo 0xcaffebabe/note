@@ -49,7 +49,7 @@
     "pdf-merger-js": "3.2.1",
     "puppeteer": "12.0.1",
     "rimraf": "3.0.2",
-    "rollup-plugin-visualizer": "5.5.2",
+    "rollup-plugin-visualizer": "5.5.4",
     "shelljs": "0.8.5",
     "simple-git": "2.48.0",
     "ts-node": "10.4.0",

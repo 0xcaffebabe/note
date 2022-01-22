@@ -22,7 +22,7 @@
     "jspdf": "2.5.0",
     "less": "4.1.2",
     "marked": "4.0.10",
-    "mime": "2.5.2",
+    "mime": "2.6.0",
     "nprogress": "0.2.0",
     "prismjs": "1.26.0",
     "query-string": "7.1.0",

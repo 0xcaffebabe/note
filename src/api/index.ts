@@ -119,6 +119,12 @@ class Api implements Cacheable{
     return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.descCommitTimeDocList))).data;
   }
 
+  @cache
+  public async getCommitTotalTrend(): Promise<[string, number, number][]> {
+    const datasource = DatasourceService.getDatasourceById("jsdelivr")
+    return (await axios.get(UrlUtils.concatUrl(datasource.url, UrlConst.commitTotalTrend))).data
+  }
+
   public static getInstance(){
     if (!this.instance) {
       this.instance = new Api()

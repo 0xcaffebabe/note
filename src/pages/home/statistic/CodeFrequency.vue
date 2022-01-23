@@ -61,10 +61,20 @@ export default defineComponent({
       const option: EChartsOption = {
       tooltip: {
         trigger: "item",
+        backgroundColor: this.isDark ? "#666" : "#fff",
+        textStyle: {
+          color: this.isDark ? "#bbb" : "",
+        },
       },
       legend: {
         top: "5%",
         left: "center",
+        textStyle: {
+          color: this.isDark ? "#bbb" : "",
+        },
+        itemStyle: {
+          borderColor: this.isDark ? "#bbb" : "",
+        }
       },
       height: 500,
       series: [

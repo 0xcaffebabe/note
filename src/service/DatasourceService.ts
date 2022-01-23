@@ -30,7 +30,7 @@ class DatasourceService {
     localStorage.setItem('datasource-servier::current', datasource.id)
   }
 
-  private static getDatasourceById(id: string): DatasourceItem {
+  public static getDatasourceById(id: string): DatasourceItem {
     const candicate =  DatasourceService.listDatasourceList().filter(v => v.id == id)
     if (!candicate) {
       throw new Error('指定ID的数据源不存在')

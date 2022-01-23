@@ -89,6 +89,7 @@
         </template>
         <heat-map />
         <hour-commit-heatmap />
+        <commit-total-trend />
       </el-descriptions-item>
       <el-descriptions-item :span="12">
         <template #label>
@@ -105,6 +106,7 @@
 
 <script setup lang="ts">
 import HourCommitHeatmap from "./HourCommitHeatmap.vue"
+import CommitTotalTrend from "./CommitTotalTrend.vue";
 </script>
 
 <script lang="ts">

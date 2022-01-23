@@ -92,14 +92,14 @@ class GitService extends BaseService {
     /* 
     解析git show 原始结果，算法概要：
     1. 扫描每一行，存为line
-    2. 如果发现line 以 'diff --git' 开头, 并且line往后数四行是一个有效的分割段(如 @@ -31,70 +31,155 @@), 则解析当前line 提取出文件名 作为currentFile
-    3. 如果发现line 以 '-' 开头, 并且不是如 +++ b/src/util/BatchPromiseHelper.ts 这种类型用来表示当前操作文件的行, 则根据事以 + 还是 - 开头决定将本行存为增加还是删除
+    2. 如果发现line 以 'diff --git' 开头, 并且line往后数四行或者五行是一个有效的分割段(如 @@ -31,70 +31,155 @@), 则解析当前line 提取出文件名 作为currentFile
+    3. 如果发现line 以 '-' 开头, 并且不是如 +++ b/src/util/BatchPromiseHelper.ts 这种类型用来表示当前操作文件的行, 则根据是以 + 还是 - 开头决定将本行存为增加还是删除
     4. 当每次的 currentFile 发生变化, 则记录为一项 changeItem
     
     */
     for(let i = 0;i<splitArr.length;i++){
       const line = splitArr[i]
-      if (line.startsWith("diff --git") &&  i + 4 < splitArr.length && this.isValidCommitSegementHead(splitArr[i + 4])) {
+      if (line.startsWith("diff --git") &&  this.isValidCommitSegementHeadWithIndex(i, splitArr)) {
         if (currentFile) {
           result.push({
             filename: currentFile, insertions, deletions
@@ -162,6 +162,11 @@ class GitService extends BaseService {
       return false
     }
     return line.startsWith("@@") && line.indexOf("@@", 3) != -1
+  }
+
+  private isValidCommitSegementHeadWithIndex(index: number, splitArr: string[]): boolean {
+    return (index + 4 < splitArr.length && this.isValidCommitSegementHead(splitArr[index + 4])) ||
+            (index + 5 < splitArr.length && this.isValidCommitSegementHead(splitArr[index + 5]))
   }
 
   private isGitDiffFileDesc(line: string, currentFile: string): boolean {

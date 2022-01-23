@@ -83,6 +83,7 @@ class StatisticService extends BaseService {
    * 生成提交总量趋势数据
    * @static
    * @memberof StatisticService
+   * @returns [日期, 当日总字数, 当日总行数][]
    */
   public static async generateCommitTotalTrend(): Promise<[string, number, number][]> {
     const commitList = await GitService.listAllRawCommit()
@@ -103,11 +104,12 @@ class StatisticService extends BaseService {
           GitService.gitShowUseHash(commit.hash)
             .then( map => 
               flatGitShowList(map)
+              .filter(v => v.filename.endsWith('.md'))
               .map(v => [cleanText(v.insertions.join()).length - cleanText(v.deletions.join()).length, v.insertions.length - v.deletions.length])
               .reduce((a,b) => [a[0] + b[0], a[1] + b[1]])
             )
             .then(total => {
-              console.log(`${commit.date}:${total}`)
+              console.log(`提交总量趋势 ${commit.hash} ${commit.date}:${total}`)
               return [commit.date, total[0], total[1]] as [string, number, number]
             })
             .catch(err => [commit.date, 0, 0] as [string, number, number])
@@ -127,8 +129,17 @@ class StatisticService extends BaseService {
       }
     }
     const result: [string, number, number][] = []
-    for(let i in map) {
-      result.push([i, ...(map.get(i)!)])
+    map.forEach((v, k) => {
+      result.push([k, ...v])
+    })
+    // 排序
+    result.sort((a,b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
+    // 计算当日的总数
+    for(let i = 1;i<result.length;i++){
+      const current = result[i]
+      const previous = result[i-1]
+      current[1] += previous[1]
+      current[2] += previous[2]
     }
     return result
   }

@@ -7,6 +7,7 @@ import WordCloudGenrator from './src/plugins/WordCloudGenerator'
 import StatisticInfoGenerator from './src/plugins/StatisticInfoGenerator'
 import KnowledgeNetworkGenerator from './src/plugins/KnowledgeNetworkGenerator'
 import DescCommitDocListGenerator from './src/plugins/DescCommitDocListGenerator'
+import CommitTotalTrendGenerator from './src/plugins/CommitTotalTrendGenerator'
 import DocTagsGenerator from './src/plugins/DocTagsGenerator'
 import VitePluginPrismjs from 'vite-plugin-prismjs'
 import visualizer from "rollup-plugin-visualizer"
@@ -66,6 +67,10 @@ export default defineConfig({
     },
     {
       ...DescCommitDocListGenerator(),
+      apply: 'build'
+    },
+    {
+      ...CommitTotalTrendGenerator(),
       apply: 'build'
     },
     {

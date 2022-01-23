@@ -6,6 +6,7 @@ export default {
   potentialKnowledgeNetwork: '/potentialKnowledgeNetwork.json',
   descCommitTimeDocList: '/descCommitTimeDocList.json',
   knowledgeNetworkJson: '/knowledgeNetwork.json',
+  commitTotalTrend: '/commitTotalTrend.json',
   summaryJson: '/SUMMARY.md.json',
   tagMappingJson: '/tagMapping.json',
   wordcloudJson: '/wordcloud.json',

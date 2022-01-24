@@ -17,7 +17,7 @@
     "echarts-wordcloud": "2.0.0",
     "element-plus": "1.2.0-beta.6",
     "html2canvas": "1.4.1",
-    "js-yaml": "3.14.1",
+    "js-yaml": "4.1.0",
     "jsmind": "0.4.6",
     "jspdf": "2.5.0",
     "less": "4.1.2",
@@ -32,7 +32,7 @@
     "vuex": "4.0.2"
   },
   "devDependencies": {
-    "@types/js-yaml": "4.0.4",
+    "@types/js-yaml": "4.0.5",
     "@types/jsdom": "16.2.14",
     "@types/marked": "4.0.1",
     "@types/mime": "2.0.3",

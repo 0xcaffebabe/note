@@ -73,12 +73,12 @@ class Api implements Cacheable{
    */
   @cache
   public async getStatisticInfo(): Promise<StatisticInfo> {
-    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.statisticInfoUrl))).data
+    return this.requestDataUseJsDelivr(UrlConst.statisticInfoUrl)
   }
 
   @cache
   public async getCommitHeatmap(): Promise<[string, number][]> {
-    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.yearCommitHeatmapUrl))).data
+    return this.requestDataUseJsDelivr(UrlConst.yearCommitHeatmapUrl)
   }
 
   /**
@@ -89,7 +89,7 @@ class Api implements Cacheable{
    */
   @cache
   public async getHourCommitHeatmap(): Promise<[string, number][]> {
-    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.hourCommitHeatmap))).data
+    return this.requestDataUseJsDelivr(UrlConst.hourCommitHeatmap)
   }
 
 
@@ -116,13 +116,17 @@ class Api implements Cacheable{
 
   @cache
   public async getDescCommitDocList(): Promise<[string, CommitInfo][]> {
-    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.descCommitTimeDocList))).data;
+    return this.requestDataUseJsDelivr(UrlConst.descCommitTimeDocList)
   }
 
   @cache
   public async getCommitTotalTrend(): Promise<[string, number, number][]> {
+    return this.requestDataUseJsDelivr(UrlConst.commitTotalTrend)
+  }
+
+  private async requestDataUseJsDelivr(url: string): Promise<any> {
     const datasource = DatasourceService.getDatasourceById("jsdelivr")
-    return (await axios.get(UrlUtils.concatUrl(datasource.url, UrlConst.commitTotalTrend))).data
+    return (await axios.get(UrlUtils.concatUrl(datasource.url, url))).data
   }
 
   public static getInstance(){

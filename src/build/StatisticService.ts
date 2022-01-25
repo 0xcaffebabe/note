@@ -3,7 +3,6 @@ import BaseService from "./BaseService";
 import GitService from "./GitService";
 import fs from 'fs'
 import { cleanText } from "../util/StringUtils";
-import CommitTotalTrendItem from "../dto/statistic/CommitTotalTrendItem";
 import BatchPromiseHelper from "../util/BatchPromiseHelper";
 import GitChangeItem from "@/dto/git/GitChangeItem";
 

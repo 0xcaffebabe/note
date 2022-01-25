@@ -5,6 +5,8 @@ import GitChangeItem from "../dto/git/GitChangeItem";
 import { octal2Chinese } from "../util/StringUtils";
 const git: SimpleGit = simpleGit();
 
+const ignoreCommits = ['30588a462801b5266eb892031f254c0ee99322c2', '75b476d27b17e66b2aeb2de677900355a4439eec', '1fdb2124651cb796a587fd8fc3f238f96e29cb6c']
+
 class GitService extends BaseService {
 
 
@@ -19,7 +21,7 @@ class GitService extends BaseService {
     const resp = await git.log({
       file :path
     })
-    return resp.all.map(this.convert)
+    return resp.all.map(this.convert).filter(c => ignoreCommits.indexOf(c.hash) == -1)
   }
 
 
@@ -46,7 +48,7 @@ class GitService extends BaseService {
     const resp = await git.log({
       '--stat': '4096'
     })
-    return resp.all.map(this.convert)
+    return resp.all.map(this.convert).filter(c => ignoreCommits.indexOf(c.hash) == -1)
   }
 
 
@@ -60,7 +62,7 @@ class GitService extends BaseService {
     const resp = await git.log({
       '--stat': '4096'
     })
-    return resp.all.map(v => v)
+    return resp.all.map(v => v).filter(c => ignoreCommits.indexOf(c.hash) == -1)
   }
 
 
@@ -135,7 +137,7 @@ class GitService extends BaseService {
 
   public async findFirstCommit(): Promise<CommitInfo> {
     const resp = await git.log()
-    const commitList =  resp.all.map(this.convert)
+    const commitList =  resp.all.map(this.convert).filter(c => ignoreCommits.indexOf(c.hash) == -1)
     return commitList[commitList.length - 1]
   }
 
@@ -143,7 +145,7 @@ class GitService extends BaseService {
     const resp = await git.log({
       '--since': "1 years ago"
     })
-    return resp.all.map(this.convert)
+    return resp.all.map(this.convert).filter(c => ignoreCommits.indexOf(c.hash) == -1)
   }
 
   private convert(v: DefaultLogFields & ListLogLine) : CommitInfo {

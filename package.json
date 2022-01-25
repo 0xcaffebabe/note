@@ -38,7 +38,7 @@
     "@types/mime": "2.0.3",
     "@types/node": "16.11.21",
     "@types/nprogress": "0.2.0",
-    "@types/prismjs": "1.16.6",
+    "@types/prismjs": "1.16.8",
     "@types/rimraf": "3.0.2",
     "@types/shelljs": "0.8.11",
     "@types/wordcloud": "1.1.3",

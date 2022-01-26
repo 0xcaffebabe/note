@@ -34,7 +34,18 @@ class GitService extends BaseService {
    */
   public async getFileLastCommit(path: string): Promise<CommitInfo> {
     const commitList = await this.getFileCommitList(path)
-    return commitList[0];
+    const commit = commitList[0];
+    if (!commit) {
+      return {
+        date: '1999-02-17 12:00:00',
+        hash: '',
+        message: 'unknow commit',
+        author: 'unknow',
+        insertions: 0,
+        deletions: 0
+      }
+    }
+    return commit
   }
 
 

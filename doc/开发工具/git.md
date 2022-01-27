@@ -287,7 +287,7 @@ hotfix  | 修复生产环境紧急的问题 从master拉出来 修复完合并�
 
 这两种方式本质上是一样的，都是利用了git merge来合并两个分支。
 
-同步fork过来的仓库与源仓库：
+[同步fork过来的仓库与源仓库](https://github.com/selfteaching/the-craft-of-selfteaching/issues/67)：
 
 方法1：
 

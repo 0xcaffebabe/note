@@ -9,6 +9,8 @@
         </div>
         <div class="content">
           <div>
+            <instapaper-shower />
+            <el-divider direction="vertical" />
             <datasource-selector />
             <el-divider direction="vertical" />
             <!-- 正常/暗色模式切换按钮 -->
@@ -75,6 +77,7 @@
 <script setup lang="ts">
 import {Sunny, Moon, Monitor, Brush, Aim } from '@element-plus/icons';
 import EventBus from "@/components/EventBus";
+import InstapaperShower from "./InstapaperShower.vue";
 </script>
 
 <script lang="ts">

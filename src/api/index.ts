@@ -124,6 +124,17 @@ class Api implements Cacheable{
     return this.requestDataUseJsDelivr(UrlConst.commitTotalTrend)
   }
 
+  /**
+   *
+   * 获取instapaper原始html数据
+   * @return {*}  {Promise<string>}
+   * @memberof Api
+   */
+  @cache
+  public async getInstapaperRawData(): Promise<string> {
+    return (await axios.get("https://proxy.ismy.wang/api/instapaper/list")).data
+  }
+
   private async requestDataUseJsDelivr(url: string): Promise<any> {
     const datasource = DatasourceService.getDatasourceById("jsdelivr")
     return (await axios.get(UrlUtils.concatUrl(datasource.url, url))).data

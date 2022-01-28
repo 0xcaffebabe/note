@@ -38,9 +38,7 @@ type EChartsOption = echarts.ComposeOption<
 >;
 
 function fillTimeRange(data: [string, number][]): [string, number][] {
-  console.log(data);
   const map = new Map<string, number>(data);
-  console.log(map);
   const range = [data[0][0], data[data.length - 1][0]];
   const start = +echarts.number.parseDate(range[0]);
   const end = +echarts.number.parseDate(range[1]);
@@ -60,7 +58,7 @@ function fillTimeRange(data: [string, number][]): [string, number][] {
  */
 function generatePieces(maxValue: number, colorBox: string[]) {
   const pieces = [];
-  const quotient = Math.ceil(maxValue / 4);
+  const quotient = Math.ceil(maxValue / 2);
   let temp: any = {};
   temp.lt = 1;
   temp.label = "0";
@@ -114,8 +112,6 @@ export default defineComponent({
         .sort()
         .reverse()[0];
       const range = [heatmapData[0][0], heatmapData[heatmapData.length - 1][0]];
-      console.log(range, maxValue);
-      console.log(heatmapData);
       option = {
         title: {
           top: 30,

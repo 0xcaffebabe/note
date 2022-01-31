@@ -10,7 +10,7 @@
         <el-button size="mini" style="margin-left:4px" type="success" @click="clean">清理</el-button>
         <el-dropdown-item v-for="item in unreadList" :key="item.originLink" class="article-item" @click="handleArticleClick(item)">
           <h3 class="article-title">{{item.title}}</h3>
-          <div style="display:inline">
+          <div class="article-main">
             <p class="article-preview">{{item.preview}}</p>
             <el-image
               style="width: 100px; height: 72px"
@@ -40,7 +40,7 @@ export default defineComponent({
       window.open(item.originLink, '_blank')
     },
     clean(item: InstapaperItem) {
-      window.open('https://www.instapaper.com/u/', '_blank')
+      window.open('https://www.instapaper.com/u', '_blank')
     }
   },
   async created() {
@@ -70,6 +70,7 @@ export default defineComponent({
   }
   .article-item {
     display: block;
+    padding-bottom: 20px;
   }
   .article-preview {
     max-width: 360px;
@@ -77,6 +78,14 @@ export default defineComponent({
     line-height: 16px;
     padding: 2px;
     margin: 2px;
+  }
+  .el-dropdown-menu {
+    max-height: 400px;
+    overflow: scroll;
+  }
+  .article-main {
+    display: flex;
+    justify-content: space-between;
   }
 
 body[theme=dark] {

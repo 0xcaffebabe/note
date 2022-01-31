@@ -8,7 +8,7 @@
         />
       </el-affix>
     </el-header>
-    <div class="header-toggle-button" :style="{'margin-top': showHeader ?'32px': ''}">
+    <div class="header-toggle-button" :style="{'margin-top': showHeader ?'66px': '6px'}">
       <el-button @click="showHeader = !showHeader" size="mini">
         <el-icon>
           <arrow-up-bold v-if="showHeader" />
@@ -113,11 +113,11 @@ export default defineComponent({
 }
 .header-toggle-button {
   position: fixed;
-  width: 100%;
+  // width: 100%;
+  right: 20px;
   z-index: 1000;
   .el-button {
-    padding: 0 7px;
-    margin-left: 280px;
+    padding: 0 16px;
   }
 }
 

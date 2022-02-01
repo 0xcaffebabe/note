@@ -315,21 +315,26 @@ class DocService implements Cacheable{
     /* 
       算法概要：
       获取所有h1 - h6 节点
+      计算顶级目录层级：查找出来的第一个Hx节点的level
       每次迭代将dom元素转为Content类 并将转换后的对象存储到contentMap（key: level, value: content）里
       除了顶级目录 其他目录每次都会通过ContentMap找寻其最近的一个父节点 并将自己添加到父节点的孩子列表
     */
     let contentMap = []
     let result : Content[] = []
+    let topLevel = -1
     for(let i = 0;i<allHead.length;i++){
       const head = allHead[i]
       let level = parseInt(head.tagName.replace('H', ''))
+      if (topLevel == -1) {
+        topLevel = level
+      }
       let content = new Content();
       // 这里考虑到标题里面可能由html标签构成 排除掉sup标签 转为文本内容
       content.name = Array.from(head.childNodes).filter(v => v.nodeName.toUpperCase() != 'SUP').map(v => v.textContent).join('');
       content.link = head.getAttribute("id")!
       content.level = level;
       contentMap[level] = content
-      if (level == 1) {
+      if (level == topLevel) {
         result.push(content)
       }else {
         for(let i = level - 1;i >= 1; i--) {

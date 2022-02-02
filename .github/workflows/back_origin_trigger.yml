@@ -2,10 +2,10 @@ name: 回源触发
 
 on:
   push:
-    branches: [ master ]
+    branches: [ gh-pages ]
   workflow_dispatch:
   schedule:
-    - cron:  '0 0/1 * * *'
+    - cron:  '0/30 * * * *'
   
 jobs:
   build:

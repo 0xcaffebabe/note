@@ -40,6 +40,7 @@
               <el-button size="mini" @click="enterZenMode" title="进入专注模式">
                 <el-icon><aim /></el-icon>
               </el-button>
+              <yueque-draft-shower />
             </el-button-group>
             <el-divider direction="vertical" />
             <!-- 搜索 -->
@@ -78,6 +79,7 @@
 import {Sunny, Moon, Monitor, Brush, Aim } from '@element-plus/icons';
 import EventBus from "@/components/EventBus";
 import InstapaperShower from "./InstapaperShower.vue";
+import YuequeDraftShower from "./YuequeDraftShower.vue";
 </script>
 
 <script lang="ts">

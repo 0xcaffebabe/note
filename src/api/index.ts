@@ -9,6 +9,7 @@ import DatasourceService from '@/service/DatasourceService'
 import UrlUtils from '@/util/UrlUtils'
 import UrlConst from '@/const/UrlConst'
 import CommitInfo from '@/dto/CommitInfo'
+import YuequeDraft from '@/dto/YuqueDraft'
 
 const baseUrl = () => {
   return DatasourceService.getCurrentDatasource().url
@@ -133,6 +134,15 @@ class Api implements Cacheable{
   @cache
   public async getInstapaperRawData(): Promise<string> {
     return (await axios.get("https://proxy.ismy.wang/api/instapaper/list")).data
+  }
+
+  public async getYuqueDraft(): Promise<YuequeDraft> {
+    const data = (await axios.get("https://proxy.ismy.wang/api/yuque/draft")).data
+    return {
+      content: data.data.content,
+      title: data.data.title,
+      updateAt: data.data.content_updated_at
+    }
   }
 
   private async requestDataUseJsDelivr(url: string): Promise<any> {

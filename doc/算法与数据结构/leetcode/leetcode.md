@@ -4270,3 +4270,21 @@ class Solution {
 ```
 
 time:0 beat:100
+
+## 2006. 差的绝对值为 K 的数对数目
+
+<https://leetcode-cn.com/problems/count-number-of-pairs-with-absolute-difference-k/>
+
+```java
+class Solution {
+    public int countKDifference(int[] nums, int k) {
+        int cnt = 0;
+        for(int i = 0;i<nums.length;i++) {
+            for(int j = 0;j<nums.length;j++) if (i < j && Math.abs(nums[i] - nums[j]) == k) cnt++;
+        }
+        return cnt;
+    }
+}
+```
+
+time:9 beat:6

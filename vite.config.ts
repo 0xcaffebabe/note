@@ -88,7 +88,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id: string): string {
-          const indepentDependcies = ['element-plus', 'vue', 'jspdf', 'html2canvas', 'echarts', 'zrender', 'marked']
+          const indepentDependcies = ['element-plus', 'vue', 'jspdf', 'html2canvas', 'echarts', 'zrender', 'marked', 'mermaid']
           for(let depend of indepentDependcies) {
             if (id.includes('node_modules') && id.includes(depend)) {
               return depend

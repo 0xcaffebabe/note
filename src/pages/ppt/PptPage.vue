@@ -96,6 +96,10 @@ export default defineComponent({
         }
       }
       this.hilightCurrent()
+      this.$nextTick(() => {
+        // 渲染mermaid
+        this.eventManager!.renderMermaid()
+      })
     },
     hilightCurrent() {
       const segement = this.flatContent[this.currentIndex];

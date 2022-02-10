@@ -1,5 +1,6 @@
 import ImageViewerVue from "@/components/ImageViewer.vue";
 import PptPage from "./PptPage.vue";
+import MermaidUtils from "@/util/MermaidUtils";
 
 class PptPageEventManager {
   private pptPageInstance: InstanceType<typeof PptPage>
@@ -30,6 +31,11 @@ class PptPageEventManager {
       }
     })
   }
+
+  public renderMermaid() {
+    MermaidUtils.initAllNode()
+  }
+
 }
 
 export default PptPageEventManager

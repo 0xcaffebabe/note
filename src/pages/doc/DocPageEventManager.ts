@@ -6,6 +6,7 @@ import DocService from "@/service/DocService";
 import ResourceBrower from "./ResourceBrower.vue";
 import EventBus from "@/components/EventBus";
 import ImageViewerVue from "@/components/ImageViewer.vue";
+import MermaidUtils from "@/util/MermaidUtils";
 
 class DocPageEventManager {
 
@@ -160,6 +161,9 @@ class DocPageEventManager {
     });
   }
 
+  public renderMermaid() {
+    MermaidUtils.initAllNode()
+  }
 
   /**
    *

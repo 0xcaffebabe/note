@@ -87,6 +87,7 @@ import { defineComponent } from "vue";
 import config from "@/config";
 import DatasourceSelector from './datasource/DatasourceSelector.vue';
 import CacheService from "@/service/CacheService";
+import MermaidUtils from '@/util/MermaidUtils';
 
 export default defineComponent({
   components: {
@@ -126,10 +127,12 @@ export default defineComponent({
         document.body.setAttribute('theme', 'light');
         this.$store.commit('setIsDarkMode', false);
         localStorage.setItem('system::theme', "light");
+        MermaidUtils.initWithNormal();
       }else {
         document.body.setAttribute('theme', 'dark');
         this.$store.commit('setIsDarkMode', true);
         localStorage.setItem('system::theme', "dark");
+        MermaidUtils.initWithNormal();
       }
     },
     enterZenMode() {

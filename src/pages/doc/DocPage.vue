@@ -213,6 +213,8 @@ export default defineComponent({
         this.eventManager!.registerImageClick(docEl);
         this.eventManager!.registerHeadingClick(docEl);
         this.eventManager!.registerDocTagSupClick(docEl);
+        // 渲染mermaid
+        this.eventManager!.renderMermaid();
         // 同步滚动markdown-section到headingId区域
         this.eventManager!.syncHeading(headingId);
         // 同步滚动左侧目录 让当前激活目录位于可视区域

@@ -16,6 +16,7 @@ import TagUtils from '@/pages/tag/TagUtils'
 import { KnowledgeLinkNode } from '@/dto/KnowledgeNode'
 import KnowledgeNetworkService from './KnowledgeNetworkService'
 import DocSegement from '@/dto/doc/DocSegement'
+import IdGenUtils from '@/util/IdGenUtils'
 
 const cache = Cache()
 
@@ -149,6 +150,10 @@ class DocService implements Cacheable{
     }
     // 自定义代码块渲染
     render.code = (code: string, language: string | undefined, isEscaped: boolean) :string => {
+      // 如果语言是mermaid 特殊处理 转为mermaid
+      if (language == 'mermaid') {
+        return `<div class='mermaid' id='mermaid-${IdGenUtils.uuid()}'>${code}</div>`
+      }
       return `<pre><code class="language-${language}">${this.hightlightCode(code, language)}</code></pre>`
     }
     // 自定义图片渲染

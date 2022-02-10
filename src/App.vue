@@ -33,6 +33,7 @@ import Search from "@/components/search/Search.vue";
 import CategorySearch from "@/components/search/CategorySearch.vue";
 import { ArrowUpBold, ArrowDownBold } from "@element-plus/icons";
 import EventBus from "./components/EventBus";
+import MermaidUtils from "./util/MermaidUtils";
 
 const cateListKey='system::currentCategoryList';
 export default defineComponent({
@@ -84,6 +85,7 @@ export default defineComponent({
     if (theme == 'dark') {
       this.$store.commit('setIsDarkMode', true);
       document.body.setAttribute('theme', 'dark');
+      MermaidUtils.initWithDark()
     }
     // 恢复目录列表
     const raw = localStorage.getItem(cateListKey);

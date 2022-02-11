@@ -22,7 +22,6 @@ class InstapaperService implements Cacheable {
     return InstapaperService.instance
   }
 
-  @cache
   public async getUnreadList(): Promise<InstapaperItem[]> {
     const html = await api.getInstapaperRawData()
     const elm = new DOMParser().parseFromString(html, 'text/html')

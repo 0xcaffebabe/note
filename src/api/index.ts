@@ -131,7 +131,6 @@ class Api implements Cacheable{
    * @return {*}  {Promise<string>}
    * @memberof Api
    */
-  @cache
   public async getInstapaperRawData(): Promise<string> {
     return (await axios.get("https://proxy.ismy.wang/api/instapaper/list")).data
   }

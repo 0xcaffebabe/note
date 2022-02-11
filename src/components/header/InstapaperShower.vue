@@ -1,7 +1,7 @@
 <template>
   <div class="root">稍后阅读 
 
-    <el-dropdown :hide-on-click="false" trigger="click">
+    <el-dropdown :hide-on-click="false" trigger="click" @visible-change="handleVisibleChange">
     <span class="el-dropdown-link">
       {{unreadList.length}}
     </span>
@@ -41,6 +41,12 @@ export default defineComponent({
     },
     clean(item: InstapaperItem) {
       window.open('https://www.instapaper.com/u', '_blank')
+    },
+    async handleVisibleChange(visible: boolean) {
+      if (visible) {
+        this.unreadList = await InstapaperService.getUnreadList()
+        console.log(this.unreadList) 
+      }
     }
   },
   async created() {

@@ -285,6 +285,32 @@ Via: [ <protocol-name> "/" ] <protocol-version> <host> [ ":" <port> ]
 
 使用 SSL 等加密手段，在客户端和服务器之间建立一条安全的通信线路
 
+```mermaid
+sequenceDiagram
+  客户端->>隧道网关: CONNECT请求 CONNECT baidu.com:888 HTTP/1.0
+  隧道网关->>客户端: HTTP/1.0 407 Proxy authentication required
+  客户端->>隧道网关: CONNECT带上凭证
+  隧道网关->>baidu.com: 打开888端口连接
+  baidu.com->>隧道网关: 连接已建立
+  隧道网关->>客户端: 连接就绪 HTTP/1.0 Connection established
+  客户端->>隧道网关: 非HTTP流量
+  隧道网关->>baidu.com: 非HTTP流量
+  baidu.com->>隧道网关: 非HTTP流量
+  隧道网关->>客户端: 非HTTP流量
+```
+
+### 中继
+
+- 由于HTTP的连接管理，单纯的盲中继可能会出现连接管理上的问题
+
+```mermaid
+sequenceDiagram
+    客户端->>中继: 二进制流A
+    中继->>目标服务器: 二进制流A
+    目标服务器->>中继: 二进制流B
+    中继->>客户端: 二进制流B
+```
+
 ## 重定向原理
 
 当服务端对客户端进行重定向时，会设置一个Location响应头，并将状态码设置为302

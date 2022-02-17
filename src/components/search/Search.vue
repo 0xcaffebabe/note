@@ -72,9 +72,6 @@ export default defineComponent({
       searchSuggestionList: [] as SearchSuggestion[],
     };
   },
-  async created() {
-    this.searchSuggestionList = await searchService.getQuerySuggestions();
-  },
   computed: {
     outerKw() {
       return this.$store.state.currentSearchKw;
@@ -91,6 +88,7 @@ export default defineComponent({
     async show() {
       this.showDrawer = true;
       (this.$refs.input as any).focus();
+      this.searchSuggestionList = await searchService.getQuerySuggestions();
     },
     hide() {
       this.showDrawer = false;

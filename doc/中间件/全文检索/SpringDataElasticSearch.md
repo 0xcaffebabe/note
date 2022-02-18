@@ -1,4 +1,9 @@
-# 配置
+---
+tags: ['中间件', 'es']
+---
+# SpringDataElasticSearch
+
+## 配置
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -44,35 +49,35 @@ public class Article {
 public interface ArticleDao extends ElasticsearchRepository<Article,Long> { }
 ```
 
-# 创建索引
+## 创建索引
 
 ```java
 ElasticsearchTemplate template = context.getBean(ElasticsearchTemplate.class);
 template.createIndex(Article.class);
 ```
 
-# 添加文档
+## 添加文档
 
 ```java
-        Article article = new Article();
-        article.setId(1L);
-        article.setTitle("【中国稳健前行】“中国之治”的政治保证");
-        article.setContent("新中国成立70年来，在中国共产党的坚强领导下，...");
-        articleDao.save(article);
+Article article = new Article();
+article.setId(1L);
+article.setTitle("【中国稳健前行】“中国之治”的政治保证");
+article.setContent("新中国成立70年来，在中国共产党的坚强领导下，...");
+articleDao.save(article);
 ```
 
-# 删除文档
+## 删除文档
 
 ```java
 articleDao.deleteById(1L);
 articleDao.deleteAll(); // 全部删除
 ```
 
-# 修改文档
+## 修改文档
 
 同添加文档
 
-# 查询
+## 查询
 
 - 查询全部
 
@@ -86,7 +91,7 @@ articleDao.findAll().forEach(System.out::println);
 System.out.println(articleDao.findById(2L).get());
 ```
 
-# 自定义查询
+## 自定义查询
 
 ```java
 @Repository
@@ -106,17 +111,9 @@ articleDao.findAllByTitle("中", PageRequest.of(0,5)).forEach(System.out::printl
 - 原生查询
 
 ```java
-        NativeSearchQuery query = new NativeSearchQueryBuilder()
-                .withQuery(QueryBuilders.queryStringQuery("中国").defaultField("title"))
-                .withPageable(PageRequest.of(0,5))
-                .build();
-        template.queryForList(query,Article.class).forEach(System.out::println);
+NativeSearchQuery query = new NativeSearchQueryBuilder()
+        .withQuery(QueryBuilders.queryStringQuery("中国").defaultField("title"))
+        .withPageable(PageRequest.of(0,5))
+        .build();
+template.queryForList(query,Article.class).forEach(System.out::println);
 ```
-
-
-
-
-
-
-
-

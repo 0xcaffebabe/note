@@ -34,6 +34,7 @@ import CategorySearch from "@/components/search/CategorySearch.vue";
 import { ArrowUpBold, ArrowDownBold } from "@element-plus/icons";
 import EventBus from "./components/EventBus";
 import MermaidUtils from "./util/MermaidUtils";
+import ConfigService from "./service/ConfigService";
 
 const cateListKey='system::currentCategoryList';
 export default defineComponent({
@@ -56,6 +57,11 @@ export default defineComponent({
     return {
       search, showSearch,
       categorySearch, showCategorySearch
+    }
+  },
+  watch : {
+    showHeader(val: boolean) {
+      ConfigService.set('showHeader', val)
     }
   },
   provide(){
@@ -96,6 +102,11 @@ export default defineComponent({
     EventBus.on('enter-zen-mode', () => {
       this.showHeader = false
     })
+    // 设置showHeader初始值
+    const showHeader = ConfigService.get('showHeader') as boolean
+    if (typeof showHeader != 'undefined') {
+      this.showHeader = showHeader
+    }
   },
 });
 </script>

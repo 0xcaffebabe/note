@@ -95,8 +95,11 @@ export default defineComponent({
 .category-wrapper {
   transition: all 0.2s;
   position: fixed;
-  overflow-y: scroll;
+  overflow-y: hidden;
   width: 280px;
+}
+.category-wrapper:hover {
+  overflow-y: scroll;
 }
 .cate-fix-btn {
   padding: 7px 2px;

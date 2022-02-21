@@ -1,6 +1,6 @@
 <template>
   <tool-box @go-to-doc="$router.push('/doc/' + doc)"/>
-  <div class="toc-wrapper">
+  <div class="toc-wrapper" :style="{'top': parentShowHeader ? '66px': '6px', 'height': parentShowHeader ? 'calc(100% - 60px)': '100%'}">
     <contents-list
       :doc="doc"
       :with-event="false"
@@ -60,6 +60,7 @@ import PptPageEventManager from "./PptPageEventManager";
 import ImageViewer from "@/components/ImageViewer.vue";
 
 export default defineComponent({
+  inject: ['showHeader'],
   components: {
     ArrowLeftBold,
     ArrowRightBold,
@@ -75,7 +76,8 @@ export default defineComponent({
       currentIndex: 0,
       showImageViewer: false,
       imageUrlList: [] as string[],
-      eventManager: null as PptPageEventManager | null
+      eventManager: null as PptPageEventManager | null,
+      parentShowHeader: true as boolean,
     };
   },
   watch: {
@@ -85,6 +87,12 @@ export default defineComponent({
         this.hilightCurrent();
       },
     },
+    showHeader: {
+      handler(val){
+        this.parentShowHeader = val;
+      },
+      immediate: true,
+    }
   },
   methods: {
     async showPpt() {
@@ -195,7 +203,6 @@ export default defineComponent({
   transition: all 0.2s;
   position: fixed;
   right: 16px;
-  height: calc(100% - 60px);
 }
 .outline {
   ul {

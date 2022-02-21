@@ -20,7 +20,7 @@
             </div>
             <!-- 提交历史结束 -->
             <!-- toc开始 -->
-            <div class="toc-wrapper" :style="{'top': parentShowHeader ? '66px': '6px'}">
+            <div class="toc-wrapper" :style="{'top': parentShowHeader ? '66px': '6px', 'height': parentShowHeader ? 'calc(100% - 60px)': '100%'}">
               <keep-alive>
                 <contents-list :doc="doc" @item-click="handleTocItemClick"/>
               </keep-alive>
@@ -281,7 +281,6 @@ export default defineComponent({
   transition: all 0.2s;
   position: fixed;
   right: 16px;
-  height: calc(100% - 60px);
 }
 .footer-wrapper {
   display: flex;

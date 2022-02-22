@@ -72,7 +72,7 @@ export default defineComponent({
     };
   },
   computed: {
-    filterDocList(){
+    filterDocList(): [string, CommitInfo][]{
       const now = new Date().getTime()
       let left = this.rangeMapping(this.rangeValue[0])
       let right = this.rangeMapping(this.rangeValue[1])

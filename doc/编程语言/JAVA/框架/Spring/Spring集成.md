@@ -1,4 +1,8 @@
-## 远程调用的一些技术
+# Spring 集成
+
+## 远程调用
+
+远程调用的一些技术：
 
 - RMI
 - Hessian 和 Burlap
@@ -7,11 +11,11 @@
 
 ![2022110104548](/assets/2022110104548.png)
 
-## Spring 的远程调用
+### Spring 的远程调用
 
 ![202211010453](/assets/202211010453.png)
 
-### RMI
+#### RMI
 
 - 导出服务
 
@@ -30,8 +34,8 @@
 
 - 装配服务
 
-### Hessian 和 Burlap
+#### Hessian 和 Burlap
 
-### HttpInvoker
+#### HttpInvoker
 
-### 使用web服务
+#### 使用web服务

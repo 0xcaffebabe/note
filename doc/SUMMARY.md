@@ -381,8 +381,7 @@
     - [SpringSecurity](./编程语言/JAVA/框架/Spring/SpringSecurity/springSecurity.md)
       - [用户认证](./编程语言/JAVA/框架/Spring/SpringSecurity/用户认证.md)
       - [RBAC](./编程语言/JAVA/框架/Spring/SpringSecurity/RBAC.md)
-    - [Spring集成](./编程语言/JAVA/框架/Spring/Spring集成/nav.md)
-      - [使用远程服务](./编程语言/JAVA/框架/Spring/Spring集成/远程服务.md)
+    - [Spring集成](./编程语言/JAVA/框架/Spring/Spring集成.md)
     - [SpringBoot](./编程语言/JAVA/框架/SpringBoot/nav.md)
     - [SpringWebFlux](./编程语言/JAVA/框架/SpringWebFlux.md)
 

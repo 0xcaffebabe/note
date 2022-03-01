@@ -117,7 +117,7 @@ class Api implements Cacheable{
 
   @cache
   public async getDescCommitDocList(): Promise<[string, CommitInfo][]> {
-    return this.requestDataUseJsDelivr(UrlConst.descCommitTimeDocList)
+    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.descCommitTimeDocList))).data;
   }
 
   @cache

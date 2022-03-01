@@ -2267,6 +2267,10 @@ class Solution {
 
 <https://leetcode-cn.com/problems/find-pivot-index/>
 
+<https://leetcode-cn.com/problems/tvdfij/>
+
+- 解法1
+
 ```java
 class Solution {
     public int pivotIndex(int[] nums) {
@@ -2289,6 +2293,26 @@ class Solution {
 ```
 
 耗时：2
+
+- 解法2
+
+```java
+class Solution {
+    public int pivotIndex(int[] nums) {
+        int rsum = 0;
+        int lsum = 0;
+        for(int i : nums) rsum += i;
+        for(int i = 0;i < nums.length;i++) {
+            rsum -= nums[i];
+            if (lsum == rsum) return i;
+            lsum += nums[i];
+        }
+        return -1;
+    }
+}
+```
+
+time:1 beat:87
 
 ## 1078. Bigram 分词
 

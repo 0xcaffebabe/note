@@ -66,7 +66,7 @@ class SearchService implements Cacheable{
     const index = client.initIndex('note');
     const hits : SearchResponse<DocHits> = await index.search(kw, { hitsPerPage: 200, highlightPreTag: `<${hilighTag}>`, highlightPostTag: `</${hilighTag}>` });
     if (hits) {
-      return hits.hits.map(v => {
+      const result = hits.hits.map(v => {
         return {
           url: v.url,
           hilighedUrl: v._highlightResult?.url?.value,
@@ -77,6 +77,8 @@ class SearchService implements Cacheable{
           .map(v => appendMissingKw(v, kw)) // 添加搜索结果中没有出现的关键词
         } as SearchResult
       })
+      // 过滤掉目录名没有包含关键词且没有搜索结果的纪录
+      return result.filter(v => v.hilighedSegement.length != 0 || kwContains(kw, v.url))
     }
     return []
   }

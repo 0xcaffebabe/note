@@ -115,6 +115,8 @@ private static ThreadLocal<Connection> holder = ThreadLocal.withInitial(() -> ge
 
 ## 对象的组合
 
+- 如何构建线程安全的类？
+
 **依赖状态的操作**：某个操作包含有基于状态的先验操作
 
 ```java
@@ -123,17 +125,47 @@ if (a== 1){
 }
 ```
 
+在并发编程中，由于其他线程也会修改状态，所以需要一些JUC中的基础类库来帮助我们在并发环境下执行基于依赖的操作
+
+在提供多线程API时，将是否线程安全文档化
+
 ### 实例封闭
 
-> 将线程不安全的对象封装在某个进行良好并发控制的对象内
+- 监视器模式（客户端加锁），最简单的封闭机制
 
-- 客户端加锁
+> 将线程不安全的对象封装在某个进行良好并发控制的对象内
 
 ```java
 private Object obj = new Object();
 ...
 synchronized(obj){
     obj.xxx();
+}
+```
+
+### 线程安全委托
+
+> 线程不安全的对象将线程安全的职责委托给线程安全的对象
+
+```java
+// 线程安全的类
+private AtomicInteger coutner = new AtomicInteger();
+...
+void increase() {
+    counter.increase();
+}
+```
+
+这种方式要求委托方对被委托方的API调用不能出现复合操作，否则委托方仍需要采用一定的线程安全机制
+
+```java
+private AtomicInteger coutner1 = new AtomicInteger();
+private AtomicInteger coutner2 = new AtomicInteger();
+...
+// × 不安全
+void increase() {
+    coutner1.increase();
+    coutner2.increase();
 }
 ```
 

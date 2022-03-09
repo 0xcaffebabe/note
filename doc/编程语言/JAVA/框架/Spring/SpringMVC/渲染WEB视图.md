@@ -1,4 +1,6 @@
-# 视图解析
+# Web 视图渲染
+
+## 视图解析
 
 ViewResolver接口
 
@@ -27,13 +29,21 @@ public interface View {
 }
 ```
 
-视图解析器的工作原理很简单，外部会传给视图解析器一个视图名和地区对象， 解析根据两个参数返回一个视图。 视图做的工作就是根据外部传入的模型，来渲染出html页面。
+视图解析器的工作原理很简单，外部会传给视图解析器一个视图名和地区对象， 解析两个参数返回一个视图。 视图做的工作就是根据外部传入的模型，来渲染出html页面，使用 并使用 HttpServletResponse 输出到前端。
 
-## Spring提供的视图解析器
+### Spring 提供的视图解析器
 
-![批注 2019-06-17 151441](/assets/批注%202019-06-17%20151441.png) ![批注 2019-06-17 151543](/assets/批注%202019-06-17%20151543.png)
+视图解析器                          | 说明
+------------------------------ | --------------------------------------------------
+AbstractCachingViewResolver    | 会对解析的View对象缓存 以提高性能
+UrlBasedViewResolver           | 会对redirect:、forward:等特殊的url特殊处理，并将请求转发给子类实现，返回具体视图
+InternalResourceViewResolver   | 继承了 UrlBasedViewResolver，可以用来访问内部资源，比如jsp等待
+FreeMarkerViewResolver         | 用来支持FreeMarker模板
+ContentNegotiatingViewResolver | 用来支持HTTP的内容协商功能
+BeanNameViewResolver           | 一种极为灵活的视图解析方式，直接通过 Spring 中的容器 Bean 名称来获取视图
 
-# 创建JSP视图
+
+### 创建JSP视图
 
 - 配置视图解析器
 
@@ -50,9 +60,9 @@ public interface View {
 
   访问home就相当于访问/WEB-INF/views/home.jsp
 
-  # 使用 Thymeleaf
+## 使用 Thymeleaf
 
-  ## 三个与spring集成的bean
+### 三个与spring集成的bean
 
 - 配置 thymeleaf
 
@@ -88,7 +98,7 @@ public interface View {
   <p th:text="*{time}"></p>
   ```
 
-# 响应
+## 响应
 
 - 返回String类型
 
@@ -104,14 +114,13 @@ public interface View {
 
 - 返回ModelAndView类型
 
-## 静态资源配置
+### 静态资源配置
 
 ```xml
     <!--配置静态资源过滤-->
     <mvc:resources mapping="/js/**" location="/js/"/>
 ```
 
-## 响应json
+### 响应json
 
 @ResponseBody
-

@@ -171,27 +171,35 @@ void increase() {
 
 ## 取消与关闭
 
-- 取消策略
-
-通常，使用中断来取消是最合理的方式
+一个可取消的任务必须拥有取消策略
 
 ```java
-class MyThread extends  Thread{
-
-    @Override
-    public void run() {
-        while(!isInterrupted()){
-            System.out.println("running");
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                break;
-            }
-        }
-        System.out.println("my thread done");
-    }
+while(runnable) {
+    // do something
 }
 ```
+
+使用中断来取消是最合理的方式，线程中断是线程之间协作的一种手段，中断是取消的一种语义实现，所以这要求你自己的线程必须决定如何响应中断
+
+除非知道某个线程的中断策略，否则不要中断该线程
+
+```java
+// thread1
+while(!isInterrupted()){
+    System.out.println("running");
+    try {
+        Thread.sleep(1000);
+    } catch (InterruptedException e) {
+        break;
+    }
+}
+System.out.println("my thread done");
+
+// main thread
+thread1.interrupt();
+```
+
+JVM 在线程阻塞状态时若发生中断，会抛出一个中断异常，在非阻塞情况下，就需要检查中断状态来判断是否发生中断
 
 ### 使用Future取消
 
@@ -219,16 +227,18 @@ try {
 
 由于如IO等的资源一旦阻塞就无法进行中断，所以可对其做关闭处理来模拟中断
 
-## 停止基于线程的服务
+### 停止基于线程的服务
 
-- 使用生命周期管理ExecutorService
+基于生产者消费者的队列模式，要求消费者等待生产者完全关闭后，才能安全结束
+
+- 使用ExecutorService的生命周期管理方法
 - 毒药对象
-  - 本质上就是一个flag，当队列读取到这个毒药时，就会停止相关操作
+  - 本质上就是一个flag，当队列读取到这个毒药时，就会停止相关操作 这要求生产与消费者数量都要是已知的 因为只有接收到确定数量的毒药对象 才能判断是否所有生产者都停止了
 
-## 处理非正常的线程终止
+### 处理非正常的线程终止
 
 ```java
-hread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
     @Override
     public void uncaughtException(Thread t, Throwable e) {
         System.out.println(t + "something happen" + e);
@@ -243,7 +253,7 @@ new Thread(){
 }.start();
 ```
 
-## JVM关闭钩子
+### JVM关闭钩子
 
 ```java
 Runtime.getRuntime().addShutdownHook(new Thread(){

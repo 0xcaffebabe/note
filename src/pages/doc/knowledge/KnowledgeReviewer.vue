@@ -18,9 +18,9 @@
         <el-timeline-item
           v-for="item in filterDocList"
           :key="item[0]"
-          :timestamp="new Date(item[1].date).toLocaleString() + ' ' + item[1].message"
         >
           <a href="#" @click.prevent="$router.push('/doc/' + item[0])">{{docId2Url(item[0])}}</a>
+          <p class="timestamp">{{new Date(item[1].date).toLocaleString()}} <a :href="repoUrl + '/commit/' + item[1].hash" target="_blank">{{item[1].message}}</a></p>
         </el-timeline-item>
       </el-timeline>
     </div>
@@ -33,6 +33,7 @@ import api from "@/api";
 import CommitInfo from "@/dto/CommitInfo";
 import DocUtils from "@/util/DocUtils";
 import { defineComponent, CSSProperties } from "vue";
+import config from "@/config";
 
 interface Mark {
   style: CSSProperties
@@ -45,6 +46,7 @@ export default defineComponent({
     return {
       displayMode: '倒序' as '正序' | '倒序',
       showDrawer: false as boolean,
+      repoUrl: config.repositoryUrl,
       rangeValue: [0, 20],
       docList: [] as [string, CommitInfo][],
       marks: {
@@ -138,6 +140,14 @@ export default defineComponent({
   :deep(.el-timeline-item:hover .el-timeline-item__node) {
     background-color: #3E90E8 !important;
     border-color: #3E90E8 !important;
+  }
+  .timestamp {
+    margin: 0;
+    padding: 0;
+    margin-top: 8px;
+    color: var(--el-text-color-secondary);
+    line-height: 1;
+    font-size: var(--el-font-size-small);
   }
 }
 .display-mode {

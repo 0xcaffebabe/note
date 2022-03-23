@@ -4725,37 +4725,57 @@ class Bank {
 
 time:105 beat:34
 
-## 653. 两数之和 IV - 输入 BST
+## 622. 设计循环队列
 
-<https://leetcode-cn.com/problems/two-sum-iv-input-is-a-bst/>
+<https://leetcode-cn.com/problems/design-circular-queue/>
 
 ```java
-class Solution {
-    private HashSet<Integer> set = new HashSet<>();
-    private int k;
-    public boolean findTarget(TreeNode root, int k) {
-        this.k = k;
-        preorder(root);
-        if (set.size() == 1) return false;
-        return check(root);
-    }
+class MyCircularQueue {
+    private int[] data;
+    private int capcity;
+    private int size;
+    private int front = 1;
+    private int rear = 1;
 
-    private void preorder(TreeNode root) {
-        if (root == null) return;
-        set.add(root.val);
-        preorder(root.left);
-        preorder(root.right);
+    public MyCircularQueue(int k) {
+        this.data = new int[k + 1];
+        this.capcity = k;
     }
-
-    private boolean check(TreeNode root) {
-        if (root == null) return false;
-        int a = root.val;
-        int b = k - root.val;
-        if (set.contains(b) && a != b) return true;
-        if (check(root.left) || check(root.right)) return true;
-        return false;
+    
+    public boolean enQueue(int value) {
+        if (isFull()) return false;
+        data[rear % capcity] = value;
+        rear++;
+        size++;
+        return true;
+    }
+    
+    public boolean deQueue() {
+        if (isEmpty()) return false;
+        front++;
+        size--;
+        return true;
+    }
+    
+    public int Front() {
+        if (isEmpty()) return -1;
+        return data[(front) % capcity];
+    }
+    
+    public int Rear() {
+        if (isEmpty()) return -1;
+        return data[(rear-1) % capcity];
+    }
+    
+    public boolean isEmpty() {
+        return size == 0;
+    }
+    
+    public boolean isFull() {
+        return size == capcity;
     }
 }
+
 ```
 
-time:3 beat:48
+time:4 beat:100

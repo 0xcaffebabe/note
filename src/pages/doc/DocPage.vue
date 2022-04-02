@@ -195,7 +195,7 @@ export default defineComponent({
       const elm : HTMLElement = document.querySelector('#' + id)!
       window.scrollTo(0, elm.offsetTop - 80)
     },
-    async showDoc(doc: string, headingId?: string) {
+    async showDoc(doc: string, headingId?: string, kw?: string) {
       // 将滚动条设置为上一次的状态
       document.body.scrollTo(0, docService.getDocReadRecord(doc))
       this.loading = true;
@@ -221,11 +221,24 @@ export default defineComponent({
         (this.$refs.docSideCategory as any).syncCategoryListScrollBar();
         // 更新知识网络
         (this.$refs.knowledgeNetwork as InstanceType<typeof KnowledgeNetwork>).init();
+        // 高亮关键词
+        this.hilightKeywords(docEl, kw);
       });
       this.loading = false;
     },
     generateTOC() {
       this.contentsList = docService.getContent(this.contentHtml);
+    },
+    hilightKeywords(docEl: HTMLElement, kw?: string) {
+      if (!kw) {
+        return;
+      }
+      const kwList = kw.trim().split(' ').filter(v => v);
+      let html = docEl.innerHTML;
+      for(let i of kwList) {
+        html = html.replace(new RegExp(i, "gi"), (str) => `<mark>${str}</mark>`);
+      }
+      docEl.innerHTML = html;
     },
     downloadPdf() {
       try {
@@ -245,14 +258,14 @@ export default defineComponent({
   },
   beforeRouteUpdate(to, from) {
     const doc = to.params.doc.toString();
-    this.showDoc(doc, to.query.headingId?.toString());
+    this.showDoc(doc, to.query.headingId?.toString(), to.query.kw?.toString());
     (this.$refs.docSideCategory as any).updateCurrentCategory(doc);
   },
   async created() {
     this.eventManager = new DocPageEventMnager(this);
     this.eventManager!.registerScrollListener();
     this.eventManager!.listenEventBus();
-    this.showDoc(this.$route.params.doc.toString(), this.$route.query.headingId?.toString());
+    this.showDoc(this.$route.params.doc.toString(), this.$route.query.headingId?.toString(), this.$route.query.kw?.toString());
   },
   unmounted(){
     // 一些清理操作
@@ -292,6 +305,12 @@ export default defineComponent({
 }
 .main-content {
   padding-top: 24px;
+}
+.markdown-section {
+  :deep(mark) {
+    color: white;
+    background-color: #f56c6c;
+  }
 }
 @media screen and(max-width: 1366px) {
   .center {

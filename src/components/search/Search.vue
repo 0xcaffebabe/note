@@ -123,6 +123,7 @@ export default defineComponent({
         path: "/doc/" + id,
         query: {
           headingId,
+          kw: this.kw
         },
       });
     },

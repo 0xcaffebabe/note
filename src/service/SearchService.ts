@@ -78,7 +78,7 @@ class SearchService implements Cacheable{
         } as SearchResult
       })
       // 过滤掉目录名没有包含关键词且没有搜索结果的纪录
-      return result.filter(v => v.hilighedSegement.length != 0 || kwContains(kw, v.url))
+      return result.filter(v => (v.hilighedSegement && v.hilighedSegement.length != 0) || kwContains(kw, v.url))
     }
     return []
   }

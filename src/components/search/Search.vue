@@ -16,7 +16,7 @@
         </template>
       </el-autocomplete>
     </template>
-    <div class="search-result" v-loading="showLoading">
+    <div class="search-result" v-loading="showLoading" :element-loading-background="loadingColor">
       <div v-for="result in resultList" :key="result.url">
         <div class="result-item top-heading">
         <h1
@@ -76,6 +76,12 @@ export default defineComponent({
     outerKw() {
       return this.$store.state.currentSearchKw;
     },
+    loadingColor() {
+      if (this.$store.state.isDarkMode) {
+        return 'rgba(0, 0, 0, 0.8)'
+      }
+      return 'rgba(0, 0, 0, 0.2)'
+    }
   },
   watch: {
     outerKw(val: string) {

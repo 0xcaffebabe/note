@@ -2,7 +2,7 @@
   <el-container>
     <doc-side-category :doc="doc" :showAside="showAside" @toggle-aside="showAside = !showAside" ref="docSideCategory" />
     <el-main class="main">
-      <doc-tab-nav />
+      <doc-tab-nav @dbclick="handleTabNavDbclick" />
       <el-skeleton :rows="25" animated :loading="loading" :throttle="50" style="max-width: 80%;margin-top:20px;position:fixed">
         <template #default>
           <div class="main-content">
@@ -195,6 +195,12 @@ export default defineComponent({
       const elm : HTMLElement = document.querySelector('#' + id)!
       window.scrollTo(0, elm.offsetTop - 80)
     },
+    handleTabNavDbclick() {
+      this.syncCategoryListScrollBar();
+    },
+    syncCategoryListScrollBar() {
+      (this.$refs.docSideCategory as any).syncCategoryListScrollBar();
+    },
     async showDoc(doc: string, headingId?: string, kw?: string) {
       // 将滚动条设置为上一次的状态
       document.body.scrollTo(0, docService.getDocReadRecord(doc))
@@ -218,7 +224,7 @@ export default defineComponent({
         // 同步滚动markdown-section到headingId区域
         this.eventManager!.syncHeading(headingId);
         // 同步滚动左侧目录 让当前激活目录位于可视区域
-        (this.$refs.docSideCategory as any).syncCategoryListScrollBar();
+        this.syncCategoryListScrollBar();
         // 更新知识网络
         (this.$refs.knowledgeNetwork as InstanceType<typeof KnowledgeNetwork>).init();
         // 高亮关键词

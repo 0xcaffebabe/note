@@ -9,6 +9,7 @@
         docUrl2Id(currentCate.link) == docUrl2Id(cate) ? 'primary' : 'default'
       "
       @click="$router.push('/doc/' + docUrl2Id(cate))"
+      @dblclick="$emit('dbclick')"
     >
       {{ cateName(cate) }}
     </el-button>
@@ -24,6 +25,7 @@ import TabNavContextMenu from "./TabNavContextMenu.vue";
 
 export default defineComponent({
   inject: ['showHeader'],
+  emits: ['dbclick'],
   components: {
     TabNavContextMenu
   },

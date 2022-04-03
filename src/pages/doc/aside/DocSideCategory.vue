@@ -64,7 +64,7 @@ export default defineComponent({
         const activeMenuPos1: number = activeMenu.getBoundingClientRect().y;
         if (
           (activeMenuPos1 >= 350 &&
-            activeMenuPos1 <= categoryWrapper.offsetHeight) ||
+            activeMenuPos1 <= categoryWrapper.offsetHeight - 350) ||
           categoryWrapper.scrollTop + amount < 0
         ) {
           clearInterval(timer);

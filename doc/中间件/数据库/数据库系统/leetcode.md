@@ -117,3 +117,14 @@ ORDER BY order_count DESC LIMIT 1) AS t;
 ```
 
 time:500 beat:50
+
+## 1729. 求关注者的数量
+
+<https://leetcode-cn.com/problems/find-followers-count/>
+
+```sql
+SELECT user_id, (SELECT COUNT(*) FROM Followers AS t1 WHERE t1.user_id = t2.user_id ) AS followers_count 
+FROM Followers AS t2 GROUP BY user_id ORDER BY user_id
+```
+
+time:800 beat:5

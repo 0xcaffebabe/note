@@ -40,3 +40,35 @@ var point: (x: Int, y: Int) = (1,2)
 var point1 = (x:1, y: 2)
 print("the point: \(point), point1: \(point1)")
 ```
+
+## 运算符
+
+基本的数值逻辑运算符操作跟 Java 一样, 但在 Swift3 之后 ++ -- 已被废弃
+
+=== 与 !== 用来比较对象的引用
+
+### 常量的首次赋值
+
+```swift
+let i: Int
+var condition = false
+if condition {
+    i = 1
+}else {
+    i = 2
+}
+```
+
+### 范围运算符
+
+```swift
+let a = 0..<10 // 前闭后开（0-9）
+print(a)
+// 前闭后闭（1-10）
+for index in 1...10 {
+    print(index)
+    // 循环里的index是常量
+    // index += 1
+}
+
+```

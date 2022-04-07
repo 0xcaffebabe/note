@@ -202,6 +202,7 @@ for case let index in 1...10 where index % 3 == 0 {
 
 ```swift
 // 防御式编程的语义化
+// 只有满足条件才不会进入代码块
 guard num >= 1 else {
     print("stop")
     exit(0)

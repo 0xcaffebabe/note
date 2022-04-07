@@ -4,6 +4,7 @@ export default {
   yearCommitHeatmapUrl: '/commitHeatmap.json',
   hourCommitHeatmap: '/hourCommitHeatmap.json',
   potentialKnowledgeNetwork: '/potentialKnowledgeNetwork.json',
+  category: '/category.json',
   descCommitTimeDocList: '/descCommitTimeDocList.json',
   knowledgeNetworkJson: '/knowledgeNetwork.json',
   commitTotalTrend: '/commitTotalTrend.json',

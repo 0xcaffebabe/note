@@ -10,6 +10,7 @@ import UrlUtils from '@/util/UrlUtils'
 import UrlConst from '@/const/UrlConst'
 import CommitInfo from '@/dto/CommitInfo'
 import YuequeDraft from '@/dto/YuqueDraft'
+import Category from '@/dto/Category'
 
 const baseUrl = () => {
   return DatasourceService.getCurrentDatasource().url
@@ -48,6 +49,18 @@ class Api implements Cacheable{
   @cache
   public async getCategory() : Promise<DocFileInfo>{
     const data = await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.summaryJson))
+    return data.data;
+  }
+
+  /**
+   *
+   * 获取电子书目录(编译过的)
+   * @static
+   * @memberof Api
+   */
+  @cache
+  public async getCompiledCategory() : Promise<Category[]>{
+    const data = await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.category))
     return data.data;
   }
 

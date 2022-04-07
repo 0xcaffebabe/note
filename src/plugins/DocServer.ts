@@ -8,6 +8,7 @@ import GitService from '../build/GitService'
 import DocService from '../build/DocService'
 import StatisticService from '../build/StatisticService'
 import UrlConst from '../const/UrlConst'
+import CategoryService from '../build/CategoryService'
 
 interface DocApiItem {
   name: string
@@ -56,6 +57,11 @@ const apiMappings: DocApiItem[] = [
     name: '标签映射',
     path: '/tagMapping.json',
     method: async () => Array.from((await DocService.buildTagMapping()).entries())
+  },
+  {
+    name: '目录',
+    path: UrlConst.category,
+    method: async () => CategoryService.getCategoryList()
   },
 ]
 

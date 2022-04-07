@@ -41,6 +41,27 @@ class CategoryService implements Cacheable {
     ]
   }
 
+  /**
+   *
+   * 获取编译过后的文档目录列表
+   * @return {*}  {Promise<Category[]>}
+   * @memberof CategoryService
+   */
+  @cache
+  public async getCompiledCategoryList(): Promise<Category[]> {
+    const categoryList = await api.getCompiledCategory();
+    const stack = [...categoryList]
+    // 设置目录父目录
+    while(stack.length != 0) {
+      const category = stack.pop()
+      if (category?.chidren) {
+        category.chidren.forEach(i => i.parent = category)
+        stack.push(...category.chidren)
+      }
+    }
+    return categoryList
+  }
+
 
   /**
    *

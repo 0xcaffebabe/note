@@ -7,7 +7,8 @@
     :lock-scroll="false"
     :append-to-body="false"
     @close="$emit('close')"
-    modal-class="drawer-modal-class"
+    modal-class="operational-drawer-modal"
+    custom-class="operational-drawer"
   >
     <mind ref="mind" id="mindGraphMind" :mind-data="mindData" @node-click="handleNodeClick"/>
   </el-drawer>
@@ -43,6 +44,12 @@ export default defineComponent({
         this.$refs.mind && (this.$refs.mind as InstanceType<typeof Mind>).select(val);
       })
     },
+    $route(to, from) {
+      // 只有在可视化状态才需要更新视图
+      if (this.showDrawer) {
+        this.showMind()
+      }
+    }
   },
   methods: {
     mindConvert(toc: Content[]): MindNode[] {

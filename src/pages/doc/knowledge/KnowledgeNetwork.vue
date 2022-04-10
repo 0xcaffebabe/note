@@ -6,7 +6,8 @@
     title="知识网络"
     @close="$emit('close')"
     :lock-scroll="false"
-    modal-class="drawer-modal-class"
+    modal-class="operational-drawer-modal"
+    custom-class="operational-drawer"
   >
   <el-select v-model="mode" placeholder="显示模式" size="mini" popper-class="popper-list">
       <el-option

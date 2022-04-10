@@ -331,3 +331,125 @@ var a: String! = nil
 // 执行错误
 print(a + "dsds")
 ```
+
+## 数组
+
+### 声明
+
+```swift
+var nums = [0,1,2,3]
+
+// 指定类型
+var strings: [String] = ["0","2", "a"]
+
+// 空数组
+var es : Array<Int> = []
+var es1 = [Int]()
+
+// 5个元素初始值 全为5
+var allZeros = [Int](repeating: 5, count: 5)
+```
+
+### 基本操作
+
+```java
+print(allZeros.count)
+print(allZeros.isEmpty)
+// 数组越界会有运行异常
+print(allZeros[3])
+print(allZeros.first!, allZeros.last!)
+print(nums.min()!, nums.max()!)
+
+// 子数组 1,2,3
+print(nums[1..<4])
+print(nums.contains(3))
+print(nums.firstIndex(of: 3)!)
+
+// for-each
+for number in nums {
+    print(number)
+}
+// 带下标的for-each
+for (index, item) in strings.enumerated() {
+    print(index, item)
+}
+
+// 值比较
+print(nums == [0,1,2,3])
+```
+
+### 修改
+
+```swift
+es.append("jntm")
+// 添加两个元素到数组里面
+es += ["cxk", "juki"]
+// 插入后位于索引2
+es.insert("ctrl", at: 2)
+es.removeLast()
+es.removeFirst()
+// 删除指定下标
+es.remove(at: 1)
+es.removeAll()
+
+nums[0] = 3
+// 区间设置值
+nums[0...2] = [9,9,9]
+// 两边长度可以不一致
+nums[0...2] = [7]
+```
+
+### NSArray
+
+```swift
+// 可以承载不同数据类型
+var na: NSArray = [1, "hello", 3]
+```
+
+## 集合
+
+### 字典
+
+```swift
+var dict: [String: String] = ["name": "cxk", "age": "18"]
+var dict1: Dictionary<String, String> = [:]
+
+print(dict["name"]!)
+print(Array(dict.keys))
+print(Array(dict.values))
+for key in dict.keys {
+    print(dict[key]!)
+}
+for (key, value) in dict {
+    print(key, value)
+}
+print(dict == ["name": "cxk", "age": "18"])
+
+// 更新
+dict["name"] = "jntm"
+// 这个方法会返回其之前的值
+dict.updateValue("jntm", forKey: "name")
+// 删除
+dict["name"] = nil
+dict.removeValue(forKey: "name")
+dict.removeAll()
+```
+
+### Set
+
+```swift
+// 声明
+var set : Set<String> = ["a", "b" , "c"]
+
+for i in set {
+    print(i)
+}
+print(set == ["b", "c", "a"])
+set.insert("aa")
+set.remove("c")
+// 集合运算
+print(set.union(["a","aa"]))
+print(set.intersection(["a", "aa"]))
+print(set.subtracting(["a", "aa"]))
+print(set.symmetricDifference(["a", "aa"]))
+```

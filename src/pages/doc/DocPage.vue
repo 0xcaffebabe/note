@@ -46,6 +46,9 @@
     @showKnowledgeReviewer="showKnowledgeReviewer"
   />
   <!-- 工具栏结束 -->
+  <!-- 关键词提示器开始 -->
+  <key-word-finder ref="kwFinder" :kw="kw"/>
+  <!-- 关键词提示器结束 -->
   <link-popover ref="linkPopover"/>
   <el-backtop :bottom="40" :right="326" />
   <reading-history ref="readingHistory" />
@@ -93,6 +96,7 @@ import DocPageEventMnager from './DocPageEventManager';
 import ResourceBrower from "./ResourceBrower.vue";
 import ImageViewer from "@/components/ImageViewer.vue";
 import KnowledgeReviewer from "./knowledge/KnowledgeReviewer.vue";
+import KeyWordFinder from "./KeyWordFinder.vue";
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -112,7 +116,8 @@ export default defineComponent({
     DocTabNav,
     ResourceBrower,
     ImageViewer,
-    KnowledgeReviewer
+    KnowledgeReviewer,
+    KeyWordFinder
 },
   watch: {
     showHeader: {
@@ -131,6 +136,7 @@ export default defineComponent({
     const bookMark = ref<InstanceType<typeof BookMark>>()
     const linkList = ref<InstanceType<typeof LinkList>>()
     const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
+    const kwFinder = ref<InstanceType<typeof KeyWordFinder>>()
     const showReadingHistory = () => {
       readingHistory.value?.show()
     }
@@ -162,7 +168,8 @@ export default defineComponent({
       knowledgeSystem, showKnowledgeSystem,
       bookMark, showBookmarkAdder, showBookmarkList, 
       linkList, showLinkList,
-      knowledgeReviewer, showKnowledgeReviewer
+      knowledgeReviewer, showKnowledgeReviewer,
+      kwFinder
     }
   },
   data() {
@@ -170,6 +177,7 @@ export default defineComponent({
       file: new DocFileInfo() as DocFileInfo,
       contentsList: [] as Content[],
       doc: "" as string,
+      kw: "" as string,
       loading: true as boolean,
       showAside: true as boolean,
       isDrawerShow: false as boolean,
@@ -206,6 +214,7 @@ export default defineComponent({
       document.body.scrollTo(0, docService.getDocReadRecord(doc))
       this.loading = true;
       this.doc = doc;
+      this.kw = kw || "";
       try {
         this.file = await api.getDocFileInfo(doc);
       } catch (err: any) {
@@ -229,6 +238,8 @@ export default defineComponent({
         (this.$refs.knowledgeNetwork as InstanceType<typeof KnowledgeNetwork>).init();
         // 高亮关键词
         this.hilightKeywords(docEl, kw);
+        // 更新关键词寻找器状态
+        this.kwFinder?.refresh();
       });
       this.loading = false;
     },
@@ -315,7 +326,7 @@ export default defineComponent({
 .markdown-section {
   :deep(mark) {
     color: white;
-    background-color: #f56c6c;
+    background-color: #E6A23C;
   }
 }
 @media screen and(max-width: 1366px) {

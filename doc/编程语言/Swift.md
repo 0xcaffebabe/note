@@ -558,3 +558,70 @@ func execute(){
 }
 execute()
 ```
+
+## 闭包
+
+```swift
+var res = [1, 2, 3].sorted(by: { (a: Int, b: Int) -> Bool in
+    return a > b
+})
+print(res)
+
+// 化简
+print([1,2,3].sorted(by: {a, b in a > b}))
+// 默认命名
+print([1, 2, 3].sorted(by: {$0 > $1}))
+// 大于号本身是一个函数
+print([1,2,3].sorted(by: >))
+
+// 结尾闭包 最后一个参数是闭包的话 可以使用这种语法
+print([1,2,3].sorted{ a, b in a > b})
+print([1,2,3].map{v in String(v)})
+
+// 内容捕获
+var num = 700
+print([1,2,3].sorted{a , b in abs(a-num) < abs(b-num)})
+```
+
+## 枚举
+
+```swift
+enum Color: String {
+    case Red = "红色",Yellow = "黄色",Blue = "蓝色"
+}
+let color: Color = .Blue
+
+switch color {
+case .Blue:
+    print(color.rawValue)
+case .Yellow:
+    print(color.rawValue)
+case .Red:
+    print(color.rawValue)
+}
+
+// 使用rawValue获取枚举值
+print(Color(rawValue: "红色")!)
+
+// 关联值
+enum Status {
+    case Success(message: String, code: Int)
+    case Error(String)
+}
+let result = Status.Success(message: "done", code: 200)
+switch result {
+case let .Success(message, _):
+    print("sucess \(message)")
+case .Error:
+    print("error")
+}
+
+// 可选型的本质就是使用了关联值的枚举
+let name: String? = Optional.some("jntm")
+switch name {
+case let .some(name):
+    print(name)
+case .none:
+    print("is nil")
+}
+```

@@ -1,6 +1,7 @@
 <template>
-  <div class="kw-finder-root" v-if="kw">
-    <span class="kw">{{ kw }}</span>
+  <div class="kw-finder-root" v-if="showFinder">
+    
+    <el-input class="kw" v-model="innerKw" @keypress.enter="$emit('kwChanged', innerKw)"></el-input>
     <span class="counter">{{ currentIndex }}/{{ resultSize }}</span>
     <el-divider direction="vertical" />
     <el-button-group>
@@ -38,13 +39,37 @@ export default defineComponent({
       required: true,
     },
   },
+  emits: ['kwChanged'],
   methods: {
-    refresh() {
+    // 刷新状态 传入一个关键词 优先使用该关键词填入搜索框
+    // 后备使用当前页面的kw搜索参数
+    refresh(kw?: string) {
+      if (this.kw) {
+        this.showFinder = true
+      }
+      // 只有可视状态才需要更新视图
+      if (!this.showFinder){
+        return
+      }
       this.resultSize =
         document
           .querySelector(".markdown-section")
           ?.getElementsByTagName("mark").length || 0;
       this.currentIndex = 0
+      if (kw) {
+        this.innerKw = kw
+      }else {
+        this.innerKw = this.kw
+      }
+    },
+    show() {
+      this.showFinder = true
+    },
+    hide() {
+      this.showFinder = false
+    },
+    toggle() {
+      this.showFinder = !this.showFinder
     },
     down() {
       if (this.currentIndex <= 1) {
@@ -80,6 +105,8 @@ export default defineComponent({
     return {
       resultSize: 0,
       currentIndex: 0,
+      innerKw: '',
+      showFinder: false,
     };
   },
 });
@@ -103,6 +130,10 @@ export default defineComponent({
   line-height: 44px;
   width: 160px;
   font-size: 14px;
+  border: none;
+  :deep(.el-input__inner){
+    border: none;
+  }
 }
 .counter {
   display: inline-block;
@@ -115,6 +146,9 @@ body[theme="dark"] {
   .kw-finder-root {
     background-color: var(--second-dark-bg-color);
     box-shadow: 2px 0 13px #111;
+    .kw :deep(.el-input__inner){
+      background-color: var(--second-dark-bg-color)!important;
+    }
   }
   .el-button.is-disabled {
     background-color: #777;

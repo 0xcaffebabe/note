@@ -47,7 +47,7 @@
   />
   <!-- 工具栏结束 -->
   <!-- 关键词提示器开始 -->
-  <key-word-finder ref="kwFinder" :kw="kw"/>
+  <key-word-finder ref="kwFinder" :kw="kw" @kwChanged="handleKwChanged"/>
   <!-- 关键词提示器结束 -->
   <link-popover ref="linkPopover"/>
   <el-backtop :bottom="40" :right="326" />
@@ -246,7 +246,14 @@ export default defineComponent({
     generateTOC() {
       this.contentsList = docService.getContent(this.contentHtml);
     },
-    hilightKeywords(docEl: HTMLElement, kw?: string) {
+    handleKwChanged(kw: string){
+      const docEl = this.$refs.markdownSection as HTMLElement;
+      // 清空高亮关键词
+      docEl.querySelectorAll('mark').forEach(e => e.replaceWith(...e.childNodes))
+      // 高亮关键词
+      this.hilightKeywords(docEl, kw, true);
+    },
+    hilightKeywords(docEl: HTMLElement, kw?: string, refreshKwFinder: boolean = false) {
       if (!kw) {
         return;
       }
@@ -256,6 +263,9 @@ export default defineComponent({
         html = html.replace(new RegExp(i, "gi"), (str) => `<mark>${str}</mark>`);
       }
       docEl.innerHTML = html;
+      if (refreshKwFinder) {
+        this.kwFinder?.refresh(kw)
+      }
     },
     downloadPdf() {
       try {
@@ -283,6 +293,13 @@ export default defineComponent({
     this.eventManager!.registerScrollListener();
     this.eventManager!.listenEventBus();
     this.showDoc(this.$route.params.doc.toString(), this.$route.query.headingId?.toString(), this.$route.query.kw?.toString());
+    // 全局快捷键监听
+    document.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() == "f") {
+        this.kwFinder?.toggle()
+        e.preventDefault();
+      }
+    });
   },
   unmounted(){
     // 一些清理操作

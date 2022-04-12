@@ -132,6 +132,7 @@ let f = res => res.data;
 
 ```js
 // 箭头函数不绑定this关键字，箭头函数中的this，指向的是函数定义位置的上下文this
+// 需要注意的是 如果有多层箭头函数 那么最里层的箭头函数this的指向最其外面一层的this
 var obj = {
     f: () => {
         console.log(this); // Window

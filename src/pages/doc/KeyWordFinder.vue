@@ -2,7 +2,7 @@
   <div class="kw-finder-root" v-if="showFinder">
     
     <el-input class="kw" v-model="innerKw" @keypress.enter="$emit('kwChanged', innerKw)"></el-input>
-    <span class="counter">{{ currentIndex }}/{{ resultSize }}</span>
+    <span class="counter">{{ currentIndex }}/{{ resultSize }}/<span class="visible-index" @click="handleVisibleIndexClick">{{visibleIndex}}</span></span>
     <el-divider direction="vertical" />
     <el-button-group>
       <el-button
@@ -62,6 +62,10 @@ export default defineComponent({
         this.innerKw = this.kw
       }
     },
+    handleVisibleIndexClick() {
+      this.currentIndex = this.visibleIndex;
+      this.jump()
+    },
     show() {
       this.showFinder = true
     },
@@ -85,7 +89,7 @@ export default defineComponent({
       this.currentIndex++;
       this.jump();
     },
-    jump() {
+    jump(withScroll: boolean = true) {
       const markList = document.querySelector(".markdown-section")?.getElementsByTagName("mark") || []
       // 清空选中样式
       for(let i of markList) {
@@ -94,12 +98,39 @@ export default defineComponent({
       const kwElm = document.querySelector(".markdown-section")?.getElementsByTagName("mark")[this.currentIndex-1];
       if (kwElm) {
         kwElm.classList.add("hilight-choosed")
-        window.scrollTo(0, kwElm.offsetTop - 280)
+        if (withScroll) {
+          if (kwElm.offsetTop - 280 > window.scrollY || kwElm.offsetTop - 280 < 0) {
+            return
+          }
+          window.scrollTo(0, kwElm.offsetTop - 280)
+        }
       }
     }
   },
   created() {
     this.$nextTick(this.refresh);
+
+    let timer: NodeJS.Timeout;
+    document.addEventListener("scroll", (e) => {
+      // 限流同步关键词当前位置
+      clearTimeout(timer);
+      const that = this
+      timer = setTimeout(() => {
+        // 没有显示的时候不进行同步
+        if (!that.showFinder) {
+          return
+        }
+        const markList = document.querySelector(".markdown-section")?.getElementsByTagName("mark") || []
+        for(let i = 0; i < markList.length; i++) {
+          const mark = markList[i];
+          const difference = window.scrollY - mark.offsetTop + 280
+          if (difference > 0 && difference < 50) {
+            that.visibleIndex = i + 1
+            break
+          }
+        }
+      }, 10);
+    });
   },
   data() {
     return {
@@ -107,6 +138,7 @@ export default defineComponent({
       currentIndex: 0,
       innerKw: '',
       showFinder: false,
+      visibleIndex: 0
     };
   },
 });
@@ -118,7 +150,8 @@ export default defineComponent({
   position: fixed;
   bottom: 14px;
   left: 288px;
-  width: 330px;
+  // width: 330px;
+  padding-right: 10px;
   height: 44px;
   border-radius: 5px;
   background-color: #fff;
@@ -140,6 +173,10 @@ export default defineComponent({
   padding-left: 10px;
   line-height: 44px;
   font-size: 14px;
+}
+.visible-index {
+  color:#999;
+  cursor: pointer;
 }
 
 body[theme="dark"] {

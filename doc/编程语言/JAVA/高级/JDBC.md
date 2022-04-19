@@ -49,8 +49,8 @@ while (rs.next()){
 
 ```java
 connection.setAutoCommit(false);
-            connection.commit();
-            connection.rollback();
+connection.commit();
+connection.rollback();
 ```
 
 ## 数据库连接池
@@ -66,7 +66,6 @@ connection.setAutoCommit(false);
 - 活动线程数：正在被使用的
 - 最大线程数：限制最多只能创建的线程数
 
-
 ## JDBCUtils
 
 - 提供静态代码块加载配置文件，初始化连接池对象
@@ -75,3 +74,18 @@ connection.setAutoCommit(false);
   - 获取连接方法：通过数据库连接池获取连接
   - 释放资源
   - 获取连接池的方法
+
+## DruidDatasource在并发环境下卡死的问题
+
+在测试一个并发写入时，当线程数超过一定量时，发现线程阻塞住了。使用VisualVM 分析线程栈
+
+发现线程在druid相关代码附近处于wating状态：
+
+![屏幕截图 2021-06-10 102911](/assets/屏幕截图%202021-06-10%20102911.png)
+
+druid 默认的最大连接为8 将其调大一点即可。
+
+```yml
+max-active: 50
+remove-abandoned: true
+```

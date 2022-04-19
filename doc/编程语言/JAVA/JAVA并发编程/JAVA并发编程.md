@@ -368,6 +368,82 @@ synchronized(obj){
 
 偏向于让第一个获取锁对象的线程，这个线程在之后获取该锁就不再需要进行同步操作，甚至连 CAS 操作也不再需要
 
+## 同步工具类设计
+
+### 状态依赖性管理
+
+```java
+// 可阻塞的状态依赖操作结构
+获取锁
+while(前置条件不满足) {
+    释放锁
+    等待至前置条件满足
+    如果超时或者被interrupt则失败
+}
+执行动作
+释放锁
+```
+
+#### 调用者处理失败
+
+简单地将失败传递给调用者：只是将处理失败的职责从服务代码转移到客户代码
+
+```java
+synchroized void put() {
+    if (full) throw Excetion
+    putVal()
+}
+```
+
+#### 自旋阻塞
+
+这种方式的问题在于如果线程一进入休眠，条件马上变为真，此时会浪费大量的时间在休眠上
+
+```java
+void put(){
+    while(true) {
+        synchroized(this) {
+            if (full) {
+                Thread.sleep(1999);
+                continue;
+            }
+            putVal()
+            return;
+        }
+    }
+}
+```
+
+#### 条件队列
+
+```java
+synchroized void put() {
+    // wait会释放锁
+    // 当从wait中恢复，也就是被唤醒了，此时又获得了这把锁
+    // 等待的这个条件必须在变真时，以某种形式发出通知 否则死锁
+    while(full) wait(); // 即使被唤醒了 也不代表前置条件为真了 所以wait必须在一个循环中
+    doPut();
+    notifyAll();
+}
+```
+
+### 显式Condtion
+
+这种方式相较于条件队列拥有更多的功能：可中断不可中断等待、基于时限的等待、公平等待
+
+```java
+notFull = lock.newCondtion();
+notEmpty = lock.newCondtion();
+...
+void put(){
+    lock.lock();
+    while(full) notFull.await();
+    putVal();
+    notEmpty.singnal();
+    lock.unlock(); // 应该使用finally释放
+}
+```
+
 ## 并发编程良好实践
 
 - 给线程起名字

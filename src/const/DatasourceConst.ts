@@ -5,6 +5,11 @@ export default [
     desc: '与本文档同源'
   },
   {
+    id: 'cn',
+    url: '//b.ismy.wang/',
+    desc: '国内服务器'
+  },
+  {
     id: 'proxy-cf',
     url: '//proxy.ismy.wang/',
     desc: 'cloudflare代理'

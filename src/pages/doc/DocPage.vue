@@ -240,6 +240,10 @@ export default defineComponent({
         this.hilightKeywords(docEl, kw);
         // 更新关键词寻找器状态
         this.kwFinder?.refresh();
+        // 如果关键词为空且关键词寻找器为显式状态
+        if (!kw && this.kwFinder?.showFinder) {
+          this.kwFinder.hide()
+        }
       });
       this.loading = false;
     },

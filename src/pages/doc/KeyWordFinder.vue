@@ -1,7 +1,7 @@
 <template>
   <div class="kw-finder-root" v-if="showFinder">
     
-    <el-input class="kw" v-model="innerKw" @keypress.enter="$emit('kwChanged', innerKw)"></el-input>
+    <el-input class="kw" v-model="innerKw" @keypress.enter="$emit('kwChanged', innerKw)" @keyup.esc="showFinder = false" ref="kwInput"></el-input>
     <span class="counter">{{ currentIndex }}/{{ resultSize }}/<span class="visible-index" @click="handleVisibleIndexClick">{{visibleIndex}}</span></span>
     <el-divider direction="vertical" />
     <el-button-group>
@@ -19,12 +19,18 @@
         @click="up"
         :disabled="currentIndex >= resultSize"
       />
+      <el-button
+        :icon="CloseBold"
+        size="mini"
+        plain
+        @click="showFinder = false"
+      />
     </el-button-group>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ArrowDownBold, ArrowUpBold } from "@element-plus/icons";
+import { ArrowDownBold, ArrowUpBold,CloseBold } from "@element-plus/icons";
 </script>
 
 <script lang="ts">
@@ -40,6 +46,23 @@ export default defineComponent({
     },
   },
   emits: ['kwChanged'],
+  watch: {
+    showFinder() {
+      if (!this.showFinder) {
+        // 隐藏的时候清空高亮样式
+        document.querySelector(".markdown-section")!.querySelectorAll('mark').forEach(e => e.replaceWith(...e.childNodes))
+        this.currentIndex = 0
+        this.visibleIndex = 0
+        this.innerKw = ""
+        this.resultSize = 0
+      }else {
+        // 显示的时候聚焦输入框
+        this.$nextTick(() => {
+          (this.$refs.kwInput as any).focus();
+        })
+      }
+    }
+  },
   methods: {
     // 刷新状态 传入一个关键词 优先使用该关键词填入搜索框
     // 后备使用当前页面的kw搜索参数
@@ -56,6 +79,7 @@ export default defineComponent({
           .querySelector(".markdown-section")
           ?.getElementsByTagName("mark").length || 0;
       this.currentIndex = 0
+      this.visibleIndex = 0
       if (kw) {
         this.innerKw = kw
       }else {
@@ -67,7 +91,7 @@ export default defineComponent({
       this.jump()
     },
     show() {
-      this.showFinder = true
+      this.showFinder = true;
     },
     hide() {
       this.showFinder = false

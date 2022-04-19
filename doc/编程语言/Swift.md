@@ -868,3 +868,55 @@ struct ReversedList {
     }
 }
 ```
+
+## 扩展
+
+```swift
+extension String {
+    // 如果扩展类的构造方法 则构造方法必须是便利构造方法
+    init(by: String) {
+        self.init(by.uppercased())
+    }
+    
+    // 扩展的属性只能是计算型属性
+    var length: Int {
+        self.count
+    }
+    
+    func firstChar() -> Character {
+        return self[self.startIndex]
+    }
+    
+    // 嵌套类型
+    struct Range {}
+}
+
+let range : String.Range? = nil
+```
+
+## 泛型
+
+```swift
+// 泛型函数
+func swap<T>(a: inout T, b: inout T) {
+    (a,b) = (b,a)
+}
+
+var a = "123"
+var b = "321"
+swap(a: &a, b: &b)
+print(a,b)
+
+// 泛型类型
+struct ArrayList<T> {
+    var data: [T] = []
+    
+    mutating func add(e: T) {
+        data += [e]
+    }
+}
+
+var list = ArrayList<String>()
+list.add(e: "123")
+print(list)
+```

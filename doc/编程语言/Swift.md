@@ -920,3 +920,51 @@ var list = ArrayList<String>()
 list.add(e: "123")
 print(list)
 ```
+
+## 协议
+
+```swift
+protocol Runnable {
+    
+    // 协议的属性
+    var threadName: String {get set}
+    
+    // 协议的方法
+    func run()
+}
+struct Task: Runnable {
+    var threadName = "test"
+    func run() {
+        print("running")
+    }
+    
+}
+
+// 只有类才能实现该协议
+protocol Future: AnyObject {}
+class MyFuture: Future{}
+
+// 如果既需要继承有需要协议 则继承类要放在协议的前面
+class Callable: NSObject, Future {}
+
+// 类型别名
+typealias Length = Int
+let length: Length = 123
+
+// 类型参数化
+protocol WeightCalacuable {
+    associatedtype WightType
+    var weight: WightType {get}
+}
+
+class Phone: WeightCalacuable {
+    typealias WightType = Double
+    var weight = 0.114
+}
+class Boat: WeightCalacuable {
+    typealias WightType = Int
+    var weight = 100_0000
+}
+```
+
+标准库的常用协议：Equatable, Comparable, CustomStringCovertible

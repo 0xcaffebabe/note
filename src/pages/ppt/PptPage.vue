@@ -53,7 +53,7 @@ import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
 import { defineComponent } from "vue";
 import "../doc/markdown-v1.less";
-import "../doc/code-hl-vsc.css";
+import "../doc/code-hl-vsc.less";
 import ContentsList from "../doc/contents/ContentsList.vue";
 import ToolBox from "../doc/ToolBox.vue";
 import PptPageEventManager from "./PptPageEventManager";

@@ -85,7 +85,7 @@ import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
 import { ElMessage } from 'element-plus'
 import './markdown-v1.less'
-import './code-hl-vsc.css'
+import './code-hl-vsc.less'
 import DocUtils from "@/util/DocUtils";
 import PdfUtils from '@/util/PdfUtils';
 import DocSideCategory from './aside/DocSideCategory.vue';

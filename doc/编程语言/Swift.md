@@ -968,3 +968,55 @@ class Boat: WeightCalacuable {
 ```
 
 标准库的常用协议：Equatable, Comparable, CustomStringCovertible
+
+### 面向协议编程
+
+```swift
+// 扩展协议
+protocol Callable: Runnable{
+    func call() -> Int
+    
+}
+// 协议的默认实现
+extension Callable {
+    func run() {
+        let _ = self.call()
+    }
+}
+// 限定扩展：只有同时实现Callable和WeightCalacuable才应用
+extension Callable where Self: WeightCalacuable {
+    func run() {
+        print("calc run")
+    }
+}
+struct Computer: Callable, WeightCalacuable {
+    var weight: Int
+    func call() -> Int {
+        return 0
+    }
+    
+    typealias WightType = Int
+    var threadName: String
+    
+}
+Computer(weight: 1, threadName: "test").run()
+// 协议聚合：同时实现两种协议的参数才被接受
+func run(computeable: Callable & CustomStringConvertible){}
+// 泛型约束
+func topOne<T: Comparable & CustomStringConvertible>(seq: [T]) -> T {
+    let ans = seq.sorted()[0]
+    print(ans.description)
+    return ans
+}
+print(topOne(seq: [67,6,4,23,45,2,1]))
+
+// 协议的可选方法
+@objc protocol Service {
+    @objc optional func start()
+}
+class UserService: Service{}
+let service: Service = UserService()
+if let start = service.start {
+    start()
+}
+```

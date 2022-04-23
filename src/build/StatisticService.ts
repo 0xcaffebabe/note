@@ -196,25 +196,37 @@ class StatisticService extends BaseService {
     }
     const langMap = new Map<string, number>();
 
+    function convertLangCount(text: String): [string, number][] {
+      const arr = text.split("\n")
+      let result: [string, number][] = []
+      
+      var lines = 0
+      var currentLang = ""
+      for(let line of arr) {
+        const lang = line.replace(/`/g, '').trim()
+        if (line.indexOf("```") != -1 && lang) {
+          result.push([lang, lines])
+          currentLang = lang
+        } else if (line.indexOf("```") != -1 && !lang) {
+          lines = 0
+          currentLang = ""
+        }else if (currentLang) {
+          result[result.length - 1][1]++
+        }
+      }
+      return result
+    }
+
     (await Promise.all(taskList))
       .map(v => v.toString())
-      .map(v => v.split('\n'))
+      .map(convertLangCount)
       .flatMap(v => v)
-      .filter(v => v.indexOf('```') != -1)
-      .map(v => {
-        if (v.indexOf('```') != -1) {
-          return v.replace(/`/g, '')
-        }
-        return ''
-      })
-      .map(v => v.trim())
-      .filter(v => v)
-      .filter(v => v.length < 12)
+      .filter(v => v[0].length < 12)
       .forEach(v => {
-        if (langMap.has(v)) {
-          langMap.set(v, langMap.get(v)! + 1)
+        if (langMap.has(v[0])) {
+          langMap.set(v[0], langMap.get(v[0])! + v[1])
         }else{
-          langMap.set(v, 1)
+          langMap.set(v[0], v[1])
         }
       })
       return Array.from(langMap)

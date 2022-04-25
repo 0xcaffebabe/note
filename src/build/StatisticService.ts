@@ -217,11 +217,20 @@ class StatisticService extends BaseService {
       return result
     }
 
+    const alias: any = {'js': 'javascript', 'sh': 'shell', 'py': 'python', 'rb': 'ruby', 'yaml': 'yml', 'el': 'erlang', 'erl': 'erlang'};
+
     (await Promise.all(taskList))
       .map(v => v.toString())
       .map(convertLangCount)
       .flatMap(v => v)
       .filter(v => v[0].length < 12)
+      .map(v => {v[0] = v[0].toLowerCase(); return v})
+      .map(v => {
+        if (alias[v[0]]) {
+          v[0] = alias[v[0]]
+        }
+        return v
+      })
       .forEach(v => {
         if (langMap.has(v[0])) {
           langMap.set(v[0], langMap.get(v[0])! + v[1])

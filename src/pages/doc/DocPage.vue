@@ -223,11 +223,6 @@ export default defineComponent({
       this.generateTOC();
       this.$nextTick(() => {
         const docEl = this.$refs.markdownSection as HTMLElement;
-        // 注册一些针对markdown-section的必要的事件
-        this.eventManager!.registerLinkRouter(docEl);
-        this.eventManager!.registerImageClick(docEl);
-        this.eventManager!.registerHeadingClick(docEl);
-        this.eventManager!.registerDocTagSupClick(docEl);
         // 渲染mermaid
         this.eventManager!.renderMermaid();
         // 同步滚动markdown-section到headingId区域
@@ -244,8 +239,16 @@ export default defineComponent({
         if (!kw && this.kwFinder?.showFinder) {
           this.kwFinder.hide()
         }
+        this.registerNecessaryEvent(docEl)
       });
       this.loading = false;
+    },
+    registerNecessaryEvent(docEl: HTMLElement) {
+      // 注册一些针对markdown-section的必要的事件
+      this.eventManager!.registerLinkRouter(docEl);
+      this.eventManager!.registerImageClick(docEl);
+      this.eventManager!.registerHeadingClick(docEl);
+      this.eventManager!.registerDocTagSupClick(docEl);
     },
     generateTOC() {
       this.contentsList = docService.getContent(this.contentHtml);
@@ -256,6 +259,8 @@ export default defineComponent({
       docEl.querySelectorAll('mark').forEach(e => e.replaceWith(...e.childNodes))
       // 高亮关键词
       this.hilightKeywords(docEl, kw, true);
+      // 重新注册事件(高亮关键词替换了html 导致原来的事件失效)
+      this.registerNecessaryEvent(docEl)
     },
     hilightKeywords(docEl: HTMLElement, kw?: string, refreshKwFinder: boolean = false) {
       if (!kw) {

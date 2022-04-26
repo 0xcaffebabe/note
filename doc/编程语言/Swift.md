@@ -1089,3 +1089,19 @@ p = nil
 ```
 
 对于闭包循环引用 可以使用 [unoned xxx] 的方式来声明闭包内的变量为弱引用
+
+## 类型检查与转换
+
+```swift
+class Animal{}
+class Duck: Animal{}
+class Dog: Animal{}
+
+let dog: Animal = Dog()
+// 类型检查
+print(dog is Dog)
+// 尝试强制转型 失败返回nil
+print((dog as? Dog)!)
+```
+
+Any > AnyObject > NSObject

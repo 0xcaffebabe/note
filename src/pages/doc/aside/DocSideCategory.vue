@@ -14,7 +14,7 @@
     <el-affix :offset="384" style="height: 100px">
       <el-button
         class="cate-fix-btn"
-        type="default"
+        type="primary"
         size="mini"
         @click="$emit('toggleAside')"
         :class="{ active: showAside }"
@@ -103,15 +103,19 @@ export default defineComponent({
   overflow-y: scroll;
 }
 .cate-fix-btn {
-  padding: 7px 2px;
+  padding: 10px 8px;
   margin-left: 26px;
+  box-shadow: 2px 2px 5px #bbb;
 }
 .el-affix .active {
-  margin-left: -26px;
+  margin-left: 10px;
 }
 body[theme=dark] {
   .category-wrapper {
     box-shadow: 5px 0 13px -5px #111;
+  }
+  .cate-fix-btn{
+    box-shadow: 2px 2px 5px #111;
   }
 }
 </style>

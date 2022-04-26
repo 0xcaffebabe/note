@@ -9,7 +9,7 @@
       </el-affix>
     </el-header>
     <div class="header-toggle-button" :style="{'margin-top': showHeader ?'66px': '6px'}">
-      <el-button @click="showHeader = !showHeader" size="mini">
+      <el-button @click="showHeader = !showHeader" size="mini" type="primary">
         <el-icon>
           <arrow-up-bold v-if="showHeader" />
           <arrow-down-bold v-else />
@@ -131,6 +131,7 @@ export default defineComponent({
   z-index: 1000;
   .el-button {
     padding: 0 16px;
+    box-shadow: 2px 2px 13px #bbb;
   }
 }
 
@@ -142,6 +143,11 @@ body[theme=dark] {
   .el-header {
     background-color:var(--main-dark-bg-color);
     color: var(--main-dark-text-color);
+  }
+  .header-toggle-button {
+    .el-button {
+      box-shadow: 2px 2px 13px #111;
+    }
   }
 }
 </style>

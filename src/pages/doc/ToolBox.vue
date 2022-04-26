@@ -3,7 +3,7 @@
     <el-dropdown>
       <div>
 
-      <el-button type="primary" round size="mini">
+      <el-button type="primary" round size="mini" class="fix-button">
         <el-icon style="vertical-align: middle"><tools /></el-icon> 工具栏
       </el-button>
       </div>
@@ -180,6 +180,9 @@ export default defineComponent({
 .more-setting-container {
   padding: 10px;
 }
+.fix-button {
+  box-shadow: 2px 2px 13px #bbb;
+}
 
 body[theme=dark] {
   .el-dropdown-menu {
@@ -198,6 +201,9 @@ body[theme=dark] {
   }
   .el-dropdown-menu__item:focus, .el-dropdown-menu__item:not(.is-disabled):hover {
     background-color: var(--main-dark-bg-color);
+  }
+  .fix-button {
+    box-shadow: 2px 2px 13px #111;
   }
 }
 </style>

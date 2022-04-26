@@ -97,6 +97,7 @@ export default defineComponent({
   position: fixed;
   overflow-y: hidden;
   width: 280px;
+  box-shadow: 5px 0 5px -5px #bbb;
 }
 .category-wrapper:hover {
   overflow-y: scroll;
@@ -107,5 +108,10 @@ export default defineComponent({
 }
 .el-affix .active {
   margin-left: -26px;
+}
+body[theme=dark] {
+  .category-wrapper {
+    box-shadow: 5px 0 13px -5px #111;
+  }
 }
 </style>

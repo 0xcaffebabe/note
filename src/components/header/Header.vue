@@ -166,6 +166,7 @@ export default defineComponent({
   padding: 0;
   height: 60px;
   background-color: #fff;
+  box-shadow: 2px 0 13px #bbb;
 }
 .header-wrapper {
   padding: 16px 32px;
@@ -226,6 +227,9 @@ body[theme=dark] {
   }
   .el-link:hover {
     color: var(--main-dark-text-color);
+  }
+  .header {
+    box-shadow: 2px 0 13px #111;
   }
 }
 </style>

@@ -16,7 +16,8 @@ import {
   GridComponent,
   GridComponentOption,
   LegendComponent,
-  LegendComponentOption
+  LegendComponentOption,
+  DataZoomComponent
 } from 'echarts/components';
 import { LineChart, LineSeriesOption } from 'echarts/charts';
 import { UniversalTransition } from 'echarts/features';
@@ -30,7 +31,8 @@ echarts.use([
   LegendComponent,
   LineChart,
   CanvasRenderer,
-  UniversalTransition
+  UniversalTransition,
+  DataZoomComponent
 ]);
 
 type EChartsOption = echarts.ComposeOption<
@@ -61,6 +63,16 @@ export default defineComponent({
     const myChart = echarts.init(chartDom);
     const option: EChartsOption = {
       darkMode: this.isDark,
+      dataZoom: [
+        {
+          start: 0,
+          end: 100
+        },
+        {
+          start: 0,
+          end: 100
+        }
+      ],
       title: {
         text: "提交总量趋势",
         textStyle: {
@@ -88,7 +100,7 @@ export default defineComponent({
       },
       toolbox: {
         feature: {
-          saveAsImage: {},
+          saveAsImage: {show: false},
         },
       },
       xAxis: {

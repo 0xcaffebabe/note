@@ -226,3 +226,96 @@ class Properties {
     }
 }
 ```
+
+### 接口
+
+```kotlin
+interface Service{
+    // 接口属性
+    val name: String
+        get() = "service"
+
+    fun list()
+
+    // 接口默认方法
+    fun defaultList(){
+        println(this.list())
+    }
+}
+// 接口继承
+interface BaseService: Service{}
+
+class UserService: Service {
+    override val name: String = "user-service"
+    override fun list() {
+        TODO("Not yet implemented")
+    }
+}
+// 函数式接口
+fun interface Consumer {
+    fun accept(i: Int)
+}
+fun main(){
+    Consumer { println(it)}.accept(1)
+}
+```
+
+### 可见性修饰符
+
+- private：包内可见 类成员内可见
+- internal：模块内可见
+- protected：类成员跟子类可见
+- public：范围最大
+
+### 扩展
+
+```kotlin
+// 一个类扩展新功能而无需继承该类或者使用像装饰者这样的设计模式
+// 扩展一个类的函数
+fun MutableList<Int>.print(){
+    for(i in this) {
+        println(i)
+    }
+}
+fun String?.topPinyin(): String {
+    if (this == null) return "null"
+    return toString()
+}
+// 扩展属性
+val String.Int: Int
+    get() = this.toInt()
+fun main() {
+    // 调用的具体方法是由函数调用所在的表达式的类型来决定的
+    mutableListOf(1,2,3,4).print()
+
+    var s: String? = null
+    println(s.topPinyin())
+
+    println("1".Int)
+}
+```
+
+### 数据类
+
+```kotlin
+// 会根据构造函数自动生成equals/hashCode/toString/copy
+data class User(val name: String, val age: Int)
+
+fun main() {
+    val cxk = User("cxk", 18)
+    val olderCxk = cxk.copy(age = 22)
+    println(cxk == olderCxk)
+    // 解构
+    val (name, age) = cxk
+    println("${name},${age}")
+}
+```
+
+### 密封类
+
+```kotlin
+// 密封类的所有直接子类在编译时都是已知的
+sealed class NetworkError: Error()
+class ConnectRefusedError: NetworkError()
+class TimeoutError: NetworkError()
+```

@@ -30,6 +30,8 @@ var property: (String, Int, (Int, Int, Int)) = ("cxk", 18, (35, 35, 35))
 print(property)
 print(property.0)
 print(property.1)
+// 元组的比较
+print((1,2,3) < (3,2,1))
 // 解构
 let (name, age, quake) = property
 // 解构忽略部分属性

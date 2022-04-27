@@ -197,7 +197,7 @@ class StatisticService extends BaseService {
     const langMap = new Map<string, number>();
 
     function convertLangCount(text: String): [string, number][] {
-      const arr = text.split("\n")
+      const arr = text.split("\n").map(v => v.trim()).filter(v => v.length != 0)
       let result: [string, number][] = []
       
       var lines = 0

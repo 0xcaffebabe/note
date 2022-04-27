@@ -5,6 +5,9 @@
 </template>
 
 <script lang="ts">
+
+import langColor from './langColor'
+
 import { defineComponent,PropType } from "vue";
 import * as echarts from "echarts/core";
 import {
@@ -103,7 +106,14 @@ export default defineComponent({
             show: false,
           },
           data: this.codeFrequency.map(v => {
-            return {name: v.lang, value: v.frequency}
+            return {
+              name: v.lang,
+              value: v.frequency,
+              itemStyle: {
+                color: langColor[v.lang] ? langColor[v.lang] : '#ccc',
+                borderColor: this.isDark ? "#323233" : "#fff",
+              }
+            }
           }).splice(0,10),
         },
       ],

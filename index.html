@@ -10,4 +10,22 @@
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
+  <script>
+    // 定时检查js资源是否有效
+    setInterval(async () => {
+      for(let i of document.querySelectorAll("script")) {
+        const url = i.getAttribute("src")
+        if (url) {
+          const resp = await fetch(url)
+          if (resp.status == 404) {
+            console.log('refresh')
+            window.location.reload()
+            break
+          }
+        }
+
+      }
+    }, 10000)
+    
+  </script>
 </html>

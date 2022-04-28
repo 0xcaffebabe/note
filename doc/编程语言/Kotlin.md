@@ -319,3 +319,62 @@ sealed class NetworkError: Error()
 class ConnectRefusedError: NetworkError()
 class TimeoutError: NetworkError()
 ```
+
+### 泛型
+
+```kotlin
+// 使用out T 来确保它仅从 成员中返回（生产），并从不被消费
+// in T 则相反
+class Wrapper<out T>(val data: T) {
+    fun get(): T {
+        return data
+    }
+    // 类型投影
+    fun copy(from: Wrapper<out Any>, to: Wrapper<Any>){}
+    // 星投影
+    fun print(w: Wrapper<*>) {}
+}
+
+// 泛型函数
+fun <T> singleList(t: T): List<T> {
+    return Arrays.asList(t)
+}
+
+// 泛型约束
+// 上界
+fun <T: Comparable<T>> sort(list: List<T>){}
+
+fun main() {
+    // 泛型自动推导
+    var wrapper = Wrapper(1)
+}
+```
+
+### 枚举类
+
+```kotlin
+enum class Season(val desc: String) {
+    SPRING("春"),
+    SUMMER("夏"),
+    AUTUMN("秋"),
+    WINTER("冬"),
+
+    // 匿名内部类
+    QUANZHOU_AUTUMN("夏秋-秋夏") {}
+}
+
+fun main() {
+    for (season in Season.values()) {
+        println("${season.name} ${season.ordinal} ${season.desc}")
+    }
+}
+```
+
+### 内联类
+
+```kotlin
+// 内联类：引入了一种新的类型，并且都在运行时表示为基础类型
+// 构造器只允许一个参数 其在使用时会内被编译为其基础类型
+@JvmInline
+value class Password(val raw: String)
+```

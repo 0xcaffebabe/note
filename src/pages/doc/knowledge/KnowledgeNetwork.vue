@@ -57,6 +57,16 @@ type EChartsOption = echarts.ComposeOption<
   TitleComponentOption | TooltipComponentOption | GraphSeriesOption
 >;
 
+function nodeColorMapping(size: number): string {
+  if (size <= 20) {
+    return '#84c0ff'
+  }
+  if (size > 20 && size <= 40) {
+    return '#409eff'
+  }
+  return '#1D8CFF'
+}
+
 export default defineComponent({
   props: {
     doc: {
@@ -108,6 +118,9 @@ export default defineComponent({
             category: v == this.doc ? 1 : 0,
             symbolSize: 20,
             draggable: true,
+            itemStyle: {
+              color: v == this.doc ? '#F56C6C': nodeColorMapping(20)
+            }
           };
           // 节点扇出数越多 大小越大
         } else {
@@ -116,6 +129,9 @@ export default defineComponent({
             category: v == this.doc ? 1 : 0,
             symbolSize: 20 * (1 + (list[0].links?.length || 0) / 3),
             draggable: true,
+            itemStyle: {
+              color: v == this.doc ? '#F56C6C': nodeColorMapping(20 * (1 + (list[0].links?.length || 0) / 3))
+            }
           };
         }
       });
@@ -129,7 +145,9 @@ export default defineComponent({
             links.push({
               target: i.id,
               source: j.id,
-              value: decodeURI(j.headingId ? "#" + j.headingId : "-"),
+              value: {
+                cate: decodeURI(j.headingId ? "#" + j.headingId : "-")
+              }
             });
           }
         }
@@ -167,7 +185,7 @@ export default defineComponent({
         },
         darkMode: this.isDark,
         tooltip: {
-          backgroundColor: this.isDark ? 'var(--main-dark-bg-color)' :'',
+          backgroundColor: this.isDark ? 'var(--main-dark-bg-color)' :'#fff',
           textStyle: {
             color: this.isDark ? 'var(--main-dark-text-color)' :'',
           }
@@ -214,6 +232,7 @@ export default defineComponent({
                 },
               },
             ],
+            // 节点的文字样式
             label: {
               show: true,
               position: "top",
@@ -224,8 +243,22 @@ export default defineComponent({
               formatter(params): string {
                 const name: string = (params.data as any).name;
                 const arr = name.split("-");
-                return arr[arr.length - 1];
+                return [`{title|${arr[arr.length - 1]}}`,
+                        `{category|『${name.replaceAll(/-/g, '/')}』}`
+                ].join("\n");
               },
+              rich: {
+                title: {
+                  align: "center",
+                  fontSize: "15px",
+                  color: this.isDark ? '#eee' :'#4C4C49',
+                },
+                category: {
+                  align: "center",
+                  color: '#46adff',
+                  textBorderColor: this.isDark ? "":"#fff",
+                }
+              }
             },
             force: {
               // 节点之间的斥力因子,值越大则斥力越大
@@ -236,7 +269,6 @@ export default defineComponent({
               edgeLength: [nodeMap.size * 1.2, nodeMap.size * 2],
             },
             edgeSymbolSize: 8,
-            edgeSymbol: ["arrow"],
             edgeLabel: {
               show: false,
               fontSize: 10,
@@ -246,7 +278,7 @@ export default defineComponent({
             links,
             lineStyle: {
               opacity: 0.9,
-              curveness: 0.3,
+              curveness: 0,
               width: 2,
               color: "#38B3FF",
             },

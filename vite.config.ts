@@ -10,6 +10,7 @@ import DescCommitDocListGenerator from './src/plugins/DescCommitDocListGenerator
 import CommitTotalTrendGenerator from './src/plugins/CommitTotalTrendGenerator'
 import CategoryJsonGenerator from './src/plugins/CategoryJsonGenerator'
 import DocTagsGenerator from './src/plugins/DocTagsGenerator'
+import BuildTimeGenerator from './src/plugins/BuildTimeGenerator'
 import VitePluginPrismjs from 'vite-plugin-prismjs'
 import visualizer from "rollup-plugin-visualizer"
 
@@ -45,6 +46,7 @@ export default defineConfig({
     ...plugins,
     vue(),
     DocServer(),
+    BuildTimeGenerator(),
     {
       ...DocBuildMove(),
       enforce: 'post',

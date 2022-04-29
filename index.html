@@ -8,8 +8,13 @@
   </head>
   <body>
     <div id="app"></div>
+    <div style="position: fixed; bottom: 10px; right: 10px" id="buildTime"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
+  <script>
+    /*build-time*/const buildTime = "" /*build-time*/
+    document.getElementById("buildTime").innerHTML = `构建时间: ${new Date(buildTime).toLocaleString()}`
+  </script>
   <script>
     // 定时检查js资源是否有效
     setInterval(async () => {

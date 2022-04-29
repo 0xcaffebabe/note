@@ -44,6 +44,10 @@ import { GraphChart, GraphSeriesOption } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
 import api from "@/api";
 import { KnowledgeNode } from "@/dto/KnowledgeNode";
+import DocFileInfo from "@/dto/DocFileInfo";
+import DocService from "@/service/DocService";
+import TagUtils from "@/pages/tag/TagUtils";
+import { cleanText } from "@/util/StringUtils";
 
 echarts.use([
   TitleComponent,
@@ -65,6 +69,19 @@ function nodeColorMapping(size: number): string {
     return '#409eff'
   }
   return '#1D8CFF'
+}
+
+function buildSummaryDocInfo(file: DocFileInfo): string {
+  return [
+    `<p>${file.name}</p>`,
+    `<div>创建时间: ${new Date(file.createTime).toLocaleString()}</div>`,
+    `<div>${
+      Math.ceil(
+        (new Date().getTime() - new Date(file.commitList[0].date).getTime()) / (3600 * 24 * 1000)
+      )
+      }天前更新, ${cleanText(file.content).length}字</div>`,
+    `<div>${DocService.resolveTagList(file) || ''}</div>`
+  ].join("\n")
 }
 
 export default defineComponent({
@@ -145,9 +162,7 @@ export default defineComponent({
             links.push({
               target: i.id,
               source: j.id,
-              value: {
-                cate: decodeURI(j.headingId ? "#" + j.headingId : "-")
-              }
+              value: decodeURI(j.headingId ? "#" + j.headingId : "-")
             });
           }
         }
@@ -188,8 +203,31 @@ export default defineComponent({
           backgroundColor: this.isDark ? 'var(--main-dark-bg-color)' :'#fff',
           textStyle: {
             color: this.isDark ? 'var(--main-dark-text-color)' :'',
+          },
+          formatter(params: any, ticket: string, callback: (ticket: string, html: string) => string | HTMLElement | HTMLElement[]): string {
+            const name: string = (params.data as any).name;
+            // 如果不存在name 则就是边的tooltip
+            if (!name) {
+              return `${params.data.source}->${params.data.target} ${params.data.value}`
+            }
+            if (!name) {
+              return 'none'
+            }
+            const result: Promise<DocFileInfo> | DocFileInfo = api.getDocFileInfo(name)
+            if (result instanceof Promise) {
+              result
+              .then(file => {
+                callback(ticket, buildSummaryDocInfo(file))
+              })
+              .catch(err => {
+                callback(ticket, `${err}`)
+              })
+            }else {
+              return buildSummaryDocInfo(result)
+            }
+            return 'loading'
           }
-        },
+        } as any,
         // 数据更新动画的时长
         animationDurationUpdate: 1500,
         animationEasingUpdate: "quinticInOut",
@@ -297,7 +335,7 @@ export default defineComponent({
   },
   data() {
     return {
-      showDrawer: false as boolean,
+      showDrawer: true as boolean,
       chart: null as echarts.ECharts | null,
       mode: 'force' as "force" | "circular" | "none" | undefined,
       displayMode: ['force', 'circular'],

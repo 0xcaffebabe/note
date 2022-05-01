@@ -1,0 +1,34 @@
+name: 文档聚类
+
+on:
+  push:
+    branches: [ master ]
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x]
+    
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: 安装依赖
+      run: |
+        npm install
+    - name: 文档聚类
+      run: |
+        npm run doc-cluster
+    - name: 合并pdf存档
+      uses: actions/upload-artifact@v2
+      with:
+        name: docCluster
+        path: |
+          docCluster.json

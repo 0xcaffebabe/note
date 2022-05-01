@@ -283,6 +283,9 @@ print(NSString("-a-").trimmingCharacters(in: CharacterSet(charactersIn: "-")))
 var responseCode : Int? = 404
 var responseMessage: String? = "success"
 responseCode = nil
+var code: Int! = 4
+let a  = code // 此时a的类型是Int?
+let b: Int = code // 可以转为Int
 ```
 
 ### 解包
@@ -583,6 +586,12 @@ print([1,2,3].map{v in String(v)})
 // 内容捕获
 var num = 700
 print([1,2,3].sorted{a , b in abs(a-num) < abs(b-num)})
+
+// @autoclosure 自动将值封装成匿名函数
+func test(f: @autoclosure () -> String) -> String {
+    return f()
+}
+test(f: "test")
 ```
 
 ## 枚举
@@ -1057,6 +1066,16 @@ do {
 }catch {
     print("unknow error")
 }
+// 使用Nerver代表异常情况
+func errorHandle() -> Never {
+    print("!!!")
+    fatalError()
+}
+var aaa = 1
+guard aaa != 1 else {
+    errorHandle()
+}
+
 ```
 
 ## 内存管理

@@ -26,7 +26,7 @@ jobs:
     - name: 文档聚类
       run: |
         npm run doc-cluster
-    - name: 合并pdf存档
+    - name: 数据存储
       uses: actions/upload-artifact@v2
       with:
         name: docCluster

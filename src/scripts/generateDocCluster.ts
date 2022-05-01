@@ -55,7 +55,6 @@ function cleanText(str: string): string {
 
 async function  main() {
   let files = BaseService.listFilesBySuffix("md", "doc").filter(v => v.indexOf("SUMMARY") == -1 && v.indexOf("README") == -1 && v.indexOf("书单") == -1 && v.indexOf("参考文献") == -1)
-    .slice(0, 10)
   const map = new Map<string, string>()
   const similarCache = new Map<string,number>()
   for(let file of files) {

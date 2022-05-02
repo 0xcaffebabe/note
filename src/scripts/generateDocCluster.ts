@@ -1,4 +1,5 @@
 import BaseService from '../build/BaseService'
+import DocService from '../build/DocService'
 import fs from 'fs'
 import util from 'util'
 import { cleanText } from '../util/StringUtils';
@@ -78,7 +79,7 @@ async function  main() {
   const map = new Map<string, string>()
   const similarCache = new Map<string,number>()
   for(let file of files) {
-    const content = fs.readFileSync(file).toString().split("\n").map(cleanText).map(v => v.trim()).filter(v => v.indexOf("assets") == -1).filter(v => v.length > 20)
+    const content = fs.readFileSync(file).toString().split("\n").map(cleanText).map(v => v.trim()).map(v => v.replace(/-/gi, '')).filter(v => v.indexOf("assets") == -1).filter(v => v.length > 20)
     .filter(v => reg.test(v)).join("\n")
     map.set(file, content)
   }

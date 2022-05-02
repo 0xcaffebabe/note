@@ -21,7 +21,7 @@
       for(let i of document.querySelectorAll("script")) {
         const url = i.getAttribute("src")
         if (url) {
-          const resp = await fetch(url)
+          const resp = await fetch(url, {cache: "no-cache"})
           if (resp.status == 404) {
             console.log('refresh')
             window.location.reload()

@@ -4,6 +4,7 @@ import fs from 'fs'
 import util from 'util'
 import { cleanText } from '../util/StringUtils';
 import ClusterNode from '../dto/ClusterNode';
+import { stopWords } from '../util/StringUtils';
 
 var reg = new RegExp("[\\u4E00-\\u9FFF]+", "g");
 
@@ -72,8 +73,11 @@ async function  main() {
   const map = new Map<string, string>()
   const similarCache = new Map<string,number>()
   for(let file of files) {
-    const content = fs.readFileSync(file).toString().split("\n").map(cleanText).map(v => v.trim()).map(v => v.replace(/-/gi, '')).filter(v => v.indexOf("assets") == -1).filter(v => v.length > 20)
-    .filter(v => reg.test(v)).join("\n")
+    let content = fs.readFileSync(file).toString().split("\n").map(cleanText).map(v => v.trim()).map(v => v.replace(/-/gi, '')).filter(v => v.indexOf("assets") == -1).filter(v => v.length > 20)
+    .filter(v => reg.test(v)).join("")
+    for(let i of stopWords) {
+      content = content.replace(new RegExp(i, "gi"), "")
+    }
     map.set(file, content)
   }
   // 聚类列表

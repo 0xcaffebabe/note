@@ -72,3 +72,10 @@ export function getMidString(text: string, left:string, right: string) {
   result = text.substring(zLen, yLen);
   return result;
 }
+
+export const stopWords = ['的', '是', '在', '一个', '和',
+'与', '批注', '可以', '使用', '通过', 'md', '据库', '这个', '截图', '没有',
+'进行', '如果', '需要', '务器', '屏幕', '不会', '就是', '或者', '并且',
+'其他', '之后', '那么', '什么', '可能', '为了', '第一', '不是', '大小',
+"the", "而且", "但", "一种", "不错", "不仅", "问题", "不", "必要"
+]

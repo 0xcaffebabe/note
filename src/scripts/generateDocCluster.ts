@@ -1,14 +1,15 @@
 import BaseService from '../build/BaseService'
 import fs from 'fs'
 import util from 'util'
+import { cleanText } from '../util/StringUtils';
 
 var reg = new RegExp("[\\u4E00-\\u9FFF]+", "g");
 
 class ClusterNode {
-  vals: string[] = []
+  name: string = ''
   children: ClusterNode[] = []
   all(): string[] {
-    return [...this.vals, ...this.children.map(v => v.all()).flatMap(v => v)]
+    return [this.name, ...this.children.map(v => v.all()).flatMap(v => v)]
   }
 }
 
@@ -50,14 +51,6 @@ function similar(s: string, t: string, f: number = 3): number {
   return parseFloat(res.toFixed(f))
 }
 
-function cleanText(str: string): string {
-  return str.replace(/[’!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~]/g, '')
-    .replace(/-/g, '')
-    .replace(/#/g, '')
-    .replace(/\s/g, '')
-    .replace(/\|/g, '')
-}
-
 const stopFiles = [
   'SUMMARY.md',
   'README.md',
@@ -93,7 +86,7 @@ async function  main() {
   const cluster: ClusterNode[] = []
   for(let file of files) {
     const node: ClusterNode = new ClusterNode()
-    node.vals = [file]
+    node.name = file
     cluster.push(node)
   }
   // 后N轮

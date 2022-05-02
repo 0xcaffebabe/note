@@ -1,10 +1,15 @@
 import BaseService from '../build/BaseService'
 import fs from 'fs'
+import util from 'util'
 
 var reg = new RegExp("[\\u4E00-\\u9FFF]+", "g");
 
 class ClusterNode {
   vals: string[] = []
+  children: ClusterNode[] = []
+  all(): string[] {
+    return [...this.vals, ...this.children.map(v => v.all()).flatMap(v => v)]
+  }
 }
 
 function similar(s: string, t: string, f: number = 3): number {
@@ -53,8 +58,30 @@ function cleanText(str: string): string {
     .replace(/\|/g, '')
 }
 
+const stopFiles = [
+  'SUMMARY.md',
+  'README.md',
+  '书单.md',
+  '参考文献.md',
+  '技术栈参考.md',
+  'leetcode.md',
+  '学习计划.md',
+  '基于位置的网络社交平台分析与设计.md',
+  '全文检索引擎在信息检索中的应用.md',
+  'MyBook.md',
+]
+
+function stopFileCheck(filename: string) {
+  for(let name of stopFiles) {
+    if (filename.indexOf(name) != -1) {
+      return false
+    }
+  }
+  return true
+}
+
 async function  main() {
-  let files = BaseService.listFilesBySuffix("md", "doc").filter(v => v.indexOf("SUMMARY") == -1 && v.indexOf("README") == -1 && v.indexOf("书单") == -1 && v.indexOf("参考文献") == -1)
+  let files = BaseService.listFilesBySuffix("md", "doc").filter(stopFileCheck)
   const map = new Map<string, string>()
   const similarCache = new Map<string,number>()
   for(let file of files) {
@@ -70,7 +97,7 @@ async function  main() {
     cluster.push(node)
   }
   // 后N轮
-  while(cluster.length >= 10) {
+  while(cluster.length > 1) {
 
       const cluster1 = cluster.shift()
       // console.log(cluster1)
@@ -82,13 +109,13 @@ async function  main() {
       let simIndex = -1
       for(let j = 0; j < cluster.length;j++) {
         const cluster2 = cluster[j]
-        if (JSON.stringify(cluster1.vals) == JSON.stringify(cluster2.vals)) {
+        if (JSON.stringify(cluster1) == JSON.stringify(cluster2)) {
           continue
         }
         let totalSim = 0
         let cnt = 0
-        for(let file1 of cluster1.vals) {
-          for(let file2 of cluster2.vals) {
+        for(let file1 of cluster1.all()) {
+          for(let file2 of cluster2.all()) {
             const key = file1 + "-" + file2
             const key1 = file2 + "-" + file1
             if (similarCache.has(key) || similarCache.has(key1)) {
@@ -113,10 +140,10 @@ async function  main() {
   
       if (simIndex != -1) {
         const newCluster = new ClusterNode()
-        newCluster.vals = [...cluster1!.vals,...cluster[simIndex].vals]
+        newCluster.children = [cluster1,cluster[simIndex]]
         cluster.push(newCluster)
         cluster.splice(simIndex, 1)
-        console.log(cluster.slice(Math.max(cluster.length - 5, 1)))
+        console.log(util.inspect(cluster.slice(Math.max(cluster.length - 5, 1)), {showHidden:false, depth: null, colors: true}))
       }
     }
   

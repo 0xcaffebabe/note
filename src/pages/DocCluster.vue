@@ -8,8 +8,8 @@ import * as echarts from "echarts/core";
 import { TooltipComponent, TooltipComponentOption } from "echarts/components";
 import { TreeChart, TreeSeriesOption } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
+import api from "@/api";
 
-import axios from "axios";
 echarts.use([TooltipComponent, TreeChart, CanvasRenderer]);
 
 type EChartsOption = echarts.ComposeOption<
@@ -37,8 +37,8 @@ export default defineComponent({
           hilight(i);
         }
       }
-      axios.get("/docCluster.json").then((resp) => {
-        const data = resp.data[0];
+      api.getDocCluster().then(resp => {
+        const data = resp[0];
         hilight(data);
         myChart.hideLoading();
 

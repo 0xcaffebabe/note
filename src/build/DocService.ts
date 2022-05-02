@@ -13,6 +13,9 @@ import DocMetadata from "@/dto/doc/DocMetadata";
 import Cacheable from "@/decorator/Cacheable";
 import ArrayUtils from "../util/ArrayUtils";
 import CommitInfo from "@/dto/CommitInfo";
+import ClusterNode from "@/dto/ClusterNode";
+import axios from "axios";
+const proxy = require("node-global-proxy").default;
 
 
 class DocService extends BaseService implements Cacheable {
@@ -164,6 +167,16 @@ class DocService extends BaseService implements Cacheable {
       })
       return {id: DocUtils.docUrl2Id(path), links}
     })
+  }
+
+  public async getDocCluster(): Promise<ClusterNode[]> {
+    if (process.env.ENV == 'DEV') {
+      proxy.setConfig({
+        http: "http://127.0.0.1:54088",
+      });
+      proxy.start();
+    }
+    return JSON.parse((await axios.get('https://api.github.com/gists/e993023fd97fb85483d1e20361ad28c4')).data.files['gistfile1.txt'].content)
   }
 
   /**

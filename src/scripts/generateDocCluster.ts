@@ -3,16 +3,9 @@ import DocService from '../build/DocService'
 import fs from 'fs'
 import util from 'util'
 import { cleanText } from '../util/StringUtils';
+import ClusterNode from '../dto/ClusterNode';
 
 var reg = new RegExp("[\\u4E00-\\u9FFF]+", "g");
-
-class ClusterNode {
-  name: string = ''
-  children: ClusterNode[] = []
-  all(): string[] {
-    return [this.name, ...this.children.map(v => v.all()).flatMap(v => v)]
-  }
-}
 
 function similar(s: string, t: string, f: number = 3): number {
   if (!s || !t) {
@@ -75,7 +68,7 @@ function stopFileCheck(filename: string) {
 }
 
 async function  main() {
-  let files = BaseService.listFilesBySuffix("md", "doc").filter(stopFileCheck)
+  let files = BaseService.listFilesBySuffix("md", "doc").filter(stopFileCheck).slice(0,50)
   const map = new Map<string, string>()
   const similarCache = new Map<string,number>()
   for(let file of files) {

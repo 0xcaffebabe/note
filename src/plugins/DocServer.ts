@@ -63,6 +63,11 @@ const apiMappings: DocApiItem[] = [
     path: UrlConst.category,
     method: async () => CategoryService.getCategoryList()
   },
+  {
+    name: '文档聚类',
+    path: UrlConst.docClusterJson,
+    method: async () => DocService.getDocCluster()
+  },
 ]
 
 // API请求缓存

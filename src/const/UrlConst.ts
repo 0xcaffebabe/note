@@ -11,4 +11,5 @@ export default {
   summaryJson: '/SUMMARY.md.json',
   tagMappingJson: '/tagMapping.json',
   wordcloudJson: '/wordcloud.json',
+  docClusterJson: '/docCluster.json',
 }

@@ -11,6 +11,7 @@ import UrlConst from '@/const/UrlConst'
 import CommitInfo from '@/dto/CommitInfo'
 import YuequeDraft from '@/dto/YuqueDraft'
 import Category from '@/dto/Category'
+import ClusterNode from '@/dto/ClusterNode'
 
 const baseUrl = () => {
   return DatasourceService.getCurrentDatasource().url
@@ -75,6 +76,12 @@ class Api implements Cacheable{
   @cache
   public async getWordCloud(): Promise<[string, number][]>{
     const data = await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.wordcloudJson))
+    return data.data
+  }
+
+  @cache
+  public async getDocCluster(): Promise<ClusterNode[]> {
+    const data = await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.docClusterJson))
     return data.data
   }
 

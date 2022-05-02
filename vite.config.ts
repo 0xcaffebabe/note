@@ -11,6 +11,7 @@ import CommitTotalTrendGenerator from './src/plugins/CommitTotalTrendGenerator'
 import CategoryJsonGenerator from './src/plugins/CategoryJsonGenerator'
 import DocTagsGenerator from './src/plugins/DocTagsGenerator'
 import BuildTimeGenerator from './src/plugins/BuildTimeGenerator'
+import DocClusterGenerator from './src/plugins/DocClusterGenerator'
 import VitePluginPrismjs from 'vite-plugin-prismjs'
 import visualizer from "rollup-plugin-visualizer"
 
@@ -78,6 +79,10 @@ export default defineConfig({
     },
     {
       ...CategoryJsonGenerator(),
+      apply: 'build'
+    },
+    {
+      ...DocClusterGenerator(),
       apply: 'build'
     },
     {

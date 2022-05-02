@@ -35,6 +35,7 @@
     "vuex": "4.0.2"
   },
   "devDependencies": {
+    "@types/global-tunnel-ng": "^2.1.1",
     "@types/js-yaml": "4.0.5",
     "@types/jsdom": "16.2.14",
     "@types/marked": "4.0.1",
@@ -49,6 +50,7 @@
     "@vitejs/plugin-vue": "1.9.2",
     "jsdom": "19.0.0",
     "md-to-pdf": "5.1.0",
+    "node-global-proxy": "^1.0.1",
     "nodejieba": "2.6.0",
     "pdf-merger-js": "3.3.2",
     "puppeteer": "13.1.2",

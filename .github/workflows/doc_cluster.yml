@@ -32,3 +32,11 @@ jobs:
         name: docCluster
         path: |
           docCluster.json
+    - name: 上传至gist
+      uses: exuanbo/actions-deploy-gist@v1
+      with:
+        token: ${{ secrets.THE_GITHUB_TOKEN }}
+        gist_id: e993023fd97fb85483d1e20361ad28c4
+        gist_description: "docCluster"
+        gist_file_name: gistfile1.txt
+        file_path: docCluster.json

@@ -68,7 +68,7 @@ function stopFileCheck(filename: string) {
 }
 
 async function  main() {
-  let files = BaseService.listFilesBySuffix("md", "doc").filter(stopFileCheck).slice(0,50)
+  let files = BaseService.listFilesBySuffix("md", "doc").filter(stopFileCheck)
   const map = new Map<string, string>()
   const similarCache = new Map<string,number>()
   for(let file of files) {

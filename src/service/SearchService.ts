@@ -6,6 +6,7 @@ import Cacheable from '@/decorator/Cacheable';
 import Cache from '@/decorator/Cache'
 import SearchSuggestion from '@/dto/search/SearchSuggestion';
 import { text } from 'stream/consumers';
+import axios from 'axios';
 
 interface DocHits {
   url: string,
@@ -61,7 +62,10 @@ class SearchService implements Cacheable{
   }
 
   @cache
-  public async search(kw: string): Promise<SearchResult[]> {
+  public async search(kw: string, type: 'es' | 'algolia' = 'es'): Promise<SearchResult[]> {
+    if (type == 'es') {
+      return this.searchInSelfES(kw)
+    }
     const client = algoliasearch('K9I7PAT3CY', '8f3ec5043331dedbccce916154fc0162');
     const index = client.initIndex('note');
     const hits : SearchResponse<DocHits> = await index.search(kw, { hitsPerPage: 200, highlightPreTag: `<${hilighTag}>`, highlightPostTag: `</${hilighTag}>` });
@@ -80,6 +84,62 @@ class SearchService implements Cacheable{
       // 过滤掉目录名没有包含关键词且没有搜索结果的纪录
       return result.filter(v => (v.hilighedSegement && v.hilighedSegement.length != 0) || kwContains(kw, v.url))
     }
+    return []
+  }
+
+  public async searchInSelfES(kw: string): Promise<SearchResult[]> {
+    interface ESHits {
+      _index: string
+      _id: string
+      _score: number
+      _source: {
+        url: string
+        objectID: string
+        segments: SearchIndexSegment[]
+        createTime: string
+      },
+      highlight: {
+        "segments.id"?: string[],
+        "segments.txt"?: string[],
+        url?: string[],
+      }
+    }
+    const serviceUrl = "https://search.ismy.wang"
+    const raw = (await axios.get(`${serviceUrl}/search?kw=${encodeURI(kw)}`)).data
+    const hits = raw.hits.hits as ESHits[]
+    if (hits) {
+      const result = hits.map(v => {
+        const idList = v.highlight['segments.id']?.map(v => v.replace(/<mark>/gi, '').replace(/<\/mark>/gi, '')) || []
+        const txtList = v.highlight['segments.txt']?.map(v => v.replace(/<mark>/gi, '').replace(/<\/mark>/gi, '')) || []
+        const urlList = v.highlight.url || []
+        return {
+          url: v._source.url,
+          hilighedUrl: urlList[0] || v._source.url,
+          createTime: v._source.createTime,
+          hilighedSegement: v._source.segments.map(sv => {
+            if (v.highlight['segments.id']) {
+              for(let i = 0; i < idList.length; i++) {
+                sv.id = sv.id.replace(idList[i], v.highlight['segments.id'][i])
+              }
+            }
+            if (v.highlight['segments.txt']) {
+              for(let i = 0; i < txtList.length; i++) {
+                sv.txt = sv.txt.replace(txtList[i], v.highlight['segments.txt'][i])
+              }
+            }
+            return sv
+          })
+          .filter(sv => sv.id.indexOf(`<${hilighTag}>`) != -1 || sv.txt.indexOf(`<${hilighTag}>`) != -1) // 过滤掉没有高亮的搜索结果
+          .filter(v => kwContains(kw, v.id || '') || kwContains(kw, v.txt || '')) // 过滤掉搜索结果没有关键词的结果
+          .map(v => appendMissingKw(v, kw)) // 添加搜索结果中没有出现的关键词
+        } as SearchResult
+      })
+      // 过滤掉目录名没有包含关键词且没有搜索结果的纪录
+      let i = result.filter(v => (v.hilighedSegement && v.hilighedSegement.length != 0) || kwContains(kw, v.url))
+      console.log(i)
+      return i
+    }
+    console.log(hits)
     return []
   }
 

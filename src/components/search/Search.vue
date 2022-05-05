@@ -14,6 +14,20 @@
           <div class="search-suggestion-item">{{ item.query }}</div>
           <el-badge :value="item.popularity" />
         </template>
+        <template #append>
+          <div style="width:48px;">
+
+          <el-select v-model="searchEngine" placeholder="搜索引擎" size="mini" popper-class="popper-list" style="float:">
+            <el-option
+            v-for="item in searchEngineList"
+            :key="item"
+            :label="item"
+            :value="item"
+          >
+          </el-option>
+        </el-select>
+          </div>
+        </template>
       </el-autocomplete>
     </template>
     <div class="search-result" v-loading="showLoading" :element-loading-background="loadingColor">
@@ -70,6 +84,8 @@ export default defineComponent({
       showLoading: false as boolean,
       resultList: [] as SearchResult[],
       searchSuggestionList: [] as SearchSuggestion[],
+      searchEngineList: ['es', 'algolia'],
+      searchEngine: 'es' as 'es' | 'algolia'
     };
   },
   computed: {
@@ -109,7 +125,7 @@ export default defineComponent({
         // 动画开始
         this.showLoading = true;
         // 拉取数据
-        this.resultList = await searchService.search(this.kw);
+        this.resultList = await searchService.search(this.kw, this.searchEngine);
         this.showEmpty = true;
         this.showLoading = false;
         // 动画结束

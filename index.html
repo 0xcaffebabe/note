@@ -18,17 +18,12 @@
   <script>
     // 定时检查js资源是否有效
     setInterval(async () => {
-      for(let i of document.querySelectorAll("script")) {
-        const url = i.getAttribute("src")
-        if (url) {
-          const resp = await fetch(url, {cache: "no-cache"})
-          if (resp.status == 404) {
-            console.log('refresh')
-            window.location.reload()
-            break
-          }
-        }
-
+      const data = await (await fetch("/", {cache: 'no-cache'})).text()
+      const remoteMainScript = new DOMParser().parseFromString(data, 'text/html').querySelectorAll("script")[0].getAttribute("src")
+      const localMainScript = document.querySelectorAll("script")[0].getAttribute("src")
+      if (remoteMainScript != localMainScript) {
+        console.log('refresh')
+        location.reload()
       }
     }, 10000)
     

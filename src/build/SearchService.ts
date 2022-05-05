@@ -3,6 +3,8 @@ import DocService from "./DocService";
 import fs from 'fs'
 import algoliasearch from 'algoliasearch';
 import SearchIndexSegment from "@/dto/search/SearchIndexSegement";
+import axios from "axios";
+import DocUtils from "../util/DocUtils";
 
 interface IndexItem {
   url: string
@@ -59,7 +61,7 @@ class SearchService extends BaseService {
 
   /**
    *
-   * 全量更新索引
+   * 全量更新ALGOLIA索引
    * @static
    * @memberof SearchService
    */
@@ -67,6 +69,39 @@ class SearchService extends BaseService {
     const client = algoliasearch(appId, secret);
     const index = client.initIndex(indexName)
     await index.replaceAllObjects(indexData)
+  }
+
+
+
+  /**
+   *
+   * 全量更新自建ES索引
+   * @static
+   * @param {string} secret
+   * @param {IndexItem[]} indexData
+   * @memberof SearchService
+   */
+  static async updateIndexBySelfES(secret: string, indexData: IndexItem[]) {
+    const serviceUrl = "https://search.ismy.wang"
+    const data = (await axios.get(`${serviceUrl}/rebuild?token=${secret}`)).data
+    console.log(`自建ES 重建索引结果 `, data)
+    const taskList = []
+    for(let i of indexData) {
+      taskList.push(axios.post(`${serviceUrl}/update?token=${secret}&id=${encodeURI(DocUtils.docUrl2Id(i.url))}`,i)
+        .then(resp => resp.data))
+    }
+    let updates = 0
+    let createds = 0
+    const result = await Promise.all(taskList)
+    for(let i of result) {
+      if (i.result == 'updated') {
+        updates++
+      }
+      if (i.result == 'created') {
+        createds++
+      }
+    }
+    console.log(`自建ES 索引更新结果 更新数:${updates} 创建数:${createds}`)
   }
 }
 

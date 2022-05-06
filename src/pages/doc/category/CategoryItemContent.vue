@@ -27,6 +27,25 @@
             >{{ item }}</el-tag
           >
         </div>
+        <el-alert :closable="false" v-if="docMetadata.books && docMetadata.books.length > 0">
+          <template #default>
+            <p>相关书籍</p>
+            <p v-for="book in docMetadata.books" :key="book.name">
+              <el-popover
+                ref="popover"
+                placement="right"
+                :title="book.name"
+                trigger="hover"
+              >
+                <template #reference>
+                  <el-link>{{book.name}}</el-link>
+                </template>
+                <el-image v-if="book.name" :src="'https://search.ismy.wang/book/img?name=' + book.name" alt="" style="width:100px;height:150px" fit="cover" />
+              </el-popover>
+              <el-tag size="mini" v-for="chapter in book.chapters" :key="chapter">{{chapter}}</el-tag>
+            </p>
+          </template>
+        </el-alert>
       </template>
     </el-skeleton>
   </div>
@@ -40,6 +59,7 @@ import api from "@/api";
 import DocService from "@/service/DocService";
 import DocUtils from "@/util/DocUtils";
 import TagUtils from "@/pages/tag/TagUtils";
+import {DocMetadata, EMPTY_DOC_METADATA} from "@/dto/doc/DocMetadata";
 
 export default defineComponent({
   props: {
@@ -71,7 +91,8 @@ export default defineComponent({
           DocUtils.docUrl2Id(this.categoryLink)
         );
       }
-      this.tags = DocService.resolveTagList(this.file);
+      this.docMetadata = DocService.resolveMetadata(this.file)
+      this.tags = this.docMetadata.tags;
       this.lastPastDays = this.calcLastUpdate();
       this.loading = false;
     },
@@ -117,6 +138,8 @@ export default defineComponent({
       tags: [] as string[],
       // 离最后一次更新过去几天
       lastPastDays: 0 as number,
+      // 文档元数据
+      docMetadata: EMPTY_DOC_METADATA as DocMetadata
     };
   },
   setup() {},

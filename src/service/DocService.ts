@@ -9,7 +9,7 @@ import DocUtils from '@/util/DocUtils'
 import DatasourceService from '@/service/DatasourceService'
 import yaml from 'js-yaml';
 import DocFileInfo from '@/dto/DocFileInfo'
-import DocMetadata from '@/dto/doc/DocMetadata'
+import {DocMetadata, EMPTY_DOC_METADATA} from '@/dto/doc/DocMetadata'
 import TagService from './TagService'
 import TagSumItem from '@/dto/tag/TagSumItem'
 import TagUtils from '@/pages/tag/TagUtils'
@@ -401,6 +401,23 @@ class DocService implements Cacheable{
   public resolveTagList(file: DocFileInfo): string[] {
     const json = yaml.load(file.metadata) as DocMetadata;
     return json?.tags
+  }
+
+
+  /**
+   *
+   * 解析文档的元数据
+   * @param {DocFileInfo} file
+   * @return {*}  {DocMetadata}
+   * @memberof DocService
+   */
+  @cache
+  public resolveMetadata(file: DocFileInfo): DocMetadata {
+    const metadata = yaml.load(file.metadata) as DocMetadata;
+    if (metadata) {
+      return metadata
+    }
+    return EMPTY_DOC_METADATA
   }
 }
 

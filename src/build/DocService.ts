@@ -9,7 +9,7 @@ import { getMidString } from '../util/StringUtils';
 import {KnowledgeNode, KnowledgeLinkNode} from "../dto/KnowledgeNode";
 import DocUtils from "../util/DocUtils";
 import yaml from 'js-yaml'
-import DocMetadata from "@/dto/doc/DocMetadata";
+import {DocMetadata} from "@/dto/doc/DocMetadata";
 import Cacheable from "@/decorator/Cacheable";
 import ArrayUtils from "../util/ArrayUtils";
 import CommitInfo from "@/dto/CommitInfo";

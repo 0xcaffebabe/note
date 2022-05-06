@@ -1,7 +1,7 @@
 <template>
   <el-popover
     placement="right-start"
-    :width="200"
+    :width="300"
     trigger="hover"
     :hide-after="100"
     @show="handlePopoverShow"

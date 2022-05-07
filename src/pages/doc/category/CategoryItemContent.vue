@@ -38,7 +38,7 @@
                 trigger="hover"
               >
                 <template #reference>
-                  <el-link>{{book.name}}</el-link>
+                  <el-link @click="openBook(book.name)">{{book.name}}</el-link>
                 </template>
                 <el-image v-if="book.name" :src="'https://search.ismy.wang/book/img?name=书 ' + book.name" alt="" style="width:100px;height:150px" fit="cover" />
               </el-popover>
@@ -60,6 +60,8 @@ import DocService from "@/service/DocService";
 import DocUtils from "@/util/DocUtils";
 import TagUtils from "@/pages/tag/TagUtils";
 import {DocMetadata, EMPTY_DOC_METADATA} from "@/dto/doc/DocMetadata";
+import {ElMessage} from 'element-plus'
+import EnhancerService from '@/service/EnhancerService'
 
 export default defineComponent({
   props: {
@@ -128,6 +130,16 @@ export default defineComponent({
         return 'default'
       }
       return 'primary';
+    },
+    async openBook(bookName: string) {
+      try {
+        const success = await EnhancerService.openBook(bookName)
+        if (!success) {
+          ElMessage.error("打开书籍失败")
+        }
+      }catch(err: any) {
+        ElMessage.error(`打开书籍失败: ${err}`)
+      }
     }
   },
   data() {

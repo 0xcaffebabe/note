@@ -1,4 +1,4 @@
-import SearchResult from '@/dto/SearchResult';
+import SearchResultItem from '@/dto/search/SearchResultItem';
 import algoliasearch from 'algoliasearch'
 import { SearchResponse } from '@algolia/client-search';
 import SearchIndexSegment from '@/dto/search/SearchIndexSegement';
@@ -7,6 +7,7 @@ import Cache from '@/decorator/Cache'
 import SearchSuggestion from '@/dto/search/SearchSuggestion';
 import { text } from 'stream/consumers';
 import axios from 'axios';
+import SearchResult from '@/dto/search/SearchResult';
 
 interface DocHits {
   url: string,
@@ -62,7 +63,7 @@ class SearchService implements Cacheable{
   }
 
   @cache
-  public async search(kw: string, type: 'es' | 'algolia' = 'es'): Promise<SearchResult[]> {
+  public async search(kw: string, type: 'es' | 'algolia' = 'es'): Promise<SearchResult> {
     if (type == 'es') {
       return this.searchInSelfES(kw)
     }
@@ -70,7 +71,7 @@ class SearchService implements Cacheable{
     const index = client.initIndex('note');
     const hits : SearchResponse<DocHits> = await index.search(kw, { hitsPerPage: 200, highlightPreTag: `<${hilighTag}>`, highlightPostTag: `</${hilighTag}>` });
     if (hits) {
-      const result = hits.hits.map(v => {
+      let result = hits.hits.map(v => {
         return {
           url: v.url,
           hilighedUrl: v._highlightResult?.url?.value,
@@ -79,15 +80,16 @@ class SearchService implements Cacheable{
           .filter(v => v.id?.indexOf(`<${hilighTag}>`) != -1 || v.txt?.indexOf(`<${hilighTag}>`) != -1) // 过滤掉没有高亮的搜索结果
           .filter(v => kwContains(kw, v.id || '') || kwContains(kw, v.txt || '')) // 过滤掉搜索结果没有关键词的结果
           .map(v => appendMissingKw(v, kw)) // 添加搜索结果中没有出现的关键词
-        } as SearchResult
+        } as SearchResultItem
       })
       // 过滤掉目录名没有包含关键词且没有搜索结果的纪录
-      return result.filter(v => (v.hilighedSegement && v.hilighedSegement.length != 0) || kwContains(kw, v.url))
+      result = result.filter(v => (v.hilighedSegement && v.hilighedSegement.length != 0) || kwContains(kw, v.url))
+      return {took:hits.processingTimeMS ,list: result}
     }
-    return []
+    return {took:0, list: []}
   }
 
-  public async searchInSelfES(kw: string): Promise<SearchResult[]> {
+  public async searchInSelfES(kw: string): Promise<SearchResult> {
     interface ESHits {
       _index: string
       _id: string
@@ -114,6 +116,7 @@ class SearchService implements Cacheable{
         const urlList = v.highlight.url || []
         return {
           url: v._source.url,
+          score: v._score,
           hilighedUrl: urlList[0] || v._source.url,
           createTime: v._source.createTime,
           hilighedSegement: v._source.segments.map(sv => {
@@ -132,15 +135,13 @@ class SearchService implements Cacheable{
           .filter(sv => sv.id.indexOf(`<${hilighTag}>`) != -1 || sv.txt.indexOf(`<${hilighTag}>`) != -1) // 过滤掉没有高亮的搜索结果
           .filter(v => kwContains(kw, v.id || '') || kwContains(kw, v.txt || '')) // 过滤掉搜索结果没有关键词的结果
           .map(v => appendMissingKw(v, kw)) // 添加搜索结果中没有出现的关键词
-        } as SearchResult
+        } as SearchResultItem
       })
       // 过滤掉目录名没有包含关键词且没有搜索结果的纪录
       let i = result.filter(v => (v.hilighedSegement && v.hilighedSegement.length != 0) || kwContains(kw, v.url))
-      console.log(i)
-      return i
+      return {took: raw.took as number, list: i}
     }
-    console.log(hits)
-    return []
+    return {took:0, list:[]}
   }
 
   @cache

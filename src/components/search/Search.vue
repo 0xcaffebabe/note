@@ -28,6 +28,9 @@
         </el-select>
           </div>
         </template>
+        <template #suffix>
+          <span class="search-took" v-if="resultList.length > 0">搜索耗时:{{searchTook}}</span>
+        </template>
       </el-autocomplete>
     </template>
     <div class="search-result" v-loading="showLoading" :element-loading-background="loadingColor">
@@ -40,6 +43,7 @@
         />
         <div class="index-time-wrapper">
           <el-tag class="index-time" size="mini">⏰索引时间: {{new Date(result.createTime).toLocaleString()}}</el-tag>
+          <el-tag class="index-time" style="margin-left: 10px" size="mini" v-if="result.score">⚽分数: {{result.score}}</el-tag>
         </div>
         </div>
         <div
@@ -68,7 +72,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import searchService from "@/service/SearchService";
-import SearchResult from "@/dto/SearchResult";
+import SearchResultItem from "@/dto/search/SearchResultItem";
 import docService from "@/service/DocService";
 import SearchSuggestion from "@/dto/search/SearchSuggestion";
 
@@ -82,7 +86,9 @@ export default defineComponent({
       showDrawer: false as boolean,
       showEmpty: true as boolean,
       showLoading: false as boolean,
-      resultList: [] as SearchResult[],
+      resultList: [] as SearchResultItem[],
+      // 搜索耗时
+      searchTook: 0,
       searchSuggestionList: [] as SearchSuggestion[],
       searchEngineList: ['es', 'algolia'],
       searchEngine: 'es' as 'es' | 'algolia'
@@ -125,7 +131,9 @@ export default defineComponent({
         // 动画开始
         this.showLoading = true;
         // 拉取数据
-        this.resultList = await searchService.search(this.kw, this.searchEngine);
+        const searchResult = await searchService.search(this.kw, this.searchEngine);
+        this.resultList = searchResult.list
+        this.searchTook = searchResult.took
         this.showEmpty = true;
         this.showLoading = false;
         // 动画结束
@@ -208,6 +216,12 @@ export default defineComponent({
 .search-suggestion-item {
   display: inline-block;
   padding: 4px 0;
+}
+.search-took {
+  color: #bbb;
+  height: 42px;
+  line-height: 42px;
+  padding-right: 10px;
 }
 
 body[theme=dark] {

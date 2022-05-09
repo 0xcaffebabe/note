@@ -231,5 +231,12 @@ body[theme=dark] {
   .el-empty__image {
     filter: invert(25%)!important;
   }
+  .el-input-group__append {
+    background-color: var(--main-dark-bg-color)!important;
+    border-color: var(--main-dark-bg-color)!important;
+  }
+  .el-autocomplete .el-input__inner {
+    border-color: var(--main-dark-bg-color)!important;
+  }
 }
 </style>

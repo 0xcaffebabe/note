@@ -200,8 +200,13 @@ export default defineComponent({
       ElMessage.success('复制成功: ' + url);
     },
     handleTocItemClick(id: string) {
-      const elm : HTMLElement = document.querySelector('#' + id)!
-      window.scrollTo(0, elm.offsetTop - 80)
+      const elmList:NodeListOf<HTMLElement> = document.querySelector('.markdown-section')?.querySelectorAll('h1,h2,h3,h4,h5,h6')!
+      for(let elm of elmList) {
+        if (elm.id.replace(/<mark>/gi, '').replace(/<\/mark>/gi, '') == id) {
+          window.scrollTo(0, elm.offsetTop - 80)
+          break
+        }
+      }
     },
     handleTabNavDbclick() {
       this.syncCategoryListScrollBar();

@@ -37,11 +37,12 @@ function hightHeading(instance: InstanceType<typeof ContentList>) {
       previousNode.classList.remove("active");
     }
     // 高亮当前标题
+    const id = node.id.replace(/<mark>/gi, '').replace(/<\/mark>/gi, '')
     document
-      .querySelector(`.toc a[href='#${node.id}']`)
+      .querySelector(`.toc a[href='#${id}']`)
       ?.classList.add("active");
     // 记录当前标题
-    instance.$store.commit("setCurrentHeading", node.id);
+    instance.$store.commit("setCurrentHeading", id);
   }
 }
 

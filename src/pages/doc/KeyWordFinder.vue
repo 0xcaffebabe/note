@@ -123,10 +123,14 @@ export default defineComponent({
       if (kwElm) {
         kwElm.classList.add("hilight-choosed")
         if (withScroll) {
-          if (kwElm.offsetTop - 280 > window.scrollY || kwElm.offsetTop - 280 < 0) {
-            return
+          let hilightElm = kwElm
+          while(!hilightElm.parentElement?.classList.contains("markdown-section")) {
+            if (!hilightElm.parentElement) {
+              break
+            }
+            hilightElm = hilightElm.parentElement
           }
-          window.scrollTo(0, kwElm.offsetTop - 280)
+          window.scrollTo(0, hilightElm.offsetTop - 280)
         }
       }
     }

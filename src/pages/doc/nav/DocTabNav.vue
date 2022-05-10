@@ -1,28 +1,38 @@
 <template>
-  <div class="tab-container" ref="tabContainer" :style="{top: parentShowHeader? 66 + 'px': 6 + 'px', position: fixed? 'fixed': 'absolute'}">
+  <el-scrollbar wrap-class="tab-container-wrapper" class="tab-container" ref="tabContainer" :style="{top: parentShowHeader? 66 + 'px': 6 + 'px', position: fixed? 'fixed': 'absolute'}">
     <el-button
       class="nav-item"
       size="mini"
       v-for="cate in cateList"
       :key="cate"
       @contextmenu="handleContextMenuEvent(cate, $event)"
-      :type="
-        docUrl2Id(currentCate.link) == docUrl2Id(cate) ? 'primary' : 'default'
-      "
+      :class="{
+        'active': docUrl2Id(currentCate.link) == docUrl2Id(cate)
+      }"
       @click="$router.push('/doc/' + docUrl2Id(cate))"
       @dblclick="$emit('dbclick')"
     >
+      <span class="nav-item-sign">{{findRootCategoryFirstLetter(cate)}}</span>
       {{ cateName(cate) }}
+      <span class="close-btn" @click.prevent.stop="close(cate)" v-if="cateList.length > 1">
+        <el-icon><close-bold /></el-icon>
+      </span>
     </el-button>
-  </div>
+  </el-scrollbar>
   <tab-nav-context-menu ref="contextMenu" @toggle-fixed="fixed = !fixed" :fixed="fixed"/>
 </template>
+
+<script lang="ts" setup>
+import {CloseBold} from '@element-plus/icons'
+</script>
 
 <script lang="ts">
 import Category from "@/dto/Category";
 import DocUtils from "@/util/DocUtils";
 import { defineComponent } from "vue";
 import TabNavContextMenu from "./TabNavContextMenu.vue";
+import CategoryService from '@/service/CategoryService';
+import { ElScrollbar } from 'element-plus';
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -33,7 +43,8 @@ export default defineComponent({
   data(){
     return {
       parentShowHeader: true,
-      fixed: true
+      fixed: true,
+      allCateList: [] as Category[]
     }
   },
   watch: {
@@ -42,16 +53,29 @@ export default defineComponent({
         this.parentShowHeader = val;
       },
       immediate: true,
+    },
+    currentCate() {
+      // const activeTab = document.querySelector('.tab-container-wrapper .active') as HTMLElement
+      // if (!activeTab) {
+      //   return
+      // }
+      // const tabContainer = document.querySelector('.tab-container-wrapper') as HTMLElement
+      // console.log(activeTab, activeTab.offsetLeft, tabContainer.scrollLeft )
+      // tabContainer.scrollTo(activeTab.offsetLeft - 280, 0)
     }
     
   },
   mounted() {
-    const dom  = this.$refs.tabContainer as HTMLElement
+    const dom  = document.querySelector('.tab-container-wrapper') as HTMLElement
+    console.log(dom)
     dom.addEventListener('wheel', (e: WheelEvent) => {
       dom.scrollTo(dom.scrollLeft + e.deltaY,0)
       e.stopPropagation()
       return e.preventDefault()
     })
+  },
+  async created() {
+    this.allCateList = await CategoryService.getCategoryList()
   },
   setup() {},
   methods: {
@@ -64,6 +88,38 @@ export default defineComponent({
       (this.$refs.contextMenu as any).show(cateLink, e.clientX, e.clientY);
       e.preventDefault();
       e.stopPropagation();
+    },
+    close(cateLink: string) {
+      (this.$refs.contextMenu as InstanceType<typeof TabNavContextMenu>).close(cateLink)
+    },
+    findRootCategoryFirstLetter(cateLink: string): string {
+      function findTarget(cateList: Category[]): Category | null {
+        if (!cateList) {
+          return null
+        }
+        for(let cate of cateList) {
+          if (cate.link == cateLink) {
+            return cate
+          }
+          const fromChildren = findTarget(cate.chidren)
+          if (fromChildren) {
+            return fromChildren
+          }
+        }
+        return null
+      }
+      let root = findTarget(this.allCateList)
+      if (!root) {
+        return '📋'
+      }
+      while(root.parent) {
+        root = root?.parent
+      }
+      for(let i of root.name) {
+        return i
+      }
+      return root.name.substring(0, 1)
+
     }
   },
   computed: {
@@ -86,23 +142,66 @@ export default defineComponent({
   overflow-x: hidden;
   overflow-y: hidden;
   z-index: 999;
-  box-shadow: 2px 0 13px #bbb;
-}
-.tab-container::-webkit-scrollbar {
-  width: 3px;
-  height: 3px;
-}
-.tab-container:hover {
-  overflow-x: auto;
+  :deep(.el-scrollbar__bar.is-vertical) {
+    display: none;
+  }
 }
 .nav-item {
-  padding: 10px 14px;
-  margin: 0;
-  border-radius: 1px;
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  border-radius: 14px;
+  color: #666;
+  background: rgba(248, 249, 252, .5);
+  margin: 0px 1px 13px 9px;
+  padding: 6px 28px;
+  backdrop-filter: blur(50px);
+  font-size: 14px;
+  .close-btn {
+    position: absolute;
+    right: 8px;
+    bottom: 4px;
+    padding: 2px;
+    display: none;
+    border-radius: 4px;
+  }
+  .nav-item-sign {
+    position: absolute;
+    left: 8px;
+    bottom: 4px;
+    padding: 2px;
+    font-weight: 700;
+    color: #ddf;
+  }
+  .close-btn:hover {
+    background-color: #ddd;
+  }
+}
+.nav-item.active {
+  background: rgba(64,158,255,.8);
+  border: 1px solid rgba(64,158,255,.5);
+  color: white;
+  .close-btn {
+    display: inline-block;
+  }
+}
+.nav-item:hover {
+  background: rgba(64,158,255,.8);
+  border: 1px solid rgba(64,158,255,.5);
+  color: white;
+  .close-btn {
+    display: inline-block;
+  }
 }
 body[theme="dark"] {
-  .tab-container {
-    box-shadow: 2px 0 13px #111;
+  .close-btn:hover {
+    background-color: #444;
+  }
+  .nav-item {
+    color: var(--main-dark-text-color);
+  }
+  .nav-item:hover {
+    color: var(--main-dark-text-color)
   }
 }
 </style>

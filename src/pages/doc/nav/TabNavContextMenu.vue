@@ -70,6 +70,10 @@ export default defineComponent({
       }
       this.hide();
     },
+    close(cateLink: string) {
+      this.cateLink = cateLink
+      this.closeCurrent()
+    },
     closeOthers(){
       this.$store.commit('removeFromCategoryListExcept', this.cateLink);
       this.$router.push('/doc/' + DocUtils.docUrl2Id(this.cateList[0]));

@@ -12,7 +12,7 @@
   >
     <template #default="{ item }">
       <div class="value" v-html="renderHilighHTML(item.name)"></div>
-      <span class="link">{{ docUrl2Id(item.link) }}</span>
+      <span class="link" v-html="renderHilighHTML(docUrl2Id(item.link))"></span>
     </template>
   </el-autocomplete>
   </el-dialog>  
@@ -33,10 +33,27 @@ function pyFirstLetter(str: string): string {
               .join("")
 }
 
+function categoryLinkIsMatch(category: Category, queryString: string): boolean {
+  const link = decodeURI(category.link).replace(/\//gi, '')
+  return link.toLowerCase().indexOf(queryString.toLowerCase()) != -1 || // 目录名包含完全匹配
+          pinyin.convertToPinyin(link).toLowerCase().indexOf(queryString.toLowerCase()) != -1 || // 目录名包含拼音完全匹配
+          pyFirstLetter(link).toLowerCase().indexOf(queryString.toLowerCase()) != -1  // 目录名包含拼音首字母匹配
+}
+
+function categoryNameIsMatch(category: Category, queryString: string): boolean {
+  return category.name?.toLowerCase().indexOf(queryString.toLowerCase()) != -1 || // 文档名包含完全匹配
+          pinyin.convertToPinyin(category.name).toLowerCase().indexOf(queryString.toLowerCase()) != -1 || // 文档名包含拼音完全匹配
+          pyFirstLetter(category.name).toLowerCase().indexOf(queryString.toLowerCase()) != -1  // 文档名包含拼音首字母匹配
+}
+
+
 function categoryIsMatch(category: Category, queryString: string): boolean{
-  return category.name?.toLowerCase().indexOf(queryString.toLowerCase()) != -1 || // 包含完全匹配
-          pinyin.convertToPinyin(category.name).toLowerCase().indexOf(queryString.toLowerCase()) != -1 || // 包含拼音完全匹配
-          pyFirstLetter(category.name).toLowerCase().indexOf(queryString.toLowerCase()) != -1 // 包含拼音首字母匹配
+  const kwList = queryString.split(" ")
+  let allMatched = true
+  for(let kw of kwList) {
+    allMatched &&= categoryNameIsMatch(category, kw) || categoryLinkIsMatch(category, kw)
+  }
+  return allMatched
 }
 
 export default defineComponent({
@@ -79,8 +96,13 @@ export default defineComponent({
         cb(results)
       }
     },
-    renderHilighHTML(raw: string){
-      return raw.replace(new RegExp(this.kw, 'gi'), (str: string) =>`<mark>${str}</mark>`)
+    renderHilighHTML(raw: string): string{
+      const kwList = this.kw.trim().split(" ")
+      let html = raw
+      for(let kw of kwList) {
+        html = html.replace(new RegExp(kw, 'gi'), (str: string) =>`<mark>${str}</mark>`)
+      }
+      return html
     },
     handleSelect(value: Category){
       // 记录搜索点击结果

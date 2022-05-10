@@ -18,6 +18,7 @@
     >
     </el-option>
   </el-select>
+  <el-checkbox v-model="onlySelfRelated" label="只看跟本节点关联的" size="large" />
   <el-switch
     v-model="isPotential"
     active-color="#409EFF"
@@ -94,6 +95,12 @@ export default defineComponent({
   watch: {
     mode(){
      this.init(false); 
+    },
+    onlySelfRelated(){
+      this.init();
+    },
+    displayMode(){
+      this.init()
     }
   },
   computed: {
@@ -117,7 +124,17 @@ export default defineComponent({
       if (this.isPotential && potentialProcess) {
         this.mode = 'circular';
       }
-      const knowledgeNetwork: KnowledgeNode[] = this.isPotential ? await api.getPotentialKnowledgeNetwork() : await api.getKnowledgeNetwork();
+      let knowledgeNetwork: KnowledgeNode[] = this.isPotential ? await api.getPotentialKnowledgeNetwork() : await api.getKnowledgeNetwork();
+      if (this.onlySelfRelated) {
+        knowledgeNetwork = knowledgeNetwork
+          .filter(v => v.id == this.doc || v.links?.find(cv => cv.id == this.doc))
+          .map(v => {
+            if (v.id != this.doc) {
+              v.links = v.links?.filter(cv => cv.id == this.doc)
+            }
+            return v
+          })
+      }
       // 提取所有节点
       let nodes = Array.from(
         new Set(
@@ -339,6 +356,7 @@ export default defineComponent({
       chart: null as echarts.ECharts | null,
       mode: 'force' as "force" | "circular" | "none" | undefined,
       displayMode: ['force', 'circular'],
+      onlySelfRelated: false,
       isPotential: false,
     };
   },
@@ -360,6 +378,12 @@ export default defineComponent({
 .el-switch {
   position:fixed;
   top:60px;
+  right: 20px;
+  z-index: 9999;
+}
+.el-checkbox {
+  position:fixed;
+  top:80px;
   right: 20px;
   z-index: 9999;
 }

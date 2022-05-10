@@ -323,7 +323,8 @@ export default defineComponent({
               // 网络边长 节点数越多 边越长
               edgeLength: [nodeMap.size * 1.2, nodeMap.size * 2],
             },
-            edgeSymbolSize: 8,
+            edgeSymbolSize: 6,
+            edgeSymbol: ["arrow"],
             edgeLabel: {
               show: false,
               fontSize: 10,

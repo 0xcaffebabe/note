@@ -141,7 +141,7 @@ class Api implements Cacheable{
   }
 
   @cache
-  public async getCommitTotalTrend(): Promise<[string, number, number][]> {
+  public async getCommitTotalTrend(): Promise<[string, number, number, number][]> {
     return this.requestDataUseJsDelivr(UrlConst.commitTotalTrend)
   }
 

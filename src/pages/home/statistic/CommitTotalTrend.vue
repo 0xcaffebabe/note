@@ -87,7 +87,7 @@ export default defineComponent({
         },
       },
       legend: {
-        data: ["总字数", "总行数"],
+        data: ["总字数", "总行数", "总提交"],
         textStyle: {
           color: this.isDark ? "#bbb" : "",
         }
@@ -121,6 +121,11 @@ export default defineComponent({
           name: "总行数",
           type: "line",
           data: data.map(v => v[2]),
+        },
+        {
+          name: "总提交",
+          type: "line",
+          data: data.map(v => v[3]),
         },
       ],
     };

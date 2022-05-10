@@ -68,6 +68,11 @@ const apiMappings: DocApiItem[] = [
     path: UrlConst.docClusterJson,
     method: async () => DocService.getDocCluster()
   },
+  {
+    name: '提交总量',
+    path: UrlConst.commitTotalTrend,
+    method: async () => StatisticService.generateCommitTotalTrend()
+  },
 ]
 
 // API请求缓存

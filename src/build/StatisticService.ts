@@ -84,7 +84,7 @@ class StatisticService extends BaseService {
    * @memberof StatisticService
    * @returns [日期, 当日总字数, 当日总行数][]
    */
-  public static async generateCommitTotalTrend(): Promise<[string, number, number][]> {
+  public static async generateCommitTotalTrend(): Promise<[string, number, number, number][]> {
     const commitList = await GitService.listAllRawCommit()
     commitList.reverse()
 
@@ -95,8 +95,8 @@ class StatisticService extends BaseService {
       }
       return result
     }
-    // [日期, 新增字数, 新增行数]
-    const helper = new BatchPromiseHelper<[string, number, number]>()
+    // [日期, 新增字数, 新增行数, 新增提交次数]
+    const helper = new BatchPromiseHelper<[string, number, number, number]>()
     for(let commit of commitList) {
 
       helper.join(
@@ -109,25 +109,26 @@ class StatisticService extends BaseService {
             )
             .then(total => {
               console.log(`提交总量趋势 ${commit.hash} ${commit.date}:${total}`)
-              return [commit.date, total[0], total[1]] as [string, number, number]
+              return [commit.date, total[0], total[1], 1] as [string, number, number, number]
             })
-            .catch(err => [commit.date, 0, 0] as [string, number, number])
+            .catch(err => [commit.date, 0, 0, 0] as [string, number, number, number])
       )
     }
     const resp = await helper.all()
     // 聚合日期
-    const map = new Map<string, [number,number]>()
+    const map = new Map<string, [number,number, number]>()
     for(let i of resp) {
       const date = i[0].split("T")[0]
       if (map.has(date)) {
         const data = map.get(date)!
         data[0] = data[0] + i[1]
         data[1] = data[1] + i[2]
+        data[2] = data[2] + i[3]
       }else {
-        map.set(date, [i[1], i[2]])
+        map.set(date, [i[1], i[2], i[3]])
       }
     }
-    const result: [string, number, number][] = []
+    const result: [string, number, number, number][] = []
     map.forEach((v, k) => {
       result.push([k, ...v])
     })
@@ -139,6 +140,7 @@ class StatisticService extends BaseService {
       const previous = result[i-1]
       current[1] += previous[1]
       current[2] += previous[2]
+      current[3] += previous[3]
     }
     return result
   }

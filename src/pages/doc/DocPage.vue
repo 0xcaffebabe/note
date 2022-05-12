@@ -39,6 +39,7 @@
     @showMindGraph="showMindGraph();showAside = false;isDrawerShow = true"
     @showKnowledgeNetwork="showKnowledgeNetwork();showAside = false;isDrawerShow = true"
     @showKnowledgeSystem="showKnowledgeSystem();showAside = false;isDrawerShow = true"
+    @showKnowledgeTrend="showKnowledgeTrend()"
     @showBookMarkAdder="showBookmarkAdder"
     @showBookMarkList="showBookmarkList"
     @copyDocPath="handleCopyDocPath"
@@ -63,6 +64,9 @@
   </keep-alive>
   <keep-alive>
     <knowledge-system ref="knowledgeSystem" @close="showAside = true;isDrawerShow = false"/>
+  </keep-alive>
+  <keep-alive>
+    <knowledge-trend ref="knowledgeTrend"/>
   </keep-alive>
   <image-viewer ref="imageViewer" />
   <resource-brower ref="resourceBrower" />
@@ -99,6 +103,7 @@ import ResourceBrower from "./ResourceBrower.vue";
 import ImageViewer from "@/components/ImageViewer.vue";
 import KnowledgeReviewer from "./knowledge/KnowledgeReviewer.vue";
 import KeyWordFinder from "./KeyWordFinder.vue";
+import KnowledgeTrend from './knowledge/KnowledgeTrend.vue'
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -119,7 +124,8 @@ export default defineComponent({
     ResourceBrower,
     ImageViewer,
     KnowledgeReviewer,
-    KeyWordFinder
+    KeyWordFinder,
+    KnowledgeTrend
 },
   watch: {
     showHeader: {
@@ -297,7 +303,11 @@ export default defineComponent({
       }else {
         this.$router.push(`/ppt/${this.doc}`)
       }
-    }
+    },
+    showKnowledgeTrend() {
+      const kw = this.doc.split("-")[this.doc.split("-").length - 1];
+      (this.$refs.knowledgeTrend as InstanceType<typeof KnowledgeTrend>).show(kw)
+    },
   },
   beforeRouteUpdate(to, from) {
     const doc = to.params.doc.toString();

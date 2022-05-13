@@ -103,7 +103,7 @@ import ResourceBrower from "./ResourceBrower.vue";
 import ImageViewer from "@/components/ImageViewer.vue";
 import KnowledgeReviewer from "./knowledge/KnowledgeReviewer.vue";
 import KeyWordFinder from "./KeyWordFinder.vue";
-import KnowledgeTrend from './knowledge/KnowledgeTrend.vue'
+import KnowledgeTrend from './knowledge/trend/KnowledgeTrend.vue'
 
 export default defineComponent({
   inject: ['showHeader'],

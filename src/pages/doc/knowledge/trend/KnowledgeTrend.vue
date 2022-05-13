@@ -6,33 +6,18 @@
     :with-header="false"
     :lock-scroll="true"
     custom-class="knowledge-trend"
+    v-loading="true"
   >
     <div
       ref="chartContainer"
       class="chartContainer"
       style="height: 600px; width: 100%"
     ></div>
-    <el-row>
-      <el-col :span="8">
-        <el-card class="data-card">
-          <template #header>
-            <h1 class="data-title">区域热度</h1>
-          </template>
-          <el-table :data="interestByRegionData" height="250" style="width: 100%">
-            <el-table-column prop="geoName" label="区域" >
-              <template #default="scope">
-                {{localeName(scope.row.geoCode, scope.row.geoName)}}
-              </template>
-            </el-table-column>
-            <el-table-column prop="name" label="流行度" >
-              <template #default="scope">
-                  {{scope.row.value[0]}}
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
+    <el-row :gutter="24">
+      <el-col :span="24">
+        <world ref="world"/>
       </el-col>
-      <el-col :span="8">
+      <el-col :span="12">
          <el-card class="data-card">
           <template #header>
             <h1 class="data-title">相关查询</h1>
@@ -43,7 +28,7 @@
           </el-table>
         </el-card>
       </el-col>
-      <el-col :span="8">
+      <el-col :span="12">
          <el-card class="data-card">
           <template #header>
             <h1 class="data-title">相关主题</h1>
@@ -65,7 +50,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import * as echarts from "echarts/core";
-import i18n_zh from './i18n_zh';
+import i18n_zh from './components/i18n_zh';
 import {
   TitleComponent,
   TitleComponentOption,
@@ -86,6 +71,7 @@ import GoogleTrendService from "@/service/GoogleTrendService";
 import GeoMapDataItem from "@/dto/google-trend/GeoMapDataItem";
 import QueriesRankedKeywordItem from "@/dto/google-trend/QueriesRankedKeywordItem";
 import TopicsRankedKeywordItem from "@/dto/google-trend/TopicsRankedKeywordItem";
+import World from './components/World.vue'
 
 echarts.use([
   TitleComponent,
@@ -109,6 +95,9 @@ type EChartsOption = echarts.ComposeOption<
 >;
 
 export default defineComponent({
+  components: {
+    World
+  },
   setup() {},
   data() {
     return {
@@ -136,10 +125,12 @@ export default defineComponent({
     show(kw: string) {
       this.kw = kw
       this.showDrawer = true
-      this.initInterestOverTime();
-      this.initInterestByRegion();
-      this.initRelatedQueries();
-      this.initRelatedTopics();
+      this.$nextTick(() => {
+        this.initInterestOverTime();
+        this.initInterestByRegion();
+        this.initRelatedQueries();
+        this.initRelatedTopics();
+      })
     },
     async initInterestOverTime() {
       const data = (await GoogleTrendService.interestOverTime(this.kw)).default
@@ -208,7 +199,7 @@ export default defineComponent({
       option && myChart.setOption(option);
     },
     async initInterestByRegion() {
-      this.interestByRegionData = (await GoogleTrendService.interestByRegion(this.kw)).default.geoMapData
+      (this.$refs.world as InstanceType<typeof World>).init(this.kw)
     },
     async initRelatedQueries() {
       this.releatedQueriesData = (await GoogleTrendService.relatedQueries(this.kw)).default.rankedList[0].rankedKeyword

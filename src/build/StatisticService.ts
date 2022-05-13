@@ -6,7 +6,7 @@ import { cleanText } from "../util/StringUtils";
 import BatchPromiseHelper from "../util/BatchPromiseHelper";
 import GitChangeItem from "@/dto/git/GitChangeItem";
 
-const imageSuffix = ['png', 'jpg', 'svg', 'jpeg', 'jiff', 'bmp']
+const imageSuffix = ['png', 'jpg', 'svg', 'jpeg', 'jiff', 'bmp', 'webp']
 
 class StatisticService extends BaseService {
 

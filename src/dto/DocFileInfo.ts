@@ -1,4 +1,5 @@
 import CommitInfo from "./CommitInfo"
+import { DocMetadata, EMPTY_DOC_METADATA } from "./doc/DocMetadata"
 
 export default class DocFileInfo {
   // 文档名称
@@ -11,5 +12,6 @@ export default class DocFileInfo {
   hasMoreCommit: boolean = false
   totalCommits: number = 0
   metadata: string = ''
+  formattedMetadata: DocMetadata = EMPTY_DOC_METADATA
   createTime: string = ''
 }

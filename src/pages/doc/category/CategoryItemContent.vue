@@ -16,17 +16,7 @@
           class="item"
           type="primary"
         ></el-badge>
-        <div>
-          <el-tag
-            v-for="item in tags"
-            :key="item"
-            size="mini"
-            :type="calcTagType(item)"
-            @click="$router.push('/tag?tag=' + item)"
-            effect="dark"
-            >{{ item }}</el-tag
-          >
-        </div>
+        <tag-list :tags="tags" />
         <el-alert :closable="false" v-if="docMetadata.books && docMetadata.books.length > 0">
           <template #default>
             <p>相关书籍</p>
@@ -58,12 +48,15 @@ import { cleanText } from "@/util/StringUtils";
 import api from "@/api";
 import DocService from "@/service/DocService";
 import DocUtils from "@/util/DocUtils";
-import TagUtils from "@/pages/tag/TagUtils";
 import {DocMetadata, EMPTY_DOC_METADATA} from "@/dto/doc/DocMetadata";
 import {ElMessage} from 'element-plus'
 import EnhancerService from '@/service/EnhancerService'
+import TagList from '@/pages/doc/tag/TagList.vue'
 
 export default defineComponent({
+  components: {
+    TagList
+  },
   props: {
     categoryLink: {
       type: String,
@@ -93,8 +86,8 @@ export default defineComponent({
           DocUtils.docUrl2Id(this.categoryLink)
         );
       }
-      this.docMetadata = DocService.resolveMetadata(this.file)
-      this.tags = this.docMetadata.tags;
+      this.docMetadata = this.file.formattedMetadata
+      this.tags = this.file.formattedMetadata.tags;
       this.lastPastDays = this.calcLastUpdate();
       this.loading = false;
     },
@@ -113,10 +106,6 @@ export default defineComponent({
       return Math.ceil(
         (new Date().getTime() - lastUpdateDate) / (3600 * 24 * 1000)
       );
-    },
-    // 计算标签的颜色
-    calcTagType(tag: string): string {
-      return TagUtils.calcTagType(tag);
     },
     // 计算更新日期颜色
     calcUpdateType(days: number): string {
@@ -160,11 +149,6 @@ export default defineComponent({
 
 
 <style lang="less" scoped>
-.el-tag {
-  cursor: pointer;
-  margin-left: 4px;
-  margin-bottom: 4px;
-}
 .full-id {
   font-size: 12px;
   padding-top: 0;

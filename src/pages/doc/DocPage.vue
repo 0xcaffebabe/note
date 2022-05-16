@@ -10,6 +10,7 @@
           <div class="main-content">
             <doc-breadcrumb-nav />
             <p class="create-time">⏰创建时间: {{new Date(file.createTime).toLocaleString()}}</p>
+            <tag-list :tags="file.formattedMetadata.tags"/>
             <!-- doc主体开始 -->
             <div class="markdown-section" ref="markdownSection" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '960px': '74%'}"></div>
             <!-- doc主体结束 -->
@@ -104,6 +105,7 @@ import ImageViewer from "@/components/ImageViewer.vue";
 import KnowledgeReviewer from "./knowledge/KnowledgeReviewer.vue";
 import KeyWordFinder from "./KeyWordFinder.vue";
 import KnowledgeTrend from './knowledge/trend/KnowledgeTrend.vue'
+import TagList from './tag/TagList.vue'
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -125,7 +127,8 @@ export default defineComponent({
     ImageViewer,
     KnowledgeReviewer,
     KeyWordFinder,
-    KnowledgeTrend
+    KnowledgeTrend,
+    TagList,
 },
   watch: {
     showHeader: {

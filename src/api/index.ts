@@ -12,6 +12,7 @@ import CommitInfo from '@/dto/CommitInfo'
 import YuequeDraft from '@/dto/YuqueDraft'
 import Category from '@/dto/Category'
 import ClusterNode from '@/dto/ClusterNode'
+import DocService from '@/service/DocService'
 
 const baseUrl = () => {
   return DatasourceService.getCurrentDatasource().url
@@ -37,7 +38,9 @@ class Api implements Cacheable{
     if (!data.data) {
       throw Error('无法获取文档 ' + id)
     }
-    return data.data
+    const fileInfo = data.data as DocFileInfo
+    fileInfo.formattedMetadata = DocService.resolveMetadata(fileInfo)
+    return fileInfo
   }
 
 

@@ -174,6 +174,9 @@ class DocService implements Cacheable{
       // 自定义文本渲染 若发现关键字包含已存在的知识网络连接 则转为链接
       text = text.replace(reg, (str: string) => {
         const i = knowledgeLinkList.filter(v => v.name == str)[0];
+        if (!i) {
+          return str;
+        }
         // 如果被插入的链接为当前渲染的文档 跳过
         if (i.id == file.id) {
           return str;

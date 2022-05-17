@@ -9,7 +9,7 @@
       </el-affix>
     </el-header>
     <div class="header-toggle-button" :style="{'margin-top': showHeader ?'66px': '6px'}">
-      <el-button @click="showHeader = !showHeader" size="mini" type="primary">
+      <el-button @click="showHeader = !showHeader" size="small" type="primary">
         <el-icon>
           <arrow-up-bold v-if="showHeader" />
           <arrow-down-bold v-else />
@@ -31,7 +31,7 @@ import { defineComponent, computed, ref } from "vue";
 import Header from "./components/header/Header.vue";
 import Search from "@/components/search/Search.vue";
 import CategorySearch from "@/components/search/CategorySearch.vue";
-import { ArrowUpBold, ArrowDownBold } from "@element-plus/icons";
+import { ArrowUpBold, ArrowDownBold } from "@element-plus/icons-vue";
 import EventBus from "./components/EventBus";
 import MermaidUtils from "./util/MermaidUtils";
 import ConfigService from "./service/ConfigService";

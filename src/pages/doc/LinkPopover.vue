@@ -1,7 +1,7 @@
 <template>
   <transition name="fade">
     <div id="markdownLinkPopover" v-show="visible">
-      <el-button class="close-button" size="mini" circle @click="hide">
+      <el-button class="close-button" size="small" circle @click="hide">
         <el-icon><close-bold /></el-icon>
       </el-button>
       <category-item-content
@@ -15,7 +15,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { CloseBold } from "@element-plus/icons";
+import { CloseBold } from "@element-plus/icons-vue";
 import CategoryItemContent from "./category/CategoryItemContent.vue";
 
 export default defineComponent({

@@ -1,7 +1,7 @@
 <template>
   <el-popover placement="bottom" :title="title" :width="400" trigger="click" @show="init">
     <template #reference>
-      <el-button size="mini" title="随手草稿">
+      <el-button size="small" title="随手草稿">
         <el-icon><dessert /></el-icon>
       </el-button>
     </template>
@@ -14,7 +14,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { Dessert } from "@element-plus/icons";
+import { Dessert } from "@element-plus/icons-vue";
 import api from "@/api";
 
 export default defineComponent({

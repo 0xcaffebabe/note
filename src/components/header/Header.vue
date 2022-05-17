@@ -27,17 +27,17 @@
             <!-- 全屏/缓存清空 -->
             <el-divider direction="vertical" />
             <el-button-group>
-              <el-button size="mini" @click="handleToggleFullScreen" title="进入/退出全屏模式">
+              <el-button size="small" @click="handleToggleFullScreen" title="进入/退出全屏模式">
                 <el-icon><monitor /></el-icon>
               </el-button>
               <el-popconfirm title="确认清空缓存?" @confirm="clearCache">
                 <template #reference>
-                  <el-button size="mini" title="清空缓存">
+                  <el-button size="small" title="清空缓存">
                     <el-icon><brush /></el-icon>
                   </el-button>
                 </template>
               </el-popconfirm>
-              <el-button size="mini" @click="enterZenMode" title="进入专注模式">
+              <el-button size="small" @click="enterZenMode" title="进入专注模式">
                 <el-icon><aim /></el-icon>
               </el-button>
               <yueque-draft-shower />
@@ -49,7 +49,7 @@
                 icon="el-icon-search"
                 class="search"
                 @click="$emit('search')"
-                size="mini"
+                size="small"
                 round
               >
                 Ctrl + K 全文搜索
@@ -58,7 +58,7 @@
                 icon="el-icon-search"
                 class="search"
                 @click="$emit('category-search')"
-                size="mini"
+                size="small"
                 round
               >
                 Ctrl + Q 目录搜索
@@ -76,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import {Sunny, Moon, Monitor, Brush, Aim } from '@element-plus/icons';
+import {Sunny, Moon, Monitor, Brush, Aim } from '@element-plus/icons-vue';
 import EventBus from "@/components/EventBus";
 import InstapaperShower from "./InstapaperShower.vue";
 import YuequeDraftShower from "./YuequeDraftShower.vue";

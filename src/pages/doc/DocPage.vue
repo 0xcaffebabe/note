@@ -69,7 +69,7 @@
   <keep-alive>
     <knowledge-trend ref="knowledgeTrend"/>
   </keep-alive>
-  <image-viewer ref="imageViewer" />
+  <!-- <image-viewer ref="imageViewer" /> -->
   <resource-brower ref="resourceBrower" />
 </template>
 

@@ -3,7 +3,7 @@
     <div class="review-range">
       <el-slider v-model="rangeValue" range :max="20" :show-tooltip="false" :marks="marks"> </el-slider>
     </div>
-    <el-select v-model="displayMode" placeholder="选择" size="mini" class="display-mode" @change="handleDisplayModeChange">
+    <el-select v-model="displayMode" placeholder="选择" size="small" class="display-mode" @change="handleDisplayModeChange">
       <el-option
         label="倒序"
         value="倒序"

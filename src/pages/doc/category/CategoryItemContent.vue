@@ -32,7 +32,7 @@
                 </template>
                 <el-image v-if="book.name" :src="'https://search.ismy.wang/book/img?name=书 ' + book.name" alt="" style="width:100px;height:150px" fit="cover" />
               </el-popover>
-              <el-tag size="mini" v-for="chapter in book.chapters" :key="chapter">{{chapter}}</el-tag>
+              <el-tag size="small" v-for="chapter in book.chapters" :key="chapter">{{chapter}}</el-tag>
             </p>
           </template>
         </el-alert>

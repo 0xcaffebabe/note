@@ -3,7 +3,7 @@
     <el-dropdown>
       <div>
 
-      <el-button type="primary" round size="mini" class="fix-button">
+      <el-button type="primary" round size="small" class="fix-button">
         <el-icon style="vertical-align: middle"><tools /></el-icon> 工具栏
       </el-button>
       </div>
@@ -14,7 +14,7 @@
               class="box-item"
               @click="action.local ? localActionDispatch(action.action) : $emit(action.action)"
               :type="action.type"
-              size="mini"
+              size="small"
               >{{action.name}} <kbd v-if="action.hotkey">{{action.hotkey}}</kbd> </el-button
             ></el-dropdown-item
           >
@@ -38,7 +38,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import {Tools} from '@element-plus/icons'
+import {Tools} from '@element-plus/icons-vue'
 
 type ActionType = 
     'showReadingHistory' |

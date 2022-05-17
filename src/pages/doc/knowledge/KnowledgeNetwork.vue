@@ -9,7 +9,7 @@
     modal-class="operational-drawer-modal"
     custom-class="operational-drawer"
   >
-  <el-select v-model="mode" placeholder="显示模式" size="mini" popper-class="popper-list">
+  <el-select v-model="mode" placeholder="显示模式" size="small" popper-class="popper-list">
       <el-option
       v-for="item in displayMode"
       :key="item"

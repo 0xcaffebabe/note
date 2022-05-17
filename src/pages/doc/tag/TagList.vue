@@ -9,7 +9,7 @@
   >
     <template #reference>
       <el-tag
-      size="mini"
+      size="small"
       :type="calcTagType(item)"
       @click="$router.push('/tag?tag=' + item)"
       effect="dark"

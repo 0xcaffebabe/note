@@ -15,7 +15,7 @@
       <el-button
         class="cate-fix-btn"
         type="primary"
-        size="mini"
+        size="small"
         @click="$emit('toggleAside')"
         :class="{ active: showAside }"
       >
@@ -30,7 +30,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import CategoryList from "../category/CategoryList.vue";
-import { ArrowLeftBold, ArrowRightBold } from "@element-plus/icons";
+import { ArrowLeftBold, ArrowRightBold } from "@element-plus/icons-vue";
 
 export default defineComponent({
   components: {

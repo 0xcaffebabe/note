@@ -7,7 +7,7 @@
     </span>
     <template #dropdown>
       <el-dropdown-menu>
-        <el-button size="mini" style="margin-left:4px" type="success" @click="clean">清理</el-button>
+        <el-button size="small" style="margin-left:4px" type="success" @click="clean">清理</el-button>
         <el-dropdown-item v-for="item in unreadList" :key="item.originLink" class="article-item" @click="handleArticleClick(item)">
           <h3 class="article-title">{{item.title}}</h3>
           <div class="article-main">

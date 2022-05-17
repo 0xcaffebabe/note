@@ -1,14 +1,14 @@
 <template>
   <transition name="fade">
     <div ref="root" class="root" v-show="visible">
-      <el-button class="close-button" size="mini" circle @click="hide">
+      <el-button class="close-button" size="small" circle @click="hide">
         <el-icon><close-bold /></el-icon>
       </el-button>
       <el-button-group>
-        <el-button size="mini" class="menu-button" @click="$emit('toggleFixed');hide()" v-if="fixed">取消固定</el-button>
-        <el-button size="mini" class="menu-button" @click="$emit('toggleFixed');hide()" v-else>固定菜单</el-button>
-        <el-button size="mini" class="menu-button" :disabled="cateList.length <= 1" @click="closeCurrent">关闭</el-button>
-        <el-button size="mini" class="menu-button" :disabled="cateList.length <= 1" @click="closeOthers">关闭其他</el-button>
+        <el-button size="small" class="menu-button" @click="$emit('toggleFixed');hide()" v-if="fixed">取消固定</el-button>
+        <el-button size="small" class="menu-button" @click="$emit('toggleFixed');hide()" v-else>固定菜单</el-button>
+        <el-button size="small" class="menu-button" :disabled="cateList.length <= 1" @click="closeCurrent">关闭</el-button>
+        <el-button size="small" class="menu-button" :disabled="cateList.length <= 1" @click="closeOthers">关闭其他</el-button>
       </el-button-group>
     </div>
   </transition>
@@ -16,7 +16,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { CloseBold } from "@element-plus/icons";
+import { CloseBold } from "@element-plus/icons-vue";
 import Category from "@/dto/Category";
 import DocUtils from "@/util/DocUtils";
 

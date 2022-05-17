@@ -17,7 +17,7 @@
         <template #append>
           <div style="width:48px;">
 
-          <el-select v-model="searchEngine" placeholder="搜索引擎" size="mini" popper-class="popper-list" style="float:">
+          <el-select v-model="searchEngine" placeholder="搜索引擎" size="small" popper-class="popper-list" style="float:">
             <el-option
             v-for="item in searchEngineList"
             :key="item"
@@ -42,8 +42,8 @@
           @click="handleDocClick(result.url)"
         />
         <div class="index-time-wrapper">
-          <el-tag class="index-time" size="mini">⏰索引时间: {{new Date(result.createTime).toLocaleString()}}</el-tag>
-          <el-tag class="index-time" style="margin-left: 10px" size="mini" v-if="result.score">⚽分数: {{result.score}}</el-tag>
+          <el-tag class="index-time" size="small">⏰索引时间: {{new Date(result.createTime).toLocaleString()}}</el-tag>
+          <el-tag class="index-time" style="margin-left: 10px" size="small" v-if="result.score">⚽分数: {{result.score}}</el-tag>
         </div>
         </div>
         <div
@@ -56,7 +56,7 @@
           <p v-html="p.txt"></p>
           <p v-if="p.missingKeywords">
           <span class="font-size:12px;color:#666">缺少关键词:</span>
-          <el-tag v-for="mkw in p.missingKeywords" :key="mkw" size="mini" type="danger"><del>{{mkw}}</del></el-tag>
+          <el-tag v-for="mkw in p.missingKeywords" :key="mkw" size="small" type="danger"><del>{{mkw}}</del></el-tag>
           </p>
         </div>
       </div>

@@ -7,21 +7,21 @@
     <el-button-group>
       <el-button
         :icon="ArrowUpBold"
-        size="mini"
+        size="small"
         plain
         @click="down"
         :disabled="currentIndex <= 1"
       />
       <el-button
         :icon="ArrowDownBold"
-        size="mini"
+        size="small"
         plain
         @click="up"
         :disabled="currentIndex >= resultSize"
       />
       <el-button
         :icon="CloseBold"
-        size="mini"
+        size="small"
         plain
         @click="showFinder = false"
       />
@@ -30,7 +30,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ArrowDownBold, ArrowUpBold,CloseBold } from "@element-plus/icons";
+import { ArrowDownBold, ArrowUpBold,CloseBold } from "@element-plus/icons-vue";
 </script>
 
 <script lang="ts">

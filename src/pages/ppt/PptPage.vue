@@ -48,7 +48,7 @@
 <script lang="ts">
 import api from "@/api";
 import DocSegement from "@/dto/doc/DocSegement";
-import { ArrowLeftBold, ArrowRightBold } from "@element-plus/icons";
+import { ArrowLeftBold, ArrowRightBold } from "@element-plus/icons-vue";
 import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
 import { defineComponent } from "vue";

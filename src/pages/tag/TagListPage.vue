@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { Search } from "@element-plus/icons";
+import { Search } from "@element-plus/icons-vue";
 import TagChapterZone from './TagChapterZone.vue'
 </script>
 

@@ -110,7 +110,7 @@ import CommitTotalTrend from "./CommitTotalTrend.vue";
 </script>
 
 <script lang="ts">
-import { Coin, Check, Document, Notebook, PictureFilled, Aim, Clock, Calendar } from "@element-plus/icons";
+import { Coin, Check, Document, Notebook, PictureFilled, Aim, Clock, Calendar } from "@element-plus/icons-vue";
 import { defineComponent } from "vue";
 import api from "@/api";
 import { CodeFrequencyItem, StatisticInfo } from "@/dto/StatisticInfo";

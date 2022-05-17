@@ -2,7 +2,7 @@
   <el-scrollbar wrap-class="tab-container-wrapper" class="tab-container" ref="tabContainer" :style="{top: parentShowHeader? 66 + 'px': 6 + 'px', position: fixed? 'fixed': 'absolute'}">
     <el-button
       class="nav-item"
-      size="mini"
+      size="small"
       v-for="cate in cateList"
       :key="cate"
       @contextmenu="handleContextMenuEvent(cate, $event)"
@@ -23,7 +23,7 @@
 </template>
 
 <script lang="ts" setup>
-import {CloseBold} from '@element-plus/icons'
+import {CloseBold} from '@element-plus/icons-vue'
 </script>
 
 <script lang="ts">

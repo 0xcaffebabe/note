@@ -4,7 +4,7 @@
     <el-select
       v-model="currentDatasource"
       placeholder="数据源"
-      size="mini"
+      size="small"
       popper-class="popper-list"
       style="width: 120px; margin-left: 10px"
       @change="handleDatasourceChange"

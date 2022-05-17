@@ -2,21 +2,25 @@
   <div class="root">稍后阅读 
 
     <el-dropdown :hide-on-click="false" trigger="click" @visible-change="handleVisibleChange">
-    <span class="el-dropdown-link">
+      
+    <span class="el-dropdown-link" style="line-height:21px;font-size:16px">
       {{unreadList.length}}
     </span>
     <template #dropdown>
       <el-dropdown-menu>
         <el-button size="small" style="margin-left:4px" type="success" @click="clean">清理</el-button>
         <el-dropdown-item v-for="item in unreadList" :key="item.originLink" class="article-item" @click="handleArticleClick(item)">
+          <div>
+
           <h3 class="article-title">{{item.title}}</h3>
           <div class="article-main">
-            <p class="article-preview">{{item.preview}}</p>
             <el-image
               style="width: 100px; height: 72px"
               :src="item.thumbnail"
               fit="cover"
             ></el-image>
+            <p class="article-preview">{{item.preview}}</p>
+          </div>
           </div>
         </el-dropdown-item>
       </el-dropdown-menu>
@@ -84,10 +88,12 @@ export default defineComponent({
     line-height: 16px;
     padding: 2px;
     margin: 2px;
+    white-space:normal;
   }
   .el-dropdown-menu {
     max-height: 400px;
     overflow: scroll;
+    overflow-x: hidden;
   }
   .article-main {
     display: flex;

@@ -91,6 +91,7 @@ export default defineComponent({
     if (theme == 'dark') {
       this.$store.commit('setIsDarkMode', true);
       document.body.setAttribute('theme', 'dark');
+      document.documentElement.classList.add('dark');
       MermaidUtils.initWithDark()
     }
     // 恢复目录列表

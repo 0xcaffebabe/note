@@ -125,11 +125,13 @@ export default defineComponent({
       const theme = document.body.getAttribute('theme');
       if (theme == 'dark') {
         document.body.setAttribute('theme', 'light');
+        document.documentElement.classList.remove("dark");
         this.$store.commit('setIsDarkMode', false);
         localStorage.setItem('system::theme', "light");
         MermaidUtils.initWithNormal();
       }else {
         document.body.setAttribute('theme', 'dark');
+        document.documentElement.classList.add("dark");
         this.$store.commit('setIsDarkMode', true);
         localStorage.setItem('system::theme', "dark");
         MermaidUtils.initWithNormal();

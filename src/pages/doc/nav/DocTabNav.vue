@@ -2,7 +2,7 @@
   <el-scrollbar wrap-class="tab-container-wrapper" class="tab-container" ref="tabContainer" :style="{top: parentShowHeader? 66 + 'px': 6 + 'px', position: fixed? 'fixed': 'absolute'}">
     <el-button
       class="nav-item"
-      size="small"
+      size="default"
       v-for="cate in cateList"
       :key="cate"
       @contextmenu="handleContextMenuEvent(cate, $event)"
@@ -12,8 +12,8 @@
       @click="$router.push('/doc/' + docUrl2Id(cate))"
       @dblclick="$emit('dbclick')"
     >
-      <span class="nav-item-sign">{{findRootCategoryFirstLetter(cate)}}</span>
       {{ cateName(cate) }}
+      <span class="nav-item-sign">{{findRootCategoryFirstLetter(cate)}}</span>
       <span class="close-btn" @click.prevent.stop="close(cate)" v-if="cateList.length > 1">
         <el-icon><close-bold /></el-icon>
       </span>
@@ -153,23 +153,18 @@ export default defineComponent({
   border-radius: 14px;
   color: #666;
   background: rgba(248, 249, 252, .5);
-  margin: 0px 1px 13px 9px;
-  padding: 6px 28px;
+  padding: 0px 28px;
   backdrop-filter: blur(50px);
   font-size: 14px;
   .close-btn {
     position: absolute;
     right: 8px;
-    bottom: 4px;
-    padding: 2px;
     display: none;
     border-radius: 4px;
   }
   .nav-item-sign {
     position: absolute;
     left: 8px;
-    bottom: 4px;
-    padding: 2px;
     font-weight: 700;
     color: #ddf;
   }

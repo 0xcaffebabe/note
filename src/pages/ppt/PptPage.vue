@@ -96,7 +96,7 @@ export default defineComponent({
   },
   methods: {
     async showPpt() {
-      this.file = await api.getDocFileInfo(this.doc);
+      this.file = await DocService.getDocFileInfo(this.doc);
       if (this.headingId) {
         const index = this.flatContent.findIndex(v => v.id == this.headingId)
         if (index != -1) {

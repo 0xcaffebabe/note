@@ -42,7 +42,7 @@ export default defineComponent({
       this.linkList.forEach(async v => {
         try {
           console.log(v.link.replace('/doc/', ''));
-          await api.getDocFileInfo(v.link.replace('/doc/', ''));
+          await DocService.getDocFileInfo(v.link.replace('/doc/', ''));
           this.effecientMap[v.link] = true;
         }catch(e: any) {
           this.effecientMap[v.link] = false;

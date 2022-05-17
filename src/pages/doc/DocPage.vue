@@ -232,7 +232,7 @@ export default defineComponent({
       this.doc = doc;
       this.kw = kw || "";
       try {
-        this.file = await api.getDocFileInfo(doc);
+        this.file = await DocService.getDocFileInfo(doc);
       } catch (err: any) {
         ElMessage.error(err.message)
       }

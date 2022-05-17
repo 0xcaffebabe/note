@@ -230,7 +230,7 @@ export default defineComponent({
             if (!name) {
               return 'none'
             }
-            const result: Promise<DocFileInfo> | DocFileInfo = api.getDocFileInfo(name)
+            const result: Promise<DocFileInfo> | DocFileInfo = DocService.getDocFileInfo(name)
             if (result instanceof Promise) {
               result
               .then(file => {

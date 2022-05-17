@@ -68,6 +68,13 @@ class DocService implements Cacheable{
     return this.instance
   }
 
+  @cache
+  public async getDocFileInfo(id: string): Promise<DocFileInfo>{
+    const fileInfo = await api.getDocFileInfo(id)
+    fileInfo.formattedMetadata = this.resolveMetadata(fileInfo)
+    return fileInfo
+  }
+
   /**
    * 渲染doc 转为结构化数据
    *
@@ -302,7 +309,7 @@ class DocService implements Cacheable{
 
   @cache
   public async getContentByDocId(id: string): Promise<Content[]> {
-    const fileInfo = await api.getDocFileInfo(id)
+    const fileInfo = await this.getDocFileInfo(id)
     const html = this.renderMd(fileInfo)
     return this.getContent(html)
   }

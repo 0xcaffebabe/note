@@ -80,9 +80,9 @@ export default defineComponent({
     async init(docLink?: string) {
       this.loading = true;
       if (docLink) {
-        this.file = await api.getDocFileInfo(DocUtils.docUrl2Id(docLink));
+        this.file = await DocService.getDocFileInfo(DocUtils.docUrl2Id(docLink));
       } else {
-        this.file = await api.getDocFileInfo(
+        this.file = await DocService.getDocFileInfo(
           DocUtils.docUrl2Id(this.categoryLink)
         );
       }

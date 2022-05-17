@@ -1,20 +1,35 @@
 <template>
   <div>
-    <el-tag
-      v-for="item in tags"
-      :key="item"
+    <el-popover
+    :width="400"
+    v-for="item in tags"
+    :key="item"
+    trigger="hover"
+    @show="handleChpaterShow(item)"
+  >
+    <template #reference>
+      <el-tag
       size="mini"
       :type="calcTagType(item)"
       @click="$router.push('/tag?tag=' + item)"
       effect="dark"
       >{{ item }}</el-tag
     >
+    </template>
+    <tag-chapter-zone :chapters="chapters" style="height:220px;overflow-y:scroll"/>
+  </el-popover>
+    
   </div>
 </template>
+
+<script lang="ts" setup>
+import TagChapterZone from '@/pages/tag/TagChapterZone.vue'
+</script>
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 import TagUtils from "@/pages/tag/TagUtils";
+import TagService from "@/service/TagService";
 
 export default defineComponent({
   props: {
@@ -23,12 +38,28 @@ export default defineComponent({
       type: Object as PropType<string[]>
     }
   },
+  data() {
+    return {
+      tag: ''
+    }
+  },
+  computed: {
+    chapters() {
+      if (!this.tag) {
+        return []
+      }
+      return TagService.getListByTag(this.tag)
+    }
+  },
   setup() {},
   methods: {
     // 计算标签的颜色
     calcTagType(tag: string): string {
       return TagUtils.calcTagType(tag);
     },
+    handleChpaterShow(tag: string) {
+      this.tag = tag
+    }
   }
 });
 </script>

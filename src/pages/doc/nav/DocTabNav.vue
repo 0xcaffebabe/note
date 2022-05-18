@@ -2,7 +2,7 @@
   <el-scrollbar wrap-class="tab-container-wrapper" class="tab-container" ref="tabContainer" :style="{top: parentShowHeader? 66 + 'px': 6 + 'px', position: fixed? 'fixed': 'absolute'}">
     <el-button
       class="nav-item"
-      size="default"
+      size="small"
       v-for="cate in cateList"
       :key="cate"
       @contextmenu="handleContextMenuEvent(cate, $event)"
@@ -159,6 +159,7 @@ export default defineComponent({
   .close-btn {
     position: absolute;
     right: 8px;
+    bottom: 2px;
     display: none;
     border-radius: 4px;
   }

@@ -9,7 +9,8 @@
         <template #default>
           <div class="main-content">
             <doc-breadcrumb-nav />
-            <p class="create-time">⏰创建时间: {{new Date(file.createTime).toLocaleString()}}</p>
+            <p class="create-time">⏰<span>创建时间: </span>{{new Date(file.createTime).toLocaleString()}}</p>
+            <p class="quality-score">⚽<span>质量分数: </span>{{quality}}</p>
             <tag-list :tags="file.formattedMetadata.tags"/>
             <!-- doc主体开始 -->
             <div class="markdown-section" ref="markdownSection" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '960px': '74%'}"></div>
@@ -200,6 +201,9 @@ export default defineComponent({
     contentHtml(): string {
       return DocService.renderMd(this.file);
     },
+    quality(): string {
+      return DocService.calcQuanlityStr(this.file.id);
+    }
   },
   methods: {
     docUrl2Id(url: string) {
@@ -351,7 +355,17 @@ export default defineComponent({
   padding-top: 10px;
   margin: 0;
   font-size: 12px;
-  color: #888;
+  span {
+    color: #888;
+  }
+}
+.quality-score {
+  padding: 2px;
+  margin: 0;
+  font-size: 12px;
+  span {
+    color: #888;
+  }
 }
 .toc-wrapper {
   transition: all 0.2s;

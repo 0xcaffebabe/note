@@ -1,4 +1,4 @@
-import CacheService from '@/service/CacheService'
+import CacheService from '../service/CacheService'
 import Cacheable from './Cacheable';
 const cacheService = CacheService.getInstance()
 

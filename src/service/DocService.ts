@@ -17,6 +17,7 @@ import { KnowledgeLinkNode } from '@/dto/KnowledgeNode'
 import KnowledgeNetworkService from './KnowledgeNetworkService'
 import DocSegement from '@/dto/doc/DocSegement'
 import IdGenUtils from '@/util/IdGenUtils'
+import DocQuality from '@/dto/doc/DocQuality'
 
 const cache = Cache()
 
@@ -54,8 +55,19 @@ function buildDocLink(id: string, headingId: string): string {
 class DocService implements Cacheable{
 
   private static instance: DocService;
+  private docQaulity: DocQuality[] = []
+  private docQualityMap = new Map<string, DocQuality>()
 
-  private constructor(){}
+  private constructor(){
+    this.init()
+  }
+
+  private async init() {
+    this.docQaulity = await api.getDocQualityData()
+    for(let quality of this.docQaulity) {
+      this.docQualityMap.set(quality.id, quality)
+    }
+  }
 
   name(): string {
     return 'doc-service'
@@ -428,6 +440,19 @@ class DocService implements Cacheable{
       return metadata
     }
     return EMPTY_DOC_METADATA
+  }
+
+  public getDocQuality(id: string): DocQuality | null {
+    return this.docQualityMap.get(id) || null
+  }
+
+  @cache
+  public calcQuanlityStr(id: string): string {
+    const docQuality = this.getDocQuality(id)
+    if (!docQuality) {
+      return '未知'
+    }
+    return docQuality.quality.toFixed(2)
   }
 }
 

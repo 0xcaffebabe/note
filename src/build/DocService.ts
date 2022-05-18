@@ -15,7 +15,11 @@ import ArrayUtils from "../util/ArrayUtils";
 import CommitInfo from "@/dto/CommitInfo";
 import ClusterNode from "@/dto/ClusterNode";
 import axios from "axios";
+import DocQuality from "../dto/doc/DocQuality";
 const proxy = require("node-global-proxy").default;
+import Cache from "../decorator/Cache";
+
+const cache = Cache()
 
 
 class DocService extends BaseService implements Cacheable {
@@ -129,6 +133,7 @@ class DocService extends BaseService implements Cacheable {
    * @return {*}  {Promise<KnowledgeNode>}
    * @memberof DocService
    */
+  @cache
   public async getKnowledgeNode(path: string): Promise<KnowledgeNode> {
     return fs.promises.readFile(path).then(buffer => {
       const md = buffer.toString();
@@ -185,6 +190,7 @@ class DocService extends BaseService implements Cacheable {
    * @return {*}  {Promise<KnowledgeNode[]>}
    * @memberof DocService
    */
+  @cache
   public async generateKnowledgeNetwork(): Promise<KnowledgeNode[]>{
     const ignoreDoc = ['README', 'SUMMARY'];
     const fileList = BaseService.listFilesBySuffix('md', 'doc')
@@ -193,6 +199,55 @@ class DocService extends BaseService implements Cacheable {
       taskList.push(this.getKnowledgeNode(file))
     }
     return (await Promise.all(taskList)).filter(v => ignoreDoc.indexOf(v.id) == -1).filter(v => v.links?.length != 0)
+  }
+
+
+  /**
+   *
+   * 生成所有文档的质量分数
+   * @return {*}  {Promise<DocQuality[]>}
+   * @memberof DocService
+   */
+  @cache
+  public async generateDocQualityData(): Promise<DocQuality[]> {
+    const knowledgeNodes = await this.generateKnowledgeNetwork()
+    
+    // 每个文档的外链数 外部 -> 自己
+    const outLinksMap = new Map<string, number>()
+    // 每个文档的内链数 自己 -> 外部
+    const inLinksMap= new Map<string, number>()
+    for(let node of knowledgeNodes) {
+      if (!inLinksMap.has(node.id)) {
+        inLinksMap.set(node.id, node.links?.length || 0)
+      }
+      for(let child of node.links || []) {
+        outLinksMap.set(node.id, 1 + (outLinksMap.get(node.id) || 0))
+      }
+    }
+
+    const ignoreDoc = ['README', 'SUMMARY'];
+    const fileList = BaseService.listFilesBySuffix('md', 'doc')
+    const taskList :Promise<DocQuality>[] = []
+    const that = this
+    async function task(file: string): Promise<DocQuality> {
+        const id = DocUtils.docUrl2Id(file)
+        /*
+          文档质量 = 每千字数 + 外链数 + 内链数
+        */
+       const docQuality = new DocQuality()
+       docQuality.id = id
+       const md = (await fs.promises.readFile(file)).toString()
+       docQuality.quality = that.cleanText(md).length / 1000 + (outLinksMap.get(id) || 0) + (inLinksMap.get(id) || 0)
+       docQuality.segementQuality = that.md2TextSegement(md).map(v => v.txt.length / 1000)
+       return docQuality
+    }
+    for(let file of fileList) {
+      taskList.push(task(file))
+    }
+    return (await Promise.all(taskList))
+      .filter(v => v.id.indexOf("leetcode") == -1)
+      .filter(v => ignoreDoc.indexOf(v.id) == -1)
+      .sort((a, b) => b.totalQuality - a.totalQuality)
   }
 
 

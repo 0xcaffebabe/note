@@ -9,7 +9,8 @@
     "build-pdf": "ts-node ./src/scripts/buildPdf.ts",
     "back-origin": "ts-node ./src/trigger/BackOriginTrigger.ts",
     "similar-detect": "ts-node ./src/scripts/similarDetect.ts",
-    "doc-cluster": "ts-node ./src/scripts/generateDocCluster.ts"
+    "doc-cluster": "ts-node ./src/scripts/generateDocCluster.ts",
+    "test": "ts-node -r tsconfig-paths/register --files %npm_config_file%"
   },
   "dependencies": {
     "@element-plus/icons-vue": "1.1.4",
@@ -58,6 +59,7 @@
     "rollup-plugin-visualizer": "5.5.4",
     "simple-git": "3.1.1",
     "ts-node": "10.4.0",
+    "tsconfig-paths": "^4.0.0",
     "typescript": "4.4.3",
     "vite": "2.6.0",
     "vite-plugin-prismjs": "0.0.8",

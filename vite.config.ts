@@ -3,16 +3,11 @@ import vue from '@vitejs/plugin-vue'
 import path from 'path'
 import DocServer from './src/plugins/DocServer'
 import DocBuildMove from './src/plugins/DocBuildMove'
-import WordCloudGenrator from './src/plugins/WordCloudGenerator'
 import StatisticInfoGenerator from './src/plugins/StatisticInfoGenerator'
-import KnowledgeNetworkGenerator from './src/plugins/KnowledgeNetworkGenerator'
-import DescCommitDocListGenerator from './src/plugins/DescCommitDocListGenerator'
 import CommitTotalTrendGenerator from './src/plugins/CommitTotalTrendGenerator'
-import CategoryJsonGenerator from './src/plugins/CategoryJsonGenerator'
-import DocTagsGenerator from './src/plugins/DocTagsGenerator'
 import BuildTimeGenerator from './src/plugins/BuildTimeGenerator'
-import DocClusterGenerator from './src/plugins/DocClusterGenerator'
 import VitePluginPrismjs from 'vite-plugin-prismjs'
+import DataGenrator from './src/plugins/DataGenerator'
 import visualizer from "rollup-plugin-visualizer"
 
 const plugins = [];
@@ -54,23 +49,7 @@ export default defineConfig({
       apply: 'build'
     },
     {
-      ...WordCloudGenrator(),
-      apply: 'build'
-    },
-    {
       ...StatisticInfoGenerator(),
-      apply: 'build'
-    },
-    {
-      ...KnowledgeNetworkGenerator(),
-      apply: 'build'
-    },
-    {
-      ...DocTagsGenerator(),
-      apply: 'build'
-    },
-    {
-      ...DescCommitDocListGenerator(),
       apply: 'build'
     },
     {
@@ -78,11 +57,7 @@ export default defineConfig({
       apply: 'build'
     },
     {
-      ...CategoryJsonGenerator(),
-      apply: 'build'
-    },
-    {
-      ...DocClusterGenerator(),
+      ...DataGenrator(),
       apply: 'build'
     },
     {

@@ -7,14 +7,19 @@
           <el-link :href="'/doc/' + docId" @click.prevent="$router.push('/doc/' + docId)" type="primary">{{ docId }}</el-link>
         </p>
         <el-badge
-          :value="lastPastDays + '天前更新'"
+          :value="'⏰' + lastPastDays + '天前更新'"
           class="item"
           :type="calcUpdateType(lastPastDays)"
         ></el-badge>
         <el-badge
-          :value="wordCount + '字'"
+          :value="'✏️' + wordCount + '字'"
           class="item"
           type="primary"
+        ></el-badge>
+        <el-badge
+          :value="'⚽' + quality"
+          class="item"
+          type="warning"
         ></el-badge>
         <tag-list :tags="tags" />
         <el-alert :closable="false" v-if="docMetadata.books && docMetadata.books.length > 0">
@@ -73,6 +78,9 @@ export default defineComponent({
     },
     docId(){
       return DocUtils.docUrl2Id(this.categoryLink);
+    },
+    quality() {
+      return DocService.calcQuanlityStr(this.docId)
     }
   },
   methods: {

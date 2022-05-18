@@ -12,6 +12,7 @@ import CommitInfo from '@/dto/CommitInfo'
 import YuequeDraft from '@/dto/YuqueDraft'
 import Category from '@/dto/Category'
 import ClusterNode from '@/dto/ClusterNode'
+import DocQuality from '@/dto/doc/DocQuality'
 // import DocService from '@/service/DocService'
 
 const baseUrl = () => {
@@ -144,6 +145,11 @@ class Api implements Cacheable{
   @cache
   public async getCommitTotalTrend(): Promise<[string, number, number, number][]> {
     return this.requestDataUseJsDelivr(UrlConst.commitTotalTrend)
+  }
+
+  @cache
+  public async getDocQualityData(): Promise<DocQuality[]> {
+    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.docQualityJson))).data
   }
 
   /**

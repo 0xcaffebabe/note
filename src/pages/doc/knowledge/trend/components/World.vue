@@ -9,17 +9,18 @@
     </el-row>
 </template>
 
-<script lang="ts" setup>
+<script lang="ts">
 import WorldBar from "./WorldBar.vue";
 import WorldMap from "./WorldMap.vue";
-</script>
-
-<script lang="ts">
 import { defineComponent } from "vue";
 import GeoMapDataItem from "@/dto/google-trend/GeoMapDataItem";
 import GoogleTrendService from "@/service/GoogleTrendService";
 
 export default defineComponent({
+  components: {
+    WorldBar,
+    WorldMap
+  },
   setup() {},
   data() {
     return {

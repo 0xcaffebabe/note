@@ -1,5 +1,5 @@
 <template>
-  <div class="kw-finder-root" v-if="showFinder">
+  <div class="kw-finder-root" v-show="showFinder">
     
     <el-input class="kw" v-model="innerKw" @keypress.enter="$emit('kwChanged', innerKw)" @keyup.esc="showFinder = false" ref="kwInput"></el-input>
     <span class="counter">{{ currentIndex }}/{{ resultSize }}/<span class="visible-index" @click="handleVisibleIndexClick">{{visibleIndex}}</span></span>
@@ -29,16 +29,16 @@
   </div>
 </template>
 
-<script lang="ts" setup>
-import { ArrowDownBold, ArrowUpBold,CloseBold } from "@element-plus/icons-vue";
-</script>
-
 <script lang="ts">
 import { defineComponent } from "vue";
+import { ArrowDownBold, ArrowUpBold,CloseBold } from "@element-plus/icons-vue";
 
 const reg = new RegExp("<mark>");
 
 export default defineComponent({
+  components: {
+    ArrowDownBold,ArrowUpBold,CloseBold
+  },
   props: {
     kw: {
       type: String,

@@ -13,6 +13,13 @@
         value="正序"
       />
     </el-select>
+    <div class="sort">
+      <span>排序依据: </span>
+        <el-radio-group v-model="sort" @change="handleDisplayModeChange">
+          <el-radio label="时间"></el-radio>
+          <el-radio label="质量"></el-radio>
+        </el-radio-group>
+    </div>
     <div class="history-list">
       <el-timeline>
         <el-timeline-item
@@ -21,6 +28,7 @@
         >
           <a href="#" @click.prevent="$router.push('/doc/' + item[0])">{{docId2Url(item[0])}}</a>
           <p class="timestamp">{{new Date(item[1].date).toLocaleString()}} <a :href="repoUrl + '/commit/' + item[1].hash" target="_blank">{{item[1].message}}</a></p>
+          <p class="timestamp"><span>⚽质量分数: {{quality(item[0])}}</span></p>
         </el-timeline-item>
       </el-timeline>
     </div>
@@ -34,6 +42,7 @@ import CommitInfo from "@/dto/CommitInfo";
 import DocUtils from "@/util/DocUtils";
 import { defineComponent, CSSProperties } from "vue";
 import config from "@/config";
+import DocService from "@/service/DocService";
 
 interface Mark {
   style: CSSProperties
@@ -45,6 +54,7 @@ export default defineComponent({
   data() {
     return {
       displayMode: '倒序' as '正序' | '倒序',
+      sort: '时间' as '时间' | '质量',
       showDrawer: false as boolean,
       repoUrl: config.repositoryUrl,
       rangeValue: [0, 20],
@@ -109,19 +119,45 @@ export default defineComponent({
       }
       return 2147483647
     },
+    quality(id: string): string{
+      return DocService.calcQuanlityStr(id)
+    },
     show() {
       this.showDrawer = true;
     },
     hide() {
       this.showDrawer = false;
     },
+    sortByQuantity() {
+      if (this.displayMode == '倒序') {
+        this.docList = this.docList.sort((b, a) => (DocService.getDocQuality(a[0])?.quality || 0) - (DocService.getDocQuality(b[0])?.quality || 0))
+      }else {
+        this.docList = this.docList.sort((a, b) => (DocService.getDocQuality(a[0])?.quality || 0) - (DocService.getDocQuality(b[0])?.quality || 0))
+      }
+    },
+    sortByTime() {
+      if (this.displayMode == '倒序') {
+        this.docList = this.docList.sort((a, b) => new Date(a[1].date).getTime() - new Date(b[1].date).getTime() )
+      }else {
+        this.docList = this.docList.sort((b, a) => new Date(a[1].date).getTime() - new Date(b[1].date).getTime() )
+      }
+    },
     handleDisplayModeChange() {
-      this.docList.reverse()
+      if (this.sort == '时间') {
+        this.sortByTime();
+      }else {
+        this.sortByQuantity()
+      }
       document.querySelector('.knowledge-review .el-drawer__body')?.scrollTo(0,0)
     }
   },
   async created() {
     this.docList = await api.getDescCommitDocList()
+    if (this.sort == '时间') {
+        this.sortByTime();
+      }else {
+        this.sortByQuantity()
+      }
   }
 });
 </script>
@@ -156,6 +192,19 @@ export default defineComponent({
   z-index: 998;
   top: 50px;
   right: 10px;
+}
+.sort {
+  position: fixed;
+  z-index: 998;
+  top: 46px;
+  right: 100px;
+  span {
+    font-size: 15px;
+    color: #888;
+  }
+  .el-radio {
+    margin-right: 8px;
+  }
 }
 .review-range {
   padding: 20px;

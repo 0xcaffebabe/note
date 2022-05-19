@@ -442,6 +442,7 @@ class DocService implements Cacheable{
     return EMPTY_DOC_METADATA
   }
 
+  @cache
   public getDocQuality(id: string): DocQuality | null {
     return this.docQualityMap.get(id) || null
   }

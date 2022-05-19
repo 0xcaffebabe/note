@@ -6,25 +6,28 @@
     <el-divider direction="vertical" />
     <el-button-group>
       <el-button
-        :icon="ArrowUpBold"
         size="small"
         plain
         @click="down"
         :disabled="currentIndex <= 1"
-      />
+      >
+        <el-icon><arrow-up-bold /></el-icon>
+      </el-button>
       <el-button
-        :icon="ArrowDownBold"
         size="small"
         plain
         @click="up"
         :disabled="currentIndex >= resultSize"
-      />
+      >
+        <el-icon><arrow-down-bold /></el-icon>
+      </el-button>
       <el-button
-        :icon="CloseBold"
         size="small"
         plain
         @click="showFinder = false"
-      />
+      >
+        <el-icon><close-bold /></el-icon>
+      </el-button>
     </el-button-group>
   </div>
 </template>

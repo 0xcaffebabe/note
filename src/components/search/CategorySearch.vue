@@ -8,7 +8,7 @@
     :popper-append-to-body="false"
     ref="autoComplete"
     @select="handleSelect"
-    size="medium"
+    size="default"
   >
     <template #default="{ item }">
       <div class="value" v-html="renderHilighHTML(item.name)"></div>
@@ -97,7 +97,7 @@ export default defineComponent({
       }
     },
     renderHilighHTML(raw: string): string{
-      const kwList = this.kw.trim().split(" ")
+      const kwList = (this.kw || "").trim().split(" ")
       let html = raw
       for(let kw of kwList) {
         html = html.replace(new RegExp(kw, 'gi'), (str: string) =>`<mark>${str}</mark>`)

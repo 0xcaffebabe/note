@@ -97,6 +97,11 @@ export default defineComponent({
      this.init(false); 
     },
     onlySelfRelated(){
+      if (this.onlySelfRelated) {
+        this.mode = 'circular'
+      }else {
+        this.mode = 'force'
+      }
       this.init();
     },
     displayMode(){

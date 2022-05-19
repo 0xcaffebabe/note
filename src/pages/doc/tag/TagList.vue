@@ -16,7 +16,9 @@
       >{{ item }}</el-tag
     >
     </template>
-    <tag-chapter-zone :chapters="chapters" style="height:220px;overflow-y:scroll"/>
+    <div style="height:220px;overflow-y:scroll">
+      <tag-chapter-zone :chapters="chapters"/>
+    </div>
   </el-popover>
     
   </div>

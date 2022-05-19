@@ -17,8 +17,8 @@
             <el-switch
               v-model="showMode"
               :inline-prompt="true"
-              :active-icon="activeIcon"
-              :inactive-icon="inactiveIcon"
+              :active-icon="Moon"
+              :inactive-icon="Sunny"
               @click="toggleDarkMode"
               active-color="#000"
               inactive-color="#409EFF"
@@ -97,8 +97,6 @@ export default defineComponent({
     return {
       name: "my-book" as string,
       showMode: false as boolean,
-      activeIcon: Moon,
-      inactiveIcon: Sunny,
       fullscreen: false,
     };
   },

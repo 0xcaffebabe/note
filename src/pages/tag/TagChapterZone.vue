@@ -20,9 +20,13 @@ import LinkPopover from "../doc/LinkPopover.vue";
 
 <script lang="ts">
 import { defineComponent, PropType } from 'vue'
+import {Timer} from '@element-plus/icons-vue'
 import DocUtils from "@/util/DocUtils";
 
 export default defineComponent({
+  components: {
+    Timer
+  },
   props: {
     chapters: {
       required: true,

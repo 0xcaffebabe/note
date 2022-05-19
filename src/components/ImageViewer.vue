@@ -1,5 +1,5 @@
 <template>
-  <el-image-viewer @close="showImageViewer = false" v-show="showImageViewer" :url-list="imageUrlList" :hide-on-click-modal="true"/>
+  <el-image-viewer @close="showImageViewer = false" v-if="showImageViewer" :url-list="imageUrlList" :hide-on-click-modal="true"/>
 </template>
 
 <script lang="ts">

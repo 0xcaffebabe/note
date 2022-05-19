@@ -6,7 +6,9 @@
 
 <https://note.ismy.wang>(github pages)
 
-<https://noteg.ismy.wang>(百度云加速)
+<https://b.ismy.wang>(国内服务器)
+
+<https://notec.ismy.wang>(cloudflare pages)
 
 <https://notev.ismy.wang>(vercel app, 比github pages快)
 

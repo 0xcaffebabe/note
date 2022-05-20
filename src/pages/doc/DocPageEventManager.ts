@@ -86,12 +86,12 @@ class DocPageEventManager {
     const imgList: NodeListOf<HTMLElement> = document.querySelectorAll(
       ".img-wrapper"
     );
+    const srcList = Array.from(imgList).map(v => v.querySelector('img')?.getAttribute('src') || '')
     for (let i = 0; i < imgList.length; i++) {
       const img = imgList[i];
       img.onclick = (e: Event) => {
         // 展示大图
-        const src = img.querySelector('img')?.getAttribute('src') || '';
-        (this.getRef("imageViewer") as InstanceType<typeof ImageViewerVue>).show(src);
+        (this.getRef("imageViewer") as InstanceType<typeof ImageViewerVue>).show(srcList, i);
       };
     }
   }

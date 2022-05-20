@@ -1,5 +1,5 @@
 <template>
-  <el-image-viewer @close="showImageViewer = false" v-if="showImageViewer" :url-list="imageUrlList" :hide-on-click-modal="true"/>
+  <el-image-viewer @close="showImageViewer = false" v-if="showImageViewer" :initial-index="imgIndex" :url-list="imageUrlList" :hide-on-click-modal="true" :infinite="false"/>
 </template>
 
 <script lang="ts">
@@ -9,11 +9,16 @@ export default defineComponent({
   data() {
     return {
       showImageViewer: false,
-      imageUrlList: [] as string[]
+      imageUrlList: [] as string[],
+      imgIndex: 0
     }
   },
   methods: {
-    show(...url: string[]){
+    show(url: string[], index: number){
+      if (index < 0 || index > url.length) {
+        return
+      }
+      this.imgIndex = index
       this.imageUrlList = [...url]
       this.showImageViewer = true
     },

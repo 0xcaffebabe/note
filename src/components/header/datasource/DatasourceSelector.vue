@@ -80,7 +80,6 @@ export default defineComponent({
     datasourceList: {
       immediate: true,
       handler(val: DatasourceItem[]) {
-        console.log(val);
         for (let i of val) {
           DatasourceService.testDelay(i.id).then(
             (data) => {

@@ -42,7 +42,6 @@ class DocPageEventManager {
     const document = docEl;
     const docLinkList: NodeListOf<HTMLElement> = document.querySelectorAll("a[origin-link]");
     const outterLinkList: NodeListOf<HTMLElement> = document.querySelectorAll("a:not([origin-link])");
-    console.log(outterLinkList);
     // 文档链接
     for (let i = 0; i < docLinkList.length; i++) {
       const a = docLinkList[i];

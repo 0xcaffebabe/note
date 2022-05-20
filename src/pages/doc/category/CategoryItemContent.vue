@@ -124,7 +124,7 @@ export default defineComponent({
       }else if(days > 30 && days <= 100){
         return 'success'
       }else if(days > 100 && days <= 300){
-        return 'default'
+        return 'info'
       }
       return 'primary';
     },

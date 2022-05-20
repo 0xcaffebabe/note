@@ -67,7 +67,6 @@ export default defineComponent({
   },
   mounted() {
     const dom  = document.querySelector('.tab-container-wrapper') as HTMLElement
-    console.log(dom)
     dom.addEventListener('wheel', (e: WheelEvent) => {
       dom.scrollTo(dom.scrollLeft + e.deltaY,0)
       e.stopPropagation()

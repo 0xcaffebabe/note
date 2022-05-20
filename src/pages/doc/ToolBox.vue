@@ -160,11 +160,9 @@ export default defineComponent({
   },
   setup() {},
   created(){
-    console.log('register action listener')
     document.addEventListener('keydown', this.handleKeyDown);
   },
   unmounted(){
-    console.log('remove action listener')
     document.removeEventListener('keydown', this.handleKeyDown);
   }
 });

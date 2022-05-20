@@ -312,7 +312,7 @@ export default defineComponent({
       }
     },
     showKnowledgeTrend() {
-      const kw = this.doc.split("-")[this.doc.split("-").length - 1];
+      const kw = this.file.formattedMetadata.standardName || this.doc.split("-")[this.doc.split("-").length - 1];
       (this.$refs.knowledgeTrend as InstanceType<typeof KnowledgeTrend>).show(kw)
     },
   },

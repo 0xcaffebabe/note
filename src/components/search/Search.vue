@@ -8,6 +8,7 @@
         @keydown.enter="handleSearch"
         popper-class="popper-list"
         @select="handleSearchSelect"
+        size="default"
         ref="input"
       >
         <template #default="{ item }">
@@ -17,7 +18,7 @@
         <template #append>
           <div style="width:48px;">
 
-          <el-select v-model="searchEngine" placeholder="搜索引擎" size="small" popper-class="popper-list" style="float:">
+          <el-select style="height:100%" v-model="searchEngine" placeholder="搜索引擎" size="default" popper-class="popper-list">
             <el-option
             v-for="item in searchEngineList"
             :key="item"
@@ -219,38 +220,15 @@ export default defineComponent({
 }
 .search-took {
   color: #bbb;
-  height: 42px;
-  line-height: 42px;
   padding-right: 10px;
 }
 
 body[theme=dark] {
-  .search-suggestion-item {
-    color: var(--main-dark-text-color);
-  }
   .result-item {
     border-bottom: 1px solid var(--default-dark-border-color);
   }
   .result-item:hover {
     background-color: var(--main-dark-bg-color);
-  }
-  .index-time {
-    opacity: 0.75;
-  }
-}
-</style>
-
-<style lang="less">
-body[theme=dark] {
-  .el-empty__image {
-    filter: invert(25%)!important;
-  }
-  .el-input-group__append {
-    background-color: var(--main-dark-bg-color)!important;
-    border-color: var(--main-dark-bg-color)!important;
-  }
-  .el-autocomplete .el-input__inner {
-    border-color: var(--main-dark-bg-color)!important;
   }
 }
 </style>

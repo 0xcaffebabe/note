@@ -124,10 +124,6 @@ body[theme=dark] {
   .datasource-text {
     color: var(--main-dark-text-color);
   }
-  .el-select :deep(.el-input__inner){
-    background-color: var(--third-dark-bg-color);
-    color: var(--main-dark-text-color);
-  }
 }
 </style>
 

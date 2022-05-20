@@ -150,10 +150,7 @@ export default defineComponent({
   position: relative;
   cursor: pointer;
   border-radius: 14px;
-  color: #666;
-  background: rgba(248, 249, 252, .5);
   padding: 0px 28px;
-  backdrop-filter: blur(50px);
   font-size: 14px;
   .close-btn {
     position: absolute;
@@ -189,14 +186,15 @@ export default defineComponent({
   }
 }
 body[theme="dark"] {
-  .close-btn:hover {
-    background-color: #444;
-  }
   .nav-item {
+    background-color: var(--second-dark-bg-color);
     color: var(--main-dark-text-color);
   }
+  .nav-item.active {
+    background-color: var(--main-dark-bg-color);
+  }
   .nav-item:hover {
-    color: var(--main-dark-text-color)
+    background-color: var(--main-dark-bg-color);
   }
 }
 </style>

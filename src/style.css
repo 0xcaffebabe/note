@@ -1,28 +1,24 @@
-:root{
+:root {
   scroll-behavior: smooth;
   --main-dark-bg-color: #1E1E1E;
   --second-dark-bg-color: #323233;
-  --third-dark-bg-color: rgb(60,60,60);
-
+  --third-dark-bg-color: #3c3c3c;
   --default-dark-border-color: #61666b;
   --skelon-bg-start-color: #2b2c2c;
   --skelon-bg-end-color: #2b2e2e;
-
-  --main-dark-text-color: rgb(201, 209, 217);
-  --second-dark-text-color: rgb(139, 148, 158);
+  --main-dark-text-color: #c9d1d9;
+  --second-dark-text-color: #8b949e;
 }
-
-@media (prefers-color-scheme:dark) {
+@media (prefers-color-scheme: dark) {
   body {
     background-color: var(--main-dark-bg-color);
   }
 }
-@media (prefers-color-scheme:light) {
+@media (prefers-color-scheme: light) {
   body {
     background-color: #fff;
   }
 }
-
 #app {
   height: 100%;
 }
@@ -36,17 +32,17 @@ body {
 }
 ::-webkit-scrollbar-track {
   border-radius: 3px;
-  background: rgba(0,0,0,0.06);
-  box-shadow: inset 0 0 5px rgba(0,0,0,0.08);
+  background: rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.08);
 }
 /* 滚动条滑块 */
 ::-webkit-scrollbar-thumb {
   border-radius: 3px;
-  background: rgba(0,0,0,0.12);
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+  background: rgba(0, 0, 0, 0.12);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
 }
 .drawer-modal-class {
-  background-color: rgba(0,0,0,0.2);
+  background-color: rgba(0, 0, 0, 0.2);
 }
 .markdown-section {
   z-index: 1;
@@ -66,27 +62,21 @@ body {
   text-decoration: none;
   border-bottom: 1px dashed #ccc;
 }
-// 底部可操作的抽屉遮罩
 .operational-drawer-modal {
-  all: unset
+  all: unset;
 }
-// 底部可操作性的抽屉
 .operational-drawer {
-  position:fixed;
+  position: fixed;
   z-index: 3000;
 }
-
 body[theme=dark] {
-  background-color:var(--main-dark-bg-color);
+  background-color: var(--main-dark-bg-color);
   color: var(--main-dark-text-color);
-
   /* 滚动条滑块 */
-  ::-webkit-scrollbar-thumb {
-    box-shadow: inset 0 0 10px var(--second-dark-text-color);
-  }
-
 }
-
+body[theme=dark] ::-webkit-scrollbar-thumb {
+  box-shadow: inset 0 0 10px var(--second-dark-text-color);
+}
 html ::-webkit-scrollbar-thumb {
   box-shadow: inset 0 0 10px var(--second-dark-text-color);
 }

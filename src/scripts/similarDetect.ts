@@ -79,6 +79,7 @@ function stopFileCheck(filename: string) {
 
 
 function extractText(md: string): string {
+  md = md.replace(/^---$.*^---$/ms, '') // 去除markdown里的元数据
   const html = marked(md)
   const dom =  new JSDOM(`<!DOCTYPE html><body>${html}</body></html>`)
   return Array.from(dom.window.document.body.children).filter(v => v.tagName != 'PRE').map(v => v.textContent).join("\n")

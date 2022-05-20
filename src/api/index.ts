@@ -13,6 +13,7 @@ import YuequeDraft from '@/dto/YuqueDraft'
 import Category from '@/dto/Category'
 import ClusterNode from '@/dto/ClusterNode'
 import DocQuality from '@/dto/doc/DocQuality'
+import { SimilarItem } from '@/dto/doc/SimilarItem'
 // import DocService from '@/service/DocService'
 
 const baseUrl = () => {
@@ -150,6 +151,11 @@ class Api implements Cacheable{
   @cache
   public async getDocQualityData(): Promise<DocQuality[]> {
     return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.docQualityJson))).data
+  }
+
+  @cache
+  public async getTextSimilar(): Promise<SimilarItem[]> {
+    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.textSimilarJson))).data
   }
 
   /**

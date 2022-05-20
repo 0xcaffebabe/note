@@ -91,7 +91,8 @@ export default defineComponent({
     'goToPpt',
     'downloadPdf',
     'showKnowledgeReviewer',
-    'showKnowledgeTrend'
+    'showKnowledgeTrend',
+    'showKnowledgeRedundancy'
   ],
   data(){
     return {
@@ -105,6 +106,7 @@ export default defineComponent({
         {name: '知识体系', type: 'success', action: 'showKnowledgeSystem', },
         {name: '知识回顾', type: 'primary', action: 'showKnowledgeReviewer', hotkey: 'alt + r'},
         {name: '知识趋势', type: 'danger', action: 'showKnowledgeTrend', hotkey: 'alt + t'},
+        {name: '知识冗余', type: 'success', action: 'showKnowledgeRedundancy'},
         {name: '添加书签', type: 'danger', action: 'showBookMarkAdder', divided: true},
         {name: '书签列表', type: 'info', action: 'showBookMarkList'},
         {name: '路径复制', type: 'success', action: 'copyDocPath'},

@@ -192,7 +192,7 @@ class DocService extends BaseService implements Cacheable {
       });
       proxy.start();
     }
-    return JSON.parse((await axios.get('https://api.github.com/gists/e993023fd97fb85483d1e20361ad28c4')).data.files['textSimilar.json'].content)
+    return JSON.parse((await axios.get('https://api.github.com/gists/e993023fd97fb85483d1e20361ad28c4')).data.files['textSimilar.txt'].content)
   }
 
   /**

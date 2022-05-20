@@ -49,6 +49,7 @@
     @go-to-ppt="goToPpt"
     @downloadPdf="downloadPdf"
     @showKnowledgeReviewer="showKnowledgeReviewer"
+    @showKnowledgeRedundancy="showKnowledgeRedundancy"
   />
   <!-- 工具栏结束 -->
   <!-- 关键词提示器开始 -->
@@ -61,6 +62,7 @@
   <link-list :html="contentHtml" ref="linkList"/>
   <book-mark ref="bookMark" :doc="doc" />
   <knowledge-reviewer ref="knowledgeReviewer" />
+  <knowledge-redundancy ref="knowledgeRedundancy"/>
   <keep-alive>
     <knowledge-network ref="knowledgeNetwork" :doc="doc" @close="showAside = true;isDrawerShow = false"/>
   </keep-alive>
@@ -107,6 +109,7 @@ import KnowledgeReviewer from "./knowledge/KnowledgeReviewer.vue";
 import KeyWordFinder from "./KeyWordFinder.vue";
 import KnowledgeTrend from './knowledge/trend/KnowledgeTrend.vue'
 import TagList from './tag/TagList.vue'
+import KnowledgeRedundancy from './knowledge/KnowledgeRedundancy.vue'
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -130,6 +133,7 @@ export default defineComponent({
     KeyWordFinder,
     KnowledgeTrend,
     TagList,
+    KnowledgeRedundancy,
 },
   watch: {
     showHeader: {
@@ -149,6 +153,7 @@ export default defineComponent({
     const linkList = ref<InstanceType<typeof LinkList>>()
     const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
     const kwFinder = ref<InstanceType<typeof KeyWordFinder>>()
+    const knowledgeRedundancy = ref<InstanceType<typeof KnowledgeRedundancy>>()
     const showReadingHistory = () => {
       readingHistory.value?.show()
     }
@@ -173,6 +178,9 @@ export default defineComponent({
     const showKnowledgeReviewer = () => {
       knowledgeReviewer.value?.show();
     }
+    const showKnowledgeRedundancy = () => {
+      knowledgeRedundancy.value?.show();
+    }
     return {
       readingHistory,showReadingHistory, 
       mindGraph, showMindGraph, 
@@ -181,6 +189,7 @@ export default defineComponent({
       bookMark, showBookmarkAdder, showBookmarkList, 
       linkList, showLinkList,
       knowledgeReviewer, showKnowledgeReviewer,
+      knowledgeRedundancy, showKnowledgeRedundancy,
       kwFinder
     }
   },

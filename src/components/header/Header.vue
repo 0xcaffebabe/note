@@ -3,7 +3,7 @@
     <div class="header-wrapper">
       <div class="container">
         <div class="logo">
-          <a href="#" @click="$router.push('/')">
+          <a href="#" @click.prevent="$router.push('/home')">
             {{ siteName }}
           </a>
         </div>

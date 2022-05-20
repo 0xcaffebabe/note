@@ -13,4 +13,5 @@ export default {
   wordcloudJson: '/wordcloud.json',
   docClusterJson: '/docCluster.json',
   docQualityJson: '/docQuality.json',
+  textSimilarJson: '/textSimilar.json',
 }

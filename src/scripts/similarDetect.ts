@@ -1,5 +1,9 @@
 import BaseService from '../build/BaseService'
 import fs from 'fs'
+import DocService from '../build/DocService';
+import { marked } from 'marked';
+import { JSDOM } from 'jsdom';
+import UrlConst from '../const/UrlConst';
 
 var reg = new RegExp("[\\u4E00-\\u9FFF]+", "g");
 
@@ -49,14 +53,53 @@ function cleanText(str: string): string {
     .replace(/\|/g, '')
 }
 
+const stopFiles = [
+  'SUMMARY.md',
+  'README.md',
+  '书单.md',
+  '参考文献.md',
+  '技术栈参考.md',
+  'leetcode.md',
+  '学习计划.md',
+  '基于位置的网络社交平台分析与设计.md',
+  '全文检索引擎在信息检索中的应用.md',
+  'MyBook.md',
+]
+
+function stopFileCheck(filename: string) {
+  for(let name of stopFiles) {
+    if (filename.indexOf(name) != -1) {
+      return false
+    }
+  }
+  return true
+}
+
+interface SimilarItem {
+  target: string
+  targetText: string
+  source: string
+  sourceText: string
+}
+
+function extractText(md: string): string {
+  const html = marked(md)
+  const dom =  new JSDOM(`<!DOCTYPE html><body>${html}</body></html>`)
+  return Array.from(dom.window.document.body.children).filter(v => v.tagName != 'PRE').map(v => v.textContent).join("\n")
+}
+
+const similarList: SimilarItem[] = []
 async function  main() {
-  const files = BaseService.listFilesBySuffix("md", "doc").filter(v => v.indexOf("SUMMARY") == -1 && v.indexOf("README") == -1)
+  const files = BaseService.listFilesBySuffix("md", "doc").filter(stopFileCheck)
   const map =  new Map<string, string[]>()
   for(let file of files) {
-    const lines = fs.readFileSync(file).toString().split("\n").map(cleanText).map(v => v.trim()).filter(v => v.indexOf("assets") == -1).filter(v => v.length > 20)
-    .filter(v => reg.test(v))
+    const lines = extractText(fs.readFileSync(file).toString()).split("\n").map(cleanText).map(v => v.trim())
+      .filter(v => v.length > 20)
+      .filter(v => reg.test(v))
     map.set(file, lines)
   }
+  const processedFileMap = new Map<string, string>()
+
   for(let entry1 of map) {
     for(let line1 of entry1[1]) {
       for(let entry2 of map) {
@@ -64,13 +107,25 @@ async function  main() {
           continue
         }
         for(let line2 of entry2[1]) {
+          if ((processedFileMap.get(entry1[0]+line1) || '') == entry2[0]+line2) {
+            continue
+          }
           const sim = similar(line1, line2)
           if (sim > 0.6) {
             console.log(`${entry1[0]} ${line1} ${entry2[0]} ${line2} sim ${sim}`)
+            similarList.push({
+              target: entry1[0],
+              targetText: line1,
+              source: entry2[0],
+              sourceText: line1,
+            } as SimilarItem)
           }
+          processedFileMap.set(entry1[0]+line1, entry2[0]+line2)
+          processedFileMap.set(entry2[0]+line2, entry1[0]+line1)
         }
       }
     }
   }
+  fs.writeFileSync("." + UrlConst.textSimilarJson, JSON.stringify(similarList))
 }
 main()

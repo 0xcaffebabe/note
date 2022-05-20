@@ -26,3 +26,11 @@ jobs:
     - name: 相似文本检测
       run: |
         npm run similar-detect
+    - name: 上传至gist
+      uses: exuanbo/actions-deploy-gist@v1
+      with:
+        token: ${{ secrets.THE_GITHUB_TOKEN }}
+        gist_id: e993023fd97fb85483d1e20361ad28c4
+        gist_description: "textSimilar"
+        gist_file_name: textSimilar.txt
+        file_path: textSimilar.json

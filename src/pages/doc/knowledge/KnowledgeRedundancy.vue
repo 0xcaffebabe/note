@@ -30,6 +30,7 @@
           <el-link>{{docUrl2Id(scope.row.target)}}</el-link>
         </template>
       </el-table-column>
+      <el-table-column prop="similar" label="相似度" />
     </el-table>
   </el-drawer>
 </template>

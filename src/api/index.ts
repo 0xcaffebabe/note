@@ -155,7 +155,8 @@ class Api implements Cacheable{
 
   @cache
   public async getTextSimilar(): Promise<SimilarItem[]> {
-    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.textSimilarJson))).data
+    const result :SimilarItem[] = (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.textSimilarJson))).data
+    return result.sort((a, b) => (b.similar || 0) - (a.similar ||0))
   }
 
   /**

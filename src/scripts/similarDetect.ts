@@ -4,6 +4,7 @@ import DocService from '../build/DocService';
 import { marked } from 'marked';
 import { JSDOM } from 'jsdom';
 import UrlConst from '../const/UrlConst';
+import { SimilarItem } from '../dto/doc/SimilarItem';
 
 var reg = new RegExp("[\\u4E00-\\u9FFF]+", "g");
 
@@ -75,12 +76,7 @@ function stopFileCheck(filename: string) {
   return true
 }
 
-interface SimilarItem {
-  target: string
-  targetText: string
-  source: string
-  sourceText: string
-}
+
 
 function extractText(md: string): string {
   const html = marked(md)
@@ -117,7 +113,8 @@ async function  main() {
               target: entry1[0],
               targetText: line1,
               source: entry2[0],
-              sourceText: line1,
+              sourceText: line2,
+              similar: sim
             } as SimilarItem)
           }
           processedFileMap.set(entry1[0]+line1, entry2[0]+line2)

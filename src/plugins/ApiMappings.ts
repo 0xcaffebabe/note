@@ -81,6 +81,12 @@ const apiMappings: DocApiItem[] = [
     path: UrlConst.docQualityJson,
     method: async () => DocService.generateDocQualityData()
   },
+  {
+    type: 'build&runtime',
+    name: '相似文本',
+    path: UrlConst.textSimilarJson,
+    method: async () => DocService.getTextSimilar()
+  },
 ]
 
 export default apiMappings

@@ -55,7 +55,7 @@
     "md-to-pdf": "5.1.0",
     "node-global-proxy": "1.0.1",
     "nodejieba": "2.6.0",
-    "pdf-merger-js": "3.3.2",
+    "pdf-merger-js": "3.4.0",
     "puppeteer": "14.1.1",
     "rimraf": "3.0.2",
     "rollup-plugin-visualizer": "5.5.4",

@@ -14,16 +14,7 @@
             <datasource-selector />
             <el-divider direction="vertical" />
             <!-- 正常/暗色模式切换按钮 -->
-            <el-switch
-              v-model="showMode"
-              :inline-prompt="true"
-              :active-icon="Moon"
-              :inactive-icon="Sunny"
-              @click="toggleDarkMode"
-              active-color="#000"
-              inactive-color="#409EFF"
-            >
-            </el-switch>
+            <theme-switcher />
             <!-- 全屏/缓存清空 -->
             <el-divider direction="vertical" />
             <el-button-group>
@@ -80,6 +71,7 @@ import {Sunny, Moon, Monitor, Brush, Aim } from '@element-plus/icons-vue';
 import EventBus from "@/components/EventBus";
 import InstapaperShower from "./InstapaperShower.vue";
 import YuequeDraftShower from "./YuequeDraftShower.vue";
+import ThemeSwitcher from "./ThemeSwitcher.vue";
 </script>
 
 <script lang="ts">
@@ -87,7 +79,6 @@ import { defineComponent } from "vue";
 import config from "@/config";
 import DatasourceSelector from './datasource/DatasourceSelector.vue';
 import CacheService from "@/service/CacheService";
-import MermaidUtils from '@/util/MermaidUtils';
 
 export default defineComponent({
   components: {
@@ -96,7 +87,6 @@ export default defineComponent({
   data() {
     return {
       name: "my-book" as string,
-      showMode: false as boolean,
       fullscreen: false,
     };
   },
@@ -119,22 +109,6 @@ export default defineComponent({
         document.exitFullscreen();
       }
     },
-    toggleDarkMode(){
-      const theme = document.body.getAttribute('theme');
-      if (theme == 'dark') {
-        document.body.setAttribute('theme', 'light');
-        document.documentElement.classList.remove("dark");
-        this.$store.commit('setIsDarkMode', false);
-        localStorage.setItem('system::theme', "light");
-        MermaidUtils.initWithNormal();
-      }else {
-        document.body.setAttribute('theme', 'dark');
-        document.documentElement.classList.add("dark");
-        this.$store.commit('setIsDarkMode', true);
-        localStorage.setItem('system::theme', "dark");
-        MermaidUtils.initWithNormal();
-      }
-    },
     enterZenMode() {
       EventBus.emit('enter-zen-mode', null)
     }
@@ -146,12 +120,8 @@ export default defineComponent({
     linkList() {
       return config.linkList;
     },
-    isDark(){
-      return this.$store.state.isDarkMode;
-    }
   },
   created() {
-    this.showMode = this.isDark;
     EventBus.on('enter-zen-mode', () => {
       document.body.requestFullscreen();
     })

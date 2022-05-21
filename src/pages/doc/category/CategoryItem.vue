@@ -1,6 +1,6 @@
 <template>
   <el-popover
-    placement="right-start"
+    :placement="!$isMobile() ? 'right-start': 'bottom-start'"
     :width="300"
     trigger="hover"
     :hide-after="100"

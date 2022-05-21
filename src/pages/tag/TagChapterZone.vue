@@ -11,11 +11,11 @@
         </el-table-column>
       </el-table>
     </div>
-    <link-popover ref="linkPopover" />
+    <!-- <link-popover ref="linkPopover" /> -->
 </template>
 
 <script lang="ts" setup>
-import LinkPopover from "../doc/LinkPopover.vue";
+// import LinkPopover from "../doc/LinkPopover.vue";
 </script>
 
 <script lang="ts">

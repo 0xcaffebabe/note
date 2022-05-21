@@ -1,5 +1,5 @@
 import {createApp} from 'vue'
-import App from './App.vue'
+import App from './Main.vue'
 import createRouter from './route'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
@@ -9,12 +9,17 @@ import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 import axios from 'axios'
 import createStore from '@/store'
+import { SysUtils } from './util/SysUtils'
 
 const app = createApp(App)
+
+// 全局变量
+app.config.globalProperties.$isMobile = SysUtils.isMobile
 
 app.use(ElementPlus)
 app.use(createStore())
 const router = createRouter()
+
 
 // 屏幕顶端进度条开始
 router.beforeEach((to, from, next) => {

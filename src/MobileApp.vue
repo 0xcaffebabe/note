@@ -2,7 +2,7 @@
   <el-container>
     <el-header>
       <el-affix>
-        <mobile-header @showSearch="showSearch"/>
+        <mobile-header @showSearch="showSearch" @show-category-search="showCategorySearch"/>
       </el-affix>
     </el-header>
     <el-main>
@@ -10,21 +10,26 @@
     </el-main>
   </el-container>
   <Search ref="search" />
+  <category-search ref="categorySearch" />
 </template>
 
 <script lang="ts">
 import { defineComponent, } from 'vue'
 import MobileHeader from './components/header/mobile/MobileHeader.vue'
 import Search from "@/components/search/Search.vue";
+import CategorySearch from './components/search/CategorySearch.vue';
 
 export default defineComponent({
   components: {
-    MobileHeader, Search
+    MobileHeader, Search, CategorySearch
   },
   methods: {
     showSearch() {
       (this.$refs.search as InstanceType<typeof Search>).show()
-    }
+    },
+    showCategorySearch() {
+      (this.$refs.categorySearch as InstanceType<typeof CategorySearch>).show()
+    },
   },
   setup() {
     

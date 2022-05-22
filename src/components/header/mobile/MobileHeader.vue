@@ -14,6 +14,9 @@
         <el-button size="default" text @click="$emit('showSearch')">
           <el-icon><Search /></el-icon>
         </el-button>
+        <el-button size="default" text @click="$emit('showCategorySearch')">
+          <el-icon><Folder /></el-icon>
+        </el-button>
       </div>
     </div>
   </div>
@@ -25,10 +28,11 @@ import ThemeSwitcher from '../ThemeSwitcher.vue';
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { Expand, Search } from '@element-plus/icons-vue';
+import { Expand, Search, Folder } from '@element-plus/icons-vue';
 import config from "@/config";
 
 export default defineComponent({
+  emits: ['showSearch', 'showCategorySearch'],
   setup() {
     
   },

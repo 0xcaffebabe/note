@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="showDialog" width="25%" @opened="focusAutoComplete">
+  <el-dialog v-model="showDialog" :width="$isMobile()? '75%' : '25%'" @opened="focusAutoComplete">
     <el-autocomplete
     v-model="kw"
     :fetch-suggestions="querySearch"

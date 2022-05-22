@@ -10,7 +10,8 @@ declare module '@vue/runtime-core' {
     currentCategoryList: string[],
     isDarkMode: boolean,
     currentSearchKw: string,
-    currentHeading: string
+    currentHeading: string,
+    showCategory: boolean,
   }
 
   // provide typings for `this.$store`

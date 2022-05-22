@@ -2,10 +2,11 @@
   <el-container>
     <mobile-doc-side-category :doc="doc" :showAside="showAside" @toggle-aside="showAside = !showAside" ref="docSideCategory" />
     <el-main>
-      <div class="markdown-section" v-html="contentHtml"></div>
+      <div class="markdown-section" v-html="contentHtml" ref="markdownSection"></div>
     </el-main>
   </el-container>
   <link-popover />
+  <mobile-image-viewer ref="imageViewer" />
 </template>
 
 <script lang="ts">
@@ -13,13 +14,17 @@ import { defineComponent } from 'vue'
 import DocFileInfo from '@/dto/DocFileInfo'
 import DocService from '@/service/DocService'
 import './mobile-markdown-v1.less'
+import '../code-hl-vsc.less'
 import MobileDocSideCategory from './aside/MobileDocSideCategory.vue'
 import LinkPopover from '../LinkPopover.vue'
+import MobileImageViewer from '@/components/mobile/MobileImageViewer.vue'
+import DocPageEventManager from '../DocPageEventManager'
 
 export default defineComponent({
   components: {
     MobileDocSideCategory,
-    LinkPopover
+    LinkPopover,
+    MobileImageViewer
   },
   setup() {
     
@@ -34,11 +39,16 @@ export default defineComponent({
       doc: "" as string,
       file: new DocFileInfo() as DocFileInfo,
       showAside: true,
+      eventManger: null as DocPageEventManager | null
     }
   },
   methods: {
     async init() {
       this.file = await DocService.getDocFileInfo(this.doc)
+      this.$nextTick(() => {
+        const docEl = this.$refs.markdownSection as HTMLElement
+        this.eventManger?.registerImageClick(docEl)
+      })
     }
   },
   beforeRouteUpdate(to, from) {
@@ -48,6 +58,7 @@ export default defineComponent({
   async created() {
     this.doc = this.$route.params.doc.toString()
     this.init()
+    this.eventManger = new DocPageEventManager(this)
   }
 })
 </script>

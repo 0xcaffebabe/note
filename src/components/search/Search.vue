@@ -1,5 +1,5 @@
 <template>
-  <el-drawer v-model="showDrawer" size="600px" custom-class="search">
+  <el-drawer v-model="showDrawer" :size="$isMobile() ? '90%': '600px'" custom-class="search">
     <template #title>
       <el-autocomplete
         v-model="kw"

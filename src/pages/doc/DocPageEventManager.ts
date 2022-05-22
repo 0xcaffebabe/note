@@ -7,12 +7,13 @@ import ResourceBrower from "./ResourceBrower.vue";
 import EventBus from "@/components/EventBus";
 import ImageViewerVue from "@/components/ImageViewer.vue";
 import MermaidUtils from "@/util/MermaidUtils";
+import MobileDocPage from "./mobile/MobileDocPage.vue";
 
 class DocPageEventManager {
 
-  private docPageInstance: InstanceType<typeof DocPage>
+  private docPageInstance: InstanceType<typeof DocPage | typeof MobileDocPage>
 
-  constructor(docPageInstance: InstanceType<typeof DocPage>) {
+  constructor(docPageInstance: InstanceType<typeof DocPage | typeof MobileDocPage>) {
     this.docPageInstance = docPageInstance;
   }
 

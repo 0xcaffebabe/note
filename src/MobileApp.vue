@@ -2,22 +2,29 @@
   <el-container>
     <el-header>
       <el-affix>
-        <mobile-header />
+        <mobile-header @showSearch="showSearch"/>
       </el-affix>
     </el-header>
     <el-main>
       <router-view />
     </el-main>
   </el-container>
+  <Search ref="search" />
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent, } from 'vue'
 import MobileHeader from './components/header/mobile/MobileHeader.vue'
+import Search from "@/components/search/Search.vue";
 
 export default defineComponent({
   components: {
-    MobileHeader
+    MobileHeader, Search
+  },
+  methods: {
+    showSearch() {
+      (this.$refs.search as InstanceType<typeof Search>).show()
+    }
   },
   setup() {
     

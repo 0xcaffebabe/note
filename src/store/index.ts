@@ -13,7 +13,8 @@ export default function create(){
         isDarkMode: false,
         // 当前所在的章节标题
         currentHeading: '' as string,
-        currentSearchKw: '' as string
+        currentSearchKw: '' as string,
+        showCategory: false as boolean,
       }
     },
     mutations: {
@@ -52,6 +53,9 @@ export default function create(){
       },
       setIsDarkMode(state: any, dark: boolean) {
         state.isDarkMode = dark;
+      },
+      setShowCategory(state: any, show: boolean) {
+        state.showCategory = show
       }
     }
   })

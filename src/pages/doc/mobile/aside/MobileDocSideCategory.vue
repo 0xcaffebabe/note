@@ -1,6 +1,6 @@
 <template>
   <el-drawer
-    v-model="showDrawer"
+    v-model="showCategory"
     direction="ltr"
     :with-header="false"
     size="64%"
@@ -12,13 +12,6 @@
       <category-list :doc="doc" />
     </div>
   </el-drawer>
-  <el-affix :offset="384" style="height: 100px">
-    <el-button class="cate-fix-btn" type="primary" size="small" @click="showDrawer = true">
-      <el-icon>
-        <arrow-right-bold />
-      </el-icon>
-    </el-button>
-  </el-affix>
 </template>
 
 <script lang="ts">
@@ -33,11 +26,19 @@ export default defineComponent({
       type: String,
     },
   },
+  computed: {
+    showCategory: {
+      get() {
+        return this.$store.state.showCategory
+      },
+      set(newVal: boolean) {
+        this.$store.commit('setShowCategory', newVal)
+      }
+    }
+  },
   components: { CategoryList, ArrowRightBold },
-  setup() {},
   data() {
     return {
-      showDrawer: false,
     };
   },
 });

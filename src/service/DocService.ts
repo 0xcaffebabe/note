@@ -55,8 +55,31 @@ function buildDocLink(id: string, headingId: string): string {
 class DocService implements Cacheable{
 
   private static instance: DocService;
+  
+  /**
+   *
+   * 文档质量源数据
+   * @private
+   * @type {DocQuality[]}
+   * @memberof DocService
+   */
   private docQaulity: DocQuality[] = []
+
+  /**
+   *
+   * 每个文档对应的质量数据
+   * @private
+   * @memberof DocService
+   */
   private docQualityMap = new Map<string, DocQuality>()
+
+  /**
+   *
+   * 每个文档对应的排序
+   * @private
+   * @memberof DocService
+   */
+  private docQualityOrderMap = new Map<string, number>()
 
   private constructor(){
     this.init()
@@ -64,8 +87,10 @@ class DocService implements Cacheable{
 
   private async init() {
     this.docQaulity = await api.getDocQualityData()
-    for(let quality of this.docQaulity) {
+    for(let i = 0; i < this.docQaulity.length; i++) {
+      const quality = this.docQaulity[i]
       this.docQualityMap.set(quality.id, quality)
+      this.docQualityOrderMap.set(quality.id, i + 1)
     }
   }
 
@@ -453,7 +478,7 @@ class DocService implements Cacheable{
     if (!docQuality) {
       return '未知'
     }
-    return docQuality.quality.toFixed(2)
+    return `${docQuality.quality.toFixed(2)}(${this.docQualityOrderMap.get(id) || -1}/${this.docQaulity.length})`
   }
 }
 

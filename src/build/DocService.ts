@@ -299,6 +299,7 @@ class DocService extends BaseService implements Cacheable {
   }
 
   public md2TextSegement(md: string): SearchIndexSegment[] {
+    md = md.replace(/^---$.*^---$/ms, '') // 去除markdown里的元数据
     const html = marked(md)
     DocService.dom.window.document.body.innerHTML = `<!DOCTYPE html><body>${html}</body></html>`
     const elemts = DocService.dom.window.document.body.querySelectorAll('h1, h2, h3, h4, h5, h6');

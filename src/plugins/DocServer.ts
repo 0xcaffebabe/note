@@ -6,6 +6,7 @@ import mime from 'mime'
 import GitService from '../build/GitService'
 import DocService from '../build/DocService'
 import ApiMappings from './ApiMappings'
+import url from 'url'
 
 // API请求缓存
 const apiCache = new Map<string, any>()
@@ -53,10 +54,15 @@ export default function DocServer(){
       
       // JSON API
       server.middlewares.use(async (req, res, next) => {
-        const api = ApiMappings.find(v => v.path == req.originalUrl)
+        const uri = url.parse(req.originalUrl || '', true)
+        const api = ApiMappings.find(v => v.path == uri.pathname)
         if (api) {
           if (!apiCache.has(api.path)) {
             console.log(`${api.name}为空 生成`)
+            apiCache.set(api.path, await api.method())
+          }
+          if (uri.query.refresh) {
+            console.log(`${api.name} 强制刷新`)
             apiCache.set(api.path, await api.method())
           }
           res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });

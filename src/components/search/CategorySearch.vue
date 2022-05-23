@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="showDialog" :width="$isMobile()? '75%' : '25%'" @opened="focusAutoComplete">
+  <el-dialog v-model="showDialog" :width="$isMobile()? '90%' : '40%'" @opened="focusAutoComplete">
     <el-autocomplete
     v-model="kw"
     :fetch-suggestions="querySearch"
@@ -126,6 +126,9 @@ export default defineComponent({
 <style lang="less">
   .el-autocomplete{
     width: 100%;
+  }
+  .popper-list {
+    max-width: 80%;
   }
 </style>
 

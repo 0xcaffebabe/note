@@ -7,10 +7,16 @@
   </el-container>
   <link-popover />
   <mobile-image-viewer ref="imageViewer" />
+  <knowledge-reviewer ref="knowledgeReviewer" />
+  <knowledge-network ref="knowledgeNetwork" :doc="doc"/>
+  <mobile-tool-box 
+    @showKnowledgeReviewer="showKnowledgeReviewer"
+    @showKnowledgeNetwork="showKnowledgeNetwork"
+  />
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent, ref } from 'vue'
 import DocFileInfo from '@/dto/DocFileInfo'
 import DocService from '@/service/DocService'
 import './mobile-markdown-v1.less'
@@ -19,15 +25,32 @@ import MobileDocSideCategory from './aside/MobileDocSideCategory.vue'
 import LinkPopover from '../LinkPopover.vue'
 import MobileImageViewer from '@/components/mobile/MobileImageViewer.vue'
 import DocPageEventManager from '../DocPageEventManager'
+import MobileToolBox from '../MobileToolBox.vue'
+import KnowledgeReviewer from '../knowledge/KnowledgeReviewer.vue'
+import KnowledgeNetwork from '../knowledge/KnowledgeNetwork.vue'
 
 export default defineComponent({
   components: {
     MobileDocSideCategory,
     LinkPopover,
-    MobileImageViewer
+    MobileImageViewer,
+    MobileToolBox,
+    KnowledgeReviewer,
+    KnowledgeNetwork,
   },
   setup() {
-    
+    const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
+    const knowledgeNetwork = ref<InstanceType<typeof KnowledgeNetwork>>()
+    const showKnowledgeReviewer = () => {
+      knowledgeReviewer.value?.show();
+    }
+    const showKnowledgeNetwork = () => {
+      knowledgeNetwork.value?.show()
+    }
+    return {
+      knowledgeReviewer, showKnowledgeReviewer,
+      knowledgeNetwork, showKnowledgeNetwork,
+    }
   },
   computed: {
     contentHtml(): string {

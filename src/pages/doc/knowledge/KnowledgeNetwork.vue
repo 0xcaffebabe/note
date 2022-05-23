@@ -1,7 +1,8 @@
 <template>
   <el-drawer
     v-model="showDrawer"
-    size="44%"
+    :size="$isMobile() ? '50%' : '44%'"
+    :direction="$isMobile() ? 'btt': 'rtl'"
     :with-header="false"
     title="知识网络"
     @close="$emit('close')"
@@ -370,25 +371,30 @@ export default defineComponent({
 });
 </script>
 
+<style lang="less">
+.el-drawer__body {
+  padding: 0;
+}
+</style>
 
 <style lang="less" scoped>
 #knowledgeNetwork {
   height: 100%;
 }
 .el-select {
-  position:fixed;
+  position:absolute;
   top:20px;
   right: 20px;
   z-index: 9999;
 }
 .el-switch {
-  position:fixed;
+  position:absolute;
   top:60px;
   right: 20px;
   z-index: 9999;
 }
 .el-checkbox {
-  position:fixed;
+  position:absolute;
   top:80px;
   right: 20px;
   z-index: 9999;

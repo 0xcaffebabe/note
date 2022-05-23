@@ -1,5 +1,5 @@
 <template>
-  <el-drawer v-model="showDrawer" size="30%" title="知识回顾" :lock-scroll="false" custom-class="knowledge-review">
+  <el-drawer v-model="showDrawer" :size="$isMobile() ? '90%' : '30%'" title="知识回顾" :lock-scroll="false" custom-class="knowledge-review">
     <div class="review-range">
       <el-slider v-model="rangeValue" range :max="20" :show-tooltip="false" :marks="marks"> </el-slider>
     </div>

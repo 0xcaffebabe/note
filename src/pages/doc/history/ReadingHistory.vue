@@ -1,5 +1,5 @@
 <template>
-  <el-drawer v-model="showDrawer" size="20%" title="阅读历史">
+  <el-drawer v-model="showDrawer" :size="$isMobile() ? '80%': '20%'" title="阅读历史">
     <div class="history-list">
       <el-timeline>
         <el-timeline-item

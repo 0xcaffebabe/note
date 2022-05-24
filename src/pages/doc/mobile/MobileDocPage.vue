@@ -5,12 +5,14 @@
       <div class="markdown-section" v-html="contentHtml" ref="markdownSection"></div>
     </el-main>
   </el-container>
-  <link-popover />
+  <link-popover ref="linkPopover"/>
   <mobile-image-viewer ref="imageViewer" />
   <knowledge-reviewer ref="knowledgeReviewer" />
   <knowledge-network ref="knowledgeNetwork" :doc="doc"/>
   <knowledge-trend ref="knowledgeTrend"/>
+  <reading-history ref="readingHistory" />
   <mobile-tool-box 
+    @showReadingHistory="showReadingHistory"
     @showKnowledgeReviewer="showKnowledgeReviewer"
     @showKnowledgeNetwork="showKnowledgeNetwork"
     @showKnowledgeTrend="showKnowledgeTrend"
@@ -31,6 +33,7 @@ import MobileToolBox from '../MobileToolBox.vue'
 import KnowledgeReviewer from '../knowledge/KnowledgeReviewer.vue'
 import KnowledgeNetwork from '../knowledge/KnowledgeNetwork.vue'
 import KnowledgeTrend from '../knowledge/trend/KnowledgeTrend.vue'
+import ReadingHistory from '../history/ReadingHistory.vue'
 
 export default defineComponent({
   components: {
@@ -40,11 +43,16 @@ export default defineComponent({
     MobileToolBox,
     KnowledgeReviewer,
     KnowledgeNetwork,
-    KnowledgeTrend
+    KnowledgeTrend,
+    ReadingHistory,
   },
   setup() {
     const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
     const knowledgeNetwork = ref<InstanceType<typeof KnowledgeNetwork>>()
+    const readingHistory = ref<InstanceType<typeof ReadingHistory>>()
+    const showReadingHistory = () => {
+      readingHistory.value?.show()
+    }
     const showKnowledgeReviewer = () => {
       knowledgeReviewer.value?.show();
     }
@@ -52,6 +60,7 @@ export default defineComponent({
       knowledgeNetwork.value?.show()
     }
     return {
+      readingHistory,showReadingHistory,
       knowledgeReviewer, showKnowledgeReviewer,
       knowledgeNetwork, showKnowledgeNetwork,
     }

@@ -8,6 +8,7 @@ import EventBus from "@/components/EventBus";
 import ImageViewerVue from "@/components/ImageViewer.vue";
 import MermaidUtils from "@/util/MermaidUtils";
 import MobileDocPage from "./mobile/MobileDocPage.vue";
+import Hammer from 'hammerjs'
 
 class DocPageEventManager {
 
@@ -61,6 +62,11 @@ class DocPageEventManager {
         e.stopPropagation();
         return false;
       });
+      new Hammer(a).on('press', e => {
+        const originLink = a.getAttribute('origin-link')!;
+        (this.getRef('linkPopover') as InstanceType<typeof LinkPopover>).show(originLink, e.center.x, e.center.y);
+        return false;
+      })
     }
     // 外部链接
     for(let i = 0;i < outterLinkList.length;i++){

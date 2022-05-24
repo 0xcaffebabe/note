@@ -99,7 +99,7 @@ export default defineComponent({
   async created() {
     this.doc = this.$route.params.doc.toString()
     this.init()
-    this.eventManager = new DocPageEventManager(this)
+    this.eventManager = new DocPageEventManager(this, true)
   }
 })
 </script>

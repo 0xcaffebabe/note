@@ -13,9 +13,11 @@ import Hammer from 'hammerjs'
 class DocPageEventManager {
 
   private docPageInstance: InstanceType<typeof DocPage | typeof MobileDocPage>
+  private isMobile: boolean;
 
-  constructor(docPageInstance: InstanceType<typeof DocPage | typeof MobileDocPage>) {
+  constructor(docPageInstance: InstanceType<typeof DocPage | typeof MobileDocPage>, isMobile: boolean = false) {
     this.docPageInstance = docPageInstance;
+    this.isMobile = isMobile
   }
 
   private getRef<T>(name: string): any {
@@ -55,18 +57,21 @@ class DocPageEventManager {
           e.stopPropagation();
         }
       };
-      a.addEventListener('contextmenu', (e: MouseEvent) => {
-        const originLink = a.getAttribute('origin-link')!;
-        (this.getRef('linkPopover') as InstanceType<typeof LinkPopover>).show(originLink, e.clientX, e.clientY);
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      });
-      new Hammer(a).on('press', e => {
-        const originLink = a.getAttribute('origin-link')!;
-        (this.getRef('linkPopover') as InstanceType<typeof LinkPopover>).show(originLink, e.center.x, e.center.y);
-        return false;
-      })
+      if (!this.isMobile) {
+        a.addEventListener('contextmenu', (e: MouseEvent) => {
+          const originLink = a.getAttribute('origin-link')!;
+          (this.getRef('linkPopover') as InstanceType<typeof LinkPopover>).show(originLink, e.clientX, e.clientY);
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        });
+      }else {
+        new Hammer(a).on('press', e => {
+          const originLink = a.getAttribute('origin-link')!;
+          (this.getRef('linkPopover') as InstanceType<typeof LinkPopover>).show(originLink, e.center.x, e.center.y);
+          return false;
+        })
+      }
     }
     // 外部链接
     for(let i = 0;i < outterLinkList.length;i++){

@@ -9,9 +9,11 @@
   <mobile-image-viewer ref="imageViewer" />
   <knowledge-reviewer ref="knowledgeReviewer" />
   <knowledge-network ref="knowledgeNetwork" :doc="doc"/>
+  <knowledge-trend ref="knowledgeTrend"/>
   <mobile-tool-box 
     @showKnowledgeReviewer="showKnowledgeReviewer"
     @showKnowledgeNetwork="showKnowledgeNetwork"
+    @showKnowledgeTrend="showKnowledgeTrend"
   />
 </template>
 
@@ -28,6 +30,7 @@ import DocPageEventManager from '../DocPageEventManager'
 import MobileToolBox from '../MobileToolBox.vue'
 import KnowledgeReviewer from '../knowledge/KnowledgeReviewer.vue'
 import KnowledgeNetwork from '../knowledge/KnowledgeNetwork.vue'
+import KnowledgeTrend from '../knowledge/trend/KnowledgeTrend.vue'
 
 export default defineComponent({
   components: {
@@ -37,6 +40,7 @@ export default defineComponent({
     MobileToolBox,
     KnowledgeReviewer,
     KnowledgeNetwork,
+    KnowledgeTrend
   },
   setup() {
     const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
@@ -74,7 +78,10 @@ export default defineComponent({
         this.eventManager?.registerImageClick(docEl)
         this.eventManager!.registerLinkRouter(docEl);
       })
-    }
+    },
+    showKnowledgeTrend() {
+      (this.$refs.knowledgeTrend as InstanceType<typeof KnowledgeTrend>).show(this.file)
+    },
   },
   beforeRouteUpdate(to, from) {
     this.doc = to.params.doc.toString()

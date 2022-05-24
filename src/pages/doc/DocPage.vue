@@ -321,8 +321,7 @@ export default defineComponent({
       }
     },
     showKnowledgeTrend() {
-      const kw = this.file.formattedMetadata.standardName || this.doc.split("-")[this.doc.split("-").length - 1];
-      (this.$refs.knowledgeTrend as InstanceType<typeof KnowledgeTrend>).show(kw)
+      (this.$refs.knowledgeTrend as InstanceType<typeof KnowledgeTrend>).show(this.file)
     },
   },
   beforeRouteUpdate(to, from) {

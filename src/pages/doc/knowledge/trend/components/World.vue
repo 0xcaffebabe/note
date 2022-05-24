@@ -1,9 +1,9 @@
 <template>
     <el-row style="width:100%;height:400px">
-      <el-col :span="12">
+      <el-col :md="12" :xs="24">
         <world-map :regionData="interestByRegionData" ref="worldMap"/>
       </el-col>
-      <el-col :span="12">
+      <el-col :md="12" :xs="24">
         <world-bar :regionData="interestByRegionData" ref="worldBar"/>
       </el-col>
     </el-row>

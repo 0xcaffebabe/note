@@ -2,22 +2,26 @@
   <el-drawer
     v-model="showDrawer"
     size="80%"
+    :direction="$isMobile() ? 'btt': 'rtl'"
     title="知识趋势"
     :with-header="false"
     :lock-scroll="true"
     custom-class="knowledge-trend"
     v-loading="true"
   >
+    <el-select v-model="kw" size="small">
+      <el-option v-for="keyword in keywords" :key="keyword" :value="keyword" :label="keyword"></el-option>
+    </el-select>
     <div
       ref="chartContainer"
       class="chartContainer"
       style="height: 600px; width: 100%"
     ></div>
-    <el-row :gutter="24">
+    <el-row :gutter="12">
       <el-col :span="24">
         <world ref="world"/>
       </el-col>
-      <el-col :span="12">
+      <el-col :md="12" :xs="24">
          <el-card class="data-card">
           <template #header>
             <h1 class="data-title">相关查询</h1>
@@ -28,7 +32,7 @@
           </el-table>
         </el-card>
       </el-col>
-      <el-col :span="12">
+      <el-col :md="12" :xs="24">
          <el-card class="data-card">
           <template #header>
             <h1 class="data-title">相关主题</h1>
@@ -72,6 +76,7 @@ import GeoMapDataItem from "@/dto/google-trend/GeoMapDataItem";
 import QueriesRankedKeywordItem from "@/dto/google-trend/QueriesRankedKeywordItem";
 import TopicsRankedKeywordItem from "@/dto/google-trend/TopicsRankedKeywordItem";
 import World from './components/World.vue'
+import DocFileInfo from "@/dto/DocFileInfo";
 
 echarts.use([
   TitleComponent,
@@ -106,12 +111,18 @@ export default defineComponent({
       interestByRegionData: [] as GeoMapDataItem[],
       releatedQueriesData: [] as QueriesRankedKeywordItem[],
       releatedTopicsData: [] as TopicsRankedKeywordItem[],
+      keywords: [] as string[],
     };
   },
   computed: {
     isDark() {
       return this.$store.state.isDarkMode;
     },
+  },
+  watch: {
+    kw() {
+      this.init()
+    }
   },
   mounted() {
   },
@@ -122,9 +133,17 @@ export default defineComponent({
     localeName(geoCode: string, defaultVal: string) {
       return (i18n_zh.countries as any)[geoCode] || defaultVal
     },
-    show(kw: string) {
-      this.kw = kw
+    show(file: DocFileInfo) {
+      this.keywords = Array.from(new Set<string>([file.formattedMetadata.standardName,
+        file.id.split("-")[file.id.split("-").length - 1],
+        ...file.formattedMetadata.alias
+        ]))
+        .filter(v => v && v.length != 0)
+      this.kw = this.keywords[0]
       this.showDrawer = true
+      this.init();
+    },
+    init() {
       this.$nextTick(() => {
         this.initInterestOverTime();
         this.initInterestByRegion();

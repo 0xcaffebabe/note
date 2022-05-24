@@ -96,7 +96,4 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
-.el-main {
-  padding-top: 0;
-}
 </style>

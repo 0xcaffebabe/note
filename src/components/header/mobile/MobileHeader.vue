@@ -48,8 +48,7 @@ export default defineComponent({
 .header {
   height: 40px;
   padding: 0;
-  box-shadow: var(--el-box-shadow);
-  background-color:#fff;
+  background-color:#f2f2f2;
 }
 .header-wrapper {
   padding: 4px;

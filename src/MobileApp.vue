@@ -62,3 +62,12 @@ body[theme=dark] {
   }
 }
 </style>
+
+<style lang="less">
+#buildTime {
+  transition: all .2s;
+  font-size: 10px!important;
+  bottom: 2px!important;
+  right: 2px!important;
+}
+</style>

@@ -1,6 +1,6 @@
 <template>
   <div v-show="visible" class="mask">
-    <el-button @click="visible = false" class="close-btn" text>
+    <el-button @click="visible = false" class="close-btn" text size="large">
       <el-icon><full-screen /></el-icon>
     </el-button>
     <ul ref="images" style="display:none">
@@ -30,6 +30,7 @@ export default defineComponent({
   mounted() {
     this.viewer = new Viewer(this.$refs.images as HTMLElement, {
           inline: true,
+          fullscreen: true,
           viewed(e) {
             // viewer.zoomTo(1);
           },
@@ -57,6 +58,7 @@ export default defineComponent({
     display: flex;
     z-index: 999;
     top: 0;
+    left: 0;
     background-color: rgba(0,0,0,.5);
     height: 100%;
     width: 100%;
@@ -64,7 +66,7 @@ export default defineComponent({
   }
   .close-btn {
     position:fixed;
-    top:-1px;
+    top:-5px;
     right: -11px;
     z-index:999;
   }

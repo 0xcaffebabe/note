@@ -198,7 +198,7 @@ class DocService implements Cacheable{
       if (language == 'mermaid') {
         return `<div class='mermaid' id='mermaid-${IdGenUtils.uuid()}'>${code}</div>`
       }
-      return `<pre><code class="language-${language}"><span class='code-lang'>${language}</span>${this.hightlightCode(code, language)}</code></pre>`
+      return `<pre><code class="language-${language}">${this.hightlightCode(code, language)}</code></pre>`
     }
     // 自定义图片渲染
     render.image = (href: string | null, title: string | null, text: string): string => {
@@ -232,6 +232,9 @@ class DocService implements Cacheable{
         return `<a href='${buildDocLink(i.id, i.headingId!)}' class="potential-link" origin-link="${DocUtils.docId2Url(i.id)}">${str}</a>`
       })
       return text;
+    }
+    render.table = (header: string, body: string): string => {
+      return `<div class="table-wrapper"><table>${header}${body}</table></div>`
     }
     return  marked(mdContent, {
       renderer: render

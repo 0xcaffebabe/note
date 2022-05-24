@@ -10,6 +10,9 @@
     modal-class="operational-drawer-modal"
     custom-class="operational-drawer"
   >
+  <el-button text class="close-btn" @click="showDrawer = false">
+    <el-icon><close-bold /></el-icon>
+  </el-button>
   <el-select v-model="mode" placeholder="显示模式" size="small" popper-class="popper-list">
       <el-option
       v-for="item in displayMode"
@@ -35,6 +38,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import * as echarts from "echarts/core";
+import {CloseBold} from '@element-plus/icons-vue'
 import {
   TitleComponent,
   TitleComponentOption,
@@ -87,6 +91,9 @@ function buildSummaryDocInfo(file: DocFileInfo): string {
 }
 
 export default defineComponent({
+  components: {
+    CloseBold
+  },
   props: {
     doc: {
       type: String,
@@ -391,6 +398,12 @@ export default defineComponent({
   position:absolute;
   top:60px;
   right: 20px;
+  z-index: 9999;
+}
+.close-btn {
+  position:absolute;
+  top: -2px;
+  right: -2px;
   z-index: 9999;
 }
 .el-checkbox {

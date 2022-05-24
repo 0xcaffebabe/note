@@ -62,7 +62,7 @@ export default defineComponent({
       doc: "" as string,
       file: new DocFileInfo() as DocFileInfo,
       showAside: true,
-      eventManger: null as DocPageEventManager | null
+      eventManager: null as DocPageEventManager | null
     }
   },
   methods: {
@@ -70,7 +70,9 @@ export default defineComponent({
       this.file = await DocService.getDocFileInfo(this.doc)
       this.$nextTick(() => {
         const docEl = this.$refs.markdownSection as HTMLElement
-        this.eventManger?.registerImageClick(docEl)
+        this.eventManager!.renderMermaid();
+        this.eventManager?.registerImageClick(docEl)
+        this.eventManager!.registerLinkRouter(docEl);
       })
     }
   },
@@ -81,7 +83,7 @@ export default defineComponent({
   async created() {
     this.doc = this.$route.params.doc.toString()
     this.init()
-    this.eventManger = new DocPageEventManager(this)
+    this.eventManager = new DocPageEventManager(this)
   }
 })
 </script>

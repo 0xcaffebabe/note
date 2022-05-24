@@ -5,28 +5,32 @@ import DatasourceConst from "../const/DatasourceConst";
 import UrlUtils from "../util/UrlUtils";
 import UrlConst from "../const/UrlConst";
 import axios from 'axios';
-import DatasourceItem from "../dto/DatasourceItem";
 
-
-const origins = ['https://note.ismy.wang', 'https://noteg.ismy.wang', 'https://notev.ismy.wang', 'https://noten.ismy.wang']
-const urls = ['/', '/#/doc/README', '/#/tag']
+const origins = ['https://note.ismy.wang', 'https://notev.ismy.wang', 'https://notec.ismy.wang', 'https://b.ismy.wang']
+const urls = ['/#/home', '/#/doc/README', '/#/tag']
 const storagePath = 'back_origin_snapshot'
 
-async function screenHost(url: string, name: string, counter: number) {
+const tabletUa = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36 Edg/101.0.1210.47'
+const phoneUa = 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1 Edg/101.0.4951.64'
+
+async function screenHost(url: string, name: string, counter: number, ua: 'tablet' | 'phone' = 'tablet') {
   const startTime = new Date().getTime();
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
-  if (url.indexOf('README') != -1) {
-    await page.setViewport({ height: 1080, width: 1920 })
-  } else {
-    await page.setViewport({ height: 3240, width: 1920 })
+  if (ua == 'tablet') {
+    page.setUserAgent(tabletUa)
+  }else {
+    page.setUserAgent(phoneUa)
   }
+  let width = ua == 'tablet' ? 1920: 390
+  let height = ua == 'tablet' ? 1080: 844
+  await page.setViewport({ height, width })
   await page.goto(url, {
     waitUntil: 'networkidle0'
   });
-  const path = storagePath + '/' + name + counter + '.png';
+  const path = storagePath + '/' + name +"-" + ua +"-" + counter + '.png';
   PathUtils.ensureDirectoryExistence(path);
-  if (url.indexOf('README') != -1) {
+  if (url.indexOf('README') != -1 && ua == 'tablet') {
     page.keyboard.press('Alt');
     page.keyboard.press('k');
     page.keyboard.up('Alt');
@@ -79,6 +83,7 @@ async function main() {
     for (let url of urls) {
       try {
         await screenHost(origin + url, origin.replace('http://', '').replace('https://', ''), counter++)
+        await screenHost(origin + url, origin.replace('http://', '').replace('https://', ''), counter++, 'phone')
       } catch (err: any) {
         console.error('\x1b[31m',`${origin + url} 页面回源失败 ${err.message}`, '\x1b[0m')
       }

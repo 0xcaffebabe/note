@@ -5,5 +5,5 @@ dist-ssr
 *.local
 .vscode
 *.pyc
-book
+/book
 back_origin_snapshot

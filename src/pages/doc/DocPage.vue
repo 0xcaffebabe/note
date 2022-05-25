@@ -11,6 +11,7 @@
             <doc-breadcrumb-nav />
             <p class="create-time">⏰<span>创建时间: </span>{{new Date(file.createTime).toLocaleString()}}</p>
             <p class="quality-score">⚽<span>质量分数: </span>{{quality}}</p>
+            <book :file="file"/>
             <tag-list :tags="file.formattedMetadata.tags"/>
             <!-- doc主体开始 -->
             <div class="markdown-section" ref="markdownSection" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '960px': '74%'}"></div>
@@ -110,6 +111,7 @@ import KeyWordFinder from "./KeyWordFinder.vue";
 import KnowledgeTrend from './knowledge/trend/KnowledgeTrend.vue'
 import TagList from './tag/TagList.vue'
 import KnowledgeRedundancy from './knowledge/KnowledgeRedundancy.vue'
+import Book from './book/Book.vue'
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -134,6 +136,7 @@ export default defineComponent({
     KnowledgeTrend,
     TagList,
     KnowledgeRedundancy,
+    Book,
 },
   watch: {
     showHeader: {

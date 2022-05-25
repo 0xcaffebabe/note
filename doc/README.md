@@ -4,19 +4,28 @@
 
 在线阅读:
 
-<https://note.ismy.wang>(github pages)
+<https://note.ismy.wang>(github pages, cf加速)
 
 <https://b.ismy.wang>(国内服务器)
 
-<https://notev.ismy.wang>(vercel app, 比github pages快)
+<https://notec.ismy.wang>(cloudflare pages)
 
-~~note-mind 笔记思维导图: <https://github.com/0xcaffebabe/note-mind>~~(已集成到笔记页面中)
+<https://notev.ismy.wang>(vercel app, 比github pages快)
 
 - [参考文献](./参考文献.md)
 
 --------------------------------------------------------------------------------
 
-[![wakatime](https://wakatime.com/badge/github/0xcaffebabe/note.svg)](https://wakatime.com/badge/github/0xcaffebabe/note) ![star](https://img.shields.io/github/stars/0xcaffebabe/note) ![fork](https://img.shields.io/github/forks/0xcaffebabe/note) ![license](https://img.shields.io/github/license/0xcaffebabe/note) ![build](https://github.com/0xcaffebabe/note/workflows/%E6%9E%84%E5%BB%BA%E7%94%B5%E5%AD%90%E4%B9%A6/badge.svg)
+[![wakatime](https://wakatime.com/badge/github/0xcaffebabe/note.svg)](https://wakatime.com/badge/github/0xcaffebabe/note) ![字数](https://cdn.jsdelivr.net/gh/0xcaffebabe/note@gh-pages/wordCountBadge.svg) ![star](https://img.shields.io/github/stars/0xcaffebabe/note) ![fork](https://img.shields.io/github/forks/0xcaffebabe/note) ![license](https://img.shields.io/github/license/0xcaffebabe/note) ![build](https://github.com/0xcaffebabe/note/workflows/%E6%9E%84%E5%BB%BA%E7%94%B5%E5%AD%90%E4%B9%A6/badge.svg)
+
+![统计](https://repobeats.axiom.co/api/embed/24137e8c365c058184db40c146a5dc1291924862.svg "Repobeats analytics image")
+
+---
+
+知识体系应该是什么样的？基础深厚，涉猎广泛，融汇贯通
+
+![2022525213243](/assets/2022525213243.webp)
+![2022525213254](/assets/2022525213254.webp)
 
 - [💎算法与数据结构](./算法与数据结构/算法与数据结构.md)
   - [leetcode](./算法与数据结构/leetcode/leetcode.md)

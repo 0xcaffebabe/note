@@ -1,13 +1,17 @@
 <template>
   <banner />
+  <div style="width:100%;overflow-x:scroll">
+  <statistic/>
+  </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
 import Banner from '../Banner.vue'
+import Statistic from '../statistic/Statistic.vue'
 
 export default defineComponent({
-  components: { Banner },
+  components: { Banner, Statistic },
   setup() {
     
   },

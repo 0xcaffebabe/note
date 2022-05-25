@@ -1,9 +1,9 @@
 <template>
-  <div class="statistic-wrapper">
+  <div :class="{'statistic-wrapper': !$isMobile(), 'mobile-statistic-wrapper': $isMobile()}">
     <el-descriptions
       class="margin-top"
       title="统计"
-      :column="12"
+      :column="$isMobile() ? 1: 12"
       border
     >
       <el-descriptions-item>
@@ -171,6 +171,10 @@ export default defineComponent({
 .statistic-wrapper {
   height: 100%;
   padding: 0 40px;
+}
+.mobile-statistic-wrapper {
+  height: 100%;
+  padding: 0;
 }
 :deep(.el-icon) {
   vertical-align: middle;

@@ -81,6 +81,7 @@ export default defineComponent({
   methods: {
     async init() {
       this.file = await DocService.getDocFileInfo(this.doc)
+      DocService.setLastReadRecord(this.doc)
       this.$nextTick(() => {
         const docEl = this.$refs.markdownSection as HTMLElement
         this.eventManager!.renderMermaid();

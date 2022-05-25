@@ -38,6 +38,10 @@ class DatasourceService {
     return candicate[0]
   }
 
+  public static getDatasourcesByMatch(predicate: ((v: DatasourceItem) => boolean)): DatasourceItem[] {
+    return DatasourceConst.filter(predicate)
+  }
+
   
   /**
    *

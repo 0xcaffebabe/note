@@ -179,8 +179,14 @@ class Api implements Cacheable{
   }
 
   private async requestDataUseJsDelivr(url: string): Promise<any> {
-    const datasource = DatasourceService.getDatasourceById("jsdelivr")
-    return (await axios.get(UrlUtils.concatUrl(datasource.url, url))).data
+    const datasources = DatasourceService.getDatasourcesByMatch(v => v.id.indexOf("jsdelivr") != -1)
+    for(let datasource of datasources) {
+      try {
+        return (await axios.get(UrlUtils.concatUrl(datasource.url, url))).data
+      }catch(err: any) {
+        console.error(err)
+      }
+    }
   }
 
   public static getInstance(){

@@ -20,8 +20,18 @@ export default [
     desc: '百度云加速'
   },
   {
-    id: 'jsdelivr',
+    id: 'jsdelivr-fastly',
+    url: '//fastly.jsdelivr.net/gh/0xcaffebabe/note@gh-pages/',
+    desc: 'jsdelivr-fastly'
+  },
+  {
+    id: 'jsdelivr-cdn',
     url: '//cdn.jsdelivr.net/gh/0xcaffebabe/note@gh-pages/',
     desc: 'jsdelivr-cdn'
+  },
+  {
+    id: 'jsdelivr-gcore',
+    url: '//gcore.jsdelivr.net/gh/0xcaffebabe/note@gh-pages/',
+    desc: 'jsdelivr-gcore'
   }
 ]

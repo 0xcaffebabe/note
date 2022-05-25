@@ -5,7 +5,7 @@
       v-model="currentDatasource"
       placeholder="数据源"
       size="small"
-      popper-class="popper-list"
+      popper-class="datasource-popper-list"
       style="width: 120px; margin-left: 10px"
       @change="handleDatasourceChange"
     >
@@ -34,15 +34,20 @@
           type="success"
           v-if="item.url.startsWith('//')"
         />
-        <span style="float: left" class="text">
+        <el-badge
+          value="nolimit"
+          class="protocol"
+          type="success"
+          v-else-if="item.url.startsWith('/')"
+        />
+        <span class="text" style="margin-left: 4px">
           {{ item.id }}
         </span>
 
         <span
           class="text"
           style="
-            float: right;
-            margin-left: 10px;
+            margin-left: 20px;
             color: var(--el-text-color-secondary);
             font-size: 13px;
           "
@@ -110,10 +115,11 @@ export default defineComponent({
   color: var(--el-color-danger);
 }
 .protocol {
-  margin-left: 4px;
+  margin-left: -4px;
 }
 .last-update {
   margin-left: 4px;
+  float:right;
 }
 .datasource-text {
   color: #606266;
@@ -128,6 +134,9 @@ body[theme=dark] {
 </style>
 
 <style lang="less">
+.datasource-popper-list {
+  max-width: 100%!important;
+}
 body[theme=dark] {
   .text {
     color: var(--main-dark-text-color)!important;

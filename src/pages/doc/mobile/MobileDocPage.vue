@@ -34,6 +34,7 @@ import KnowledgeReviewer from '../knowledge/KnowledgeReviewer.vue'
 import KnowledgeNetwork from '../knowledge/KnowledgeNetwork.vue'
 import KnowledgeTrend from '../knowledge/trend/KnowledgeTrend.vue'
 import ReadingHistory from '../history/ReadingHistory.vue'
+import AlloyFinger from 'alloyfinger'
 
 export default defineComponent({
   components: {
@@ -98,6 +99,19 @@ export default defineComponent({
   beforeRouteUpdate(to, from) {
     this.doc = to.params.doc.toString()
     this.init()
+  },
+  mounted() {
+    // 监听手势
+    new AlloyFinger(this.$refs.markdownSection, {
+    swipe: function (evt: TouchEvent & {direction: 'Right' | 'Left' | 'Down' | 'Up'}) {
+        if (evt.direction == 'Right') {
+          history.forward()
+        }
+        if (evt.direction == 'Left') {
+          history.back()
+        }
+    }
+});
   },
   async created() {
     this.doc = this.$route.params.doc.toString()

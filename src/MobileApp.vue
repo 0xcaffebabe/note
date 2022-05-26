@@ -1,5 +1,5 @@
 <template>
-  <el-container>
+  <el-container ref="main">
     <el-header>
       <el-affix>
         <mobile-header @showSearch="showSearch" @show-category-search="showCategorySearch"/>

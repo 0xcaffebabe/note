@@ -1,7 +1,7 @@
 <template>
-  <p class="books">
+  <p class="books" v-if="file.formattedMetadata.books.length != 0">
     📕<span>相关书籍: </span> 
-    <el-link @click="showDrawer = true">架构整洁之道</el-link>
+    <el-link @click="showDrawer = true" v-for="book in file.formattedMetadata.books" :key="book.name">{{book.name}}</el-link>
   </p>
   <el-drawer direction="ttb" v-model="showDrawer" :with-header="false">
     <div class="book-container">

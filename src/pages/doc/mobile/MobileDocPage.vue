@@ -81,9 +81,11 @@ export default defineComponent({
   methods: {
     async init() {
       this.file = await DocService.getDocFileInfo(this.doc)
-      DocService.setLastReadRecord(this.doc)
+      // DocService.setLastReadRecord(this.doc)
       this.$nextTick(() => {
         const docEl = this.$refs.markdownSection as HTMLElement
+        // 将滚动条设置为上一次的状态
+        document.body.scrollTo(0, DocService.getDocReadRecord(this.doc))
         this.eventManager!.renderMermaid();
         this.eventManager?.registerImageClick(docEl)
         this.eventManager!.registerLinkRouter(docEl);
@@ -101,6 +103,7 @@ export default defineComponent({
     this.doc = this.$route.params.doc.toString()
     this.init()
     this.eventManager = new DocPageEventManager(this, true)
+    this.eventManager!.registerScrollListener();
   }
 })
 </script>

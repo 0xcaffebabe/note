@@ -59,14 +59,22 @@ export default function DocServer(){
         if (api) {
           if (!apiCache.has(api.path)) {
             console.log(`${api.name}为空 生成`)
-            apiCache.set(api.path, await api.method())
+            try {
+              apiCache.set(api.path, await api.method())
+            }catch(err: any) {
+              console.error(err)
+            }
           }
           if (uri.query.refresh) {
             console.log(`${api.name} 强制刷新`)
-            apiCache.set(api.path, await api.method())
+            try {
+              apiCache.set(api.path, await api.method())
+            }catch(err: any) {
+              console.error(err)
+            }
           }
           res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
-          res.write(JSON.stringify(apiCache.get(api.path)))
+          res.write(JSON.stringify(apiCache.get(api.path)|| ""))
           res.end()
         }else{
           next()

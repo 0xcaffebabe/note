@@ -1,5 +1,5 @@
 <template>
-  <p class="books" v-if="file.formattedMetadata.books.length != 0">
+  <p class="books" v-if="file.formattedMetadata.books && file.formattedMetadata.books.length != 0">
     📕<span>相关书籍: </span> 
     <el-link @click="showDrawer = true" v-for="book in file.formattedMetadata.books" :key="book.name">{{book.name}}</el-link>
   </p>

@@ -17,13 +17,18 @@ import {Sunny, Moon } from '@element-plus/icons-vue';
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import MermaidUtils from '@/util/MermaidUtils';
+import { SysUtils } from '@/util/SysUtils';
 
 export default defineComponent({
   setup() {},
   data() {
     return {
       showMode: false as boolean,
+    }
+  },
+  watch: {
+    isDark() {
+      this.showMode = this.isDark
     }
   },
   computed: {
@@ -38,17 +43,9 @@ export default defineComponent({
     toggleDarkMode(){
       const theme = document.body.getAttribute('theme');
       if (theme == 'dark') {
-        document.body.setAttribute('theme', 'light');
-        document.documentElement.classList.remove("dark");
-        this.$store.commit('setIsDarkMode', false);
-        localStorage.setItem('system::theme', "light");
-        MermaidUtils.initWithNormal();
+        SysUtils.enterLightMode(this)
       }else {
-        document.body.setAttribute('theme', 'dark');
-        document.documentElement.classList.add("dark");
-        this.$store.commit('setIsDarkMode', true);
-        localStorage.setItem('system::theme', "dark");
-        MermaidUtils.initWithNormal();
+        SysUtils.enterDarkMode(this)
       }
     },
   }

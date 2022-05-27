@@ -1,6 +1,6 @@
 <template>
   <el-container>
-    <mobile-doc-side-category :doc="doc" :showAside="showAside" @toggle-aside="showAside = !showAside" ref="docSideCategory" />
+    <mobile-doc-side-category :doc="doc" ref="docSideCategory" />
     <el-main>
       <doc-metadata-info :file="file"/>
       <div class="markdown-section" v-html="contentHtml" ref="markdownSection"></div>
@@ -78,7 +78,6 @@ export default defineComponent({
     return {
       doc: "" as string,
       file: new DocFileInfo() as DocFileInfo,
-      showAside: true,
       eventManager: null as DocPageEventManager | null
     }
   },
@@ -105,12 +104,13 @@ export default defineComponent({
   },
   mounted() {
     // 监听手势
+    const vm = this
     new AlloyFinger(this.$refs.markdownSection, {
     swipe: function (evt: TouchEvent & {direction: 'Right' | 'Left' | 'Down' | 'Up'}) {
-        if (evt.direction == 'Right') {
-          history.forward()
-        }
         if (evt.direction == 'Left') {
+          (vm.$refs.docSideCategory as InstanceType<typeof MobileDocSideCategory>).showCategory = true
+        }
+        if (evt.direction == 'Right') {
           history.back()
         }
     }

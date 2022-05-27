@@ -1,7 +1,7 @@
 <template>
   <el-drawer
     v-model="showCategory"
-    direction="ltr"
+    direction="rtl"
     :with-header="false"
     size="64%"
     :close-on-click-modal="true"

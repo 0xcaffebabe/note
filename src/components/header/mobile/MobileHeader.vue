@@ -2,11 +2,8 @@
   <div class="header">
     <div class="header-wrapper">
       <div class="container">
-        <el-button size="default" text @click="$store.commit('setShowCategory', true)">
-          <el-icon><Expand /></el-icon>
-        </el-button>
         <div class="logo">
-           <el-link href="#" @click.prevent="$router.push('/home')">
+          <el-link href="#" @click.prevent="$router.push('/home')">
                 {{ siteName }}
           </el-link>
         </div>
@@ -16,6 +13,9 @@
         </el-button>
         <el-button size="default" text @click="$emit('showCategorySearch')">
           <el-icon><Folder /></el-icon>
+        </el-button>
+        <el-button size="default" text @click="$store.commit('setShowCategory', true)">
+          <el-icon><Expand /></el-icon>
         </el-button>
       </div>
     </div>

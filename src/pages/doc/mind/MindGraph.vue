@@ -2,6 +2,7 @@
   <el-drawer
     v-model="showDrawer"
     size="44%"
+    :direction="$isMobile() ? 'btt': 'rtl'"
     :with-header="false"
     title="思维导图"
     :lock-scroll="false"
@@ -10,6 +11,9 @@
     modal-class="operational-drawer-modal"
     custom-class="operational-drawer"
   >
+    <el-button text class="close-btn" @click="showDrawer = false">
+      <el-icon><close-bold /></el-icon>
+    </el-button>
     <mind ref="mind" id="mindGraphMind" :mind-data="mindData" @node-click="handleNodeClick"/>
   </el-drawer>
 </template>
@@ -20,10 +24,12 @@ import Content from "@/dto/Content";
 import DocService from "@/service/DocService";
 import Mind from '@/components/mind/Mind.vue';
 import MindNode from "@/dto/mind/MindNode";
+import { CloseBold } from "@element-plus/icons-vue";
 
 export default defineComponent({
   components: {
-    Mind
+    Mind,
+    CloseBold,
   },
   setup() {},
   data() {
@@ -104,5 +110,14 @@ export default defineComponent({
 <style lang="less">
 .el-drawer__body {
   padding: 0;
+}
+</style>
+
+<style lang="less" scoped>
+.close-btn {
+  position:absolute;
+  top: -2px;
+  right: -2px;
+  z-index: 9999;
 }
 </style>

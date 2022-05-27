@@ -136,7 +136,7 @@ export default defineComponent({
     show(file: DocFileInfo) {
       this.keywords = Array.from(new Set<string>([file.formattedMetadata.standardName,
         file.id.split("-")[file.id.split("-").length - 1],
-        ...file.formattedMetadata.alias
+        ...file.formattedMetadata.alias || []
         ]))
         .filter(v => v && v.length != 0)
       this.kw = this.keywords[0]

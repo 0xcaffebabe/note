@@ -2,6 +2,7 @@
   <el-drawer
     v-model="showDrawer"
     size="64%"
+    :direction="$isMobile() ? 'btt': 'rtl'"
     :with-header="false"
     title="知识冗余检测"
     @close="$emit('close')"
@@ -15,7 +16,7 @@
             <p>源文本: {{scope.row.sourceText}}</p>
             <p>目标文本: {{scope.row.targetText}}</p>
             <p>
-              <span :class="{removed: part.removed, added: part.added}" v-for="part in diff(scope.row.sourceText, scope.row.targetText)" :key="part">{{part.value}}</span>
+              <span :class="{removed: part.removed, added: part.added}" v-for="(part, index) in diff(scope.row.sourceText, scope.row.targetText)" :key="index">{{part.value}}</span>
             </p>
           </div>
         </template>

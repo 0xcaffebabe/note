@@ -1,5 +1,5 @@
 <template>
-    <el-row style="width:100%;height:400px">
+    <el-row :style="{height: $isMobile() ? '800px': '400px'}">
       <el-col :md="12" :xs="24">
         <world-map :regionData="interestByRegionData" ref="worldMap"/>
       </el-col>

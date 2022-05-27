@@ -7,16 +7,22 @@
     </el-main>
   </el-container>
   <link-popover ref="linkPopover"/>
+  <mind-graph ref="mindGraph" />
   <mobile-image-viewer ref="imageViewer" />
   <knowledge-reviewer ref="knowledgeReviewer" />
   <knowledge-network ref="knowledgeNetwork" :doc="doc"/>
   <knowledge-trend ref="knowledgeTrend"/>
   <reading-history ref="readingHistory" />
+  <knowledge-system ref="knowledgeSystem"/>
+  <knowledge-redundancy ref="knowledgeRedundancy"/>
   <mobile-tool-box 
     @showReadingHistory="showReadingHistory"
+    @showMindGraph="showMindGraph"
     @showKnowledgeReviewer="showKnowledgeReviewer"
     @showKnowledgeNetwork="showKnowledgeNetwork"
     @showKnowledgeTrend="showKnowledgeTrend"
+    @showKnowledgeSystem="showKnowledgeSystem"
+    @showKnowledgeRedundancy="showKnowledgeRedundancy"
   />
 </template>
 
@@ -37,6 +43,9 @@ import KnowledgeTrend from '../knowledge/trend/KnowledgeTrend.vue'
 import ReadingHistory from '../history/ReadingHistory.vue'
 import AlloyFinger from 'alloyfinger'
 import DocMetadataInfo from '../DocMetadataInfo.vue'
+import MindGraph from '../mind/MindGraph.vue'
+import KnowledgeSystem from '../knowledge/KnowledgeSystem.vue'
+import KnowledgeRedundancy from '../knowledge/KnowledgeRedundancy.vue'
 
 export default defineComponent({
   components: {
@@ -49,13 +58,22 @@ export default defineComponent({
     KnowledgeTrend,
     ReadingHistory,
     DocMetadataInfo,
-  },
+    MindGraph,
+    KnowledgeSystem,
+    KnowledgeRedundancy
+},
   setup() {
     const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
     const knowledgeNetwork = ref<InstanceType<typeof KnowledgeNetwork>>()
     const readingHistory = ref<InstanceType<typeof ReadingHistory>>()
+    const mindGraph = ref<InstanceType<typeof MindGraph>>()
+    const knowledgeSystem = ref<InstanceType<typeof KnowledgeSystem>>()
+    const knowledgeRedundancy = ref<InstanceType<typeof KnowledgeRedundancy>>()
     const showReadingHistory = () => {
       readingHistory.value?.show()
+    }
+    const showMindGraph = () => {
+      mindGraph.value?.show()
     }
     const showKnowledgeReviewer = () => {
       knowledgeReviewer.value?.show();
@@ -63,10 +81,19 @@ export default defineComponent({
     const showKnowledgeNetwork = () => {
       knowledgeNetwork.value?.show()
     }
+    const showKnowledgeSystem = () => {
+      knowledgeSystem.value?.show();
+    }
+    const showKnowledgeRedundancy = () => {
+      knowledgeRedundancy.value?.show();
+    }
     return {
       readingHistory,showReadingHistory,
       knowledgeReviewer, showKnowledgeReviewer,
       knowledgeNetwork, showKnowledgeNetwork,
+      mindGraph, showMindGraph,
+      knowledgeSystem, showKnowledgeSystem,
+      knowledgeRedundancy, showKnowledgeRedundancy,
     }
   },
   computed: {

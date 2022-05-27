@@ -1,7 +1,8 @@
 <template>
   <el-drawer
     v-model="showDrawer"
-    size="44%"
+    :size="$isMobile() ? '80%': '44%'"
+    :direction="$isMobile() ? 'btt': 'rtl'"
     :with-header="false"
     title="知识体系"
     @close="$emit('close')"

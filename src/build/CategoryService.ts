@@ -34,7 +34,7 @@ class CategoryService extends BaseService {
 
    private categoryParse(html: string): Category[]{
     const dom =  new JSDOM(`<!DOCTYPE html><body>${html}</body></html>`)
-    const elm = dom.window.document
+    const elm = dom.window.document.body
     const topCate = elm.querySelectorAll('body > ul > li')
     const categoryList: Category[] = []
     for(let i = 0;i<topCate.length;i++){
@@ -47,7 +47,7 @@ class CategoryService extends BaseService {
     const category = new Category()
     category.name = cate.firstChild?.textContent || '';
     category.link = cate.querySelector('a')?.getAttribute("href")!
-    const children = cate.querySelector("ul")?.querySelectorAll(':scope > li')
+    const children = Array.from(cate.getElementsByTagName("ul")[0]?.children || []).filter(v => v.tagName == 'LI')
     if (!children) {
       return category
     }

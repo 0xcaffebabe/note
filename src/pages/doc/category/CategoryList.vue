@@ -83,7 +83,7 @@ export default defineComponent({
   },
   async created() {
     this.loading = true;
-    this.cateList = await categoryService.getCategoryList();
+    this.cateList = await categoryService.getCompiledCategoryList();
     this.updateCurrentCategory(this.doc!);
     this.$nextTick(() => {
       this.loading = false;

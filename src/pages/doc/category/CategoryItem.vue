@@ -43,7 +43,7 @@ export default defineComponent({
   },
   props: {
     value: {
-      type: Category as PropType<Category>,
+      type: Object as PropType<Category>,
       required: true,
     },
     isParent: {

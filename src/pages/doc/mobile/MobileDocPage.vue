@@ -2,6 +2,7 @@
   <el-container>
     <mobile-doc-side-category :doc="doc" :showAside="showAside" @toggle-aside="showAside = !showAside" ref="docSideCategory" />
     <el-main>
+      <doc-metadata-info :file="file"/>
       <div class="markdown-section" v-html="contentHtml" ref="markdownSection"></div>
     </el-main>
   </el-container>
@@ -35,6 +36,7 @@ import KnowledgeNetwork from '../knowledge/KnowledgeNetwork.vue'
 import KnowledgeTrend from '../knowledge/trend/KnowledgeTrend.vue'
 import ReadingHistory from '../history/ReadingHistory.vue'
 import AlloyFinger from 'alloyfinger'
+import DocMetadataInfo from '../DocMetadataInfo.vue'
 
 export default defineComponent({
   components: {
@@ -46,6 +48,7 @@ export default defineComponent({
     KnowledgeNetwork,
     KnowledgeTrend,
     ReadingHistory,
+    DocMetadataInfo,
   },
   setup() {
     const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()

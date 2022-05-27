@@ -9,10 +9,7 @@
         <template #default>
           <div class="main-content">
             <doc-breadcrumb-nav />
-            <p class="create-time">⏰<span>创建时间: </span>{{new Date(file.createTime).toLocaleString()}}</p>
-            <p class="quality-score">⚽<span>质量分数: </span>{{quality}}</p>
-            <book :file="file"/>
-            <tag-list :tags="file.formattedMetadata.tags"/>
+            <doc-metadata-info :file="file"/>
             <!-- doc主体开始 -->
             <div class="markdown-section" ref="markdownSection" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '960px': '74%'}"></div>
             <!-- doc主体结束 -->
@@ -109,9 +106,8 @@ import ImageViewer from "@/components/ImageViewer.vue";
 import KnowledgeReviewer from "./knowledge/KnowledgeReviewer.vue";
 import KeyWordFinder from "./KeyWordFinder.vue";
 import KnowledgeTrend from './knowledge/trend/KnowledgeTrend.vue'
-import TagList from './tag/TagList.vue'
 import KnowledgeRedundancy from './knowledge/KnowledgeRedundancy.vue'
-import Book from './book/Book.vue'
+import DocMetadataInfo from './DocMetadataInfo.vue'
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -134,9 +130,8 @@ export default defineComponent({
     KnowledgeReviewer,
     KeyWordFinder,
     KnowledgeTrend,
-    TagList,
     KnowledgeRedundancy,
-    Book,
+    DocMetadataInfo,
 },
   watch: {
     showHeader: {
@@ -212,9 +207,6 @@ export default defineComponent({
   computed: {
     contentHtml(): string {
       return DocService.renderMd(this.file);
-    },
-    quality(): string {
-      return DocService.calcQuanlityStr(this.file.id);
     }
   },
   methods: {
@@ -361,22 +353,6 @@ export default defineComponent({
   background-color: #fff;
   padding-left: 4em;
   padding-bottom: 20px;
-}
-.create-time {
-  padding-top: 10px;
-  margin: 0;
-  font-size: 12px;
-  span {
-    color: #888;
-  }
-}
-.quality-score {
-  padding: 2px;
-  margin: 0;
-  font-size: 12px;
-  span {
-    color: #888;
-  }
 }
 .toc-wrapper {
   transition: all 0.2s;

@@ -13,6 +13,7 @@
         :router="true"
         :background-color="isDark ? 'var(--second-dark-bg-color)' : ''"
         :text-color="isDark ? 'var(--main-dark-text-color)' : ''"
+        @open="handleOpen"
       >
         <CategoryTree :menuList="cateList" />
       </el-menu>
@@ -34,12 +35,14 @@ export default defineComponent({
   components: {
     CategoryTree,
   },
+  emits: ['firstLoad'],
   setup() {},
   data() {
     return {
       cateList: [] as Category[],
       activeMenu: "" as string,
       loading: true as boolean,
+      loaded: false
     };
   },
   computed: {
@@ -49,11 +52,9 @@ export default defineComponent({
   },
   methods: {
     handleOpen(index: string) {
-      if (index) {
-        console.log(index);
-        // 由于带有孩子目录的父级目录的index后缀带了一个p 所有这里要去掉
-        const doc = index.substring(0, index.length - 1);
-        this.showDoc(doc);
+      if (!this.loaded) {
+        this.loaded = true
+        this.$emit('firstLoad')
       }
     },
     showDoc(index: string) {

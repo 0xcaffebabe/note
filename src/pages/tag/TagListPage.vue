@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container" :class="{'mobile': $isMobile()}" ref="container">
     <div class="search-box-zone">
       <el-input placeholder="搜索标签" v-model="kw">
         <template #prefix>
@@ -20,7 +20,7 @@
       </transition-group>
     </div>
     <!-- 数据展示区 -->
-    <div style="max-width:60%;margin:0 auto;">
+    <div class="data-container">
       <tag-chapter-zone :chapters="chapters"/>
     </div>
   </div>
@@ -37,6 +37,7 @@ import api from "@/api";
 import { defineComponent, ref } from "vue";
 import DocUtils from "@/util/DocUtils";
 import TagUtils from './TagUtils';
+import AlloyFinger from 'alloyfinger'
 
 interface TagItem {
   tag: string
@@ -94,6 +95,13 @@ export default defineComponent({
           chapters: v.chapters,
         };
       });
+    new AlloyFinger(this.$refs.container, {
+      swipe: function (evt: TouchEvent & {direction: 'Right' | 'Left' | 'Down' | 'Up'}) {
+          if (evt.direction == 'Right') {
+            history.back()
+          }
+      }
+    })
   },
   mounted(){
     // 通过url传参 确认哪些标签
@@ -150,5 +158,20 @@ export default defineComponent({
   transition: all 0.2s ease;
   opacity: 0;
   transform: translateY(30px);
+}
+.data-container {
+  max-width:60%;
+  margin:0 auto;
+}
+.mobile {
+  .search-box-zone {
+    max-width: 88%;
+  }
+  .tag-zone {
+    max-width: 96%;
+  }
+  .data-container {
+    max-width: 88%;
+  }
 }
 </style>

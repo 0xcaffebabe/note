@@ -50,6 +50,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import("@/pages/doc/mobile/MobileDocPage.vue"),
         beforeEnter: mobile2Tablet
       },
+      { path: "/m/tag", component: () => import("@/pages/tag/TagListPage.vue"), beforeEnter: mobile2Tablet },
     ]
   }
 ]

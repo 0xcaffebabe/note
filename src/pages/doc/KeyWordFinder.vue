@@ -1,5 +1,5 @@
 <template>
-  <div class="kw-finder-root" v-show="showFinder">
+  <div class="kw-finder-root" :class="{'mobile-kw-finder-root': $isMobile()}" v-show="showFinder">
     
     <el-input class="kw" v-model="innerKw" @keypress.enter="$emit('kwChanged', innerKw)" @keyup.esc="showFinder = false" ref="kwInput"></el-input>
     <span class="counter">{{ currentIndex }}/{{ resultSize }}/<span class="visible-index" @click="handleVisibleIndexClick">{{visibleIndex}}</span></span>
@@ -136,7 +136,21 @@ export default defineComponent({
           window.scrollTo(0, hilightElm.offsetTop - 280)
         }
       }
-    }
+    },
+    hilightKeywords(docEl: HTMLElement, kw?: string, refreshKwFinder: boolean = false) {
+      if (!kw) {
+        return;
+      }
+      const kwList = kw.trim().split(' ').filter(v => v);
+      let html = docEl.innerHTML;
+      for(let i of kwList) {
+        html = html.replace(new RegExp(i, "gi"), (str) => `<mark>${str}</mark>`);
+      }
+      docEl.innerHTML = html;
+      if (refreshKwFinder) {
+        this.refresh(kw)
+      }
+    },
   },
   created() {
     this.$nextTick(this.refresh);
@@ -187,6 +201,10 @@ export default defineComponent({
   border-radius: 5px;
   background-color: #fff;
   box-shadow: 2px 0 13px #bbb;
+}
+.mobile-kw-finder-root {
+  left: 24px;
+  bottom: 50px;
 }
 .kw {
   display: inline-block;

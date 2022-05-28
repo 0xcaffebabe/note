@@ -52,7 +52,8 @@ type ActionType =
     'goToDoc' | 
     'goToPpt' |
     'downloadPdf' |
-    'showKnowledgeSystem'
+    'showKnowledgeSystem' | 
+    'showKwFinder'
 
 type LocalActionType = ActionType & 'showMoreSetting'
 
@@ -90,7 +91,8 @@ export default defineComponent({
     'downloadPdf',
     'showKnowledgeReviewer',
     'showKnowledgeTrend',
-    'showKnowledgeRedundancy'
+    'showKnowledgeRedundancy',
+    'showKwFinder'
   ],
   data(){
     return {
@@ -98,13 +100,14 @@ export default defineComponent({
       fontSize: 1,
       parentShowHeader: true,
       actionList: [
-        {name: '阅读历史', type: 'primary', action: 'showReadingHistory'},
         {name: '思维导图', type: 'success', action: 'showMindGraph'},
         {name: '知识网络', type: 'warning', action: 'showKnowledgeNetwork'},
         {name: '知识体系', type: 'success', action: 'showKnowledgeSystem' },
         {name: '知识回顾', type: 'primary', action: 'showKnowledgeReviewer'},
         {name: '知识趋势', type: 'danger', action: 'showKnowledgeTrend'},
-        {name: '知识冗余', type: 'success', action: 'showKnowledgeRedundancy'},
+        {name: '知识冗余', type: 'success', action: 'showKnowledgeRedundancy',},
+        {name: '阅读历史', type: 'primary', action: 'showReadingHistory', divided: true},
+        {name: '文本搜索', type: 'warning', action: 'showKwFinder'},
         // {name: '添加书签', type: 'danger', action: 'showBookMarkAdder', divided: true},
         // {name: '书签列表', type: 'info', action: 'showBookMarkList'},
         // {name: '路径复制', type: 'success', action: 'copyDocPath'},

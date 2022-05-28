@@ -287,18 +287,7 @@ export default defineComponent({
       this.registerNecessaryEvent(docEl)
     },
     hilightKeywords(docEl: HTMLElement, kw?: string, refreshKwFinder: boolean = false) {
-      if (!kw) {
-        return;
-      }
-      const kwList = kw.trim().split(' ').filter(v => v);
-      let html = docEl.innerHTML;
-      for(let i of kwList) {
-        html = html.replace(new RegExp(i, "gi"), (str) => `<mark>${str}</mark>`);
-      }
-      docEl.innerHTML = html;
-      if (refreshKwFinder) {
-        this.kwFinder?.refresh(kw)
-      }
+      this.kwFinder?.hilightKeywords(docEl, kw, refreshKwFinder)
     },
     downloadPdf() {
       try {

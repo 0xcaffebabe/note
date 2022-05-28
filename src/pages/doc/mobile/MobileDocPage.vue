@@ -109,7 +109,7 @@ export default defineComponent({
     }
   },
   methods: {
-    async init() {
+    async init(doc: string, headingId?: string, kw?: string) {
       this.file = await DocService.getDocFileInfo(this.doc)
       // DocService.setLastReadRecord(this.doc)
       this.$nextTick(() => {
@@ -119,6 +119,7 @@ export default defineComponent({
         this.eventManager!.renderMermaid();
         this.eventManager?.registerImageClick(docEl)
         this.eventManager!.registerLinkRouter(docEl);
+        this.eventManager!.syncHeading(headingId);
       })
     },
     showKnowledgeTrend() {
@@ -127,7 +128,8 @@ export default defineComponent({
   },
   beforeRouteUpdate(to, from) {
     this.doc = to.params.doc.toString()
-    this.init()
+    const headingId = to.query.headingId?.toString()
+    this.init(this.doc, headingId)
   },
   mounted() {
     // 监听手势
@@ -145,7 +147,8 @@ export default defineComponent({
   },
   async created() {
     this.doc = this.$route.params.doc.toString()
-    this.init()
+    const headingId = this.$route.query.headingId?.toString()
+    this.init(this.doc, headingId)
     this.eventManager = new DocPageEventManager(this, true)
     this.eventManager!.registerScrollListener();
   }

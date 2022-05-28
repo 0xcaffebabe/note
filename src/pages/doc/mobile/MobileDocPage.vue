@@ -43,12 +43,12 @@ import KnowledgeReviewer from '../knowledge/KnowledgeReviewer.vue'
 import KnowledgeNetwork from '../knowledge/KnowledgeNetwork.vue'
 import KnowledgeTrend from '../knowledge/trend/KnowledgeTrend.vue'
 import ReadingHistory from '../history/ReadingHistory.vue'
-import AlloyFinger from 'alloyfinger'
 import DocMetadataInfo from '../DocMetadataInfo.vue'
 import MindGraph from '../mind/MindGraph.vue'
 import KnowledgeSystem from '../knowledge/KnowledgeSystem.vue'
 import KnowledgeRedundancy from '../knowledge/KnowledgeRedundancy.vue'
 import KeyWordFinder from '../KeyWordFinder.vue'
+import TouchUtils from '@/util/TouchUtils'
 
 export default defineComponent({
   components: {
@@ -165,17 +165,18 @@ export default defineComponent({
   },
   mounted() {
     // 监听手势
-    const vm = this
-    new AlloyFinger(this.$refs.markdownSection, {
-    swipe: function (evt: TouchEvent & {direction: 'Right' | 'Left' | 'Down' | 'Up'}) {
-        if (evt.direction == 'Left') {
-          (vm.$refs.docSideCategory as InstanceType<typeof MobileDocSideCategory>).showCategory = true
-        }
-        if (evt.direction == 'Right') {
-          history.back()
-        }
-    }
-});
+    TouchUtils.onSwipe(this.$refs.markdownSection as HTMLElement, (direction, delta) => {
+      console.log(direction, delta)
+      if (direction[0] == 'left' && delta[0] > 150) {
+        (this.$refs.docSideCategory as InstanceType<typeof MobileDocSideCategory>).showCategory = true
+      }
+      if (direction[0] == 'right' && delta[0] > 150) {
+        history.back()
+      }
+      if (direction[1] == 'down' && delta[1] > 500) {
+        location.reload()
+      }
+    })
   },
   async created() {
     this.doc = this.$route.params.doc.toString()

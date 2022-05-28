@@ -37,7 +37,7 @@ import api from "@/api";
 import { defineComponent, ref } from "vue";
 import DocUtils from "@/util/DocUtils";
 import TagUtils from './TagUtils';
-import AlloyFinger from 'alloyfinger'
+import TouchUtils from "@/util/TouchUtils";
 
 interface TagItem {
   tag: string
@@ -95,12 +95,10 @@ export default defineComponent({
           chapters: v.chapters,
         };
       });
-    new AlloyFinger(this.$refs.container, {
-      swipe: function (evt: TouchEvent & {direction: 'Right' | 'Left' | 'Down' | 'Up'}) {
-          if (evt.direction == 'Right') {
+    TouchUtils.onSwipe(this.$refs.container as HTMLElement, (direction, delta) => {
+      if (direction[0] == 'right' && delta[0] > 150) {
             history.back()
           }
-      }
     })
   },
   mounted(){

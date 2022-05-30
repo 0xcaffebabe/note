@@ -54,6 +54,7 @@
   <key-word-finder ref="kwFinder" :kw="kw" @kwChanged="handleKwChanged"/>
   <!-- 关键词提示器结束 -->
   <link-popover ref="linkPopover"/>
+  <selection-popover ref="selectionPopover" @showKnowledgeTrend="showKnowledgeTrend"/>
   <el-backtop :bottom="40" :right="326" />
   <reading-history ref="readingHistory" />
   <mind-graph ref="mindGraph" @close="showAside = true;isDrawerShow = false" />
@@ -108,6 +109,7 @@ import KeyWordFinder from "./KeyWordFinder.vue";
 import KnowledgeTrend from './knowledge/trend/KnowledgeTrend.vue'
 import KnowledgeRedundancy from './knowledge/KnowledgeRedundancy.vue'
 import DocMetadataInfo from './DocMetadataInfo.vue'
+import SelectionPopover from './tool/SelectionPopover.vue'
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -132,6 +134,7 @@ export default defineComponent({
     KnowledgeTrend,
     KnowledgeRedundancy,
     DocMetadataInfo,
+    SelectionPopover,
 },
   watch: {
     showHeader: {
@@ -273,6 +276,7 @@ export default defineComponent({
       this.eventManager!.registerImageClick(docEl);
       this.eventManager!.registerHeadingClick(docEl);
       this.eventManager!.registerDocTagSupClick(docEl);
+      this.eventManager!.registerTextSelected(docEl);
     },
     generateTOC() {
       this.contentsList = docService.getContent(this.contentHtml);
@@ -304,8 +308,8 @@ export default defineComponent({
         this.$router.push(`/ppt/${this.doc}`)
       }
     },
-    showKnowledgeTrend() {
-      (this.$refs.knowledgeTrend as InstanceType<typeof KnowledgeTrend>).show(this.file)
+    showKnowledgeTrend(kw?: string) {
+      (this.$refs.knowledgeTrend as InstanceType<typeof KnowledgeTrend>).show(this.file, kw)
     },
   },
   beforeRouteUpdate(to, from) {

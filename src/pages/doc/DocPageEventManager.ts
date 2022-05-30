@@ -9,6 +9,7 @@ import ImageViewerVue from "@/components/ImageViewer.vue";
 import MermaidUtils from "@/util/MermaidUtils";
 import MobileDocPage from "./mobile/MobileDocPage.vue";
 import Hammer from 'hammerjs'
+import SelectionPopover from "./tool/SelectionPopover.vue";
 
 class DocPageEventManager {
 
@@ -170,6 +171,32 @@ class DocPageEventManager {
       // 滚动的同时将link-popover隐藏掉
       this.getRef('linkPopover') && (this.getRef('linkPopover') as InstanceType<typeof LinkPopover>).hide();
     });
+  }
+
+
+  /**
+   *
+   * 监听文本选中
+   * @param {HTMLElement} docEl
+   * @memberof DocPageEventManager
+   */
+  public registerTextSelected(docEl: HTMLElement) {
+    docEl.addEventListener('mouseup', (e: MouseEvent) => {
+      const selection = document.getSelection()?.toString()
+      if (selection) {
+        this.getRef('selectionPopover') && (this.getRef('selectionPopover') as InstanceType<typeof SelectionPopover>).show(selection, e.clientX- 50, e.clientY + 20)
+      }else {
+        this.getRef('selectionPopover') && (this.getRef('selectionPopover') as InstanceType<typeof SelectionPopover>).hide()
+      }
+    })
+    docEl.addEventListener('touchend', (e: TouchEvent) => {
+      const selection = document.getSelection()?.toString()
+      if (selection) {
+        this.getRef('selectionPopover') && (this.getRef('selectionPopover') as InstanceType<typeof SelectionPopover>).show(selection, e.changedTouches[0].clientX - 50, e.changedTouches[0].clientY+ 20)
+      }else {
+        this.getRef('selectionPopover') && (this.getRef('selectionPopover') as InstanceType<typeof SelectionPopover>).hide()
+      }
+    })
   }
 
   public renderMermaid() {

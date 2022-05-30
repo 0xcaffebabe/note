@@ -133,12 +133,16 @@ export default defineComponent({
     localeName(geoCode: string, defaultVal: string) {
       return (i18n_zh.countries as any)[geoCode] || defaultVal
     },
-    show(file: DocFileInfo) {
-      this.keywords = Array.from(new Set<string>([file.formattedMetadata.standardName,
-        file.id.split("-")[file.id.split("-").length - 1],
-        ...file.formattedMetadata.alias || []
-        ]))
-        .filter(v => v && v.length != 0)
+    show(file: DocFileInfo, kw?: string) {
+      if (kw) {
+        this.keywords = [kw]
+      }else {
+        this.keywords = Array.from(new Set<string>([file.formattedMetadata.standardName,
+          file.id.split("-")[file.id.split("-").length - 1],
+          ...file.formattedMetadata.alias || []
+          ]))
+          .filter(v => v && v.length != 0)
+      }
       this.kw = this.keywords[0]
       this.showDrawer = true
       this.init();

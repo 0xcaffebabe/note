@@ -1,4 +1,8 @@
 <template>
+  <el-button-group style="position:absolute;top:0;left:0;z-index:999">
+    <el-button size="small" @click="zoomOut">-</el-button>
+    <el-button size="small" @click="zoomIn">+</el-button>
+  </el-button-group>
   <div :id="id" class="mind-container"></div>
 </template>
 
@@ -46,6 +50,12 @@ export default defineComponent({
           this.jm.view.zoomIn();
         }
       }
+    },
+    zoomIn() {
+      this.jm.view.zoomIn()
+    },
+    zoomOut() {
+      this.jm.view.zoomOut()
     },
     reigseterMindClickEvent() {
       document

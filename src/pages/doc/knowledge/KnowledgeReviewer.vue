@@ -1,37 +1,45 @@
 <template>
-  <el-drawer v-model="showDrawer" :size="$isMobile() ? '90%' : '30%'" title="知识回顾" :lock-scroll="false" custom-class="knowledge-review">
-    <div class="review-range">
-      <el-slider v-model="rangeValue" range :max="20" :show-tooltip="false" :marks="marks"> </el-slider>
-    </div>
-    <el-select v-model="displayMode" placeholder="选择" size="small" class="display-mode" @change="handleDisplayModeChange">
-      <el-option
-        label="倒序"
-        value="倒序"
-      />
-      <el-option
-        label="正序"
-        value="正序"
-      />
-    </el-select>
-    <div class="sort">
-      <span>排序依据: </span>
-        <el-radio-group v-model="sort" @change="handleDisplayModeChange">
-          <el-radio label="时间"></el-radio>
-          <el-radio label="质量"></el-radio>
-        </el-radio-group>
-    </div>
-    <div class="history-list">
-      <el-timeline>
-        <el-timeline-item
-          v-for="item in filterDocList"
-          :key="item[0]"
-        >
-          <a href="#" @click.prevent="$router.push('/doc/' + item[0])">{{docId2Url(item[0])}}</a>
-          <p class="timestamp">{{new Date(item[1].date).toLocaleString()}} <a :href="repoUrl + '/commit/' + item[1].hash" target="_blank">{{item[1].message}}</a></p>
-          <p class="timestamp"><span>⚽质量分数: {{quality(item[0])}}</span></p>
-        </el-timeline-item>
-      </el-timeline>
-    </div>
+  <el-drawer v-model="showDrawer" :size="$isMobile() ? '90%' : '84%'" title="知识回顾" :lock-scroll="true" custom-class="knowledge-review">
+    <el-row>
+      <el-col :md="18" :xs="24">
+        <knowledge-scatter ref="knowledgeScatter"/>
+      </el-col>
+      <el-col :md="6" :xs="24">
+         <div class="review-range">
+          <el-slider v-model="rangeValue" range :max="20" :show-tooltip="false" :marks="marks"> </el-slider>
+        </div>
+        <el-select v-model="displayMode" placeholder="选择" size="small" class="display-mode" @change="handleDisplayModeChange">
+          <el-option
+            label="倒序"
+            value="倒序"
+          />
+          <el-option
+            label="正序"
+            value="正序"
+          />
+        </el-select>
+        <div class="sort">
+          <span>排序依据: </span>
+            <el-radio-group v-model="sort" @change="handleDisplayModeChange">
+              <el-radio label="时间"></el-radio>
+              <el-radio label="质量"></el-radio>
+            </el-radio-group>
+        </div>
+        <div class="history-list">
+          <el-timeline>
+            <el-timeline-item
+              v-for="item in filterDocList"
+              :key="item[0]"
+            >
+              <a href="#" @click.prevent="$router.push('/doc/' + item[0])">{{docId2Url(item[0])}}</a>
+              <p class="timestamp">{{new Date(item[1].date).toLocaleString()}} <a :href="repoUrl + '/commit/' + item[1].hash" target="_blank">{{item[1].message}}</a></p>
+              <p class="timestamp"><span>⚽质量分数: {{quality(item[0])}}</span></p>
+            </el-timeline-item>
+          </el-timeline>
+        </div>
+      </el-col>
+    </el-row>
+   
   </el-drawer>
 </template>
 
@@ -43,6 +51,7 @@ import DocUtils from "@/util/DocUtils";
 import { defineComponent, CSSProperties } from "vue";
 import config from "@/config";
 import DocService from "@/service/DocService";
+import KnowledgeScatter from './KnowledgeScatter.vue'
 
 interface Mark {
   style: CSSProperties
@@ -51,6 +60,9 @@ interface Mark {
 type Marks = Record<number, Mark | string>
 
 export default defineComponent({
+  components: {
+    KnowledgeScatter
+  },
   data() {
     return {
       displayMode: '倒序' as '正序' | '倒序',

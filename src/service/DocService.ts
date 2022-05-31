@@ -18,6 +18,7 @@ import KnowledgeNetworkService from './KnowledgeNetworkService'
 import DocSegement from '@/dto/doc/DocSegement'
 import IdGenUtils from '@/util/IdGenUtils'
 import DocQuality from '@/dto/doc/DocQuality'
+import { cleanText } from '@/util/StringUtils'
 
 const cache = Cache()
 
@@ -337,6 +338,19 @@ class DocService implements Cacheable{
       lang = 'clike';
     }
     return prism.highlight(code, prism.languages[lang], lang)
+  }
+
+  public buildSummaryDocInfo(file: DocFileInfo): string {
+    return [
+      `<p>${file.name}</p>`,
+      `<div>创建时间: ${new Date(file.createTime).toLocaleString()}</div>`,
+      `<div>${
+        Math.ceil(
+          (new Date().getTime() - new Date(file.commitList[0].date).getTime()) / (3600 * 24 * 1000)
+        )
+        }天前更新, ${cleanText(file.content).length}字</div>`,
+      `<div>${this.resolveTagList(file) || ''}</div>`
+    ].join("\n")
   }
 
   public docUrl2Id(url :string): string {

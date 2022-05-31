@@ -78,16 +78,7 @@ function nodeColorMapping(size: number): string {
 }
 
 function buildSummaryDocInfo(file: DocFileInfo): string {
-  return [
-    `<p>${file.name}</p>`,
-    `<div>创建时间: ${new Date(file.createTime).toLocaleString()}</div>`,
-    `<div>${
-      Math.ceil(
-        (new Date().getTime() - new Date(file.commitList[0].date).getTime()) / (3600 * 24 * 1000)
-      )
-      }天前更新, ${cleanText(file.content).length}字</div>`,
-    `<div>${DocService.resolveTagList(file) || ''}</div>`
-  ].join("\n")
+  return DocService.buildSummaryDocInfo(file)
 }
 
 export default defineComponent({

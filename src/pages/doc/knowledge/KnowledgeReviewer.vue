@@ -1,10 +1,10 @@
 <template>
   <el-drawer v-model="showDrawer" :size="$isMobile() ? '90%' : '84%'" title="知识回顾" :lock-scroll="true" custom-class="knowledge-review">
-    <el-row>
+    <el-row style="height:100%">
       <el-col :md="18" :xs="24">
         <knowledge-scatter ref="knowledgeScatter"/>
       </el-col>
-      <el-col :md="6" :xs="24">
+      <el-col :md="6" :xs="24" style="height:100%">
          <div class="review-range">
           <el-slider v-model="rangeValue" range :max="20" :show-tooltip="false" :marks="marks"> </el-slider>
         </div>
@@ -176,6 +176,8 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .history-list {
+  height: calc(100% - 80px);
+  overflow-y:scroll;
   a {
     text-decoration: none;
     color: #74818d;

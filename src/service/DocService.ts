@@ -340,15 +340,17 @@ class DocService implements Cacheable{
     return prism.highlight(code, prism.languages[lang], lang)
   }
 
+  @cache
   public buildSummaryDocInfo(file: DocFileInfo): string {
     return [
-      `<p>${file.name}</p>`,
+      `<p>${file.name}(${file.id})</p>`,
       `<div>创建时间: ${new Date(file.createTime).toLocaleString()}</div>`,
-      `<div>${
+      `<div>最后更新: ${new Date(file.commitList[0].date).toLocaleString()}</div>`,
+      `<div>⏰${
         Math.ceil(
           (new Date().getTime() - new Date(file.commitList[0].date).getTime()) / (3600 * 24 * 1000)
         )
-        }天前更新, ${cleanText(file.content).length}字</div>`,
+        }天前更新, ✏️${cleanText(file.content).length}字, ⚽${this.calcQuanlityStr(file.id)}</div>`,
       `<div>${this.resolveTagList(file) || ''}</div>`
     ].join("\n")
   }

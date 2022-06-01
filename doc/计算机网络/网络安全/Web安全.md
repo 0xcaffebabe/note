@@ -90,6 +90,7 @@ public void doFilter(ServletRequest request, ServletResponse response, FilterCha
 - 使用http-only 禁止js读取cookie
 - 输入检查
 - 输出检查
+- CSP 在服务端返回的 HTTP header 里面添加一个 Content-Security-Policy 选项，然后定义资源的白名单域名
 
 ## 跨站请求伪造（CSRF）
 
@@ -133,9 +134,33 @@ sequenceDiagram
 
 数据提交前要向服务的申请 token，token 放到 redis 或内存，token 有效时间提交后后台校验 token，同时删除 token，token只有一次有效性
 
+## SSRF
+
+- 服务端请求伪造
+
+为了解决跨域问题，可能会出现客户端提交一串url交由服务器请求转发后再返回给客户端
+
+```mermaid
+sequenceDiagram
+  黑客 ->> 网页服务器: server.com?url=htpp://192.168.0.1:8080
+  网页服务器 ->> 内网服务器: 无脑请求
+  内网服务器 ->> 网页服务器: 结果回送
+  网页服务器 ->> 黑客: 内网信息泄露
+```
+
+### 漏洞利用
+
+- 内网服务探测
+- 文件读取 如本机的密码文件、日志
+
+### 防御
+
+- 白名单
+- 其他的服务器自身做好防护
+
 ## 点击劫持
 
-![](https://upload-images.jianshu.io/upload_images/2166980-06491836dedab318.jpg?imageMogr2/auto-orient/strip|imageView2/2/w/498/format/webp)
+![202261213657](/assets/202261213657.webp)
 
 - flash劫持
 - 图片覆盖攻击
@@ -189,6 +214,15 @@ sequenceDiagram
 - 安全编码函数
   - OWASP ESAPI
 
+### 反序列化漏洞
+
+在把数据转化成对象的过程中。在这个过程中，应用需要根据数据的内容，去调用特定的方法。而黑客正是利用这个逻辑，在数据中嵌入自定义的代码（比如执行某个系统命令）
+
+#### 防御
+
+- 黑名单 禁止反序列化某些类
+- RASP检测 Runtime Application Self-Protection，实时程序自我保护 在关键函数的调用中，增加一道规则的检测
+
 ### 其他注入攻击
 
 - XML注入
@@ -227,6 +261,11 @@ sequenceDiagram
 - 文件存放加上随机数
 - 单独的文件服务器
 
+## 信息泄露
+
+- 返回的错误信息
+- 上线前没有删干净的开发、测试文件 如 .git 文件夹
+
 ## Web框架安全
 
 ### 模板引擎与XSS
@@ -245,6 +284,14 @@ sequenceDiagram
 ### 持久层
 
 - 变量绑定与SQL注入
+
+## 第三方依赖安全
+
+对于项目应用的第三方依赖应该定时梳理，及时剔除无用依赖
+
+当出现CVE漏洞时，一般都已有补丁发布，更新即可
+
+但是某些情况下会面临无补丁可打的困境，此时可以通过前置防火墙检测拦截攻击流量
 
 ## 应用层拒绝服务攻击
 

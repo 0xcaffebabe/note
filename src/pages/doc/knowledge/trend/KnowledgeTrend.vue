@@ -27,7 +27,11 @@
             <h1 class="data-title">相关查询</h1>
           </template>
           <el-table :data="releatedQueriesData" height="250" style="width: 100%">
-            <el-table-column prop="query" label="查询" />
+            <el-table-column prop="query" label="查询" >
+              <template #default="scope">
+                <el-link @click="search(scope.row.query)">{{scope.row.query}}</el-link>
+              </template>
+            </el-table-column>
             <el-table-column prop="value" label="流行度"/>
           </el-table>
         </el-card>
@@ -40,7 +44,7 @@
           <el-table :data="releatedTopicsData" height="250" style="width: 100%">
             <el-table-column prop="topc.title" label="主题">
                <template #default="scope">
-                  {{scope.row.topic.title}}
+                  <el-link @click="search(scope.row.topic.title)">{{scope.row.topic.title}}</el-link>
               </template>
             </el-table-column>
             <el-table-column prop="value" label="流行度"/>
@@ -146,6 +150,10 @@ export default defineComponent({
       this.kw = this.keywords[0]
       this.showDrawer = true
       this.init();
+    },
+    search(kw: string) {
+      this.kw = kw
+      this.init()
     },
     init() {
       this.$nextTick(() => {

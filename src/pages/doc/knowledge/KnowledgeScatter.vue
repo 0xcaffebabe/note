@@ -12,7 +12,9 @@ import {
   DataZoomComponent,
   DataZoomComponentOption,
   TooltipComponent,
-  TooltipComponentOption
+  TooltipComponentOption,
+  MarkLineComponent,
+  MarkLineComponentOption
 } from "echarts/components";
 import { ScatterChart, ScatterSeriesOption } from "echarts/charts";
 import { UniversalTransition } from "echarts/features";
@@ -27,11 +29,37 @@ echarts.use([
   CanvasRenderer,
   UniversalTransition,
   TooltipComponent,
+  MarkLineComponent
 ]);
 
 type EChartsOption = echarts.ComposeOption<
-  GridComponentOption | DataZoomComponentOption | ScatterSeriesOption | TooltipComponentOption
+  GridComponentOption | DataZoomComponentOption | ScatterSeriesOption | TooltipComponentOption | MarkLineComponentOption
 >;
+
+function generateMarkLineOptions(data: [number,number,string][]) {
+  const maxQuality = data.sort((a,b) => b[1] - a[1])[0][1]
+  return {
+    animation: false,
+    label: {
+      formatter: '0.75 基准线',
+      align: 'right'
+    },
+    lineStyle: {
+      type: 'solid'
+    },
+    tooltip: {
+      formatter: '0.75 基准线'
+    },
+    data: [
+      
+        {
+          name: '0.75 基准线',
+          yAxis: maxQuality * 0.75,
+        }
+      
+    ]
+  };
+}
 
 export default defineComponent({
   setup() {},
@@ -103,6 +131,7 @@ export default defineComponent({
             symbolSize: 20,
             data,
             type: "scatter",
+            markLine: generateMarkLineOptions(data)
           },
         ],
       } as any;

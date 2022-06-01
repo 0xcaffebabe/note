@@ -1,16 +1,149 @@
-> ORM（Object-Relational Mapping） 表示对象关系映射。在面向对象的软件开发中，通过ORM，就可以把对象映射到关系型数据库中。只要有一套程序能够做到建立对象与数据库的关联，操作对象就可以直接操作数据库数据，就可以说这套程序实现了ORM对象关系映射
+# Spring Data
 
-# JPA
+- Spring的数据访问哲学
 
-# 需要的一些复杂特性
+![202081191941](/assets/202081191941.png)
+
+## Spring的数据访问异常体系
+
+**SQLException**
+
+- 提供了挺多的异常
+- 数据访问模板化
+
+## 配置数据源
+
+- 使用JNDI
+- 使用数据源连接池
+
+```java
+@Bean
+public DataSource dataSource(){
+    DruidDataSource dataSource = new DruidDataSource();
+    dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
+    dataSource.setUsername("root");
+    dataSource.setPassword("Root@@715711877");
+    dataSource.setUrl("jdbc:mysql:///manage");
+    return dataSource;
+}
+```
+
+- 使用嵌入式数据源
+
+## 使用profile选择数
+
+```java
+@Profile("product")
+    @Bean
+    public DataSource dataSource(){
+
+        DruidDataSource dataSource = new DruidDataSource();
+        dataSource.setUrl("jdbc:h2:~/test");
+        return dataSource;
+    }
+
+    @Profile("dev")
+    @Bean
+    public DataSource dataSourceDev(){
+
+        DruidDataSource dataSource = new DruidDataSource();
+        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
+        dataSource.setUsername("root");
+        dataSource.setPassword("Root@@715711877");
+        dataSource.setUrl("jdbc:mysql:///manage");
+        return dataSource;
+    }
+```
+
+## 在Spring 当中使用JDBC
+
+### JDBC模板
+
+*JdbcDaoSupport*
+
+- update():执行DML语句。增、删、改语句
+- queryForMap():查询结果将结果集封装为map集合，将列名作为key，将值作为value 将这条记录封装为一个map集合
+
+  - 注意：这个方法查询的结果集长度只能是1
+
+- queryForList():查询结果将结果集封装为list集合
+
+  - 注意：将每一条记录封装为一个Map集合，再将Map集合装载到List集合中
+
+- query():查询结果，将结果封装为JavaBean对象
+
+  - query的参数：RowMapper
+
+    - 一般我们使用BeanPropertyRowMapper实现类。可以完成数据到JavaBean的自动封装
+    - new BeanPropertyRowMapper<类型>(类型.class)
+
+- queryForObject：查询结果，将结果封装为对象
+
+  - 一般用于聚合函数的查询
+
+- 配置模板
+
+```java
+@Bean
+    public JdbcTemplate jdbcTemplate(){
+        JdbcTemplate jdbcTemplate = new JdbcTemplate();
+        jdbcTemplate.setDataSource(dataSourceDev());
+        return jdbcTemplate;
+    }
+```
+
+- 执行操作
+
+```java
+@org.springframework.stereotype.Service
+public class Service {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    public void insert(Admin admin){
+        jdbcTemplate.update("INSERT INTO admin(username,password) VALUES(?,?)",
+                admin.getUsername(),
+                admin.getPassword());
+    }
+}
+```
+
+#### 使用Lambda表达式
+
+```java
+jdbcTemplate.query("select * from admin",r->{
+
+    do{
+        System.out.println(
+                r.getString("username")+"||"+r.getString("password")
+        );
+    }while (r.next());
+
+});
+```
+
+#### 使用命名参数
+
+```java
+public void insert(Admin admin){
+    jdbcTemplate.update("INSERT INTO admin(username,password) VALUES(:username,:password)",
+            Map.of("username",admin.getUsername(),
+                    "password",admin.getPassword()));
+}
+```
+
+## JPA
+
+需要的一些复杂特性
 
 - 延迟加载
 - 预先抓取
 - 级联
 
-# [集成 Hibernate](/后端开发/JakartaEE/JPA.md)
+### [集成 Hibernate](/编程语言/JAVA/JakartaEE/JPA.md)
 
-# Spring与JAVA持久化API
+### Spring与JAVA持久化API
 
 - 配置实体管理器工厂
 
@@ -140,7 +273,7 @@ public interface AdminRepository extends JpaRepository<Admin,Integer> { }
 adminRepository.findAll();
 ```
 
-## 自定义查询方法
+#### 自定义查询方法
 
 ```java
 public interface AdminRepository extends JpaRepository<Admin,Integer> { 
@@ -197,7 +330,7 @@ List<Customer> findByJPQL(String name);
 int update(Long id,String name);
 ```
 
-## 动态查询
+#### 动态查询
 
 _JpaSpecificationExecutor_
 
@@ -206,38 +339,38 @@ _Specification_
 - 示例
 
 ```java
-        Specification<Customer> spec = (Specification<Customer>) (root/*比较的属性*/, query, cb/*查询方式*/) -> {
-            Path<Object> custName = root.get("custName");
-            return cb.equal(custName,"老王八");
-        };
-        Optional<Customer> one = repository.findOne(spec);
+Specification<Customer> spec = (Specification<Customer>) (root/*比较的属性*/, query, cb/*查询方式*/) -> {
+    Path<Object> custName = root.get("custName");
+    return cb.equal(custName,"老王八");
+};
+Optional<Customer> one = repository.findOne(spec);
 
-        System.out.println(one.get());
+System.out.println(one.get());
 ```
 
 - 条件拼接
 
 ```java
-        Specification<Customer> spec = (Specification<Customer>) (root/*比较的属性*/, query, cb/*查询方式*/) -> {
-            Path<Object> custName = root.get("custName");
-            Path<Object> custIndustry = root.get("custIndustry");
+Specification<Customer> spec = (Specification<Customer>) (root/*比较的属性*/, query, cb/*查询方式*/) -> {
+    Path<Object> custName = root.get("custName");
+    Path<Object> custIndustry = root.get("custIndustry");
 
-            var p1 = cb.equal(custName,"老王八");
-            var p2 = cb.equal(custIndustry,"隔壁");
+    var p1 = cb.equal(custName,"老王八");
+    var p2 = cb.equal(custIndustry,"隔壁");
 
-            return  cb.and(p1,p2);
-        };
+    return  cb.and(p1,p2);
+};
 ```
 
 - 模糊查询
 
 ```java
-        Specification<Customer> spec = (Specification<Customer>) (root/*比较的属性*/, query, cb/*查询方式*/) -> {
-            Path<Object> custName = root.get("custName");
+Specification<Customer> spec = (Specification<Customer>) (root/*比较的属性*/, query, cb/*查询方式*/) -> {
+    Path<Object> custName = root.get("custName");
 
-            return cb.like(custName.as(String.class),"%老%");
-        };
-        repository.findAll(spec).forEach(System.out::println);
+    return cb.like(custName.as(String.class),"%老%");
+};
+repository.findAll(spec).forEach(System.out::println);
 ```
 
 - 排序
@@ -273,37 +406,37 @@ public interface Page<T> extends Slice<T> {
 }
 ```
 
-## 多表操作
+#### 多表操作
 
-### 一对多
+##### 一对多
 
 - 主表
 
 ```java
 @OneToMany(targetEntity = LinkMan.class)
-    @JoinColumn(name = "lkm_cust_id",referencedColumnName = "cust_id")
-    private Set<LinkMan> linkMan = new HashSet<>(0);
+@JoinColumn(name = "lkm_cust_id",referencedColumnName = "cust_id")
+private Set<LinkMan> linkMan = new HashSet<>(0);
 ```
 
 - 从表
 
 ```java
-   @ManyToOne(targetEntity = Customer.class)
-    @JoinColumn(name = "lkm_cust_id",referencedColumnName = "cust_id")
-    private Customer customer;
+@ManyToOne(targetEntity = Customer.class)
+@JoinColumn(name = "lkm_cust_id",referencedColumnName = "cust_id")
+private Customer customer;
 ```
 
 - 操作
 
 ```java
-        Customer customer = new Customer();
-        customer.setCustName("20190908");
+Customer customer = new Customer();
+customer.setCustName("20190908");
 
-        LinkMan man = new LinkMan();
-        man.setLkmName("小婊砸");
-        man.setCustomer(customer);
-        customerRepository.save(customer);
-        linkManRepository.save(man);
+LinkMan man = new LinkMan();
+man.setLkmName("小婊砸");
+man.setCustomer(customer);
+customerRepository.save(customer);
+linkManRepository.save(man);
 ```
 
 - 放弃外键维护
@@ -319,15 +452,15 @@ public interface Page<T> extends Slice<T> {
 ```
 
 ```java
-        Customer customer = new Customer();
-        customer.setCustName("20190908");
+Customer customer = new Customer();
+customer.setCustName("20190908");
 
-        LinkMan man = new LinkMan();
-        man.setLkmName("小婊砸");
-        man.setCustomer(customer);
-        customer.getLinkMans().add(man);
+LinkMan man = new LinkMan();
+man.setLkmName("小婊砸");
+man.setCustomer(customer);
+customer.getLinkMans().add(man);
 
-        customerRepository.save(customer);
+customerRepository.save(customer);
 ```
 
 - 级联删除
@@ -337,36 +470,36 @@ Optional<Customer> cus = customerRepository.findById(1L);
 customerRepository.delete(cus.get());
 ```
 
-### 多对多
+##### 多对多
 
 ```java
-    @ManyToMany(targetEntity = Role.class)
-    @JoinTable(name = "user_role",joinColumns = {@JoinColumn(name = "user_id",referencedColumnName = "user_id")},
-            inverseJoinColumns = {@JoinColumn(name = "role_id",referencedColumnName = "role_id")})
-    private Set<Role> roleSet  = new HashSet<>();
+@ManyToMany(targetEntity = Role.class)
+@JoinTable(name = "user_role",joinColumns = {@JoinColumn(name = "user_id",referencedColumnName = "user_id")},
+        inverseJoinColumns = {@JoinColumn(name = "role_id",referencedColumnName = "role_id")})
+private Set<Role> roleSet  = new HashSet<>();
 ```
 
 ```java
-    @ManyToMany(targetEntity = User.class)
-    @JoinTable(name = "user_role",joinColumns ={@JoinColumn(name = "role_id",referencedColumnName = "role_id")},
-            inverseJoinColumns =  {@JoinColumn(name = "user_id",referencedColumnName = "user_id")})
-    private Set<User> userSet = new HashSet<>();
+@ManyToMany(targetEntity = User.class)
+@JoinTable(name = "user_role",joinColumns ={@JoinColumn(name = "role_id",referencedColumnName = "role_id")},
+        inverseJoinColumns =  {@JoinColumn(name = "user_id",referencedColumnName = "user_id")})
+private Set<User> userSet = new HashSet<>();
 ```
 
 ```java
-        User user = new User();
-        user.setUsername("老王");
+User user = new User();
+user.setUsername("老王");
 
-        Role role = new Role();
-        role.setRoleName("隔壁");
-        user.getRoleSet().add(role);
-        userDao.save(user);
-        roleDao.save(role);
+Role role = new Role();
+role.setRoleName("隔壁");
+user.getRoleSet().add(role);
+userDao.save(user);
+roleDao.save(role);
 ```
 
 - 级联
 
-## 对象导航
+#### 对象导航
 
 ```java
 public enum FetchType {
@@ -374,11 +507,68 @@ public enum FetchType {
 }
 ```
 
+## 缓存数据
 
+### 启用缓存支持
 
+```java
+@Configuration
+@ComponentScan("wang.ismy.spring")
+@EnableCaching
+public class Config {
 
+    @Bean
+    public CacheManager cacheManager(){
+        return new ConcurrentMapCacheManager();
+    }
 
+}
+```
 
+- Spring 提供的几个缓存管理器 ![批注 2019-06-21 150246](/assets/批注%202019-06-21%20150246.png)
 
+#### 让方法支持缓存
 
+```java
+@Cacheable(value = "find",key = "#id")
+public String find(Integer id){
+    System.out.println("real find");
+    return "hello world"+id;
+}
+```
 
+- 将值放到缓存当中
+
+  ```java
+  /**
+  * 该方法肯定会被执行，但是返回结果会放到缓存当中
+  */
+  @CachePut(value = "find",key = "#id")
+  public String put(Integer id){
+    return "new"+id;
+  }
+  ```
+
+- 条件化缓存
+
+  - unless : 阻止将对象放入缓存，但是还会进行缓存查找
+  - condition : 不会进行缓存查找，也不会将结果放入缓存
+
+在id等于10时不会进行缓存
+
+```java
+@Cacheable(value = "find",key = "#id",condition = "#id != 10")
+public String find(Integer id){
+    System.out.println("real find");
+    return "hello world"+id;
+}
+```
+
+- 移除缓存
+
+```java
+@CacheEvict(value = "find",key = "#id")
+public void remove(Integer id){}
+```
+
+### 使用xml添加缓存

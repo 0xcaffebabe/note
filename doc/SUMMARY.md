@@ -247,7 +247,6 @@
       - [Disruptor](./编程语言/JAVA/JAVA并发编程/Disruptor.md)
     - [网络编程](./编程语言/JAVA/高级/网络编程.md)
       - [NIO](./编程语言/JAVA/高级/NIO.md)
-      - [网络爬虫](./编程语言/JAVA/高级/网络爬虫.md)
       - [Netty](./编程语言/JAVA/框架/netty/netty.md)
         - [传输](./编程语言/JAVA/框架/netty/传输.md)
         - [ByteBuf](./编程语言/JAVA/框架/netty/ByteBuf.md)

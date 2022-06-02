@@ -1,5 +1,5 @@
 <template>
-  <div ref="container" class="container"></div>
+  <div ref="container" class="container" :class="{'mobile-container': $isMobile()}"></div>
 </template>
 
 <script lang="ts">
@@ -38,24 +38,44 @@ type EChartsOption = echarts.ComposeOption<
 
 function generateMarkLineOptions(data: [number,number,string][]) {
   const maxQuality = data.sort((a,b) => b[1] - a[1])[0][1]
+  const maxTime = data.sort((a,b) => b[0] - a[0])[0][0]
   return {
     animation: false,
     label: {
-      formatter: '0.75 基准线',
+      formatter: '{b}',
       align: 'right'
     },
     lineStyle: {
       type: 'solid'
     },
     tooltip: {
-      formatter: '0.75 基准线'
+      formatter: '{b}'
     },
     data: [
       
         {
           name: '0.75 基准线',
           yAxis: maxQuality * 0.75,
-        }
+        },
+        {
+          name: '0.5 基准线',
+          yAxis: maxQuality * 0.5,
+        },{
+          name: '0.25 基准线',
+          yAxis: maxQuality * 0.25,
+        },
+        {
+          name: '0.75 基准线',
+          xAxis: maxTime * 0.75,
+        },
+        {
+          name: '0.5 基准线',
+          xAxis: maxTime * 0.5,
+        },
+        {
+          name: '0.25 基准线',
+          xAxis: maxTime * 0.25,
+        },
       
     ]
   };
@@ -128,7 +148,7 @@ export default defineComponent({
         },
         series: [
           {
-            symbolSize: 20,
+            symbolSize: 12,
             data,
             type: "scatter",
             markLine: generateMarkLineOptions(data)
@@ -145,6 +165,9 @@ export default defineComponent({
 <style lang="less" scoped>
 .container {
   width: 100%;
+  height: 100%;
+}
+.mobile-container {
   height: 600px;
 }
 </style>

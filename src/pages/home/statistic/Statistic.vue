@@ -94,6 +94,15 @@
       <el-descriptions-item :span="12">
         <template #label>
           <el-icon>
+        <aim />
+      </el-icon>
+          知识雷达
+        </template>
+        <knowledge-radar />
+      </el-descriptions-item>
+      <el-descriptions-item :span="12">
+        <template #label>
+          <el-icon>
             <calendar />
           </el-icon>
           词云统计
@@ -117,6 +126,7 @@ import { CodeFrequencyItem, StatisticInfo } from "@/dto/StatisticInfo";
 import HeatMap from './HeatMap.vue'
 import WordCloud from './WordCloud.vue'
 import CodeFrequency from './CodeFrequency.vue'
+import KnowledgeRadar from './KnowledgeRadar.vue'
 
 export default defineComponent({
   components: {
@@ -130,7 +140,8 @@ export default defineComponent({
     Calendar,
     HeatMap,
     WordCloud,
-    CodeFrequency
+    CodeFrequency,
+    KnowledgeRadar
   },
   setup() {},
   data() {

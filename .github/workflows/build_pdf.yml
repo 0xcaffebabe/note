@@ -27,14 +27,14 @@ jobs:
       run: |
         npm run build-pdf
     - name: 散列pdf存档
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: pdf
         path: |
           book
           !book/out.pdf
     - name: 合并pdf存档
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: merge_pdf
         path: |

@@ -30,7 +30,7 @@ jobs:
       run: |
         npm run back-origin
     - name: 回源快照存档
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: snapshot
         path: |

@@ -66,6 +66,16 @@ class DocService implements Cacheable{
    */
   private docQaulity: DocQuality[] = []
 
+
+  /**
+   *
+   * 最高的文档质量分
+   * @private
+   * @type {number}
+   * @memberof DocService
+   */
+  private maxQuality: number = 1
+
   /**
    *
    * 每个文档对应的质量数据
@@ -88,6 +98,7 @@ class DocService implements Cacheable{
 
   private async init() {
     this.docQaulity = await api.getDocQualityData()
+    this.maxQuality = this.docQaulity.map(v => v.quality).sort((a,b) => b - 1)[0]
     for(let i = 0; i < this.docQaulity.length; i++) {
       const quality = this.docQaulity[i]
       this.docQualityMap.set(quality.id, quality)
@@ -497,7 +508,8 @@ class DocService implements Cacheable{
     if (!docQuality) {
       return '未知'
     }
-    return `${docQuality.quality.toFixed(2)}(${this.docQualityOrderMap.get(id) || -1}/${this.docQaulity.length})`
+    const percent = ((docQuality.quality / this.maxQuality ) * 100).toFixed(0)
+    return `${docQuality.quality.toFixed(2)}(${this.docQualityOrderMap.get(id) || -1}/${this.docQaulity.length}, ${percent}%)`
   }
 }
 

@@ -2,6 +2,10 @@
 
 ## ArrayList
 
+ArrayList的subList方法会返回一个list视图，对这个SubList的修改都会映射到原来的list
+
+而Arrays.asList返回的arrays包下的ArrayList，这个类并没有重写add,remove等方法，所以修改时会抛出异常
+
 ### 架构
 
 ![202002191425](/assets/202002191425.jfif)

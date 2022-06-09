@@ -66,6 +66,12 @@ StringBuffer 线程安全
 - wait
 - notify
 
+### Clone
+
+对象 clone 方法默认是浅拷贝，若想实现深拷贝需覆写 clone 方法实现域对象的深度遍历式拷贝。
+
+- java天生就对原型模式做了很好的支持，这个支持就是Object中的clone方法
+
 ## LocalDateTime
 
 ```java

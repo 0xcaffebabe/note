@@ -345,14 +345,17 @@ Person p = (Person)ois.readObject();
 
 序列化的类需要实现 `Serializable` 接口
 
-最好手动设置 serialVersionUID 的值, 类修改时根据是否兼容来调整这个值
+最好手动设置 serialVersionUID 的值, 类修改时根据是否兼容来调整这个值，serialVersionUID 值不一致会抛出序列化运行时异常。
 
 **transient关键字**修饰的变量不会被序列化
+
+序列化的目的：**持久化、传输**
 
 其他方式的序列化：
 
 - Hessian 效率很高 跨语言
-- JSON
+- Kryo 序列化
+- JSON 存在的一个问题是可能存在类型丢失
 
 序列化一些复杂对象：
 

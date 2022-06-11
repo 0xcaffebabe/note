@@ -16,8 +16,11 @@
     document.getElementById("buildTime").innerHTML = `${new Date(buildTime).toLocaleString()}`
   </script>
   <script>
-    // 定时检查js资源是否有效
-    setInterval(async () => {
+    // 切回页面时检查js资源是否有效
+    document.addEventListener('visibilitychange', async () => {
+      if (document.hidden) {
+        return
+      }
       const data = await (await fetch("/", {cache: 'no-cache'})).text()
       const remoteMainScript = new DOMParser().parseFromString(data, 'text/html').querySelectorAll("script")[0].getAttribute("src")
       const localMainScript = document.querySelectorAll("script")[0].getAttribute("src")
@@ -25,7 +28,7 @@
         console.log('refresh')
         location.reload()
       }
-    }, 10000)
+    })
     
   </script>
 </html>

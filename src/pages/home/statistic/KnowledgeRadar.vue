@@ -1,5 +1,8 @@
 <template>
-  <div ref="container" class="container"></div>
+  <div style="text-align:center">
+    <div ref="container" class="container"></div>
+    <el-button @click="back" v-show="showBack" class="back-btn">返回</el-button>
+  </div>
 </template>
 
 <script lang="ts">
@@ -15,6 +18,7 @@ import { RadarChart, RadarSeriesOption } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
 import api from "@/api";
 import Category from "@/dto/Category";
+import { ElMessage } from "element-plus";
 
 echarts.use([TitleComponent, LegendComponent, RadarChart, CanvasRenderer]);
 
@@ -23,15 +27,73 @@ type EChartsOption = echarts.ComposeOption<
 >;
 
 export default defineComponent({
-  setup() {},
+  data() {
+    return {
+      origin: [] as Category[],
+      current: [] as Category[],
+      chart: null as echarts.ECharts|null,
+    }
+  },
+  computed: {
+    showBack():boolean {
+      if (this.origin.length < 1 || this.current.length < 1) {
+        return false
+      }
+      return this.current[0].link != this.origin[0].link
+    }
+  },
+  watch: {
+    current() {
+      this.init()
+    }
+  },
   methods: {
-    async init() {
-      const rawData = (await api.getCompiledCategory()).filter(v => v.name.indexOf('首页') == -1 && v.name.indexOf('参考文献') == -1 && v.name.indexOf('MyBook') == -1)
-      const max = rawData.map(v => Category.childrenSize(v)).sort((a,b) => b - a)[0]
-      var chartDom = this.$refs.container as HTMLElement;
-      var myChart = echarts.init(chartDom);
-      var option: EChartsOption;
+    async getData() {
+      this.origin = (await api.getCompiledCategory()).filter(v => v.name.indexOf('首页') == -1 && v.name.indexOf('参考文献') == -1 && v.name.indexOf('MyBook') == -1)
+    },
+    back(event: any, cate?: Category[]) {
+      if (!cate) {
+        cate = this.origin
+      }
+      for(let elm of cate) {
+        for(let c of elm.chidren) {
+          if (c.link == this.current[0].link) {
+            this.current = cate
+          }
+        }
+        this.back(null, elm.chidren)
+      }
 
+    },
+    async prepareCurrentData(name?: string) {
+      if (!name) {
+        this.current = this.origin
+        return
+      }
+      for(let elm of this.current) {
+        if (elm.name == name) {
+          if (elm.chidren.length == 0) {
+            ElMessage.warning("没有更多了")
+            return
+          }
+          this.current = elm.chidren
+          return
+        }
+      }
+      this.current = []
+    },
+    async init() {
+      const max = this.current.map(v => Category.childrenSize(v)).sort((a,b) => b - a)[0]
+      if (!this.chart) {
+        const chartDom = this.$refs.container as HTMLElement;
+        this.chart = echarts.init(chartDom);
+        this.chart.on("click", (e) => {
+          console.log(e)
+          this.prepareCurrentData(e.name)
+          this.init()
+        })
+      }
+      var option: EChartsOption;
       option = {
         title: {},
         legend: {
@@ -39,7 +101,8 @@ export default defineComponent({
         },
         radar: {
           // shape: 'circle',
-          indicator: rawData.map(v => {return {name: v.name, max}}),
+          indicator: this.current.map(v => {return {name: v.name, max}}),
+          triggerEvent: true,
         },
         series: [
           {
@@ -47,7 +110,7 @@ export default defineComponent({
             type: "radar",
             data: [
               {
-                value: rawData.map(v => Category.childrenSize(v)),
+                value: this.current.map(v => Category.childrenSize(v)),
                 name: "知识丰富度",
               },
             ],
@@ -55,11 +118,12 @@ export default defineComponent({
         ],
       };
 
-      option && myChart.setOption(option);
+      this.chart.setOption(option);
     },
   },
-  mounted() {
-    this.init()
+  async mounted() {
+    await this.getData()
+    this.prepareCurrentData()
   },
 });
 </script>

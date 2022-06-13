@@ -56,6 +56,7 @@ class DocPageEventManager {
           this.docPageInstance.$router.push(href);
           e.preventDefault();
           e.stopPropagation();
+          return false
         }
       };
       if (!this.isMobile) {

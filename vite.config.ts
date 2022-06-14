@@ -9,6 +9,9 @@ import BuildTimeGenerator from './src/plugins/BuildTimeGenerator'
 import VitePluginPrismjs from 'vite-plugin-prismjs'
 import DataGenrator from './src/plugins/DataGenerator'
 import visualizer from "rollup-plugin-visualizer"
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
 const plugins = [];
 
@@ -67,7 +70,13 @@ export default defineConfig({
         'kotlin', 'ini', 'json', 'graphql', 'haskell', 'clojure', 'rust'],
         "plugins": ["line-numbers"]
       }),
-    }
+    },
+    AutoImport({
+      resolvers: [ElementPlusResolver()],
+    }),
+    Components({
+      resolvers: [ElementPlusResolver()],
+    }),
   ],
   build: {
     assetsDir: "resource",

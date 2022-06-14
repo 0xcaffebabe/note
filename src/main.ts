@@ -1,9 +1,7 @@
 import {createApp} from 'vue'
 import App from './Main.vue'
 import createRouter from './route'
-import ElementPlus from 'element-plus'
-import 'element-plus/dist/index.css'
-import 'element-plus/theme-chalk/dark/css-vars.css'
+
 import './style.less'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
@@ -16,7 +14,6 @@ const app = createApp(App)
 // 全局变量
 app.config.globalProperties.$isMobile = SysUtils.isMobile
 
-app.use(ElementPlus)
 app.use(createStore())
 const router = createRouter()
 

@@ -15,10 +15,11 @@
         :text-color="isDark ? 'var(--main-dark-text-color)' : ''"
         @open="handleOpen"
       >
-        <CategoryTree :menuList="cateList" />
+        <CategoryTree :menuList="cateList" @contextmenu="handleContextMenu"/>
       </el-menu>
     </template>
   </el-skeleton>
+  <link-popover ref="linkPopover"/>
 </template>
 
 <script lang="ts">
@@ -27,6 +28,7 @@ import categoryService from "@/service/CategoryService";
 import docService from "@/service/DocService";
 import Category from "@/dto/Category";
 import CategoryTree from "./CategoryTree.vue";
+import LinkPopover from '@/pages/doc/LinkPopover.vue'
 
 export default defineComponent({
   props: {
@@ -34,6 +36,7 @@ export default defineComponent({
   },
   components: {
     CategoryTree,
+    LinkPopover
   },
   emits: ['firstLoad'],
   setup() {},
@@ -56,6 +59,10 @@ export default defineComponent({
         this.loaded = true
         this.$emit('firstLoad')
       }
+    },
+    handleContextMenu(e: MouseEvent,link: string) {
+      (this.$refs.linkPopover as any).show(link, e.clientX, e.clientY)
+      e.preventDefault()
     },
     showDoc(index: string) {
       this.updateCurrentCategory(index);

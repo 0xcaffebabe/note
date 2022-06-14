@@ -51,13 +51,13 @@ export default defineComponent({
 #markdownLinkPopover {
   transition: all 0.2s;
   background-color: #fff;
-  width: 200px;
+  width: 300px;
   position: fixed;
   top: 80px;
   left: 400px;
   padding: 10px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  z-index: 999;
+  z-index: 9999;
 }
 .close-button {
   float: right;

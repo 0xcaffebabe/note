@@ -1,34 +1,16 @@
 <template>
-  <el-popover
-    :placement="!$isMobile() ? 'right-start': 'bottom-start'"
-    :width="300"
-    trigger="hover"
-    :hide-after="100"
-    @show="handlePopoverShow"
-    @hide="handlePopoverHide"
-    :disabled="!value.link"
-  >
-    <template #reference>
-      <el-menu-item
-        :index="convert(value.link)"
-        @click="handleMenuItemClick(value)"
-        :class="{ hilight: isParent }"
-        :disabled="!value.link"
-      >
-        <template #title>
-          <div>
-            <span>{{ value.name }}</span>
-          </div>
-        </template>
-      </el-menu-item>
-    </template>
-    <category-item-content
-      v-if="value.link"
-      :category-name="value.name"
-      :category-link="value.link"
-      ref="categoryItemContent"
-    />
-  </el-popover>
+    <el-menu-item
+      :index="convert(value.link)"
+      @click="handleMenuItemClick(value)"
+      :class="{ hilight: isParent }"
+      :disabled="!value.link"
+    >
+      <template #title>
+        <div>
+          <span>{{ value.name }}</span>
+        </div>
+      </template>
+    </el-menu-item>
 </template>
 
 <script lang="ts">
@@ -57,7 +39,6 @@ export default defineComponent({
     };
   },
   methods: {
-    // 将doc链接转为 x-x-x 形式的id
     convert(link: string): string {
       return DocService.docUrl2Id(link);
     },

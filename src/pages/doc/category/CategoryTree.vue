@@ -17,11 +17,11 @@
           />
         </div>
       </template>
-      <category-item :value="value" :isParent="true"/>
+      <category-item :value="value" :isParent="true" @contextmenu="handleContextMenu($event, value.link)"/>
 
-      <category-tree :menuList="value.chidren"></category-tree>
+      <category-tree :menuList="value.chidren" @contextmenu="handleContextMenu"></category-tree>
     </el-sub-menu>
-    <category-item v-else :value="value" :key="convert(value.link)"/>
+    <category-item v-else :value="value" :key="convert(value.link)" @contextmenu="handleContextMenu($event, value.link)"/>
   </template>
 </template>
 
@@ -41,6 +41,7 @@ export default defineComponent({
       required: true
     },
   },
+  emits: ['contextmenu'],
   methods: {
     uuid(): string {
       return Math.random().toString();
@@ -48,6 +49,12 @@ export default defineComponent({
     // 将doc链接转为 x-x-x 形式的id
     convert(link: string): string {
       return DocService.docUrl2Id(link);
+    },
+    handleContextMenu(e: MouseEvent, link: string) {
+      this.$emit('contextmenu', e, link)
+    },
+    handleChildrenContextMenu(e: MouseEvent, link: string) {
+
     },
     childrenSize(value: Category): number {
       return Category.childrenSize(value)
@@ -61,7 +68,6 @@ export default defineComponent({
 .el-menu-item.is-active {
   transition: all 0.2s;
   border-left: 4px solid #409eef;
-  padding-left: 36px !important;
 }
 :deep(.el-sub-menu__title *) {
   vertical-align: middle!important;

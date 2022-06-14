@@ -136,9 +136,6 @@
       - [规模化](./软件工程/微服务/规模化.md)
       - [分布式日志](./软件工程/微服务/分布式日志.md)
       - [ServiceMesh](./软件工程/微服务/ServiceMesh/ServiceMesh.md)
-      - [SpringCloud](./软件工程/微服务/SpringCloud/SpringCloud.md)
-        - [消息总线](./软件工程/微服务/SpringCloud/消息总线.md)
-        - [消息驱动](./软件工程/微服务/SpringCloud/消息驱动.md)
 
 - [💻计算机系统](./计算机系统/nav.md)
   - [数据的表示](./计算机系统/程序结构和执行/数据的表示.md)

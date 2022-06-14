@@ -62,6 +62,12 @@ Proactor 中，直接监听读/写操作是否完成，也就是说读/写操作
 - DirectByteBuffer 可以减少内存从内核到用户的拷贝 但是创建消费成本更高 需要池化
 - HeapByteBuffer 使用堆内存
 
+## [零拷贝](/操作系统/内存管理.md#零拷贝)
+
+- MappedByteBuffer 是 NIO 基于内存映射（mmap）这种零拷贝方式的提供的一种实现
+- DirectByteBuffer 在 MappedByteBuffer 的基础上提供了内存映像文件的随机读取 get() 和写入 write() 的操作
+- FileChannel 是连接两个通道拷贝的实现
+
 ## 核心类
 
 ![屏幕截图 2020-09-28 140403](/assets/屏幕截图%202020-09-28%20140403.png)

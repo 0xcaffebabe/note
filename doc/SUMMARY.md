@@ -139,7 +139,6 @@
       - [SpringCloud](./软件工程/微服务/SpringCloud/SpringCloud.md)
         - [消息总线](./软件工程/微服务/SpringCloud/消息总线.md)
         - [消息驱动](./软件工程/微服务/SpringCloud/消息驱动.md)
-        - [服务网关](./软件工程/微服务/SpringCloud/服务网关.md)
         - [开放平台](./软件工程/微服务/SpringCloud/开放平台.md)
 
 - [💻计算机系统](./计算机系统/nav.md)

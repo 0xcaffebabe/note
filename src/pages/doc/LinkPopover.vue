@@ -1,6 +1,6 @@
 <template>
   <transition name="fade">
-    <div id="markdownLinkPopover" v-show="visible">
+    <div ref="popover" class="popover" v-show="visible">
       <el-button class="close-button" size="small" circle @click="hide">
         <el-icon><close-bold /></el-icon>
       </el-button>
@@ -33,7 +33,7 @@ export default defineComponent({
     show(docLink: string, x: number, y: number) {
       this.docLink = docLink;
       (this.$refs.categoryItemContent as any).init(docLink);
-      const popover = document.getElementById("markdownLinkPopover")!;
+      const popover = this.$refs.popover as HTMLElement;
       this.visible = true;
       popover.style.top = y + "px";
       popover.style.left = x + "px";
@@ -43,12 +43,18 @@ export default defineComponent({
       (this.$refs.categoryItemContent as any).destroy();
     },
   },
-  setup() {},
+  mounted() {
+    const popover = this.$refs.popover as HTMLElement;
+    document.addEventListener('scroll', this.hide)
+  },
+  unmounted() {
+    document.removeEventListener('scroll', this.hide)
+  }
 });
 </script>
 
 <style lang="less" scoped>
-#markdownLinkPopover {
+.popover {
   transition: all 0.2s;
   background-color: #fff;
   width: 300px;

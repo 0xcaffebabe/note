@@ -22,7 +22,6 @@
 .markdown-section h4,
 .markdown-section h5,
 .markdown-section h6 {
-  // position: relative;
   margin: 8px;
   width: fit-content;
   margin-left: -16px;
@@ -35,41 +34,35 @@
 .markdown-section h6:hover {
   cursor: pointer;
 }
-.markdown-section h1:hover::before,
-.markdown-section h2:hover::before,
-.markdown-section h3:hover::before,
-.markdown-section h4:hover::before,
-.markdown-section h5:hover::before,
-.markdown-section h6:hover::before
+.markdown-section h1:hover::after,
+.markdown-section h2:hover::after,
+.markdown-section h3:hover::after,
+.markdown-section h4:hover::after,
+.markdown-section h5:hover::after,
+.markdown-section h6:hover::after
 {
-  position: absolute;
+  position: relative;
   top: 0;
   color: #66B1FF;
-  padding-right: 8px;
+  padding-left: 8px;
 }
-.markdown-section h1:hover::before {
+.markdown-section h1:hover::after {
   content: '#1';
-  left: -48px;
 }
-.markdown-section h2:hover::before {
+.markdown-section h2:hover::after {
   content: '#2';
-  left: -40px;
 }
-.markdown-section h3:hover::before {
+.markdown-section h3:hover::after {
   content: '#3';
-  left: -28px;
 }
-.markdown-section h4:hover::before {
+.markdown-section h4:hover::after {
   content: '#4';
-  left: -24px;
 }
-.markdown-section h5:hover::before {
+.markdown-section h5:hover::after {
   content: '#5';
-  left: -18px;
 }
-.markdown-section h6:hover::before {
+.markdown-section h6:hover::after {
   content: '#6';
-  left: -10px;
 }
 
 /* Text Formating
@@ -83,7 +76,6 @@
   padding: 4px 5px;
   margin: 2px 0;
   border-radius: 2px;
-  color: #d4d4d4;
 }
 
 /* Horizontal Rule

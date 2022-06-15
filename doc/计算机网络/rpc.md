@@ -96,3 +96,47 @@ Hessian 与 Protobuf 是综合这些考量较优的选择
 ## 另外一个角度
 
 如果跳出程序方法调用的视角 不再以传递参数-调用方法-获取结果这样的思路思考 就会有焕然一新的视角
+
+## 客户端负载均衡
+
+- 从注册中心服务器端上获取服务注册信息列表，缓存到本地。后在本地实现轮训负载均衡策略
+
+```java
+// 自己实现一个随机负载均衡
+List<ServiceInstance> list = discoveryClient.getInstances("producer");
+Random random = new Random();
+ServiceInstance serviceInstance = list.get(random.nextInt(list.size()));
+```
+
+```java
+// Ribbon的负载均衡选择
+@RestController
+public class Controller {
+    @Autowired
+    LoadBalancerClient client;
+
+    @RequestMapping("/user")
+    public String user(){
+        return new RestTemplate().getForObject(
+                client.choose("user-service").getUri().toString()+"/user",String.class);
+    }
+}
+```
+
+### 负载均衡策略
+
+简单的实现有随机策略，但有时需要根据压力的负载情况来选择压力最小的节点，从而实现压力的均衡，一种实现是监控节点的资源指标，压力越高，权重越小。
+
+## SpringCloudFeign
+
+feign通过调用方自己定义一个提供方的接口来进行RPC：
+
+```java
+// 调用方
+@FeignClient("producer")
+public interface HelloRemote {
+
+    @RequestMapping("/hello")
+    String hello(@RequestParam String name);
+}
+```

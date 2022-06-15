@@ -1,7 +1,6 @@
 import DocUtils from "@/util/DocUtils";
 import DocPage from "./DocPage.vue";
 import LinkPopover from "./LinkPopover.vue";
-import { ElMessage } from 'element-plus'
 import DocService from "@/service/DocService";
 import ResourceBrower from "./ResourceBrower.vue";
 import EventBus from "@/components/EventBus";
@@ -10,6 +9,8 @@ import MermaidUtils from "@/util/MermaidUtils";
 import MobileDocPage from "./mobile/MobileDocPage.vue";
 import Hammer from 'hammerjs'
 import SelectionPopover from "./tool/SelectionPopover.vue";
+import { ElMessage } from 'element-plus'
+import 'element-plus/es/components/message/style/css'
 
 class DocPageEventManager {
 

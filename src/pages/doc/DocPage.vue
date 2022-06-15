@@ -92,6 +92,7 @@ import LinkPopover from "./LinkPopover.vue";
 import api from "@/api";
 import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
+import 'element-plus/es/components/message/style/css'
 import { ElMessage } from 'element-plus'
 import './markdown-v1.less'
 import './code-hl-vsc.less'
@@ -358,7 +359,7 @@ export default defineComponent({
 }
 .center {
   transition: all 0.2s;
-  padding-left: 4rem;
+  padding-left: 1rem;
 }
 .main-content {
   padding-top: 24px;

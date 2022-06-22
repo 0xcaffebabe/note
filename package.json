@@ -20,7 +20,7 @@
     "echarts": "5.3.2",
     "echarts-wordcloud": "2.0.0",
     "element-plus": "2.2.5",
-    "hammerjs": "^2.0.8",
+    "hammerjs": "2.0.8",
     "html2canvas": "1.4.1",
     "js-yaml": "4.1.0",
     "jsmind": "0.4.6",
@@ -41,7 +41,7 @@
   "devDependencies": {
     "@types/diff": "5.0.2",
     "@types/global-tunnel-ng": "2.1.1",
-    "@types/hammerjs": "^2.0.41",
+    "@types/hammerjs": "2.0.41",
     "@types/js-yaml": "4.0.5",
     "@types/jsdom": "16.2.14",
     "@types/marked": "4.0.3",
@@ -66,8 +66,8 @@
     "ts-node": "10.8.1",
     "tsconfig-paths": "4.0.0",
     "typescript": "4.6.4",
-    "unplugin-auto-import": "^0.8.8",
-    "unplugin-vue-components": "^0.19.6",
+    "unplugin-auto-import": "0.8.8",
+    "unplugin-vue-components": "0.19.6",
     "vite": "2.9.9",
     "vite-plugin-prismjs": "0.0.8",
     "vue-tsc": "0.34.15"

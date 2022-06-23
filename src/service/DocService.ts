@@ -99,11 +99,13 @@ class DocService implements Cacheable{
     this.docQaulity = await api.getDocQualityData()
     // 中位数计算
     const sorted = this.docQaulity.map(v => v.quality).sort((a,b) => a - b)
+    const midPos = Math.floor(sorted.length / 2)
     if (sorted.length % 2 == 0) {
-      this.medianQuality = (sorted[sorted.length / 2] + sorted[sorted.length / 2 - 1]) / 2
+      this.medianQuality = (sorted[midPos] + sorted[midPos - 1]) / 2
     }else {
-      this.medianQuality = sorted[sorted.length / 2]
+      this.medianQuality = sorted[midPos]
     }
+    console.log(this.medianQuality, sorted)
     for(let i = 0; i < this.docQaulity.length; i++) {
       const quality = this.docQaulity[i]
       this.docQualityMap.set(quality.id, quality)

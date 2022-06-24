@@ -131,6 +131,75 @@ Object(1)
 
 ## JS特殊语法
 
+### 分号自动插入
+
+JS的语句若没有分号，会按照以下规则插入分号：
+
+1. 要有换行符，且下一个符号是不符合语法的，那么就尝试插入分号。
+2. 有换行符，且语法中规定此处不能有换行符，那么就自动插入分号。
+3. 源代码结束处，不能形成完整的脚本或者模块结构，那么就自动插入分号
+
+#### no LineTerminator here 规则
+
+- 带标签的continue语句,不能在continue后插入换行
+- 带标签的break语句,不能在break后插入换行
+- return后不能插入换行
+- 后自增、后自减运算符前不能插入换行
+- throw和Exception之间不能插入换行
+- 凡是async关键字,后面都不能插入换行
+- 箭头函数的箭头前,也不能插入换行
+- yield之后,不能插入换行
+
+#### 一些不加分号容易出错的情况
+
+1. 以括号开头
+
+```js
+(function(a){
+   console.log(a);
+})()/*这里没有被自动插入分号*/
+(function(a){
+  console.log(a);
+})()
+```
+
+2. 以数组开头
+
+```js
+var a = [[]]/*这里没有被自动插入分号*/
+[3, 2, 1, 0].forEach(e => console.log(e))
+```
+
+3. 以正则表达式开头
+
+```js
+var x = 1, g = {test:()=>0}, b = 1/*这里没有被自动插入分号*/
+/(a)/g.test("abc")
+console.log(RegExp.$1)
+```
+
+4. 以Template开头
+
+```js
+var f = function(){
+  return "";
+}
+var g = f/*这里没有被自动插入分号*/
+`Template`.match(/(a)/);
+console.log(RegExp.$1)
+```
+
+### 指令序言
+
+```js
+"no lint";
+"use strict";
+function doSth(){
+    //......
+}
+//......
+```
+
 ## 流程控制语句
 
 - if..else...

@@ -55,6 +55,21 @@ var    | let     | const
 变量提升   | 不存在变量提升 | 不存在变量提升
 值可更改   | 值可更改    | 值不可更改
 
+在早期没有let与const之前，使用的立即执行函数表达式来创建一个作用域：
+
+```js
+for(var i = 0; i < 20; i ++) {
+    void function(i){
+        var div = document.createElement("div");
+        div.innerHTML = i;
+        div.onclick = function(){
+            console.log(i);
+        }
+        document.body.appendChild(div);
+    }(i);
+}
+```
+
 ## 模板字符串
 
 ```javascript

@@ -60,7 +60,7 @@
   <mind-graph ref="mindGraph" @close="showAside = true;isDrawerShow = false" />
   <link-list :html="contentHtml" ref="linkList"/>
   <book-mark ref="bookMark" :doc="doc" />
-  <knowledge-reviewer ref="knowledgeReviewer" />
+  <knowledge-reviewer ref="knowledgeReviewer" :doc="doc"/>
   <knowledge-redundancy ref="knowledgeRedundancy"/>
   <keep-alive>
     <knowledge-network ref="knowledgeNetwork" :doc="doc" @close="showAside = true;isDrawerShow = false"/>

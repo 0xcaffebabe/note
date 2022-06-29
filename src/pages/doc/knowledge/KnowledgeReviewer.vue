@@ -2,7 +2,7 @@
   <el-drawer v-model="showDrawer" :size="$isMobile() ? '90%' : '84%'" title="知识回顾" :lock-scroll="true" custom-class="knowledge-review">
     <el-row style="height:100%">
       <el-col :md="18" :xs="24">
-        <knowledge-scatter ref="knowledgeScatter"/>
+        <knowledge-scatter ref="knowledgeScatter" :doc="doc"/>
       </el-col>
       <el-col :md="6" :xs="24" style="height:100%">
          <div class="review-range">
@@ -60,6 +60,12 @@ interface Mark {
 type Marks = Record<number, Mark | string>
 
 export default defineComponent({
+  props: {
+    doc: {
+      type: String,
+      required: true
+    }
+  },
   components: {
     KnowledgeScatter
   },

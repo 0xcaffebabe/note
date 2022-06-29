@@ -82,12 +82,23 @@ function generateMarkLineOptions(data: [number,number,string][]) {
 }
 
 export default defineComponent({
+  props: {
+    doc: {
+      type: String,
+      required: true
+    }
+  },
   setup() {},
   mounted() {
     this.init();
   },
   data() {
     return {};
+  },
+  watch: {
+    doc() {
+      this.init()
+    }
   },
   methods: {
     // 生成散点图数据 [时间新鲜维度, 质量维度, 文档id]
@@ -111,11 +122,21 @@ export default defineComponent({
       return Array.from(map.entries()).map((v) => [...v[1], v[0]]);
     },
     async init() {
-      const data = await this.generateScatterData()
+      let raw = await this.generateScatterData()
+      const data = raw.map(v => {
+        return {
+          name: v[2], 
+          value: v,
+          symbolSize: this.doc == v[2] ? 20: 12,
+          itemStyle: {
+            color: this.doc == v[2] ? '#F56C6C': '#409EFF'
+          }
+        }
+      })
       var chartDom = this.$refs.container as HTMLElement;
       const chart = echarts.init(chartDom);
       chart.on('click', e => {
-        const id = (e.data as any)[2]
+        const id = (e.data as any).name
         this.$router.push('/doc/' + id)
       })
       var option: EChartsOption;
@@ -130,7 +151,7 @@ export default defineComponent({
         dataZoom: [{ type: "inside" }, { type: "slider" }],
         tooltip: {
           formatter(params: any, ticket: string, callback: (ticket: string, html: string) => string | HTMLElement | HTMLElement[]): string {
-            const id = (params.data as any)[2]
+            const id = (params.data as any).name
             const result: Promise<DocFileInfo> | DocFileInfo = DocService.getDocFileInfo(id)
             if (result instanceof Promise) {
               result
@@ -151,7 +172,7 @@ export default defineComponent({
             symbolSize: 12,
             data,
             type: "scatter",
-            markLine: generateMarkLineOptions(data)
+            markLine: generateMarkLineOptions(data.map(v => v.value))
           },
         ],
       } as any;

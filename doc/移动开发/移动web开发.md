@@ -31,6 +31,7 @@ iOS, Android基本都将这个视口分辨率设置为 980px，所以PC上的网
 属性            | 解释说明
 ------------- | ------------------------------------
 width         | 宽度设置的是viewport宽度，可以设置device-width特殊值
+height | 页面高度，可以取值具体的数字，也可以是 device-height，表示跟设备高度相等
 initial-scale | 初始缩放比，大于0的数字
 maximum-scale | 最大缩放比，大于0的数字
 minimum-scale | 最小缩放比，大于0的数字

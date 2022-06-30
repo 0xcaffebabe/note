@@ -15,11 +15,44 @@
 
 ## 基本标签
 
+### 元标签
+
+- head 规定了自身必须是 html 标签中的第一个标签，它的内容必须包含一个 title，并且最多只能包含一个 base
+- title 文档标题，应该是完整地概括整个网页内容的
+- base 是个历史遗留标签，它的作用是给页面上所有的 URL 相对地址提供一个基础
+- link
+- meta
+  - [http-equiv](/计算机网络/http/缓存.md#HTML的HTTP-EQUIV)
+	- [viewport](/移动开发/移动web开发.md#流式布局)
+
+```html
+<html>
+<head>
+<!-- 
+    一般情况下，HTTP 服务端会通过 http 头来指定正确的编码方式，
+    但是有些特殊的情况如使用 file 协议打开一个 HTML 文件，则没有 http 头
+    这种时候，charset meta 就非常重要了
+ -->
+<meta charset="UTF-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<!-- 默认使用最新浏览器 -->
+<meta http-equiv="Cache-Control" content="no-siteapp">
+<!-- 不被网页(加速)转码 -->
+<meta name="robots" content="index,follow">
+<!-- 搜索引擎抓取 -->
+<meta name="renderer" content="webkit">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<!-- 删除苹果默认的工具栏和菜单栏 -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- 设置苹果工具栏颜色 -->
+……
+```
+
 ### 文件标签
 
 - html
-- head
-- title
 - body
 - `<!DOCTYPE html>`
 
@@ -44,6 +77,12 @@
 - ol：有序
 
 ### 链接标签
+
+![2022630163840](/assets/2022630163840.webp)
+
+- link
+- a
+- area 是唯一一个支持了非矩形触发区域的元素
 
 ### 块标签
 

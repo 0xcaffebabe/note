@@ -2,7 +2,45 @@
 
 > 层叠样式表（英语：Cascading Style Sheets，缩写：CSS；又称串样式列表、级联样式表、串接样式表、阶层式样式表）是一种用来为结构化文档（如HTML文档或XML应用）添加样式（字体、间距和颜色等）的计算机语言，由W3C定义和维护。当前最新版本是CSS2.1，为W3C的推荐标准。CSS3现在已被大部分现代浏览器支持，而下一版的CSS4仍在开发中。
 
+## 语法规则
+
+### At规则
+
+- @charset ：< https://www.w3.org/TR/css-syntax-3/>
+- @import ：<https://www.w3.org/TR/css-cascade-4/>
+- @media ：<https://www.w3.org/TR/css3-conditional/>
+- @page ：<https://www.w3.org/TR/css-page-3/>
+- @counter-style ：<https://www.w3.org/TR/css-counter-styles-3>
+- @keyframes ：<https://www.w3.org/TR/css-animations-1/>
+- @fontface ：<https://www.w3.org/TR/css-fonts-3/>
+- @supports ：<https://www.w3.org/TR/css3-conditional/>
+- @namespace ：<https://www.w3.org/TR/css-namespaces-3/>
+
+### 选择器
+
+- <https://www.w3.org/TR/selectors-4/>
+
+![2022630152944](/assets/2022630152944.webp)
+
+### 属性和值
+
+属性不允许使用连续的两个中划线开头，这样的属性会被认为是 CSS 变量
+
+值可能是以下类型：
+
+- CSS 范围的关键字：initial，unset，inherit，任何属性都可以的关键字。
+- 字符串：比如 content 属性。
+- URL：使用 url() 函数的 URL 值。
+- 整数 / 实数：比如 flex 属性。
+- 维度：单位的整数 / 实数，比如 width 属性。
+- 百分比：大部分维度都支持。颜色：比如 background-color 属性。
+- 图片：比如 background-image 属性。
+- 2D 位置：比如 background-position 属性。
+- 函数：来自函数的值，比如 transform 属性。
+
 ## 书写规范
+
+[BEM规范](https://juejin.cn/post/6844903672162304013)
 
 - 空格规范
 
@@ -36,8 +74,6 @@
     /* 属性定义后必须以分号结尾。 */
 }
 ```
-
-
 
 ## 使用方式
 
@@ -96,6 +132,17 @@ href | 定义所链接外部样式表文件的URL，可以是相对路径，也�
 子元素可以继承父元素的样式（**text-，font-，line-这些元素开头的可以继承，以及color属性**）
 
 ### 优先级
+
+选择器列表是用逗号分隔的复杂选择器序列；复杂选择器则是用空格、大于号、波浪线等符号连接的复合选择器；复合选择器则是连写的简单选择器组合
+
+- 第一优先级：无连接符号
+- 第二优先级
+  - “空格”
+  - “~”
+  - “+”
+  - “>”
+  - “||”
+- 第三优先级：“,”
 
 | 标签选择器             | 计算权重公式 |
 | ---------------------- | ------------ |

@@ -345,10 +345,9 @@
 
 - [🔨DSL](./DSL/nav.md)
   - [HTML](./DSL/HTML.md)
-  - [CSS](./DSL/CSS/nav.md)
+  - [CSS](./DSL/CSS/CSS.md)
     - [选择器](./DSL/CSS/选择器.md)
     - [字体样式](./DSL/CSS/字体样式.md)
-    - [复合选择器](./DSL/CSS/复合选择器.md)
     - [标签显式模式](./DSL/CSS/标签显式模式.md)
     - [行高](./DSL/CSS/行高.md)
     - [背景](./DSL/CSS/背景.md)

@@ -105,7 +105,6 @@ class DocService implements Cacheable{
     }else {
       this.medianQuality = sorted[midPos]
     }
-    console.log(this.medianQuality, sorted)
     for(let i = 0; i < this.docQaulity.length; i++) {
       const quality = this.docQaulity[i]
       this.docQualityMap.set(quality.id, quality)

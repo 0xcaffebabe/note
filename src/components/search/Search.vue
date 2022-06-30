@@ -1,6 +1,6 @@
 <template>
   <el-drawer v-model="showDrawer" :size="$isMobile() ? '90%': '600px'" custom-class="search">
-    <template #title>
+    <template #header>
       <el-autocomplete
         v-model="kw"
         placeholder="搜索"

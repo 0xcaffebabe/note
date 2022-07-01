@@ -6,7 +6,7 @@
 
 ### At规则
 
-- @charset ：< https://www.w3.org/TR/css-syntax-3/>
+- @charset ：<https://www.w3.org/TR/css-syntax-3/>
 - @import ：<https://www.w3.org/TR/css-cascade-4/>
 - @media ：<https://www.w3.org/TR/css3-conditional/>
 - @page ：<https://www.w3.org/TR/css-page-3/>
@@ -158,3 +158,19 @@ href | 定义所链接外部样式表文件的URL，可以是相对路径，也�
   - .nav ul li   ------>      0,0,1,2
   - a:hover      -----—>   0,0,1,1
   - .nav a       ------>      0,0,1,1
+
+## 排版
+
+### 正常流
+
+- 依次排列，排不下了换行
+
+正常流基础上，有 float 相关规则，使得一些盒占据了正常流需要的空间，可以把 float 理解为“文字环绕”
+
+还有 vertical-align 相关规则规定了如何在垂直方向对齐盒
+
+#### 原理
+
+- 当遇到块级盒：排入块级格式化上下文（也就是会换行）
+- 当遇到行内级盒或者文字：首先尝试排入行内级格式化上下文，如果排不下，那么创建一个行盒，先将行盒排版（行盒是块级，所以到第一种情况），行盒会创建一个行内级格式化上下文
+- 遇到 float 盒：把盒的顶部跟当前行内级上下文上边缘对齐，然后根据 float 的方向把盒的对应边缘对到块级格式化上下文的边缘，之后重排当前行盒

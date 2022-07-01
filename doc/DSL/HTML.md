@@ -89,12 +89,6 @@
 - div
 - span
 
-### 语义化标签
-
-- header
-- footer
-- nav
-
 ### 表格标签
 
 ```html
@@ -234,6 +228,10 @@ width       | px              | 设置视频播放器的宽度。
 - novalidate：指定是否验证input域或者提交表单时是否检查表单数据符合要求
 
 ## 语义化标签
+
+- header
+- footer
+- nav
 
 ![2021927165247](/assets/2021927165247.jpg)
 

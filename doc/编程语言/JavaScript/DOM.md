@@ -2,6 +2,13 @@
 
 > DOM是W3C组织制定的一套处理 html和xml文档的规范
 
+DOM API 大致会包含 4 个部分:
+
+- 节点：DOM 树形结构中的节点相关 API。
+- 事件：触发和监听事件相关 API。
+- Range：操作文字范围相关 API。
+- 遍历：遍历 DOM 需要的 API
+
 ## DOM树
 
 ![202001232031](/assets/202001232031.png)
@@ -220,19 +227,79 @@ style
 
 ![202001281820](/assets/202001281820.png)
 
-## 元素滚动 scroll 系列
-
-使用 scroll 系列的相关属性可以动态的得到该元素的大小、滚动距离等
-
-![202001281844](/assets/202001281844.png)
-
-![202001281907](/assets/202001281907.png)
-
-如果浏览器的高（或宽）度不足以显示整个页面时，会自动出现滚动条。当滚动条向下滚动时，页面上面被隐藏掉的高度，我们就称为页面被卷去的头部。滚动条在滚动时会触发 onscroll事件
-
 ## 三大系列总结
 
 1. offset系列 经常用于获得元素位置 offsetLeft offsetTop
 2. client经常用于获取元素大小 clientWidth clientHeight
 3. scroll 经常用于获取滚动距离 scrollTop scrollLeft
 4. 注意页面滚动的距离通过 window.pageXOffset 获得
+
+## CSSOM
+
+是 CSS 的对象模型，在 W3C 标准中，它包含两个部分：描述样式表和规则等 CSS 的模型部分（CSSOM），和跟元素视图相关的 View 部分（CSSOM View）
+
+```js
+// styleSheets 是只读的，但是可以修改里面的规则
+document.styleSheets[0].insertRule("p { color:pink; }", 0)
+document.styleSheets[0].removeRule(0)
+// 获取样式表的所有css规则
+document.styleSheets[0].cssRules
+// 获取一个元素经过CSS计算得到的属性
+window.getComputedStyle(document.body);
+```
+
+### 窗口API
+
+- moveTo(x, y) 窗口移动到屏幕的特定坐标；
+- moveBy(x, y) 窗口移动特定距离；
+- resizeTo(x, y) 改变窗口大小到特定尺寸；
+- resizeBy(x, y) 改变窗口大小特定尺寸
+
+```js
+window.open("about:blank", "_blank" ,"width=100,height=100,left=100,right=100" )
+```
+
+### 视口滚动API
+
+- scrollX 是视口的属性，表示 X 方向上的当前滚动距离，有别名 pageXOffset；
+- scrollY 是视口的属性，表示 Y 方向上的当前滚动距离，有别名 pageYOffset；
+- scroll(x, y) 使得页面滚动到特定的位置，有别名 scrollTo，支持传入配置型参数 {top, left}；
+- scrollBy(x, y) 使得页面滚动特定的距离，支持传入配置型参数 {top, left}
+
+通过这些API 读取视口的滚动位置和操纵视口滚动，是页面的顶层容器的滚动，大部分移动端浏览器都会采用一些性能优化，它和元素滚动不完全一样
+
+### 元素滚动API
+
+使用 scroll 系列的相关属性可以动态的得到该元素的大小、滚动距离等
+
+scroll系列属性           | 作用
+-------------------- | -----------------------------------------------
+elementscrollTop     | 返回被卷去的上侧距离，返回数值不带单位
+element.scrollLeft   | 返回被卷去的左侧距离，返回数值不带单位
+element.scrollWidth  | 返回自身实际的宽度，不含边框，返回数值不带单位
+element.scrollHeight | 返回自身实际的高度，不含边框，返回数值不带单位
+scroll(x, y)         | 使得元素滚动到特定的位置，有别名 scrollTo，支持传入配置型参数 {top, left}
+scrollBy(x, y)       | 使得元素滚动到特定的位置，支持传入配置型参数 {top, left}
+scrollIntoView(arg)  | 滚动元素所在的父元素，使得元素滚动到可见区域，可以通过 arg 来指定滚到中间、开始或者就近
+
+![202001281907](/assets/202001281907.png)
+
+如果浏览器的高（或宽）度不足以显示整个页面时，会自动出现滚动条。当滚动条向下滚动时，页面上面被隐藏掉的高度，我们就称为页面被卷去的头部。滚动条在滚动时会触发 onscroll事件
+
+### 全局尺寸信息
+
+- window.innerHeight, window.innerWidth 这两个属性表示视口的大小。- window.outerWidth, window.outerHeight 这两个属性表示浏览器窗口占据的大小，很多浏览器没有实现，一般来说这两个属性无关紧要。
+- window.devicePixelRatio 这个属性非常重要，表示物理像素和 CSS 像素单位的倍率关系，Retina 屏这个值是 2，后来也出现了一些 3 倍的 Android 屏。
+- window.screen （屏幕尺寸相关的信息）
+  - window.screen.width, window.screen.height 设备的屏幕尺寸。- window.screen.availWidth, window.screen.availHeight 设备屏幕的可渲染区域尺寸，一些 Android 机器会把屏幕的一部分预留做固定按钮，所以有这两个属性，实际上一般浏览器不会实现的这么细致。
+  - window.screen.colorDepth, window.screen.pixelDepth 这两个属性是固定值 24，应该是为了以后预留
+
+### 元素布局信息
+
+- getClientRects()：回一个列表，里面包含元素对应的每一个盒所占据的客户端矩形区域，这里每一个矩形区域可以用 x, y, width, height 来获取它的位置和尺寸
+- getBoundingClientRect()：返回元素对应的所有盒的包裹的矩形区域
+
+```js
+// 获取元素相对于视口的相对坐标
+var offsetX = document.documentElement.getBoundingClientRect().x - element.getBoundingClientRect().x;
+```

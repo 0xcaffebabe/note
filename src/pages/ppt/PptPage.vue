@@ -58,6 +58,7 @@ import ContentsList from "../doc/contents/ContentsList.vue";
 import ToolBox from "../doc/ToolBox.vue";
 import PptPageEventManager from "./PptPageEventManager";
 import ImageViewer from "@/components/ImageViewer.vue";
+import { SysUtils } from "@/util/SysUtils";
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -94,9 +95,13 @@ export default defineComponent({
       immediate: true,
     }
   },
+  beforeRouteLeave() {
+    SysUtils.resetDocTitle()
+  },
   methods: {
     async showPpt() {
       this.file = await DocService.getDocFileInfo(this.doc);
+      SysUtils.setDocTitle(this.file.name)
       if (this.headingId) {
         const index = this.flatContent.findIndex(v => v.id == this.headingId)
         if (index != -1) {

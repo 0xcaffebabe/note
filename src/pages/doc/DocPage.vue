@@ -111,6 +111,7 @@ import KnowledgeTrend from './knowledge/trend/KnowledgeTrend.vue'
 import KnowledgeRedundancy from './knowledge/KnowledgeRedundancy.vue'
 import DocMetadataInfo from './DocMetadataInfo.vue'
 import SelectionPopover from './tool/SelectionPopover.vue'
+import { SysUtils } from "@/util/SysUtils";
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -248,6 +249,7 @@ export default defineComponent({
       } catch (err: any) {
         ElMessage.error(err.message)
       }
+      SysUtils.setDocTitle(this.file.name)
       this.generateTOC();
       this.$nextTick(() => {
         const docEl = this.$refs.markdownSection as HTMLElement;
@@ -317,6 +319,9 @@ export default defineComponent({
     const doc = to.params.doc.toString();
     this.showDoc(doc, to.query.headingId?.toString(), to.query.kw?.toString());
     (this.$refs.docSideCategory as any).updateCurrentCategory(doc);
+  },
+  beforeRouteLeave() {
+    SysUtils.resetDocTitle()
   },
   async created() {
     this.eventManager = new DocPageEventMnager(this);

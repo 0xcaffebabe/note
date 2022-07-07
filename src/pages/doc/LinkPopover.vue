@@ -87,5 +87,9 @@ body[theme=dark] {
   .el-button {
     opacity: 0.75;
   }
+  .popover {
+    background-color: var(--second-dark-bg-color);
+    box-shadow: 2px 2px 13px var(--main-dark-bg-color);
+  }
 }
 </style>

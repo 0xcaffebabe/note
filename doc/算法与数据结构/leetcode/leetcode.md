@@ -5459,3 +5459,93 @@ class Solution {
 ```
 
 time:11 beat:38
+
+## 78. 子集
+
+<https://leetcode.cn/problems/subsets/>
+
+```java
+class Solution {
+    private List<List<Integer>> ans = new ArrayList<>(16);
+    private int[] nums;
+    {
+        ans.add(new ArrayList<>());
+    }
+
+    public List<List<Integer>> subsets(int[] nums) {
+        this.nums = nums;
+        recursive(new ArrayList<>(), 0);
+        return ans;
+    }
+
+    private void recursive(List<Integer> origin, int start) {
+        if (origin.size() == nums.length) return;
+        for(int i = start; i < nums.length; i++) {
+            var list = new ArrayList<Integer>();
+            for(int o: origin) {
+                if (o != nums[i]) list.add(o);
+            }
+            list.add(nums[i]);
+            ans.add(list);
+            recursive(list, i + 1);
+        }
+    }
+}
+```
+
+time:0 beat:100
+
+## 1217. 玩筹码
+
+<https://leetcode.cn/problems/minimum-cost-to-move-chips-to-the-same-position/>
+
+```java
+class Solution {
+    public int minCostToMoveChips(int[] position) {
+        int even = 0, odd = 0;
+        for(int i: position) {
+            if (i % 2 == 0) even++;
+            else odd++;
+        }
+        return Math.min(even, odd);
+    }
+}
+```
+
+time:0 beat:100
+
+## 1863. 找出所有子集的异或总和再求和
+
+<https://leetcode.cn/problems/sum-of-all-subset-xor-totals/>
+
+```java
+class Solution {
+    private List<List<Integer>> subsets = new ArrayList<>(16);
+    private int[] nums;
+    public int subsetXORSum(int[] nums) {
+        this.nums = nums;
+        recursive(new ArrayList<>(), 0);
+        int ans = 0;
+        for(var list: subsets) {
+            int sum = list.get(0);
+            for(int i = 1; i < list.size(); i++) sum ^= list.get(i);
+            ans += sum;
+        }
+        return ans;
+    }
+
+    private void recursive(List<Integer> origin, int start) {
+        if (origin.size() == nums.length) return;
+        for(int i = start; i < nums.length; i++) {
+            var list = new ArrayList<Integer>();
+            for(int o: origin) list.add(o);
+            
+            list.add(nums[i]);
+            subsets.add(list);
+            recursive(list, i + 1);
+        }
+    }
+}
+```
+
+time: 15 beat:6

@@ -14,13 +14,13 @@
     <el-button text class="close-btn" @click="showDrawer = false">
       <el-icon><close-bold /></el-icon>
     </el-button>
-    <mind ref="mind" id="mindGraphMind" :mind-data="mindData" @node-click="handleNodeClick"/>
+    <mind ref="mind" id="mindGraphMind" :mind-data="mindData" />
   </el-drawer>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import Content from "@/dto/Content";
+import {MindUtils} from './MindUtils';
 import DocService from "@/service/DocService";
 import Mind from '@/components/mind/Mind.vue';
 import MindNode from "@/dto/mind/MindNode";
@@ -58,17 +58,6 @@ export default defineComponent({
     }
   },
   methods: {
-    mindConvert(toc: Content[]): MindNode[] {
-      let counter: number = 0;
-      return toc.map((i) => {
-        return {
-          id: i.link,
-          topic: i.name,
-          children: this.mindConvert(i.chidren),
-          direction: counter++ % 2 == 0 ? "right" : "left",
-        } as MindNode;
-      });
-    },
     show() {
       this.showDrawer = true;
       this.showMind();
@@ -76,25 +65,11 @@ export default defineComponent({
     hide() {
       this.showDrawer = false;
     },
-    handleNodeClick(id: string){
-      const elm: HTMLElement = document.querySelector("#" + id)!;
-      window.scrollTo(0, elm.offsetTop - 80);
-    },
     async showMind() {
       const doc = this.$route.params.doc.toString();
       const toc = await DocService.getContentByDocId(doc);
-      const minds = this.mindConvert(toc);
-      if (minds.length > 1) {
-        this.mindData = {
-          id: "root",
-          topic: "root",
-          expanded: true,
-          children: minds,
-          direction: "left",
-        };
-      } else {
-        this.mindData = minds[0];
-      }
+      const minds = MindUtils.mindConvert(toc);
+      this.mindData = minds[0];
       this.$nextTick(() => {
         (this.$refs.mind as InstanceType<typeof Mind>).init();
         const currentHeading = this.$store.state.currentHeading;

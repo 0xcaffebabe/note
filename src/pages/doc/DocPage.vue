@@ -11,6 +11,7 @@
             <doc-breadcrumb-nav />
             <doc-metadata-info :file="file"/>
             <!-- doc主体开始 -->
+            <mind-note />
             <div class="markdown-section" ref="markdownSection" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '960px': '74%'}"></div>
             <!-- doc主体结束 -->
             <!-- 提交历史开始 -->
@@ -84,6 +85,7 @@ import ContentsList from "./contents/ContentsList.vue";
 import HistoryList from "./commit/HistoryList.vue";
 import ReadingHistory from "./history/ReadingHistory.vue"
 import MindGraph from './mind/MindGraph.vue'
+import MindNote from './mind/MindNote.vue'
 import BookMark from './book-mark/BookMark.vue'
 import LinkList from './LinkList.vue';
 import ToolBox from './ToolBox.vue';
@@ -120,6 +122,7 @@ export default defineComponent({
     HistoryList,
     ReadingHistory,
     MindGraph,
+    MindNote,
     BookMark,
     ToolBox,
     LinkPopover,

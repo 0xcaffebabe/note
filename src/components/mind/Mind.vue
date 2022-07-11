@@ -35,7 +35,6 @@ export default defineComponent({
       }
     },
   },
-  emits: ['node-click'],
   methods: {
     mousewheel(event: any) {
       // ctrl键按下了 event.ctrlKey
@@ -64,7 +63,8 @@ export default defineComponent({
           const target: any = event.target;
           const id = target.getAttribute("nodeid");
           if (id) {
-            this.$emit('node-click', id);
+            const elm: HTMLElement = document.querySelector("#" + id)!;
+            window.scrollTo(0, elm.offsetTop - 80);
           }
         });
     },
@@ -75,8 +75,6 @@ export default defineComponent({
       this.jm.select_node([nodeId]);
     },
     init() {
-      console.log(this.mindData);
-      console.log(this.id);
       if (!this.mindData) {
         throw new Error("思维导图数据不能为空!");
       }

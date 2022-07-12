@@ -19,6 +19,8 @@ import DocSegement from '@/dto/doc/DocSegement'
 import IdGenUtils from '@/util/IdGenUtils'
 import DocQuality from '@/dto/doc/DocQuality'
 import { cleanText } from '@/util/StringUtils'
+import MindNode from '@/dto/mind/MindNode'
+import { MindUtils } from '@/pages/doc/mind/MindUtils'
 
 const cache = Cache()
 
@@ -516,6 +518,13 @@ class DocService implements Cacheable{
     }
     const farToMid = ((docQuality.quality / this.medianQuality ) * 100).toFixed(0)
     return `${docQuality.quality.toFixed(2)}(${this.docQualityOrderMap.get(id) || -1}/${this.docQaulity.length}, ${farToMid}%)`
+  }
+
+  @cache
+  public async generateMindData(id: string): Promise<MindNode> {
+    const toc = await this.getContentByDocId(id);
+    const minds = MindUtils.mindConvert(toc);
+    return minds[0];
   }
 }
 

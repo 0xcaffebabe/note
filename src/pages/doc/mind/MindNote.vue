@@ -9,7 +9,7 @@ import { defineComponent } from 'vue'
 import Mind from '@/components/mind/Mind.vue';
 import MindNode from "@/dto/mind/MindNode";
 import DocService from '@/service/DocService';
-import { MindUtils } from './MindUtils';
+import DocUtils from '@/util/DocUtils';
 
 export default defineComponent({
   components: {
@@ -20,14 +20,27 @@ export default defineComponent({
       mindData: null as MindNode | null
     }
   },
+  computed: {
+    currentCategory() {
+      return this.$store.state.currentCategory
+    }
+  },
+  watch: {
+    currentCategory() {
+      this.refresh(DocUtils.docUrl2Id(this.currentCategory.link))
+    }
+  },
+  methods: {
+    async refresh(docId?: string) {
+      const doc = docId || this.$route.params.doc.toString();
+      this.mindData = await DocService.generateMindData(doc);
+      this.$nextTick(() => {
+        (this.$refs.mind as InstanceType<typeof Mind>).init();
+      })
+    }
+  },
   async mounted() {
-    const doc = this.$route.params.doc.toString();
-    const toc = await DocService.getContentByDocId(doc);
-    const minds = MindUtils.mindConvert(toc);
-    this.mindData = minds[0];
-    this.$nextTick(() => {
-      (this.$refs.mind as InstanceType<typeof Mind>).init();
-    })
+    this.refresh()
   },
 })
 </script>

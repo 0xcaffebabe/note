@@ -34,6 +34,7 @@ export default defineComponent({
 
 <style lang="less" scoped>
   .mind-note {
+    position: relative;
     max-width: 80%;
     height: 400px;
     border: 1px solid #ccc;

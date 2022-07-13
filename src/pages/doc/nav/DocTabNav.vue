@@ -12,11 +12,13 @@
       @click="$router.push('/doc/' + docUrl2Id(cate))"
       @dblclick="$emit('dbclick')"
     >
+      <div>
       {{ cateName(cate) }}
       <span class="nav-item-sign">{{findRootCategoryFirstLetter(cate)}}</span>
       <span class="close-btn" @click.prevent.stop="close(cate)" v-if="cateList.length > 1">
         <el-icon><close-bold /></el-icon>
       </span>
+      </div>
     </el-button>
   </el-scrollbar>
   <tab-nav-context-menu ref="contextMenu" @toggle-fixed="fixed = !fixed" :fixed="fixed"/>
@@ -149,13 +151,14 @@ export default defineComponent({
   display: inline-block;
   position: relative;
   cursor: pointer;
-  border-radius: 14px;
+  border-radius: 18px;
   padding: 0px 28px;
+  height: 28px;
   font-size: 14px;
   .close-btn {
     position: absolute;
-    right: 8px;
-    bottom: 2px;
+    right: 10px;
+    bottom: 4px;
     display: none;
     border-radius: 4px;
   }

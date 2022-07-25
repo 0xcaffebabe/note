@@ -24,26 +24,20 @@ import CategoryService from '@/service/CategoryService'
 import DocUtils from '@/util/DocUtils'
 import { ElAutocomplete } from 'element-plus'
 import { defineComponent, ref } from 'vue'
-import pinyin from 'tiny-pinyin'
+import { PinyinUtils } from '@/util/PinyinUtils'
 
-function pyFirstLetter(str: string): string {
-  return pinyin.convertToPinyin(str, '-')
-              .split('-')
-              .map(v => v.charAt(0))
-              .join("")
-}
 
 function categoryLinkIsMatch(category: Category, queryString: string): boolean {
   const link = decodeURI(category.link).replace(/\//gi, '')
   return link.toLowerCase().indexOf(queryString.toLowerCase()) != -1 || // 目录名包含完全匹配
-          pinyin.convertToPinyin(link).toLowerCase().indexOf(queryString.toLowerCase()) != -1 || // 目录名包含拼音完全匹配
-          pyFirstLetter(link).toLowerCase().indexOf(queryString.toLowerCase()) != -1  // 目录名包含拼音首字母匹配
+          PinyinUtils.fullPinyinContains(link, queryString) || // 目录名包含拼音完全匹配
+          PinyinUtils.firstLetterPinyinContains(link, queryString)  // 目录名包含拼音首字母匹配
 }
 
 function categoryNameIsMatch(category: Category, queryString: string): boolean {
   return category.name?.toLowerCase().indexOf(queryString.toLowerCase()) != -1 || // 文档名包含完全匹配
-          pinyin.convertToPinyin(category.name).toLowerCase().indexOf(queryString.toLowerCase()) != -1 || // 文档名包含拼音完全匹配
-          pyFirstLetter(category.name).toLowerCase().indexOf(queryString.toLowerCase()) != -1  // 文档名包含拼音首字母匹配
+          PinyinUtils.fullPinyinContains(category.name, queryString) || // 文档名包含拼音完全匹配
+          PinyinUtils.firstLetterPinyinContains(category.name, queryString)  // 文档名包含拼音首字母匹配
 }
 
 

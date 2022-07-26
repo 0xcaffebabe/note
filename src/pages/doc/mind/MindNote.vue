@@ -34,9 +34,6 @@ export default defineComponent({
     async refresh(docId?: string) {
       const doc = docId || this.$route.params.doc.toString();
       this.mindData = await DocService.generateMindData(doc);
-      this.$nextTick(() => {
-        (this.$refs.mind as InstanceType<typeof Mind>).init();
-      })
     }
   },
   async mounted() {

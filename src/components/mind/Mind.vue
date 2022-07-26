@@ -30,9 +30,7 @@ export default defineComponent({
   },
   watch: {
     mindData(val: MindNode | null) {
-      if (!val && this.jm) {
-        this.jm.show(this.mindData);
-      }
+      this.init()
     },
   },
   methods: {
@@ -106,9 +104,9 @@ export default defineComponent({
         document
           .getElementById(this.id)
           ?.addEventListener("mousewheel", this.mousewheel);
+        this.reigseterMindClickEvent();
       }
       this.jm.show(mind);
-      this.reigseterMindClickEvent();
     },
   },
 });

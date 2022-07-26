@@ -11,13 +11,22 @@ import MindNode from "@/dto/mind/MindNode";
 import DocService from '@/service/DocService';
 import DocUtils from '@/util/DocUtils';
 
+const EMPTY_NODE  = {
+  id: '',
+  topic: '',
+  children: [],
+  expanded: false,
+  direction: 'left'
+} as MindNode
+  
+
 export default defineComponent({
   components: {
     Mind
   },
   data() {
     return {
-      mindData: null as MindNode | null
+      mindData: EMPTY_NODE as MindNode
     }
   },
   computed: {

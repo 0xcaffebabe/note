@@ -121,7 +121,22 @@ books: [
 
 - 减少了TCP连接建立的开销
 
-从 HTTP/1.1 开始默认是长连接的，如果要断开连接，需要由客户端或者服务器端提出断开，使用 Connection : close
+从 HTTP/1.1 开始默认是长连接的，如果要断开连接，需要由客户端或者服务器端提出断开，使用 Connection : close，HTTP/2 里，连接关闭是通过另外的机制实现的，与 Connection 头部无关
+
+加快VIP切换时的收敛速度：
+
+```mermaid
+sequenceDiagram
+  客户端 ->> LB: 请求
+  LB ->> 客户端: serverA
+  客户端 ->> serverA: HTTP
+  serverA ->> 客户端: Connection:Keep-Alive
+  客户端 ->> serverA: 其他事务
+  serverA ->> 客户端: Connection:Close
+  客户端 ->> LB: 请求
+  LB ->> 客户端: serverB
+  客户端 ->> serverB: HTTP
+```
 
 在 HTTP/1.1 之前默认是短连接的，如果需要使用长连接，则使用 Connection : Keep-Alive
 

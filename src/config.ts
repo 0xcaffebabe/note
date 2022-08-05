@@ -3,6 +3,7 @@ export default {
   siteName: '个人知识体系·PKS',
   // 仓库地址 用于更改、编辑等的跳转
   repositoryUrl: 'https://github.com/0xcaffebabe/note',
+  localUrl: 'D:/learning/note/doc',
   // 左上方链接
   linkList: [
     {

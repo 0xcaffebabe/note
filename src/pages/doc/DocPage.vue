@@ -49,6 +49,7 @@
     @downloadPdf="downloadPdf"
     @showKnowledgeReviewer="showKnowledgeReviewer"
     @showKnowledgeRedundancy="showKnowledgeRedundancy"
+    @open-in-editor="openInEditor"
   />
   <!-- 工具栏结束 -->
   <!-- 关键词提示器开始 -->
@@ -91,7 +92,6 @@ import LinkList from './LinkList.vue';
 import ToolBox from './ToolBox.vue';
 import KnowledgeNetwork from "./knowledge/KnowledgeNetwork.vue";
 import LinkPopover from "./LinkPopover.vue";
-import api from "@/api";
 import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
 import 'element-plus/es/components/message/style/css'
@@ -114,6 +114,7 @@ import KnowledgeRedundancy from './knowledge/KnowledgeRedundancy.vue'
 import DocMetadataInfo from './DocMetadataInfo.vue'
 import SelectionPopover from './tool/SelectionPopover.vue'
 import { SysUtils } from "@/util/SysUtils";
+import config from '@/config';
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -240,6 +241,9 @@ export default defineComponent({
     },
     syncCategoryListScrollBar() {
       (this.$refs.docSideCategory as any).syncCategoryListScrollBar();
+    },
+    openInEditor() {
+      window.open(`vscode://file/${config.localUrl}/${docService.docId2Url(this.doc)}/`, '_blank')
     },
     async showDoc(doc: string, headingId?: string, kw?: string) {
       // 将滚动条设置为上一次的状态

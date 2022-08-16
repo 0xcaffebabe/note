@@ -6,7 +6,7 @@ polyphonicMap.set('重', ['ZHONG', 'CHONG'])
 export namespace PinyinUtils {
   function toPinyin(str: string): string[][] {
     const result: string[][] = []
-    for (let char of str) {
+    for (const char of str) {
       if (polyphonicMap.has(char)) {
         result.push(JSON.parse(JSON.stringify(polyphonicMap.get(char))))
       } else {
@@ -27,7 +27,7 @@ export namespace PinyinUtils {
       if (index >= list.length) return
       if (index == list.length - 1) result.push(path.substring(0, path.length - 1))
 
-      for(let i of list[index]) {
+      for(const i of list[index]) {
         const subPath = path + i + splitor
         travel(index + 1, subPath)
       }
@@ -50,7 +50,7 @@ export namespace PinyinUtils {
    */
   export function fullPinyinContains(text: string, pinyin: string) {
     const pinyinList = convertToPinyin(text)
-    for(let i of pinyinList) {
+    for(const i of pinyinList) {
       if (i.replace(/-/gi, '').indexOf(pinyin.toUpperCase()) != -1) return true
     }
     return false
@@ -66,7 +66,7 @@ export namespace PinyinUtils {
    */
   export function firstLetterPinyinContains(text: string, pinyin: string) {
     const pinyinList = convertToPinyin(text)
-    for(let i of pinyinList) {
+    for(const i of pinyinList) {
       if (i.split("-").map(v => v.charAt(0)).join("").indexOf(pinyin.toUpperCase()) != -1) return true
     }
     return false

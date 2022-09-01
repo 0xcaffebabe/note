@@ -73,7 +73,7 @@ export default defineComponent({
         top: "5%",
         left: "center",
         textStyle: {
-          color: this.isDark ? "#bbb" : "",
+          color: this.isDark ? "#bbb" : "#666",
         },
         itemStyle: {
           borderColor: this.isDark ? "#bbb" : "",

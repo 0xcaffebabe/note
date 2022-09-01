@@ -118,7 +118,7 @@ export default defineComponent({
           left: "center",
           text: "提交日历图",
           textStyle: {
-            color: this.isDark ? "#bbb" : "",
+            color: this.isDark ? "#bbb" : "#666",
           },
         },
         tooltip: {
@@ -128,7 +128,7 @@ export default defineComponent({
           },
           backgroundColor: this.isDark ? "#666" : "#fff",
           textStyle: {
-            color: this.isDark ? "#bbb" : "",
+            color: this.isDark ? "#bbb" : "#666",
           },
         },
         visualMap: {
@@ -140,7 +140,7 @@ export default defineComponent({
           top: 65,
           pieces: generatePieces(maxValue, colorBox),
           textStyle: {
-            color: this.isDark ? "#bbb" : "",
+            color: this.isDark ? "#bbb" : "#666",
           },
         },
         calendar: {

@@ -89,7 +89,7 @@ export default defineComponent({
       legend: {
         data: ["总字数", "总行数", "总提交"],
         textStyle: {
-          color: this.isDark ? "#bbb" : "",
+          color: this.isDark ? "#bbb" : "#666",
         }
       },
       grid: {

@@ -43,7 +43,7 @@ export default defineComponent({
           text: "各时段提交统计(GMT+8)",
           left: "center",
           textStyle: {
-            color: this.isDark ? "#bbb" : "",
+            color: this.isDark ? "#bbb" : "#666",
           },
         },
         xAxis: {
@@ -57,7 +57,7 @@ export default defineComponent({
           formatter: "{c}",
           backgroundColor: this.isDark ? "#666" : "#fff",
           textStyle: {
-            color: this.isDark ? "#bbb" : "",
+            color: this.isDark ? "#bbb" : "#666",
           },
         },
         series: [

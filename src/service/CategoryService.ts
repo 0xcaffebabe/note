@@ -115,7 +115,7 @@ class CategoryService implements Cacheable {
   public categoryIsMatch(category: Category, queryString: string): boolean {
     const kwList = queryString.split(" ")
     let allMatched = true
-    for(let kw of kwList) {
+    for(const kw of kwList) {
       allMatched &&= this.categoryNameIsMatch(category, kw) || this.categoryLinkIsMatch(category, kw)
     }
     return allMatched

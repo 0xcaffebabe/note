@@ -59,6 +59,7 @@ declare module '@vue/runtime-core' {
     ElTag: typeof import('element-plus/es')['ElTag']
     ElTimeline: typeof import('element-plus/es')['ElTimeline']
     ElTimelineItem: typeof import('element-plus/es')['ElTimelineItem']
+    ElTreeSelect: typeof import('element-plus/es')['ElTreeSelect']
     Header: typeof import('./src/components/header/Header.vue')['default']
     ImageViewer: typeof import('./src/components/ImageViewer.vue')['default']
     InstapaperShower: typeof import('./src/components/header/InstapaperShower.vue')['default']

@@ -3,6 +3,7 @@ import api from '@/api'
 import Category from '@/dto/Category'
 import Cacheable from '@/decorator/Cacheable'
 import Cache from '@/decorator/Cache'
+import { PinyinUtils } from '@/util/PinyinUtils'
 const cache = Cache()
 
 const searchRecordKey = 'category-service::search-record-list';
@@ -101,6 +102,36 @@ class CategoryService implements Cacheable {
     }
     searchRecordList = searchRecordList.reverse();
     return searchRecordList;
+  }
+
+  /**
+   *
+   * 判断目录是否匹配搜索字符串
+   * @param {Category} category
+   * @param {string} queryString
+   * @return {*}  {boolean}
+   * @memberof CategoryService
+   */
+  public categoryIsMatch(category: Category, queryString: string): boolean {
+    const kwList = queryString.split(" ")
+    let allMatched = true
+    for(let kw of kwList) {
+      allMatched &&= this.categoryNameIsMatch(category, kw) || this.categoryLinkIsMatch(category, kw)
+    }
+    return allMatched
+  }
+
+  private categoryLinkIsMatch(category: Category, queryString: string): boolean {
+    const link = decodeURI(category.link).replace(/\//gi, '')
+    return link.toLowerCase().indexOf(queryString.toLowerCase()) != -1 || // 目录名包含完全匹配
+            PinyinUtils.fullPinyinContains(link, queryString) || // 目录名包含拼音完全匹配
+            PinyinUtils.firstLetterPinyinContains(link, queryString)  // 目录名包含拼音首字母匹配
+  }
+  
+  private categoryNameIsMatch(category: Category, queryString: string): boolean {
+    return category.name?.toLowerCase().indexOf(queryString.toLowerCase()) != -1 || // 文档名包含完全匹配
+            PinyinUtils.fullPinyinContains(category.name, queryString) || // 文档名包含拼音完全匹配
+            PinyinUtils.firstLetterPinyinContains(category.name, queryString)  // 文档名包含拼音首字母匹配
   }
 
   private categoryParse(html: string): Category[]{

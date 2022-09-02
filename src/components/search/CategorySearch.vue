@@ -24,31 +24,6 @@ import CategoryService from '@/service/CategoryService'
 import DocUtils from '@/util/DocUtils'
 import { ElAutocomplete } from 'element-plus'
 import { defineComponent, ref } from 'vue'
-import { PinyinUtils } from '@/util/PinyinUtils'
-
-
-function categoryLinkIsMatch(category: Category, queryString: string): boolean {
-  const link = decodeURI(category.link).replace(/\//gi, '')
-  return link.toLowerCase().indexOf(queryString.toLowerCase()) != -1 || // 目录名包含完全匹配
-          PinyinUtils.fullPinyinContains(link, queryString) || // 目录名包含拼音完全匹配
-          PinyinUtils.firstLetterPinyinContains(link, queryString)  // 目录名包含拼音首字母匹配
-}
-
-function categoryNameIsMatch(category: Category, queryString: string): boolean {
-  return category.name?.toLowerCase().indexOf(queryString.toLowerCase()) != -1 || // 文档名包含完全匹配
-          PinyinUtils.fullPinyinContains(category.name, queryString) || // 文档名包含拼音完全匹配
-          PinyinUtils.firstLetterPinyinContains(category.name, queryString)  // 文档名包含拼音首字母匹配
-}
-
-
-function categoryIsMatch(category: Category, queryString: string): boolean{
-  const kwList = queryString.split(" ")
-  let allMatched = true
-  for(let kw of kwList) {
-    allMatched &&= categoryNameIsMatch(category, kw) || categoryLinkIsMatch(category, kw)
-  }
-  return allMatched
-}
 
 export default defineComponent({
   setup() {
@@ -86,7 +61,7 @@ export default defineComponent({
       if (!queryString) {
         cb(CategoryService.getCategorySearchRecords())
       }else {
-        const results = this.flatCategoryList.filter(v => categoryIsMatch(v, queryString))
+        const results = this.flatCategoryList.filter(v => CategoryService.categoryIsMatch(v, queryString))
         cb(results)
       }
     },

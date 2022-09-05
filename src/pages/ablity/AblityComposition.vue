@@ -1,7 +1,7 @@
 
 <template>
   <div class="container">
-    <h3>组合</h3>
+    <h3>目标组合</h3>
     <el-table :data="tableData" table-layout="auto" class="table">
       <el-table-column label="名称" width="180">
         <template #default="scope">
@@ -17,11 +17,11 @@
             trigger="hover"
           >
             <template #reference>
-              <span>{{ scope.row.chapterList.map(docUrl2Id)[0] }} <el-tag v-if="scope.row.chapterList.length > 1">+{{scope.row.chapterList.length - 1}}</el-tag></span>
+              <span class="chapter-sum">{{ scope.row.chapterList.map(docUrl2Id)[0] }} <el-tag v-if="scope.row.chapterList.length > 1">+{{scope.row.chapterList.length - 1}}</el-tag></span>
             </template>
-            <ul>
+            <ul class="chapter-list">
               <li v-for="item in scope.row.chapterList" :key="item">
-                <el-link>{{ docUrl2Id(item) }}</el-link>
+                <el-link @click="$emit('chapterClick', item)">{{ docUrl2Id(item) }}</el-link>
               </li>
             </ul>
           </el-popover>
@@ -30,12 +30,37 @@
           </el-button>
         </template>
       </el-table-column>
+      <el-table-column label="目标红绿灯">
+        <template #default="scope">
+          <el-progress
+            :text-inside="true"
+            :stroke-width="24"
+            :percentage="calcIndex(scope.$index)"
+            v-if="calcIndex(scope.$index) >= 60"
+            status="success"
+          />
+          <el-progress
+            :text-inside="true"
+            :stroke-width="24"
+            :percentage="calcIndex(scope.$index)"
+            v-else-if="calcIndex(scope.$index) >= 30 && calcIndex(scope.$index) < 30"
+            status="warning"
+          />
+          <el-progress
+            :text-inside="true"
+            :stroke-width="24"
+            :percentage="calcIndex(scope.$index)"
+            v-else
+            status="exception"
+          />
+        </template>
+      </el-table-column>
       <el-table-column label="操作">
         <template #default="scope">
-          <el-button size="small" v-if="scope.$index > 0">上移</el-button>
-          <el-button size="small" v-if="scope.$index < tableData.length - 1">下移</el-button>
-          <el-button size="small" type="success">往下新增</el-button>
-          <el-button size="small" type="danger">删除</el-button>
+          <el-button size="small" v-if="scope.$index > 0" @click="swapOrder(scope.$index, scope.$index-1)">上移</el-button>
+          <el-button size="small" v-if="scope.$index < tableData.length - 1" @click="swapOrder(scope.$index, scope.$index+1)">下移</el-button>
+          <el-button size="small" type="success" @click="appendRow(scope.$index)">往下新增</el-button>
+          <el-button size="small" type="danger" @click="removeRow(scope.$index)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -54,11 +79,21 @@ export default defineComponent({
     Edit,
     ChapterSelector
   },
+  watch: {
+    tableData: {
+      handler: function() {
+        localStorage.setItem("ablity::data", JSON.stringify(this.tableData));
+      },
+      deep: true,
+    }
+  },
+  emits: ['chapterClick'],
   data() {
+    const tableData: {name: string, chapterList:string[]}[] = JSON.parse(localStorage.getItem("ablity::data") || "[]")
     return {
       showSelector: false,
       chapterIndex: 0,
-      tableData: [
+      tableData: tableData || [
         {
           name: "Java",
           chapterList: [
@@ -77,10 +112,27 @@ export default defineComponent({
   },
   methods: {
     docUrl2Id: DocUtils.docUrl2Id,
-    handleEdit(a: any, b: any) {},
     showChapterSelector(index: number) {
       this.chapterIndex = index;
       (this.$refs.chapterSelector as InstanceType<typeof ChapterSelector>).show(this.tableData[index].chapterList);
+    },
+    swapOrder(index1: number, index2: number) {
+      const t = this.tableData[index1];
+      this.tableData[index1] = this.tableData[index2];
+      this.tableData[index2] = t;
+    },
+    appendRow(index: number) {
+      this.tableData.splice(index + 1, 0, {
+        name: "",
+        chapterList:[]
+      });
+    },
+    calcIndex(index: number): number {
+      const count = this.tableData.map(v => v.chapterList).flatMap(v => v).length;
+      return Math.floor(this.tableData[index].chapterList.length / count * 100);
+    },
+    removeRow(index: number) {
+      this.tableData.splice(index, 1);
     },
     handleChapterSave(value: string[]) {
       this.tableData[this.chapterIndex].chapterList = value;
@@ -95,5 +147,12 @@ export default defineComponent({
 }
 .table {
   width: 100%;
+}
+.chapter-list {
+  max-height: 400px;
+  overflow-y: scroll;
+}
+.chapter-sum {
+  cursor: pointer;
 }
 </style>

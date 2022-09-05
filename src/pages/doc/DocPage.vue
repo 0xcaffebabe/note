@@ -49,6 +49,7 @@
     @downloadPdf="downloadPdf"
     @showKnowledgeReviewer="showKnowledgeReviewer"
     @showKnowledgeRedundancy="showKnowledgeRedundancy"
+    @showKnowledgeAblity="showKnowledgeAblity"
     @open-in-editor="openInEditor"
   />
   <!-- 工具栏结束 -->
@@ -72,6 +73,9 @@
   </keep-alive>
   <keep-alive>
     <knowledge-trend ref="knowledgeTrend"/>
+  </keep-alive>
+  <keep-alive>
+    <knowledge-ablity ref="knowledgeAblity"/>
   </keep-alive>
   <image-viewer ref="imageViewer" />
   <resource-brower ref="resourceBrower" />
@@ -111,6 +115,7 @@ import KnowledgeReviewer from "./knowledge/KnowledgeReviewer.vue";
 import KeyWordFinder from "./KeyWordFinder.vue";
 import KnowledgeTrend from './knowledge/trend/KnowledgeTrend.vue'
 import KnowledgeRedundancy from './knowledge/KnowledgeRedundancy.vue'
+import KnowledgeAblity from './knowledge/KnowledgeAblity.vue'
 import DocMetadataInfo from './DocMetadataInfo.vue'
 import SelectionPopover from './tool/SelectionPopover.vue'
 import { SysUtils } from "@/util/SysUtils";
@@ -139,6 +144,7 @@ export default defineComponent({
     KeyWordFinder,
     KnowledgeTrend,
     KnowledgeRedundancy,
+    KnowledgeAblity,
     DocMetadataInfo,
     SelectionPopover,
 },
@@ -161,6 +167,7 @@ export default defineComponent({
     const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
     const kwFinder = ref<InstanceType<typeof KeyWordFinder>>()
     const knowledgeRedundancy = ref<InstanceType<typeof KnowledgeRedundancy>>()
+    const knowledgeAblity = ref<InstanceType<typeof KnowledgeAblity>>()
     const showReadingHistory = () => {
       readingHistory.value?.show()
     }
@@ -188,6 +195,9 @@ export default defineComponent({
     const showKnowledgeRedundancy = () => {
       knowledgeRedundancy.value?.show();
     }
+    const showKnowledgeAblity = () => {
+      knowledgeAblity.value?.show();
+    }
     return {
       readingHistory,showReadingHistory, 
       mindGraph, showMindGraph, 
@@ -197,6 +207,7 @@ export default defineComponent({
       linkList, showLinkList,
       knowledgeReviewer, showKnowledgeReviewer,
       knowledgeRedundancy, showKnowledgeRedundancy,
+      knowledgeAblity, showKnowledgeAblity,
       kwFinder
     }
   },

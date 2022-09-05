@@ -25,6 +25,7 @@
 import Category from "@/dto/Category";
 import CategoryService from "@/service/CategoryService";
 import { defineComponent } from "vue";
+import {cloneDeep} from 'lodash'
 
 export default defineComponent({
   data() {
@@ -59,9 +60,7 @@ export default defineComponent({
       }
 
       if (value) {
-        console.log(value);
         this.cateList = this.data.filter(search);
-        console.log(this.cateList);
       }else {
         this.cateList = [...this.data];
       }
@@ -72,7 +71,23 @@ export default defineComponent({
     }
   },
   async created() {
-    this.data = await CategoryService.getCompiledCategoryList();
+
+    function appendParentInChildren(cateList: Category[]) {
+      if (cateList.length == 0) {
+        return;
+      }
+      for(const parent of cateList) {
+        appendParentInChildren(parent.chidren);
+        parent.chidren.splice(0,0,{
+          name: parent.name,
+          link: parent.link,
+          chidren: []
+        } as Category);
+      }
+    }
+
+    this.data = cloneDeep(await CategoryService.getCompiledCategoryList());
+    appendParentInChildren(this.data);
     this.cateList = [...this.data];
   },
 });

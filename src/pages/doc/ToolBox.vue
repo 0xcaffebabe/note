@@ -53,7 +53,8 @@ type ActionType =
     'goToPpt' |
     'downloadPdf' |
     'showKnowledgeSystem' | 
-    'openInEditor'
+    'openInEditor' | 
+    'showKnowledgeAblity'
 
 type LocalActionType = ActionType & 'showMoreSetting'
 
@@ -95,6 +96,7 @@ export default defineComponent({
     'showKnowledgeTrend',
     'showKnowledgeRedundancy',
     'openInEditor',
+    'showKnowledgeAblity'
   ],
   data(){
     return {
@@ -109,6 +111,7 @@ export default defineComponent({
         {name: '知识回顾', type: 'primary', action: 'showKnowledgeReviewer', hotkey: 'alt + r'},
         {name: '知识趋势', type: 'danger', action: 'showKnowledgeTrend', hotkey: 'alt + t'},
         {name: '知识冗余', type: 'success', action: 'showKnowledgeRedundancy'},
+        {name: '知识能力', type: 'primary', action: 'showKnowledgeAblity', hotkey: 'alt + a'},
         {name: '添加书签', type: 'danger', action: 'showBookMarkAdder', divided: true},
         {name: '路径复制', type: 'success', action: 'copyDocPath'},
         {name: '在VSC打开', type: 'danger', action: 'openInEditor', hotkey: 'alt + v'},

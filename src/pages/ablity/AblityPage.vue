@@ -1,9 +1,9 @@
 <template>
   <div class="container">
     <!-- <h1>能力目标</h1> -->
-    <ablity-graph />
+    <ablity-graph :top-link="topLink"/>
     <el-divider />
-    <ablity-composition />
+    <ablity-composition @chapter-click="handleChapterClick" />
   </div>
 </template>
 
@@ -11,11 +11,23 @@
 import { defineComponent } from 'vue'
 import AblityGraph from './AblityGraph.vue';
 import AblityComposition from './AblityComposition.vue';
+import DocUtils from '@/util/DocUtils';
 
 export default defineComponent({
   components: { AblityGraph, AblityComposition },
-    setup() {
-    },
+  data() {
+    return {
+      topLink: ''
+    }
+  },
+  emits: ['chapterClick'],
+  methods: {
+    handleChapterClick(link: string) {
+      this.topLink = link;
+      // this.$emit("chapterClick", link);
+      this.$router.push(`/doc/${DocUtils.docUrl2Id(link)}`)
+    }
+  }
 })
 </script>
 
@@ -23,5 +35,6 @@ export default defineComponent({
   .container {
     padding: 0 10px;
     padding-top: 20px;
+    width: 100%;
   }
 </style>

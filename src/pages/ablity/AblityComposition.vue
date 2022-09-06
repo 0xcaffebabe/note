@@ -93,7 +93,7 @@ export default defineComponent({
     return {
       showSelector: false,
       chapterIndex: 0,
-      tableData: tableData || [
+      tableData: tableData.length != 0 ? tableData : [
         {
           name: "Java",
           chapterList: [

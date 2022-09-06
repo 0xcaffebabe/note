@@ -11,7 +11,7 @@
       <el-table-column label="章节" width="500">
         <template #default="scope">
           <el-popover
-            placement="top-start"
+            placement="right-start"
             :title="scope.row.name"
             :width="400"
             trigger="hover"

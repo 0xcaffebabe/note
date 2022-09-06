@@ -11,12 +11,11 @@
     :data="cateList"
     node-key="link"
     :highlight-current="true"
-    :render-after-expand="false"
+    :render-after-expand="true"
     show-checkbox
     multiple
     :props="props"
     filterable 
-    :filter-method="filterMethod"
     />
   </el-dialog>
 </template>

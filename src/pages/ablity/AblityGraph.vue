@@ -1,12 +1,5 @@
 <template>
-  <el-row :gutter="15">
-    <!-- <el-col :span="12"> -->
-      <!-- <knowledge-radar /> -->
-    <!-- </el-col> -->
-    <el-col :span="24">
-      <div class="rank" ref="rank"></div>
-    </el-col>
-  </el-row>
+  <div class="rank" ref="rank"></div>
 </template>
 
 <script lang="ts">

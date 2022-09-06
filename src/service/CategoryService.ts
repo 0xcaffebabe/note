@@ -11,6 +11,8 @@ class CategoryService implements Cacheable {
 
   private static instance : CategoryService
 
+  private cahedCategoryList: Category[] = []
+
   private constructor(){}
   name(): string {
     return 'category-service'
@@ -60,7 +62,21 @@ class CategoryService implements Cacheable {
         stack.push(...category.chidren)
       }
     }
+    this.cahedCategoryList = categoryList
     return categoryList
+  }
+
+  public getCategory(predicate: (cate :Category) => boolean): Category[] {
+    const stack: Category[] = [...this.cahedCategoryList];
+    const result: Category[] = []
+    while(stack.length != 0) {
+      const i = stack.pop()!;
+      if (predicate(i)) {
+        result.push(i);
+      }
+      stack.push(...i.chidren);
+    }
+    return result;
   }
 
 

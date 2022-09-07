@@ -30,7 +30,38 @@ neo4j 不强制要求schema
 (matrix:Movie {title: 'The Matrix', released: 1997})
 // 一个类型为ACTED_IN叫role的关系 有 roles一个属性
 -[role:ACTED_IN {roles: ['Neo']}]->
-// 演员keanu通过关系 role 与电影 matrix 连接
-CREATE (keanu:Person:Actor {name: 'Keanu Reeves'})-[role:ACTED_IN {roles: ['Neo']}]->(matrix:Movie {title: 'The Matrix'}) 
-RETURN keanu,role,matrix
+```
+
+### 语法
+
+```cypher
+// 创建一个节点
+CREATE (:Movie {title: 'The Matrix', released: 1997})
+// 创建节点与关系
+CREATE (cxk:Person {name: "蔡徐坤", playAge: "两年半"})-[:PLAYED_IN {name: "打"}]->(ball:Basketball {name: "篮球"})
+CREATE (cxk)-[:SING_IN {name: "rap"}]->(song:Song {name: "鸡你太美"})
+RETURN cxk,ball,song
+```
+
+```cypher
+// 查询所有标签为Person的节点
+MATCH (p:Person) RETURN p
+// 查询指定属性满足的节点
+MATCH (p:Person {name: "蔡徐坤"}) RETURN p
+// 查询指定节点关系
+MATCH (p:Person)-[:SING_IN]->(s:Song) RETURN p,s
+```
+
+```cypher
+// 创建新关系
+MATCH (p: Person)
+CREATE (p)-[:LIVE_IN]->(:Earth)
+// 不存在就创建 存在就更新 在大图里，这种操作需要扫描大量节点，即使加上索引或约束，仍有一定开销
+MERGE (p: Person {name: "蔡徐坤2号"})
+ON CREATE SET p.age = 18
+RETURN p
+// MERGE 关系
+MATCH (p: Person {name: "蔡徐坤2号"})
+MATCH (b: Basketball)
+MERGE (p)-[:PLAYED_IN]->(b)
 ```

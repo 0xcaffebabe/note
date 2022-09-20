@@ -65,3 +65,19 @@ MATCH (p: Person {name: "蔡徐坤2号"})
 MATCH (b: Basketball)
 MERGE (p)-[:PLAYED_IN]->(b)
 ```
+
+```cypher
+// 查询身份证为xxx 的 PERSON 与 PERSON、THING拥有rytcx、yysj关系的图
+MATCH (p:PERSON  {fq_gmsfhm: "350500196306111518"})<-[:rytcx|yysj*..2]->(n) WHERE (n: PERSON OR n: THING)
+RETURN p,n
+// 查询身份证为xxx 的 PERSON到手机号为17750052235的THING之间的路径
+MATCH p=(n: PERSON {fq_gmsfhm: "350521195607060010"})-[*]->(m: THING {sjhm: "17750052235"})
+RETURN p
+```
+
+## 数据建模
+
+- 节点：一般就是领域中的名词
+- 标签：代表节点的通用名词
+- 关系：
+- 属性：

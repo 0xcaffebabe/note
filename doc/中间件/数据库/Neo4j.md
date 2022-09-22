@@ -77,6 +77,29 @@ MATCH p=(n: PERSON {fq_gmsfhm: "350521195607060010"})-[*]->(m: THING {sjhm: "177
 RETURN p
 ```
 
+#### UNION
+
+- 合并两个查询，结果名称必须都一致
+
+```cypher
+MATCH (p: Person)
+RETURN p as a
+UNION
+MATCH (b: Basketball)
+RETURN b as a
+```
+
+#### WITH
+
+在WITH中定义变量，只有这些变量，才会被传递到下一个查询中
+
+```cypher
+MATCH (p: Person)
+WITH DISTINCT p.name AS name
+// RETURN p 找不到p
+RETURN name
+```
+
 #### CASE
 
 ```cypher
@@ -95,6 +118,44 @@ CASE p.age
     WHEN p.age = 18 THEN "两年半"
 END AS a
 RETURN a
+```
+
+#### 子查询
+
+```cypher
+// 存在子查询
+MATCH (p: Person)
+WHERE exists((p)-[:PLAYED_IN]->(:Basketball))
+RETURN p
+// 结果返回子查询
+CALL {
+    MATCH (p: Person)
+    RETURN p as a
+    UNION
+    MATCH (b: Basketball)
+    RETURN b as a
+}
+RETURN a.name
+```
+
+#### 索引
+
+为提升图的遍历性能，某些情况下使用索引是有必要的
+
+```cypher
+// 根据姓名创建索引
+CREATE INDEX cxk_index FOR (p: Person) ON (p.name)
+// 查看有哪些索引
+SHOW INDEXES
+```
+
+#### 约束
+
+```cypher
+// 强制要求字段唯一
+CREATE CONSTRAINT constraint_example_1 FOR (movie:Movie) REQUIRE movie.title IS UNIQUE
+// 查看有哪些约束
+SHOW CONSTRAINTS
 ```
 
 #### 参数

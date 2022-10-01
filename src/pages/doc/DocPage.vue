@@ -11,7 +11,6 @@
             <doc-breadcrumb-nav />
             <doc-metadata-info :file="file"/>
             <!-- doc主体开始 -->
-            <mind-note />
             <div class="markdown-section" ref="markdownSection" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '960px': '74%'}"></div>
             <!-- doc主体结束 -->
             <!-- 提交历史开始 -->
@@ -23,9 +22,12 @@
             </div>
             <!-- 提交历史结束 -->
             <!-- toc开始 -->
-            <div class="toc-wrapper" :style="{'top': parentShowHeader ? '66px': '6px', 'height': parentShowHeader ? 'calc(100% - 60px)': '100%'}">
+            <div class="toc-wrapper" :style="{'top': parentShowHeader ? '66px': '6px', 'height': parentShowHeader ? 'calc(80 % - 60px)': '80%'}">
               <keep-alive>
                 <contents-list :doc="doc" @item-click="handleTocItemClick"/>
+              </keep-alive>
+              <keep-alive>
+                <mind-note/>
               </keep-alive>
             </div>
             <!-- toc结束 -->

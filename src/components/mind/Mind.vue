@@ -2,17 +2,24 @@
   <el-button-group style="position:absolute;top:0;left:0;z-index:999">
     <el-button size="small" @click="zoomOut">-</el-button>
     <el-button size="small" @click="zoomIn">+</el-button>
+    <el-button size="small" @click="$emit('onFullScreen')">
+      <el-icon><full-screen /></el-icon>
+    </el-button>
   </el-button-group>
   <div :id="id" class="mind-container"></div>
 </template>
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
+import { FullScreen } from '@element-plus/icons-vue';
 import MindNode from "@/dto/mind/MindNode";
 import jsMind from "jsmind";
 import "jsmind/style/jsmind.css";
 
 export default defineComponent({
+  components: {
+    FullScreen
+  },
   props: {
     id: {
       type: String,
@@ -23,6 +30,7 @@ export default defineComponent({
       required: true,
     },
   },
+  emits: ['onFullScreen'],
   data() {
     return {
       jm: null as any,

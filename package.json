@@ -15,7 +15,7 @@
   "dependencies": {
     "@element-plus/icons-vue": "2.0.9",
     "algoliasearch": "4.13.1",
-    "axios": "0.27.2",
+    "axios": "1.1.2",
     "diff": "5.1.0",
     "echarts": "5.3.3",
     "echarts-wordcloud": "2.0.0",

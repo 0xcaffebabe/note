@@ -9,6 +9,7 @@ import MermaidUtils from "@/util/MermaidUtils";
 import MobileDocPage from "./mobile/MobileDocPage.vue";
 import Hammer from 'hammerjs'
 import SelectionPopover from "./tool/SelectionPopover.vue";
+import InstantPreviewer from './tool/InstantPreviewer.vue'
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 
@@ -51,10 +52,15 @@ class DocPageEventManager {
     // 文档链接
     for (let i = 0; i < docLinkList.length; i++) {
       const a = docLinkList[i];
-      a.onclick = (e: Event) => {
+      a.onclick = (e: MouseEvent) => {
         const href = a.getAttribute("href");
         if (href?.startsWith("doc") || href?.startsWith("/doc")) {
-          this.docPageInstance.$router.push(href);
+          if (e.altKey) {
+            (this.getRef('instantPreviewer') as InstanceType<typeof InstantPreviewer>).preview('/#' + href);
+            console.log(href)
+          }else {
+            this.docPageInstance.$router.push(href);
+          }
           e.preventDefault();
           e.stopPropagation();
           return false

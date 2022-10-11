@@ -80,6 +80,7 @@
     <knowledge-ablity ref="knowledgeAblity"/>
   </keep-alive>
   <image-viewer ref="imageViewer" />
+  <instant-previewer ref="instantPreviewer"/>
   <resource-brower ref="resourceBrower" />
 </template>
 
@@ -120,6 +121,7 @@ import KnowledgeRedundancy from './knowledge/KnowledgeRedundancy.vue'
 import KnowledgeAblity from './knowledge/KnowledgeAblity.vue'
 import DocMetadataInfo from './DocMetadataInfo.vue'
 import SelectionPopover from './tool/SelectionPopover.vue'
+import InstantPreviewer from './tool/InstantPreviewer.vue'
 import { SysUtils } from "@/util/SysUtils";
 import config from '@/config';
 
@@ -149,6 +151,7 @@ export default defineComponent({
     KnowledgeAblity,
     DocMetadataInfo,
     SelectionPopover,
+    InstantPreviewer,
 },
   watch: {
     showHeader: {

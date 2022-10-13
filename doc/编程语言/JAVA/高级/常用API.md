@@ -49,6 +49,18 @@ StringBuilder 线程不安全(效率更高)
 
 StringBuffer 线程安全
 
+String 在 Java 6 以后提供了 intern() 方法，可以通过此方法来返回代表某一字符串的唯一实例，但问题是这个实例会被缓存在永久代中，如果使用不当，OOM 就会光顾
+
+在后续版本中，这个缓存被放置在堆中，这样就极大避免了永久代占满的问题
+
+Oracle JDK 8u20 之后，推出了一个新的特性，可以将相同数据的字符串指向同一份数据来做到的，但需要配置`
+-XX:+UseStringDeduplication
+`来开启这个特性
+
+JDK9之后对字符串进行优化，从原来的char数组编程了byte数组，精简了字符串，减少空间占用
+
+JDK对字符串的另外一个优化是对字符串加法语法转换成StringBuilder，在9之后的版本，这个优化手段变成了java.lang.invoke.StringConcatFactory#makeConcatWithConstants 统一了入口，相比之前在javac中硬编码好
+
 ### equals原理
 
 ```java
@@ -178,6 +190,20 @@ System.out.println(sb.toString());
 1. POJO类属性全部使用包装类
 2. RPC方法参数与返回值全部使用包装类
 3. 局部变量尽可能使用基本类型
+
+```java
+Integer integer = 1;
+int unboxing = integer ++;
+```
+
+以上两句代码会被编译成：
+
+```
+1: invokestatic  #2                  // Method
+java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+8: invokevirtual #3                  // Method
+java/lang/Integer.intValue:()I
+```
 
 ### 基本类型与字符串的转换
 

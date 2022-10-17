@@ -1,4 +1,21 @@
-# Map源码解析
+# Map
+
+```mermaid
+classDiagram
+    Map <.. HashTable: 实现
+    Dictionary <-- HashTable: 继承
+    HashTable <-- Properties: 继承
+    Map <.. EnumMap: 实现
+    AbstractMap <-- EnumMap: 继承
+    AbstractMap <-- HashMap: 继承
+    AbstractMap <-- TreeMap: 继承
+    HashMap <-- LinkedHashMap: 继承
+    Map <.. HashMap: 实现
+    Map <.. AbstractMap: 实现
+    Map <.. SortedMap: 实现
+    SortedMap <.. NavigableMap: 实现
+    NavigableMap <.. TreeMap: 实现
+```
 
 ## HashMap
 
@@ -85,6 +102,8 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
 只有当链表长度大于等于8，并且整个数组长度大于等于64时，才会进行链表转红黑树
 
 至于为什么是8，链表查询的时间复杂度是 O (n)，红黑树的查询复杂度是 O (log (n))。在链表数据不多的时候，使用链表进行遍历也比较快，只有当链表数据比较多的时候，才会转化成红黑树，但红黑树需要的占用空间是链表的 2 倍，考虑到转化时间和空间损耗，8是最合适的
+
+在元素放置过程中，恶意构造哈希冲突的数据是有可能的，针对于JDK8之前使用链表来存储相同哈希的数据可以进行哈希碰撞拒绝服务攻击，消耗服务端的CPU
 
 **红黑树的插入**
 

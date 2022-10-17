@@ -250,6 +250,10 @@ Promise.all([query(),query(),query()]).then(()=>console.log('all mission complet
 Promise.race([query(),query(),query()]).then(()=>console.log('mission complete'));
 ```
 
+**错误捕获**
+
+Promise 对象的错误，会一直向后传递，直到被 onReject 函数处理或 catch 语句捕获为止
+
 ### 异步函数
 
 ```js
@@ -270,9 +274,7 @@ f()
 
 await关键字只能出现在异步函数中
 
-await promise await后面只能写promise对象 写其他类型的API是不不可以的
-
-await关键字可是暂停异步函数向下执行 直到promise返回结果
+await关键字可暂停异步函数向下执行 直到promise返回结果
 
 ```js
 async function f1() {
@@ -289,6 +291,8 @@ async function f(){
 }
 f()
 ```
+
+一个被 async 修饰的函数会被包装为一个 Promise，遇到await关键字时，引擎会把该任务提交给微任务队列，然后暂停当前协程的执行，将主线程的控制权转交给父协程执行，同时会将await的这个对象返回给父协程，父协程拿到这个对象之后，就是调用then方法了
 
 ## web服务器
 

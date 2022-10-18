@@ -39,6 +39,10 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import {Tools} from '@element-plus/icons-vue'
+import {random} from 'lodash'
+import Category from "@/dto/Category";
+import CategoryService from "@/service/CategoryService";
+import DocUtils from "@/util/DocUtils";
 
 type ActionType = 
     'showReadingHistory' |
@@ -56,7 +60,7 @@ type ActionType =
     'openInEditor' | 
     'showKnowledgeAblity'
 
-type LocalActionType = ActionType & 'showMoreSetting'
+type LocalActionType = ActionType & 'showMoreSetting' & 'randomReview'
 
 interface Action {
   name: string
@@ -103,6 +107,7 @@ export default defineComponent({
       showDrawer: false,
       fontSize: 1,
       parentShowHeader: true,
+      flatCategoryList: [] as Category[],
       actionList: [
         {name: '阅读历史', type: 'primary', action: 'showReadingHistory'},
         {name: '思维导图', type: 'success', action: 'showMindGraph', hotkey: 'alt + l'},
@@ -120,6 +125,7 @@ export default defineComponent({
         {name: '去到DOC', type: 'info', action: 'goToDoc', divided: true},
         {name: '去到PPT', type: 'danger', action: 'goToPpt'},
         {name: '下载pdf', type: 'success', action: 'downloadPdf'},
+        {name: '随机复习', type: 'primary', action: 'randomReview' as LocalActionType, local: true, hotkey: 'alt + n'},
         {name: '更多设置', type: 'info', action: 'showMoreSetting' as LocalActionType, local: true, divided: true},
       ] as Action[]
     }
@@ -130,9 +136,16 @@ export default defineComponent({
         case 'showMoreSetting':
           this.showDrawer = true;
           break;
+        case 'randomReview':
+          this.handleRandomReview();
+          break;
         default:
           break;
       }
+    },
+    handleRandomReview() {
+      const category = this.flatCategoryList[random(0, this.flatCategoryList.length - 1)];
+      this.$router.push("/doc/" + DocUtils.docUrl2Id(category.link));
     },
     handleKeyDown(e: KeyboardEvent){
       const actions = this.actionList.filter(v => v.hotkey)
@@ -165,8 +178,9 @@ export default defineComponent({
     }
   },
   setup() {},
-  created(){
+  async created(){
     document.addEventListener('keydown', this.handleKeyDown);
+    this.flatCategoryList = await CategoryService.getFlatCategoryList();;
   },
   unmounted(){
     document.removeEventListener('keydown', this.handleKeyDown);

@@ -66,6 +66,29 @@ class CategoryService implements Cacheable {
     return categoryList
   }
 
+  /**
+   *
+   * 获取平铺开的目录列表
+   * @return {*}  {Promise<Category[]>}
+   * @memberof CategoryService
+   */
+  @cache
+  public async getFlatCategoryList(): Promise<Category[]> {
+    const categoryList = await this.getCompiledCategoryList();
+    const res:Category[] = []
+    const stack = [...categoryList];
+    while(stack.length != 0) {
+      const category = stack.pop();
+      if (category?.link) {
+        res.push(category);
+      }
+      if (category?.chidren) {
+        stack.push(...category.chidren)
+      }
+    }
+    return res;
+  }
+
   public getCategory(predicate: (cate :Category) => boolean): Category[] {
     const stack: Category[] = [...this.cahedCategoryList];
     const result: Category[] = []

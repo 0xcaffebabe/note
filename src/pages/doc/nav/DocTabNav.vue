@@ -78,7 +78,6 @@ export default defineComponent({
   async created() {
     this.allCateList = await CategoryService.getCategoryList()
   },
-  setup() {},
   methods: {
     docUrl2Id: DocUtils.docUrl2Id,
     cateName(url: string): string {

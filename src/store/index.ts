@@ -23,6 +23,9 @@ export default function create(){
         const cateList :string[]= state.currentCategoryList;
         if (cateList.indexOf(category.link) == -1) {
           cateList.push(category.link)
+          if (cateList.length >= 10) {
+            cateList.shift();
+          }
         }
         localStorage.setItem(cateListKey, JSON.stringify(cateList));
       },

@@ -40,8 +40,11 @@
         @change="init"
       />
     </div>
+    <div>
+      度数: <el-input type="number" size="small" v-model="degree" :disabled="!onlySelfRelated || isPotential"></el-input>
+    </div>
   </div>
-    <div id="knowledgeNetwork"></div>
+  <div id="knowledgeNetwork"></div>
   </el-drawer>
 </template>
 
@@ -101,12 +104,13 @@ export default defineComponent({
   },
   data() {
     return {
-      showDrawer: false,
+      showDrawer: true,
       chart: null as echarts.ECharts | null,
       mode: 'force' as "force" | "circular" | "none" | undefined,
       displayMode: ['force', 'circular'],
-      onlySelfRelated: false,
+      onlySelfRelated: true,
       isPotential: false,
+      degree: 3,
     };
   },
   watch: {
@@ -123,6 +127,9 @@ export default defineComponent({
     },
     displayMode(){
       this.init()
+    },
+    degree() {
+      this.init();
     }
   },
   computed: {
@@ -148,7 +155,20 @@ export default defineComponent({
       }
       let knowledgeNetwork: KnowledgeNode[] = this.isPotential ? await api.getPotentialKnowledgeNetwork() : await api.getKnowledgeNetwork();
       if (this.onlySelfRelated) {
-        knowledgeNetwork = knowledgeNetwork
+        // 非隐式知识网络才能进行度数过滤
+        if (!this.isPotential) {
+          const direct: KnowledgeNode[] = knowledgeNetwork.filter(v => v.id == this.doc || v.links?.find(cv => this.doc == cv.id));
+          for(let i = 0; i < this.degree; i++) {
+            const list = knowledgeNetwork.filter(v => direct.some(d => d.id == v.id) || v.links?.find(cv => direct.some(d => d.id == cv.id)));
+            direct.push(...list);
+            direct.push(...list.flatMap(v => v.links || []).filter(v => direct.some(d => d.id == v.id)));
+          }
+          direct.forEach(v => {
+              v.links = v.links?.filter(cv => direct.some(d => d.id == cv.id))
+            })
+          knowledgeNetwork = direct;
+        } else {
+          knowledgeNetwork = knowledgeNetwork
           .filter(v => v.id == this.doc || v.links?.find(cv => cv.id == this.doc))
           .map(v => {
             if (v.id != this.doc) {
@@ -156,6 +176,8 @@ export default defineComponent({
             }
             return v
           })
+        }
+        
       }
       // 提取所有节点
       let nodes = Array.from(

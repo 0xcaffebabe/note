@@ -104,7 +104,7 @@ export default defineComponent({
   },
   data() {
     return {
-      showDrawer: true,
+      showDrawer: false,
       chart: null as echarts.ECharts | null,
       mode: 'force' as "force" | "circular" | "none" | undefined,
       displayMode: ['force', 'circular'],

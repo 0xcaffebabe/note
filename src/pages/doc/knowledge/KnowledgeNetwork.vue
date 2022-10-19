@@ -10,27 +10,37 @@
     modal-class="operational-drawer-modal"
     custom-class="operational-drawer"
   >
-  <el-button text class="close-btn" @click="showDrawer = false">
-    <el-icon><close-bold /></el-icon>
-  </el-button>
-  <el-select v-model="mode" placeholder="显示模式" size="small" popper-class="popper-list">
-      <el-option
-      v-for="item in displayMode"
-      :key="item"
-      :label="item"
-      :value="item"
-    >
-    </el-option>
-  </el-select>
-  <el-checkbox v-model="onlySelfRelated" label="只看跟本节点关联的" size="large" />
-  <el-switch
-    v-model="isPotential"
-    active-color="#409EFF"
-    inactive-color="#409EFF"
-    inactive-text="显式知识网络"
-    active-text="隐式知识网络"
-    @change="init"
-  />
+  <div class="tool-zone">
+    <div>
+      <el-button text class="close-btn" @click="showDrawer = false">
+        <el-icon><close-bold /></el-icon>
+      </el-button>
+    </div>
+    <div>
+      <el-select v-model="mode" placeholder="显示模式" size="small" popper-class="popper-list">
+          <el-option
+          v-for="item in displayMode"
+          :key="item"
+          :label="item"
+          :value="item"
+        >
+        </el-option>
+      </el-select>
+    </div>
+    <div>
+      <el-checkbox v-model="onlySelfRelated" label="只看跟本节点关联的" size="large" />
+    </div>
+    <div>
+      <el-switch
+        v-model="isPotential"
+        active-color="#409EFF"
+        inactive-color="#409EFF"
+        inactive-text="显式知识网络"
+        active-text="隐式知识网络"
+        @change="init"
+      />
+    </div>
+  </div>
     <div id="knowledgeNetwork"></div>
   </el-drawer>
 </template>
@@ -52,8 +62,6 @@ import api from "@/api";
 import { KnowledgeNode } from "@/dto/KnowledgeNode";
 import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
-import TagUtils from "@/pages/tag/TagUtils";
-import { cleanText } from "@/util/StringUtils";
 
 echarts.use([
   TitleComponent,
@@ -90,6 +98,16 @@ export default defineComponent({
       type: String,
       required: true,
     },
+  },
+  data() {
+    return {
+      showDrawer: false,
+      chart: null as echarts.ECharts | null,
+      mode: 'force' as "force" | "circular" | "none" | undefined,
+      displayMode: ['force', 'circular'],
+      onlySelfRelated: false,
+      isPotential: false,
+    };
   },
   watch: {
     mode(){
@@ -355,17 +373,6 @@ export default defineComponent({
       this.chart.setOption(option);
     },
   },
-  data() {
-    return {
-      showDrawer: false as boolean,
-      chart: null as echarts.ECharts | null,
-      mode: 'force' as "force" | "circular" | "none" | undefined,
-      displayMode: ['force', 'circular'],
-      onlySelfRelated: false,
-      isPotential: false,
-    };
-  },
-  mounted() {},
 });
 </script>
 
@@ -379,27 +386,15 @@ export default defineComponent({
 #knowledgeNetwork {
   height: 100%;
 }
-.el-select {
-  position:absolute;
-  top:20px;
-  right: 20px;
-  z-index: 9999;
-}
-.el-switch {
-  position:absolute;
-  top:60px;
-  right: 20px;
-  z-index: 9999;
-}
 .close-btn {
   position:absolute;
   top: -2px;
   right: -2px;
   z-index: 9999;
 }
-.el-checkbox {
-  position:absolute;
-  top:80px;
+.tool-zone {
+  position: absolute;
+  top: 20px;
   right: 20px;
   z-index: 9999;
 }

@@ -17,15 +17,15 @@
       </el-button>
     </div>
     <div>
-      <el-select v-model="mode" placeholder="显示模式" size="small" popper-class="popper-list">
-          <el-option
+      <el-radio-group v-model="mode" placeholder="显示模式" size="small" popper-class="popper-list">
+          <el-radio
           v-for="item in displayMode"
           :key="item"
           :label="item"
           :value="item"
         >
-        </el-option>
-      </el-select>
+        </el-radio>
+      </el-radio-group>
     </div>
     <div>
       <el-checkbox v-model="onlySelfRelated" label="只看跟本节点关联的" size="large" />
@@ -163,9 +163,9 @@ export default defineComponent({
             direct.push(...list);
             direct.push(...list.flatMap(v => v.links || []).filter(v => direct.some(d => d.id == v.id)));
           }
-          direct.forEach(v => {
-              v.links = v.links?.filter(cv => direct.some(d => d.id == cv.id))
-            })
+          // direct.forEach(v => {
+          //     v.links = v.links?.filter(cv => direct.some(d => d.id == cv.id))
+          //   })
           knowledgeNetwork = direct;
         } else {
           knowledgeNetwork = knowledgeNetwork

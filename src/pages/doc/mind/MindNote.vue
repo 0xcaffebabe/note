@@ -54,7 +54,12 @@ export default defineComponent({
       const doc = docId || this.$route.params.doc.toString();
       this.mindData = await DocService.generateMindData(doc);
       for(let i = 0; i < 3; i++) {
-        this.$nextTick((this.$refs.mind as InstanceType<typeof Mind>).zoomOut)
+        this.$nextTick(() => {
+          if (!this.$refs.mind) {
+            return
+          }
+          (this.$refs.mind as InstanceType<typeof Mind>).zoomOut()
+        })
       }
     },
     test() {

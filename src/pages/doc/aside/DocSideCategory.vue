@@ -58,6 +58,9 @@ export default defineComponent({
       const activeMenu: HTMLElement = document.querySelector(
         ".el-menu-item.is-active"
       ) as HTMLElement;
+      if (!activeMenu) {
+        return
+      }
       const activeMenuPos: number = activeMenu.getBoundingClientRect().y;
       const amount = activeMenuPos < 350 ? -50 : 50;
       let timer = setInterval(() => {

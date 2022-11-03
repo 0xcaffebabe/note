@@ -60,7 +60,7 @@
   <!-- 关键词提示器结束 -->
   <link-popover ref="linkPopover"/>
   <selection-popover ref="selectionPopover" @showKnowledgeTrend="showKnowledgeTrend"/>
-  <el-backtop :bottom="40" :right="326" />
+  <el-backtop :bottom="220" :right="326" />
   <reading-history ref="readingHistory" />
   <mind-graph ref="mindGraph" @close="showAside = true;isDrawerShow = false" />
   <link-list :html="contentHtml" ref="linkList"/>
@@ -406,6 +406,9 @@ export default defineComponent({
   right: 2px;
 }
 }
+.el-backtop {
+  transition: all .1s;
+}
 
 body[theme=dark] {
   background-color:var(--main-dark-bg-color);
@@ -413,6 +416,12 @@ body[theme=dark] {
   .main {
     background-color:var(--main-dark-bg-color);
     color: var(--main-dark-text-color);
+  }
+  .el-backtop {
+    background-color: var(--second-dark-bg-color);
+  }
+  .el-backtop:hover {
+    background-color: #666;
   }
 }
 </style>

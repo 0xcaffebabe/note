@@ -150,10 +150,12 @@ export default defineComponent({
   display: inline-block;
   position: relative;
   cursor: pointer;
-  border-radius: 18px;
+  border-radius: 0;
+  border-right-width: 0;
   padding: 0px 28px;
   height: 28px;
   font-size: 14px;
+  margin-left: 0;
   .close-btn {
     position: absolute;
     right: 10px;
@@ -171,9 +173,11 @@ export default defineComponent({
     background-color: #ddd;
   }
 }
+.nav-item:last-child {
+  border-right-width: 1px !important;
+}
 .nav-item.active {
   background: rgba(64,158,255,.8);
-  border: 1px solid rgba(64,158,255,.5);
   color: white;
   .close-btn {
     display: inline-block;
@@ -181,7 +185,6 @@ export default defineComponent({
 }
 .nav-item:hover {
   background: rgba(64,158,255,.8);
-  border: 1px solid rgba(64,158,255,.5);
   color: white;
   .close-btn {
     display: inline-block;

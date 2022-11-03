@@ -61,20 +61,7 @@ export default defineComponent({
       if (!activeMenu) {
         return
       }
-      const activeMenuPos: number = activeMenu.getBoundingClientRect().y;
-      const amount = activeMenuPos < 350 ? -50 : 50;
-      let timer = setInterval(() => {
-        const activeMenuPos1: number = activeMenu.getBoundingClientRect().y;
-        if (
-          (activeMenuPos1 >= 350 &&
-            activeMenuPos1 <= categoryWrapper.offsetHeight - 350) ||
-          categoryWrapper.scrollTop + amount < 0
-        ) {
-          clearInterval(timer);
-          return;
-        }
-        categoryWrapper.scrollTo(0, categoryWrapper.scrollTop + amount);
-      }, 4);
+      activeMenu.scrollIntoView({behavior: 'smooth'})
     },
     updateCurrentCategory(doc: string) {
       const categoryListRef: any = this.$refs.categoryList;

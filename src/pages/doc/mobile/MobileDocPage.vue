@@ -34,7 +34,6 @@
 import { defineComponent, ref } from 'vue'
 import DocFileInfo from '@/dto/DocFileInfo'
 import DocService from '@/service/DocService'
-import './mobile-markdown-v1.less'
 import '../code-hl-vsc.less'
 import MobileDocSideCategory from './aside/MobileDocSideCategory.vue'
 import LinkPopover from '../LinkPopover.vue'
@@ -194,5 +193,5 @@ export default defineComponent({
 })
 </script>
 
-<style lang="less" scoped>
+<style lang="less" src="./mobile-markdown-v1.less" scoped>
 </style>

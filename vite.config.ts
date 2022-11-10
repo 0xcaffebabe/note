@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 import DocServer from './src/plugins/DocServer'
@@ -13,7 +13,7 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
-const plugins = [];
+const plugins:Plugin[] = [];
 
 // 打包生产环境才引入的插件
 if (process.env.NODE_ENV === "production") {
@@ -85,16 +85,18 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id: string): string {
-          const indepentDependcies = ['element-plus', 'vue', 'jspdf', 'html2canvas', 'echarts', 'zrender', 'marked', 'mermaid']
+          const indepentDependcies = ['element-plus', 'vue', 'jspdf',
+           'html2canvas', 'echarts', 'zrender', 'marked', 'mermaid',
+            'katex', 'lodash']
           for(let depend of indepentDependcies) {
             if (id.includes('node_modules') && id.includes(depend)) {
               return depend
             }
           }
           if (id.includes('node_modules')) {
-            console.log(id)
             return 'vendor'
           }
+          return ''
         }
       }
     }

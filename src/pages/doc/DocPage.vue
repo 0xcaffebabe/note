@@ -124,6 +124,8 @@ import SelectionPopover from './tool/SelectionPopover.vue'
 import InstantPreviewer from './tool/InstantPreviewer.vue'
 import { SysUtils } from "@/util/SysUtils";
 import config from '@/config';
+import katex from 'katex'
+import 'katex/dist/katex.css'
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -288,6 +290,8 @@ export default defineComponent({
         this.hilightKeywords(docEl, kw);
         // 更新关键词寻找器状态
         this.kwFinder?.refresh();
+        // 渲染数学公式
+        this.renderLatex();
         // 如果关键词为空且关键词寻找器为显式状态
         if (!kw && this.kwFinder?.showFinder) {
           this.kwFinder.hide()
@@ -318,6 +322,22 @@ export default defineComponent({
     },
     hilightKeywords(docEl: HTMLElement, kw?: string, refreshKwFinder: boolean = false) {
       this.kwFinder?.hilightKeywords(docEl, kw, refreshKwFinder)
+    },
+    renderLatex() {
+      const segList = document.querySelector('.markdown-section')?.querySelectorAll('.tex')
+      document.querySelector('.markdown-section')?.querySelectorAll('.tex')
+        .forEach(e => {
+          const element = e as HTMLElement
+          katex.render(
+              // 如果在`%`字符前没有`\`字符，则在`%`前添加`\`后再渲染
+              element.textContent!.replace(/[^\\](%)/g, (match)=>{return match[0] + '\\' + '%'}),
+              element,
+              {
+                  // 取消对中文内容渲染的警告
+                  strict: false
+              }
+          )
+        })
     },
     downloadPdf() {
       try {

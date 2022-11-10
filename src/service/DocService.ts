@@ -256,6 +256,29 @@ class DocService implements Cacheable{
     render.table = (header: string, body: string): string => {
       return `<div class="table-wrapper"><table>${header}${body}</table></div>`
     }
+    render.paragraph = (text: string): string => {
+      // isTeXInline - 该文本是否有行内公式
+      const isTeXInline = /\$(.*)\$/g.test(text)
+      // isTeXLine - 该文本是否有行间公式
+      const isTeXLine = /^\$\$(\s*.*\s*)\$\$$/.test(text)
+
+      if (!isTeXLine && isTeXInline) {
+          // 如果不是行间公式，但是行内公式，则使用<span class="marked_inline_tex">包裹公式内容，消除$定界符
+          text = text.replace(/(\$([^\$]*)\$)+/g, function(_, $2) {
+              // 避免和行内代码冲突
+              if ($2.indexOf('<code>') >= 0 || $2.indexOf('</code>') >= 0) {
+                  return $2
+              } else {
+                  return "<span class=\"inline_tex tex\">" + $2.replace(/\$/g, "") + "</span>"
+              }
+          })
+      } else if(isTeXLine) {
+          // 如果是行间公式，则使用<div class='marked_tex'>包裹公式内容，消除$$定界符
+          // 如果不是LaTex公式，则直接返回原文本
+          text = (isTeXLine) ? "<div class=\"line_tex tex\">" + text.replace(/\$/g, "") +"</div>": text
+      }
+      return text
+    }
     return  marked(mdContent, {
       renderer: render
     })

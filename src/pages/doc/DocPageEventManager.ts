@@ -35,7 +35,7 @@ class DocPageEventManager {
    */
   public listenEventBus(){
     EventBus.on('enter-zen-mode', () => {
-      this.docPageInstance.showAside = false;
+      (this.docPageInstance as InstanceType<typeof DocPage>).showAside = false;
     })
   }
 

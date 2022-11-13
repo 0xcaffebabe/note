@@ -65,7 +65,7 @@
     "pdf-merger-js": "3.4.0",
     "puppeteer": "19.2.2",
     "rimraf": "3.0.2",
-    "rollup-plugin-visualizer": "5.6.0",
+    "rollup-plugin-visualizer": "5.8.3",
     "simple-git": "3.14.1",
     "ts-node": "10.8.1",
     "tsconfig-paths": "4.0.0",

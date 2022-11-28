@@ -277,7 +277,7 @@ class DocService implements Cacheable{
           // 如果不是LaTex公式，则直接返回原文本
           text = (isTeXLine) ? "<div class=\"line_tex tex\">" + text.replace(/\$/g, "") +"</div>": text
       }
-      return text
+      return `<p>${text}</p>`
     }
     return  marked(mdContent, {
       renderer: render

@@ -157,3 +157,66 @@ Wasm 将其模块内部所使用到的数字值分为以下三种类型：
 - wasm2wat：该工具主要用于将指定文件内的 Wasm 二进制代码转译为对应的 WAT 可读文本代码
 - wat2wasm：该工具的作用恰好与 wasm2wat 相反。它可以将输入文件内的 WAT 可读文本代码转译为对应的 Wasm 二进制代码
 - wat-desugar：该工具主要用于将输入文件内的，基于 “S- 表达式” 形式表达的 WAT 可读文本代码“拍平”成对应的 Flat-WAT 代码
+
+## WASI
+
+- 这个抽象层允许了在 Web 场景之外使用 Wasm
+
+![20221129103749](/assets/20221129103749.webp)
+
+WASI 在 Wasm 字节码与虚拟机之间，增加了一层“系统调用抽象层”提供了可移植性
+
+另外一点，基础设施，即虚拟机在实现WASI标准时，便会采用 “Capability-based Security” 的方式来控制每一个 Wasm 模块实例所拥有的 capability
+
+## 浏览器加载
+
+能够使用 Wasm 来实现的功能，现阶段都可以通过 JavaScript 来实现
+
+- fetch 将被使用到的 Wasm 二进制模块，从网络上的某个位置通过 HTTP 请求的方式，加载到浏览器中
+- compile 将从远程位置获取到的 Wasm 模块二进制代码，编译为可执行的平台相关代码和数据结构
+- instantiate 浏览器引擎开始执行在上一步中生成的代码
+- call 可以直接通过上一阶段生成的动态 Wasm 模块对象，来调用从 Wasm 模块内导出的方法
+
+对应的 js 方法：
+
+```js
+bufferSource = new Int8Array([...]); 
+let module = new WebAssembly.Module(bufferSource);
+
+let memory = new WebAssembly.Memory({
+  initial:10, 
+  maximum:100,
+});
+
+WebAssembly.compile(bufferSource)
+
+WebAssembly.instantiate(bufferSource, importObject)
+```
+
+### Web API
+
+- 流式实例化 WebAssembly.instantiateStreaming(source, importObject)
+- 流式编译 WebAssembly.compileStreaming(source)
+
+### 运行时
+
+- 每一个经过实例化的 Wasm 模块对象，都会在运行时维护自己唯一的“调用栈”
+- 每一个实例化的 Wasm 模块对象都有着自己的（在 MVP 下只能有一个）线性内存段
+
+![20221129114714](/assets/20221129114714.webp)
+
+### 内存模型
+
+在 Web 浏览器这个宿主环境中，一个内存实例通常可以由 JavaScript 中的 ArrayBuffer 类型来进行表示
+
+![20221129115134](/assets/20221129115134.webp)
+
+### 局限
+
+- 想要在Wasm 二进制模块内引用外部 DOM，目前需要通过封装导入对象来实现
+- 复杂数据类型需要进行编解码
+
+## 应用
+
+- 作为一种中间表示的字节码格式
+- 在浏览器中适合计算密集型的操作

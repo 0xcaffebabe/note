@@ -5,6 +5,7 @@
       size="small"
       v-for="cate in cateList"
       :key="cate"
+      :url="cate"
       @contextmenu="handleContextMenuEvent(cate, $event)"
       :class="{
         'active': docUrl2Id(currentCate.link) == docUrl2Id(cate)
@@ -57,13 +58,16 @@ export default defineComponent({
       immediate: true,
     },
     currentCate() {
-      // const activeTab = document.querySelector('.tab-container-wrapper .active') as HTMLElement
-      // if (!activeTab) {
-      //   return
-      // }
-      // const tabContainer = document.querySelector('.tab-container-wrapper') as HTMLElement
-      // console.log(activeTab, activeTab.offsetLeft, tabContainer.scrollLeft )
-      // tabContainer.scrollTo(activeTab.offsetLeft - 280, 0)
+      this.$nextTick(() => {
+        console.log(this.currentCate)
+        const activeTab = document.querySelector(`.tab-container-wrapper [url="${this.currentCate.link}"]`) as HTMLElement
+        console.log(activeTab)
+        if (!activeTab) {
+          return
+        }
+        activeTab.scrollIntoView()
+      })
+      
     }
     
   },

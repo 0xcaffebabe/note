@@ -110,6 +110,7 @@ export default defineComponent({
       },
       yAxis: {
         type: "value",
+        min: 'dataMin'
       },
       series: [
         {

@@ -116,7 +116,9 @@ export default defineComponent({
   methods: {
     async show() {
       this.showDrawer = true;
-      (this.$refs.input as any).focus();
+      setTimeout(() => {
+        (this.$refs.input as any).focus();
+      }, 200)
       this.searchSuggestionList = await searchService.getQuerySuggestions();
     },
     hide() {

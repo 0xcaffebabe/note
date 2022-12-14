@@ -18,11 +18,13 @@ interface DocHits {
 const hilighTag = 'mark'
 const cache = Cache()
 
+const splitRegx = /,|，|\s+/
+
 function kwContains(kw: string, txt: string): boolean{
   if (!txt) {
     return false
   }
-  const kwList = kw.trim().split(' ').filter(v => v);
+  const kwList = kw.trim().split(splitRegx).filter(v => v);
   for(let i of kwList) {
     if (txt.replace(/<[^>]+>/ig, '').toLowerCase().indexOf(i.toLowerCase()) != -1) {
       return true;
@@ -32,7 +34,7 @@ function kwContains(kw: string, txt: string): boolean{
 }
 
 function appendMissingKw(segement: SearchIndexSegment, kw: string): SearchIndexSegment {
-  const kwList = kw.trim().split(' ').filter(v => v);
+  const kwList = kw.trim().split(splitRegx).filter(v => v);
   for(let i of kwList) {
     if (segement.id.replace(/<[^>]+>/ig, '').toLowerCase().indexOf(i.toLowerCase()) == -1 &&
           segement.txt.replace(/<[^>]+>/ig, '').toLowerCase().indexOf(i.toLowerCase()) == -1) {

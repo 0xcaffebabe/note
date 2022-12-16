@@ -24,9 +24,6 @@ export default function DocServer(){
             next()
             return
           }
-          if (fileUri.endsWith('.md')) {
-            GitService.getFileCommitList(fileUri)
-          }
           res.writeHead(200, { 'Content-Type': `${mime.getType(path.extname(uri))};charset=utf8` });
           res.write(fs.readFileSync(fileUri))
           res.end()
@@ -36,7 +33,7 @@ export default function DocServer(){
       })
       // 处理md文件
       server.middlewares.use(async (req, res, next) => {
-        if (req.originalUrl && req.originalUrl.endsWith('.md.json')) {
+        if (req.originalUrl && req.originalUrl.endsWith('.md.json') && req.method == 'GET') {
           const uri = decodeURI(req.originalUrl)
           const mdFileUri = "./doc" + uri.substring(0,uri.lastIndexOf('.'));
           console.log(mdFileUri)
@@ -45,7 +42,10 @@ export default function DocServer(){
             return
           }
           res.writeHead(200, { 'Content-Type': `application/json;charset=utf8` });
-          res.write(JSON.stringify(await DocService.getFileInfo(mdFileUri)))
+          const st = new Date().getTime()
+          const fileInfo = await DocService.getFileInfo(mdFileUri)
+          console.log(`获取 ${mdFileUri} 文件信息耗时: ${new Date().getTime() - st}`)
+          res.write(JSON.stringify(fileInfo))
           res.end()
         }else{
           next()
@@ -60,7 +60,9 @@ export default function DocServer(){
           if (!apiCache.has(api.path)) {
             console.log(`${api.name}为空 生成`)
             try {
+              const st = new Date().getTime()
               apiCache.set(api.path, await api.method())
+              console.log(`${api.name}生成完毕 耗时 ${new Date().getTime() - st}`)
             }catch(err: any) {
               console.error(err)
             }

@@ -41,6 +41,7 @@ class DocService extends BaseService implements Cacheable {
     return this.instance;
   }
 
+  @cache
   public async getFileInfo(path: string): Promise<DocFileInfo> {
     const callResult = await Promise.all([GitService.getFileCommitList(path), fs.promises.readFile(path)])
     return {
@@ -243,12 +244,15 @@ class DocService extends BaseService implements Cacheable {
     async function task(file: string): Promise<DocQuality> {
         const id = DocUtils.docUrl2Id(file)
         /*
-          文档质量 = 每千字数 + 外链数 + 内链数
+          文档质量 = 每千字数 + 外链数 + 内链数 + git提交数
         */
        const docQuality = new DocQuality()
        docQuality.id = id
        const md = (await fs.promises.readFile(file)).toString()
-       docQuality.quality = that.cleanText(md).length / 1000 + (outLinksMap.get(id) || 0) + (inLinksMap.get(id) || 0)
+       docQuality.quality = that.cleanText(md).length / 1000 
+                              + (outLinksMap.get(id) || 0) 
+                              + (inLinksMap.get(id) || 0)
+                              + (await GitService.getFileCommitList(file)).length
        docQuality.segementQuality = that.md2TextSegement(md).map(v => v.txt.length / 1000)
        return docQuality
     }

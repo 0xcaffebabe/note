@@ -3,12 +3,19 @@ import CommitInfo from '../dto/CommitInfo'
 import simpleGit, {DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git';
 import GitChangeItem from "../dto/git/GitChangeItem";
 import { octal2Chinese } from "../util/StringUtils";
+import Cacheable from "@/decorator/Cacheable";
+import Cache from "../decorator/Cache";
+
 const git: SimpleGit = simpleGit();
 
 const ignoreCommits = ['30588a462801b5266eb892031f254c0ee99322c2', '75b476d27b17e66b2aeb2de677900355a4439eec', '1fdb2124651cb796a587fd8fc3f238f96e29cb6c']
+const cache = Cache()
 
-class GitService extends BaseService {
+class GitService extends BaseService implements Cacheable{
 
+  name(): string {
+    return 'build::doc-service';
+  }
 
   /**
    *
@@ -17,6 +24,7 @@ class GitService extends BaseService {
    * @return {*}  {Promise<CommitInfo[]>}
    * @memberof GitService
    */
+  @cache
   public async getFileCommitList(path: string): Promise<CommitInfo[]> {
     const resp = await git.log({
       file :path

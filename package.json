@@ -18,7 +18,7 @@
     "axios": "1.1.2",
     "diff": "5.1.0",
     "echarts": "5.4.0",
-    "echarts-wordcloud": "2.0.0",
+    "echarts-wordcloud": "2.1.0",
     "element-plus": "2.2.25",
     "hammerjs": "2.0.8",
     "html2canvas": "1.4.1",

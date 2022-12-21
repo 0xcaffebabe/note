@@ -50,7 +50,7 @@
     "@types/lodash": "4.14.186",
     "@types/marked": "4.0.7",
     "@types/mermaid": "9.1.0",
-    "@types/mime": "2.0.3",
+    "@types/mime": "3.0.1",
     "@types/node": "18.11.17",
     "@types/nprogress": "0.2.0",
     "@types/prismjs": "1.26.0",

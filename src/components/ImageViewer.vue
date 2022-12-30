@@ -1,5 +1,5 @@
 <template>
-  <el-image-viewer @close="showImageViewer = false" v-if="showImageViewer" :initial-index="imgIndex" :url-list="imageUrlList" :hide-on-click-modal="true" :infinite="false"/>
+  <el-image-viewer @close="close" v-if="showImageViewer" :initial-index="imgIndex" :url-list="imageUrlList" :hide-on-click-modal="true" :infinite="false"/>
 </template>
 
 <script lang="ts">
@@ -21,9 +21,11 @@ export default defineComponent({
       this.imgIndex = index
       this.imageUrlList = [...url]
       this.showImageViewer = true
+      document.body.classList.add('image-viewer-stop-scroll')
     },
     close(){
       this.showImageViewer = false;
+      document.body.classList.remove('image-viewer-stop-scroll')
     }
   }
 })

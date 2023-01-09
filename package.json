@@ -71,6 +71,7 @@
     "unplugin-auto-import": "0.8.8",
     "unplugin-vue-components": "0.19.6",
     "vite": "4.0.2",
-    "vite-plugin-prismjs": "0.0.8"
+    "vite-plugin-prismjs": "0.0.8",
+    "vite-plugin-pwa": "^0.14.1"
   }
 }

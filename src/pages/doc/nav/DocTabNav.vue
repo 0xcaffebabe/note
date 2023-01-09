@@ -150,6 +150,13 @@ export default defineComponent({
     display: none;
   }
 }
+
+@media screen and(max-width: 1366px) {
+  .tab-container {
+    max-width: 44%;
+  }
+}
+
 .nav-item {
   display: inline-block;
   position: relative;

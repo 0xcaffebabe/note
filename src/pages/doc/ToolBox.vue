@@ -195,6 +195,13 @@ export default defineComponent({
   right: 300px;
   z-index: 1000;
 }
+
+@media screen and(max-width: 1366px) {
+  .tool-box {
+    right: 74px;
+  }
+}
+
 .box-item {
   width: 140px;
   padding: 6px 0;

@@ -35,30 +35,24 @@
             </el-button-group>
             <el-divider direction="vertical" />
             <!-- 搜索 -->
-            <el-button-group style="margin-left: 20px">
+            <el-button-group>
               <el-button
-                icon="el-icon-search"
                 class="search"
                 @click="$emit('search')"
                 size="small"
                 round
-              >
-                Ctrl + K 全文搜索
-              </el-button>
+              >全文搜索</el-button>
               <el-button
-                icon="el-icon-search"
                 class="search"
                 @click="$emit('category-search')"
                 size="small"
                 round
-              >
-                Ctrl + Q 目录搜索
-              </el-button>
+              >目录搜索</el-button>
             </el-button-group>
             <el-divider direction="vertical" />
+            <el-link :href="link.url" v-for="link in linkList" :key="link.url" target="_blank">{{link.title}}</el-link>
           </div>
           <div>
-            <el-link :href="link.url" v-for="link in linkList" :key="link.url" target="_blank">{{link.title}}</el-link>
           </div>
         </div>
       </div>

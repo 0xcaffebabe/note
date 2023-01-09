@@ -3,7 +3,7 @@
     <doc-side-category :doc="doc" :showAside="showAside" @toggle-aside="showAside = !showAside" ref="docSideCategory" />
     <el-main class="main">
       <keep-alive>
-        <doc-tab-nav @dbclick="handleTabNavDbclick" />
+        <doc-tab-nav class="doc-tab-nav" @dbclick="handleTabNavDbclick" />
       </keep-alive>
       <el-skeleton :rows="25" animated :loading="loading" :throttle="50" style="max-width: 80%;margin-top:20px;position:fixed">
         <template #default>
@@ -60,7 +60,7 @@
   <!-- 关键词提示器结束 -->
   <link-popover ref="linkPopover"/>
   <selection-popover ref="selectionPopover" @showKnowledgeTrend="showKnowledgeTrend"/>
-  <el-backtop :bottom="220" :right="326" />
+  <el-backtop :bottom="220" :right="26" />
   <reading-history ref="readingHistory" />
   <mind-graph ref="mindGraph" @close="showAside = true;isDrawerShow = false" />
   <link-list :html="contentHtml" ref="linkList"/>
@@ -423,8 +423,16 @@ export default defineComponent({
     padding-left: 0rem;
   }
   .toc-wrapper {
-  right: 2px;
+    right: 2px;
+  }
 }
+@media screen and(max-width: 1180px) {
+  .center {
+    padding-left: 0rem;
+  }
+  .markdown-section {
+    width: 66%!important;
+  }
 }
 .el-backtop {
   transition: all .1s;

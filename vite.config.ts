@@ -14,18 +14,18 @@ import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import { VitePWA } from 'vite-plugin-pwa'
 
-const plugins:Plugin[] = [];
+const plugins: Plugin[] = [];
 
 // 打包生产环境才引入的插件
 if (process.env.NODE_ENV === "production") {
   // 打包依赖展示
   plugins.push(
-      visualizer({
-          open: true,
-          gzipSize: true,
-          brotliSize: true,
-          filename: "dist/stats.html"
-      })
+    visualizer({
+      open: true,
+      gzipSize: true,
+      brotliSize: true,
+      filename: "dist/stats.html"
+    })
   );
 }
 
@@ -45,7 +45,28 @@ export default defineConfig({
   },
   plugins: [
     ...plugins,
-    VitePWA({ registerType: 'autoUpdate' }),
+    VitePWA({
+      registerType: 'autoUpdate', 
+      includeAssets: ['favicon.ico'],
+      manifest: {
+        name: '知识体系',
+        short_name: 'PKS',
+        description: '个人知识体系',
+        theme_color: '#ffffff',
+        icons: [
+          {
+            src: 'log-192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'logo-512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          }
+        ]
+      }
+    }),
     vue(),
     DocServer(),
     BuildTimeGenerator(),
@@ -68,9 +89,9 @@ export default defineConfig({
     },
     {
       ...VitePluginPrismjs({
-        "languages": ["javascript", "css", "markup", "java", "sql", 
-        'c', 'go', 'python', 'ts', 'ruby', 'io', 'scala', 'groovy', 
-        'kotlin', 'ini', 'json', 'graphql', 'haskell', 'clojure', 'rust'],
+        "languages": ["javascript", "css", "markup", "java", "sql",
+          'c', 'go', 'python', 'ts', 'ruby', 'io', 'scala', 'groovy',
+          'kotlin', 'ini', 'json', 'graphql', 'haskell', 'clojure', 'rust'],
         "plugins": ["line-numbers"]
       }),
     },
@@ -88,9 +109,9 @@ export default defineConfig({
       output: {
         manualChunks(id: string): string {
           const indepentDependcies = ['element-plus', 'vue', 'jspdf',
-           'html2canvas', 'echarts', 'zrender', 'marked', 'mermaid',
+            'html2canvas', 'echarts', 'zrender', 'marked', 'mermaid',
             'katex', 'lodash']
-          for(let depend of indepentDependcies) {
+          for (let depend of indepentDependcies) {
             if (id.includes('node_modules') && id.includes(depend)) {
               return depend
             }

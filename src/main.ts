@@ -40,5 +40,7 @@ axios.interceptors.response.use(config => {
 })
 // 屏幕顶端进度条结束
 
+window.addEventListener('orientationchange', () => location.reload())
+
 app.use(router)
 app.mount('#app')

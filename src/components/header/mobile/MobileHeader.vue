@@ -14,6 +14,9 @@
         <el-button size="default" text @click="$emit('showCategorySearch')">
           <el-icon><Folder /></el-icon>
         </el-button>
+        <el-button size="default" text @click="refresh">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
         <el-button size="default" text @click="$store.commit('setShowCategory', true)">
           <el-icon><Expand /></el-icon>
         </el-button>
@@ -28,18 +31,20 @@ import ThemeSwitcher from '../ThemeSwitcher.vue';
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { Expand, Search, Folder } from '@element-plus/icons-vue';
+import { Expand, Search, Folder, Refresh } from '@element-plus/icons-vue';
 import config from "@/config";
 
 export default defineComponent({
   emits: ['showSearch', 'showCategorySearch'],
-  setup() {
-    
-  },
   computed: {
     siteName() {
       return config.siteName;
     },
+  },
+  methods: {
+    refresh() {
+      location.reload()
+    }
   }
 })
 </script>

@@ -21,6 +21,9 @@
               <el-button size="small" @click="handleToggleFullScreen" title="进入/退出全屏模式">
                 <el-icon><monitor /></el-icon>
               </el-button>
+              <el-button size="small" @click="refresh">
+                <el-icon><Refresh /></el-icon>
+              </el-button>
               <el-popconfirm title="确认清空缓存?" @confirm="clearCache">
                 <template #reference>
                   <el-button size="small" title="清空缓存">
@@ -61,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import {Sunny, Moon, Monitor, Brush, Aim } from '@element-plus/icons-vue';
+import {Sunny, Moon, Monitor, Brush, Aim, Refresh } from '@element-plus/icons-vue';
 import EventBus from "@/components/EventBus";
 import InstapaperShower from "./InstapaperShower.vue";
 import YuequeDraftShower from "./YuequeDraftShower.vue";
@@ -105,6 +108,9 @@ export default defineComponent({
     },
     enterZenMode() {
       EventBus.emit('enter-zen-mode', null)
+    },
+    refresh() {
+      location.reload()
     }
   },
   computed: {

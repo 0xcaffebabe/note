@@ -263,15 +263,18 @@ class DocService implements Cacheable{
       const isTeXLine = /^\$\$(\s*.*\s*)\$\$$/.test(text)
 
       if (!isTeXLine && isTeXInline) {
-          // 如果不是行间公式，但是行内公式，则使用<span class="marked_inline_tex">包裹公式内容，消除$定界符
-          text = text.replace(/(\$([^\$]*)\$)+/g, function(_, $2) {
-              // 避免和行内代码冲突
-              if ($2.indexOf('<code>') >= 0 || $2.indexOf('</code>') >= 0) {
-                  return $2
-              } else {
-                  return "<span class=\"inline_tex tex\">" + $2.replace(/\$/g, "") + "</span>"
-              }
+          // console.log(text)
+          // 如果不是行间公式，但是行内公式，则使用<div class="line_tex tex">包裹公式内容，消除$定界符
+          let tex = text.replace(/(\$([^\$]*)\$)+/g, function(_, $2) {
+            // 避免和行内代码冲突
+            if ($2.indexOf('<code>') >= 0 || $2.indexOf('</code>') >= 0) {
+                return $2
+            } else {
+                return ""
+            }
           })
+          tex = tex.split("\n").map(v => v.endsWith("\\") ? v + "\\": v).join("\n")
+          text = "<div class=\"line_tex tex\">" + tex + "</div>"
       } else if(isTeXLine) {
           // 如果是行间公式，则使用<div class='marked_tex'>包裹公式内容，消除$$定界符
           // 如果不是LaTex公式，则直接返回原文本

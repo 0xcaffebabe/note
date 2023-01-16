@@ -395,6 +395,10 @@
     - [高级应用开发](./中间件/数据库/数据库系统/高级主题/高级应用开发.md)
     - [时空数据和移动性](./中间件/数据库/数据库系统/高级主题/时空数据和移动性.md)
     - [高级事务处理](./中间件/数据库/数据库系统/高级主题/高级事务处理.md)
+    - -分库分表中间件-
+    - [MyCat](./中间件/数据库/MyCat.md)
+    - [ShardingJDBC](./中间件/数据库/ShardingJDBC.md)
+    - -关系数据库-
     - [MySQL](./中间件/数据库/mysql/mysql.md)
       - [基本使用](./中间件/数据库/mysql/基本使用.md)
       - [数据类型](./中间件/数据库/mysql/数据类型.md)
@@ -411,6 +415,7 @@
         - [查询优化](./中间件/数据库/mysql/查询优化.md)
         - [分区表](./中间件/数据库/mysql/分区表.md)
     - [Oracle](./中间件/数据库/Oracle.md)
+    - -缓存-
     - [Redis](./中间件/数据库/redis/Redis.md)
       - [数据结构](./中间件/数据库/redis/数据结构.md)
       - [API](./中间件/数据库/redis/API.md)
@@ -419,6 +424,10 @@
       - [复制](./中间件/数据库/redis/复制.md)
       - [哨兵](./中间件/数据库/redis/哨兵.md)
       - [集群](./中间件/数据库/redis/集群.md)
+    - [EhCache](./中间件/数据库/EhCache.md)
+    - [Memcached](./中间件/数据库/Memcached.md)
+    - -文档数据库-
+    - [ElasticSearch](./中间件/数据库/ElasticSearch.md)
     - [MongoDB](./中间件/数据库/MongoDB.md)
     - [Neo4j](./中间件/数据库/Neo4j.md)
   - [消息队列](./中间件/消息队列/消息队列.md)
@@ -431,13 +440,7 @@
   - [web容器/服务器](./中间件/web中间件/web中间件.md)
     - [Tomcat](./中间件/web中间件/Tomcat.md)
     - [Nginx](./中间件/web中间件/Nginx.md)
-  - [缓存中间件](./中间件/缓存/缓存.md)
-    - [EhCache](./中间件/缓存/EhCache.md)
-    - [Memcached](./中间件/缓存/Memcached.md)
   - [xxl-job](./中间件/xxl-job.md)
-  - [数据库中间件](./中间件/数据库中间件/数据库中间件.md)
-    - [MyCat](./中间件/数据库中间件/MyCat.md)
-    - [ShardingJDBC](./中间件/数据库中间件/ShardingJDBC.md)
   - [文件服务器](./中间件/文件服务器/文件服务器.md)
     - [FastDFS](./中间件/文件服务器/FastDFS.md)
   - [浏览器](./中间件/浏览器/浏览器.md)

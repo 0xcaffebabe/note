@@ -19,6 +19,7 @@ import {
 import { HeatmapChart, HeatmapSeriesOption } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
 import api from "@/api";
+import HeatMapUtils from "./HeatMapUtils";
 
 echarts.use([
   TitleComponent,
@@ -37,49 +38,9 @@ type EChartsOption = echarts.ComposeOption<
   | HeatmapSeriesOption
 >;
 
-function fillTimeRange(data: [string, number][]): [string, number][] {
-  const map = new Map<string, number>(data);
-  const range = [data[0][0], data[data.length - 1][0]];
-  const start = +echarts.number.parseDate(range[0]);
-  const end = +echarts.number.parseDate(range[1]);
-  const dayTime = 3600 * 24 * 1000;
-  const results: [string, number][] = [];
-  for (let time = start; time < end; time += dayTime) {
-    const date = echarts.format.formatTime("yyyy-MM-dd", time);
-    results.push([date, map.get(date) || 0]);
-  }
-  return results;
-}
+const fillTimeRange = HeatMapUtils.fillTimeRange
 
-/**
- * 封装服务次数区间数据
- * @param {*} maxValue 最大值
- * @param {*} colorBox 区间颜色集
- */
-function generatePieces(maxValue: number, colorBox: string[]) {
-  const pieces = [];
-  const quotient = Math.ceil(maxValue / 2);
-  let temp: any = {};
-  temp.lt = 1;
-  temp.label = "0";
-  temp.color = colorBox[0];
-  pieces.push(temp);
-
-  for (var i = 1; i <= 5; i++) {
-    temp = {};
-    if (i == 1) {
-      temp.gte = 1;
-    } else {
-      temp.gte = quotient * (i - 1);
-    }
-    temp.lte = quotient * i;
-    temp.color = colorBox[i];
-    // temp.label = '等级'+i;
-    pieces.push(temp);
-  }
-
-  return pieces;
-}
+const generatePieces = HeatMapUtils.generatePieces
 
 export default defineComponent({
   setup() {},
@@ -99,14 +60,6 @@ export default defineComponent({
       const chartDom = document.getElementById("heatmap")!;
       const myChart = echarts.init(chartDom);
       let option: EChartsOption;
-      const colorBox = [
-        this.isDark ? "#323233" : "white",
-        this.isDark ? "#00452b" : "#98E9A8",
-        this.isDark ? "#006f37" : "#40C403",
-        this.isDark ? "#00a84b" : "#30A14E",
-        this.isDark ? "#007534" : "#216E39",
-        this.isDark ? "#00d65f" : "#1A572D",
-      ];
       const maxValue = heatmapData
         .map((v) => v[1])
         .sort()
@@ -138,7 +91,7 @@ export default defineComponent({
           orient: "horizontal",
           left: "center",
           top: 65,
-          pieces: generatePieces(maxValue, colorBox),
+          pieces: generatePieces(maxValue, this.isDark),
           textStyle: {
             color: this.isDark ? "#bbb" : "#666",
           },

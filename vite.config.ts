@@ -1,4 +1,4 @@
-import { defineConfig, Plugin } from 'vite'
+import { defineConfig, Plugin, PluginOption } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 import DocServer from './src/plugins/DocServer'
@@ -25,7 +25,7 @@ if (process.env.NODE_ENV === "production") {
       gzipSize: true,
       brotliSize: true,
       filename: "dist/stats.html"
-    })
+    }) as Plugin
   );
 }
 

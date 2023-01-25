@@ -41,7 +41,7 @@ export default {
     temp.color = colorBox[0];
     pieces.push(temp);
 
-    for (var i = 1; i <= 5; i++) {
+    for (let i = 1; i <= 5; i++) {
       temp = {};
       if (i == 1) {
         temp.gte = 1;

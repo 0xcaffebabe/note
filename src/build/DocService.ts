@@ -237,7 +237,7 @@ class DocService extends BaseService implements Cacheable {
       }
     }
 
-    const ignoreDoc = ['README', 'SUMMARY'];
+    const ignoreDoc = ['README', 'SUMMARY', '参考文献'];
     const fileList = BaseService.listFilesBySuffix('md', 'doc')
     const taskList :Promise<DocQuality>[] = []
     const that = this

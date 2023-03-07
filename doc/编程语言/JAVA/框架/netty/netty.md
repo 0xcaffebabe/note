@@ -96,15 +96,22 @@
 
 ChannelHandler 为 Netty 中最核心的组件，它充当了所有处理入站和出站数据的应用程序逻辑的容器。ChannelHandler 主要用来处理各种事件，这里的事件很广泛，比如可以是连接、数据接收、异常、数据转换等
 
-![](https://img2018.cnblogs.com/blog/1322310/201812/1322310-20181220211548971-1386097414.png)
-
-- ChannelInboundHandler
+```mermaid
+classDiagram
+  ChannelHandler <-- ChannelInboundHandler: 继承
+  ChannelHandler <-- ChannelHandlerAdapter: 继承
+  ChannelHandler <-- ChannelOutboundHandler: 继承
+  ChannelInboundHandler <.. ChannelInboundHandlerAdapter: 实现
+  ChannelHandlerAdapter <-- ChannelInboundHandlerAdapter: 继承
+  ChannelHandlerAdapter <-- ChannelOutboundHandlerAdapter: 继承
+  ChannelOutboundHandler <.. ChannelOutboundHandlerAdapter: 实现
+```
 
 ### ChannelPipeline
 
 ChannelPipeline 为 ChannelHandler 链提供了一个容器并定义了用于沿着链传播入站和出站事件流的 API
 
-![](https://img-blog.csdn.net/20160504161903129?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center)
+![](/assets/202337111911.png)
 
 在netty中，有两种消息发送方式
 

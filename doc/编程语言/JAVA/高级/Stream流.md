@@ -8,7 +8,7 @@
 
 ## 处理流程
 
-![](https://www.oracle.com/ocom/groups/public/@otn/documents/digitalasset/2179051.jpg)
+![20233915651](/assets/20233915651.webp)
 
 - 流的创建
 - 流的转换，将流转换为其他流的中间操作，可包括多个步骤(惰性操作)

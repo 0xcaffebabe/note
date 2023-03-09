@@ -186,9 +186,9 @@ int main(){
 
 ## 共享文件
 
-![](https://upload-images.jianshu.io/upload_images/7380023-7ccfa65788df8862.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/611/format/webp)
+![](/assets/20233917726.png)
 
-![](https://upload-images.jianshu.io/upload_images/7380023-e55086007ac99201.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/535/format/webp)
+![](/assets/20233917840.png)
 
 ## IO重定向
 
@@ -196,7 +196,7 @@ int main(){
 int dup2(int ofd,int nfd);
 ```
 
-![](https://images.cnblogs.com/cnblogs_com/mydomain/201107/201107032229433652.png)
+![](/assets/20233917924.png)
 
 ## C语言标准IO
 

@@ -102,7 +102,7 @@ class HelloWorld extends React.Component{
 
 - 生命周期
 
-![](https://user-gold-cdn.xitu.io/2017/11/11/88e11709488aeea3f9c6595ee4083bf3?imageView2/0/w/1280/h/960/format/webp/ignore-error/1)
+![](/assets/202339163133.png)
 
 添加钩子方法
 

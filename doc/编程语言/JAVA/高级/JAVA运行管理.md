@@ -23,7 +23,7 @@ JMX是一个为应用程序植入管理功能的框架
 
 用户可以在任何Java应用程序中使用这些代理和服务实现管理
 
-![](https://upload-images.jianshu.io/upload_images/5001962-1d62a1d30a912f44.png?imageMogr2/auto-orient/strip|imageView2/2/w/600/format/webp)
+![](/assets/202339162835.png)
 
 ### MBean
 

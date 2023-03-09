@@ -150,7 +150,7 @@ public void onMessage(@Payload User user){
 
 ### 工作队列
 
-![](https://www.rabbitmq.com/img/tutorials/python-two.png)
+![](/assets/202339154930.png)
 
 消息转发机制是平均分配，这样就会出现俩个消费者，由于每个消费者处理任务的效率不一，可以通过设置qos的方式来决定消费者的消费能力，从而达到资源的充分利用
 

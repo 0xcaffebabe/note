@@ -53,7 +53,7 @@ rpx（responsive pixel）: 可以根据屏幕宽度进行自适应。规定屏�
 
 ### 生命周期
 
-![](https://res.wx.qq.com/wxdoc/dist/assets/img/page-lifecycle.2e646c86.png)
+![](/assets/202339155144.png)
 
 - 生命周期回调
 

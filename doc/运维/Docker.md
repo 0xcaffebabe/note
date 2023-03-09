@@ -16,7 +16,7 @@
 
 ## Docker架构
 
-![](https://www.runoob.com/wp-content/uploads/2016/04/576507-docker1.png)
+![](/assets/202339164052.png)
 
 - 镜像与容器
   - 容器是镜像的实例

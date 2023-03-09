@@ -149,7 +149,13 @@ target.close();
 
 它是Java NIO核心组件中的一个，用于检查一个或多个NIO Channel（通道）的状态是否处于可读、可写。如此可以实现单线程管理多个channels,也就是可以管理多个网络链接
 
-![](https://pic3.zhimg.com/80/v2-5458e9182d8e2e002d82327273561172_hd.jpg)
+```mermaid
+stateDiagram-v2
+    Selector --> Channel1: 轮询
+    Selector --> Channel2: 轮询
+    Selector --> Channel3: 轮询
+    Selector --> Channel4: 轮询
+```
 
 - SelectionKey
 

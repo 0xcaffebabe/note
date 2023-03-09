@@ -47,7 +47,7 @@ Dubbo支持Multicast，Zookeeper，Redis，Simple注册中心
 
 ### ZooKeeper
 
-![](https://dubbo.apache.org/docs/zh-cn/user/sources/images/zookeeper.jpg)
+![](/assets/20233916218.jpg)
 
 - 服务提供者启动时: 向 /dubbo/com.foo.BarService/providers 目录下写入自己的 URL 地址
 - 服务消费者启动时: 订阅 /dubbo/com.foo.BarService/providers 目录下的提供者 URL 地址。并向 /dubbo/com.foo.BarService/consumers 目录下写入自己的 URL 地址，当提供者发生变化时，zk会通知消费者
@@ -59,7 +59,7 @@ Dubbo 默认协议采用单一长连接和 NIO 异步通讯，适合于小数据
 
 反之，Dubbo 默认协议不适合传送大数据量的服务，比如传文件，传视频等，除非请求量很低
 
-![](https://dubbo.apache.org/docs/zh-cn/user/sources/images/dubbo-protocol.jpg)
+![](/assets/202339162233.jpg)
 
 缺省协议，使用基于 mina 1.1.7 和 hessian 3.2.1 的 tbremoting 交互。
 

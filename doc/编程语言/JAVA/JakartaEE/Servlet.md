@@ -73,7 +73,17 @@ public class MyServlet implements Servlet{
         * destroy方法在Servlet被销毁之前执行，一般用于释放资源
 ```
 
-![](http://static.oschina.net/uploads/space/2015/0403/112707_yOnu_120166.jpg)
+```mermaid
+sequenceDiagram
+    客户端 ->> Servlet容器: 发送请求
+    Servlet容器 ->> Servlet容器: 解析请求
+    Servlet容器 ->> Servlet: 创建实例
+    Servlet容器 ->> Servlet: 调用init()
+    Servlet容器 ->> Servlet: 调用service()
+    Servlet ->> Servlet容器: 输出响应
+    Servlet容器 ->> 客户端: 返回响应
+    Servlet容器 ->> Servlet: 调用destory()
+```
 
 ### Servlet3.0
 

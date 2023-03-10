@@ -1,2 +1,0 @@
-![JNDI](/assets/JNDI.png)
-

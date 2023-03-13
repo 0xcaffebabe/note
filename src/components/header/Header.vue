@@ -76,6 +76,7 @@ import { defineComponent } from "vue";
 import config from "@/config";
 import DatasourceSelector from './datasource/DatasourceSelector.vue';
 import CacheService from "@/service/CacheService";
+import { ElMessage  } from 'element-plus';
 
 export default defineComponent({
   components: {
@@ -97,6 +98,7 @@ export default defineComponent({
     },
     clearCache(){
       CacheService.getInstance().clear();
+      ElMessage.success('清除缓存完成');
     },
     handleToggleFullScreen(){
       this.fullscreen = !document.fullscreenElement;

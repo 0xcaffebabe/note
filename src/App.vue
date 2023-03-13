@@ -31,8 +31,9 @@ import Search from "@/components/search/Search.vue";
 import CategorySearch from "@/components/search/CategorySearch.vue";
 import { ArrowUpBold, ArrowDownBold } from "@element-plus/icons-vue";
 import EventBus from "./components/EventBus";
-import MermaidUtils from "./util/MermaidUtils";
 import ConfigService from "./service/ConfigService";
+import CacheService from "./service/CacheService";
+import { ElMessage } from "element-plus";
 
 const cateListKey='system::currentCategoryList';
 export default defineComponent({
@@ -67,6 +68,12 @@ export default defineComponent({
       showHeader: computed(() => this.showHeader)
     }
   },
+  methods: {
+    clearCache(){
+      CacheService.getInstance().clear();
+      ElMessage.success('清除缓存完成');
+    },
+  }, 
   data() {
     return {
       showHeader: true,
@@ -74,16 +81,40 @@ export default defineComponent({
   },
   created() {
     // 全局快捷键监听
-    document.addEventListener("keydown", (e) => {
-      if (e.ctrlKey && e.key == "q") {
-        (this.$refs.categorySearch as any).show();
-        e.preventDefault();
+    const actionList = [
+      {
+        hotkey: 'ctrl + q',
+        action: () => (this.$refs.categorySearch as any).show()
+      },
+      {
+        hotkey: 'ctrl + k',
+        action: () => (this.$refs.search as any).show()
+      },
+      {
+        hotkey: 'ctrl + l',
+        action: () => this.clearCache()
       }
-      if (e.ctrlKey && e.key == "k") {
-        (this.$refs.search as any).show();
-        e.preventDefault();
+    ]
+    document.addEventListener('keydown', (e) => {
+      for(let action of actionList) {
+        const mainKey = action.hotkey.split('+')[0].trim();
+        const subKey = action.hotkey.split('+')[1].trim();
+        let mainKeyPressed = false;
+        if (mainKey == 'alt') {
+          mainKeyPressed = e.altKey;
+        }
+        if (mainKey == 'ctrl') {
+          mainKeyPressed = e.ctrlKey;
+        }
+        if (mainKey == 'shift') {
+          mainKeyPressed = e.shiftKey;
+        }
+        if (mainKeyPressed && e.key.toUpperCase() == subKey.toUpperCase()) {
+          action.action()
+          return e.preventDefault();
+        }
       }
-    });
+    })
     // 恢复目录列表
     const raw = localStorage.getItem(cateListKey);
     if (raw){

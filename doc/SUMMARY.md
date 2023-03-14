@@ -342,6 +342,8 @@
   - [Kotlin](./编程语言/Kotlin.md)
   - [WebAssembly](./编程语言/WebAssembly.md)
 
+- [编译原理](./编译原理/编译原理.md)
+
 - [🔨DSL](./DSL/nav.md)
   - [HTML](./DSL/HTML.md)
   - [CSS](./DSL/CSS/CSS.md)

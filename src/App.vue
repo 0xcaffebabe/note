@@ -77,6 +77,7 @@ export default defineComponent({
   data() {
     return {
       showHeader: true,
+      lastClickTime: 0,
     };
   },
   created() {
@@ -93,8 +94,17 @@ export default defineComponent({
       {
         hotkey: 'ctrl + l',
         action: () => this.clearCache()
-      }
+      },
+      {
+        hotkey: 'db + shift',
+        action: () => (this.$refs.categorySearch as any).show()
+      },
+      {
+        hotkey: 'db + s',
+        action: () => (this.$refs.search as any).show()
+      },
     ]
+    const clickTimeMap = new Map<string, number>()
     document.addEventListener('keydown', (e) => {
       for(let action of actionList) {
         const mainKey = action.hotkey.split('+')[0].trim();
@@ -109,6 +119,16 @@ export default defineComponent({
         if (mainKey == 'shift') {
           mainKeyPressed = e.shiftKey;
         }
+        // 双击按键处理
+        if (mainKey == 'db' && e.key.toLowerCase() == subKey) {
+          const diff = new Date().getTime() - (clickTimeMap.get(subKey)! || 0);
+          if (diff <= 300) {
+            action.action()
+            return e.preventDefault()
+          }
+          clickTimeMap.set(subKey, new Date().getTime())
+        }
+        // 组合按键处理
         if (mainKeyPressed && e.key.toUpperCase() == subKey.toUpperCase()) {
           action.action()
           return e.preventDefault();

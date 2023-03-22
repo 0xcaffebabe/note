@@ -4,11 +4,12 @@
     :size="$isMobile() ? '50%' : '44%'"
     :direction="$isMobile() ? 'btt': 'rtl'"
     :with-header="false"
+    :modal="false"
     title="知识网络"
     @close="$emit('close')"
     :lock-scroll="false"
     modal-class="operational-drawer-modal"
-    custom-class="operational-drawer"
+    class="operational-drawer"
   >
   <div class="tool-zone">
     <div>

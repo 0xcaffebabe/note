@@ -7,9 +7,10 @@
     title="思维导图"
     :lock-scroll="false"
     :append-to-body="false"
+    :modal="false"
     @close="$emit('close')"
     modal-class="operational-drawer-modal"
-    custom-class="operational-drawer"
+    class="operational-drawer"
   >
     <el-button text class="close-btn" @click="showDrawer = false">
       <el-icon><close-bold /></el-icon>

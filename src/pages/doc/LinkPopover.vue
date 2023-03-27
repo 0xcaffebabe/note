@@ -1,6 +1,7 @@
 <template>
   <transition name="fade">
-    <div ref="popover" class="popover" v-show="visible">
+    <div ref="popover" class="popover" v-show="visible" draggable="true">
+      <div class="drag-bar" ref="bar"></div>
       <el-button class="close-button" size="small" circle @click="hide">
         <el-icon><close-bold /></el-icon>
       </el-button>
@@ -48,6 +49,31 @@ export default defineComponent({
       this.visible = true;
       popover.style.top = y + "px";
       popover.style.left = x + "px";
+
+      /* 拖拽支持 */
+      const bar = this.$refs.bar as HTMLElement
+      let inDrag = false;
+      let currentX = x;
+      let currentY = y;
+      bar.onmousedown = (e: MouseEvent) => {
+        currentX = e.clientX, currentY = e.clientY;
+        inDrag = true;
+      }
+      bar.onmousemove = (e: MouseEvent) => {
+        console.log(inDrag)
+        if (inDrag) {
+			    const disX = e.clientX - currentX, disY = e.clientY - currentY;
+          console.log(disX, disY)
+          popover.style.top = (y + disY) + "px";
+          popover.style.left = (x + disX) + "px";
+          e.preventDefault()
+        }
+      }
+      bar.onmouseup = () => {
+        inDrag = false;
+        y = (parseInt(popover.style.top.replace('px', '')))
+        x = (parseInt(popover.style.left.replace('px', '')))
+      }
     },
     async initDoc() {
       this.file = await DocService.getDocFileInfo(DocUtils.docUrl2Id(this.docLink));
@@ -58,7 +84,6 @@ export default defineComponent({
     },
   },
   mounted() {
-    const popover = this.$refs.popover as HTMLElement;
     document.addEventListener('scroll', this.hide)
   },
   unmounted() {
@@ -69,7 +94,7 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .popover {
-  transition: all 0.2s;
+  // transition: all 0.2s;
   background-color: #fff;
   width: 400px;
   position: fixed;
@@ -99,6 +124,13 @@ export default defineComponent({
   padding-right: 10px;
   max-height: 600px;
   overflow: scroll;
+  cursor: default;
+}
+.drag-bar {
+  width: 100%;
+  height: 20px;
+  position: absolute;
+  cursor: move;
 }
 
 body[theme=dark] {

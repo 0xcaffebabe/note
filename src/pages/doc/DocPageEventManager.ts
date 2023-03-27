@@ -67,13 +67,20 @@ class DocPageEventManager {
         }
       };
       if (!this.isMobile) {
-        a.addEventListener('contextmenu', (e: MouseEvent) => {
+        const action = (e: MouseEvent) => {
           const originLink = a.getAttribute('origin-link')!;
           (this.getRef('linkPopover') as InstanceType<typeof LinkPopover>).show(originLink, e.clientX, e.clientY);
           e.preventDefault();
           e.stopPropagation();
+        }
+        a.addEventListener('contextmenu', (e: MouseEvent) => {
+          action(e)
           return false;
         });
+        a.addEventListener('mouseover', (e: MouseEvent) => {
+          action(e)
+          return false
+        })
       }else {
         new Hammer(a).on('press', e => {
           const originLink = a.getAttribute('origin-link')!;

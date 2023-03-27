@@ -9,6 +9,7 @@
         category-name="test"
         ref="categoryItemContent"
       />
+      <div class="markdown-section preview-markdown" v-html="contentHtml"></div>
     </div>
   </transition>
 </template>
@@ -17,6 +18,9 @@
 import { defineComponent } from "vue";
 import { CloseBold } from "@element-plus/icons-vue";
 import CategoryItemContent from "./category/CategoryItemContent.vue";
+import DocFileInfo from "@/dto/DocFileInfo";
+import DocService from "@/service/DocService";
+import DocUtils from "@/util/DocUtils";
 
 export default defineComponent({
   components: {
@@ -27,16 +31,26 @@ export default defineComponent({
     return {
       docLink: "",
       visible: false,
+      file: new DocFileInfo() as DocFileInfo,
     };
+  },
+  computed: {
+    contentHtml(): string {
+      return DocService.renderMd(this.file);
+    }
   },
   methods: {
     show(docLink: string, x: number, y: number) {
       this.docLink = docLink;
+      this.initDoc();
       (this.$refs.categoryItemContent as any).init(docLink);
       const popover = this.$refs.popover as HTMLElement;
       this.visible = true;
       popover.style.top = y + "px";
       popover.style.left = x + "px";
+    },
+    async initDoc() {
+      this.file = await DocService.getDocFileInfo(DocUtils.docUrl2Id(this.docLink));
     },
     hide() {
       this.visible = false;
@@ -57,7 +71,7 @@ export default defineComponent({
 .popover {
   transition: all 0.2s;
   background-color: #fff;
-  width: 300px;
+  width: 400px;
   position: fixed;
   top: 80px;
   left: 400px;
@@ -78,6 +92,13 @@ export default defineComponent({
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+.markdown-section {
+  margin-top: 20px;
+  padding-left: 10px;
+  padding-right: 10px;
+  max-height: 600px;
+  overflow: scroll;
 }
 
 body[theme=dark] {

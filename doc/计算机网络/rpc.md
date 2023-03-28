@@ -75,6 +75,34 @@ RPC选择序列化协议需要考量的：
 
 Hessian 与 Protobuf 是综合这些考量较优的选择
 
+#### Thrift
+
+通过预先定义一个IDL：
+
+```go
+struct SearchClick
+{
+  1:string user_id,
+  2:string search_term,
+  3:i16 rank,
+  4:string landing_url,
+  // 5:i32 click_timestamp, deprecated 已废弃
+  6:i64 click_long_timestamp,
+  7:string ip_address
+}
+```
+
+Thrift 里的 TBinaryProtocol 在顺序写入数据的过程中，不仅会写入数据的值（field-value），还会写入数据的编号（field-id）和类型（field-type）
+
+![20230327204002](/assets/20230327204002.webp)
+
+有了编号，就可以实现向下兼容旧数据，同时部分字段也可以不用有值。
+
+为了压榨存储空间，Thrift 使用两种方式：
+
+- Delta Encoding：TCompactProtocol 就是一种“紧凑”的编码方式，这个协议在存储编号的时候，存储的不是编号的值，而是存储编号和上一个编号的差，同时使用更少的 bit 数来代表类型
+- ZigZag 编码 +VQL 可变长数值表示：TCompactProtocol 对于所有的整数类型的值，都采用了可变长数值（VQL，Variable-length quantity）的表示方式，通过 1~N 个 byte 来表示整数
+
 ### 网络模型
 
 多路IO复用、零拷贝是实现高性能的关键

@@ -162,7 +162,9 @@ export default defineComponent({
         if (mainKey == 'shift') {
           mainKeyPressed = e.shiftKey;
         }
-        if (mainKeyPressed && e.key.toUpperCase() == subKey.toUpperCase()) {
+        const key = e.key.toLowerCase()
+        const code = e.code.toLowerCase().replace('key', '')
+        if (mainKeyPressed && [key,code].some(v => v == subKey.toLowerCase())) {
           if (!action.local) {
             this.$emit(action.action);
           }else {

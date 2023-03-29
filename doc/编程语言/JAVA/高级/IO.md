@@ -23,15 +23,52 @@
 
 ## 架构
 
-![2020527165937](/assets/2020527165937.png)
-![20205271703](/assets/20205271703.png)
+```mermaid
+stateDiagram-v2
+    direction LR
+    处理流 --> 缓冲操作
+    缓冲操作 --> BufferedInputStream
+    缓冲操作 --> BufferedOutputStream
+    缓冲操作 --> BufferedReader
+    缓冲操作 --> BufferedWriter
+    处理流 --> 基本数据类型操作
+    基本数据类型操作 --> DataInputStream
+    基本数据类型操作 --> DataOutputStream
+    处理流 --> 对象序列化操作
+    对象序列化操作 --> ObjectInputStream
+    对象序列化操作 --> ObjectOutputStream
+    处理流 --> 转化控制
+    转化控制 --> InputStreamReader
+    转化控制 --> OutputStreamWriter
+    处理流 --> 打印控制
+    打印控制 --> PrintStream
+    打印控制 --> PrintWriter
 
-大体分为两类：
+    节点流 --> 文件操作
+    文件操作 --> FileInputStream
+    文件操作 --> FileOutputStream
+    文件操作 --> FileReader
+    文件操作 --> FileWriter
+    节点流 --> 管道操作
+    管道操作 --> PipedInputStream
+    管道操作 --> PipedOutputStream
+    管道操作 --> PipedReader
+    管道操作 --> PipedWriter
+    节点流 --> 数组操作
+    数组操作 --> ByteArrayInputStream
+    数组操作 --> ByteArrayOutputStream
+    数组操作 --> CharArrayReader
+    数组操作 --> CharArrayWriter
+```
+
+大体分为几类：
 
 - 字节操作流 InputStream 与 OutputStream等 
 - 字符操作流 Writer 与 Reader
 - 磁盘IO File
 - 网络操作 Socekt等
+
+节点流可以从或向一个特定的地方（节点）读写数据，处理流则是对一个已存在的流的连接和封装，通过所封装的流的功能调用实现数据读写，是一种[装饰器](/软件工程/设计模式/结构型模式.md#装饰器)
 
 字节到字符的转换十分耗时 非常容易出现乱码问题 这是字符流的用处
 
@@ -91,7 +128,7 @@ FileDescriptor才是代表一个真实文件对象
 
 ### 顶级父类
 
--   | 输入流               | 输出流
+项   | 输入流               | 输出流
 --- | ----------------- | ------------------
 字节流 | 字节输入流 InputStream | 字节输出流 OutputStream
 字符流 | 字符输入流 Reader      | 字符输出流 Writer
@@ -109,12 +146,11 @@ FileDescriptor才是代表一个真实文件对象
 ```java
 FileOutputStream fos = new FileOutputStream("fos.txt");
 
-        for (int i =0;i<100;i++){
-            fos.write(("hello"+i+"\n").getBytes());
-
-        }
-        fos.flush();
-        fos.close();
+for (int i =0;i<100;i++){
+    fos.write(("hello"+i+"\n").getBytes());
+}
+fos.flush();
+fos.close();
 ```
 
 - 数据追加续写
@@ -133,16 +169,16 @@ FileOutputStream fos = new FileOutputStream("fos.txt",true);
 
 构造方法
 
-- FileInputStream(File file) ： 通过打开与实际文件的连接来创建一个 FileInputStream ，该文件由文件系 统中的 File对象 ﬁle命名。
+- FileInputStream(File file) ： 通过打开与实际文件的连接来创建一个 FileInputStream ，该文件由文件系统中的 File对象 ﬁle命名。
 - FileInputStream(String name) ： 通过打开与实际文件的连接来创建一个 FileInputStream ，该文件由文件 系统中的路径名 name命名。
 
 ```java
 FileInputStream fis = new FileInputStream("fos.txt");
-        int c = -1;
-        while ((c = fis.read()) != -1) {
-            System.out.print((char)c);
-        }
-        fis.close();
+int c = -1;
+while ((c = fis.read()) != -1) {
+    System.out.print((char)c);
+}
+fis.close();
 ```
 
 ### 字符流
@@ -176,11 +212,10 @@ Writer
 FileWriter
 
 ```java
-        FileWriter writer = new FileWriter("fos.txt");
-
-        writer.append("hh种");
-        writer.flush();
-        writer.close();
+FileWriter writer = new FileWriter("fos.txt");
+writer.append("hh种");
+writer.flush();
+writer.close();
 ```
 
 - flush与close的区别

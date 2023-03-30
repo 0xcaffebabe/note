@@ -61,6 +61,10 @@ export default defineComponent({
       if (!activeMenu) {
         return
       }
+      const y = activeMenu.getBoundingClientRect().y
+      if (y > 0 && y < window.innerHeight) {
+        return
+      }
       activeMenu.scrollIntoView({behavior: 'smooth'})
     },
     updateCurrentCategory(doc: string) {

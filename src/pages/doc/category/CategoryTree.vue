@@ -1,9 +1,9 @@
 <template>
   <template v-for="value in menuList">
     <el-sub-menu
-      :index="convert(value.link) + 'p'"
+      :index="convert(value) + 'p'"
       v-if="value.chidren.length != 0"
-      :key="convert(value.link) + 'p'"
+      :key="convert(value) + 'p'"
     >
       <template #title>
         <div>
@@ -17,11 +17,11 @@
           />
         </div>
       </template>
-      <category-item :value="value" :isParent="true" @contextmenu="handleContextMenu($event, value.link)"/>
+      <category-item :value="value" v-if="value.link" :isParent="true" @contextmenu="handleContextMenu($event, value.link)" :title="value.link"/>
 
       <category-tree :menuList="value.chidren" @contextmenu="handleContextMenu"></category-tree>
     </el-sub-menu>
-    <category-item v-else :value="value" :key="convert(value.link)" @contextmenu="handleContextMenu($event, value.link)"/>
+    <category-item v-else :value="value" :key="convert(value)" @contextmenu="handleContextMenu($event, value.link)"/>
   </template>
 </template>
 
@@ -46,9 +46,12 @@ export default defineComponent({
     uuid(): string {
       return Math.random().toString();
     },
-    // 将doc链接转为 x-x-x 形式的id
-    convert(link: string): string {
-      return DocService.docUrl2Id(link);
+    // 生成目录的唯一ID
+    convert(category: Category): string {
+      if (category.link) {
+        return DocService.docUrl2Id(category.link);
+      }
+      return category.name + '-' + Math.random() * 1000000
     },
     handleContextMenu(e: MouseEvent, link: string) {
       this.$emit('contextmenu', e, link)

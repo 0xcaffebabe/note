@@ -46,9 +46,11 @@ class CategoryService extends BaseService {
   private resolveCategory(cate: Element): Category {
     const category = new Category()
     category.name = cate.firstChild?.textContent || '';
-    category.link = cate.querySelector('a')?.getAttribute("href")!
     const children = Array.from(cate.getElementsByTagName("ul")[0]?.children || []).filter(v => v.tagName == 'LI')
-    if (!children) {
+    category.link = cate.querySelector(':first-child')?.getAttribute('href')! ||
+                      cate.querySelector(':first-child')?.querySelector('a')?.getAttribute('href')!
+    if (!children || children.length == 0) {
+      category.link = cate.querySelector('a')?.getAttribute("href")!
       return category
     }
     for(let i = 0;i<children.length;i++){

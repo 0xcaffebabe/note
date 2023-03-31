@@ -7,7 +7,7 @@ import ClusterNode from '../dto/ClusterNode';
 import jieba from 'nodejieba'
 import {cloneDeep} from 'lodash'
 
-var reg = new RegExp("[\\u4E00-\\u9FFF]+", "g");
+const reg = new RegExp("[\\u4E00-\\u9FFF]+", "g");
 
 const stopWords = ['的', '是', '在', '一个', '和',
                  '与', '批注', '可以', '使用', '通过', 'md', '据库', '这个', '截图', '没有',
@@ -36,7 +36,7 @@ const stopFiles = [
 ]
 
 function stopFileCheck(filename: string) {
-  for(let name of stopFiles) {
+  for(const name of stopFiles) {
     if (filename.indexOf(name) != -1) {
       return false
     }
@@ -46,11 +46,11 @@ function stopFileCheck(filename: string) {
 
 async function main(ret = false): Promise<ClusterNode[]> {
   await getAllWords()
-  let files = BaseService.listFilesBySuffix("md", "doc").filter(stopFileCheck)
+  const files = BaseService.listFilesBySuffix("md", "doc").filter(stopFileCheck)
   const similarCache = new Map<string,number>()
   // 聚类列表
   const cluster: ClusterNode[] = []
-  for(let file of files) {
+  for(const file of files) {
     const node: ClusterNode = new ClusterNode()
     node.name = file
     cluster.push(node)
@@ -73,8 +73,8 @@ async function main(ret = false): Promise<ClusterNode[]> {
         }
         let totalSim = 0
         let cnt = 0
-        for(let file1 of cluster1.all()) {
-          for(let file2 of cluster2.all()) {
+        for(const file1 of cluster1.all()) {
+          for(const file2 of cluster2.all()) {
             const key = file1 + "-" + file2
             const key1 = file2 + "-" + file1
             if (similarCache.has(key) || similarCache.has(key1)) {
@@ -125,7 +125,7 @@ function isStopWord(word: string): boolean{
 async function getAllWords() {
   const fileList = BaseService.listAllMdFile()
   const tasks = []
-  for(let file of fileList) {
+  for(const file of fileList) {
     tasks.push(fs.promises.readFile(file))
   }
   const buffers = await Promise.all(tasks)
@@ -136,7 +136,7 @@ async function getAllWords() {
       .flatMap(v => v)
       .filter(v => !isStopWord(v))
   const map = new Map<string, number>()
-  for(let i of allWords) {
+  for(const i of allWords) {
     if (map.has(i)){
       map.set(i, map.get(i)! + 1)
     }else {

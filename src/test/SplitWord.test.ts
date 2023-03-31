@@ -30,7 +30,7 @@ let totalList: [string, number][] = []
 async function getAllWords() {
   const fileList = BaseService.listAllMdFile()
   const tasks = []
-  for(let file of fileList) {
+  for(const file of fileList) {
     tasks.push(fs.promises.readFile(file))
   }
   const buffers = await Promise.all(tasks)
@@ -41,7 +41,7 @@ async function getAllWords() {
       .flatMap(v => v)
       .filter(v => !isStopWord(v))
   const map = new Map<string, number>()
-  for(let i of allWords) {
+  for(const i of allWords) {
     if (map.has(i)){
       map.set(i, map.get(i)! + 1)
     }else {

@@ -19,6 +19,7 @@ import DocQuality from "../dto/doc/DocQuality";
 const proxy = require("node-global-proxy").default;
 import Cache from "../decorator/Cache";
 import { SimilarItem } from "@/dto/doc/SimilarItem";
+import generateDocCluster from '../scripts/generateDocCluster'
 
 const cache = Cache()
 
@@ -176,14 +177,9 @@ class DocService extends BaseService implements Cacheable {
     })
   }
 
+  @cache
   public async getDocCluster(): Promise<ClusterNode[]> {
-    if (process.env.ENV == 'DEV') {
-      proxy.setConfig({
-        http: "http://127.0.0.1:54088",
-      });
-      proxy.start();
-    }
-    return JSON.parse((await axios.get('https://api.github.com/gists/e993023fd97fb85483d1e20361ad28c4')).data.files['gistfile1.txt'].content)
+    return generateDocCluster(true)
   }
 
   public async getTextSimilar(): Promise<SimilarItem[]> {

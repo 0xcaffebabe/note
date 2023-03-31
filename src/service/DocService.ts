@@ -21,6 +21,7 @@ import DocQuality from '@/dto/doc/DocQuality'
 import { cleanText } from '@/util/StringUtils'
 import MindNode from '@/dto/mind/MindNode'
 import { MindUtils } from '@/pages/doc/mind/MindUtils'
+import ClusterNode from '@/dto/ClusterNode'
 
 const cache = Cache()
 
@@ -551,6 +552,42 @@ class DocService implements Cacheable{
     const toc = await this.getContentByDocId(id);
     const minds = MindUtils.mindConvert(toc);
     return minds[0];
+  }
+
+  /**
+   *
+   * 获取相似的文档
+   * @param {string} id
+   * @return {*}  {Promise<string[]>}
+   * @memberof DocService
+   */
+  @cache
+  public async getSimliarDoc(id: string): Promise<string[]> {
+    const clusters = await api.getDocCluster()
+    let node: ClusterNode | null = null
+    function travel(root: ClusterNode, round: number[]): [ClusterNode, boolean] {
+        if (DocUtils.docUrl2Id(root.name) == id) {
+          return [root, true]
+        }
+        let ret: [ClusterNode, boolean] | null = null
+        for(let i of root.children) {
+          const r = travel(i, round)
+          if (r[1] && round[0] > 0) {
+            node = root
+            round[0]--
+            return r
+          }
+        }
+        return ret || [root, false]
+    }
+    function all(root: ClusterNode): string[] {
+      return [root.name, ...root.children.map(all).flatMap(v => v)].filter(v => v)
+    }
+    travel(clusters[0], [3])
+    if (!node) {
+      return []
+    }
+    return all(node).filter(v => this.docUrl2Id(v) != id)
   }
 }
 

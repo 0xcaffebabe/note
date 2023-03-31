@@ -21,7 +21,7 @@
           class="item"
           type="warning"
         ></el-badge>
-        <tag-list :tags="tags" />
+        <tag-list :tags="tags" :doc="docId"/>
         <el-alert :closable="false" v-if="docMetadata.books && docMetadata.books.length > 0">
           <template #default>
             <p>相关书籍</p>
@@ -69,6 +69,18 @@ export default defineComponent({
     },
   },
   emits: ['pastdays-change'],
+  data() {
+    return {
+      loading: true as boolean,
+      file: null as DocFileInfo | null,
+      // 标签
+      tags: [] as string[],
+      // 离最后一次更新过去几天
+      lastPastDays: 0 as number,
+      // 文档元数据
+      docMetadata: EMPTY_DOC_METADATA as DocMetadata
+    };
+  },
   computed: {
     wordCount() {
       return cleanText(this.file?.content).length;
@@ -138,20 +150,7 @@ export default defineComponent({
         ElMessage.error(`打开书籍失败: ${err}`)
       }
     }
-  },
-  data() {
-    return {
-      loading: true as boolean,
-      file: null as DocFileInfo | null,
-      // 标签
-      tags: [] as string[],
-      // 离最后一次更新过去几天
-      lastPastDays: 0 as number,
-      // 文档元数据
-      docMetadata: EMPTY_DOC_METADATA as DocMetadata
-    };
-  },
-  setup() {},
+  }
 });
 </script>
 

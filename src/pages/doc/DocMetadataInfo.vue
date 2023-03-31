@@ -7,7 +7,7 @@
   </p>
   <p class="quality-score">⚽<span>质量分数: </span>{{ quality }}</p>
   <book :file="file" />
-  <tag-list :tags="file.formattedMetadata.tags" />
+  <tag-list :tags="file.formattedMetadata.tags" :doc="file.id"/>
 </template>
 
 <script lang="ts" setup>

@@ -94,6 +94,9 @@ export default defineComponent({
   margin-left: 4px;
   margin-bottom: 4px;
 }
+
+</style>
+<style lang="less">
 .tag-popover {
   z-index: 10000!important;
 }

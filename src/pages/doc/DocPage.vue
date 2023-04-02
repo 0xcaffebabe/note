@@ -52,6 +52,7 @@
     @showKnowledgeReviewer="showKnowledgeReviewer"
     @showKnowledgeRedundancy="showKnowledgeRedundancy"
     @showKnowledgeAblity="showKnowledgeAblity"
+    @showKnowledgePyramid="showKnowledgePyramid"
     @open-in-editor="openInEditor"
   />
   <!-- 工具栏结束 -->
@@ -78,6 +79,9 @@
   </keep-alive>
   <keep-alive>
     <knowledge-ablity ref="knowledgeAblity"/>
+  </keep-alive>
+  <keep-alive>
+    <knowledge-pyramid ref="knowledgePyramid" :doc="doc" />
   </keep-alive>
   <image-viewer ref="imageViewer" />
   <instant-previewer ref="instantPreviewer"/>
@@ -126,6 +130,7 @@ import { SysUtils } from "@/util/SysUtils";
 import config from '@/config';
 import katex from 'katex'
 import 'katex/dist/katex.css'
+import KnowledgePyramid from "./knowledge/KnowledgePyramid.vue";
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -154,6 +159,7 @@ export default defineComponent({
     DocMetadataInfo,
     SelectionPopover,
     InstantPreviewer,
+    KnowledgePyramid,
 },
   watch: {
     showHeader: {
@@ -175,6 +181,7 @@ export default defineComponent({
     const kwFinder = ref<InstanceType<typeof KeyWordFinder>>()
     const knowledgeRedundancy = ref<InstanceType<typeof KnowledgeRedundancy>>()
     const knowledgeAblity = ref<InstanceType<typeof KnowledgeAblity>>()
+    const knowledgePyramid = ref<InstanceType<typeof KnowledgePyramid>>()
     const showReadingHistory = () => {
       readingHistory.value?.show()
     }
@@ -205,6 +212,7 @@ export default defineComponent({
     const showKnowledgeAblity = () => {
       knowledgeAblity.value?.show();
     }
+    const showKnowledgePyramid = () => knowledgePyramid.value?.show()
     return {
       readingHistory,showReadingHistory, 
       mindGraph, showMindGraph, 
@@ -215,6 +223,7 @@ export default defineComponent({
       knowledgeReviewer, showKnowledgeReviewer,
       knowledgeRedundancy, showKnowledgeRedundancy,
       knowledgeAblity, showKnowledgeAblity,
+      knowledgePyramid, showKnowledgePyramid,
       kwFinder
     }
   },

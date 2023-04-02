@@ -22,6 +22,15 @@ export interface DocMetadata {
    */
   books: Book[]
 
+
+  /**
+   *
+   * 知识等级层次，从 1 开始
+   * @type {number}
+   * @memberof DocMetadata
+   */
+  level: number
+
   /**
    *
    * 文档名称
@@ -52,6 +61,7 @@ export const EMPTY_DOC_METADATA = {
   tags:[],
   books:[],
   name: '',
+  level: 3,
   standardName: '',
   alias: []
 } as DocMetadata

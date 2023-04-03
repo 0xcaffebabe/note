@@ -1,6 +1,7 @@
 <template>
   <div>
     <el-popover
+    popper-class="tag-popover"
     :width="400"
     v-for="item in tagList"
     :key="item"
@@ -34,7 +35,7 @@ import TagUtils from "@/pages/tag/TagUtils";
 import TagService from "@/service/TagService";
 import DocService from '@/service/DocService';
 
-const SIMLIARY_DOC = '相似文档'
+const SIMLIARY_DOC = '相关文档'
 
 export default defineComponent({
   props: {
@@ -45,6 +46,11 @@ export default defineComponent({
     doc: {
       required: true,
       type: String
+    }
+  },
+  watch: {
+    async doc() {
+      this.simliaryDoc = await DocService.getSimliarDoc(this.doc)
     }
   },
   data() {
@@ -67,7 +73,7 @@ export default defineComponent({
       return TagService.getListByTag(this.tag)
     }
   },
-  async created() {
+  async mounted() {
     this.simliaryDoc = await DocService.getSimliarDoc(this.doc)
   },
   methods: {
@@ -87,5 +93,11 @@ export default defineComponent({
   cursor: pointer;
   margin-left: 4px;
   margin-bottom: 4px;
+}
+
+</style>
+<style lang="less">
+.tag-popover {
+  z-index: 10000!important;
 }
 </style>

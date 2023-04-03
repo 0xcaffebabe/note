@@ -66,6 +66,7 @@ import api from "@/api";
 import { KnowledgeNode } from "@/dto/KnowledgeNode";
 import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
+import KnowledgeNetworkService from "@/service/KnowledgeNetworkService";
 
 echarts.use([
   TitleComponent,
@@ -147,6 +148,7 @@ export default defineComponent({
       });
     },
     async init(potentialProcess : boolean = true) {
+      const stream = (await KnowledgeNetworkService.getDocStream(this.doc)).flatMap(v => v)
       if (!this.showDrawer) {
         return;
       }
@@ -194,22 +196,22 @@ export default defineComponent({
         if (list.length == 0) {
           return {
             name: v,
-            category: v == this.doc ? 1 : 0,
+            category: v == this.doc ? 1 : stream.some(vv => v == vv) ? 2 : 0,
             symbolSize: 20,
             draggable: true,
             itemStyle: {
-              color: v == this.doc ? '#F56C6C': nodeColorMapping(20)
+              color: v == this.doc ? '#F56C6C': stream.some(vv => v == vv) ? '#95d475' : nodeColorMapping(20)
             }
           };
           // 节点扇出数越多 大小越大
         } else {
           return {
             name: v,
-            category: v == this.doc ? 1 : 0,
+            category: v == this.doc ? 1 : stream.some(vv => v == vv) ? 2 : 0,
             symbolSize: 20 * (1 + (list[0].links?.length || 0) / 3),
             draggable: true,
             itemStyle: {
-              color: v == this.doc ? '#F56C6C': nodeColorMapping(20 * (1 + (list[0].links?.length || 0) / 3))
+              color: v == this.doc ? '#F56C6C': stream.some(vv => v == vv) ? '#95d475' : nodeColorMapping(20 * (1 + (list[0].links?.length || 0) / 3))
             }
           };
         }
@@ -304,7 +306,7 @@ export default defineComponent({
         legend: {
           x: "center",
           show: true,
-          data: ["联系", "当前"],
+          data: ["联系", "当前", "上下游"],
           textStyle: {
             color: this.isDark ? '#eee' : '#555'
           }
@@ -328,6 +330,13 @@ export default defineComponent({
                 name: "当前",
                 itemStyle: {
                   color: "#F56C6C",
+                  opacity: this.isDark ? 0.9 : 1
+                },
+              },
+              {
+                name: "上下游",
+                itemStyle: {
+                  color: "#95d475",
                   opacity: this.isDark ? 0.9 : 1
                 },
               },

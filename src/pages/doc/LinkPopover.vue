@@ -119,7 +119,7 @@ export default defineComponent({
   opacity: 0;
 }
 .markdown-section {
-  margin-top: 20px;
+  margin-top: 10px!important;
   padding-left: 10px;
   padding-right: 10px;
   max-height: 600px;

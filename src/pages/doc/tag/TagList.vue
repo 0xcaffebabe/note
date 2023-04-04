@@ -74,7 +74,7 @@ export default defineComponent({
     }
   },
   async mounted() {
-    this.simliaryDoc = await DocService.getSimliarDoc(this.doc)
+    this.simliaryDoc = (await DocService.getSimliarDoc(this.doc)).reverse()
   },
   methods: {
     // 计算标签的颜色

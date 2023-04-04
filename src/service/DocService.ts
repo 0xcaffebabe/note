@@ -252,6 +252,10 @@ class DocService implements Cacheable{
         }
         return `<a href='${buildDocLink(i.id, i.headingId!)}' class="potential-link" origin-link="${DocUtils.docId2Url(i.id)}">${str}</a>`
       })
+      // 自动发现RFC
+      text = text.replace(/\[RFC\d+\]/gi, (str: string) => {
+        return `<a href='https://www.rfc-editor.org/rfc/${str.toLowerCase().replace('[', '').replace(']', '')}'>${str}</a>`
+      })
       return text;
     }
     render.table = (header: string, body: string): string => {

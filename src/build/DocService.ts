@@ -94,7 +94,7 @@ class DocService extends BaseService implements Cacheable {
     }
     const taskList: Promise<TagAndFilename>[] = [];
     // 将markdown转换为 标签列表, 文件名 映射
-    for(let file of files) {
+    for(const file of files) {
       taskList.push(
         fs.promises.readFile(file)
           .then(buffer => {
@@ -109,9 +109,9 @@ class DocService extends BaseService implements Cacheable {
     // 构建映射
     const tagMap = new Map<string, string[]>();
     const TagAndFilenameList = await Promise.all(taskList);
-    for(let tagAndFilename of TagAndFilenameList) {
+    for(const tagAndFilename of TagAndFilenameList) {
       console.log(tagAndFilename)
-      for(let tag of tagAndFilename.tags || []) {
+      for(const tag of tagAndFilename.tags || []) {
         if (!tagMap.has(tag)) {
           tagMap.set(tag, []);
         }
@@ -204,7 +204,7 @@ class DocService extends BaseService implements Cacheable {
     const ignoreDoc = ['README', 'SUMMARY'];
     const fileList = BaseService.listFilesBySuffix('md', 'doc')
     const taskList :Promise<KnowledgeNode>[] = []
-    for(let file of fileList) {
+    for(const file of fileList) {
       taskList.push(this.getKnowledgeNode(file))
     }
     return (await Promise.all(taskList)).filter(v => ignoreDoc.indexOf(v.id) == -1).filter(v => v.links?.length != 0)
@@ -225,11 +225,11 @@ class DocService extends BaseService implements Cacheable {
     const outLinksMap = new Map<string, number>()
     // 每个文档的内链数 自己 -> 外部
     const inLinksMap= new Map<string, number>()
-    for(let node of knowledgeNodes) {
+    for(const node of knowledgeNodes) {
       if (!inLinksMap.has(node.id)) {
         inLinksMap.set(node.id, node.links?.length || 0)
       }
-      for(let child of node.links || []) {
+      for(const child of node.links || []) {
         outLinksMap.set(node.id, 1 + (outLinksMap.get(node.id) || 0))
       }
     }
@@ -253,7 +253,7 @@ class DocService extends BaseService implements Cacheable {
        docQuality.segementQuality = that.md2TextSegement(md).map(v => v.txt.length / 1000)
        return docQuality
     }
-    for(let file of fileList) {
+    for(const file of fileList) {
       taskList.push(task(file))
     }
     return (await Promise.all(taskList))
@@ -272,7 +272,7 @@ class DocService extends BaseService implements Cacheable {
   public async generateDocListOrderByLastCommit(): Promise<[string, CommitInfo][]> {
     const fileList = BaseService.listFilesBySuffix('md', 'doc')
     const taskList :Promise<[string,CommitInfo]>[] = []
-    for(let file of fileList) {
+    for(const file of fileList) {
       taskList.push(GitService.getFileLastCommit(file).then(commit => [file, commit]))
     }
     return (await Promise.all(taskList))
@@ -287,13 +287,13 @@ class DocService extends BaseService implements Cacheable {
       .map(v => v.links)
       .flatMap(v => v);
     const kwNodeMap = new Map<string, KnowledgeLinkNode>();
-    for(let i of linkList) {
+    for(const i of linkList) {
       kwNodeMap.set(i?.name!, i!)
     }
     const ignoreDoc = ['README', 'SUMMARY'];
     const fileList = BaseService.listFilesBySuffix('md', 'doc')
     const taskList :Promise<KnowledgeNode>[] = []
-    for(let file of fileList) {
+    for(const file of fileList) {
       taskList.push(this.getPotentialKnowledgeNode(file, kwNodeMap))
     }
     return (await Promise.all(taskList)).filter(v => ignoreDoc.indexOf(v.id) == -1).filter(v => v.links?.length != 0)

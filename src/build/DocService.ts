@@ -110,7 +110,8 @@ class DocService extends BaseService implements Cacheable {
     const tagMap = new Map<string, string[]>();
     const TagAndFilenameList = await Promise.all(taskList);
     for(let tagAndFilename of TagAndFilenameList) {
-      for(let tag of tagAndFilename.tags) {
+      console.log(tagAndFilename)
+      for(let tag of tagAndFilename.tags || []) {
         if (!tagMap.has(tag)) {
           tagMap.set(tag, []);
         }

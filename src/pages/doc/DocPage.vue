@@ -333,8 +333,7 @@ export default defineComponent({
       this.kwFinder?.hilightKeywords(docEl, kw, refreshKwFinder)
     },
     renderLatex() {
-      const segList = document.querySelector('.markdown-section')?.querySelectorAll('.tex')
-      document.querySelector('.markdown-section')?.querySelectorAll('.tex')
+      document.querySelectorAll('.markdown-section .tex')
         .forEach(e => {
           const element = e as HTMLElement
           katex.render(

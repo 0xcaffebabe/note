@@ -426,7 +426,7 @@
     - [前端性能优化](./中间件/浏览器/前端性能优化.md)
 
 - [📱移动开发](./移动开发/nav.md)
-  - [安卓](./移动开发/安卓/nav.md)
+  - **安卓**
     - [Activity](./移动开发/安卓/Activity.md)
     - [Intent](./移动开发/安卓/Intent.md)
     - [RecyclerView](./移动开发/安卓/RecyclerView.md)

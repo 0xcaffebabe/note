@@ -1,23 +1,26 @@
 <template>
   <transition name="fade">
-    <div ref="popover" class="popover" v-show="visible" draggable="true">
+    <div ref="popover" class="popover" v-show="visible">
       <div class="drag-bar" ref="bar"></div>
-      <el-button class="close-button" size="small" circle @click="hide">
+      <el-button class="close-button" size="small" circle @click="hide0">
         <el-icon><close-bold /></el-icon>
+      </el-button>
+      <el-button size="small" circle @click="pin = true" style="float:right;margin-right: 10px">
+        <el-icon><place /></el-icon>
       </el-button>
       <category-item-content
         :category-link="docLink"
         category-name="test"
         ref="categoryItemContent"
       />
-      <div class="markdown-section preview-markdown" v-html="contentHtml"></div>
+      <div class="markdown-section preview-markdown" v-html="contentHtml" draggable="false"></div>
     </div>
   </transition>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { CloseBold } from "@element-plus/icons-vue";
+import { CloseBold, Place } from "@element-plus/icons-vue";
 import CategoryItemContent from "./category/CategoryItemContent.vue";
 import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
@@ -26,6 +29,7 @@ import DocUtils from "@/util/DocUtils";
 export default defineComponent({
   components: {
     CloseBold,
+    Place,
     CategoryItemContent,
   },
   data() {
@@ -33,6 +37,7 @@ export default defineComponent({
       docLink: "",
       visible: false,
       file: new DocFileInfo() as DocFileInfo,
+      pin: false,
     };
   },
   computed: {
@@ -43,6 +48,7 @@ export default defineComponent({
   methods: {
     show(docLink: string, x: number, y: number) {
       this.docLink = docLink;
+      this.pin = false
       this.initDoc();
       (this.$refs.categoryItemContent as any).init(docLink);
       const popover = this.$refs.popover as HTMLElement;
@@ -51,19 +57,20 @@ export default defineComponent({
       popover.style.left = x + "px";
 
       /* 拖拽支持 */
-      const bar = this.$refs.bar as HTMLElement
+      const bar = this.$refs.popover as HTMLElement
       let inDrag = false;
       let currentX = x;
       let currentY = y;
       bar.onmousedown = (e: MouseEvent) => {
-        currentX = e.clientX, currentY = e.clientY;
-        inDrag = true;
+        if (e.button == 1) {
+          currentX = e.clientX, currentY = e.clientY;
+          inDrag = true;
+          e.preventDefault()
+        }
       }
       bar.onmousemove = (e: MouseEvent) => {
-        console.log(inDrag)
         if (inDrag) {
 			    const disX = e.clientX - currentX, disY = e.clientY - currentY;
-          console.log(disX, disY)
           popover.style.top = (y + disY) + "px";
           popover.style.left = (x + disX) + "px";
           e.preventDefault()
@@ -79,9 +86,15 @@ export default defineComponent({
       this.file = await DocService.getDocFileInfo(DocUtils.docUrl2Id(this.docLink));
     },
     hide() {
+      if (this.pin) {
+        return
+      }
+      this.hide0()
+    },
+    hide0() {
       this.visible = false;
       (this.$refs.categoryItemContent as any).destroy();
-    },
+    }
   },
   mounted() {
     document.addEventListener('scroll', this.hide)

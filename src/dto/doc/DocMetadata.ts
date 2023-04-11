@@ -31,6 +31,15 @@ export interface DocMetadata {
    */
   level: number
 
+
+  /**
+   *
+   * 文档引用的外部链接
+   * @type {string[]}
+   * @memberof DocMetadata
+   */
+  links: string[]
+
   /**
    *
    * 文档名称
@@ -62,6 +71,7 @@ export const EMPTY_DOC_METADATA = {
   books:[],
   name: '',
   level: 3,
+  links: [],
   standardName: '',
   alias: []
 } as DocMetadata

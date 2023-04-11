@@ -94,11 +94,15 @@ class DocPageEventManager {
       const a = outterLinkList[i];
       a.onclick = (e: Event) => {
         const href = a.getAttribute("href");
-        (this.getRef('resourceBrower') as InstanceType<typeof ResourceBrower>).show(href!);
+        this.openOutterLink(href!)
         e.preventDefault();
         e.stopPropagation();
       };
     }
+  }
+
+  public openOutterLink(link: string) {
+    (this.getRef('resourceBrower') as InstanceType<typeof ResourceBrower>).show(link);
   }
 
 

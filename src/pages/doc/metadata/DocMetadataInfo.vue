@@ -6,13 +6,15 @@
     🪵<span>最后更新: {{new Date(firstCommit.date).toLocaleString()}} </span> <a :href="config.repositoryUrl + '/commit/' +firstCommit.hash" target="_blank">{{ firstCommit.message }}</a>
   </p>
   <p class="quality-score">⚽<span>质量分数: </span>{{ quality }}</p>
+  <link-list :links="file.formattedMetadata.links" @link-click="handleLinkClick"/>
   <book :file="file" />
   <tag-list :tags="file.formattedMetadata.tags" :doc="file.id"/>
 </template>
 
 <script lang="ts" setup>
-import TagList from './tag/TagList.vue'
-import Book from './book/Book.vue'
+import TagList from '../tag/TagList.vue'
+import Book from './Book.vue'
+import LinkList from './LinkList.vue';
 </script>
 
 <script lang="ts">
@@ -31,6 +33,12 @@ export default defineComponent({
   },
   data() {
     return {config}
+  },
+  emits: ['linkClick'],
+  methods: {
+    handleLinkClick(link: string) {
+      this.$emit('linkClick', link)
+    }
   },
   computed: {
     quality(): string {
@@ -70,5 +78,12 @@ export default defineComponent({
   span {
     color: #888;
   }
+}
+
+.el-dropdown-link {
+  cursor: pointer;
+  color: var(--el-color-primary);
+  display: flex;
+  align-items: center;
 }
 </style>

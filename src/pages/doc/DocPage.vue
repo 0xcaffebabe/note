@@ -9,7 +9,7 @@
         <template #default>
           <div class="main-content">
             <doc-breadcrumb-nav />
-            <doc-metadata-info :file="file"/>
+            <doc-metadata-info :file="file" @link-click="link => eventManager?.openOutterLink(link)"/>
             <!-- doc主体开始 -->
             <div class="main markdown-section" ref="markdownSection" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '960px': '74%'}"></div>
             <!-- doc主体结束 -->
@@ -123,7 +123,7 @@ import KeyWordFinder from "./KeyWordFinder.vue";
 import KnowledgeTrend from './knowledge/trend/KnowledgeTrend.vue'
 import KnowledgeRedundancy from './knowledge/KnowledgeRedundancy.vue'
 import KnowledgeAblity from './knowledge/KnowledgeAblity.vue'
-import DocMetadataInfo from './DocMetadataInfo.vue'
+import DocMetadataInfo from './metadata/DocMetadataInfo.vue'
 import SelectionPopover from './tool/SelectionPopover.vue'
 import InstantPreviewer from './tool/InstantPreviewer.vue'
 import { SysUtils } from "@/util/SysUtils";

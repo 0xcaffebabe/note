@@ -59,9 +59,7 @@ export default defineComponent({
     },
     currentCate() {
       this.$nextTick(() => {
-        console.log(this.currentCate)
         const activeTab = document.querySelector(`.tab-container-wrapper [url="${this.currentCate.link}"]`) as HTMLElement
-        console.log(activeTab)
         if (!activeTab) {
           return
         }

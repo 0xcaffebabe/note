@@ -6,7 +6,7 @@
     🪵<span>最后更新: {{new Date(firstCommit.date).toLocaleString()}} </span> <a :href="config.repositoryUrl + '/commit/' +firstCommit.hash" target="_blank">{{ firstCommit.message }}</a>
   </p>
   <p class="quality-score">⚽<span>质量分数: </span>{{ quality }}</p>
-  <link-list :links="file.formattedMetadata.links" @link-click="handleLinkClick"/>
+  <link-list :links="file.formattedMetadata.links" @link-click="handleLinkClick" v-if="file.formattedMetadata.links.length > 0"/>
   <book :file="file" />
   <tag-list :tags="file.formattedMetadata.tags" :doc="file.id"/>
 </template>

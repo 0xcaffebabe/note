@@ -531,6 +531,11 @@ class DocService implements Cacheable{
   public resolveMetadata(file: DocFileInfo): DocMetadata {
     const metadata = yaml.load(file.metadata) as DocMetadata;
     if (metadata) {
+      for(let key in EMPTY_DOC_METADATA) {
+        if (!(metadata as any)[key]) {
+          (metadata as any)[key] = (EMPTY_DOC_METADATA as any)[key]
+        }
+      }
       return metadata
     }
     return EMPTY_DOC_METADATA

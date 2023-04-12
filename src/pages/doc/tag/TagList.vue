@@ -61,6 +61,9 @@ export default defineComponent({
   },
   computed: {
     tagList() {
+      if (!this.tags) {
+        return [SIMLIARY_DOC]
+      }
       return [SIMLIARY_DOC, ...this.tags]
     },
     chapters() {

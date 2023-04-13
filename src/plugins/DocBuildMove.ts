@@ -21,7 +21,7 @@ function getSummaryHtml() {
   const renderer = new marked.Renderer();
   return marked(content, {
     renderer: renderer
-  }).replaceAll(/\.\//gi, '/')
+  }).replaceAll(/\.\//gi, '/').replaceAll(/\.md/gi, '.html')
 }
 
 export default function DocBuildMove(){

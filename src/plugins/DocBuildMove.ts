@@ -8,7 +8,7 @@ import PathUtils from "../util/PathUtils"
 import { marked } from "marked"
 
 function ensureDirectoryExistence(filePath: string) {
-  var dirname = path.dirname(filePath);
+  const dirname = path.dirname(filePath);
   if (fs.existsSync(dirname)) {
     return true;
   }
@@ -32,7 +32,7 @@ export default function DocBuildMove(){
     async configResolved(rconfig: ResolvedConfig) {
       config = rconfig
     },
-    transformIndexHtml(html: String) {
+    transformIndexHtml(html: string) {
       return html.replace('{summary}', summaryHtml)
     },
     async buildStart(options: any) {
@@ -42,14 +42,14 @@ export default function DocBuildMove(){
         rimraf.sync(config.build.outDir + "/*")
         PathUtils.ensureDirectoryExistence(config.build.outDir)
         console.log("doc-build-move 移动doc目录")
-        for(let sourceFile of BaseService.listAllFile('doc')) {
+        for(const sourceFile of BaseService.listAllFile('doc')) {
           const targetFilename = config.build.outDir + '/' + sourceFile.replace('doc/', '')
           PathUtils.ensureDirectoryExistence(targetFilename)
           fs.promises.readFile(sourceFile)
             .then(data => fs.promises.writeFile(targetFilename, data))
         }
         // 生成md文件对应的json
-        for (let item of BaseService.listAllMdFile()) {
+        for (const item of BaseService.listAllMdFile()) {
           DocService.getFileInfo(item)
             .then(info => {
               let filename = item

@@ -5,6 +5,7 @@ import rimraf from 'rimraf'
 import BaseService from "../build/BaseService"
 import DocService from '../build/DocService'
 import PathUtils from "../util/PathUtils"
+import { marked } from "marked"
 
 function ensureDirectoryExistence(filePath: string) {
   var dirname = path.dirname(filePath);
@@ -15,14 +16,26 @@ function ensureDirectoryExistence(filePath: string) {
   fs.mkdirSync(dirname);
 }
 
+function getSummaryHtml() {
+  const content = fs.readFileSync("./doc/SUMMARY.md").toString()
+  const renderer = new marked.Renderer();
+  return marked(content, {
+    renderer: renderer
+  }).replaceAll(/\.\//gi, '/')
+}
+
 export default function DocBuildMove(){
   let config : ResolvedConfig;
+  const summaryHtml = getSummaryHtml()
   return {
     name: "doc-build-move",
     async configResolved(rconfig: ResolvedConfig) {
       config = rconfig
     },
-    buildStart(options: any) {
+    transformIndexHtml(html: String) {
+      return html.replace('{summary}', summaryHtml)
+    },
+    async buildStart(options: any) {
       // build 模式移动doc目录
       if (config.command == 'build') {
         console.log("doc-build-move 清空outDir")
@@ -43,10 +56,38 @@ export default function DocBuildMove(){
               if (filename.startsWith('doc/')) {
                 filename = filename.substring(4)
               }
-              const fileFullName = `${config.build.outDir}/${filename}.json`
-              ensureDirectoryExistence(fileFullName)
-              fs.writeFileSync(fileFullName, JSON.stringify(info))
-              console.log("doc-build-move " + fileFullName + " 完成")
+              const jsonFileFullName = `${config.build.outDir}/${filename}.json`
+              ensureDirectoryExistence(jsonFileFullName)
+              fs.promises.writeFile(jsonFileFullName, JSON.stringify(info)).then(() => console.log("doc-build-move " + jsonFileFullName + " 生成完成"))
+              
+
+              const htmlFileFullName = `${config.build.outDir}/${filename.replace('.md', '')}.html`
+
+              const renderer = new marked.Renderer();
+              let html = marked(info.content, {
+                renderer: renderer
+              })
+              html = `
+              <!DOCTYPE html>
+              <html lang="zh">
+                <head>
+                  <meta charset="UTF-8">
+                  <title>${info.name}</title>
+                  <meta name="description" content="">
+                </head>
+                <body>
+                  <div class='menu'>
+                    ${summaryHtml}
+                  </div>
+                  <div class='content'>
+                    ${html}
+                  </div>
+                </body>
+                
+              </html>
+              `
+              fs.promises.writeFile(htmlFileFullName, html).then(() => console.log("doc-build-move " + htmlFileFullName + " 生成完成"))
+              
             })
         }
       }

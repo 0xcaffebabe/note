@@ -39,13 +39,7 @@ innodb_flush_log_at_trx_commit 这个参数设置成 1 的时候，表示每次�
 
 sync_binlog 这个参数设置成 1 的时候，表示每次事务的 binlog 都持久化到磁盘
 
-## 并发控制
-
-- 读写锁
-  - 共享锁与独占锁
-- 锁粒度
-
-### 锁机制
+## 锁机制
 
 - MyISAM采用表级锁(table-level locking)。
 - InnoDB支持行级锁(row-level locking)和表级锁,默认为行级锁
@@ -61,19 +55,61 @@ MySQL的锁释放是在COMMIT或者ROLLBACK时释放的。隐式锁定是存储�
 SELECT ... LOCK IN SHARE MODE; -- 任何时候都不要手动加锁
 ```
 
-InnoDB存储引擎的锁的算法
+### 全局锁
 
-- Record lock：单个行记录上的锁
-- Gap lock：间隙锁，锁定一个范围，不包括记录本身 防止这个区间的数据插入 解决幻读问题
-	- 要有索引
-- Next-key lock：record+gap 锁定一个范围，包含记录本身
-- Insert Intention Locks: 插入意向锁 insert前执行
-- AUTO-INC Locks：自增锁
-- Predicate Locks 谓词锁
+MySQL 提供了一个加全局读锁的方法，命令是 Flush tables with read lock (FTWRL)，锁了之后整个数据库全局就是只读
 
-### 锁分析
+mysqldump 在备份时使用参数–single-transaction 的时候，导数据之前就会启动一个事务，来确保拿到一致性视图，但只有支持事务的引擎才能用这个参数
 
-#### 锁相关统计信息
+### 表级锁
+
+- lock tables … read/write：使用了之后在本线程之内只能操作这条语句指定的表及读写类型
+- 元数据锁（MDL）：主要防止修改表结构的同时其他事务修改数据
+
+为了防止拿不到元数据锁一直等待：一些 MySQL 的分支支持NOWAIT/WAIT n 这个语法，等待一段时间拿不到锁就终止 DDL 语句
+
+MySQL 5.6 后支持了 online ddl 可以不阻塞读写：
+
+1. 拿MDL写锁
+2. 降级成MDL读锁
+3. 真正做DDL
+4. 升级成MDL写锁
+5. 释放MDL锁
+
+### 行锁
+
+InnoDB 事务中，行锁是在需要的时候才加上，要等到事务结束时才释放
+
+为了解决死锁，有两种策略：
+
+1. 获取锁时直接进入等待，直到超时，使用参数innodb_lock_wait_timeout，但是这个时间很难控制
+2. 检测到死锁时，自动中断，每次获取一个行锁都要判断会不会因为自己的加入而导致死锁，如果有热点数据，每个线程都要去检测一下，这容易导致CPU飙高
+
+所以死锁最好的解决方案应该是从业务上来解决，保证业务操作不会产生死锁，另外一个较次一点的方案是控制并发度，这样也不会导致CPU飙高
+
+### 间隙锁
+
+锁定一个范围，不包括记录本身 防止这个区间的数据插入 解决[幻读](/中间件/数据库/数据库系统/事务管理/事务.md#幻读)问题
+
+间隙锁是在可重复读隔离级别下才会生效的。间隙锁的引入，可能会导致同样的语句锁住更大的范围，这其实是影响了并发度的
+
+### Next-key lock
+
+行锁 + 间隙锁 = 锁定一个范围，包含记录本身
+
+### Insert Intention Locks
+
+插入意向锁 insert前执行
+
+### AUTO-INC Locks
+
+自增锁
+
+### Predicate Locks 
+
+谓词锁
+
+### 锁相关统计信息
 
 ```sql
 show status like '%innodb_row_lock%';
@@ -89,24 +125,21 @@ show status like '%innodb_row_lock%';
 SHOW ENGINE INNODB STATUS; -- 关注结果中 TRANSACTIONS 段落
 ```
 
-#### 锁、事务相关的表
+### 锁、事务相关的表
 
 当前事务执行情况：
 
-- [INFORMATION_SCHEMA.INNODB_TRX](https://dev.mysql.com/doc/refman/5.7/en/information-schema-innodb-trx-table.html) 5.7
-- [INFORMATION_SCHEMA.INNODB_TRX](https://dev.mysql.com/doc/refman/8.0/en/information-schema-innodb-trx-table.html) 8.0
+- [INFORMATION_SCHEMA.INNODB_TRX](https://dev.mysql.com/doc/refman/8.0/en/information-schema-innodb-trx-table.html)
 
 锁信息：
 
-- [INFORMATION_SCHEMA.INNODB_LOCKS](https://dev.mysql.com/doc/refman/5.7/en/information-schema-innodb-locks-table.html) 5.7
-- [PERFORMANCE.DATA_LOCKS](https://dev.mysql.com/doc/refman/8.0/en/performance-schema-data-locks-table.html) 8.0
+- [PERFORMANCE.DATA_LOCKS](https://dev.mysql.com/doc/refman/8.0/en/performance-schema-data-locks-table.html)
 
 锁等待信息：
 
-- [INFORMATION_SCHEMA.INNODB_LOCK_WAITS](https://dev.mysql.com/doc/refman/5.7/en/information-schema-innodb-lock-waits-table.html) 5.7	
-- [PERFORMANCE.DATA_LOCKS_WAITS](https://dev.mysql.com/doc/refman/8.0/en/performance-schema-data-lock-waits-table.html) 8.0
+- [PERFORMANCE.DATA_LOCKS_WAITS](https://dev.mysql.com/doc/refman/8.0/en/performance-schema-data-lock-waits-table.html)
 
-##### 事务与锁情况分析
+#### 事务与锁情况分析
 
 ```sql
 SELECT

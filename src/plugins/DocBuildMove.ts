@@ -48,7 +48,7 @@ export default function DocBuildMove(){
           fs.promises.readFile(sourceFile)
             .then(data => fs.promises.writeFile(targetFilename, data))
         }
-        // 生成md文件对应的json
+        // 生成md文件对应的json,html
         for (let item of BaseService.listAllMdFile()) {
           DocService.getFileInfo(item)
             .then(info => {
@@ -67,6 +67,7 @@ export default function DocBuildMove(){
               let html = marked(info.content, {
                 renderer: renderer
               })
+              html = html.replaceAll(/\.md/gi, '.html')
               html = `
               <!DOCTYPE html>
               <html lang="zh">
@@ -75,6 +76,9 @@ export default function DocBuildMove(){
                   <title>${info.name}</title>
                   <meta name="description" content="">
                 </head>
+                <script>
+                  window.location = '/#/doc/${info.id}'
+                </script>
                 <body>
                   <div class='menu'>
                     ${summaryHtml}
@@ -83,7 +87,6 @@ export default function DocBuildMove(){
                     ${html}
                   </div>
                 </body>
-                
               </html>
               `
               fs.promises.writeFile(htmlFileFullName, html).then(() => console.log("doc-build-move " + htmlFileFullName + " 生成完成"))

@@ -19,7 +19,19 @@ tags: ['数据库']
 
 作用是在数据库崩溃时，用来恢复事务提交之前的数据修改，是一个循环写的日志文件，不断地被填写，当写满时，重新从开头开始覆盖
 
-innodb_flush_log_at_trx_commit 这个参数设置成 1 的时候，表示每次事务的 redo log 都直接持久化到磁盘
+InnoDB 有一个后台线程，每隔 1 秒，就会把 redo log buffer 中的日志，调用 write 写到文件系统的 page cache，然后调用 fsync 持久化到磁盘，除此之外，redo log buffer 占用的空间即将达到 innodb_log_buffer_size 一半的时候，后台线程会主动写盘，另一种是，并行的事务提交的时候，顺带将这个事务的 redo log buffer 持久化到磁盘
+
+控制 redo log 的写入策略（innodb_flush_log_at_trx_commit 参数）：
+
+- 设置为 0 的时候，表示每次事务提交时都只是把 redo log 留在 redo log buffer 中 
+- 设置为 1 的时候，表示每次事务提交时都将 redo log 直接持久化到磁盘
+- 设置为 2 的时候，表示每次事务提交时都只是把 redo log 写到 page cache
+
+组提交：
+
+日志逻辑序列号（log sequence number，LSN），单调递增的，用来对应 redo log 的一个个写入点。每次写入长度为 length 的 redo log， LSN 的值就会加上 length
+
+通过一次性写入多个事务的 redo log，来提升写入效率
 
 ### undo log
 
@@ -37,7 +49,11 @@ innodb_flush_log_at_trx_commit 这个参数设置成 1 的时候，表示每次�
 - 可用于数据快照还原
 - 提交事务记录binlog 定时刷磁盘
 
-sync_binlog 这个参数设置成 1 的时候，表示每次事务的 binlog 都持久化到磁盘
+事务执行时，binlog 是先写入到线程自己的 binlog cache 中，事务提交的时候，执行器把 binlog cache 里的完整事务写入到 binlog 中（先 write 到操作系统的 page cache，后再 fsync 到磁盘上）
+
+- sync_binlog=0 的时候，表示每次提交事务都只 write，不 fsync
+- sync_binlog=1 的时候，表示每次提交事务都会执行 fsync
+- sync_binlog=N(N>1) 的时候，表示每次提交事务都 write，但累积 N 个事务后才 fsync
 
 ## 锁机制
 

@@ -226,7 +226,7 @@ class DocService implements Cacheable{
       if (href?.startsWith('/')) {
         href = baseUrl() + href.replace('/', '')
       }
-      return `<p class="img-wrapper"><img src='${localImageProxy(href)}' width="640" height="360" crossorigin="anonymous"/><p class="img-title">${text}</p></p>`
+      return `<p class="img-wrapper"><img src='${localImageProxy(href)}' width="320" height="180" crossorigin="anonymous"/><p class="img-title">${text}</p></p>`
     }
     const reg = new RegExp(knowledgeLinkList.map(v => v.name).join('|'))
     render.text = (text: string): string => {

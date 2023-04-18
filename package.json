@@ -62,7 +62,7 @@
     "node-global-proxy": "1.0.1",
     "nodejieba": "2.6.0",
     "puppeteer": "19.2.2",
-    "rimraf": "3.0.2",
+    "rimraf": "5.0.0",
     "rollup-plugin-visualizer": "5.9.0",
     "simple-git": "3.7.1",
     "ts-node": "10.8.1",

@@ -1,7 +1,7 @@
 import { ResolvedConfig } from "vite"
 import fs from 'fs'
 import path from 'path'
-import rimraf from 'rimraf'
+import { rimrafSync } from 'rimraf'
 import BaseService from "../build/BaseService"
 import DocService from '../build/DocService'
 import PathUtils from "../util/PathUtils"
@@ -39,7 +39,7 @@ export default function DocBuildMove(){
       // build 模式移动doc目录
       if (config.command == 'build') {
         console.log("doc-build-move 清空outDir")
-        rimraf.sync(config.build.outDir + "/*")
+        rimrafSync(config.build.outDir + "/*")
         PathUtils.ensureDirectoryExistence(config.build.outDir)
         console.log("doc-build-move 移动doc目录")
         for(let sourceFile of BaseService.listAllFile('doc')) {

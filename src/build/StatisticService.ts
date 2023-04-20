@@ -96,25 +96,23 @@ class StatisticService extends BaseService {
       return result
     }
     // [日期, 新增字数, 新增行数, 新增提交次数]
-    const helper = new BatchPromiseHelper<[string, number, number, number]>()
+    const resp:[string, number, number, number][] = []
     for(let commit of commitList) {
 
-      helper.join(
-          GitService.gitShowUseHash(commit.hash)
-            .then( map => 
-              flatGitShowList(map)
-              .filter(v => v.filename.endsWith('.md'))
-              .map(v => [cleanText(v.insertions.join()).length - cleanText(v.deletions.join()).length, v.insertions.length - v.deletions.length])
-              .reduce((a,b) => [a[0] + b[0], a[1] + b[1]])
-            )
-            .then(total => {
-              console.log(`提交总量趋势 ${commit.hash} ${commit.date}:${total}`)
-              return [commit.date, total[0], total[1], 1] as [string, number, number, number]
-            })
-            .catch(err => [commit.date, 0, 0, 0] as [string, number, number, number])
-      )
+      const i = await GitService.gitShowUseHash(commit.hash)
+        .then( map => 
+          flatGitShowList(map)
+          .filter(v => v.filename.endsWith('.md'))
+          .map(v => [cleanText(v.insertions.join()).length - cleanText(v.deletions.join()).length, v.insertions.length - v.deletions.length])
+          .reduce((a,b) => [a[0] + b[0], a[1] + b[1]])
+        )
+        .then(total => {
+          console.log(`提交总量趋势 ${commit.hash} ${commit.date}:${total}`)
+          return [commit.date, total[0], total[1], 1] as [string, number, number, number]
+        })
+        .catch(err => [commit.date, 0, 0, 0] as [string, number, number, number])
+      resp.push(i)
     }
-    const resp = await helper.all()
     // 聚合日期
     const map = new Map<string, [number,number, number]>()
     for(let i of resp) {

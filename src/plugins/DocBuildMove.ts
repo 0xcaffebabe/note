@@ -80,7 +80,9 @@ export default function DocBuildMove(){
                   <meta name="description" content="">
                 </head>
                 <script>
-                  window.location = '/#/doc/${info.id}'
+                  if (!/bot|googlebot|crawler|spider|robot|crawling/i.test(navigator.userAgent)) {
+                    window.location = '/#/doc/${info.id}'
+                  }
                 </script>
                 <body>
                   <div class='menu'>

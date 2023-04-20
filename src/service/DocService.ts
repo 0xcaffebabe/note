@@ -48,7 +48,7 @@ function buildDocLink(id: string, headingId: string): string {
   if (!id) {
     return ""
   }
-  let url = "/doc/" + id;
+  let url = "/#/doc/" + id;
   if (headingId) {
     url += "?headingId=" + headingId
   }

@@ -56,6 +56,9 @@ export default function DocBuildMove(){
               if (filename.startsWith('doc/')) {
                 filename = filename.substring(4)
               }
+              if (filename == 'README.md') {
+                info.content = fs.readFileSync('./readme_template.md').toString().replace('{{SUMMARY}}', fs.readFileSync("./doc/SUMMARY.md").toString())
+              }
               const jsonFileFullName = `${config.build.outDir}/${filename}.json`
               ensureDirectoryExistence(jsonFileFullName)
               fs.promises.writeFile(jsonFileFullName, JSON.stringify(info)).then(() => console.log("doc-build-move " + jsonFileFullName + " 生成完成"))

@@ -9,6 +9,7 @@ import { getMidString } from '../util/StringUtils';
 import {KnowledgeNode, KnowledgeLinkNode} from "../dto/KnowledgeNode";
 import DocUtils from "../util/DocUtils";
 import yaml from 'js-yaml'
+import fm from 'front-matter';
 import {DocMetadata} from "@/dto/doc/DocMetadata";
 import Cacheable from "@/decorator/Cacheable";
 import ArrayUtils from "../util/ArrayUtils";
@@ -45,11 +46,12 @@ class DocService extends BaseService implements Cacheable {
   @cache
   public async getFileInfo(path: string): Promise<DocFileInfo> {
     const callResult = await Promise.all([GitService.getFileCommitList(path), fs.promises.readFile(path)])
+    const { body, frontmatter } = fm(callResult[1].toString())
     return {
       name: path.split('/')[path.split('/').length-1].replace('.md', ''),
       id: DocUtils.docUrl2Id(path),
-      content: callResult[1].toString().replace(/^---$.*^---$/ms, ''), // 去除markdown里的元数据
-      metadata: this.resolveMetadata(callResult[1].toString()),
+      content: body,
+      metadata: frontmatter || '',
       hasMoreCommit: callResult[0].length > 10,
       totalCommits: callResult[0].length,
       commitList: ArrayUtils.topN(callResult[0], 10),

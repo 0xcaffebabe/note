@@ -7,6 +7,13 @@ tags: ['数据库']
 
 ![MySQL逻辑架构](/assets/屏幕截图%202020-08-23%20142118.png)
 
+取数据和发数据的流程：
+
+1. 获取一行，写到 net_buffer 中。这块内存的大小是由参数 net_buffer_length 定义的，默认是 16k
+2. 重复获取行，直到 net_buffer 写满，调用网络接口发出去
+3. 如果发送成功，就清空 net_buffer，然后继续取下一行，并写入 net_buffer
+4. 如果发送函数返回 EAGAIN 或 WSAEWOULDBLOCK，就表示本地网络栈（socket send buffer）写满了，进入等待。直到网络栈重新可写，再继续发送
+
 ## 日志机制
 
 在数据更新写日志的时候，是先预提交写 redolog 和写 binlog，提交事务后再把redolog改成提交状态，要两阶段提交写的原因就是为了避免极端情况下两个日志的数据不一致

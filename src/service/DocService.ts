@@ -193,7 +193,8 @@ class DocService implements Cacheable{
    */
   @cache
   public renderMd(file: DocFileInfo) : string {
-    const mdContent = file.content;
+    // 对夹在中文之间的数字或英文前后加上空格
+    const mdContent = file.content.replace(/([\u4e00-\u9fa5]+)([\da-zA-Z]+)/g, '$1 $2').replace(/([\da-zA-Z]+)([\u4e00-\u9fa5]+)/g, '$1 $2');
 
     const render = new marked.Renderer();
     const tagList: TagSumItem[] = TagService.getTagSumList();

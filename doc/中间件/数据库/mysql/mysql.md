@@ -175,6 +175,12 @@ SELECT
 FROM sys.innodb_lock_waits;
 ```
 
+### insert 相关的锁
+
+- insert … select 在可重复读隔离级别下，这个语句会给 select 的表里扫描到的记录和间隙加读锁
+- insert 语句如果出现唯一键冲突，会在冲突的唯一值上加共享的 next-key lock(S 锁)
+- insert 和 select 的对象是同一个表，则有可能会造成循环写入，所以这种语句在执行会创建一个临时表
+
 ## [MVCC](/中间件/数据库/数据库系统/事务管理/事务.md#多版本并发控制)
 
 ## 用户及权限管理
@@ -190,6 +196,8 @@ create user 'user2'@'%' identified by '123';
 ```sql
 grant all on *.* to 'user2'@'%';
 ```
+
+grant 语句会同时修改数据表和内存，判断权限的时候使用的是内存数据，如果直接操作了系统权限表，此时数据表和内存的数据就会不一致，此时就需要 flush privileges
 
 ## 事务
 

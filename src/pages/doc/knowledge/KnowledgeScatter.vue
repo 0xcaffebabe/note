@@ -4,6 +4,8 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import 'element-plus/es/components/notification/style/css'
+import { ElNotification, NotificationHandle   } from 'element-plus'
 import api from "@/api";
 import * as echarts from "echarts/core";
 import {
@@ -14,7 +16,9 @@ import {
   TooltipComponent,
   TooltipComponentOption,
   MarkLineComponent,
-  MarkLineComponentOption
+  MarkLineComponentOption,
+  BrushComponent,
+  BrushComponentOption
 } from "echarts/components";
 import { ScatterChart, ScatterSeriesOption } from "echarts/charts";
 import { UniversalTransition } from "echarts/features";
@@ -29,11 +33,12 @@ echarts.use([
   CanvasRenderer,
   UniversalTransition,
   TooltipComponent,
-  MarkLineComponent
+  MarkLineComponent,
+  BrushComponent
 ]);
 
 type EChartsOption = echarts.ComposeOption<
-  GridComponentOption | DataZoomComponentOption | ScatterSeriesOption | TooltipComponentOption | MarkLineComponentOption
+  GridComponentOption | DataZoomComponentOption | ScatterSeriesOption | TooltipComponentOption | MarkLineComponentOption | BrushComponentOption
 >;
 
 function generateMarkLineOptions(data: [number,number,string][]) {
@@ -93,7 +98,9 @@ export default defineComponent({
     this.init();
   },
   data() {
-    return {};
+    return {
+      selectedData: [] as string[]
+    };
   },
   watch: {
     doc() {
@@ -139,6 +146,25 @@ export default defineComponent({
         const id = (e.data as any).name
         this.$router.push('/doc/' + id)
       })
+      chart.on('brushselected', e => {
+        this.selectedData = ((e as any).batch[0].selected[0].dataIndex as number[]).map(v => data[v].name)
+      })
+      let notification: NotificationHandle | null  = null
+      chart.on('brushEnd', e => {
+        if (this.selectedData.length == 0) {
+          return
+        }
+        if (notification) {
+          notification.close()
+        }
+        this.selectedData.sort()
+        notification = ElNotification({
+          title: '所选文档',
+          dangerouslyUseHTMLString: true,
+          message: this.selectedData.join("</br>"),
+          duration: 0
+        })
+      })
       var option: EChartsOption;
 
       option = {
@@ -148,6 +174,7 @@ export default defineComponent({
         yAxis: {
           name: '质量'
         },
+        brush: {},
         dataZoom: [{ type: "inside" }, { type: "slider" }],
         tooltip: {
           formatter(params: any, ticket: string, callback: (ticket: string, html: string) => string | HTMLElement | HTMLElement[]): string {

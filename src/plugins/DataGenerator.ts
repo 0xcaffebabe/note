@@ -15,10 +15,11 @@ export default function DataGenerator(){
         if (!api.type || api.type?.indexOf("build") == -1) {
           continue
         }
+        const st = new Date().getTime()
         console.log(`${api.name}构建开始`)
         api.method().then((data: any) => {
           fs.writeFileSync(config.build.outDir + api.path, JSON.stringify(data))
-          console.log(`${api.name}构建结束`)
+          console.log(`${api.name}构建结束, 耗时: ${new Date().getTime() - st}ms`)
         })
         .catch((err:any) => {
           console.error(`${api.name}构建异常: ${err}`)

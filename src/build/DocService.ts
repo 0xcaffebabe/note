@@ -242,7 +242,7 @@ class DocService extends BaseService implements Cacheable {
     async function task(file: string): Promise<DocQuality> {
         const id = DocUtils.docUrl2Id(file)
         /*
-          文档质量 = 每千字数 + 外链数 + 内链数 + git提交数 + 每次提交新增的行数
+          文档质量 = 每千字数 + 外链数 + 内链数 + git提交数
         */
        const docQuality = new DocQuality()
        docQuality.id = id
@@ -252,7 +252,6 @@ class DocService extends BaseService implements Cacheable {
                               + (outLinksMap.get(id) || 0) 
                               + (inLinksMap.get(id) || 0)
                               + (commitList.length / 10)
-                              + (commitList.map(v => v.insertions).reduce((a,b) => a+b, 0) / 1000)
        docQuality.segementQuality = that.md2TextSegement(md).map(v => v.txt.length / 1000)
        return docQuality
     }

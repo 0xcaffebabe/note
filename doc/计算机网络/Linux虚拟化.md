@@ -32,6 +32,12 @@ veth是一对设备，因而也常被称作veth pair，在veth设备的其中一
 
 ### 虚拟交换机：Linux Bridge
 
+![虚拟网桥](/assets/2023524141141.webp)
+
+![虚拟交换机](/assets/2023524141331.webp)
+
+![NAT](/assets/2023524141435.webp)
+
 Linux Bridge创建以后，便能够接入任何位于二层的网络设备
 
 ### 虚拟网络：VXLAN

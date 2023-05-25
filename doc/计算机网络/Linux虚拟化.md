@@ -40,9 +40,17 @@ veth是一对设备，因而也常被称作veth pair，在veth设备的其中一
 
 Linux Bridge创建以后，便能够接入任何位于二层的网络设备
 
+### GRE
+
+一种 IP-over-IP 的隧道技术。它将 IP 包封装在 GRE 包里，外面加上 IP 头，在隧道的一端封装数据包，并在通路上进行传输，到另外一端的时候解封装
+
+![](/assets/2023525145243.webp)
+
 ### 虚拟网络：VXLAN
 
 - VLAN的不足
+
+![VXLAN协议](/assets/2023525144352.webp)
 
 ### 副本网卡：MACVLAN
 

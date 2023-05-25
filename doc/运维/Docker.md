@@ -395,6 +395,39 @@ docker run -d --network my-net # 指定容器网络
 
 如果在相同网络中继续接入新的容器，那么在新接入容器中是可以通过的容器名称来进行网络通信的
 
+### 容器网络
+
+Flannel：主要功能是为容器提供跨主机的网络互连，使得不同主机上的容器可以直接通信，无论它们是否在同一物理网络中。它通过创建虚拟网络层来实现这一目标，并使用Overlay网络技术在物理网络之上构建虚拟网络，其有两种实现：
+
+- UDP
+- VXLAN
+
+![使用 UDP 实现 Overlay 网络的方案](/assets/2023525163719.webp)
+
+![VXLAN 实现方案](/assets/202352516382.webp)
+
+```mermaid
+sequenceDiagram
+    participant Admin as 管理员
+    participant FlannelAgent as Flannel代理
+    participant Allocator as 分配器
+    participant Container as 容器
+
+    Admin->>FlannelAgent: 配置Flannel
+    FlannelAgent->>FlannelAgent: 启动
+    FlannelAgent->>Allocator: 请求子网分配
+
+    loop 每个主机
+        FlannelAgent->>FlannelAgent: 创建虚拟网络接口
+        Container->>FlannelAgent: 发送网络流量
+        FlannelAgent->>FlannelAgent: 封装数据包到Overlay网络
+    end
+
+    FlannelAgent->>FlannelAgent: 路由数据包到目标主机
+    FlannelAgent->>Container: 解封装数据包
+
+```
+
 ### 网络类型
   
 - Bridge：: 单机桥接网络 Docker设计的NAT网络模型（默认类型）

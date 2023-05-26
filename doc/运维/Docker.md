@@ -428,6 +428,10 @@ sequenceDiagram
 
 ```
 
+Calico：
+
+![](/assets/2023526133149.webp)
+
 ### 网络类型
   
 - Bridge：: 单机桥接网络 Docker设计的NAT网络模型（默认类型）

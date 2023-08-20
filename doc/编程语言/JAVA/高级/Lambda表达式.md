@@ -74,6 +74,8 @@ private static void superRun(SuperRunnable sr){
 
 Java编译器将Lambda表达式编译成使用表达式的类的一个私有方法，然后通过invokedynamic指令调用该方法。所以在Lambda表达式内，this引用指向的仍是使用表达式的类。
 
+通过一些编译优化技术，如果分析得到这个类可以是无状态，就可以内联优化，否则每次执行就必须创建这个动态类的实例
+
 ## 方法引用
 
 - Class::staticMethod，如 Math::abs方法

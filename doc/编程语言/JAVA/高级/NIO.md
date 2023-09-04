@@ -62,12 +62,6 @@ Proactor 中，直接监听读/写操作是否完成，也就是说读/写操作
 - DirectByteBuffer 可以减少内存从内核到用户的拷贝 但是创建消费成本更高 需要池化
 - HeapByteBuffer 使用堆内存
 
-## [零拷贝](/操作系统/内存管理.md#零拷贝)
-
-- MappedByteBuffer 是 NIO 基于内存映射（mmap）这种零拷贝方式的提供的一种实现
-- DirectByteBuffer 在 MappedByteBuffer 的基础上提供了内存映像文件的随机读取 get() 和写入 write() 的操作
-- FileChannel 是连接两个通道拷贝的实现
-
 ## 核心类
 
 ![屏幕截图 2020-09-28 140403](/assets/屏幕截图%202020-09-28%20140403.png)
@@ -87,24 +81,20 @@ Proactor 中，直接监听读/写操作是否完成，也就是说读/写操作
 
 ![屏幕截图 2020-09-28 141745](/assets/屏幕截图%202020-09-28%20141745.png)
 
--    | HeapByteBuffer             | DirectByteBuffer
----- | -------------------------- | -----------------------------------------------------------------------------------------
+对比项    | HeapByteBuffer             | DirectByteBuffer
+-|-|-
 存储位置 | Java Heap中                 | Native内存中
 I/O  | 需要在用户地址空间和操作系统内核地址空间复制数据   | 不需复制
 内存管理 | Java GC回收，创建和回收开销少          | 通过调用System.gc要释放掉Java对象引用的DirectByteBuffer内空间， 如果Java对象长时间持有引用可能会导致Native内存泄漏，创建和回收内存开销较大
 适用场景 | 并发连接数少于1000, I/O 操作较少时比较合适 | 数据量比较大、生命周期比较长的情况下比较合适
 
-MappedByteBuffer：它将文件按照指定大小直接映射为内存区域，当程序访问这个内存区域时将直接操作这块儿文件数据，省去了将数据从内核空间向用户空间传输的损耗
+大多数垃圾收集过程中，都不会主动收集 DirectBuffer，其内部使用 Cleaner 和虚引用（PhantomReference）机制，其本身不是 public 类型，内部实现了一个 Deallocator 负责销毁的逻辑
 
-大多数垃圾收集过程中，都不会主动收集 Direct Buffer，其内部使用 Cleaner 和虚引用（PhantomReference）机制，其本身不是 public 类型，内部实现了一个 Deallocator 负责销毁的逻辑
+#### [零拷贝](/操作系统/内存管理.md#零拷贝)
 
-### NIO的文件读写
-
-FileChannel.transferXXX:
-
-![屏幕截图 2020-09-28 142245](/assets/屏幕截图%202020-09-28%20142245.png)
-
-FileChannel.map: 将文件映射为内存区域
+- MappedByteBuffer 是 NIO 基于内存映射（mmap）这种零拷贝方式的提供的一种实现
+- DirectByteBuffer 在 MappedByteBuffer 的基础上提供了内存映像文件的随机读取 get() 和写入 write() 的操作
+- FileChannel.transferXXX 是 sendfile 的实现
 
 ### 文件输出例子
 

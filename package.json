@@ -61,7 +61,6 @@
     "jsdom": "20.0.0",
     "node-global-proxy": "1.0.1",
     "nodejieba": "2.6.0",
-    "puppeteer": "19.2.2",
     "rimraf": "5.0.0",
     "rollup-plugin-visualizer": "5.9.0",
     "simple-git": "3.7.1",

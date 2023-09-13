@@ -90,7 +90,7 @@ I/O  | 需要在用户地址空间和操作系统内核地址空间复制数据 
 
 大多数垃圾收集过程中，都不会主动收集 DirectBuffer，其内部使用 Cleaner 和虚引用（PhantomReference）机制，其本身不是 public 类型，内部实现了一个 Deallocator 负责销毁的逻辑
 
-#### [零拷贝](/操作系统/内存管理.md#零拷贝)
+#### [零拷贝](/操作系统/输入输出.md#零拷贝)
 
 - MappedByteBuffer 是 NIO 基于内存映射（mmap）这种零拷贝方式的提供的一种实现
 - DirectByteBuffer 在 MappedByteBuffer 的基础上提供了内存映像文件的随机读取 get() 和写入 write() 的操作

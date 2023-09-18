@@ -135,7 +135,6 @@
       - [测试](./软件工程/微服务/测试.md)
       - [安全](./软件工程/微服务/安全.md)
       - [规模化](./软件工程/微服务/规模化.md)
-      - [分布式日志](./软件工程/微服务/分布式日志.md)
       - [ServiceMesh](./软件工程/微服务/ServiceMesh/ServiceMesh.md)
     - [Serverless](./软件工程/架构/Serverless.md)
 

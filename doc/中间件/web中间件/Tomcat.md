@@ -2,7 +2,26 @@
 
 ## 目录结构
 
-![屏幕截图 2020-08-26 141912](/assets/屏幕截图%202020-08-26%20141912.png)
+目录及文件|说明
+-|-
+bin|用于存放Tomeat的启动、停止等批处理脚本和Shelll脚本
+bin/startup.bat|用于在Vindows下启动Tomeat
+bin/startup.sh|用于在Linux下启动Tomcat
+bin/shutdown.bat|用于在Windows下停止Tomcat
+bin/shutdown.sh|用于在Linux下停止Tomcat
+conf|用于存放Tomeat的相关配置文件
+conf/Catalina|用于存储针对每个虚拟机的Context配置
+conf/context.xml|用于定义所有Wcb应用均需要加载的Context配置，如果Web应用指定了自己的context..xml,那么该文件的配置将被覆盖
+conf/catalina.properties|Tomcat环境变量配置
+conf/catalina.policy|当Tomeat在安全模式下运行时，此文件为默认的安全策略配置
+conf/logging.properties|Tomcat日志配置文件，可通过该文件修改Tomcat日志级别以及日志路径等
+conf/server.xml|Tomcat服务器核心配置文件，用于配置Tomcat的链接器、监听端口、处理请求的虚拟主机等。可以说，Tomcat主要根据该文件的配置信息创建服务器实例
+conf/tomcat-users.xml|用于定义Tomcat默认用户及角色映射信息，Tomcat的Manager模块即用该文件中定义的用户进行安全认证
+conf/web.xml|Tomcat中所有应用默认的部署描述文件，主要定义了基础Servlet和MME映射。如果应用中不包含web.xml,那么Tomcat将使用此文件初始化部署描述，反之，Tomcat会在启动时将默认部署描述与自定义配置进行合并
+lib|Tomcat服务器依赖库目录，包含Tomeat服务器运行环境依赖Jar包
+logs|Tomcat默认的日志存放路径
+webapps|Tomcat默认的Web应用部署目录
+work|web应用JSP代码生成和编译临时目录
 
 ## 部署方式
 
@@ -34,17 +53,84 @@
 
 ## 架构
 
-整体设计：
+```mermaid
+classDiagram
+    class Server {
+        +start()
+        +stop()
+    }
+    class Service {
+        +start()
+        +stop()
+    }
+    class Connector {
+        +start()
+        +stop()
+    }
+    class Container {
+        +start()
+        +stop()
+    }
+    Server *--> Service
+    Service *--> Connector
+    Service *--> Container
 
-![屏幕截图 2020-08-26 143148](/assets/屏幕截图%202020-08-26%20143148.png)
+```
 
 - Connector负责连接的建立以及数据返回
 - Container(Engine)负责请求的具体处理
 - Service 负责维护Conenctor与Container之间的映射关系
 
-Container设计：
+### Connector
 
-![屏幕截图 2020-08-26 144406](/assets/屏幕截图%202020-08-26%20144406.png)
+连接器需要完成 3 个的功能：网络通信、应用层协议解析、Tomcat Request/Response 与 ServletRequest/ServletResponse 的转化分别由 Endpoint、Processor 和 Adapter 完成
+
+```mermaid
+classDiagram
+    class Connector {
+        +start()
+        +stop()
+    }
+    class ProtocolHandler {
+        +handle()
+    }
+    class AbstractEndpoint {
+        +bind()
+        +release()
+    }
+    class Processor {
+        +process()
+    }
+    Connector *--> ProtocolHandler
+    ProtocolHandler *--> AbstractEndpoint
+    ProtocolHandler ..> Processor
+
+```
+
+```mermaid
+sequenceDiagram
+  外部 ->> Endpoint: 请求
+  note left of Endpoint: TCP/IP
+  Endpoint ->> Processor: Socket
+  note left of Processor: HTTP/AJP
+  Processor ->> Adapter: Tomcat Request
+  Adapter ->> Container: Servlet Request
+```
+
+### Container
+
+```mermaid
+stateDiagram
+    direction LR
+    连接器 --> Engine
+    Engine --> Host1
+    Host1 --> Context1
+    Context1 --> Wrapper1
+    Context1 --> Wrapper2
+    Host1 --> Context2
+    Engine --> Host2
+
+```
 
 - Engine：Container的具体实现
 - Host：以域名为主的一个虚拟主机
@@ -52,28 +138,82 @@ Container设计：
 - Context：代表一个独立的web应用
 - PipeLine：各个组件之间传递消息的管道
 
-Connector设计：
+所有的容器组件都实现了 Container 接口，因此组合模式可以使得用户对单容器对象和组合容器对象的使用具有一致性。
 
-![屏幕截图 2020-08-26 144755](/assets/屏幕截图%202020-08-26%20144755.png)
+Tomcat 通过 Mapper 组件保存了 Web 应用的配置信息，其实就是容器组件与访问路径的映射关系，当一个请求到来时，Mapper 组件通过解析请求 URL 里的域名和路径，就能定位到一个 Servlet。
 
-- Endpoint负责监听连接，将连接交给Processor处理
-- Processor再将请求映射到Container
+一个请求流经 Engine -> Host -> Context -> Wrapper，每个节点都会对请求做一些处理
 
-Executor：
+### LifeCycle
 
-共享线程池由Service维护
+容器相关的组件都实现了 LifeCycle 接口，父组件以此管理子组件的启动与停止
 
-外部依赖 Bootstrap和Catalina：
+### Executor
 
-Bootstrap启动Cataina Catalina启动Server 实现了Bootstrap 与 Server进行解耦
+在 Endpoint 与 Processor 之间有个线程池来处理请求，共享线程池由Service维护
+
+### Bootstrap和Catalina
+
+Bootstrap 是用来初始化类加载器的
+
+通过 Bootstrap 启动 Cataina， Catalina启动Server 实现了Bootstrap 与 Server进行解耦
 
 ### 启动流程
 
-![屏幕截图 2020-08-26 145611](/assets/屏幕截图%202020-08-26%20145611.png)
+```mermaid
+sequenceDiagram
+  用户 ->> Bootstrap: start
+  Bootstrap ->> Bootstrap: init
+  Bootstrap ->> Bootstrap: load
+  Bootstrap ->> Cataina: load
+  Cataina ->> Cataina: 创建Server
+  Cataina ->> Server: init
+  Server ->> Service: init
+  Service ->> Engine: init
+  Engine ->> Host: init
+  Host ->> Context: init
+  Service ->> Executor: init
+  Service ->> Connector: init
+  Connector ->> ProtocolHandler: init
+
+  Bootstrap ->> Bootstrap: start
+  Bootstrap ->> Cataina: start
+  Cataina ->> Server: start
+  Server ->> Service: start
+  Service ->> Engine: start
+  Engine ->> Host: start
+  Host ->> Context: start
+  Service ->> Executor: start
+  Service ->> Connector: start
+  Connector ->> ProtocolHandler: start
+```
 
 ### 请求处理
 
-![屏幕截图 2020-08-26 145856](/assets/屏幕截图%202020-08-26%20145856.png)
+```mermaid
+sequenceDiagram
+    participant Endpoint
+    participant Processor
+    participant CoyoteAdapter
+    participant Mapper
+    participant Engine
+    participant Host
+    participant Context
+    participant Wrapper
+    participant FilterChain
+    participant Servlet
+
+    Endpoint->>Processor: Request
+    Processor->>CoyoteAdapter: Process request
+    CoyoteAdapter->>Mapper: Map request
+    Mapper->>Engine: Send to engine
+    Engine->>Host: Identify host
+    Host->>Context: Identify context
+    Context->>Wrapper: Identify wrapper
+    Wrapper->>Wrapper: Build Filters
+    Wrapper->>FilterChain: Apply filters
+    FilterChain->>Servlet: Forward to servlet
+```
 
 总体流程：
 

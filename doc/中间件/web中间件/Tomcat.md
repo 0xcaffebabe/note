@@ -215,19 +215,18 @@ sequenceDiagram
     FilterChain->>Servlet: Forward to servlet
 ```
 
-总体流程：
-
-- `CoyoteAdapter.service`
-  - 请求映射：`CoyoteAdapter.postParseRequest`
-  - 调用容器：`connector.getService().getContainer().getPipeline().getFirst().invoke(request, response)`
-
-Catalina请求处理：
-
-![屏幕截图 2020-08-27 145924](/assets/屏幕截图%202020-08-27%20145924.png)
-
 ### 类加载器
 
-![屏幕截图 2020-08-26 150126](/assets/屏幕截图%202020-08-26%20150126.png)
+```mermaid
+stateDiagram-v2
+  BootstrapClassLoader --> ExtensionClassLoader
+  ExtensionClassLoader --> SystemClassLoader
+  SystemClassLoader --> CommonClassLoader
+  CommonClassLoader --> CatalineClassLoader
+  CommonClassLoader --> SharedClassLoader
+  SharedClassLoader --> WebApp1ClassLoader
+  SharedClassLoader --> WebApp2ClassLoader
+```
 
 通过每个app使用自己的类加载器来达到：
 

@@ -1,4 +1,5 @@
 import mermaid from "mermaid"
+import svgPanZoom from 'svg-pan-zoom'
 
 function initWithDark() {
   mermaid.initialize({theme: 'dark', startOnLoad: true})
@@ -9,9 +10,24 @@ function initWithNormal() {
 }
 
 function initAllNode() {
-  mermaid.run({
-    querySelector: '[id^=mermaid-]'
-  })
+  const nodeList = document.querySelectorAll('[id^=mermaid-]')
+  nodeList.forEach(
+    v => {
+      mermaid.render(v.id + '-svg', v.textContent!)
+        .then(data => {
+          v.innerHTML = data.svg.replace(/[ ]*max-width:[ 0-9\.]*px;/i , '')
+        })
+        .then(() => {
+          svgPanZoom('#' + v.id + " svg", {
+            zoomEnabled: true,
+            controlIconsEnabled: true,
+            mouseWheelZoomEnabled: false,
+            fit: true,
+            center: true
+          })
+        })
+      }
+    )
 }
 
 export default {

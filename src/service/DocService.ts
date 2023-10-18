@@ -217,7 +217,7 @@ class DocService implements Cacheable{
     render.code = (code: string, language: string | undefined, isEscaped: boolean) :string => {
       // 如果语言是mermaid 特殊处理 转为mermaid
       if (language == 'mermaid') {
-        return `<div class='mermaid' id='mermaid-${IdGenUtils.uuid()}'>${code}</div>`
+        return `<div id='mermaid-${IdGenUtils.uuid()}'>${code}</div>`
       }
       return `<pre><code class="language-${language}">${this.hightlightCode(code, language)}</code></pre>`
     }

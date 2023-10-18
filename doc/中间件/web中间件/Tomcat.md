@@ -222,11 +222,15 @@ stateDiagram-v2
   BootstrapClassLoader --> ExtensionClassLoader
   ExtensionClassLoader --> SystemClassLoader
   SystemClassLoader --> CommonClassLoader
-  CommonClassLoader --> CatalineClassLoader
+  CommonClassLoader --> CatalinaClassLoader
   CommonClassLoader --> SharedClassLoader
   SharedClassLoader --> WebApp1ClassLoader
   SharedClassLoader --> WebApp2ClassLoader
 ```
+
+- SharedClassLoader：专门来加载 Web 应用之间共享的类
+- CatalinaClassLoader：专门来加载 Tomcat 自身的类
+- CommonClassLoader：用来共享 Tomcat 和各 Web 应用之间的类
 
 通过每个app使用自己的类加载器来达到：
 
@@ -240,49 +244,30 @@ stateDiagram-v2
 - 如果还是没有 从当前类加载器加载 （如果开启委托 则会遵循JVM双亲委托模型）
 - 还没有 再从父类加载器加载
 
-## Catalina
+线程上下文加载器：这个类加载器保存在线程私有数据里，只要是同一个线程，一旦设置了线程上下文加载器，在线程后续执行过程中就能把这个类加载器取出来用
 
-- Servlet容器
-- Digester : XML解析工具
+### 热加载与热部署
 
-### Server 创建
+周期性检测资源文件变化，热加载主要完成了下面这些任务：
 
-- 解析Server：`Catalina.createStartDigester`
-- 解析Engine：`EngineRuleSet.addRuleInstances`
-- 解析Host：`HostRuleSet.addRuleInstances`
-- 解析Context：`ContextRuleSet.addRuleInstances`
+1. 停止和销毁 Context 容器及其所有子容器，子容器其实就是 Wrapper，也就是说 Wrapper 里面 Servlet 实例也被销毁了
+2. 停止和销毁 Context 容器关联的 Listener 和 Filter
+3. 停止和销毁 Context 下的 Pipeline 和各种 Valve
+4. 停止和销毁 Context 的类加载器，以及类加载器加载的类文件资源
+5. 启动 Context 容器，在这个过程中会重新创建前面四步被销毁的资源
 
-### Web应用启动流程
-
-![屏幕截图 2020-08-26 153133](/assets/屏幕截图%202020-08-26%20153133.png)
-
-StandardHost：
-
-- 从server.xml配置加载
-- 或者扫描webapps目录加载
-
-HostConfig：
-
-- START_EVENT事件：会根据context描述文件或者对webapps目录下war包目录等部署应用 调用`deployApps()`
-- PERIODIC_EVENT事件：检查文件是否发生变更 是则重新部署(之前不存在的应用)或者重新加载(之前存在的应用)
-
-StandardContext：
-
-应用初始化及启动
-
-ContextConfig：
-
-- AFTER_INIT_EVENT事件：加载Context配置文件
-- BEFORE_START_EVENT事件：处理docBase(应用所在文件夹)问题
-- CONFIGURE_START_EVENT：初始化操作, 解析XML配置文件(或者扫描目录 使用注解的方式) 创建 Servlet Filter等组件
-
-StandardWrapper：
-
-- 根据配置load servlet 以及对 servlet 初始化
+当监听到webapps 目录变化，Host 会创新创建相对应的 Context 并启动
 
 ### Context的命名与请求路径映射
 
-![屏幕截图 2020-08-26 160757](/assets/屏幕截图%202020-08-26%20160757.png)
+基础文件名称|Name|Path|Version|部署文件名称
+-|-|-|-|-
+foo|/foo|/foo||foo.xml、foo.war、foo
+foo#bar|/foo/bar|/foo/bar||foo#bar.xml、foo#bar.war、foo#bar
+foo##2|/foo##2|/foo|2|foo##2.xml、foo#+2.war、foo#2
+foo#bar##2|/foo/bar##2|/foo/bar|2|foo#bar##2.xml、foo#bar##2.war、foo#bar##2
+ROOT||||ROOT.xml、ROOT.war、ROOT
+ROOT##2|##2||2|ROOT##2.xml、ROOT##2.war、ROOT##2
 
 ### Catalina 自带的 Servlet
 
@@ -336,10 +321,6 @@ HTTP 配置：
 - ProtocolHandler 封装Endpoint Processor
 - UpgradeProtocol 处理HTTP协议的升级协议
 
-### 请求流程
-
-![屏幕截图 2020-08-27 152428](/assets/屏幕截图%202020-08-27%20152428.png)
-
 ### AJP
 
 ```xml
@@ -354,15 +335,39 @@ HTTP 配置：
 
 包结构：
 
-![屏幕截图 2020-08-27 154533](/assets/屏幕截图%202020-08-27%20154533.png)
+```
+字节位置 0     1      2 3           4-(n+3)
+内容     0x12 0x34 数据长度(n)       数据
+```
 
 有效载荷的前一个字节代表类型
 
-![屏幕截图 2020-08-27 155233](/assets/屏幕截图%202020-08-27%20155233.png)
+序号|	类型|	描述
+-|-|-
+2|Forward Request|使用接下来的数据开始请求处理周期
+7|Shutdown|Web服务器请求Servlet容器关闭自己
+8|Ping|Web服务器请求Servlet容器采取控制（安全登录阶段）
+10|CPing|Web服务器请求Servlet容器通过一个CPong快速响应
+空|Data|主体数据及其大小
+3|Send Body Chunk|Servlet?容器向Web服务器发送一个主体数据块
+4|Send Headers|Servlet?容器向Web服务器发送响应头信息
+5|End Response|用于标记响应结束
+6|Get Body Chunk|如果请求数据未传输完，用于得到更多的请求数据
+9|CPong Reply|CPingi请求应答
 
-请求处理：
-
-![屏幕截图 2020-08-27 155429](/assets/屏幕截图%202020-08-27%20155429.png)
+```mermaid
+sequenceDiagram
+    title 请求处理
+    participant Web服务器 as Web服务器
+    participant Server程序 as Servlet容器
+    Web服务器->>Server程序: Forward Request
+    Server程序->>Web服务器: Data
+    Web服务器->>Server程序: Get Body Chunk
+    Server程序->>Web服务器: Data
+    Web服务器->>Server程序: Send Headers
+    Server程序->>Web服务器: Send Body Chunk
+    Web服务器->>Server程序: End Response
+```
 
 ## Jasper
 
@@ -370,9 +375,23 @@ HTTP 配置：
 
 ### 编译方式
 
-运行时编译：
 
-![屏幕截图 2020-09-03 144855](/assets/屏幕截图%202020-09-03%20144855.png)
+```mermaid
+sequenceDiagram
+  title 运行时编译
+  用户 ->> JspServlet: service()
+  JspServlet ->> JspServlet: 获取JSP文件路径
+  JspServlet ->> JspServlet: 判断当前请求是否为预编译请求
+  JspServlet ->> JspServlet: 执行请求serviceJspFile()
+  alt 找不到对应JspServletWrapper
+    JspServlet ->> JspServletWrapper: 执行请求
+    JspServletWrapper ->> JspComplicationContext: 开发环境或第一次调用，执行编译
+    JspServletWrapper ->> JspServletWrapper: 重新加载并实例化JSP的Servlet类
+    JspServletWrapper ->> JspServletWrapper: 更新上次使用时间
+    JspServletWrapper ->> JspServletWrapper: 调用JSP Servlet执行请求
+  end
+
+```
 
 编译结果：
 
@@ -404,7 +423,25 @@ private static final Set<String> _jspx_imports_classes; // 导入的类
 - 对于静态内容调用out.write
 - 处理jsp标签
 
-![屏幕截图 2020-09-03 152717](/assets/屏幕截图%202020-09-03%20152717.png)
+```mermaid
+sequenceDiagram
+  title JSP编译流程
+  外部 ->> JspComplicationContext: 编译
+  JspComplicationContext ->> Compiler: 是否过期
+  Compiler ->> JspComplicationContext: 没过期直接返回
+  opt 编译过程
+    JspComplicationContext ->> Compiler: 删除生成的文件
+    Compiler ->> ParserController: 解析JSP页面
+    Compiler ->> Generator: 生成Java源码
+    Compiler ->> Compiler: 生成Class文件
+  end
+```
+
+## Session机制
+
+主要由每个 Context 容器内的一个 Manager 对象来管理 Session，默认为 StandardManager。通过 Request 获取 Session 会执行创建 Session，Session 存放在个 ConcurrentHashMap 中。
+
+StandardContext 会有个定时扫描的线程去清理过期的 Session，Session 创建事件的监听则是通过 StandardContext 将 HttpSessionListener 类型的 Listener 取出，然后依次调用它们的 sessionCreated 方法。
 
 ## 配置管理
 

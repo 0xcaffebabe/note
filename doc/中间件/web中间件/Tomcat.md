@@ -546,7 +546,21 @@ server.xml: 服务器核心配置
 
 ## 集群
 
-![屏幕截图 2020-09-04 111658](/assets/屏幕截图%202020-09-04%20111658.png)
+```mermaid
+stateDiagram-v2
+  LB --> WebServer1
+  WebServer1 --> Tomcat1
+  WebServer1 --> Tomcat2
+  Tomcat1 --> Tomcat2
+  Tomcat2 --> Tomcat1
+  LB --> WebServer2
+  WebServer2 --> Tomcat3
+  WebServer2 --> Tomcat4
+  Tomcat3 --> Tomcat4
+  Tomcat4 --> Tomcat3
+```
+
+Tomcat 集群实现的原理就是在节点之间同步 Session
 
 Tomcat 本身就不适合配置集群 一种通用的解决方案是 接入层为 Nginx
 

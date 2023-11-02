@@ -23,6 +23,7 @@ import MindNode from '@/dto/mind/MindNode'
 import { MindUtils } from '@/pages/doc/mind/MindUtils'
 import ClusterNode from '@/dto/ClusterNode'
 import KatexExtension from '@/render/KatexExtension'
+import Slugger from '@/util/Slugger'
 
 const cache = Cache()
 
@@ -259,12 +260,20 @@ class DocService implements Cacheable{
       })
       return text;
     }
+    const slugger = new Slugger();
     render.table = (header: string, body: string): string => {
       return `<div class="table-wrapper"><table>${header}${body}</table></div>`
     }
-    return  marked(mdContent, {
-      renderer: render
-    })
+    render.heading = (text: string, level: number, raw: string): string => {
+      raw = raw
+      .toLowerCase()
+      .trim()
+      .replace(/<[!\/a-z].*?>/gi, '');
+      const id = slugger.slug(raw);
+
+      return `<h${level} id="${id}">${text}</h${level}>\n`;
+    }
+    return marked.parse(mdContent, {renderer: render})
   }
 
 

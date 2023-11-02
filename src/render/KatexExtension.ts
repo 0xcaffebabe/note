@@ -1,8 +1,8 @@
 import katex, {type KatexOptions} from 'katex'
 import 'katex/dist/katex.css'
-import type {marked} from 'marked'
+import { MarkedExtension, TokenizerAndRendererExtension } from 'marked'
 
-export default function (options: KatexOptions = {}): marked.MarkedExtension {
+export default function (options: KatexOptions = {}): MarkedExtension {
     return {
         extensions: [
             inlineKatex(options),
@@ -11,7 +11,7 @@ export default function (options: KatexOptions = {}): marked.MarkedExtension {
     }
 }
 
-function inlineKatex(options: KatexOptions): marked.TokenizerAndRendererExtension {
+function inlineKatex(options: KatexOptions): TokenizerAndRendererExtension {
     return {
         name: 'inlineKatex',
         level: 'inline',
@@ -34,7 +34,7 @@ function inlineKatex(options: KatexOptions): marked.TokenizerAndRendererExtensio
     }
 }
 
-function blockKatex(options: KatexOptions): marked.TokenizerAndRendererExtension {
+function blockKatex(options: KatexOptions): TokenizerAndRendererExtension {
     return {
         name: 'blockKatex',
         level: 'block',

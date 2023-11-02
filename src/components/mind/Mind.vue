@@ -100,6 +100,9 @@ export default defineComponent({
         container: this.id,
         theme: "primary1",
         editable: false,
+        view: {
+          draggable: true, 
+        },
         layout: {
           hspace: 60, // 节点之间的水平间距
           vspace: 20, // 节点之间的垂直间距

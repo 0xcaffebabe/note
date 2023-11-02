@@ -55,7 +55,6 @@ type ActionType =
     'showKnowledgeSystem' | 
     'goToDoc' | 
     'goToPpt' |
-    'downloadPdf' |
     'showKnowledgeSystem' | 
     'openInEditor' | 
     'showKnowledgeAblity' | 
@@ -96,7 +95,6 @@ export default defineComponent({
     'showKnowledgeSystem',
     'goToDoc',
     'goToPpt',
-    'downloadPdf',
     'showKnowledgeReviewer',
     'showKnowledgeTrend',
     'showKnowledgeRedundancy',
@@ -127,7 +125,6 @@ export default defineComponent({
         {name: '链接列表', type: 'primary', action: 'showLinkList',},
         {name: '去到DOC', type: 'info', action: 'goToDoc', divided: true},
         {name: '去到PPT', type: 'danger', action: 'goToPpt'},
-        {name: '下载pdf', type: 'success', action: 'downloadPdf'},
         {name: '随机复习', type: 'primary', action: 'randomReview' as LocalActionType, local: true, hotkey: 'alt + n'},
         {name: '更多设置', type: 'info', action: 'showMoreSetting' as LocalActionType, local: true, divided: true},
       ] as Action[]

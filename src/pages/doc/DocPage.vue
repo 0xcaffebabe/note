@@ -48,7 +48,6 @@
     @copyDocPath="handleCopyDocPath"
     @showLinkList="showLinkList"
     @go-to-ppt="goToPpt"
-    @downloadPdf="downloadPdf"
     @showKnowledgeReviewer="showKnowledgeReviewer"
     @showKnowledgeRedundancy="showKnowledgeRedundancy"
     @showKnowledgeAblity="showKnowledgeAblity"
@@ -110,7 +109,6 @@ import { ElMessage } from 'element-plus'
 import './markdown-v1.less'
 import './code-hl-vsc.less'
 import DocUtils from "@/util/DocUtils";
-import PdfUtils from '@/util/PdfUtils';
 import DocSideCategory from './aside/DocSideCategory.vue';
 import DocBreadcrumbNav from "./nav/DocBreadcrumbNav.vue";
 import DocTabNav from "./nav/DocTabNav.vue";
@@ -346,13 +344,6 @@ export default defineComponent({
               }
           )
         })
-    },
-    downloadPdf() {
-      try {
-        PdfUtils.downloadPdf(this.doc, true)
-      }catch(err: any) {
-        ElMessage.error(err.message)
-      }
     },
     goToPpt(){
       const heading = this.$store.state.currentHeading;

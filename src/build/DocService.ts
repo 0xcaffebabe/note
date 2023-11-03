@@ -21,6 +21,7 @@ const proxy = require("node-global-proxy").default;
 import Cache from "../decorator/Cache";
 import { SimilarItem } from "@/dto/doc/SimilarItem";
 import generateDocCluster from '../scripts/generateDocCluster'
+import Slugger from "../util/Slugger";
 
 const cache = Cache()
 
@@ -303,7 +304,18 @@ class DocService extends BaseService implements Cacheable {
 
   public md2TextSegement(md: string): SearchIndexSegment[] {
     md = md.replace(/^---$.*^---$/ms, '') // 去除markdown里的元数据
-    const html = marked(md)
+    const render = new marked.Renderer();
+    const slugger = new Slugger();
+    render.heading = (text: string, level: number, raw: string): string => {
+      raw = raw
+      .toLowerCase()
+      .trim()
+      .replace(/<[!\/a-z].*?>/gi, '');
+      const id = slugger.slug(raw);
+
+      return `<h${level} id="${id}">${text}</h${level}>\n`;
+    }
+    const html = marked(md, {renderer: render})
     DocService.dom.window.document.body.innerHTML = `<!DOCTYPE html><body>${html}</body></html>`
     const elemts = DocService.dom.window.document.body.querySelectorAll('h1, h2, h3, h4, h5, h6');
     const segments: SearchIndexSegment[] = []

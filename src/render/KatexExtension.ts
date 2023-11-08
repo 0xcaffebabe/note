@@ -42,7 +42,15 @@ function blockKatex(options: KatexOptions): TokenizerAndRendererExtension {
             return src.indexOf('$$')
         },
         tokenizer(src: string, _tokens) {
-            const match = src.match(/^\$\$+\n([^$]+?)\n\$\$/)
+            let match = src.match(/^\$\$+([^$]+?)\$\$/)
+            if (match) {
+                return {
+                    type: 'blockKatex',
+                    raw: match[0],
+                    text: match[1].trim()
+                }
+            }
+            match = src.match(/^\$\$+\n([^$]+?)\n\$\$/)
             if (match) {
                 return {
                     type: 'blockKatex',
@@ -52,7 +60,6 @@ function blockKatex(options: KatexOptions): TokenizerAndRendererExtension {
             }
         },
         renderer(token) {
-            options.displayMode = true
             return `<div class="line_tex tex">${token.text}</div>`
         }
     }

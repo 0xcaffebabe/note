@@ -2,8 +2,6 @@
 
 > redis是一款高性能的NOSQL系列的非关系型数据库
 
-![批注 2020-06-18 145713](/assets/批注%202020-06-18%20145713.png)
-
 ## 应用场景
 
 - 缓存
@@ -25,7 +23,14 @@
 
 ## 简单使用
 
-![屏幕截图 2020-09-23 150438](/assets/屏幕截图%202020-09-23%20150438.png)
+可执行文件|作用
+-|-
+redis-server|启动Redis
+redis-cli|Redis命令行客户端
+redis-benchmark|Redis基准测试工具
+redis-check-aof|Redis AOF持久化文件检测和修复工具
+redis-check-dump|Redis RDB持久化文件检测和修复工具
+redis-sentinel|启动Redis Sentinel
 
 ```sh
 redis-server # 默认配置启动
@@ -134,9 +139,7 @@ vs. 原生批量命令：
 
 Redis 将所有时间事件都放在一个无序链表中，通过遍历整个链表查找出已到达的时间事件，并调用相应的事件处理器
 
-## 发布订阅
-
-![屏幕截图 2020-09-27 154059](/assets/屏幕截图%202020-09-27%20154059.png)
+## [发布订阅](/软件工程/设计模式/行为模式.md#观察者)
 
 新开启的订阅客户端，无法收到该频道之前的消息
 
@@ -198,7 +201,31 @@ geohash locations beijing # 将二维经纬度转换为一维字符串
 
 ## 线程模型
 
-redis采用 IO 多路复用机制同时监听多个 socket，将产生事件的 socket 压入内存队列中，事件分派器根据 socket 上的事件类型来选择对应的事件处理器进行处理
+redis采用 IO 多路复用机制如 epoll 同时监听多个 socket，将产生事件的 socket 压入内存队列中，事件分派器根据 socket 上的事件类型来选择对应的事件处理器进行处理
+
+```mermaid
+graph TD
+    A[bind/listen] --> B[epoll_wait]
+    B --> FD
+    B --> FD1
+    B --> FD2
+    FD --> D[AcceptEvent]
+    FD1 --> D[AcceptEvent]
+    FD2 --> D[AcceptEvent]
+    FD --> E[ReadEvent]
+    FD1 --> E[ReadEvent]
+    FD2 --> E[ReadEvent]
+    FD --> F[WriteEvent]
+    FD1 --> F[WriteEvent]
+    FD2 --> F[WriteEvent]
+    D --> 队列
+    E --> 队列
+    F --> 队列
+    队列 --> accept
+    队列 --> get
+    队列 --> put
+    队列 --> return
+```
 
 Redis 单线程模型指的是只有一条线程来处理命令
 
@@ -302,7 +329,17 @@ Redis产生的子进程并不需要消耗1倍的父进程内存，实际消耗�
 
 - 惰性删除 当客户端读取带有超时属性的键时，如果已经超过键设置的过期时间，会执行删除操作并返回空 虽然节省CPU 但存在过期对象无法及时回收 内存泄漏的问题
 - 定时任务删除 Redis内部维护一个定时任务，默认每秒运行10次
-![屏幕截图 2020-10-06 141625](/assets/屏幕截图%202020-10-06%20141625.png)
+
+```mermaid
+graph TD
+  默认采用慢模式运行 --> 每个数据库空间随机检查20个键
+  每个数据库空间随机检查20个键 --> A{是否超过25%的键过期}
+  A --> |yes| 循环执行
+  A --> |no| 退出
+  循环执行 --> B{执行时间超过25ms}
+  B --> |yes| 每次Redis事件之前采用快模式运行
+  B --> |no| 退出
+```
 
 循环执行指的是执行回收逻辑 直到不足25%或运行超时为止
 

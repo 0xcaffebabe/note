@@ -17,7 +17,7 @@
         size="small"
         plain
         @click="up"
-        :disabled="currentIndex >= resultSize"
+        :disabled="currentIndex >= resultSize || resultSize == 1"
       >
         <el-icon><arrow-down-bold /></el-icon>
       </el-button>
@@ -53,7 +53,7 @@ export default defineComponent({
     showFinder() {
       if (!this.showFinder) {
         // 隐藏的时候清空高亮样式
-        document.querySelector(".markdown-section")!.querySelectorAll('mark').forEach(e => e.replaceWith(...e.childNodes))
+        document.querySelector(".markdown-section.main")!.querySelectorAll('mark').forEach(e => e.replaceWith(...e.childNodes))
         this.currentIndex = 0
         this.visibleIndex = 0
         this.innerKw = ""
@@ -79,7 +79,7 @@ export default defineComponent({
       }
       this.resultSize =
         document
-          .querySelector(".markdown-section")
+          .querySelector(".markdown-section.main")
           ?.getElementsByTagName("mark").length || 0;
       this.currentIndex = 0
       this.visibleIndex = 0
@@ -117,12 +117,12 @@ export default defineComponent({
       this.jump();
     },
     jump(withScroll: boolean = true) {
-      const markList = document.querySelector(".markdown-section")?.getElementsByTagName("mark") || []
+      const markList = document.querySelector(".markdown-section.main")?.getElementsByTagName("mark") || []
       // 清空选中样式
       for(let i of markList) {
         i.classList.remove("hilight-choosed")
       }
-      const kwElm = document.querySelector(".markdown-section")?.getElementsByTagName("mark")[this.currentIndex-1];
+      const kwElm = document.querySelector(".markdown-section.main")?.getElementsByTagName("mark")[this.currentIndex-1];
       if (kwElm) {
         kwElm.classList.add("hilight-choosed")
         if (withScroll) {
@@ -165,7 +165,7 @@ export default defineComponent({
         if (!that.showFinder) {
           return
         }
-        const markList = document.querySelector(".markdown-section")?.getElementsByTagName("mark") || []
+        const markList = document.querySelector(".markdown-section.main")?.getElementsByTagName("mark") || []
         for(let i = 0; i < markList.length; i++) {
           const mark = markList[i];
           const difference = window.scrollY - mark.offsetTop + 280

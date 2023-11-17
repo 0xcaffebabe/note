@@ -164,25 +164,6 @@ punsubscribe pattern # 按照给定模式取消订阅
 PUBLISH redisChat "Redis is a great caching technique"
 ```
 
-## GEO
-
-地理信息定位功能
-
-```sh
-geoadd locations 116.38 39.55 beijing # 添加成员
-geopos locations beijing # 获取
-geodist locations beijing tianjin [m|km|mi|ft] # 计算两地距离
-georadiusbymember locations beijing 150 km # 获取北京方圆150km内的成员
-geohash locations beijing # 将二维经纬度转换为一维字符串
-```
-
-关于geohash：
-
-- 字符串越长，表示的位置更精确
-- 两个字符串越相似，它们之间的距离越近，Redis利用字符串前缀匹配
-算法实现相关的命令
-- Redis正是使用有序集合并结合geohash的特性实现了GEO的若干命令
-
 ## 分布式
 
 通用集群方案：
@@ -222,6 +203,21 @@ graph TD
 Redis 单线程模型指的是只有一条线程来处理命令
 
 单线程对每个命令的执行时间是有要求的 某个命令执行过长 就会造成其他命令的阻塞
+
+Redis 的以下操作会产生阻塞
+
+- 网络IO
+- 键值对增删改查
+- 数据库操作
+- 生成RDB快照
+- 记录AOF日志
+- AOF日志重写
+- RDB传输
+- 加载RDB
+- 哈希槽扩散
+- 数据迁移
+
+如果阻塞点不在关键路径上，就可以异步执行。Redis 主线程启动后，会创建 3 个子线程，分别由它们负责 AOF 日志写操作、键值对删除以及文件关闭的异步执行
 
 ### 发现阻塞
 

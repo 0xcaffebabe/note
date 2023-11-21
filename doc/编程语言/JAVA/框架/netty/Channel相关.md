@@ -73,6 +73,14 @@ SimpleChannelInboundHandler 会自动释放资源
 
 通过分配1%的采样来检测内存泄漏
 
+1. 创建ByteBuf时调用了track0(obj)方法，传入的obj就是创建的ByteBuf对象。
+2. track0(obj)方法内做了2件事
+   a. 创建一个弱引用对象，绑定上面传入的ByteBuf对象和一个全局的弱引用队列refQueue。
+   b. 把这个弱引用对象加入到另一个全局集合allLeaks里面。
+3. ByteBuf对象用完了，正常情况会调用release()方法回收堆外内存，同时release()方法中调用了弱引用对象DefaultResourceLeak的close()方法，从allLeaks集合里面把这个弱引用对象移除。如果开发者忘记调用release()方法，则allLeaks集合里还会存在这个弱引用对象。
+4. 一段时间后，ByteBuf对象被GC回收，此时会触发一个操作：ByteBuf对象所绑定的弱引用对象被加入到refQueue中。
+5.下一次创建ByteBuf时又调用了track0(obj)方法，把refQueue和allLeaks这俩集合一对比，既存在于refQueue（说明ByteBuf用完了且已经被GC回收），又存在于allLeaks（说明没调用release释放内存），表明存在内存泄漏
+
 ## ChannelPipeline
 
 拦截流经 Channel 的入站和出站时间的ChannelHandler 示例链

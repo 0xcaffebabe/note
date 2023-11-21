@@ -339,8 +339,10 @@ graph TD
 volatile-lru    | 从已设置过期时间的数据集中挑选最近最少使用的数据淘汰（**最常用**）
 volatile-ttl    | 从已设置过期时间的数据集中挑选将要过期的数据淘汰
 volatile-random | 从已设置过期时间的数据集中任意选择数据淘汰
+volatile-lfu    | 从已设置过期时间的数据集中挑选访问频率最低的数据淘汰
 allkeys-lru     | 从所有数据集中挑选最近最少使用的数据淘汰
 allkeys-random  | 从所有数据集中任意选择数据进行淘汰
+allkeys-lfu     | 从所有数据集中挑选访问频率最低的数据淘汰
 noeviction      | 禁止驱逐数据，当内存不足时，写入操作会被拒绝
 
 内存溢出淘汰策略可以采用config set maxmemory-policy{policy}动态配置

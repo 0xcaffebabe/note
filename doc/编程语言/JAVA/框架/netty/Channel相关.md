@@ -63,8 +63,6 @@ SimpleChannelInboundHandler 会自动释放资源
 `flush(ChannelHandlerContext)`                                              | 当请求通过`Channel`将入队数据冲刷到远程节点时被调用
 `write(ChannelHandlerContext,Object,<br>``ChannelPromise)`                  | 当请求通过`Channel`将数据写到远程节点时被调用
 
-
-
 ### ChannelHandlerAdapter
 
 ![批注 2020-07-08 105137](/assets/批注%202020-07-08%20105137.png)
@@ -80,6 +78,10 @@ SimpleChannelInboundHandler 会自动释放资源
 3. ByteBuf对象用完了，正常情况会调用release()方法回收堆外内存，同时release()方法中调用了弱引用对象DefaultResourceLeak的close()方法，从allLeaks集合里面把这个弱引用对象移除。如果开发者忘记调用release()方法，则allLeaks集合里还会存在这个弱引用对象。
 4. 一段时间后，ByteBuf对象被GC回收，此时会触发一个操作：ByteBuf对象所绑定的弱引用对象被加入到refQueue中。
 5.下一次创建ByteBuf时又调用了track0(obj)方法，把refQueue和allLeaks这俩集合一对比，既存在于refQueue（说明ByteBuf用完了且已经被GC回收），又存在于allLeaks（说明没调用release释放内存），表明存在内存泄漏
+
+### XXTrafficShapingHandler
+
+通过指定一个限制速度，读取或写入时进行计算，如果当前速度超限，会让生产者或者消费者等待一段时间后，再进行读取写入
 
 ## ChannelPipeline
 

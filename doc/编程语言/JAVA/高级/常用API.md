@@ -169,7 +169,17 @@ LocalDateTime.now()
 
 ## StringBuilder
 
-![01_StringBuilder的原理](/assets/01_StringBuilder的原理.bmp)
+String字符串是常量；它们的值在创建之后不能更改。字符串的底层是一个被final修饰的数组，不能改变，是一个常量
+
+```java
+private final char value[];
+```
+
+StringBuilder是字符串缓冲区，可以提高字符串的操作效率（看成一个长度可以变化的字符串），底层也是一个数组，但是没有被final修饰，可以改变长度
+
+```java
+char[] value;
+```
 
 ```java
 StringBuilder sb = new StringBuilder("hello");
@@ -181,6 +191,21 @@ System.out.println(sb.toString());
 ## 包装类
 
 ![02_包装类的概念](/assets/02_包装类的概念.bmp)
+
+基本数据类型，使用起来非常方便但是没有对应的方法来操作这些基本类型的数据
+
+可以使用一个类把基本类型的数据装起来，在类中定义一些方法，这个类叫做包装类
+我们可以使用类中的方法来操作这些基本类型的数据
+
+```mermaid
+stateDiagram-v2
+    state Integer类 {
+        10
+    }
+    state Double类 {
+        8.5
+    }
+```
 
 - 装箱拆箱
   - 自动装箱拆箱

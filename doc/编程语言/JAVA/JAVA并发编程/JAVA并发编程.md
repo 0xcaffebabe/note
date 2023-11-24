@@ -17,6 +17,13 @@
 
 ![06_等待唤醒案例分析](/assets/06_等待唤醒案例分析.bmp)
 
+```mermaid
+sequenceDiagram
+    生产者 ->> 同步对象: wait
+    消费者 ->> 同步对象: notify
+    同步对象 -->> 生产者: 继续执行
+```
+
 要注意，wait() notify() notifyAll()都需要在synchronized中
 
 wait() 会释放锁，sleep() 不会

@@ -63,7 +63,17 @@ exception   | Throwable           | 异常对象
 
 # MVC
 
-![MVC开发模式](/assets/MVC开发模式.bmp)
+```mermaid
+sequenceDiagram
+    用户->>控制器: 请求
+    控制器->>模型: 调用
+    模型->>控制器: 返回数据
+    控制器->>视图: 调用
+    视图->>用户: 响应
+    Note right of 模型: JavaBean
+    Note right of 视图: JSP
+    Note right of 控制器: Servlet
+```
 
 - 耦合性低，方便维护，可以利于分工协作
 - 重用性高

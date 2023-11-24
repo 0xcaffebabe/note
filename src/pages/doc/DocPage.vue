@@ -285,16 +285,21 @@ export default defineComponent({
       this.generateTOC();
       this.$nextTick(() => {
         const docEl = this.$refs.markdownSection as HTMLElement;
-        // 渲染mermaid
-        this.eventManager!.renderMermaid();
+        if (!kw) {
+          this.eventManager!.renderMermaid();
+        }
         // 同步滚动markdown-section到headingId区域
         this.eventManager!.syncHeading(headingId);
         // 同步滚动左侧目录 让当前激活目录位于可视区域
         this.syncCategoryListScrollBar();
         // 更新知识网络
         (this.$refs.knowledgeNetwork as InstanceType<typeof KnowledgeNetwork>).init();
-        // 高亮关键词
-        this.hilightKeywords(docEl, kw);
+        if (kw) {
+          // 高亮关键词
+          this.hilightKeywords(docEl, kw);
+          // 渲染mermaid
+          this.eventManager!.renderMermaid();
+        }
         // 更新关键词寻找器状态
         this.kwFinder?.refresh();
         // 渲染数学公式

@@ -3,7 +3,20 @@
 - 系统虚拟机
 - 软件虚拟机
 
-![批注 2020-07-10 083948](/assets/批注%202020-07-10%20083948.png)
+```mermaid
+stateDiagram-v2
+  x.java --> javac
+  javac --> x.class
+  x.class --> ClassLoader
+  state jvm {
+    ClassLoader --> 字节码解释器
+    java类库 --> ClassLoader
+    ClassLoader --> JIT即时编译器
+    JIT即时编译器 --> 执行引擎
+    字节码解释器 --> 执行引擎
+  }
+  执行引擎 --> 系统硬件
+```
 
 JVM是一种规范
 
@@ -57,7 +70,19 @@ JDK14:<https://docs.oracle.com/javase/specs/jvms/se14/jvms14.pdf>
 
 执行引擎的执行过程：
 
-![屏幕截图 2020-10-05 105134](/assets/屏幕截图%202020-10-05%20105134.png)
+偏移量|指令|说明
+-|-|-
+0:|iconst1|常数1入栈
+1:|istore_1|将栈顶元素移入本地变量1存储
+2:|iconst2|常数2入栈
+3:|istore2|将栈顶元素移入本地变量2存储
+4:|i1oad1|本地变量1入栈
+5:|i1oad2|本地变量2入栈
+6:|iadd|弹出栈顶两个元素相加
+7:|bipush| 将10入栈
+9:|imul|栈顶两个元素相乘
+10:|istore3|栈顶元素移入本地变量3存储
+11:|return|返回
 
 方法调用：
 

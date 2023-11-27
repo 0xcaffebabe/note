@@ -67,6 +67,7 @@
   <book-mark ref="bookMark" :doc="doc" />
   <knowledge-reviewer ref="knowledgeReviewer" :doc="doc"/>
   <knowledge-redundancy ref="knowledgeRedundancy"/>
+  <mermaid-shower ref="mermaidShower"/>
   <keep-alive>
     <knowledge-network ref="knowledgeNetwork" :doc="doc" @close="showAside = true;isDrawerShow = false"/>
   </keep-alive>
@@ -129,6 +130,7 @@ import config from '@/config';
 import katex from 'katex'
 import 'katex/dist/katex.css'
 import KnowledgePyramid from "./knowledge/KnowledgePyramid.vue";
+import MermaidShower from './mermaid-shower/MermaidShower.vue';
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -158,6 +160,7 @@ export default defineComponent({
     SelectionPopover,
     InstantPreviewer,
     KnowledgePyramid,
+    MermaidShower,
 },
   watch: {
     showHeader: {
@@ -319,6 +322,7 @@ export default defineComponent({
       this.eventManager!.registerHeadingClick(docEl);
       this.eventManager!.registerDocTagSupClick(docEl);
       this.eventManager!.registerTextSelected(docEl);
+      this.eventManager!.registerMermaidFullScreenClick(docEl);
     },
     generateTOC() {
       this.contentsList = docService.getContent(this.contentHtml);

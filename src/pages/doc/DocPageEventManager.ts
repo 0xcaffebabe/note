@@ -10,6 +10,7 @@ import MobileDocPage from "./mobile/MobileDocPage.vue";
 import Hammer from 'hammerjs'
 import SelectionPopover from "./tool/SelectionPopover.vue";
 import InstantPreviewer from './tool/InstantPreviewer.vue'
+import MermaidShower from './mermaid-shower/MermaidShower.vue';
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 
@@ -216,6 +217,20 @@ class DocPageEventManager {
         this.getRef('selectionPopover') && (this.getRef('selectionPopover') as InstanceType<typeof SelectionPopover>).hide()
       }
     })
+  }
+
+
+  /**
+   *
+   * 注册mermaid全屏按钮点击
+   * @param {HTMLElement} docEl
+   * @memberof DocPageEventManager
+   */
+  public registerMermaidFullScreenClick(docEl: HTMLElement) {
+    const buttons = docEl.querySelectorAll('.mermaid-wrapper .fullscreen button')
+    buttons.forEach(v => v.addEventListener('click', e => {
+      this.getRef('mermaidShower') && (this.getRef('mermaidShower') as InstanceType<typeof MermaidShower>).show(v.parentElement?.parentElement?.getAttribute("data-raw")!);
+    }))
   }
 
   public renderMermaid() {

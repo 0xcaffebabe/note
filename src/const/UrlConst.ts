@@ -14,4 +14,5 @@ export default {
   docClusterJson: '/docCluster.json',
   docQualityJson: '/docQuality.json',
   textSimilarJson: '/textSimilar.json',
+  knowledgeRichnessJson: '/knowledgeRichness.json',
 }

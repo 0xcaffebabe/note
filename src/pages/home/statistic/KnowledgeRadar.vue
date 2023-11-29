@@ -17,8 +17,8 @@ import {
 import { RadarChart, RadarSeriesOption } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
 import api from "@/api";
-import Category from "@/dto/Category";
 import { ElMessage } from "element-plus";
+import KnowledgeRichnessNode from "@/dto/KnowledgeRichnessNode";
 
 echarts.use([TitleComponent, LegendComponent, RadarChart, CanvasRenderer]);
 
@@ -29,8 +29,8 @@ type EChartsOption = echarts.ComposeOption<
 export default defineComponent({
   data() {
     return {
-      origin: [] as Category[],
-      current: [] as Category[],
+      origin: [] as KnowledgeRichnessNode[],
+      current: [] as KnowledgeRichnessNode[],
       chart: null as echarts.ECharts|null,
     }
   },
@@ -49,9 +49,9 @@ export default defineComponent({
   },
   methods: {
     async getData() {
-      this.origin = (await api.getCompiledCategory()).filter(v => v.name.indexOf('首页') == -1 && v.name.indexOf('参考文献') == -1 && v.name.indexOf('MyBook') == -1)
+      this.origin = await api.getKnowledgeRichness()
     },
-    back(event: any, cate?: Category[]) {
+    back(event: any, cate?: KnowledgeRichnessNode[]) {
       if (!cate) {
         cate = this.origin
       }
@@ -83,12 +83,12 @@ export default defineComponent({
       this.current = []
     },
     async init() {
-      const max = this.current.map(v => Category.childrenSize(v)).sort((a,b) => b - a)[0]
+      const max = this.current.map(v => KnowledgeRichnessNode.childrenSize(v)).sort((a,b) => b - a)[0]
+      const avg = this.current.map(v => KnowledgeRichnessNode.childrenSize(v)).reduce((a,b) => a + b, 0)
       if (!this.chart) {
         const chartDom = this.$refs.container as HTMLElement;
         this.chart = echarts.init(chartDom);
         this.chart.on("click", (e) => {
-          console.log(e)
           this.prepareCurrentData(e.name)
           this.init()
         })
@@ -101,7 +101,7 @@ export default defineComponent({
         },
         radar: {
           // shape: 'circle',
-          indicator: this.current.map(v => {return {name: v.name, max}}),
+          indicator: this.current.map(v => {return {name: v.name, max: Math.min(avg, max) }}),
           triggerEvent: true,
         },
         series: [
@@ -110,7 +110,7 @@ export default defineComponent({
             type: "radar",
             data: [
               {
-                value: this.current.map(v => Category.childrenSize(v)),
+                value: this.current.map(v => KnowledgeRichnessNode.childrenSize(v)),
                 name: "知识丰富度",
               },
             ],

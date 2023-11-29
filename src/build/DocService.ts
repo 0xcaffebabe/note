@@ -22,6 +22,9 @@ import Cache from "../decorator/Cache";
 import { SimilarItem } from "@/dto/doc/SimilarItem";
 import generateDocCluster from '../scripts/generateDocCluster'
 import Slugger from "../util/Slugger";
+import KnowledgeRichnessNode from "../dto/KnowledgeRichnessNode";
+import CategoryService from "./CategoryService";
+import Category from "../dto/Category";
 
 const cache = Cache()
 
@@ -281,6 +284,41 @@ class DocService extends BaseService implements Cacheable {
     return (await Promise.all(taskList))
       .sort((a, b) => new Date(a[1].date).getTime() - new Date(b[1].date).getTime())
       .map(v => [DocUtils.docUrl2Id(v[0]), v[1]])
+  }
+
+
+  /**
+   *
+   * 生成知识丰富度
+   * @return {*}  {Promise<KnowledgeRichnessNode[]>}
+   * @memberof DocService
+   */
+  public async generateKnwoledgeRichness(): Promise<KnowledgeRichnessNode[]> {
+    const cateList = (await CategoryService.getCategoryList())
+      .filter(v => v.name.indexOf('首页') == -1 && v.name.indexOf('参考文献') == -1 && v.name.indexOf('MyBook') == -1)
+    const taskList: Promise<void>[] = []
+    function toKnowledgeRichnessNode(value: Category): KnowledgeRichnessNode {
+      const node = new KnowledgeRichnessNode()
+      node.link = value.link
+      node.name = value.name
+      if (value.chidren) {
+        for(const i of value.chidren) {
+          node.chidren.push(toKnowledgeRichnessNode(i))
+        }
+        if (!node.link) {
+          return node
+        }
+        taskList.push(fs.promises.readFile("./doc/" + decodeURI(node.link.substring(2))).then(data => {
+          node.size = data.toString().length
+        }))
+        if (value.chidren.length == 0) {
+        }
+      }
+      return node
+    }
+    const result = cateList.map(toKnowledgeRichnessNode)
+    await Promise.all(taskList)
+    return result
   }
 
   public async generatePotentialKnowledgeNetwork(): Promise<KnowledgeNode[]> {

@@ -4,7 +4,7 @@ import Cache from '@/decorator/Cache'
 import Cacheable from '@/decorator/Cacheable'
 import { StatisticInfo } from '@/dto/StatisticInfo'
 import DocUtils from '@/util/DocUtils'
-import {KnowledgeNode} from '@/dto/KnowledgeNode'
+import {KnowledgeLinkNode, KnowledgeNode} from '@/dto/KnowledgeNode'
 import DatasourceService from '@/service/DatasourceService'
 import UrlUtils from '@/util/UrlUtils'
 import UrlConst from '@/const/UrlConst'
@@ -14,6 +14,7 @@ import Category from '@/dto/Category'
 import ClusterNode from '@/dto/ClusterNode'
 import DocQuality from '@/dto/doc/DocQuality'
 import { SimilarItem } from '@/dto/doc/SimilarItem'
+import KnowledgeRichnessNode from '@/dto/KnowledgeRichnessNode'
 // import DocService from '@/service/DocService'
 
 const baseUrl = () => {
@@ -85,6 +86,12 @@ class Api implements Cacheable{
   @cache
   public async getDocCluster(): Promise<ClusterNode[]> {
     const data = await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.docClusterJson))
+    return data.data
+  }
+
+  @cache
+  public async getKnowledgeRichness(): Promise<KnowledgeRichnessNode[]> {
+    const data = await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.knowledgeRichnessJson))
     return data.data
   }
 

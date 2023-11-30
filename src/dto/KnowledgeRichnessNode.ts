@@ -10,7 +10,7 @@ export default class KnowledgeRichnessNode {
       return value.size;
     }
     let size0: number = value.size;
-    for (let i of value.chidren) {
+    for (const i of value.chidren) {
       size0 += this.childrenSize(i);
     }
     return size0;

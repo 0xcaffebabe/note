@@ -350,23 +350,66 @@ POST localhost:8083/connectors
 
 中心架构：
 
-![屏幕截图 2020-08-22 144033](/assets/屏幕截图%202020-08-22%20144033.png)
+```mermaid
+stateDiagram-v2
+  direction LR
+  北京Kafka集群(部分数据) --> 中心指标Kafka集群(整体数据)
+  上海Kafka集群(部分数据) --> 中心指标Kafka集群(整体数据)
+  广州Kafka集群(部分数据) --> 中心指标Kafka集群(整体数据)
+  厦门Kafka集群(部分数据) --> 中心指标Kafka集群(整体数据)
+```
 
 主从架构：
 
-![屏幕截图 2020-08-22 144112](/assets/屏幕截图%202020-08-22%20144112.png)
+```mermaid
+stateDiagram-v2
+  订单业务Kafka集群 --> 报表统计Kafka集群
+```
 
 双活架构：
 
-![屏幕截图 2020-08-22 144741](/assets/屏幕截图%202020-08-22%20144741.png)
+```mermaid
+stateDiagram-v2
+  北京Kafka集群 --> 广州Kafka集群
+  广州Kafka集群 --> 北京Kafka集群
+```
 
 主备架构：
 
-![屏幕截图 2020-08-22 145035](/assets/屏幕截图%202020-08-22%20145035.png)
+```mermaid
+stateDiagram-v2
+  direction LR
+  主Kafka集群 --> 备Kafka集群
+  用户 --> 主Kafka集群: 正常情况
+  用户 --> 备Kafka集群: 主集群挂掉
+```
 
 ### MirrorMaker
 
-![屏幕截图 2020-08-22 145553](/assets/屏幕截图%202020-08-22%20145553.png)
+```mermaid
+stateDiagram-v2
+  state 源Kafka集群 {
+    主题A
+    主题B
+    主题C
+  }
+  主题A --> 消费者1
+  主题B --> 消费者2
+  主题C --> 消费者3
+  state MirrorMaker {
+    消费者1 --> 生产者
+    消费者2 --> 生产者
+    消费者3 --> 生产者
+  }
+  生产者 --> 主题A0
+  生产者 --> 主题B0
+  生产者 --> 主题C0
+  state 目标Kafka集群 {
+    主题A0
+    主题B0
+    主题C0
+  }
+```
 
 如果有可能，尽量让 MirrorMaker 运行在目标数据中心里
 
@@ -381,6 +424,23 @@ POST localhost:8083/connectors
 - 如果集群里多个 broker 的非同步分区数量一直保持不变，那说明集群中的某个 broker 已经离线了
 - 如果非同步分区的数量是波动的，或者虽然数量稳定但并没有 broker 离线，说明集群出现了性能问题
 
+关键指标：
+
+- BytesIn/BytesOut：Broker 端每秒入站和出站字节数
+- NetworkProcessorAvgIdlePercent：网络线程池线程平均的空闲比例
+- RequestHandlerAvgIdlePercent：I/O 线程池线程平均的空闲比例
+- UnderReplicatedPartitions：未充分备份的分区数
+- ISRShrink/ISRExpand：ISR 收缩和扩容的频次指标
+- ActiveControllerCount：当前处于激活状态的控制器的数量
+
+其他监控：
+
+- 进程是否启动，端口是否建立，端口能否对外提供服务
+- broker 端日志，服务器日志 server.log，控制器日志 controller.log 以及主题分区状态变更日志 state-change.log
+- broker 端关键线程的运行状态
+  - Log Compaction 线程
+  - 副本拉取消息的线程，通常以 ReplicaFetcherThread 开头
+
 集群问题：
 
 - 不均衡的负载
@@ -391,6 +451,45 @@ POST localhost:8083/connectors
 - 硬件
 - 进程冲突
 - 配置问题
+
+### 客户端
+
+- 关注网络RTT
+- 关键线程
+  - 生产者 kafka-producer-network-thread
+  - 消费者 kafka-coordinator-heartbeat-thread
+
+指标：
+
+- 生产者 request-latency，消息生产请求的延时
+- 消费者 lag和lead
+- 消费者组 一个是 join rate，另一个是 sync rate。它们说明了 Rebalance 的频繁程度
+
+## 优化
+
+### 操作系统层优化
+
+- 文件系统挂载优化：禁用 atime（access time）更新以减少文件系统写操作数，提高性能。
+- 文件系统选择：推荐使用ext4或XFS，特别是XFS对于生产服务器具有高性能和高伸缩性。
+- Swap空间设置：设置较小的swappiness值，防止Linux的OOM Killer随意终止进程。
+- 重要系统参数调整：ulimit -n 和 vm.max_map_count的适当调整，确保不出现文件打开过多或内存映射过小的错误。
+- 页缓存大小：重要性关乎Kafka，至少要足够容纳一个日志段的大小，以减少磁盘I/O操作。
+
+### [JVM调优](/编程语言/JAVA/JVM/自动内存管理/调优.md#调优)
+
+### Broker端调优
+
+- 参数值设置：合理设置Broker端参数以匹配生产环境，保持客户端和Broker端版本一致。
+- 版本一致性：保持版本一致以获得性能收益，如Zero Copy功能。
+
+### 应用层调优
+
+- 对象实例管理：避免频繁创建和及时关闭Producer和Consumer对象实例，充分利用多线程改善性能。
+
+### 性能指标调优
+
+- 调优吞吐量：增加num.replica.fetchers、调整缓冲区、压缩算法配置以减少网络I/O、避免设置acks=all和开启重试。
+- 调优延时：在Producer端设置linger.ms=0、不启用压缩、避免设置acks=all，在Consumer端保持fetch.min.bytes=1。
 
 ## 流式处理
 

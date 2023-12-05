@@ -54,3 +54,36 @@ etcd 租约关联的 key 不仅会保存在内存中，而且在 MVCC 模块持�
 ttl 是 lease 的一个属性，如果 ttl 相同，就可以复用同一个 lease，这样可以有效减少更新 ttl 时，需要操作的数据数量
 
 etcd 会根据 ttl 维护一个最小堆，每次轮询都会判断堆顶元素是否过期，过期就加入待淘汰列表，通知其他节点删除数据
+
+## MVCC机制
+
+etcd 使用 keyIndex 保存一个 key 的多个版本号
+
+```go
+type keyIndex struct {
+   key         []byte
+   modified    revision //最后一次修改key时的etcd版本号,比如我们案例中的刚写入hello为world1时的，版本号为2
+   generations []generation //generation保存了一个key若干代版本号信息，每代中包含对key的多次修改的版本号列表
+}
+```
+
+在查询更新时，是根据 key + revision 的方式，去找到对应的 value
+
+## watch机制
+
+etcd 利用 HTTP2 的流式推送，推送 key 的变更，通过将 watcher 划分为 synced/unsynced/victim 三类，将问题进行了分解，并通过多个后台异步循环 goroutine 负责不同场景下 key 变更的事件推送
+
+同时在寻找 key 对应有哪些 watcher 时，其还通过区间树来加速查询
+
+## 事务机制
+
+etcd 可以支持对 key 的 CAS, 比较的对象支持 key 的 mod_revision、create_revision、version、value 值
+
+## 压缩机制
+
+压缩的本质是回收历史版本
+
+- 周期性压缩：etcd 会异步的获取、记录过去一段时间的版本号，对不在这些版本号的数据进行压缩
+- 版本号压缩：etcd 会定时获取当前 server 的最大版本号，减去用户想保留的历史版本数，对不再这些版本号的数据进行压缩
+
+etcd 所要做的，就是真正删除掉已被标记删除的数据，同时根据版本号去删除数据

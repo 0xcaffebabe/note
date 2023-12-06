@@ -172,7 +172,30 @@ PUBLISH redisChat "Redis is a great caching technique"
 
 ## 线程模型
 
-redis采用 IO 多路复用机制如 epoll 同时监听多个 socket，将产生事件的 socket 压入内存队列中，事件分派器根据 socket 上的事件类型来选择对应的事件处理器进行处理
+redis 采用 IO 多路复用机制如 epoll 同时监听多个 socket，使用 Reactor 模型将产生事件的 socket 压入内存队列中，事件分派器根据 socket 上的事件类型来选择对应的事件处理器进行处理
+
+```c
+// 事件处理
+int aeProcessEvents(aeEventLoop *eventLoop, int flags)
+{
+    int processed = 0, numevents;
+ 
+    /* 若没有事件处理，则立刻返回*/
+    if (!(flags & AE_TIME_EVENTS) && !(flags & AE_FILE_EVENTS)) return 0;
+    /*如果有IO事件发生，或者紧急的时间事件发生，则开始处理*/
+    if (eventLoop->maxfd != -1 || ((flags & AE_TIME_EVENTS) && !(flags & AE_DONT_WAIT))) {
+       …
+    }
+    /* 检查是否有时间事件，若有，则调用processTimeEvents函数处理 */
+    if (flags & AE_TIME_EVENTS)
+        processed += processTimeEvents(eventLoop);
+    /* 返回已经处理的文件或时间*/
+    return processed; 
+}
+```
+
+- IO事件：建立、读写连接
+- 时间事件：在主线程中执行的定时任务
 
 ```mermaid
 graph TD
@@ -199,9 +222,7 @@ graph TD
     事件分派器 --> return
 ```
 
-Redis 单线程模型指的是只有一条线程来处理命令
-
-单线程对每个命令的执行时间是有要求的 某个命令执行过长 就会造成其他命令的阻塞
+Redis 单线程模型指的是只有一条线程来处理命令，单线程对每个命令的执行时间是有要求的 某个命令执行过长 就会造成其他命令的阻塞
 
 Redis 的以下操作会产生阻塞
 
@@ -216,7 +237,39 @@ Redis 的以下操作会产生阻塞
 - 哈希槽扩散
 - 数据迁移
 
-如果阻塞点不在关键路径上，就可以异步执行。Redis 主线程启动后，会创建 3 个子线程，分别由它们负责 AOF 日志写操作、键值对删除以及文件关闭的异步执行
+如果阻塞点不在关键路径上，就可以异步执行。Redis 主线程启动后，会创建 3 个子线程，分别由它们负责 AOF 日志写操作、键值对删除以及文件关闭的异步执行：
+
+```c
+static unsigned int bio_job_to_worker[] = {
+    [BIO_CLOSE_FILE] = 0,
+    [BIO_AOF_FSYNC] = 1,
+    [BIO_CLOSE_AOF] = 1,
+    [BIO_LAZY_FREE] = 2,
+};
+// 内部通过 bioCreateXXJob后，由线程执行bioProcessBackgroundJobs方法执行具体的内容
+```
+
+6.0 之后，Redis 引入了 IO 多线程，Redis 会在初始化过程中，根据用户设置的 IO 线程数量，创建对应数量的 IO 线程，这样 Redis 在进入事件循环流程前，都会将待读写客户端以分配给 IO 线程，由 IO 线程负责读写
+
+```c
+void *IOThreadMain(void *myid) {
+    ...
+    while(1) {
+        ...
+        while((ln = listNext(&li))) {
+            client *c = listNodeValue(ln);
+            if (io_threads_op == IO_THREADS_OP_WRITE) {
+                writeToClient(c,0);
+            } else if (io_threads_op == IO_THREADS_OP_READ) {
+                readQueryFromClient(c->conn);
+            } else {
+                serverPanic("io_threads_op value is unknown");
+            }
+        }
+        ...
+    }
+}
+```
 
 ### 发现阻塞
 
@@ -347,22 +400,6 @@ noeviction      | 禁止驱逐数据，当内存不足时，写入操作会被�
 
 内存溢出淘汰策略可以采用config set maxmemory-policy{policy}动态配置
 
-### 内存优化
-
-redisObject：
-
-Redis存储的所有值对象在内部定义为redisObject结构体
-
-```c
-struct {
-  type // 表示当前对象使用的数据类型
-  encoding // 代表当前对象内部采用哪种数据结构实现
-  lru // 记录对象最后一次被访问的时间
-  refcount // 记录当前对象被引用的次数 Redis可以使用共享对象的方式来节省内存
-  *ptr // 如果是整数，直接存储数据；否则表示指向数据的指针 3.0之后对值对象是字符串且长度<=39字节的会直接存储在这 避免间接内存操作
-}
-```
-
 #### 缩减键值对象
 
 设计键时，在完整描述业务情况下，键值越短越好 值对象尽量选择更高效的序列化工具进行压缩
@@ -372,22 +409,6 @@ struct {
 当数据大量使用[0-9999]的整数时，共享对象池可以节约大量内存
 
 当启用LRU相关淘汰策略如：volatile-lru，allkeys-lru时，Redis禁止使用共享对象池
-
-#### 字符串优化
-
-字符串结构：
-
-```c
-struct {
-  int len; // 已用字节长度
-  int free; // 未用字节长度
-  char buf[]; // 字节数组
-}
-```
-
-内部实现空间预分配机制，降低内存再分配次数，字符串缩减后的空间不释放，作为预分配空间保留 这就导致如果对字符串进行 append setrange等操作 就会有内存碎片的产生
-
-可以使用hash来代替字符串类型存储json 不仅支持部分存取 数据量一大时也更节省内存
 
 #### 编码优化
 
@@ -405,7 +426,6 @@ graph TB
   C --> |大于| hashtable编码
   C --> |小于等于| ziplist编码
 ```
-
 
 #### 控制键的数量
 

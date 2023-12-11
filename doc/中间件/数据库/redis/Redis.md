@@ -137,31 +137,6 @@ vs. 原生批量命令：
 - 原生批量命令是一个命令对应多个key，Pipeline支持多个命令
 - 原生批量命令是Redis服务端支持实现的，而Pipeline需要服务端和客户端的共同实现
 
-## [发布订阅](/软件工程/设计模式/行为模式.md#观察者)
-
-新开启的订阅客户端，无法收到该频道之前的消息
-
-```sh
-pubsub channels # 查看活跃的频道(至少一个订阅者)
-pubsub numsub chat # 查看频道订阅数
-pubsub numpat # 查看模式订阅数
-```
-
-- 消费者
-
-```sh
-SUBSCRIBE redisChat # 订阅
-unsubscribe redisChat # 取消订阅
-psubscribe pattern # 按照给定模式订阅
-punsubscribe pattern # 按照给定模式取消订阅
-```
-
-- 生产者向频道发送数据
-
-```sh
-PUBLISH redisChat "Redis is a great caching technique"
-```
-
 ## 分布式
 
 通用集群方案：

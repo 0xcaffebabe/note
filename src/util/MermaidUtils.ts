@@ -15,16 +15,7 @@ function initAllNode() {
     v => {
       mermaid.render(v.id + '-svg', v.textContent!)
         .then(data => {
-          v.innerHTML = data.svg.replace(/[ ]*max-width:[ 0-9\.]*px;/i , '')
-        })
-        .then(() => {
-          svgPanZoom('#' + v.id + " svg", {
-            zoomEnabled: true,
-            controlIconsEnabled: true,
-            mouseWheelZoomEnabled: false,
-            fit: true,
-            center: true
-          })
+          v.innerHTML = data.svg
         })
       }
     )

@@ -530,6 +530,26 @@ bigkey是指key对应的value所占的内存空间比较大
 8. 是否运行了 Redis 主从集群？如果是的话，把主库实例的数据量大小控制在 2~4GB，以免主从复制时，从库因加载大的 RDB 文件而阻塞
 9. 是否使用了多核 CPU 或 NUMA 架构的机器运行 Redis 实例？使用多核 CPU 时，可以给 Redis 实例绑定物理核；使用 NUMA 架构时，注意把 Redis 实例和网络中断处理程序运行在同一个 CPU Socket 上
 
+## 监控
+
+Redis 会对 命令事件、AOF事件、fork事件、过期key事件、缓存替换事件 这些延迟事件的执行情况进行记录
+
+内部记录了一个事件的最大延迟以及一段时间内的延迟历史
+
+```c
+struct latencySample {
+    int32_t time; /* We don't use time_t to force 4 bytes usage everywhere. */
+    uint32_t latency; /* Latency in milliseconds. */
+};
+
+/* The latency time series for a given event. */
+struct latencyTimeSeries {
+    int idx; /* Index of the next sample to store. */
+    uint32_t max; /* Max latency observed for this event. */
+    struct latencySample samples[LATENCY_TS_LEN]; /* Latest history. */
+};
+```
+
 
 ## redis vs memcached
 

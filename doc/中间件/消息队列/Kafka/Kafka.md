@@ -76,10 +76,6 @@ ISR：中的副本都是与 leader 同步的副本
 
 为了描述一个副本是否与 leader 副本同步，replica.lag.time.max.ms 用来描述这个最大延迟，如果 follower 副本与 leader 副本的复制延迟超过这个时间，则认为不同步
 
-Kafka 使用高水位（HW, Hight WaterMark）来标识分区下的哪些消息是可以被消费者消费以及进行副本间的同步
-
-![](/assets/2023113019631.webp)
-
 Leader epoch：可以用来确定最新的分区副本，由两部分数据组成。一个是Epoch,一个单调增加的版本号。每当副本领导权发生变更时，都会增加该版本号
 
 ### zk的作用
@@ -177,7 +173,7 @@ Kafka 中消息是以 topic 进行分类的，生产者生产消息，消费者�
 
 消费者组中的每个消费者，都会实时记录自己消费到了哪个 offset，以便出错恢复时，从上次的位置继续消费
 
-### 日志文件
+### 日志
 
 消息日志文件（.log）、位移索引文件（.index）、时间戳索引文件（.timeindex）、已中止（Aborted）事务的索引文件（.txnindex）
 
@@ -198,15 +194,90 @@ stateDiagram-v2
 
 一个非空的日志段 segment 在超过一段时候后，即使还没有写满，也会强制滚动（roll，也就是新建）日志段
 
-#### 写入
+#### 日志段写入
 
 Producer 生产的数据会被不断追加到 log 文件的末端，在对该文件进行读写时，Kafka 会充分利用 PageCache 来加速读写，每条数据都有自己的 offset
 
 Kafka 在写入消息时，会根据这批写入的最大 offset 、时间戳等来判断要不要追加索引
 
-#### 读取
+#### 日志段读取
 
 ![index与log文件的作用](/assets/屏幕截图%202020-08-05%20155619.png)
+
+#### 恢复
+
+在启动 broker 时，kafka 会遍历所有日志段。为了从磁盘读取索引数据，对于某一个 segement，恢复操作会从 log 文件重建索引，清除掉之前的索引文件。并删除掉日志文件跟索引文件末尾无效的数据
+
+#### 高水位管理
+
+Kafka 使用高水位（HW, Hight WaterMark）来标识分区下的哪些消息是可以被消费者消费以及进行副本间的同步
+
+```java
+public final class LogOffsetMetadata {
+    ...
+
+    public final long messageOffset; // 消息位移值
+    public final long segmentBaseOffset; // 位移值在日志段的上的位置
+    public final int relativePositionInSegment; // 位移值所在日志段的物理磁盘位置
+
+    ...
+}
+```
+
+![](/assets/2023113019631.webp)
+
+#### 日志段管理
+
+```java
+public class LogSegments {
+  /* the segments of the log with key being LogSegment base offset and value being a LogSegment */
+  private final ConcurrentNavigableMap<Long, LogSegment> segments = new ConcurrentSkipListMap<>();
+}
+```
+
+在写入数据时，Kafka 就是是对最后一个日志段执行的写入操作
+
+```scala
+segments.activeSegment.append(lastOffset, largestTimestamp, shallowOffsetOfMaxTimestamp, records)
+```
+
+在读取数据时，则是根据起始偏移量、读取多少数据，不断地日志段中读取数据
+
+```scala
+while (fetchDataInfo == null && segmentOpt.isPresent) {
+  ...
+  fetchDataInfo = segment.read(startOffset, maxLength, maxPosition, minOneMessage)
+  if (fetchDataInfo != null) {
+    ...
+  } else segmentOpt = segments.higherSegment(baseOffset)
+}
+```
+
+#### 索引文件
+
+```java
+public abstract class AbstractIndex implements Closeable {
+    ...
+    private final long baseOffset; // 对应日志段对象的起始位移值，如 00000000000000000123.index 123就是起始位移值
+    private final int maxIndexSize; // 控制索引文件的最大长度
+    private final boolean writable;
+
+    private volatile File file;
+
+    // Length of the index file
+    private volatile long length;
+
+    private volatile MappedByteBuffer mmap; // 内存映射磁盘读写
+
+    /**
+     * The maximum number of entries this index can hold
+     */
+    private volatile int maxEntries;
+    /** The number of entries in this index */
+    private volatile int entries;
+    ...
+}
+```
 
 Kafka 对 offset 的查找是基于[二分查找](/算法与数据结构/查找.md#二分查找)实现的：
 
@@ -216,11 +287,9 @@ Kafka 对 offset 的查找是基于[二分查找](/算法与数据结构/查找.
 
 Kafka 利用 mmap，将更大的磁盘文件映射到了一个虚拟内存空间，也就是最近读写的数据更有可能在内存中，对于什么读写的冷数据如果进行访问，会触发[缺页中断](/操作系统/内存管理.md#分页)，所以 Kafka 的二分查找会优先查找热区，即最近操作的那部分数据，找到的话就不用去查冷区的数据，以此提升性能
 
-![冷区数据触发缺页中断](/assets/20227914738.webp)
+![没有优化：冷区数据触发缺页中断](/assets/20227914738.webp)
 
-#### 恢复
-
-在启动 broker 时，kafka 会遍历所有日志段。为了从磁盘读取索引数据，对于某一个 segement，恢复操作会从 log 文件重建索引，清除掉之前的索引文件。并删除掉日志文件跟索引文件末尾无效的数据
+优化之后：由于大部分查询集中在索引项尾部，所以把后半部分设置为热区，永远保存在缓存中，如果查询目标偏移量在热区索引项范围，直接查热区，避免页中断
 
 ## 深入
 
@@ -241,7 +310,27 @@ broker通过创建临时节点把自己的 ID 注册到 Zookeeper
 
 ### 请求处理
 
-![屏幕截图 2020-08-21 143247](/assets/屏幕截图%202020-08-21%20143247.png)
+```mermaid
+stateDiagram-v2
+  clients --> processors
+  processors --> clients
+  state broker {
+    state processors {
+      processor1
+      processor2
+      processor3
+    }
+    processors --> 请求队列
+    请求队列 --> IO线程
+    state IO线程 {
+      IO线程1
+      IO线程2
+      IO线程3
+    }
+    IO线程 --> 响应队列
+    响应队列 --> processors
+  }
+```
 
 生产请求：
 
@@ -251,7 +340,16 @@ broker通过创建临时节点把自己的 ID 注册到 Zookeeper
 
 broker 将按照客户端指定的数量上限从分区里读取消息，再把消息返回给客户端。Kafka 使用零复制技术向客户端发送消息(直接从文件系统缓存复制到网卡)，如果应用程序是从文件读出数据后再通过网络发送出去的场景，并且这个过程中不需要对这些数据进行处理，这种场景可以使用[零拷贝](/操作系统/输入输出.md#零拷贝)
 
-![屏幕截图 2020-08-21 144218](/assets/屏幕截图%202020-08-21%20144218.png)
+```mermaid
+sequenceDiagram
+  消费者 ->> broker: 获取请求
+  alt 积累足够多的消息
+    生产者 ->> broker: 消息
+    生产者 ->> broker: 消息
+    生产者 ->> broker: 消息
+  end
+  broker ->> 消费者: 消息
+```
 
 所有同步副本复制了这些消息，才允许消费者读取它们
 

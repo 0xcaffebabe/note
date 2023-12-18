@@ -177,6 +177,9 @@ Kafka 中消息是以 topic 进行分类的，生产者生产消息，消费者�
 
 消息日志文件（.log）、位移索引文件（.index）、时间戳索引文件（.timeindex）、已中止（Aborted）事务的索引文件（.txnindex）
 
+- .index：K：4字节的相对偏移量，V：4字节的消息物理位置。Kafka 使用了 8 字节的整数表达消息偏移量，但由于每个索引文件额外保存了一个基础偏移量，所以绝对偏移量 = 基础偏移量 + 相对偏移量得到，可以节省不少存储空间
+- .timeindex：K：8字节的时间戳，V：4字节的相对偏移量
+
 ```mermaid
 stateDiagram-v2
   topic --> partition0
@@ -312,23 +315,28 @@ broker通过创建临时节点把自己的 ID 注册到 Zookeeper
 
 ```mermaid
 stateDiagram-v2
-  clients --> processors
-  processors --> clients
+  clients --> processor线程
+  processor线程 --> clients
   state broker {
-    state processors {
+    state processor线程 {
       processor1
       processor2
       processor3
     }
-    processors --> 请求队列
+    processor线程 --> 请求队列
     请求队列 --> IO线程
     state IO线程 {
       IO线程1
       IO线程2
       IO线程3
     }
+    state 响应队列 {
+      processor1响应队列
+      processor2响应队列
+      processor3响应队列
+    }
     IO线程 --> 响应队列
-    响应队列 --> processors
+    响应队列 --> processor线程
   }
 ```
 
@@ -354,6 +362,16 @@ sequenceDiagram
 所有同步副本复制了这些消息，才允许消费者读取它们
 
 ![屏幕截图 2020-08-21 144435](/assets/屏幕截图%202020-08-21%20144435.png)
+
+#### 监控指标
+
+Kakfa 在 RequestChannel 内保存了一些关于请求的指标：
+
+- RequestsPerSec：每秒处理的 Request 数，用来评估 Broker 的繁忙状态。
+- RequestQueueTimeMs：计算 Request 在 Request 队列中的平均等候时间，单位是毫秒
+- LocalTimeMs：计算 Request 实际被处理的时间。
+- RemoteTimeMs：等待其他 Broker 完成指定逻辑的时间。
+- TotalTimeMs：计算 Request 被处理的完整流程时间
 
 ### 物理存储
 

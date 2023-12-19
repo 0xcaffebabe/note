@@ -294,24 +294,52 @@ Kafka 利用 mmap，将更大的磁盘文件映射到了一个虚拟内存空间
 
 优化之后：由于大部分查询集中在索引项尾部，所以把后半部分设置为热区，永远保存在缓存中，如果查询目标偏移量在热区索引项范围，直接查热区，避免页中断
 
-## 深入
-
-### 集群成员关系
+## 集群成员关系
 
 broker通过创建临时节点把自己的 ID 注册到 Zookeeper
 
-控制器：一个特殊的broker 通过在zk创建临时节点进行选举
+- 控制器：一个特殊的broker 通过在zk创建临时节点进行选举。控制器负责在节点加入或离开集群时进行分区首领选举，控制器使用epoch 来避免“脑裂”。当临时节点被释放或者内容发生更新，监听临时节点的其他 broker 就会收到通知，进行新一轮的选举。2.8 之后，Kafka 移除了对 zk 的依赖，使用 QuorumController 来实现元数据的管理
 
-控制器负责在节点加入或离开集群时进行分区首领选举。控制器使用epoch 来避免“脑裂”
+```scala
+// 集群元数据
+class ControllerContext {
+  val stats = new ControllerStats // Controller统计信息类 
+  var offlinePartitionCount = 0   // 离线分区计数器
+  val shuttingDownBrokerIds = mutable.Set.empty[Int]  // 关闭中Broker的Id列表
+  private val liveBrokers = mutable.Set.empty[Broker] // 当前运行中Broker对象列表
+  private val liveBrokerEpochs = mutable.Map.empty[Int, Long]   // 运行中Broker Epoch列表
+  var epoch: Int = KafkaController.InitialControllerEpoch   // Controller当前Epoch值
+  var epochZkVersion: Int = KafkaController.InitialControllerEpochZkVersion  // Controller对应ZooKeeper节点的Epoch值
+  val allTopics = mutable.Set.empty[String]  // 集群主题列表
+  val partitionAssignments = mutable.Map.empty[String, mutable.Map[Int, ReplicaAssignment]]  // 主题分区的副本列表
+  val partitionLeadershipInfo = mutable.Map.empty[TopicPartition, LeaderIsrAndControllerEpoch]  // 主题分区的Leader/ISR副本信息
+  val partitionsBeingReassigned = mutable.Set.empty[TopicPartition]  // 正处于副本重分配过程的主题分区列表
+  val partitionStates = mutable.Map.empty[TopicPartition, PartitionState] // 主题分区状态列表 
+  val replicaStates = mutable.Map.empty[PartitionAndReplica, ReplicaState]  // 主题分区的副本状态列表
+  val replicasOnOfflineDirs = mutable.Map.empty[Int, Set[TopicPartition]]  // 不可用磁盘路径上的副本列表
+  val topicsToBeDeleted = mutable.Set.empty[String]  // 待删除主题列表
+  val topicsWithDeletionStarted = mutable.Set.empty[String]  // 已开启删除的主题列表
+  val topicsIneligibleForDeletion = mutable.Set.empty[String]  // 暂时无法执行删除的主题列表
+  ......
+}
+```
 
-### 复制
+Controller 是用来管理整个集群的，它会向其他 broker 发送三类请求：
+
+1. LeaderAndIsrRequest：告诉 Broker 相关主题各个分区的 Leader 副本位于哪台 Broker 上、ISR 中的副本都在哪些 Broker
+2. StopReplicaRequest：告知指定 Broker 停止它上面的副本对象，这个请求主要的使用场景是分区副本迁移和删除主题
+3. UpdateMetadataRequest：更新 Broker 上的元数据缓存
+
+
+
+## 复制
 
 - 首领副本
   - 所有生产者请求和消费者请求都会经过这个副本
 - 跟随者副本
   - 从首领那里复制消息，保持与首领一致的状态
 
-### 请求处理
+## 请求处理
 
 ```mermaid
 stateDiagram-v2
@@ -363,7 +391,7 @@ sequenceDiagram
 
 ![屏幕截图 2020-08-21 144435](/assets/屏幕截图%202020-08-21%20144435.png)
 
-#### 监控指标
+### 监控指标
 
 Kakfa 在 RequestChannel 内保存了一些关于请求的指标：
 
@@ -373,7 +401,7 @@ Kakfa 在 RequestChannel 内保存了一些关于请求的指标：
 - RemoteTimeMs：等待其他 Broker 完成指定逻辑的时间。
 - TotalTimeMs：计算 Request 被处理的完整流程时间
 
-### 物理存储
+## 物理存储
 
 文件管理：
 
@@ -696,8 +724,55 @@ stateDiagram-v2
 
 拓扑结构：
 
-![屏幕截图 2020-08-23 114308](/assets/屏幕截图%202020-08-23%20114308.png)
+```mermaid
+stateDiagram-v2
+  direction LR
+  state 处理器 {
+    计数器 --> 本地状态
+    本地状态 --> 计数器
+  }
+  输入行 --> 拆分成单词
+  拆分成单词 --> 单词列表
+  单词列表 --> 按照单词分组
+  按照单词分组 --> 重分区主题
+  重分区主题 --> 计数器
+  计数器 --> 输出单词数量
+```
 
 对拓扑结构伸缩：
 
-![屏幕截图 2020-08-23 114438](/assets/屏幕截图%202020-08-23%20114438.png)
+```mermaid
+stateDiagram-v2
+  state 主题 {
+    主题分区1
+    主题分区2
+  }
+  state 任务1 {
+    A --> B
+    B --> C
+  }
+  state 任务2 {
+    D --> E
+    E --> F
+  }
+  state 重分区主题 {
+    重分区主题分区1
+    重分区主题分区2
+  }
+  state 任务3 {
+    G --> H
+    H --> I
+  }
+  state 任务4 {
+    J --> K
+    K --> L
+  }
+  主题分区1 --> 任务1
+  主题分区2 --> 任务2
+  任务1 --> 重分区主题分区1
+  任务1 --> 重分区主题分区2
+  任务2 --> 重分区主题分区1
+  任务2 --> 重分区主题分区2
+  重分区主题分区1 --> 任务3
+  重分区主题分区2 --> 任务4
+```

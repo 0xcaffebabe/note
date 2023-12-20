@@ -294,6 +294,75 @@ Kafka 利用 mmap，将更大的磁盘文件映射到了一个虚拟内存空间
 
 优化之后：由于大部分查询集中在索引项尾部，所以把后半部分设置为热区，永远保存在缓存中，如果查询目标偏移量在热区索引项范围，直接查热区，避免页中断
 
+### 主题删除
+
+主题删除过程中，首先会通过复制状态机机制，向 Controller 发送通知，调整主题的所有副本状态，然后移除 zk、controller 关于该主题的所有元数据，最后执行物理磁盘文件的删除操作
+
+### 副本状态机
+
+副本的 7 种状态：
+
+- NewReplica：副本被创建之后所处的状态
+- OnlineReplica：副本正常提供服务时所处的状态
+- OfflineReplica：副本服务下线时所处的状态
+- ReplicaDeletionStarted：副本被删除时所处的状态
+- ReplicaDeletionSuccessful：副本被成功删除后所处的状态
+- ReplicaDeletionIneligible：开启副本删除，但副本暂时无法被删除时所处的状态
+- NonExistentReplica：副本从副本状态机被移除前所处的状态
+
+```mermaid
+stateDiagram-v2
+  NewReplica --> OfflineReplica: broker下线
+  NewReplica --> OnlineReplica: 初始化之后
+  OnlineReplica --> OfflineReplica: broker下线/broker重新上线
+  OfflineReplica --> OnlineReplica: broker下线/broker重新上线
+  OfflineReplica --> OfflineReplica
+  OnlineReplica --> OnlineReplica: leader 副本变更
+  OfflineReplica --> ReplicaDeletionStarted: 删除副本对象
+  ReplicaDeletionStarted --> ReplicaDeletionSuccessful: 删除副本成功
+  ReplicaDeletionStarted --> ReplicaDeletionIneligible: 删除副本失败
+  ReplicaDeletionIneligible --> OnlineReplica
+  ReplicaDeletionIneligible --> OfflineReplica: 重试副本删除
+  ReplicaDeletionSuccessful --> NonExistentReplica: 副本对象被移出副本状态机
+  NonExistentReplica --> NewReplica: 副本对象新创建
+```
+
+当 Controller 接受到状态变更请求时，首先就是判断操作是否有效，无效需要记录一条失败日志，有效则执行对应的操作、变更相关的元数据
+
+### 分区状态机
+
+- NewPartition：分区被创建后被设置成这个状态，表明它是一个全新的分区对象。处于这个状态的分区，被 Kafka 认为是“未初始化”，因此，不能选举 Leader
+- OnlinePartition：分区正式提供服务时所处的状态
+- OfflinePartition：分区下线后所处的状态
+- NonExistentPartition：分区被删除，并且从分区状态机移除后所处的状态
+
+```mermaid
+stateDiagram-v2
+  NewPartition --> OnlinePartition: broker启动或新分区初始化
+  OnlinePartition --> OnlinePartition: 分区选举leader
+  OnlinePartition --> OfflinePartition: broker下线或主题被删除
+  OfflinePartition --> OnlinePartition: 分区选举leader
+  OfflinePartition --> NonExistentPartition: 主题被成功删除
+  NonExistentPartition --> NewPartition: 新分区创建
+```
+
+Leader 选举策略：当由于某种原因，Leader 下线了，需要根据不同情况来选举 Leader
+
+```scala
+// 离线分区Leader选举策略
+final case class OfflinePartitionLeaderElectionStrategy(allowUnclean: Boolean) extends PartitionLeaderElectionStrategy
+// 分区副本重分配Leader选举策略  
+final case object ReassignPartitionLeaderElectionStrategy extends PartitionLeaderElectionStrategy
+// 分区Preferred副本Leader选举策略
+final case object PreferredReplicaPartitionLeaderElectionStrategy extends PartitionLeaderElectionStrategy
+// Broker Controlled关闭时Leader选举策略
+final case object ControlledShutdownPartitionLeaderElectionStrategy extends PartitionLeaderElectionStrategy
+```
+
+这几个策略几乎都是选择当前副本有序集合中的、首个处于 ISR 集合中的存活副本作为新的 Leader
+
+当要变更分区状态，就由 Controller 发送相关消息给 broker 们，再由 broker 来执行对每个分区的元数据变更
+
 ## 集群成员关系
 
 broker通过创建临时节点把自己的 ID 注册到 Zookeeper

@@ -363,6 +363,23 @@ final case object ControlledShutdownPartitionLeaderElectionStrategy extends Part
 
 当要变更分区状态，就由 Controller 发送相关消息给 broker 们，再由 broker 来执行对每个分区的元数据变更
 
+### 消费者组管理
+
+```mermaid
+stateDiagram-v2
+  Empty --> PreparingRebalance: 首个成员加入组
+  PreparingRebalance --> Empty
+  PreparingRebalance --> CompletingRebalance: 所有成员加入组
+  CompletingRebalance --> PreparingRebalance: 新成员加入组或已有成员退出组
+  CompletingRebalance --> Stable: leader成员指定好方案
+  CompletingRebalance --> Dead
+  Dead --> Dead
+  Stable --> Dead
+  Empty --> Dead
+  PreparingRebalance --> Dead
+  Stable --> PreparingRebalance: 新成员加入组或已有成员退出组
+```
+
 ## 集群成员关系
 
 broker通过创建临时节点把自己的 ID 注册到 Zookeeper
@@ -416,6 +433,8 @@ follower 会启动一个线程，不断执行以下操作：
 除了副本同步直接操作分区对象，生产者向 Leader 副本写入消息、消费者组写入组信息、事务管理器写入事务信息（包括事务标记、事务元数据等）这三种操作会通过 ReplaceManager 向副本写入数据
 
 而消费者的读取请求，也会通过 ReplaceManager 来确定读取范围，再从底层的日志读取消息构建结果并返回
+
+副本管理还会根据接收到的请求，决定是否将当前副本提升为 leader 副本，同时，还会有一个线程定时检测当前副本与 leader 副本的滞后时间，当滞后时间超过 replica.lag.time.max.ms，将该副本移除出 ISR
 
 ## 请求处理
 

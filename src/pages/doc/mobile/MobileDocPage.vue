@@ -16,6 +16,7 @@
   <reading-history ref="readingHistory" />
   <knowledge-system ref="knowledgeSystem"/>
   <knowledge-redundancy ref="knowledgeRedundancy"/>
+  <mermaid-shower ref="mermaidShower"/>
   <selection-popover />
   <mobile-tool-box 
     @showReadingHistory="showReadingHistory"
@@ -34,6 +35,7 @@
 import { defineComponent, ref } from 'vue'
 import DocFileInfo from '@/dto/DocFileInfo'
 import DocService from '@/service/DocService'
+import './mobile-markdown-v1.less'
 import '../code-hl-vsc.less'
 import MobileDocSideCategory from './aside/MobileDocSideCategory.vue'
 import LinkPopover from '../LinkPopover.vue'
@@ -51,6 +53,7 @@ import KnowledgeRedundancy from '../knowledge/KnowledgeRedundancy.vue'
 import KeyWordFinder from '../KeyWordFinder.vue'
 import TouchUtils from '@/util/TouchUtils'
 import SelectionPopover from '../tool/SelectionPopover.vue'
+import MermaidShower from '../mermaid-shower/MermaidShower.vue';
 
 export default defineComponent({
   components: {
@@ -68,6 +71,7 @@ export default defineComponent({
     KnowledgeRedundancy,
     KeyWordFinder,
     SelectionPopover,
+    MermaidShower,
 },
   setup() {
     const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
@@ -130,7 +134,9 @@ export default defineComponent({
         this.eventManager!.syncHeading(headingId);
         // 高亮关键词相关处理
         this.hilightKeywords(docEl, kw);
-        this.kwFinder?.refresh()
+        this.kwFinder?.refresh();
+        // 渲染数学公式
+        this.eventManager!.renderLatex(docEl);
         if (!kw && this.kwFinder?.showFinder) {
           this.kwFinder.hide()
         }
@@ -141,6 +147,7 @@ export default defineComponent({
       this.eventManager?.registerImageClick(docEl)
       this.eventManager!.registerLinkRouter(docEl);
       this.eventManager!.registerTextSelected(docEl);
+      this.eventManager!.registerMermaidFullScreenClick(docEl);
     },
     showKnowledgeTrend(kw?: string) {
       (this.$refs.knowledgeTrend as InstanceType<typeof KnowledgeTrend>).show(this.file, kw)

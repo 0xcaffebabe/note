@@ -13,6 +13,8 @@ import InstantPreviewer from './tool/InstantPreviewer.vue'
 import MermaidShower from './mermaid-shower/MermaidShower.vue';
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
+import katex from 'katex'
+import 'katex/dist/katex.css'
 
 class DocPageEventManager {
 
@@ -149,6 +151,29 @@ class DocPageEventManager {
         ElMessage.success('复制成功: ' + url);
       }
     }
+  }
+
+
+  /**
+   *
+   * 渲染数学公式
+   * @param {HTMLElement} docEl
+   * @memberof DocPageEventManager
+   */
+  public renderLatex(docEl: HTMLElement) {
+    docEl.querySelectorAll('.tex')
+        .forEach(e => {
+          const element = e as HTMLElement
+          katex.render(
+              // 如果在`%`字符前没有`\`字符，则在`%`前添加`\`后再渲染
+              element.textContent!.replace(/[^\\](%)/g, (match)=>{return match[0] + '\\' + '%'}),
+              element,
+              {
+                  // 取消对中文内容渲染的警告
+                  strict: false
+              }
+          )
+        })
   }
 
 

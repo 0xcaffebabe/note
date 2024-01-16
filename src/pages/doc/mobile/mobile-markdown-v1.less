@@ -234,6 +234,42 @@
   display: inline;
 }
 
+/* latex样式 */
+.tex {
+  text-align: center;
+}
+/* mermaid样式 */
+div[id^=mermaid-] {
+  text-align: center;
+}
+.mermaid-wrapper {
+  position: relative;
+}
+.mermaid-wrapper .fullscreen {
+  position: absolute;
+  right: 0;
+  display: none;
+  button {
+    padding: 8px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #3498db;
+  color: #fff;
+  transition: background-color 0.3s ease;
+  }
+}
+.mermaid-wrapper .fullscreen button:hover {
+  background-color: #2980b9;
+}
+.mermaid-wrapper:hover .fullscreen {
+  display: block;
+}
+
 body[theme=dark] {
   background-color:var(--main-dark-bg-color);
   color: var(--main-dark-text-color);

@@ -114,6 +114,32 @@ async function main(ret = false): Promise<ClusterNode[]> {
   
 }
 
+async function generateDocTagPrediction() {
+  await getAllWords()
+  const tagMapping = await DocService.buildTagMapping()
+  let files = BaseService.listFilesBySuffix("md", "doc").filter(stopFileCheck)
+  const mapping = new Map<string, [string, number][]>()
+  for(const file of files) {
+    const vec1 = getDocVec(file)
+    mapping.set(file, [])
+    for(const tag of tagMapping) {
+      let sumDis = 0
+      for(const tagFile of tag[1]) {
+        sumDis += sim(vec1, getDocVec(tagFile))
+      }
+      const avgDis = sumDis / tag[1].length
+      mapping.get(file)!.push([tag[0], avgDis])
+    }
+    mapping.get(file)!.sort((b,a) => a[1] - b[1])
+    mapping.set(file, mapping.get(file)!.splice(0,5))
+  }
+  const res = new Map<string, string[]>()
+  for(const file of files) {
+    res.set(file, mapping.get(file)?.map(v => v[0]) || [])
+  }
+  return Array.from(res)
+}
+
 
 function isStopWord(word: string): boolean{
   if (word.length <= 1) {
@@ -180,4 +206,4 @@ function sim(vec1: number[], vec2: number[]) {
   return xmySum / Math.sqrt(xPowSum * yPowSum)
 }
 
-export default main
+export default {main, generateDocTagPrediction}

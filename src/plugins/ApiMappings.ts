@@ -71,6 +71,12 @@ const apiMappings: DocApiItem[] = [
     method: async () => DocService.getDocCluster()
   },
   {
+    type: 'build&runtime',
+    name: '文档标签预测',
+    path: UrlConst.docTagPrediction,
+    method: async () => DocService.getDocTagPrediction()
+  },
+  {
     name: '提交总量',
     path: UrlConst.commitTotalTrend,
     method: async () => StatisticService.generateCommitTotalTrend()

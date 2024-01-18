@@ -14,7 +14,9 @@
       :type="calcTagType(item)"
       @click="$router.push('/tag?tag=' + item)"
       effect="dark"
-      >{{ item }}</el-tag
+      >{{ item }}
+        <span v-if="predictTags.indexOf(item) != -1 && tags.indexOf(item) == -1">(预测)</span>
+      </el-tag
     >
     </template>
     <div style="height:220px;overflow-y:scroll">
@@ -51,20 +53,22 @@ export default defineComponent({
   watch: {
     async doc() {
       this.simliaryDoc = await DocService.getSimliarDoc(this.doc)
+      this.predictTags = await TagService.getPredictTag(this.doc)
     }
   },
   data() {
     return {
       tag: '',
-      simliaryDoc: [] as string[]
+      simliaryDoc: [] as string[],
+      predictTags: [] as string[],
     }
   },
   computed: {
     tagList() {
       if (!this.tags) {
-        return [SIMLIARY_DOC]
+        return [SIMLIARY_DOC, ...this.predictTags]
       }
-      return [SIMLIARY_DOC, ...this.tags]
+      return [SIMLIARY_DOC, ...this.tags, ...(this.predictTags.filter(v => this.tags.indexOf(v) == -1))]
     },
     chapters() {
       if (!this.tag) {
@@ -78,6 +82,7 @@ export default defineComponent({
   },
   async mounted() {
     this.simliaryDoc = (await DocService.getSimliarDoc(this.doc)).reverse()
+    this.predictTags = await TagService.getPredictTag(this.doc)
   },
   methods: {
     // 计算标签的颜色

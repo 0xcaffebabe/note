@@ -95,6 +95,12 @@ class Api implements Cacheable{
     return data.data
   }
 
+  @cache
+  public async getDocTagPrediction(): Promise<[string, string[]][]> {
+    const data = await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.docTagPrediction))
+    return data.data
+  }
+
 
   /**
    *

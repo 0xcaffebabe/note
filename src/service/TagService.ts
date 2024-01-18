@@ -2,18 +2,21 @@ import Cacheable from "@/decorator/Cacheable";
 import Cache from '@/decorator/Cache';
 import api from "@/api";
 import TagSumItem from "@/dto/tag/TagSumItem";
+import DocUtils from "@/util/DocUtils";
 const cache = Cache();
 
 class TagService implements Cacheable{
   private static instance: TagService
   private tagSumList: TagSumItem[] = [];
   private tagList: [string, string[]][] = [];
+  private docTagPredictions: [string, string[]][] = []
   private constructor(){
     this.init();
   }
 
   private async init(){
     this.tagList = await api.getTagMapping();
+    this.docTagPredictions = await api.getDocTagPrediction()
     this.tagSumList = this.tagList
                     .map(v => {return {tag: v[0], count: v[1].length}});
   }
@@ -38,6 +41,19 @@ class TagService implements Cacheable{
   @cache
   public getTagSumList(): TagSumItem[] {
     return JSON.parse(JSON.stringify(this.tagSumList));
+  }
+
+
+  /**
+   *
+   * 根据文档路径获取预测的标签列表
+   * @param {string} doc
+   * @return {*}  {string[]}
+   * @memberof TagService
+   */
+  @cache
+  public getPredictTag(doc: string): string[] {
+    return this.docTagPredictions.filter(v => DocUtils.docUrl2Id(v[0]) == doc)[0][1]
   }
 
   @cache

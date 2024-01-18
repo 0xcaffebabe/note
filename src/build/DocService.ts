@@ -92,6 +92,7 @@ class DocService extends BaseService implements Cacheable {
    * @return {*}  {Promise<TagMappingItem[]>}
    * @memberof DocService
    */
+  @cache
   public async  buildTagMapping(): Promise<Map<string, string[]>> {
     const files = BaseService.listFilesBySuffix('md', 'doc');
     interface TagAndFilename{
@@ -185,7 +186,11 @@ class DocService extends BaseService implements Cacheable {
 
   @cache
   public async getDocCluster(): Promise<ClusterNode[]> {
-    return generateDocCluster(true)
+    return generateDocCluster.main(true)
+  }
+
+  public async getDocTagPrediction() {
+    return (await generateDocCluster.generateDocTagPrediction())
   }
 
   public async getTextSimilar(): Promise<SimilarItem[]> {

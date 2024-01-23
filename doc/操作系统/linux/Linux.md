@@ -676,12 +676,26 @@ top -d 2 # 2秒刷新一次查看进程
 状态|	说明
 -|-
 R|	running or runnable (on run queue) 正在执行或者可执行，此时进程位于执行队列中。
-D|	uninterruptible sleep (usually I/O) 不可中断阻塞，通常为 IO 阻塞。
+D|	uninterruptible sleep (usually I/O) 不可中断阻塞，表示进程正在跟硬件交互，并且交互过程不允许被其他进程或中断打断
 S|	interruptible sleep (waiting for an event to complete) 可中断阻塞，此时进程正在等待某个事件完成。
-Z|	zombie (terminated but not reaped by its parent) 僵死，进程已经终止但是尚未被其父进程获取信息。
+Z|	zombie (terminated but not reaped by its parent) 僵死，进程已经终止但是父进程还没有回收它的资源（比如进程的描述符、PID 等）
 T|	stopped (either by a job control signal or because it is being traced) 结束，进程既可以被作业控制信号结束，也可能是正在被追踪。
+I| idle 空闲状态，用在不可中断睡眠的内核线程上，硬件交互导致的不可中断进程用 D 表示，但对某些内核线程来说，它们有可能实际上并没有任何负载，用 Idle 正是为了区分这种情况
 
-![批注 2020-03-05 104504](/assets/批注%202020-03-05%20104504.png)
+```mermaid
+stateDiagram-v2
+  D --> R: woken
+  R --> Z: exit
+  R --> T: signal
+  T --> R: signal
+  R --> S: interruptible sleep
+  S --> R: woken/signal
+  R --> D: uninterruptible sleep
+```
+
+如果系统或硬件发生了故障，进程可能会在不可中断状态保持很久，甚至导致系统中出现大量不可中断进程
+
+一旦父进程没有通过 wait 、waitpid 处理子进程的终止，还一直保持运行状态，那么子进程就会一直处于僵尸状态。大量的僵尸进程会用尽 PID 进程号，导致新进程不能创建
 
 ### SIGCHLD 
 

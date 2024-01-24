@@ -19,9 +19,9 @@ function ensureDirectoryExistence(filePath: string) {
 function getSummaryHtml() {
   const content = fs.readFileSync("./doc/SUMMARY.md").toString()
   const renderer = new marked.Renderer();
-  return marked(content, {
+  return (marked(content, {
     renderer: renderer
-  }).replaceAll(/\.\//gi, '/').replaceAll(/\.md/gi, '.html')
+  }) as string).replaceAll(/\.\//gi, '/').replaceAll(/\.md/gi, '.html')
 }
 
 export default function DocBuildMove(){
@@ -69,7 +69,7 @@ export default function DocBuildMove(){
               const renderer = new marked.Renderer();
               let html = marked(info.content, {
                 renderer: renderer
-              })
+              }) as string
               html = html.replaceAll(/\.md/gi, '.html')
               html = `
               <!DOCTYPE html>

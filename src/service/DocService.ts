@@ -280,7 +280,7 @@ class DocService implements Cacheable{
 
       return `<h${level} id="${id}">${text}</h${level}>\n`;
     }
-    return marked.parse(mdContent, {renderer: render})
+    return marked.parse(mdContent, {renderer: render}) as string
   }
 
 

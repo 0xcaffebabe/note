@@ -34,7 +34,7 @@ class CategoryService implements Cacheable {
   @cache
   public async getCategoryList() : Promise<Category[]>{
     const rawData = await api.getCategory()
-    const html = marked(rawData.content)
+    const html = marked(rawData.content) as string
     const home = new Category();
     home.name = '首页';
     home.link = './README.md';

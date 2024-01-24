@@ -22,7 +22,7 @@ class CategoryService extends BaseService {
    */
    public async getCategoryList() : Promise<Category[]>{
      const rawData = (await fs.promises.readFile('doc/SUMMARY.md')).toString();
-     const html = marked(rawData);
+     const html = marked(rawData) as string;
      const home = new Category();
      home.name = '首页';
      home.link = './README.md';

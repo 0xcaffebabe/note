@@ -358,7 +358,7 @@ class DocService extends BaseService implements Cacheable {
 
       return `<h${level} id="${id}">${text}</h${level}>\n`;
     }
-    const html = marked(md, {renderer: render})
+    const html = marked(md, {renderer: render}) as string
     DocService.dom.window.document.body.innerHTML = `<!DOCTYPE html><body>${html}</body></html>`
     const elemts = DocService.dom.window.document.body.querySelectorAll('h1, h2, h3, h4, h5, h6');
     const segments: SearchIndexSegment[] = []

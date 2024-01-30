@@ -264,6 +264,10 @@ Linux 通过 inode 记录文件的元数据
 
 **网络包发送流程**：内核协议栈处理过的网络包被放到发包队列后，会有软中断通知驱动程序发包队列中有新的网络帧需要发送。驱动程序通过 DMA ，从发包队列中读出网络帧，并通过物理网卡把它发送出去
 
+- 收包队列与发包队列的内存都属于网卡设备驱动的范围
+- sk_buff 缓冲区，是一个维护网络帧结构的双向链表，链表中的每一个元素都是一个网络帧
+- 还有一个是 socket 的读写缓冲区
+
 ### 性能指标
 
 通过 ifconfig 可以看到网卡网络收发的字节数、包数、错误数以及丢包情况：
@@ -287,3 +291,41 @@ netstat 可以看到套接字的接收队列（Recv-Q）和发送队列（Send-Q
 主进程 + 多个 worker 子进程：主进程执行 bind() + listen() 后，创建多个子进程；然后在每个子进程中，都通过 accept() 或 epoll_wait() ，来处理相同的套接字
 
 监听到相同端口的多进程模型：所有的进程都监听相同的接口，并且开启 SO_REUSEPORT 选项，由内核负责将请求负载均衡到这些监听进程中去
+
+### NAT
+
+NAT 基于 Linux 内核的 conntrack 连接跟踪机制来实现，Linux 内核需要为 NAT 维护状态，维护状态也带来了很高的性能成本
+
+### 网络层
+
+路由和转发的角度
+
+- 在需要转发的服务器中，比如用作 NAT 网关的服务器，开启 IP 转发，即设置 net.ipv4.ip_forward = 1
+- 调整数据包的生存周期 TTL，设置 net.ipv4.ip_default_ttl = 64。增大该值会降低系统性能
+- 开启数据包的反向地址校验，设置 net.ipv4.conf.eth0.rp_filter = 1。可以防止 IP 欺骗，并减少伪造 IP 带来的 DDoS 问题
+
+调整 MTU 大小：很多网络设备都支持巨帧，可以把 MTU 调大为 9000，提升网络吞吐量
+
+为了避免 ICMP 主机探测、ICMP Flood 等各种网络问题：可以禁止 ICMP 协议，即设置 net.ipv4.icmp_echo_ignore_all = 1，还可以禁止广播 ICMP，即设置 net.ipv4.icmp_echo_ignore_broadcasts = 1
+
+### 链路层
+
+由于网卡收包后调用的中断处理程序（特别是软中断），需要消耗大量的 CPU。所以，将这些中断处理程序调度到不同的 CPU 上执行，就可以显著提高网络吞吐量
+
+- 为网卡硬中断配置 CPU 亲和性（smp_affinity），或者开启 irqbalance 服务
+- 开启 RPS（Receive Packet Steering）和 RFS（Receive Flow Steering），将应用程序和软中断的处理，调度到相同 CPU 上，这样就可以增加 CPU 缓存命中率
+
+将原先内核中通过软件处理的功能卸载到网卡中，通过硬件来执行：
+
+- TSO（TCP Segmentation Offload）和 UFO（UDP Fragmentation Offload）：在 TCP/UDP 协议中直接发送大包；而 TCP 包的分段（按照 MSS 分段）和 UDP 的分片（按照 MTU 分片）功能，由网卡来完成 
+- GSO（Generic Segmentation Offload）：在网卡不支持 TSO/UFO 时，将 TCP/UDP 包的分段，延迟到进入网卡前再执行。这样，不仅可以减少 CPU 的消耗，还可以在发生丢包时只重传分段后的包
+- LRO（Large Receive Offload）：在接收 TCP 分段包时，由网卡将其组装合并后，再交给上层网络处理。不过要注意，在需要 IP 转发的情况下，不能开启 LRO，因为如果多个包的头部信息不一致，LRO 合并会导致网络包的校验错误
+- GRO（Generic Receive Offload）：GRO 修复了 LRO 的缺陷，并且更为通用，同时支持 TCP 和 UDP
+- RSS（Receive Side Scaling）：也称为多队列接收，它基于硬件的多个接收队列，来分配网络接收进程，这样可以让多个 CPU 来处理接收到的网络包
+- VXLAN 卸载：也就是让网卡来完成 VXLAN 的组包功能
+
+对于网络接口本身：
+
+- 开启网络接口的多队列功能，调度到不同 CPU 上执行，从而提升网络的吞吐量
+- 增大网络接口的缓冲区大小，以及队列长度等，提升网络传输的吞吐量
+- 使用 Traffic Control 工具，为不同网络流量配置 QoS

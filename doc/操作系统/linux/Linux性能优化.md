@@ -329,3 +329,17 @@ NAT 基于 Linux 内核的 conntrack 连接跟踪机制来实现，Linux 内核�
 - 开启网络接口的多队列功能，调度到不同 CPU 上执行，从而提升网络的吞吐量
 - 增大网络接口的缓冲区大小，以及队列长度等，提升网络传输的吞吐量
 - 使用 Traffic Control 工具，为不同网络流量配置 QoS
+
+## 内核线程
+
+Linux 在启动过程中 2 号进程为 kthreadd 进程，在内核态运行，用来管理内核线程
+
+```sh
+ps -f --ppid 2 -p 2
+```
+
+- kswapd0：用于内存回收
+- kworker：用于执行内核工作队列，分为绑定 CPU （名称格式为 kworker/CPU:ID）和未绑定 CPU（名称格式为 kworker/uPOOL:ID）两类
+- migration：在负载均衡过程中，把进程迁移到 CPU 上。每个 CPU 都有一个 migration 内核线程
+- jbd2/sda1-8：jbd 是 Journaling Block Device 的缩写，用来为文件系统提供日志功能，以保证数据的完整性；名称中的 sda1-8，表示磁盘分区名称和设备号。每个使用了 ext4 文件系统的磁盘分区，都会有一个 jbd2 内核线程
+- pdflush：用于将内存中的脏页（被修改过，但还未写入磁盘的文件页）写入磁盘（已经在 3.10 中合并入了 kworker 中）

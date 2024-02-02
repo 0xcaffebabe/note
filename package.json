@@ -12,7 +12,7 @@
     "test": "ts-node -r tsconfig-paths/register --files %npm_config_file%"
   },
   "dependencies": {
-    "@element-plus/icons-vue": "2.0.10",
+    "@element-plus/icons-vue": "2.3.1",
     "algoliasearch": "4.14.2",
     "axios": "1.6.0",
     "diff": "5.1.0",

@@ -50,7 +50,7 @@
     "@types/wordcloud": "1.2.2",
     "@vitejs/plugin-vue": "5.0.3",
     "front-matter": "4.0.2",
-    "jsdom": "20.0.0",
+    "jsdom": "24.0.0",
     "mime": "4.0.1",
     "node-global-proxy": "1.0.1",
     "nodejieba": "2.6.0",

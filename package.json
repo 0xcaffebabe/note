@@ -52,7 +52,7 @@
     "@types/nprogress": "0.2.3",
     "@types/prismjs": "1.26.3",
     "@types/rimraf": "3.0.2",
-    "@types/shelljs": "0.8.11",
+    "@types/shelljs": "0.8.15",
     "@types/wordcloud": "1.2.2",
     "@vitejs/plugin-vue": "5.0.3",
     "front-matter": "4.0.2",

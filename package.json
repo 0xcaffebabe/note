@@ -42,7 +42,7 @@
     "@types/diff": "5.0.9",
     "@types/global-tunnel-ng": "2.1.1",
     "@types/hammerjs": "2.0.45",
-    "@types/js-yaml": "4.0.5",
+    "@types/js-yaml": "4.0.9",
     "@types/jsdom": "20.0.0",
     "@types/katex": "0.16.0",
     "@types/lodash": "4.14.202",

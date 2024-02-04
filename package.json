@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@types/diff": "5.0.9",
-    "@types/global-tunnel-ng": "2.1.1",
+    "@types/global-tunnel-ng": "2.1.4",
     "@types/hammerjs": "2.0.45",
     "@types/js-yaml": "4.0.5",
     "@types/jsdom": "20.0.0",

@@ -7,8 +7,7 @@
     "build": "vite build",
     "serve": "vite preview",
     "update-index": "npx tsx ./src/scripts/updateSearchIndex.ts",
-    "similar-detect": "npx tsx ./src/scripts/similarDetect.ts",
-    "test": "ts-node -r tsconfig-paths/register --files %npm_config_file%"
+    "similar-detect": "npx tsx ./src/scripts/similarDetect.ts"
   },
   "dependencies": {
     "@element-plus/icons-vue": "2.3.1",
@@ -58,7 +57,6 @@
     "rimraf": "5.0.0",
     "rollup-plugin-visualizer": "5.12.0",
     "simple-git": "3.7.1",
-    "ts-node": "10.8.1",
     "tsconfig-paths": "4.2.0",
     "tsx": "^4.7.0",
     "typescript": "5.3.3",

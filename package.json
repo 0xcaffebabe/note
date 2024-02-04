@@ -45,7 +45,7 @@
     "@types/jsdom": "20.0.0",
     "@types/katex": "0.16.0",
     "@types/lodash": "4.14.202",
-    "@types/marked": "4.0.8",
+    "@types/marked": "5.0.2",
     "@types/mime": "3.0.1",
     "@types/node": "20.11.16",
     "@types/nprogress": "0.2.3",

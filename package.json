@@ -1,6 +1,7 @@
 {
   "name": "my-book",
   "version": "0.0.0",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -24,7 +25,7 @@
     "jsmind": "0.7.5",
     "katex": "0.16.4",
     "less": "4.1.3",
-    "lodash": "4.17.21",
+    "lodash-es": "4.17.21",
     "marked": "11.1.1",
     "mermaid": "10.6.0",
     "mime": "3.0.0",
@@ -60,7 +61,7 @@
     "node-global-proxy": "1.0.1",
     "nodejieba": "2.6.0",
     "rimraf": "5.0.0",
-    "rollup-plugin-visualizer": "5.9.0",
+    "rollup-plugin-visualizer": "5.12.0",
     "simple-git": "3.7.1",
     "ts-node": "10.8.1",
     "tsconfig-paths": "4.2.0",
@@ -68,7 +69,7 @@
     "unplugin-auto-import": "0.16.4",
     "unplugin-vue-components": "0.25.0",
     "vite": "5.0.12",
-    "vite-plugin-prismjs": "0.0.8",
+    "vite-plugin-prismjs": "0.0.11",
     "vite-plugin-pwa": "0.17.4"
   }
 }

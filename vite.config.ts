@@ -8,7 +8,7 @@ import CommitTotalTrendGenerator from './src/plugins/CommitTotalTrendGenerator'
 import BuildTimeGenerator from './src/plugins/BuildTimeGenerator'
 import VitePluginPrismjs from 'vite-plugin-prismjs'
 import DataGenrator from './src/plugins/DataGenerator'
-import visualizer from "rollup-plugin-visualizer"
+import {visualizer} from "rollup-plugin-visualizer"
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
@@ -110,7 +110,7 @@ export default defineConfig({
         manualChunks(id: string): string {
           const indepentDependcies = ['element-plus', 'vue', 'jspdf',
             'html2canvas', 'echarts', 'zrender', 'marked', 'mermaid',
-            'katex', 'lodash', 'elkjs', 'cytoscape']
+            'katex', 'lodash-es', 'elkjs', 'cytoscape']
           for (let depend of indepentDependcies) {
             if (id.includes('node_modules') && id.includes(depend)) {
               return depend

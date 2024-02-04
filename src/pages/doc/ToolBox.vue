@@ -39,7 +39,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import {Tools} from '@element-plus/icons-vue'
-import {random} from 'lodash'
+import {random} from 'lodash-es'
 import Category from "@/dto/Category";
 import CategoryService from "@/service/CategoryService";
 import DocUtils from "@/util/DocUtils";

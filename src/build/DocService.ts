@@ -17,7 +17,7 @@ import CommitInfo from "@/dto/CommitInfo";
 import ClusterNode from "@/dto/ClusterNode";
 import axios from "axios";
 import DocQuality from "../dto/doc/DocQuality";
-const proxy = require("node-global-proxy").default;
+import proxy from "node-global-proxy";
 import Cache from "../decorator/Cache";
 import { SimilarItem } from "@/dto/doc/SimilarItem";
 import generateDocCluster from '../scripts/generateDocCluster'
@@ -196,7 +196,7 @@ class DocService extends BaseService implements Cacheable {
   public async getTextSimilar(): Promise<SimilarItem[]> {
     if (process.env.ENV == 'DEV') {
       proxy.setConfig({
-        http: "http://127.0.0.1:54088",
+        http: "http://127.0.0.1:54088", https: "http://127.0.0.1:54088"
       });
       proxy.start();
     }

@@ -5,7 +5,7 @@ import util from 'util'
 import { cleanText } from '../util/StringUtils';
 import ClusterNode from '../dto/ClusterNode';
 import jieba from 'nodejieba'
-import {cloneDeep} from 'lodash'
+import {cloneDeep} from 'lodash-es'
 
 const reg = new RegExp("[\\u4E00-\\u9FFF]+", "g");
 

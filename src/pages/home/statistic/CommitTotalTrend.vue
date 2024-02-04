@@ -28,7 +28,7 @@ import {
 import { LineChart, LineSeriesOption } from 'echarts/charts';
 import { UniversalTransition } from 'echarts/features';
 import { CanvasRenderer } from 'echarts/renderers';
-import {cloneDeep} from 'lodash'
+import {cloneDeep} from 'lodash-es'
 
 echarts.use([
   TitleComponent,

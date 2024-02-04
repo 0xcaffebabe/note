@@ -24,7 +24,7 @@
 import Category from "@/dto/Category";
 import CategoryService from "@/service/CategoryService";
 import { defineComponent } from "vue";
-import {cloneDeep} from 'lodash'
+import {cloneDeep} from 'lodash-es'
 
 export default defineComponent({
   data() {

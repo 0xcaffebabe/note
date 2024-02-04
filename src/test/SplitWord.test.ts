@@ -1,7 +1,7 @@
 import BaseService from "../build/BaseService"
 import fs from 'fs'
 import jieba from 'nodejieba'
-import {cloneDeep} from 'lodash'
+import {cloneDeep} from 'lodash-es'
 
 const stopWords = ['的', '是', '在', '一个', '和',
                  '与', '批注', '可以', '使用', '通过', 'md', '据库', '这个', '截图', '没有',

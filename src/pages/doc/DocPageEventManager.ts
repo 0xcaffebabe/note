@@ -164,15 +164,20 @@ class DocPageEventManager {
     docEl.querySelectorAll('.tex')
         .forEach(e => {
           const element = e as HTMLElement
-          katex.render(
-              // 如果在`%`字符前没有`\`字符，则在`%`前添加`\`后再渲染
-              element.textContent!.replace(/[^\\](%)/g, (match)=>{return match[0] + '\\' + '%'}),
-              element,
-              {
-                  // 取消对中文内容渲染的警告
-                  strict: false
-              }
-          )
+          try {
+            katex.render(
+                // 如果在`%`字符前没有`\`字符，则在`%`前添加`\`后再渲染
+                element.getAttribute("raw")!.replace(/[^\\](%)/g, (match)=>{return match[0] + '\\' + '%'}),
+                element,
+                {
+                    // 取消对中文内容渲染的警告
+                    strict: false,
+                    throwOnError: true,
+                }
+            )
+          } catch(e) {
+            element.innerHTML = `<span style='color:red'>${(e as Error).message}</span>`
+          }
         })
   }
 

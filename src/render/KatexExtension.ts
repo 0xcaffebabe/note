@@ -29,7 +29,7 @@ function inlineKatex(options: KatexOptions): TokenizerAndRendererExtension {
             }
         },
         renderer(token) {
-            return `<span class="inline_tex tex">${token.text}</span>`
+            return `<span class="inline_tex tex" raw="${token.text}"></span>`
         }
     }
 }
@@ -44,6 +44,7 @@ function blockKatex(options: KatexOptions): TokenizerAndRendererExtension {
         tokenizer(src: string, _tokens) {
             let match = src.match(/^\$\$+([^$]+?)\$\$/)
             if (match) {
+                console.log(match[0])
                 return {
                     type: 'blockKatex',
                     raw: match[0],
@@ -60,7 +61,8 @@ function blockKatex(options: KatexOptions): TokenizerAndRendererExtension {
             }
         },
         renderer(token) {
-            return `<div class="line_tex tex">${token.text}</div>`
+            console.log(token.text)
+            return `<div class="line_tex tex" raw="${token.text}"></div>`
         }
     }
 }

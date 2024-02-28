@@ -31,7 +31,7 @@
     "svg-pan-zoom": "3.6.1",
     "tiny-pinyin": "1.3.2",
     "viewerjs": "1.11.6",
-    "vue": "3.4.3",
+    "vue": "3.4.21",
     "vue-router": "4.2.5",
     "vuex": "4.1.0"
   },

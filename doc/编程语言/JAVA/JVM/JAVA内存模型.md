@@ -55,24 +55,7 @@ mfence：modify/mix | 在mfence指令前的读写操作当必须在mfence指令�
 
 ### JVM级防乱序(JSR133)
 
-JVM内存屏障 屏障两边的指令不可以重排序
-
-LoadLoad屏障:
-对于这样的语句Load1; LoadLoad; Load2,
-在Load2及后续读取操作要读取的数据被访问前，保证Load1要读取的数据被读取完毕
-
-StoreStore屏障:
-对于这样的语句Store1; StoreStore; Store2,
-在Store2及后续写入操作执行前，保证Store1的写 入操作对其它处理器可见。
-
-LoadStore屏障:
-对于这样的语句Load1; LoadStore; Store2,
-在Store2及后续写入操作被刷出前，保证Load1要读取的数据被读取完毕。
-
-StoreLoad屏障:对于这样的语句Store1; StoreLoad; Load2,
-在Load2及后续所有读取操作执行前，保证Store1的写入对所有处理器可见。
-
-再低一层，虚拟机的实现是可以依赖于 lock 指令
+- [内存屏障](/计算机系统/程序结构和执行/存储器层次结构.md#内存屏障)
 
 ### volatile的细节
 

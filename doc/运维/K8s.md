@@ -8,6 +8,21 @@
 
 ![屏幕截图 2020-09-07 145831](/assets/屏幕截图%202020-09-07%20145831.png)
 
+```mermaid
+stateDiagram-v2
+  Ingress --> Service: I want to expose my Services
+  Service --> Deployment: I want to proxy my Pod replicas
+  Pod --> Deployment: I have many Pod replicas
+  Container --> Pod: I need co-scheduling
+  Pod --> CronJob: I run periodically
+  HorizontalPodAutoscaler --> Pod: I need auto-scaling
+  Pod --> Job: I only run for once
+  ConfigMap --> Pod: I read configure file
+  Secret --> Pod: I need confidential data
+  Pod --> StatefulSet: I am stateful
+  Pod --> DaemonSet: I run as daemon
+```
+
 master：用于控制集群
 
 - API服务器：外部访问入口

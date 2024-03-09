@@ -10,7 +10,21 @@ tags: ['Linux', '云原生']
 
 ## 架构
 
-![屏幕截图 2020-09-07 145831](/assets/屏幕截图%202020-09-07%20145831.png)
+```mermaid
+stateDiagram-v2
+  state control-plane(master) {
+    API服务器 --> etcd
+    Scheduler --> API服务器
+    ControllerManager --> API服务器
+  }
+  kubelet --> API服务器
+  kubeproxy --> API服务器
+  state worker1 {
+    kubelet --> 容器运行时
+    kubeproxy
+  }
+  worker2  --> API服务器
+```
 
 ```mermaid
 stateDiagram-v2
@@ -101,6 +115,18 @@ RBAC控制：使用插件
 ### 控制管理器
 
 确保系统真实状态朝 API 服务器定义的期望的状态收敛
+
+```go
+for {
+  实际状态 := 获取集群中对象X的实际状态（Actual State）
+  期望状态 := 获取集群中对象X的期望状态（Desired State）
+  if 实际状态 == 期望状态{
+    什么都不做
+  } else {
+    执行编排动作，将实际状态调整为期望状态
+  }
+}
+```
 
 - rc rs控制器 deployment控制器...
 
@@ -195,6 +221,17 @@ minikube start \
 --image-repository='registry.cn-hangzhou.aliyuncs.com/google_containers'
 ```
 
+#### kubeadm
+
+```sh
+# 初始化master
+kubeadm init
+# 运行必要的组件
+kubectl create -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
+# 污染master 使得其能运行用户的pod
+kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+```
+
 ### 部署第一个应用
 
 ```sh
@@ -219,7 +256,32 @@ kubectl scale rc kubia --replicas=3 # 水平扩容
 
 一组紧密相关的容器 独立的逻辑机器
 
-![屏幕截图 2020-09-08 135241](/assets/屏幕截图%202020-09-08%20135241.png)
+```mermaid
+stateDiagram-v2
+  state 工作节点1 {
+    state pod1(10.1.0.1) {
+      容器1
+    }
+    state pod2(10.1.0.2) {
+      容器3
+      容器4
+    }
+    state pod3(10.1.0.3) {
+      容器5
+      容器6
+    }
+  }
+  state 工作节点2 {
+    state pod4(10.1.1.1) {
+      容器7
+      容器8
+    }
+    state pod5(10.1.1.2) {
+      容器9
+      容器10
+    }
+  }
+```
 
 一 个 pod 中的所有容器都在相同的 network 和 UTS 命名空间下运行
 
@@ -339,54 +401,9 @@ spec:
         port: 8080
 ```
 
-### ReplicationController
-
-创建和管理一个pod的多个副本
-
-![屏幕截图 2020-09-09 164430](/assets/屏幕截图%202020-09-09%20164430.png)
-
-- 创建
-
-```yml
-apiVersion: v1
-kind: ReplicationController
-metadata:
-  name: kubia
-spec:
-  replicas: 3
-  selector:
-    app: kubia
-  template:
-    metadata:
-      labels:
-        app: kubia
-    spec:
-      containers:
-      - name: kubia
-        image: luksa/kubia
-        ports:
-        - containerPort: 8080
-```
-
-控制器通 过 创建 一 个新的替代pod来响应pod的删除操作
-
-通过更改标签的方式来实现rc与pod的关联
-
-- 扩容
-
-```sh
-kubectl scale rc kubia --replicas=10
-```
-
-- 删除
-
-```sh
-kubectl delete rc kubia
-```
-
 ### ReplicaSet
 
-ReplicaSet 会 替代 rc
+ReplicaSet 取代了 ReplicationController
 
 rs 的pod 选择器的表达能力更强
 
@@ -903,6 +920,17 @@ curl http://localhost:8001/apis/batch/v1/jobs
 
 ## Deployment
 
+实际上是一个两层控制器。首先，它通过 ReplicaSet 的个数来描述应用的版本；然后，它再通过 ReplicaSet 的属性（比如 replicas 的值），来保证 Pod 的副本数量
+
+```mermaid
+stateDiagram-v2
+  Deployment --> ReplicaSet(V1)
+  Deployment --> ReplicaSet(V2)
+  ReplicaSet(V1) --> pod1
+  ReplicaSet(V1) --> pod2
+  ReplicaSet(V2) --> pod3
+```
+
 更新应用：
 
 - 删除旧版本pod 启动新版本pod
@@ -977,11 +1005,12 @@ rollingUpdate :
 
 如何复制有状态的pod？
 
-Statefulset 保证了pod在重新调度后保留它们的标识和状态
+StatefulSet 把应用的状态抽象为了：
 
-每个pod都有专属于它的持久卷
+1. 拓扑状态：应用的多个实例之间不是完全对等的关系。这些应用实例，必须按照某些顺序启动，再次被创建出来时也必须严格按照相同的顺序，k8是是通过 pod 的名字+编号固定拓扑状态的
+2. 存储状态：Statefulset 保证了pod在重新调度后保留它们的标识和状态
 
-K8S保证不会有两个相同标识和持久卷的pod同时运行
+StatefulSet 的控制器直接管理的是 Pod，每个 Pod 的 hostname、名字等都是不同的、携带了编号的。k8s 通过 Headless Service，为这些有编号的 Pod，在 DNS 服务器中生成带有同样编号的 DNS 记录。StatefulSet 会为每个 Pod 分配一个同样编号的 pvc ，这样 k8s 通过持久化卷机制为 pvc 绑定 pv，每个pod都有专属于它的持久卷
 
 ### 使用
 
@@ -1010,7 +1039,7 @@ kind: StatefulSet
 metadata:
   name: kubia
 spec:
-  serviceName: kubia
+  serviceName: kubia # 在执行控制循环（Control Loop）的时候，使用这个 Headless Service 来保证 Pod 的“可解析身份”
   replicas: 2
   selector:
     matchLabels:

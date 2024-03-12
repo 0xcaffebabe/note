@@ -528,6 +528,12 @@ spec:
     app: kubia
 ```
 
+Service 是由 kube-proxy 组件，加上 iptables 来共同实现的。当一个 Service 对象被提交给 k8s，kube-proxy 感知到，就会创建一条 iptables 规则
+
+当 iptables 规则过多时，会占据较多的资源。
+
+所以引入了 IPVS 模式，使用哈希表作为基础数据结构，并且在内核空间中工作。 这意味着，与 iptables 模式下的 kube-proxy 相比，IPVS 模式下的 kube-proxy 重定向通信的延迟要短，并且在同步代理规则时具有更好的性能
+
 ### 服务间的发现
 
 - 通过环境变量
@@ -552,9 +558,11 @@ kubectl get endpoints kubia
 
 ### 暴露服务给外部
 
-- NodePort：每个集群节点都会在节点上打开一个端口 将在该端口上接收到的流量重定向到基础服务
+#### Service
 
-```java
+NodePort：每个集群节点都会在节点上打开一个端口 将在该端口上接收到的流量重定向到基础服务
+
+```yml
 apiVersion: v1
 kind: Service
 metadata:
@@ -570,6 +578,10 @@ spec:
 ```
 
 通过nodeip:30123 访问
+
+其也是通过添加 iptables 规则来实现的
+
+#### LoadBalancer
 
 - 负载均衡器将流量重定向到跨所有节点的节点端口。客户端通过负载均衡器的 IP 连接到服务
 
@@ -589,12 +601,16 @@ spec:
 
 通过externalip:一个随机端口访问
 
-- Ingress 只需要 一 个公网 IP 就能为许多服务提供访问
+#### Ingress
 
-启用：
+- 只需要 一 个公网 IP 就能为许多服务提供访问
+
+Ingress 对象，其实就是 Kubernetes 项目对“反向代理”的一种抽象
+
+安装 ingress-nginx
 
 ```sh
-minikube addons enable ingress
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.3.1/deploy/static/provider/cloud/deploy.yaml
 ```
 
 ### 就绪探针
@@ -1354,3 +1370,10 @@ spec:
 ### 服务目录
 
 服务目录就是列出所有服务的目录。 用户可以浏览目录并自行设置目录中列出的服务实例
+
+## 网络
+
+### CNI
+
+CNI 的设计思想是 Kubernetes 在启动 Infra 容器之后，就可以直接调用 CNI 网络插件，为这个 Infra 容器的 Network Namespace，配置符合预期的网络栈
+

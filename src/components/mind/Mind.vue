@@ -43,17 +43,14 @@ export default defineComponent({
   },
   methods: {
     mousewheel(event: any) {
-      // ctrl键按下了 event.ctrlKey
-      if (event.ctrlKey) {
-        // 取消浏览器默认的放大缩小网页行为
-        event.preventDefault();
-        if (event.wheelDelta < 0 || event.detail < 0) {
-          // 鼠标滚轮往下滚动
-          this.jm.view.zoomOut();
-        } else if (event.wheelDelta > 0 || event.detail > 0) {
-          // 鼠标滚轮往上滚动
-          this.jm.view.zoomIn();
-        }
+      // 取消浏览器默认的放大缩小网页行为
+      event.preventDefault();
+      if (event.wheelDelta < 0 || event.detail < 0) {
+        // 鼠标滚轮往下滚动
+        this.jm.view.zoomOut();
+      } else if (event.wheelDelta > 0 || event.detail > 0) {
+        // 鼠标滚轮往上滚动
+        this.jm.view.zoomIn();
       }
     },
     zoomIn() {
@@ -102,6 +99,9 @@ export default defineComponent({
         editable: false,
         view: {
           draggable: true, 
+          engine: 'svg',
+          hmargin:2000,        // 思维导图距容器外框的最小水平距离
+          vmargin:2000,         // 思维导图距容器外框的最小垂直距离
         },
         layout: {
           hspace: 60, // 节点之间的水平间距

@@ -43,8 +43,6 @@
     @showKnowledgeNetwork="showKnowledgeNetwork();showAside = false;isDrawerShow = true"
     @showKnowledgeSystem="showKnowledgeSystem();showAside = false;isDrawerShow = true"
     @showKnowledgeTrend="showKnowledgeTrend()"
-    @showBookMarkAdder="showBookmarkAdder"
-    @showBookMarkList="showBookmarkList"
     @copyDocPath="handleCopyDocPath"
     @showLinkList="showLinkList"
     @go-to-ppt="goToPpt"
@@ -64,7 +62,6 @@
   <reading-history ref="readingHistory" />
   <mind-graph ref="mindGraph" @close="showAside = true;isDrawerShow = false" />
   <link-list :html="contentHtml" ref="linkList"/>
-  <book-mark ref="bookMark" :doc="doc" />
   <knowledge-reviewer ref="knowledgeReviewer" :doc="doc"/>
   <knowledge-redundancy ref="knowledgeRedundancy"/>
   <mermaid-shower ref="mermaidShower"/>
@@ -98,7 +95,6 @@ import HistoryList from "./commit/HistoryList.vue";
 import ReadingHistory from "./history/ReadingHistory.vue"
 import MindGraph from './mind/MindGraph.vue'
 import MindNote from './mind/MindNote.vue'
-import BookMark from './book-mark/BookMark.vue'
 import LinkList from './LinkList.vue';
 import ToolBox from './ToolBox.vue';
 import KnowledgeNetwork from "./knowledge/KnowledgeNetwork.vue";
@@ -138,7 +134,6 @@ export default defineComponent({
     ReadingHistory,
     MindGraph,
     MindNote,
-    BookMark,
     ToolBox,
     LinkPopover,
     DocSideCategory,
@@ -174,7 +169,6 @@ export default defineComponent({
     const mindGraph = ref<InstanceType<typeof MindGraph>>()
     const knowledgeNetwork = ref<InstanceType<typeof KnowledgeNetwork>>()
     const knowledgeSystem = ref<InstanceType<typeof KnowledgeSystem>>()
-    const bookMark = ref<InstanceType<typeof BookMark>>()
     const linkList = ref<InstanceType<typeof LinkList>>()
     const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
     const kwFinder = ref<InstanceType<typeof KeyWordFinder>>()
@@ -192,12 +186,6 @@ export default defineComponent({
     }
     const showKnowledgeSystem = () => {
       knowledgeSystem.value?.show();
-    }
-    const showBookmarkAdder = () => {
-      bookMark.value?.showAdder()
-    }
-    const showBookmarkList = () => {
-      bookMark.value?.showMarkList()
     }
     const showLinkList = () => {
       linkList.value?.show()
@@ -217,7 +205,6 @@ export default defineComponent({
       mindGraph, showMindGraph, 
       knowledgeNetwork, showKnowledgeNetwork,
       knowledgeSystem, showKnowledgeSystem,
-      bookMark, showBookmarkAdder, showBookmarkList, 
       linkList, showLinkList,
       knowledgeReviewer, showKnowledgeReviewer,
       knowledgeRedundancy, showKnowledgeRedundancy,

@@ -48,8 +48,6 @@ type ActionType =
     'showReadingHistory' |
     'showMindGraph' |
     'showKnowledgeNetwork' |
-    'showBookMarkAdder' |
-    'showBookMarkList' |
     'copyDocPath' |
     'showLinkList' |
     'showKnowledgeSystem' | 
@@ -88,8 +86,6 @@ export default defineComponent({
     'showReadingHistory',
     'showMindGraph',
     'showKnowledgeNetwork',
-    'showBookMarkAdder',
-    'showBookMarkList',
     'copyDocPath',
     'showLinkList',
     'showKnowledgeSystem',
@@ -118,10 +114,8 @@ export default defineComponent({
         {name: '知识冗余', type: 'success', action: 'showKnowledgeRedundancy'},
         {name: '知识能力', type: 'primary', action: 'showKnowledgeAblity', hotkey: 'alt + a'},
         {name: '知识金字塔', type: 'warning', action: 'showKnowledgePyramid', hotkey: 'alt + p'},
-        {name: '添加书签', type: 'danger', action: 'showBookMarkAdder', divided: true},
-        {name: '路径复制', type: 'success', action: 'copyDocPath', hotkey: 'alt + c'},
+        {name: '路径复制', type: 'success', action: 'copyDocPath', hotkey: 'alt + c', divided: true},
         {name: '在VSC打开', type: 'danger', action: 'openInEditor', hotkey: 'alt + v'},
-        {name: '书签列表', type: 'info', action: 'showBookMarkList'},
         {name: '链接列表', type: 'primary', action: 'showLinkList',},
         {name: '去到DOC', type: 'info', action: 'goToDoc', divided: true},
         {name: '去到PPT', type: 'danger', action: 'goToPpt'},

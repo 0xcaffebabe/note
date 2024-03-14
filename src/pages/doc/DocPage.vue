@@ -11,7 +11,7 @@
             <doc-breadcrumb-nav />
             <doc-metadata-info :file="file" @link-click="link => eventManager?.openOutterLink(link)"/>
             <!-- doc主体开始 -->
-            <div class="main markdown-section" ref="markdownSection" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '960px': '74%'}"></div>
+            <div class="main markdown-section" ref="markdownSection" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '920px': '74%'}"></div>
             <!-- doc主体结束 -->
             <!-- 提交历史开始 -->
             <div style="text-align: center">

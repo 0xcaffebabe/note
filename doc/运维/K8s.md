@@ -1392,3 +1392,26 @@ CRI 的接口分为两组：
 1. 第一组，是 RuntimeService。它提供的接口，主要是跟容器相关的操作
 2. 第二组，则是 ImageService。它提供的接口，主要是容器镜像相关的操作
 
+## 监控
+
+![](/assets/2024314135248.webp)
+
+1. 宿主机的监控数据通过以 DaemonSet 的方式运行在宿主机的 Node Exporter 提供
+2. API Server 也会在 /metrics API 里，暴露出各个 Controller 的工作队列（Work Queue）的长度、请求的 QPS 和延迟数据等等
+3. Kubernetes 相关的监控数据。容器相关的 Metrics 主要来自于 kubelet 内置的 cAdvisor 服务。其他数据则是由 Metrics Server 提供
+
+```mermaid
+stateDiagram-v2
+  aggregator --> apiserver
+  aggregator --> metricsserver
+  aggregator --> 其他server
+```
+
+### 日志
+
+第一种方式：logging agent 以 DaemonSet 的方式运行在节点上，然后将宿主机上的容器日志目录挂载进去，最后由 logging-agent 把日志转发到后端存储，这种方式要求应用输出的日志，都必须是直接输出到容器的 stdout 和 stderr 里
+
+第二种方式：当容器的日志只能输出到某些文件里的时候，可以通过一个 sidecar 容器把这些日志文件重新输出到 sidecar 的 stdout 和 stderr 上，这样就能够继续使用第一种方案了。但这会存两份日志文件，占用磁盘。
+
+第三种方式：通过一个 sidecar 容器，直接把应用的日志文件发送到远程存储里面去。这个 sidecar 会对日志文件进行解析，这可能需要消耗较多资源，从而导致拖垮应用容器。
+

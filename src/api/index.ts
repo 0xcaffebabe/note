@@ -13,7 +13,6 @@ import YuequeDraft from '@/dto/YuqueDraft'
 import Category from '@/dto/Category'
 import ClusterNode from '@/dto/ClusterNode'
 import DocQuality from '@/dto/doc/DocQuality'
-import { SimilarItem } from '@/dto/doc/SimilarItem'
 import KnowledgeRichnessNode from '@/dto/KnowledgeRichnessNode'
 // import DocService from '@/service/DocService'
 
@@ -164,12 +163,6 @@ class Api implements Cacheable{
   @cache
   public async getDocQualityData(): Promise<DocQuality[]> {
     return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.docQualityJson))).data
-  }
-
-  @cache
-  public async getTextSimilar(): Promise<SimilarItem[]> {
-    const result :SimilarItem[] = (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.textSimilarJson))).data
-    return result.sort((a, b) => (b.similar || 0) - (a.similar ||0))
   }
 
   /**

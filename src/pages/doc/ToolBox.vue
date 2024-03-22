@@ -50,13 +50,9 @@ type ActionType =
     'showKnowledgeNetwork' |
     'copyDocPath' |
     'showLinkList' |
-    'showKnowledgeSystem' | 
     'goToDoc' | 
     'goToPpt' |
-    'showKnowledgeSystem' | 
-    'openInEditor' | 
-    'showKnowledgeAblity' | 
-    'showKnowledgePyramid'
+    'openInEditor'
 
 type LocalActionType = ActionType & 'showMoreSetting' & 'randomReview'
 
@@ -88,15 +84,11 @@ export default defineComponent({
     'showKnowledgeNetwork',
     'copyDocPath',
     'showLinkList',
-    'showKnowledgeSystem',
     'goToDoc',
     'goToPpt',
     'showKnowledgeReviewer',
     'showKnowledgeTrend',
-    'showKnowledgeRedundancy',
-    'openInEditor',
-    'showKnowledgeAblity',
-    'showKnowledgePyramid'
+    'openInEditor'
   ],
   data(){
     return {
@@ -108,12 +100,8 @@ export default defineComponent({
         {name: '阅读历史', type: 'primary', action: 'showReadingHistory'},
         {name: '思维导图', type: 'success', action: 'showMindGraph', hotkey: 'alt + l'},
         {name: '知识网络', type: 'warning', action: 'showKnowledgeNetwork', hotkey: 'alt + k'},
-        {name: '知识体系', type: 'success', action: 'showKnowledgeSystem', },
         {name: '知识回顾', type: 'primary', action: 'showKnowledgeReviewer', hotkey: 'alt + r'},
         {name: '知识趋势', type: 'danger', action: 'showKnowledgeTrend', hotkey: 'alt + t'},
-        {name: '知识冗余', type: 'success', action: 'showKnowledgeRedundancy'},
-        {name: '知识能力', type: 'primary', action: 'showKnowledgeAblity', hotkey: 'alt + a'},
-        {name: '知识金字塔', type: 'warning', action: 'showKnowledgePyramid', hotkey: 'alt + p'},
         {name: '路径复制', type: 'success', action: 'copyDocPath', hotkey: 'alt + c', divided: true},
         {name: '在VSC打开', type: 'danger', action: 'openInEditor', hotkey: 'alt + v'},
         {name: '链接列表', type: 'primary', action: 'showLinkList',},

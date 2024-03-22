@@ -24,8 +24,6 @@
     @showKnowledgeReviewer="showKnowledgeReviewer"
     @showKnowledgeNetwork="showKnowledgeNetwork"
     @showKnowledgeTrend="showKnowledgeTrend"
-    @showKnowledgeSystem="showKnowledgeSystem"
-    @showKnowledgeRedundancy="showKnowledgeRedundancy"
     @showKwFinder="showKwFinder"
   />
   <key-word-finder ref="kwFinder" :kw="kw" @kwChanged="handleKwChanged"/>
@@ -48,8 +46,6 @@ import KnowledgeTrend from '../knowledge/trend/KnowledgeTrend.vue'
 import ReadingHistory from '../history/ReadingHistory.vue'
 import DocMetadataInfo from '../metadata/DocMetadataInfo.vue'
 import MindGraph from '../mind/MindGraph.vue'
-import KnowledgeSystem from '../knowledge/KnowledgeSystem.vue'
-import KnowledgeRedundancy from '../knowledge/KnowledgeRedundancy.vue'
 import KeyWordFinder from '../KeyWordFinder.vue'
 import TouchUtils from '@/util/TouchUtils'
 import SelectionPopover from '../tool/SelectionPopover.vue'
@@ -67,8 +63,6 @@ export default defineComponent({
     ReadingHistory,
     DocMetadataInfo,
     MindGraph,
-    KnowledgeSystem,
-    KnowledgeRedundancy,
     KeyWordFinder,
     SelectionPopover,
     MermaidShower,
@@ -78,8 +72,6 @@ export default defineComponent({
     const knowledgeNetwork = ref<InstanceType<typeof KnowledgeNetwork>>()
     const readingHistory = ref<InstanceType<typeof ReadingHistory>>()
     const mindGraph = ref<InstanceType<typeof MindGraph>>()
-    const knowledgeSystem = ref<InstanceType<typeof KnowledgeSystem>>()
-    const knowledgeRedundancy = ref<InstanceType<typeof KnowledgeRedundancy>>()
     const kwFinder = ref<InstanceType<typeof KeyWordFinder>>()
     const showReadingHistory = () => {
       readingHistory.value?.show()
@@ -93,19 +85,11 @@ export default defineComponent({
     const showKnowledgeNetwork = () => {
       knowledgeNetwork.value?.show()
     }
-    const showKnowledgeSystem = () => {
-      knowledgeSystem.value?.show();
-    }
-    const showKnowledgeRedundancy = () => {
-      knowledgeRedundancy.value?.show();
-    }
     return {
       readingHistory,showReadingHistory,
       knowledgeReviewer, showKnowledgeReviewer,
       knowledgeNetwork, showKnowledgeNetwork,
       mindGraph, showMindGraph,
-      knowledgeSystem, showKnowledgeSystem,
-      knowledgeRedundancy, showKnowledgeRedundancy,
       kwFinder
     }
   },

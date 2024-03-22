@@ -41,15 +41,11 @@
     @showReadingHistory="showReadingHistory"
     @showMindGraph="showMindGraph();showAside = false;isDrawerShow = true"
     @showKnowledgeNetwork="showKnowledgeNetwork();showAside = false;isDrawerShow = true"
-    @showKnowledgeSystem="showKnowledgeSystem();showAside = false;isDrawerShow = true"
     @showKnowledgeTrend="showKnowledgeTrend()"
     @copyDocPath="handleCopyDocPath"
     @showLinkList="showLinkList"
     @go-to-ppt="goToPpt"
     @showKnowledgeReviewer="showKnowledgeReviewer"
-    @showKnowledgeRedundancy="showKnowledgeRedundancy"
-    @showKnowledgeAblity="showKnowledgeAblity"
-    @showKnowledgePyramid="showKnowledgePyramid"
     @open-in-editor="openInEditor"
   />
   <!-- 工具栏结束 -->
@@ -63,7 +59,6 @@
   <mind-graph ref="mindGraph" @close="showAside = true;isDrawerShow = false" />
   <link-list :html="contentHtml" ref="linkList"/>
   <knowledge-reviewer ref="knowledgeReviewer" :doc="doc"/>
-  <knowledge-redundancy ref="knowledgeRedundancy"/>
   <mermaid-shower ref="mermaidShower"/>
   <keep-alive>
     <knowledge-network ref="knowledgeNetwork" :doc="doc" @close="showAside = true;isDrawerShow = false"/>
@@ -73,12 +68,6 @@
   </keep-alive>
   <keep-alive>
     <knowledge-trend ref="knowledgeTrend"/>
-  </keep-alive>
-  <keep-alive>
-    <knowledge-ablity ref="knowledgeAblity"/>
-  </keep-alive>
-  <keep-alive>
-    <knowledge-pyramid ref="knowledgePyramid" :doc="doc" />
   </keep-alive>
   <image-viewer ref="imageViewer" />
   <instant-previewer ref="instantPreviewer"/>
@@ -109,21 +98,17 @@ import DocUtils from "@/util/DocUtils";
 import DocSideCategory from './aside/DocSideCategory.vue';
 import DocBreadcrumbNav from "./nav/DocBreadcrumbNav.vue";
 import DocTabNav from "./nav/DocTabNav.vue";
-import KnowledgeSystem from "./knowledge/KnowledgeSystem.vue";
 import DocPageEventMnager from './DocPageEventManager';
 import ResourceBrower from "./ResourceBrower.vue";
 import ImageViewer from "@/components/ImageViewer.vue";
 import KnowledgeReviewer from "./knowledge/KnowledgeReviewer.vue";
 import KeyWordFinder from "./KeyWordFinder.vue";
 import KnowledgeTrend from './knowledge/trend/KnowledgeTrend.vue'
-import KnowledgeRedundancy from './knowledge/KnowledgeRedundancy.vue'
-import KnowledgeAblity from './knowledge/KnowledgeAblity.vue'
 import DocMetadataInfo from './metadata/DocMetadataInfo.vue'
 import SelectionPopover from './tool/SelectionPopover.vue'
 import InstantPreviewer from './tool/InstantPreviewer.vue'
 import { SysUtils } from "@/util/SysUtils";
 import config from '@/config';
-import KnowledgePyramid from "./knowledge/KnowledgePyramid.vue";
 import MermaidShower from './mermaid-shower/MermaidShower.vue';
 
 export default defineComponent({
@@ -139,7 +124,6 @@ export default defineComponent({
     DocSideCategory,
     LinkList,
     KnowledgeNetwork,
-    KnowledgeSystem,
     DocBreadcrumbNav,
     DocTabNav,
     ResourceBrower,
@@ -147,12 +131,9 @@ export default defineComponent({
     KnowledgeReviewer,
     KeyWordFinder,
     KnowledgeTrend,
-    KnowledgeRedundancy,
-    KnowledgeAblity,
     DocMetadataInfo,
     SelectionPopover,
     InstantPreviewer,
-    KnowledgePyramid,
     MermaidShower,
 },
   watch: {
@@ -168,13 +149,9 @@ export default defineComponent({
     const readingHistory = ref<InstanceType<typeof ReadingHistory>>()
     const mindGraph = ref<InstanceType<typeof MindGraph>>()
     const knowledgeNetwork = ref<InstanceType<typeof KnowledgeNetwork>>()
-    const knowledgeSystem = ref<InstanceType<typeof KnowledgeSystem>>()
     const linkList = ref<InstanceType<typeof LinkList>>()
     const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
     const kwFinder = ref<InstanceType<typeof KeyWordFinder>>()
-    const knowledgeRedundancy = ref<InstanceType<typeof KnowledgeRedundancy>>()
-    const knowledgeAblity = ref<InstanceType<typeof KnowledgeAblity>>()
-    const knowledgePyramid = ref<InstanceType<typeof KnowledgePyramid>>()
     const showReadingHistory = () => {
       readingHistory.value?.show()
     }
@@ -184,32 +161,18 @@ export default defineComponent({
     const showKnowledgeNetwork = () => {
       knowledgeNetwork.value?.show()
     }
-    const showKnowledgeSystem = () => {
-      knowledgeSystem.value?.show();
-    }
     const showLinkList = () => {
       linkList.value?.show()
     }
     const showKnowledgeReviewer = () => {
       knowledgeReviewer.value?.show();
     }
-    const showKnowledgeRedundancy = () => {
-      knowledgeRedundancy.value?.show();
-    }
-    const showKnowledgeAblity = () => {
-      knowledgeAblity.value?.show();
-    }
-    const showKnowledgePyramid = () => knowledgePyramid.value?.show()
     return {
       readingHistory,showReadingHistory, 
       mindGraph, showMindGraph, 
       knowledgeNetwork, showKnowledgeNetwork,
-      knowledgeSystem, showKnowledgeSystem,
       linkList, showLinkList,
       knowledgeReviewer, showKnowledgeReviewer,
-      knowledgeRedundancy, showKnowledgeRedundancy,
-      knowledgeAblity, showKnowledgeAblity,
-      knowledgePyramid, showKnowledgePyramid,
       kwFinder
     }
   },

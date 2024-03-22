@@ -6,14 +6,12 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
-    "update-index": "npx tsx ./src/scripts/updateSearchIndex.ts",
-    "similar-detect": "npx tsx ./src/scripts/similarDetect.ts"
+    "update-index": "npx tsx ./src/scripts/updateSearchIndex.ts"
   },
   "dependencies": {
     "@element-plus/icons-vue": "2.3.1",
     "algoliasearch": "4.22.1",
     "axios": "1.6.0",
-    "diff": "5.1.0",
     "echarts": "5.5.0",
     "echarts-wordcloud": "2.1.0",
     "element-plus": "2.4.4",

@@ -203,3 +203,84 @@ int main() {
   return 1;
 }
 ```
+
+### 智能指针
+
+智能指针是代理模式的具体应用，它使用 RAII 技术代理了裸指针，能够自动释放内存，无需程序员干预
+
+unique_ptr：
+
+unique_ptr 是一个对象。不要对它调用 delete，它会自动管理初始化时的指针，在离开作用域时析构释放内存，它也没有定义加减运算，不能随意移动指针地址，也不能通过拷贝赋值，要通过 move 语义进行指针的所有权转移
+
+```cpp
+class A {
+public:
+  ~A() {
+    cout << "~A";
+  }
+};
+
+int main() {
+  {
+    unique_ptr<A> p1(new A());
+    // auto p2 = p1; ERROR
+    auto p2 = move(p1); // 要通过 move 进行指针所有权转移
+  }
+  cout << "exit";
+  return 1;
+}
+```
+
+shared_ptr：
+
+其所有权是可以被安全共享的，其内部有个引用计数，会导致循环引用的问题。如果发生拷贝赋值——也就是共享的时候，引用计数就增加，而发生析构销毁的时候，引用计数就减少。只有当引用计数减少到 0，内存就会被回收
+
+```cpp
+shared_ptr<A> p3(new A());
+auto p4 = p3;
+```
+
+weak_ptr：
+
+只观察指针，不会增加引用计数（弱引用），但在需要的时候，可以调用成员函数 lock()，获取 shared_ptr（强引用）
+
+## 异常
+
+```mermaid
+stateDiagram-v2
+  direction BT
+  bad_alloc --> expcetion
+  runtime_error --> expcetion
+  logic_error --> expcetion
+  bad_cast --> expcetion
+  range_error --> runtime_error
+  overflow_error --> runtime_error
+  invalid_argument --> runtime_error
+  length_error --> runtime_error
+
+```
+
+```cpp
+try {
+    throw runtime_error("runtime_error");
+  }catch(const exception& e) {
+    cout << e.what();
+  }catch(const runtime_error& e) { // 只会按照顺序匹配，而不会根据异常继承树匹配最佳
+    cout << e.what();
+  }
+
+// noexcept 告知编译器该函数不会抛异常，可以做一些优化，但如果真的发生异常，程序直接崩掉
+int f() noexcept {
+  throw runtime_error("runtime_error");
+}
+```
+
+## lambda
+
+```cpp
+int n = 1;
+// = 捕获外层变量，值类型。 &捕获外层变量，引用类型
+auto f1 = [=](const int& a, const int& b) {
+  return a + b + n;
+};
+```

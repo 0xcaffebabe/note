@@ -6,6 +6,8 @@ import BaseService from "../build/BaseService"
 import DocService from '../build/DocService'
 import PathUtils from "../util/PathUtils"
 import { marked } from "marked"
+import DocFileInfo from "@/dto/DocFileInfo"
+import {JSDOM} from 'jsdom';
 
 function ensureDirectoryExistence(filePath: string) {
   var dirname = path.dirname(filePath);
@@ -24,9 +26,47 @@ function getSummaryHtml() {
   }) as string).replaceAll(/\.\//gi, '/').replaceAll(/\.md/gi, '.html')
 }
 
+const dom = new JSDOM()
+
+function generalHtmlContent(summaryHtml: string, info: DocFileInfo) {
+  const renderer = new marked.Renderer()
+  renderer.text = (text) => text
+  let html = marked(info.content, {
+    renderer: renderer
+  }) as string
+  html = html.replaceAll(/\.md/gi, '.html')
+  html = html.replaceAll(/\n/gi, '')
+  dom.window.document.body.innerHTML = `<!DOCTYPE html><body>${html}</body></html>`
+  let text = dom.window.document.body.textContent || ''
+  text = text.replace(/\n/ig, '')
+  return `
+  <!DOCTYPE html>
+  <html lang="zh">
+    <head>
+      <meta charset="UTF-8">
+      <title>${info.name}</title>
+      <meta name="description" content="${text.substring(0, Math.min(100, text.length))}...">
+    </head>
+    <script>
+      if (!/bot|googlebot|crawler|spider|robot|crawling/i.test(navigator.userAgent)) {
+        window.location = '/#/doc/${info.id}'
+      }
+    </script>
+    <body>
+      <div class='content'>
+      ${html}
+      </div>
+      <div class='menu'>
+        ${summaryHtml}
+      </div>
+    </body>
+  </html>
+  `
+}
+
 export default function DocBuildMove(){
   let config : ResolvedConfig;
-  const summaryHtml = getSummaryHtml()
+  const summaryHtml = getSummaryHtml().replace(/\n/ig, '')
   return {
     name: "doc-build-move",
     async configResolved(rconfig: ResolvedConfig) {
@@ -66,34 +106,7 @@ export default function DocBuildMove(){
 
               const htmlFileFullName = `${config.build.outDir}/${filename.replace('.md', '')}.html`
 
-              const renderer = new marked.Renderer();
-              let html = marked(info.content, {
-                renderer: renderer
-              }) as string
-              html = html.replaceAll(/\.md/gi, '.html')
-              html = `
-              <!DOCTYPE html>
-              <html lang="zh">
-                <head>
-                  <meta charset="UTF-8">
-                  <title>${info.name}</title>
-                  <meta name="description" content="">
-                </head>
-                <script>
-                  if (!/bot|googlebot|crawler|spider|robot|crawling/i.test(navigator.userAgent)) {
-                    window.location = '/#/doc/${info.id}'
-                  }
-                </script>
-                <body>
-                  <div class='menu'>
-                    ${summaryHtml}
-                  </div>
-                  <div class='content'>
-                    ${html}
-                  </div>
-                </body>
-              </html>
-              `
+              const html = generalHtmlContent(summaryHtml, info)
               fs.promises.writeFile(htmlFileFullName, html).then(() => console.log("doc-build-move " + htmlFileFullName + " 生成完成"))
               
             })

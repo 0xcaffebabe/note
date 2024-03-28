@@ -284,3 +284,68 @@ auto f1 = [=](const int& a, const int& b) {
   return a + b + n;
 };
 ```
+
+## 标准库
+
+### 字符串
+
+字面量后缀：
+
+明确地表示它是 string 字符串类型，而不是 C 字符串
+
+```cpp
+using namespace std::literals::string_literals; //必须打开名字空间
+auto str = "hello"s;
+```
+
+原始字符串：
+
+```cpp
+auto s = R"(\n123\n)"; // 输出\n123\n
+```
+
+字符串转换函数：
+
+```cpp
+using namespace std;
+cout << s;
+cout << stoi("123");
+cout << stol("123");
+cout << stod("123.0");
+```
+
+字符串视图：内部只保存一个指针和长度，无论是拷贝，还是修改，都非常廉价
+
+```cpp
+auto view = new string_view("aaa")
+```
+
+### 容器
+
+```cpp
+// 动态数组
+vector<int> v(2);
+v.emplace_back(3);
+// 队列
+deque<int> d;
+d.emplace_back(4);
+// 集合
+set s = {7, 3, 9};
+// 散列表
+unordered_map<int, int> map;
+map.emplace(1,2);
+```
+
+迭代器：
+
+容器一般都会提供 begin()、end() 成员函数，调用它们就可以得到表示两个端点的迭代器。迭代器和指针类似，可以前进和后退，但不能假设它一定支持“++”“--”操作符
+
+```cpp
+for(auto it = v.begin(); it != v.end(); it++) {
+  cout << *it;
+}
+// 更加通用的迭代器操作
+for(auto it = v.begin(); it != v.end(); advance(it, distance(it, next(it)))) {
+  cout << *it;
+}
+```

@@ -349,3 +349,33 @@ for(auto it = v.begin(); it != v.end(); advance(it, distance(it, next(it)))) {
   cout << *it;
 }
 ```
+
+### 线程
+
+```cpp
+static once_flag flag;        // 全局的初始化标志
+thread_local int n = 0; // 线程本地变量
+atomic<int> at = {0}; // 原子变量
+
+thread t1([&](){
+  n += 10;
+  cout << "t1, " << n;
+  at++;
+  // 只会被调用一次
+  call_once(flag, []{ cout << "Hello, once" << endl; });
+  cout << "t1, " << this_thread::get_id() << endl;
+});
+thread t2([](){
+  n += 20;
+  cout << "t2, " << n;
+  // 只会被调用一次
+  call_once(flag, []{ cout << "Hello, once" << endl; });
+  cout << "t2, " << this_thread::get_id() << endl;
+});
+
+t1.join();
+t2.join();
+// 异步执行代码块返回future
+auto f = async([](){cout << "async" << endl;});
+f.wait();
+```

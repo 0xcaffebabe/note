@@ -37,7 +37,7 @@
     "@types/diff": "5.0.9",
     "@types/hammerjs": "2.0.45",
     "@types/js-yaml": "4.0.9",
-    "@types/jsdom": "20.0.1",
+    "@types/jsdom": "21.1.6",
     "@types/katex": "0.16.7",
     "@types/lodash": "4.17.0",
     "@types/node": "20.12.3",

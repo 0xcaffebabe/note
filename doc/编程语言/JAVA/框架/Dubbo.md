@@ -14,7 +14,16 @@
 
 ## 架构
 
-![20203814260](/assets/20203814260.jpg)
+```mermaid
+sequenceDiagram
+  Consumer -->> Registry: subscribe
+  Registry -->> Consumer: notify
+  Provider(Container) -->> Provider(Container): init
+  Provider(Container) -->> Registry: register
+  Consumer ->> Provider(Container): invoke
+  Consumer -->> Monitor: report
+  Provider(Container) -->> Monitor: report
+```
 
 节点        | 角色说明
 --------- | -------------------

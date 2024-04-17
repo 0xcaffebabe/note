@@ -49,9 +49,9 @@ export default defineConfig({
       registerType: 'autoUpdate', 
       includeAssets: ['favicon.ico'],
       manifest: {
-        name: '知识体系',
+        name: '一个工程师的知识体系',
         short_name: 'PKS',
-        description: '个人知识体系',
+        description: '一个工程师的知识体系',
         theme_color: '#ffffff',
         icons: [
           {

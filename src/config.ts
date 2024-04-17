@@ -1,6 +1,6 @@
 export default {
   // 站点名称
-  siteName: '个人知识体系',
+  siteName: '一个工程师的知识体系',
   // 仓库地址 用于更改、编辑等的跳转
   repositoryUrl: 'https://github.com/0xcaffebabe/note',
   localUrl: 'D:/learning/note/doc',

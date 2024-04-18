@@ -167,6 +167,48 @@ register变量将放在机器的寄存器中
   #endif
   ```
 
+### 可变参数
+
+```c
+#include <stdio.h>
+#include <stdarg.h>
+void print_sum(int count, ...) {
+  int sum = 0;
+  va_list ap;
+  va_start(ap, count); 
+  for (int i = 0; i < count; ++i)
+    sum += va_arg(ap, int);
+  va_end(ap);
+  printf("%d\n", sum);
+}
+int main(void) {
+  print_sum(4, 1, 2, 3, 4);
+  return 0;
+}
+```
+
+可变参数是通过编译器在编译时，将参数的值拷贝到栈内存中，并通过 va_list 结构体来对这块栈内存进行访问
+
+## 流程控制
+
+### goto
+
+goto 是通过汇编指令 jmp 实现的，这种方式下的执行流程转移仅能够发生在当前程序运行所在的某个具体函数中。相对地，程序无法做到从某个函数体的执行中途，直接将其执行流转移到其他函数的内部，称之为本地跳转
+
+```c
+L1:
+if (n == 1) goto L1;
+```
+
+```nasm
+.L2:
+  cmp     DWORD PTR [rbp-4], 1
+  jne     .L3
+  jmp     .L2
+```
+
+对应的有非本地跳转，其可以在一个函数内部跳转到另外一个函数内部去，非本地跳转的原理是通过保存恢复函数的调用上下文来实现的
+
 ## 指针
 
 ### 指针与地址
@@ -372,11 +414,80 @@ strB[1] = 'c'; // Segmentation fault
 
 使用数组和指针形式定义的字符串，其底层的数据引用方式会有所区别。其中数组方式会将字符串数据从 .rodata 中拷贝到其他位置（比如栈内存），因此修改这些数据不会改变存在于原始 .rodata 中的副本。而使用常量指针形式定义的数组，该指针会直接引用位于 .rodata 中的字符串数据
 
+## 多线程
+
+```c
+// C11 引入的标准库
+#include <threads.h>
+#include <stdio.h>
+int run(void *arg) {
+  thrd_t id = thrd_current();  // 返回该函数运行所在线程的标识符；
+  printf((const char*) arg, id);
+  return thrd_success;
+}
+int main(void) {
+  thrd_t thread;
+  int result;
+  // 创建一个线程；
+  thrd_create(&thread, run, "Hello C11 thread with id: %lu.\n");
+  if (thrd_join(thread, &result) == thrd_success) {
+    // 等待其他线程退出；
+    printf("Thread returns %d at the end.\n", result);  
+  }  
+  return 0;
+}
+```
+
+### 原子操作
+
+- C11 提供的名为 stdatomic.h 的头文件
+
+```c
+_Atomic long counter = 0;  // 定义一个原子类型全局变量，用来记录线程的累加值；
+
+atomic_fetch_add_explicit(&counter, 1, memory_order_relaxed);  // 使用原子加法操作；
+```
+
+函数名|功能描述
+-|-
+atomic_flag_test_and_set|将一个atomic_flag的值置为真，并返回旧值
+atomic_flag_clear|将一个atomic_flag的值设为假
+atomic_init|初始化一个已经存在的原子对象
+atomic is lock free|检测指定对象是否是lock-free的
+atomic_exchange|原子地交换两个值
+atomic_compare_exchange_weak|比较并原子地交换两个值（允许伪失败）
+atomic_compare_exchange_strong|比较并原子地交换两个值
+atomic_signal_fence|在线程和信号处理程序之间建立内存栅栏
+atomic_thread_fence|在线程之间建立内存栅栏
+
+### 条件变量
+
+```c
+cnd_t cond;  // 定义一个条件变量；
+int done = 0;
+
+// 等待
+mtx_lock(&mutex); 
+while (done == 0) {
+  cnd_wait(&cond, &mutex);  // 让当前线程进入等待队列；
+}
+mtx_unlock(&mutex);
+
+// 通知
+mtx_lock(&mutex); 
+done = 1;
+cnd_signal(&cond);  // 通知等待中的线程；
+mtx_unlock(&mutex); 
+```
+
+### 线程本地变量
+
+```c
+_Thread_local int counter = 0;
+```
+
+
 ## 输入与输出
-
-标准的 IO 一般会使用所在平台的低级 IO 接口来实现。而低级 IO 则通过调用操作系统内核提供的系统调用函数，来完成相应的 IO 操作
-
-在 x86-64 平台上，系统调用通过 syscall 指令来执行。而在基于该平台的 Unix 与类 Unix 系统上，系统调用函数的执行会使用寄存器 rdi、rsi、rdx、r10、r8、r9 来进行参数的传递，rax 寄存器则用于传递系统调用 ID，以及接收系统调用的返回值
 
 ### 标准输入输出
 
@@ -469,6 +580,21 @@ int main(int argc,char *args[]){
 
 ### 低级IO-read/write
 
+标准的 IO 一般会使用所在平台的低级 IO 接口来实现。而低级 IO 则通过调用操作系统内核提供的系统调用函数，来完成相应的 IO 操作
+
+在 x86-64 平台上，系统调用通过 syscall 指令来执行。而在基于该平台的 Unix 与类 Unix 系统上，系统调用函数的执行会使用寄存器 rdi、rsi、rdx、r10、r8、r9 来进行参数的传递，rax 寄存器则用于传递系统调用 ID，以及接收系统调用的返回值
+
 ### open creat close unlink
 
 ### 随机访问-lseek
+
+### 信号处理
+
+```c
+void sigHandler(int sig) {
+  printf("Signal %d catched!\n", sig);
+  exit(sig);
+}
+
+signal(SIGFPE, sigHandler);
+```

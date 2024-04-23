@@ -1,3 +1,7 @@
+---
+tags: ['编程语言']
+---
+
 # C语言
 
 C 语言是一种通用的、面向过程式的计算机程序设计语言。1972 年，为了移植与开发 UNIX 操作系统，丹尼斯·里奇在贝尔电话实验室设计开发了 C 语言。
@@ -188,6 +192,10 @@ int main(void) {
 ```
 
 可变参数是通过编译器在编译时，将参数的值拷贝到栈内存中，并通过 va_list 结构体来对这块栈内存进行访问
+
+### 入口函数
+
+在 main 函数之前，还有一个符号名为 _start 的入口，在类 unix 系统中，_start 函数会初始化栈帧、准备 main 函数调用所需的参数
 
 ## 流程控制
 
@@ -584,6 +592,42 @@ int main(int argc,char *args[]){
 
 在 x86-64 平台上，系统调用通过 syscall 指令来执行。而在基于该平台的 Unix 与类 Unix 系统上，系统调用函数的执行会使用寄存器 rdi、rsi、rdx、r10、r8、r9 来进行参数的传递，rax 寄存器则用于传递系统调用 ID，以及接收系统调用的返回值
 
+```nasm
+; SYS_getpid 调用
+.global __syscall
+.type __syscall,@function
+__syscall:
+  movq %rdi, %rax
+  movq %rsi, %rdi
+  movq %rdx, %rsi
+  movq %rcx, %rdx
+  movq %r8, %r10
+  movq %r9, %r8
+  movq 8(%rsp), %r9
+  syscall
+  ret
+```
+
+另外一种调用方式是通过软中断：
+
+```nasm
+extern sub
+global _start
+section .text
+_start:
+  and   rsp,0xfffffffffffffff0
+  sub   rsp, 3
+  mov   esi, 2
+  mov   edi, 1
+  call  sub
+  # use "int" to invoke a system call.
+  mov   ebx, eax  
+  mov   eax, 1
+  int   0x80
+```
+
+在进行系统调用时，发生了特权级别的转换，为了通过隔离执行环境来保证内核安全，CPU 在进入内核态前，通常还会进行栈的切换，内核态使用的调用栈跟用户态使用的栈是不一样的。
+
 ### open creat close unlink
 
 ### 随机访问-lseek
@@ -636,3 +680,15 @@ Os|编译器将在-0O2的基础上，更侧重于优化生成二进制文件的�
 Ofast|编译器会在-O3的基础上，再应用可能会违反C标准的更多优化策略
 Og|编译器将侧重优化程序的调试体验，该选项可以在保持快速编译和良好调试体验的同时，为代码应用合理的优化级别。对于需要支持调试的代码来说，它是比-O0更好的选择
 
+## ABI
+
+应用程序二进制接口（Application Binary Interface），ABI 将程序与操作系统、硬件平台之间紧密协作需要遵守的特定规则暴露了出来。这些规则指定了基于这个体系运行的二进制应用程序，应该如何在机器代码层面进行数据访问或函数调用等一系列操作
+
+ABI 规范：
+
+- 函数调用规范
+- 处理器可以访问的数据类型其大小与对齐方式
+- 进程初始化细节（如栈和寄存器的状态变化）
+- 对象文件（如 .o）的基本结构
+- 程序载入和动态链接的细节
+- ……

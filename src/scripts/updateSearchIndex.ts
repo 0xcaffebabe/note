@@ -20,7 +20,7 @@ async function main(){
   }
   console.log('准备进行索引更新')
   try {
-    await Promise.all([SearchService.totalAmountUpdateIndex(appId, secret,'note', indexData), SearchService.updateIndexBySelfES(secret, indexData)])
+    await Promise.all([SearchService.totalAmountUpdateIndex(appId, secret,'note', indexData)])
     console.log(`索引更新完成 索引数量${indexData.length}`)
   }catch(err:any) {
     console.log('全量更新索引发生异常', err)

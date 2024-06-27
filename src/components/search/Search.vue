@@ -92,7 +92,7 @@ export default defineComponent({
       searchTook: 0,
       searchSuggestionList: [] as SearchSuggestion[],
       searchEngineList: ['es', 'algolia'],
-      searchEngine: 'es' as 'es' | 'algolia'
+      searchEngine: 'algolia' as 'es' | 'algolia'
     };
   },
   computed: {

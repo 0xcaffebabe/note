@@ -30,11 +30,8 @@ docker run -d --name elasticsearch --net somenetwork -p 9200:9200 -p 9300:9300 -
 ```
 
 9300端口： ES节点之间通讯使用
+
 9200端口： ES节点 和 外部 通讯使用
-
-## 图形化管理界面
-
-- [head](https://github.com/mobz/elasticsearch-head)
 
 ## 概念
 
@@ -44,107 +41,71 @@ docker run -d --name elasticsearch --net somenetwork -p 9200:9200 -p 9300:9300 -
   - 服务器实例
 - 索引（index）
   - Databases 数据库
-- ​类型（type）
-  - Table 数据表
 - ​文档（Document）
   - Row 行
 - ​字段（Field）
   - Columns 列
-- shard
-  - es 可以将一个索引中的数据切分为多个 shard，分布在多台服务器上存储
-- replica
-  - 任何一个服务器随时可能故障或宕机，此时 shard 可能就会丢失，因此可以为每个 shard 创建多个replica 副本。replica 可以在 shard 故障时提供备用服务，所以同一片shard跟replica不能存放在同一节点
+- primary shard
+  - es 可以将一个索引中的数据切分为多个 primary shard，分布在多台服务器上存储，以此解决水平扩展问题
+- replica shard
+  - 任何一个服务器随时可能故障或宕机，此时 primary shard 可能就会丢失，因此可以为每个 primary shard 创建多个 replica shard。replica 可以在 primary shard 故障时提供备用服务，所以同一片 primary shard 跟 replica primary 不能存放在同一节点
+- 映射 mapping：类似于 schema
 
-![批注 2020-03-19 081056](/assets/批注%202020-03-19%20081056.png)
+```mermaid
+stateDiagram
+    state "es cluster" as es_cluster {
+        state Node1 {
+            state Shard1
+            state Replica1
+            Shard1 --> Replica1
+        }
+        state Node2 {
+            state Shard2
+            state Replica2
+            Shard2 --> Replica2
+        }
+        state Node3 {
+            state Shard3
+            state Replica3
+            Shard3 --> Replica3
+        }
+        state Node4 {
+            state Shard4
+            state Replica4
+            Shard4 --> Replica4
+        }
+    }
 
-- 映射 mapping
+```
 
 ## 索引结构
 
 ![批注 2019-10-18 145410](/assets/批注%202019-10-18%20145410.png)
 
-## 操作
+## 数据类型
 
-### 创建索引
+- text：该类型被用来索引长文本，在创建索引前会将这些文本进行分词，转化为词的组合，建立索引；允许es来检索这些词，text类型不能用来排序和聚合。
+- keyword：该类型不需要进行分词，可以被用来检索过滤、排序和聚合，keyword类型自读那只能用本身来进行检索（不可用text分词后的模糊检索）
+- 数值型：long、integer、short、byte、double、float
+- 日期型：date
+- 布尔型：boolean
+- 二进制型：binary
 
-```json
-PUT /blog
-{
-    "settings": {
-        "number_of_shards": 3,
-        "number_of_replicas": 2
-      }
-}
-```
+## CRUD
 
-- 获取索引库信息
+- create 操作：如果 ID 不存在，则新增，如果 ID 存在，则更新
+- index 操作：如果 ID 不存在，则新增，如果 ID 存在，则删除后新增，版本号会增加
+- update 操作：文档必须已存在，更新只会对相应的字段做增量修改
 
-`GET /blog`
+## 批量API
 
-- 删除索引库
+- bulk 操作：批量操作，一次请求可以执行多个操作，包括索引、更新、删除等操作
+- mget
+- msearch
 
-`DELETE /blog`
+## 查询
 
-### 添加映射
-
-```json
-PUT /索引库名/_mapping/类型名称
-{
-  "properties": {
-    "字段名": {
-      "type": "类型",
-      "index": true,
-      "store": true,
-      "analyzer": "分词器"
-    }
-  }
-}
-```
-
-**数据类型**
-
-text：该类型被用来索引长文本，在创建索引前会将这些文本进行分词，转化为词的组合，建立索引；允许es来检索这些词，text类型不能用来排序和聚合。
-keyword：该类型不需要进行分词，可以被用来检索过滤、排序和聚合，keyword类型自读那只能用本身来进行检索（不可用text分词后的模糊检索）
-数值型：long、integer、short、byte、double、float
-日期型：date
-布尔型：boolean
-二进制型：binary
-
-- 查看映射关系
-
-`GET /索引库名/_mapping`
-
-- 更新索引
-
-`POST http://my-pc:9200/blog/{indexName}`
-
-### 添加文档
-
-```json
-POST /索引库名/类型名
-{
-    "key":"value"
-}
-```
-
-- 自定义id
-
-```json
-POST /索引库名/类型/id值
-{...}
-```
-
-### 删除文档
-
-`DELETE http://my-pc:9200/blog/hello/1`
-
-### 修改文档
-
-`UPDATE http://my-pc:9200/blog/hello/1`
-
-### 查询
-
-#### 基本查询
+### 基本查询
 
 ```json
 GET /索引库名/_search
@@ -295,12 +256,15 @@ ik 的两种模式：
 
 采用ES集群，将单个索引的分片到多个不同分布式物理机器上存储，从而可以实现高可用、容错性
 
+- Master-eligible Node 是指具有成为主节点资格的节点，Master Node 是当前已经被选举为主节点并执行主节点职责的节点，默认情况下，所有节点都是 Master-eligible node
+- Data Node 负责存储数据并执行数据相关操作
+- Coordinating Node 处理来自客户端的请求，分发请求到相关的数据节点，并在所有数据节点上汇总结果后返回给客户端，默认情况下，所有节点都是协调节点
+
 ### 架构
 
-es 集群多个节点，会自动选举一个节点为 master 节点
-master 节点宕机了，那么会重新选举一个节点为 master 节点
+es 集群多个节点，会自动选举一个节点为 master 节点。master 节点宕机了，那么会重新选举一个节点为 master 节点
 
-非 master节点宕机了，那么会由 master 节点，让那个宕机节点上的 primary shard 的身份转移到其他机器上的 replica shard
+非 master 节点宕机了，那么会由 master 节点，让那个宕机节点上的 primary shard 的身份转移到其他机器上的 replica shard
 
 ![批注 2020-03-19 081559](/assets/批注%202020-03-19%20081559.png)
 

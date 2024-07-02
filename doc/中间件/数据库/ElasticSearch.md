@@ -105,6 +105,15 @@ stateDiagram
 
 ## 查询
 
+### 指定查询索引
+
+语法|范围
+-|-
+/_search|集群上所有的索引
+/index1/_search|index1
+/index1,index-2/_search|index1和index2
+/index*/_search|以index开头的索引
+
 ### 基本查询
 
 ```json
@@ -204,15 +213,21 @@ GET /heima/_search
 
 ## 分词
 
+分词器是专门处理分词的组件，Analyzer由三部分组成：
+
+- Character Filters(针对原始文本处理，例如去除html)
+- Tokenizer(按照规则切分为单词)
+- Token Filter(将切分的的单词进行加工，小写，删除stopwords,增加同义词)
+
 ### 内置的分词器
 
-- Standard Analyzer
-- Simple Analyzer
-- Whitespace Analyzer
-- Stop Analyzer
-- Keyword Analyzer
-- Pattern Analyzer
-- Language Analyzers
+- Standard Analyzer 默认分词器，按词切分，小写处理
+- Simple Analyzer 按照非字母切分（符号被过滤），小写处理
+- Stop Analyzer 小写处理，停用词过滤(the,a,is)
+- Vhitespace Analyzer 按照空格切分，不转小写
+- Keyword Analyzer 不分词，直接将输入当作输出
+- Patter Analyzer 正则表达式，默认\W+(非字符分隔)
+- Language Analyzers 内置 30 种语言的分词器
 - Fingerprint Analyzer
 
 ### 测试分词
@@ -248,9 +263,157 @@ ik 的两种模式：
 - max：会将文本做最细粒度的拆分 会穷尽所有的可能
 - smart：最最粗粒度的划分
 
+### 自定义分词器
+
+```json
+{
+  "settings": {
+    "analysis": {
+      "char_filter": {
+        "my_char_filter": {
+          "type": "html_strip"
+        }
+      },
+      "tokenizer": {
+        "my_tokenizer": {
+          "type": "standard"
+        }
+      },
+      "filter": {
+        "my_lowercase_filter": {
+          "type": "lowercase"
+        },
+        "my_stop_filter": {
+          "type": "stop",
+          "stopwords": "_english_"
+        }
+      },
+      "analyzer": {
+        "my_custom_analyzer": {
+          "type": "custom",
+          "char_filter": [
+            "my_char_filter"
+          ],
+          "tokenizer": "my_tokenizer",
+          "filter": [
+            "my_lowercase_filter",
+            "my_stop_filter"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "content": {
+        "type": "text",
+        "analyzer": "my_custom_analyzer"
+      }
+    }
+  }
+}
+```
+
+## Mapping
+
+Mapping 类似数据库中的schema的定义，作用：
+
+1. 定义索引中的字段的名称
+2. 定义字段的数据类型
+3. 进行字段，倒排索引的相关配置，(Analyzed or Not Analyzed,Analyzer)
+
+### Dymaic Mapping
+
+当向 Elasticsearch 插入一个新文档时，且文档包含的字段在索引中尚未定义时，Elasticsearch 会自动推断这些字段的数据类型，并在索引中创建相应的映射
+
+新增加字段：
+
+- Dynamic设为true：当有新增字段的文档写入时，Elasticsearch 会自动更新映射（Mapping）。
+- Dynamic设为false：映射不会更新，新增加的字段数据无法被索引，但信息会出现在 _source 字段中。
+- Dynamic设置为strict：文档写入会失败。
+
+已有字段：
+
+- 一旦已有字段的数据写入后，不再支持修改字段定义。Lucene实现的倒排索引一旦生成后，就不允许修改。
+- 如果希望改变字段类型，必须使用 Reindex API 重建索
+
+### Mapping 配置
+
+- index：是否索引，默认为true。如果设置为 false，该字段不可被搜索
+- index_options：控制倒排索引记录的内容
+  - docs：只记录文档的编号
+  - freqs：记录文档编号和词频
+  - positions：记录文档编号、词频和词的位置
+  - offsets：记录文档编号、词频、词的位置和词的偏移量
+- null_value：只有 keyword 类型才支持
+- copy_to：将字段值复制到其他字段中
+
+## template
+
+### Index Template
+
+Index Templates 可以帮助设定 Mappings 和 Settings,并按照一定的规则，自动匹配到新创建的索引之上，可以通过设定多个 template，这些设置会被合并在一起，通过指定 order 的数值，来控制合并的过程
+
+### Dymaic Template
+
+用于在索引新文档时，自动根据字段名或字段类型来应用特定的映射规则。它可以在动态映射的基础上提供更细粒度的控制，使得可以指定某些字段的映射类型和其他属性，而不需要事先知道这些字段的名字或类型
+
+```json
+{
+  "mappings": {
+    "dynamic_templates": [
+      {
+        "date_fields": {
+          "match": "date_*",
+          "mapping": {
+            "type": "date",
+            "format": "yyyy-MM-dd"
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
 ## 聚合
 
->桶
+- Pipeline Aggregation 对其他的聚合结果进行二次聚合
+- Matrix Aggregration 支持对多个字段的操作并提供一个结果矩阵
+
+### Bucket Aggregation
+
+一些列满足特定条件的文档的集合(group by)
+
+```json
+{
+  "size": 0, 
+  "aggs": {
+      "group": {
+          "terms": {
+            "field": "sales_person.keyword"
+          }
+      }
+  }
+}
+```
+
+### Metric Aggregation
+
+一些数学运算，可以对文档字段进行统计分析(count、avg、sum)
+
+```json
+{
+  "size": 0, 
+  "aggs": {
+      "avg_amount": {
+          "avg": {
+            "field": "amount"
+          }
+      }
+  }
+}
+```
 
 ## ES集群
 
@@ -266,7 +429,16 @@ es 集群多个节点，会自动选举一个节点为 master 节点。master �
 
 非 master 节点宕机了，那么会由 master 节点，让那个宕机节点上的 primary shard 的身份转移到其他机器上的 replica shard
 
-![批注 2020-03-19 081559](/assets/批注%202020-03-19%20081559.png)
+```mermaid
+graph LR
+    A[es客户端] -->|将数据写入 primary shard| B[机器1\nes进程01\nshard 01 primary\nshard 03 replica]
+    A -->|读| C[机器2\nes进程02\nshard 02 primary\nshard 01 replica]
+    A -->|读| D[机器3\nes进程03\nshard 03 primary\nshard 02 replica]
+    
+    B -->|primary shard 将数据同步到 replica shard 上| C
+    B -->|primary shard 将数据同步到 replica shard 上| D
+
+```
 
 可以使用三个节点，将索引分成三份，每个节点存放一份primary shard，两份replica，这样就算只剩下一台节点，也能保证服务可用
 

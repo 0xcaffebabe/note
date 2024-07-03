@@ -211,6 +211,11 @@ GET /heima/_search
 }
 ```
 
+### term查询与全文查询
+
+- term查询包括 Term Query / Range Query / Exists Query / Prefix Query /Wildcard Query。 是精确查询，用于查找字段中完全匹配指定值的文档。它不进行分词，也就是说，它不会将搜索的词拆分成更小的部分，而是将整个词作为一个单元进行匹配
+- 全文查询包括 Match Query / Match Phrase Query / Query String Query / Simple Query String Query。 索引跟查询的时候都会进行分词，查询是根据分词的词项进行底层查询并进行合并，为每个文档生成一个分数
+
 ## 分词
 
 分词器是专门处理分词的组件，Analyzer由三部分组成：

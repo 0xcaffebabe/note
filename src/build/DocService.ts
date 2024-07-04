@@ -349,8 +349,10 @@ class DocService extends BaseService implements Cacheable {
     md = md.replace(/^---$.*^---$/ms, '') // 去除markdown里的元数据
     const render = new marked.Renderer();
     const slugger = new Slugger();
-    render.heading = (text: string, level: number, raw: string): string => {
-      raw = raw
+    render.heading = function(token) {
+      const text = this.parser.parseInline(token.tokens);
+      const level = token.depth + 1
+      const raw = token.raw
       .toLowerCase()
       .trim()
       .replace(/<[!\/a-z].*?>/gi, '');

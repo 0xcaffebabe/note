@@ -202,7 +202,9 @@ class DocService implements Cacheable{
     const knowledgeLinkList: KnowledgeLinkNode[] = KnowledgeNetworkService.getAllLinks();
 
     // 自定义url渲染
-    render.link = (href: string | null, title: string | null, text: string | null) : string => {
+    render.link = (token) : string => {
+      const href = token.href
+      let text = token.text
       if (!href?.startsWith('http')) {
         const {id, headingId} = DocUtils.resloveDocUrl(href!)
         // 当text为html的情况下 排除掉dom中sup节点 文本化
@@ -216,7 +218,9 @@ class DocService implements Cacheable{
       }
     }
     // 自定义代码块渲染
-    render.code = (code: string, language: string | undefined, isEscaped: boolean) :string => {
+    render.code = (token) :string => {
+      const language = token.lang
+      const code = token.text
       // 如果语言是mermaid 特殊处理 转为mermaid
       if (language == 'mermaid') {
         return `
@@ -231,14 +235,17 @@ class DocService implements Cacheable{
       return `<pre><code class="language-${language}">${this.hightlightCode(code, language)}</code></pre>`
     }
     // 自定义图片渲染
-    render.image = (href: string | null, title: string | null, text: string): string => {
+    render.image = (token): string => {
+      let href = token.href
+      let text = token.text
       if (href?.startsWith('/')) {
         href = baseUrl() + href.replace('/', '')
       }
       return `<p class="img-wrapper"><img src='${localImageProxy(href)}' width="480" height="240" crossorigin="anonymous"/><p class="img-title">${text}</p></p>`
     }
     const reg = new RegExp(knowledgeLinkList.map(v => v.name).join('|'))
-    render.text = (text: string): string => {
+    render.text = (token): string => {
+      let text = token.text
       // 自定义文本渲染 若发现关键字包含标签 则插入标记
       for(let i of tagList) {
         if (text.indexOf(i.tag) != -1) {
@@ -268,11 +275,15 @@ class DocService implements Cacheable{
       return text;
     }
     const slugger = new Slugger();
-    render.table = (header: string, body: string): string => {
-      return `<div class="table-wrapper"><table>${header}${body}</table></div>`
+    const oriTableRender = render.table
+    render.table = function(token) {
+      const tableRenderText = oriTableRender.call(render,token)
+      return `<div class="table-wrapper">${tableRenderText}</div>`
     }
-    render.heading = (text: string, level: number, raw: string): string => {
-      raw = raw
+    render.heading = function(token) {
+      const text = this.parser.parseInline(token.tokens);
+      const level = token.depth + 1
+      const raw = token.raw
       .toLowerCase()
       .trim()
       .replace(/<[!\/a-z].*?>/gi, '');

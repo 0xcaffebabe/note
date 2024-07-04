@@ -30,7 +30,7 @@ const dom = new JSDOM()
 
 function generalHtmlContent(summaryHtml: string, info: DocFileInfo) {
   const renderer = new marked.Renderer()
-  renderer.text = (text) => text
+  renderer.text = (text) => text.text
   let html = marked(info.content, {
     renderer: renderer
   }) as string

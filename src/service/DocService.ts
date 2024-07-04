@@ -153,7 +153,7 @@ class DocService implements Cacheable{
     const segementMap = new Map<string, string>();
     let previousHeading: string | null = null;
     let htmlBuffer = "";
-    for(let i of Array.from(doc.children)) {
+    for(const i of Array.from(doc.children)) {
       if (HEADING_TAGS.some(v => v == i.tagName)) {
         if (!previousHeading) {
           segementMap.set(allHead[0].id, htmlBuffer);
@@ -170,7 +170,7 @@ class DocService implements Cacheable{
 
     function content2DocSegement(contents: Content[]): DocSegement[] {
       const segements: DocSegement[] = []
-      for(let i of contents) {
+      for(const i of contents) {
         segements.push({
           id: i.link,
           title: i.name,
@@ -237,7 +237,7 @@ class DocService implements Cacheable{
     // 自定义图片渲染
     render.image = (token): string => {
       let href = token.href
-      let text = token.text
+      const text = token.text
       if (href?.startsWith('/')) {
         href = baseUrl() + href.replace('/', '')
       }
@@ -247,7 +247,7 @@ class DocService implements Cacheable{
     render.text = (token): string => {
       let text = token.text
       // 自定义文本渲染 若发现关键字包含标签 则插入标记
-      for(let i of tagList) {
+      for(const i of tagList) {
         if (text.indexOf(i.tag) != -1) {
           text = text.replace(i.tag, (str: string) =>`<u class="doc-tag-main" tag="${i.tag}">${str}</u><sup class="doc-tag" tag="${i.tag}" style="background-color: ${TagUtils.calcTagColor(i.tag)}">${i.count}</sup>`);
         }
@@ -371,7 +371,7 @@ class DocService implements Cacheable{
   }
 
   private getReadingRecords(): Map<string, number>{
-    let rawData = localStorage.getItem('doc-service::read-record')
+    const rawData = localStorage.getItem('doc-service::read-record')
     let readingRecords : Map<string, number>
     if (!rawData) {
       readingRecords = new Map()
@@ -442,16 +442,16 @@ class DocService implements Cacheable{
       每次迭代将dom元素转为Content类 并将转换后的对象存储到contentMap（key: level, value: content）里
       除了顶级目录 其他目录每次都会通过ContentMap找寻其最近的一个父节点 并将自己添加到父节点的孩子列表
     */
-    let contentMap = []
-    let result : Content[] = []
+    const contentMap = []
+    const result : Content[] = []
     let topLevel = -1
     for(let i = 0;i<allHead.length;i++){
       const head = allHead[i]
-      let level = parseInt(head.tagName.replace('H', ''))
+      const level = parseInt(head.tagName.replace('H', ''))
       if (topLevel == -1) {
         topLevel = level
       }
-      let content = new Content();
+      const content = new Content();
       // 这里考虑到标题里面可能由html标签构成 排除掉sup标签 转为文本内容
       content.name = Array.from(head.childNodes).filter(v => v.nodeName.toUpperCase() != 'SUP').map(v => v.textContent).join('');
       content.link = head.getAttribute("id")!
@@ -483,7 +483,7 @@ class DocService implements Cacheable{
     const document = new DOMParser().parseFromString(docHtml, 'text/html')
       const imgList = document.querySelectorAll('.img-wrapper img');
       const result: string[] = []
-      for(let i of imgList) {
+      for(const i of imgList) {
         result.push(i.getAttribute('src') || '')
       }
       return result;
@@ -501,7 +501,7 @@ class DocService implements Cacheable{
     const document = new DOMParser().parseFromString(docHtml, 'text/html');
     const aList = document.querySelectorAll('a');
     const result: {text:string, link: string}[] = []
-    for(let i of aList) {
+    for(const i of aList) {
       result.push({text: i.innerText, link: i.getAttribute('href') || ''})
     }
     return result;
@@ -533,7 +533,7 @@ class DocService implements Cacheable{
   public resolveMetadata(file: DocFileInfo): DocMetadata {
     const metadata = yaml.load(file.metadata) as DocMetadata;
     if (metadata) {
-      for(let key in EMPTY_DOC_METADATA) {
+      for(const key in EMPTY_DOC_METADATA) {
         if (!(metadata as any)[key]) {
           (metadata as any)[key] = (EMPTY_DOC_METADATA as any)[key]
         }
@@ -580,8 +580,8 @@ class DocService implements Cacheable{
         if (DocUtils.docUrl2Id(root.name) == id) {
           return [root, true]
         }
-        let ret: [ClusterNode, boolean] | null = null
-        for(let i of root.children) {
+        const ret: [ClusterNode, boolean] | null = null
+        for(const i of root.children) {
           const r = travel(i, round)
           if (r[1] && round[0] > 0) {
             node = root

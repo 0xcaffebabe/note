@@ -662,6 +662,19 @@ Elasticsearch 将索引的数据分成多个分片（shard），每个分片可�
 
 ## 数据建模
 
+### 字段设置
+
+如不需要检索，排序和聚合分析，source的enable设置成false
+
+如不需要检索 index设置成false
+
+对需要检索的字段，可以通过如下配置，设定存诸粒度
+  - index_options / norms：不需要归一化数据时，可以关闭
+
+如不需要排序或者聚合分析：docvalues / fielddata 设置为false
+
+更新频繁、聚合查询频繁的 keyword 字段，尅将 eager_global_ordinals 设置为 true
+
 ### 嵌套对象
 
 嵌套对象类型用于存储嵌套文档。与标准对象类型不同，嵌套对象类型的每个嵌套文档在内部都会被独立索引，从而允许进行更精确的查询，通过在创建 mapping 时指定 type 为 nested 来定义嵌套对象
@@ -686,6 +699,26 @@ GET /my_index/_search
   }
 }
 ```
+
+### 父子文档
+
+### reindex
+
+支持把文档从一个索引复制到另一个索引，使用场景：
+
+1. 修改主分片数
+2. 改变 mapping 的字段类型
+3. 集群内数据迁移 / 跨集群数据迁移
+
+## 数据处理
+
+### ingest pipeline
+
+可以添加一些简单的 processor 来处理数据
+
+### painless
+
+可以通过脚本对文档字段进行加工处理、在pipeline 中执行脚本、在reindex、update by query 中对数据进行处理
 
 # JAVA客户端
 

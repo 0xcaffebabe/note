@@ -224,6 +224,14 @@ GET /heima/_search
 
 ### Suggester
 
+### 分页
+
+> 深度分页问题：对于大分页或者一次查询大量文档，ES 需要计算所有之前页的数据，这会导致大量的内存和CPU使用
+
+为了解决这个问题，可以使用 search_after ，其可以通过指定 id 参数，实现类似于 where id > ? limit xx 的功能
+
+另外还有一个 scroll api，其可以创建一个数据的快照，实现类似于 resultset.next() 的功能。适用于需要遍历大量文档的场景
+
 ## 分词
 
 分词器是专门处理分词的组件，Analyzer由三部分组成：
@@ -360,6 +368,8 @@ Mapping 类似数据库中的schema的定义，作用：
   - offsets：记录文档编号、词频、词的位置和词的偏移量
 - null_value：只有 keyword 类型才支持
 - copy_to：将字段值复制到其他字段中
+- fielddata：将倒排索引转换为顺序结构，主要用于 text 类型字段，且数据载入内存
+- doc_values：以列存储形式保存在磁盘上，主要用于数值、日期和 keyword 类型字段(2.x 之后默认启用)
 
 ## template
 
@@ -456,7 +466,6 @@ POST /_alias
 
 ## 聚合
 
-- Pipeline Aggregation 对其他的聚合结果进行二次聚合
 - Matrix Aggregration 支持对多个字段的操作并提供一个结果矩阵
 
 ### Bucket Aggregation
@@ -492,6 +501,51 @@ POST /_alias
   }
 }
 ```
+
+### Pipeline Aggregation
+
+对其他的聚合结果进行二次聚合
+
+```json
+POST /sales/_search
+{
+  "size": 0,
+  "aggs": {
+    "monthly_sales": {
+      "date_histogram": {
+        "field": "date",
+        "calendar_interval": "month"
+      },
+      "aggs": {
+        "total_sales": {
+          "sum": {
+            "field": "sales_amount"
+          }
+        }
+      }
+    },
+    "avg_monthly_sales": {
+      "avg_bucket": {
+        "buckets_path": "monthly_sales>total_sales" # 对 monthly_sales 聚合结果再进行平均
+      }
+    }
+  }
+}
+```
+
+### 作用范围
+
+- query和filter，是先选定数据范围，再聚合桶
+- post_filter对聚合桶没影响，桶是全部返回，只对查询结果进行过滤返回，类似于 having
+- global的作用是覆盖掉query的查询作用
+
+### 精准度问题
+
+Elasticsearch 是一个分布式搜索引擎，其数据分布在多个分片上。当执行聚合操作时，Elasticsearch 会在每个分片上单独计算聚合结果，然后将这些结果合并。在某些情况下（特别是对于 terms 聚合），为了减少内存消耗和提高查询性能，Elasticsearch 不会从每个分片返回所有的桶，而是仅返回前 N 个桶。这可能导致最终结果中的文档计数存在一些误差
+
+doc_count_error_upper_bound 表示返回的结果中每个桶的文档计数可能偏差的最大值。具体来说，它是一个上限值，表明在分布式聚合过程中，由于只返回部分桶可能导致的最大文档计数误差
+
+可以通过调整 shard_size 的方式减少误差
 
 ## ES集群
 
@@ -595,6 +649,43 @@ cluster.initial_master_nodes: ["node-1","node-2","node-3"]
 另外两个节点配置省略...
 
 ### 跨集群搜索
+
+### 分布式查询
+
+Elasticsearch 将索引的数据分成多个分片（shard），每个分片可以分布在不同的节点上。查询时，这些分片会独立计算相关性评分（score），然后再合并结果。这会导致评分计算时使用的信息不全，从而导致算分不准
+
+解决这个问题的方式是将主分片设置为 1，或者使用 dfs_query_then_fetch 模式
+
+## 并发控制
+
+在更新文档时，可以通过 if_seq_no 与 if_primary_term 选项实现预期版本号与主分片的判断，实现乐观锁
+
+## 数据建模
+
+### 嵌套对象
+
+嵌套对象类型用于存储嵌套文档。与标准对象类型不同，嵌套对象类型的每个嵌套文档在内部都会被独立索引，从而允许进行更精确的查询，通过在创建 mapping 时指定 type 为 nested 来定义嵌套对象
+
+嵌套查询：
+
+```json
+GET /my_index/_search
+{
+  "query": {
+    "nested": {
+      "path": "user",
+      "query": {
+        "bool": {
+          "must": [
+            { "match": { "user.first": "Alice" }},
+            { "match": { "user.last": "Smith" }}
+          ]
+        }
+      }
+    }
+  }
+}
+```
 
 # JAVA客户端
 

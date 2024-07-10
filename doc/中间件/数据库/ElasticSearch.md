@@ -799,176 +799,137 @@ GET /my_index/_search
 
 可以通过脚本对文档字段进行加工处理、在pipeline 中执行脚本、在reindex、update by query 中对数据进行处理
 
-# JAVA客户端
+## 监控
 
-- 依赖
+ES 暴露了诸如 /_cluster/stats /_nodes/stats /{index}/_stats 等接口获取集群、索引内部的状态信息
 
-```xml
-<dependency>
-    <groupId>org.elasticsearch</groupId>
-    <artifactId>elasticsearch</artifactId>
-    <version>7.3.1</version>
-</dependency>
+### 诊断项
 
-<dependency>
-    <groupId>org.elasticsearch.client</groupId>
-    <artifactId>transport</artifactId>
-    <version>7.3.1</version>
-</dependency>
+```mermaid
+mindmap
+  root((诊断项))
+    集群异常类
+      集群颜色诊断
+      节点失联诊断
+    集群资源类
+      存储资源诊断
+      计算资源诊断
+      master节点高负载诊断
+    日常运维类
+      min master node合理性诊断
+      单节点shard个数诊断
+      shard合理性诊断
+      cluster meta变更频率诊断
+      data node负载高高诊断
+      segment合理性诊断
+      bulk reject 诊断
+      recover速度诊断
+      xpack 类索引过多诊断
+    使用规范类
+      mapping dynamic禁用诊断
+      index副本合理性诊断
+      正则删除禁用诊断
+      别名使用诊断
+      type合理性诊断
+    日志类
+      异常日志诊断
+      GC日志诊断
+      slow log诊断
+      冷数据诊断
+      mapping合理性诊断
 ```
 
-- 连接
+### 健康度
 
-```java
-Settings settings = Settings.builder()
-                .put("cluster.name","docker-cluster")
-                .build();
+- 红：至少有一个主分片没有分配
+- 黄：至少有一个副本没有分配
+- 绿：主副本分片全部正常分配
 
-TransportClient client = new PreBuiltTransportClient(settings);
-client.addTransportAddress(
-            new TransportAddress(InetAddress.getByName("my-pc"),9300));
-```
+索引健康：最差的分片的状态
 
-- 创建索引
+集群健康：最差的索引的状态
 
-```java
-client.admin().indices().prepareCreate("index").get();
-```
+分片没有被分配的原因：
 
-- 设置映射
+1. INDEX CREATE:创建索引导致。在索引的全部分片分配完成之前，会有短暂的red,不一定代表有问题
+2. CLUSTER RECOVER:集群重启阶段，会有这个问题
+3. INDEX_REOPEN:Open一个之前Close的索引，资源不足导致无法分配成功
+4. DANGLING INDEX IMPORTED:一个节点离开集群期间，有索引被删除。这个节点重新返回时，会导致Dangling的问题
 
-```java
-XContentBuilder builder = XContentFactory.jsonBuilder()
-                .startObject()
-                .startObject("article")
-                .startObject("properties")
-                .startObject("id")
-                .field("type", "long")
-                .field("store", true)
-                .endObject()
-                .startObject("title")
-                .field("type", "text")
-                .field("store", true)
-                .field("analyzer", "ik_smart")
-                .endObject()
-                .startObject("content")
-                .field("type", "text")
-                .field("store", true)
-                .field("analyzer", "ik_smart")
-                .endObject()
-                .endObject()
-                .endObject()
-                .endObject();
-  client.admin().indices().preparePutMapping("index")
-          .setType("article")
-          .setSource(builder)
-          .get();
-```
+解决无法分配的整体思路就是让无法分配的分片能被分配，如看看是不是有节点离线，或者设置了错误的副本数、以及磁盘资源不足等问题
 
-- 添加文档
+## 缓存
 
-```java
-XContentBuilder builder = XContentFactory.jsonBuilder()
-                .startObject()
-                    .field("id",1L)
-                    .field("title","央视快评：勇做敢于斗争善于斗争的战士")
-                    .field("content","9月3日，习近平总书记在中央党校（国家行政学院）中青年干部培训班开班式上发表重要讲话强调，广大干部特别是年轻干部要经受严格的思想淬炼、政治历练、实践锻炼，发扬斗争精神，增强斗争本领，为实现“两个一百年”奋斗目标、实现中华民族伟大复兴的中国梦而顽强奋斗。")
-                .endObject();
-client.prepareIndex("index","article","1")
-        .setSource(builder)
-        .get();
-```
+Node Query Cache:
 
-- POJO添加文档
+该节点所有 shard 共享，只缓存 filter context 的数据，使用 lru 算法，在 segement 被合并时失效
 
-```java
-Article article = new Article();
-        article.setId(3L);
-        article.setTitle("3央视快评：勇做敢于斗争善于斗争的战士");
-        article.setContent("9月3日3333，（国家行政学院）中青年干部培训班开班式上发表重要讲话强调，广大干部特别是年");
-        String json = new ObjectMapper().writeValueAsString(article);
+Shard Query Cache:
 
-client.prepareIndex("index","article","3")
-        .setSource(json, XContentType.JSON)
-        .get();
-```
+使用整个 JSON 查询串 作为 key，缓存每个分片的查询结果，只会缓存设置了 size = 0 的聚合查询与 suggestions 的查询结果，分片 refresh 时失效
 
-## 查询
+Fielddata Cache:
 
-- 根据ID
+缓存的是字段数据，特别是用于排序、聚合和脚本的字段数据。它通常用于 text 字段在执行这些操作时的内存中数据表示，在 segement 被合并时失效
 
-```java
-QueryBuilder queryBuilder = QueryBuilders.idsQuery().addIds("1","2");
-SearchResponse response = client.prepareSearch("index")
-        .setTypes("article")
-        .setQuery(queryBuilder)
-        .get();
-SearchHits hits = response.getHits();
+## 索引管理
 
-System.out.println("总记录:"+hits);
-SearchHit[] ret = hits.getHits();
+- open/close：关闭索引后，除了磁盘外，集群的相关开销基本为0，无法被搜索和读取，需要时可以重新 open
+- shrink：会使用和源索引的相同配置创建一个新索引，仅仅降低主分片数
+- split：可以扩大主分片个数
+- rollover：该机制允许在满足特定条件时，自动创建新的索引，并将新数据写入新索引中，从而使得单个索引不会变得过大或难以管理
 
-for (SearchHit documentFields : ret) {
-    Map<String, Object> map = documentFields.getSourceAsMap();
-    System.out.println("id:"+map.get("id"));
-    System.out.println("title:"+map.get("title"));
-    System.out.println("content:"+map.get("content"));
-    System.out.println("-------------------");
+### 生命周期管理
+
+hot -> warm -> cold -> delete
+
+- hot:索引还存在着大量的读写操作
+- warm:索引不存在写操作，还有被查询的需要
+- cold:数据不存在写操作，读操作也不多
+- delete:索引不再需要，可以被安全删除
+
+index lifecycle management：
+
+```json
+PUT _ilm/policy/my_policy
+{
+  "policy": {
+    "phases": {
+      "hot": {
+        "actions": {
+          "rollover": {
+            "max_size": "50gb",
+            "max_age": "7d"
+          }
+        }
+      },
+      "warm": {
+        "min_age": "7d",
+        "actions": {
+          "shrink": {
+            "number_of_shards": 1
+          },
+          "allocate": {
+            "number_of_replicas": 1
+          }
+        }
+      },
+      "cold": {
+        "min_age": "30d",
+        "actions": {
+          "freeze": {}
+        }
+      },
+      "delete": {
+        "min_age": "90d",
+        "actions": {
+          "delete": {}
+        }
+      }
+    }
+  }
 }
-```
 
-- 根据term
-
-```java
-QueryBuilder queryBuilder = QueryBuilders.termQuery("title","斗争");
-```
-
-- 根据queryString
-
-```java
-QueryBuilder queryBuilder = QueryBuilders.queryStringQuery("青年强调")
-                .defaultField("content");
-```
-
-- 分页查询
-
-```java
-SearchResponse response = client.prepareSearch("index")
-                .setTypes("article")
-                .setQuery(queryBuilder)
-                .setFrom(10)
-                .setSize(5)
-                .get();
-```
-
-- 高亮显示结果
-
-```java
-HighlightBuilder highlightBuilder = new HighlightBuilder();
-highlightBuilder.field(highlight);
-highlightBuilder.preTags("<em>");
-highlightBuilder.postTags("</em>");
-
-SearchResponse response = client.prepareSearch("index")
-        .setTypes("article")
-        .setQuery(queryBuilder)
-        .highlighter(highlightBuilder)
-        .get();
-SearchHits hits = response.getHits();
-
-System.out.println("总记录:"+hits.getTotalHits());
-SearchHit[] ret = hits.getHits();
-
-for (SearchHit documentFields : ret) {
-    Map<String, Object> map = documentFields.getSourceAsMap();
-
-    System.out.println("id:"+map.get("id"));
-    System.out.println("content:"+map.get("content"));
-    Map<String, HighlightField> highlightFields = documentFields.getHighlightFields();
-    System.out.println(highlightFields.get(highlight).getFragments()[0]);
-    System.out.println("-------------------");
-
-}
 ```
 
 ## es操作过程
@@ -1010,31 +971,98 @@ for (SearchHit documentFields : ret) {
 
 ## 性能优化
 
-### 杀手锏：filesystem cache
+### 写入性能
+
+增大写吞吐量：
+
+- 客户端：多线程、批量写
+- 服务端：减少 IO、降低 CPU 与存储开销、分片分布均衡、减少线程调度开销
+
+关闭无关的功能：
+
+如不需要算分，norms 可以设置为 false，关闭 dynamic mapping、关闭 _source 操作减少 IO 操作，不需要搜索 index 设置成 false 等
+
+牺牲可靠性：
+
+减少副本数量为 0，只写主分片，可以减少 IO
+
+牺牲搜索实时性：
+
+增加写入时的 refresh 间隔，避免每次写入都刷缓存到 os cache
+
+牺牲可靠性：
+
+避免同步地、每次写请求去写 translog
+
+```json
+PUT myindex
+{
+  "settings": {
+    "index": {
+      "refresh_interval": "30s",
+      "number_of_shards": "2"
+    },
+    "routing": {
+      "allocation": {
+        "total_shards_per_node": "3"
+      }
+    },
+    "translog": {
+      "sync_interval": "30s",
+      "durability": "async"
+    },
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "dynamic": false,
+    "properties": {}
+  }
+}
+```
+
+### 读取性能
+
+#### 杀手锏：filesystem cache
 
 ![批注 2020-03-19 085001](/assets/批注%202020-03-19%20085001.png)
 
 在es中，doc的字段尽量只存储要被搜索的字段，这样可以节省内存，存放更多数据，做缓存效果更好
 
-### 数据预热
+#### 数据预热
 
 对于一些热点数据，也要通过一些方式让它在缓存中
 
-### 冷热分离
+#### 冷热分离
 
 保证热点数据都在缓存里，提高系统性能
 
-### doc模型设计
+#### 数据建模
 
 对于一些复杂的关联，最好在应用层面就做好，对于一些太复杂的操作，比如 join/nested/parent-child 搜索都要尽量避免，性能都很差的
 
-### 分页性能优化
+避免 script、避免通配符查询，使用 filter，减少不必要的算分
+
+#### 聚合性能优化
+
+利用 filter 减少聚合的数据量
+
+#### 分片优化
+
+一个查询需要访问所有分片，过多的分片会增加开销
+
+#### 分页性能优化
 
 由于分页操作是由协调节点来完成的，所以翻页越深，性能越差
 解决：
 
 - 不允许深度翻页
 - 将翻页设计成不允许跳页，只能一页一页翻
+
+### 合并性能优化
+
+1. 通过提高 refresh 来减少产生的分段数量
+2. 通过 segements_per_tier 、max_merged_segement 降低最大分段的大小，提升合并性能
+3. 使用 fore merge 降低分段数量，这个操作很耗费性能，应在没有写入、资源低峰期操作，理想情况下合成 1 个分段最好
 
 ## kibana
 
@@ -1047,121 +1075,4 @@ Kibana是一个基于Node.js的Elasticsearch索引库数据统计工具，可以
 ```shell
 docker pull kibana:5.6.8 # 拉取镜像
 docker run -d --name kibana --net somenetwork -p 5601:5601 kibana:5.6.8 # 启动
-```
-
-## SpringDataElasticSearch
-
-### 配置
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:jpa="http://www.springframework.org/schema/data/jpa"
-       xmlns:elasticsearch="http://www.springframework.org/schema/data/elasticsearch"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans
-     https://www.springframework.org/schema/beans/spring-beans.xsd
-     http://www.springframework.org/schema/data/jpa
-     https://www.springframework.org/schema/data/jpa/spring-jpa.xsd http://www.springframework.org/schema/data/elasticsearch http://www.springframework.org/schema/data/elasticsearch/spring-elasticsearch.xsd">
-
-    <elasticsearch:transport-client id="esClient" cluster-name="docker-elasticsearch"
-                                    cluster-nodes="my-pc:9300"/>
-    <elasticsearch:repositories base-package="wang.ismy.es"/>
-    <bean id="elasticsearchTemplate" class="org.springframework.data.elasticsearch.core.ElasticsearchTemplate">
-        <constructor-arg name="client" ref="esClient"/>
-    </bean>
-
-</beans>
-```
-
-```java
-@Document(indexName = "index1",type = "article")
-@Data
-public class Article {
-
-    @Id
-    @Field(type = FieldType.Long,store = true)
-    private long id;
-
-    @Field(type = FieldType.Text,store = true)
-    private String title;
-
-    @Field(type = FieldType.Text,store = true)
-    private String content;
-
-}
-```
-
-```java
-@Repository
-public interface ArticleDao extends ElasticsearchRepository<Article,Long> { }
-```
-
-### 创建索引
-
-```java
-ElasticsearchTemplate template = context.getBean(ElasticsearchTemplate.class);
-template.createIndex(Article.class);
-```
-
-### 添加文档
-
-```java
-Article article = new Article();
-article.setId(1L);
-article.setTitle("【中国稳健前行】“中国之治”的政治保证");
-article.setContent("新中国成立70年来，在中国共产党的坚强领导下，...");
-articleDao.save(article);
-```
-
-### 删除文档
-
-```java
-articleDao.deleteById(1L);
-articleDao.deleteAll(); // 全部删除
-```
-
-### 修改文档
-
-同添加文档
-
-### 查询
-
-- 查询全部
-
-```java
-articleDao.findAll().forEach(System.out::println);
-```
-
-- 根据ID
-
-```java
-System.out.println(articleDao.findById(2L).get());
-```
-
-### 自定义查询
-
-```java
-@Repository
-public interface ArticleDao extends ElasticsearchRepository<Article,Long> {
-
-    List<Article> findAllByTitle(String title);
-}
-```
-
-- 分页查询
-
-```java
-List<Article> findAllByTitle(String title, Pageable pageable);
-articleDao.findAllByTitle("中", PageRequest.of(0,5)).forEach(System.out::println);
-```
-
-- 原生查询
-
-```java
-NativeSearchQuery query = new NativeSearchQueryBuilder()
-        .withQuery(QueryBuilders.queryStringQuery("中国").defaultField("title"))
-        .withPageable(PageRequest.of(0,5))
-        .build();
-template.queryForList(query,Article.class).forEach(System.out::println);
 ```

@@ -14,8 +14,8 @@
 
 --------------------------------------------------------------------------------
 
-[![wakatime](https://wakatime.com/badge/github/0xcaffebabe/note.svg)](https://wakatime.com/badge/github/0xcaffebabe/note) ![字数](https://cdn.jsdelivr.net/gh/0xcaffebabe/note@gh-pages/wordCountBadge.svg) ![star](https://img.shields.io/github/stars/0xcaffebabe/note) ![fork](https://img.shields.io/github/forks/0xcaffebabe/note) ![license](https://img.shields.io/github/license/0xcaffebabe/note) [![buildbook](https://github.com/0xcaffebabe/note/actions/workflows/build_book.yml/badge.svg)](https://github.com/0xcaffebabe/note/actions/workflows/build_book.yml)
-
-![统计](https://repobeats.axiom.co/api/embed/24137e8c365c058184db40c146a5dc1291924862.svg "Repobeats analytics image")
-
-{{SUMMARY}}
+<img src='https://wakatime.com/badge/github/0xcaffebabe/note.svg' />
+<img src='https://cdn.jsdelivr.net/gh/0xcaffebabe/note@gh-pages/wordCountBadge.svg' />
+<img src='https://img.shields.io/github/stars/0xcaffebabe/note' />
+<img src='https://img.shields.io/github/forks/0xcaffebabe/note' />
+<img src='https://github.com/0xcaffebabe/note/actions/workflows/build_book.yml/badge.svg' />

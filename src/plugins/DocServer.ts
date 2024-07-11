@@ -35,7 +35,10 @@ export default function DocServer(){
       server.middlewares.use(async (req, res, next) => {
         if (req.originalUrl && req.originalUrl.endsWith('.md.json') && req.method == 'GET') {
           const uri = decodeURI(req.originalUrl)
-          const mdFileUri = "./doc" + uri.substring(0,uri.lastIndexOf('.'));
+          let mdFileUri = "./doc" + uri.substring(0,uri.lastIndexOf('.'));
+          if (mdFileUri.indexOf('README')) {
+            mdFileUri = './readme_template.md'
+          }
           console.log(mdFileUri)
           if (!fs.existsSync(mdFileUri)){
             next()

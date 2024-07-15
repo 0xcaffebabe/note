@@ -52,7 +52,8 @@ type ActionType =
     'showLinkList' |
     'goToDoc' | 
     'goToPpt' |
-    'openInEditor'
+    'openInEditor' |
+    'showLlm'
 
 type LocalActionType = ActionType & 'showMoreSetting' & 'randomReview'
 
@@ -88,7 +89,8 @@ export default defineComponent({
     'goToPpt',
     'showKnowledgeReviewer',
     'showKnowledgeTrend',
-    'openInEditor'
+    'openInEditor',
+    'showLlm'
   ],
   data(){
     return {
@@ -102,6 +104,7 @@ export default defineComponent({
         {name: '知识网络', type: 'warning', action: 'showKnowledgeNetwork', hotkey: 'alt + k'},
         {name: '知识回顾', type: 'primary', action: 'showKnowledgeReviewer', hotkey: 'alt + r'},
         {name: '知识趋势', type: 'danger', action: 'showKnowledgeTrend', hotkey: 'alt + t'},
+        {name: '知识助手', type: 'warning', action: 'showLlm', hotkey: 'alt + i'},
         {name: '路径复制', type: 'success', action: 'copyDocPath', hotkey: 'alt + c', divided: true},
         {name: '在VSC打开', type: 'danger', action: 'openInEditor', hotkey: 'alt + v'},
         {name: '链接列表', type: 'primary', action: 'showLinkList',},

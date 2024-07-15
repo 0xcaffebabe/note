@@ -36,7 +36,7 @@ export default function DocServer(){
         if (req.originalUrl && req.originalUrl.endsWith('.md.json') && req.method == 'GET') {
           const uri = decodeURI(req.originalUrl)
           let mdFileUri = "./doc" + uri.substring(0,uri.lastIndexOf('.'));
-          if (mdFileUri.indexOf('README')) {
+          if (mdFileUri.indexOf('README') != -1) {
             mdFileUri = './readme_template.md'
           }
           console.log(mdFileUri)

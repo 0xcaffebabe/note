@@ -46,6 +46,7 @@
     @showLinkList="showLinkList"
     @go-to-ppt="goToPpt"
     @showKnowledgeReviewer="showKnowledgeReviewer"
+    @show-llm="showLLM();showAside = false;isDrawerShow = true"
     @open-in-editor="openInEditor"
   />
   <!-- 工具栏结束 -->
@@ -68,6 +69,9 @@
   </keep-alive>
   <keep-alive>
     <knowledge-trend ref="knowledgeTrend"/>
+  </keep-alive>
+  <keep-alive>
+    <LLM :doc="doc" ref="llm" @close="showAside = true;isDrawerShow = false"/>
   </keep-alive>
   <image-viewer ref="imageViewer" />
   <instant-previewer ref="instantPreviewer"/>
@@ -110,6 +114,7 @@ import InstantPreviewer from './tool/InstantPreviewer.vue'
 import { SysUtils } from "@/util/SysUtils";
 import config from '@/config';
 import MermaidShower from './mermaid-shower/MermaidShower.vue';
+import LLM from './knowledge/LLM.vue';
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -135,6 +140,7 @@ export default defineComponent({
     SelectionPopover,
     InstantPreviewer,
     MermaidShower,
+    LLM
 },
   watch: {
     showHeader: {
@@ -152,6 +158,7 @@ export default defineComponent({
     const linkList = ref<InstanceType<typeof LinkList>>()
     const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
     const kwFinder = ref<InstanceType<typeof KeyWordFinder>>()
+    const llm = ref<InstanceType<typeof LLM>>()
     const showReadingHistory = () => {
       readingHistory.value?.show()
     }
@@ -167,12 +174,16 @@ export default defineComponent({
     const showKnowledgeReviewer = () => {
       knowledgeReviewer.value?.show();
     }
+    const showLLM = () => {
+      llm.value?.show();
+    }
     return {
       readingHistory,showReadingHistory, 
       mindGraph, showMindGraph, 
       knowledgeNetwork, showKnowledgeNetwork,
       linkList, showLinkList,
       knowledgeReviewer, showKnowledgeReviewer,
+      llm, showLLM,
       kwFinder
     }
   },

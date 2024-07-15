@@ -195,7 +195,11 @@ class DocService implements Cacheable{
    */
   @cache
   public renderMd(file: DocFileInfo) : string {
-    const mdContent = file.content;
+    return this.renderMdFromText(file.content, file.id)
+  }
+
+  @cache
+  public renderMdFromText(mdContent: string, docId: string): string {
     marked.use(KatexExtension({}))
     const render = new marked.Renderer();
     const tagList: TagSumItem[] = TagService.getTagSumList();
@@ -259,7 +263,7 @@ class DocService implements Cacheable{
           return str;
         }
         // 如果被插入的链接为当前渲染的文档 跳过
-        if (i.id == file.id) {
+        if (i.id == docId) {
           return str;
         }
         // 如果被替换的关键字是标签 跳过

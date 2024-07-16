@@ -8,7 +8,7 @@
         <el-option v-for="item in presets" :key="item.value" :value="item.value" :label="item.name">{{ item.name
           }}</el-option>
       </el-select>
-      <el-input type="textarea" rows="5" v-model="query" />
+      <el-input type="textarea" rows="5" v-model="query" @keyup="handleQueryKeyUp"/>
       <el-button type="primary" @click="handleSend">发送</el-button>
     </div>
 
@@ -55,12 +55,16 @@ export default defineComponent({
       loading: false,
       presets: [
         { name: '概括总结', value: 'summary', template: () => this.summaryTemplate() },
-        { name: '回答问题', value: 'ansuwer', template: () => this.answerTempalte() },
+        { name: '根据内容回答问题', value: 'ansuwerByContent', template: () => this.answerByContentTempalte() },
+        { name: '根据目录回答问题', value: 'ansuwerByCategory', template: () => this.answerByCategoryTempalte() },
         { name: '补充目录', value: 'category', template: () => this.categoryTempalte() }
       ]
     };
   },
   watch: {
+    doc() {
+      this.handleModeChange()
+    }
   },
   computed: {
     isDark() {
@@ -68,12 +72,32 @@ export default defineComponent({
     }
   },
   methods: {
-    async answerTempalte() {
+    async answerByContentTempalte() {
       const file = await DocService.getDocFileInfo(this.doc)
       return `
         请根据以下文本回答问题：
+
+        问题：
+
+
+        文本：
         ---
         ${file.content}
+        ---
+      `
+    },
+    async answerByCategoryTempalte() {
+      const contents = await DocService.getContentByDocId(this.doc)
+      const text = contents2String(contents)
+      return `
+        以下是关于 《${this.doc}》 的目录，请根据目录回答问题：
+
+        问题：
+
+
+        目录：
+        ---
+        ${text}
         ---
       `
     },
@@ -101,7 +125,15 @@ export default defineComponent({
     },
     async handleModeChange() {
       const method = this.presets.filter(v => v.value == this.llmMode)[0].template
-      this.query = await method()
+      const template = (await method())
+                        .split('\n').map((v: string) => v.replace(/(^\s*)|(\s*$)/g, "")).join('\n')
+      
+      this.query = template
+    },
+    handleQueryKeyUp(event: KeyboardEvent) {
+      if (event.ctrlKey && event.key === 'Enter') {
+        this.handleSend()
+      }
     },
     async handleSend() {
       let stream = null
@@ -163,12 +195,6 @@ export default defineComponent({
           const line = JSON.parse(i.replace('data: ', '')).response;
           await addTextToElement(line);
         }
-      }
-
-      // 处理可能未完成的最后一块数据
-      if (data) {
-        await addTextToElement(data);
-        data = '';
       }
     }
   }

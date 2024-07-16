@@ -15,6 +15,12 @@ interface DocApiItem {
 const apiMappings: DocApiItem[] = [
   {
     type: 'build&runtime',
+    name: '目录',
+    path: UrlConst.category,
+    method: async () => CategoryService.getCategoryList()
+  },
+  {
+    type: 'build&runtime',
     name: '词云数据',
     path: '/wordcloud.json',
     method: async () => WordCloudService.calcWordFrequency()
@@ -57,12 +63,6 @@ const apiMappings: DocApiItem[] = [
     name: '标签映射',
     path: '/tagMapping.json',
     method: async () => Array.from((await DocService.buildTagMapping()).entries())
-  },
-  {
-    type: 'build&runtime',
-    name: '目录',
-    path: UrlConst.category,
-    method: async () => CategoryService.getCategoryList()
   },
   {
     type: 'build&runtime',

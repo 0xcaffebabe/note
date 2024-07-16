@@ -253,11 +253,21 @@ print(2<=3)
 print(2!=3)
 ```
 
+### is 与 ==
+
+is 判断的时内存地址
+
+== 会去调用类的 `__eq__` 函数来进行比较
+
 ## 变量与赋值
 
 ```python
 a=5
 ```
+
+### 值传递与引用传递
+
+python 的引用机制同 java，本质上都是值传递，无法实现类似于 c++ 的引用传递效果
 
 ## 函数
 
@@ -660,8 +670,8 @@ print(random.randint(1,9))
 ### 包
 
 ```
-包/
-├── __init__.py
+/
+├── main.py
 ├── 模块1.py
 ├── 模块2.py
 ├── 子包1/
@@ -679,8 +689,11 @@ print(random.randint(1,9))
 包的导入
 
 ```python
-import package.subpackage.module
+import 子包1.模块3.py
+from 子包1.模块3 import *
 ```
+
+`__init__.py` 在 python3 中不是必须的
 
 ## 迭代器
 
@@ -840,18 +853,21 @@ print(list(ret))
 def aop(fun):
     # 对fun进行包装，在其外层拦截参数
     def wrapper(*args,**kw):
-        print("aop拦截参数:",args,kw)
+        print("aop拦截参数:",args[1],kw)
         fun(*args,**kw)
     return wrapper
 
 class A:
     # 加上这一行等于 m = aop(m)
     @aop
-    def m(self):
-        print('method invoke')
+    def m(self, name):
+        print('method invoke ' + name)
 
 a = A()
-a.m()
+a.m('a')
+# 输出
+# aop拦截参数: a {}
+# method invokea
 ```
 
 ## 一些语言特性

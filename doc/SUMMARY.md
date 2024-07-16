@@ -304,7 +304,7 @@
       - [Vuex](./编程语言/JavaScript/Vue/Vuex.md)
     - [ReactJS](./编程语言/JavaScript/ReactJS.md)
     - [Angular](./编程语言/JavaScript/Angular.md)
-  - [python](./编程语言/python.md)
+  - [Python](./编程语言/python.md)
   - [go](./编程语言/Go/go.md)
     - [数组字符串切片](./编程语言/Go/数组字符串切片.md)
     - [函数方法和接口](./编程语言/Go/函数方法和接口.md)

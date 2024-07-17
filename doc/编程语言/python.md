@@ -793,6 +793,31 @@ map = {i:i**2 for i in range(10)}
 set = {i for i in range(10)}
 ```
 
+## 协程
+
+```py
+import asyncio
+async def web():
+  return requests.get('http://baidu.com').text
+
+async def main():
+  print(await web())
+
+asyncio.run(main())
+```
+
+asyncio 的原理是维护一个 eventloop，每次遍历协程任务，当协程任务让出控制权，eventloop会继续遍历其他协程任务
+
+## future
+
+```py
+with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+  fut = executor.submit(web)
+  while not fut.done():
+    continue
+  print(fut.result())
+```
+
 ## 函数式编程
 
 ```py
@@ -936,6 +961,31 @@ def f(name:str) -> str:
     return 'hello'
 ```
 
+### metaclass
+
+通过在创建类时指定 metaclass，可以控制类的创建过程
+
+```py
+
+class Mymeta(type):
+    def __init__(self, name, bases, dic):
+        # 当 Foo 创建时，会进入到这里
+        super().__init__(name, bases, dic)
+        print('===>Mymeta.__init__')
+        print(self.__name__)
+        print(dic)
+        print(self.yaml_tag)
+    
+class Foo(metaclass=Mymeta):
+    yaml_tag = '!Foo'
+
+    def __init__(self, name):
+        print('Foo.__init__')
+        self.name = name
+
+foo = Foo('foo')
+```
+
 ## IO
 
 ### 打开文件
@@ -995,6 +1045,18 @@ os.remove('a.txt')
 # 重命名文件
 os.rename('test.py','test1.py')
 ```
+
+## 全局解释锁
+
+为了实现多线程下内存管理（尤其是垃圾回收机制）的线程安全，同时 Python 通过引用计数来管理对象的生命周期，但引用计数在多线程环境中容易引发竞争条件（race conditions）。GIL 可以确保引用计数的操作是原子性的，从而避免这些竞争条件
+
+CPython大量使用C语言库，但大部分C语言库都不是线程安全的
+
+## 垃圾回收
+
+Python 将所有对象分为三代。刚刚创立的对象是第 0 代；经过一次垃圾回收后，依然存在的对象，便会依次从上一代挪到下一代。而每一代启动自动垃圾回收的阈值，则是可以单独指定的。当垃圾回收器中新增对象减去删除对象达到相应的阈值时，就会对这一代对象启动垃圾回收
+
+为了解决引用计数在发生循环引用无法回收的问题，Python 引入了一个基于跟踪的垃圾收集器 gc.collect()，其原理是通过图搜索来发现不可达的对象
 
 ## 序列化
 

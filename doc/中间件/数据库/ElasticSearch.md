@@ -580,7 +580,76 @@ graph LR
 
 #### 索引结构
 
-![批注 2019-10-18 145410](/assets/批注%202019-10-18%20145410.png)
+一个 Lucene 索引文件内部存放的内容：
+
+```mermaid
+graph TD
+    subgraph Term Index in Memory
+        A0
+        A1
+        A2
+        A3
+        A4
+        A5
+        A6
+        A7
+        A8
+        A0 --> A1
+        A1 --> A2
+        A1 --> A3
+        A2 --> A4
+        A3 --> A5
+        A5 --> A6
+        A5 --> A7
+        A7 --> A8
+    end
+
+    subgraph Term Dictionary
+        B0[block]
+        B1[Abc]
+        B2[Abd]
+        B3[Abdf]
+        B4[block]
+        B5[staff]
+        B6[straw]
+        B7[stick]
+        B8[stop]
+        B0 --> B1
+        B0 --> B2
+        B0 --> B3
+        B4 --> B5
+        B4 --> B6
+        B4 --> B7
+        B4 --> B8
+    end
+
+    subgraph Posting List
+        C1[[12,234,5,6,7,78,23]]
+        C2[[122,2364,5,26,722,78,23]]
+        C3[[12,234,23]]
+        C4[[12,23]]
+        C5[[178,23]]
+        C6[[12,234,23]]
+        C7[[77,34,63]]
+    end
+
+    A2 --> B1
+    A3 --> B2
+    A4 --> B3
+    A5 --> B5
+    A6 --> B6
+    A7 --> B7
+    A8 --> B8
+
+    B1 --> C1
+    B2 --> C2
+    B3 --> C3
+    B5 --> C4
+    B6 --> C5
+    B7 --> C6
+    B8 --> C7
+
+```
 
 ```mermaid
 graph TD

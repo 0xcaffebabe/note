@@ -1046,6 +1046,12 @@ os.remove('a.txt')
 os.rename('test.py','test1.py')
 ```
 
+### 上下文管理器
+
+Python 的 with 语句，类似于 Java 的 try(...)，在离开作用域后会自动释放资源
+
+在被创建时，首先会调用`__init__` 方法，然后会调用 `__enter__` 方法，由 `__enter__` 方法返回需要被管理的对象，在离开作用域时，会调用 `__exit__` 方法
+
 ## 全局解释锁
 
 为了实现多线程下内存管理（尤其是垃圾回收机制）的线程安全，同时 Python 通过引用计数来管理对象的生命周期，但引用计数在多线程环境中容易引发竞争条件（race conditions）。GIL 可以确保引用计数的操作是原子性的，从而避免这些竞争条件
@@ -1144,6 +1150,42 @@ for i in range(10):
 
 ```js
 pip install requests --user
+```
+
+## pbd
+
+```py
+import pdb
+
+a = 1
+pdb.set_trace() # 在此处暂停后可以执行一些 pbd 的脚本 比如输出变量、修改变量、跳转代码等
+print(a)
+```
+
+## cProfile
+
+使用 cProfile 可以统计代码运行的性能
+
+```py
+import cProfile
+# def fib(n)
+# def fib_seq(n):
+cProfile.run('fib_seq(30)')
+```
+
+```text
+         7049218 function calls (96 primitive calls) in 12.151 seconds
+
+   Ordered by: standard name
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   12.151   12.151 <string>:1(<module>)
+7049123/31   12.151    0.000   12.151    0.392 main.py:1(fib)
+     31/1    0.000    0.000   12.151   12.151 main.py:9(fib_seq)
+        1    0.000    0.000   12.151   12.151 {built-in method builtins.exec}
+       31    0.000    0.000    0.000    0.000 {method 'append' of 'list' objects}
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+       30    0.000    0.000    0.000    0.000 {method 'extend' of 'list' objects}
 ```
 
 ## python编码风格

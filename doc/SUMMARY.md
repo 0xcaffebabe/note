@@ -302,7 +302,7 @@
       - [动画](./编程语言/JavaScript/Vue/动画.md)
       - [前端路由](./编程语言/JavaScript/Vue/前端路由.md)
       - [Vuex](./编程语言/JavaScript/Vue/Vuex.md)
-    - [ReactJS](./编程语言/JavaScript/ReactJS.md)
+    - [React](./编程语言/JavaScript/React.md)
     - [Angular](./编程语言/JavaScript/Angular.md)
   - [Python](./编程语言/python.md)
   - [go](./编程语言/Go/go.md)

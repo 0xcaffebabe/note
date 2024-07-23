@@ -107,6 +107,8 @@ Emotion 通过在组件的 css 属性编写 CSS 代码，再在编译后的 styl
 
 ### Hooks
 
+Hooks 是一套为函数组件设计的，用于访问 React 内部状态或执行副作用操作，以函数形式存在的 React API
+
 ![](/assets/202472220924.webp)
 
 挂载阶段。React 会执行组件函数，在函数执行过程中遇到的 useState 、 useMemo 等 Hooks 依次挂载到 FiberNode 上，useEffect 其实也会被挂载，但它包含的副作用（Side-effect，在 Fiber 引擎中称为 Effect）会保留到提交阶段
@@ -118,3 +120,162 @@ Emotion 通过在组件的 css 属性编写 CSS 代码，再在编译后的 styl
 卸载阶段。主要是执行 Effect 的清除函数
 
 函数组件的错误处理依赖于父组件或祖先组件提供的错误边界
+
+### 状态 Hooks
+
+useState：
+
+```js
+import React, { useState } from 'react';
+// ...省略
+function App() {
+  const [showAdd, setShowAdd] = useState(false);
+  //     -------  ----------             -----
+  //        ^         ^                    ^
+  //        |         |                    |
+  //    state变量  state更新函数           state初始值
+  const [todoList, setTodoList] = useState([/* ...省略 */]);
+```
+
+每次渲染函数时，useState 都会被执行， React 根据 useState 的次数以及它们的调用顺序来判断不同的 state
+
+useReducer：
+
+```js
+function reducer(state, action) {
+  switch (action.type) {
+    case 'show':
+      return true;
+    case 'hide':
+    default:
+      return false;
+  }
+}
+
+function App() {
+  const [showAdd, dispatch] = useReducer(reducer, false);
+  // ...省略
+  dispatch({ type: 'show' });
+```
+
+useRef：调用 useRef 会返回一个可变 ref 对象，而且会保证组件每次重新渲染过程中，同一个 useRef Hook 返回的可变 ref 对象都是同一个对象。可变 ref 对象有一个可供读写的 current 属性，组件重新渲染本身不会影响 current 属性的值；反过来，变更 current 属性值也不会触发组件的重新渲染
+
+```js
+const Component = () => {
+  const myRef = useRef(null);
+  //    -----          ----
+  //      ^              ^
+  //      |              |
+  //   可变ref对象     可变ref对象current属性初始值
+
+  // 读取可变值
+  const value = myRef.current;
+  // 更新可变值
+  myRef.current = newValue;
+
+  return (<div></div>);
+};
+```
+
+### 副作用 Hooks
+
+useEffect：
+
+```js
+useEffect(() => {/* 省略 */});
+//        -----------------
+//                ^
+//                |
+//           副作用回调函数
+// 第一种用法：useEffect 在每次组件渲染（包括挂载和更新阶段）时都会被调用，但作为参数的副作用回调函数是在提交阶段才会被调用的，这时副作用回调函数可以访问到组件的真实 DOM
+```
+
+```js
+useEffect(() => {/* 省略 */}, [var1, var2]);
+//        -----------------   -----------
+//                ^                ^
+//                |                |
+//           副作用回调函数       依赖值数组
+// 第二种用法：在渲染组件时，会记录下当时的依赖值数组，下次渲染时会把依赖值数组里的值依次与前一次记录下来的值做浅对比（Shallow Compare）。如果有不同，才会在提交阶段执行副作用回调函数，否则就跳过这次执行，下次渲染再继续对比依赖值数组
+```
+
+useEffect 可以返回一个清除函数，组件在下一次提交阶段执行同一个副作用回调函数之前，或者是组件即将被卸载之前，会调用这个清除函数
+
+useMemo：
+
+```js
+const memoized = useMemo(() => createByHeavyComputing(a, b), [a, b]);
+//    --------           ----------------------------------  ------
+//       ^                            ^                         ^
+//       |                            |                         |
+//   工厂函数返回值                   工厂函数                  依赖值数组
+// 只有依赖值数组中的依赖值有变化时，该 Hook 才会调用工厂函数重新计算
+```
+
+useCallback：
+
+```js
+const memoizedFunc = useCallback(() => {/*省略*/}, [a, b]);
+//    ------------               ---------------   -----
+//         ^                            ^            ^
+//         |                            |            |
+//   记忆化的回调函数                   回调函数      依赖值数组
+// 会把作为第一个参数的回调函数返回给组件，只要第二个参数依赖值数组的依赖项不改变，它就会保证一直返回同一个回调函数（引用），而不是新建一个函数，这也保证了回调函数的闭包也是不变的
+```
+
+### Hooks 使用规则
+
+1. 只能在 React 的函数组件中调用 Hooks
+2. 只能在组件函数的最顶层调用 Hooks。因为 Hooks 的实现，是根据调用次数及调用顺序，底层存储为一个链表，在循环判断中使用 Hooks，会造成结果不确定
+
+## 合成事件
+
+React 对原生 DOM 事件进行了包装，提供了与原生事件相同的接口，但行为更加统一和一致
+
+## 组件
+
+### 数据流
+
+props：自定义 React 组件接受一组输入参数，用于改变组件运行时的行为，不可变。
+
+```js
+function MyComponent({ prop1, prop2, optionalProp = 'default' }) {...}
+```
+
+state：通过调用 useState / useReducer Hooks 创建组件转专有的状态，要修改 state 只能通过 setXxx / dispatch
+
+context：
+
+```js
+// 创建一个Context
+const MyContext = React.createContext('没路用的初始值');
+
+// Context消费者
+function MyGrandchildComponent() {
+  const value = useContext(MyContext);
+  return (
+    <li>{value}</li>
+  );
+}
+
+// Context提供者
+function MyComponent() {
+  const [obj, setObj] = useState({ key1: '文本' })
+  // ...
+  return (
+    <MyContext.Provider value={obj}>
+      <MyChildComponent />
+    </MyContext.Provider>
+  );
+}
+```
+
+React 的数据流是单向的，只能从父组件流向子组件，子组件不能直接修改父组件的状态，只能通过父组件传递一个回调函数，让子组件调用，修改父组件的状态
+
+### 接口
+
+把 React 组件的 props 和 context 看作是接口，包括但不限于：
+
+1. 哪些字段作为 props 暴露出来？
+2. 哪些抽取为 context 从全局获取？
+3. 哪些数据实现为组件内部的 state？

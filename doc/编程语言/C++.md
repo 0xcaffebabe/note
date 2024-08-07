@@ -62,6 +62,18 @@ int main() {
 static_assert(1 != 1, "1 is 1");
 ```
 
+## RAII
+
+RAII（Resource Acquisition Is Initialization）通过对象的生命周期来控制资源的分配和释放。RAII的核心思想是将资源的获取与对象的初始化绑定在一起，将资源的释放与对象的销毁绑定在一起
+
+```cpp
+std::mutex mtx;
+    {
+        std::lock_guard<std::mutex> lock(mtx); // 构造函数中加锁
+        // 临界区代码
+    }
+```
+
 ## 面向对象
 
 ```cpp
@@ -274,6 +286,16 @@ int f() noexcept {
   throw runtime_error("runtime_error");
 }
 ```
+
+### 异常安全
+
+当代码抛出异常时，程序的状态仍然保持一致，不会导致资源泄漏或数据损坏
+
+基本保证：即使发生异常，程序中的所有对象仍然处于有效状态，且不发生资源泄漏。程序的状态可能会改变，但不会有未定义行为
+
+强保证：操作失败并抛出异常，程序状态将保持不变。操作要么成功，要么在失败时不会对程序的状态产生影响
+
+无异常保证：操作保证不会抛出任何异常
 
 ## lambda
 

@@ -178,6 +178,14 @@ using iterator_type = decltype(s.cbegin());
 iterator_type iterator = s.cbegin();
 ```
 
+### 初始化
+
+```cpp
+// 列表初始化
+// 编译器的魔法只是对 {1, 2, 3} 这样的表达式自动生成一个初始化列表，在这个例子里其类型是 initializer_list。只需要声明一个接受 initializer_list 的构造函数即可使用
+vector<int> v{1, 2, 3, 4, 5};
+```
+
 ### const/volatile/mutable
 
 const
@@ -372,6 +380,16 @@ for(auto it = v.begin(); it != v.end(); advance(it, distance(it, next(it)))) {
 }
 ```
 
+```mermaid
+graph TD
+    A[Iterator<br>支持 ++ 和 *] --> B[InputIterator<br>用 * 读取]
+    A --> C[OutputIterator<br>用 * 输出]
+    B --> D[ForwardIterator<br>可反复读取]
+    D --> E[BidirectionalIterator<br>支持 --]
+    E --> F[RandomAccessIterator<br>支持跳跃和比较]
+    F --> G[ContiguousIterator<br>存储连续]
+```
+
 ### 线程
 
 ```cpp
@@ -400,4 +418,55 @@ t2.join();
 // 异步执行代码块返回future
 auto f = async([](){cout << "async" << endl;});
 f.wait();
+```
+
+## 模板
+
+### 函数模板
+
+允许编写与类型无关的函数。可以使用模板参数来指定函数中的参数和返回值类型。编译器会在使用函数模板时根据传递的参数推导出具体的类型，并生成对应的函数
+
+```cpp
+template <typename T>
+T add(T a, T b) {
+    return a + b;
+}
+```
+
+### 类模板
+
+允许定义一个通用的类，类似于函数模板，但它是针对类的。可以定义一个类，其中的成员变量、成员函数的类型可以通过模板参数来指定
+
+```cpp
+template <typename T>
+class Box {
+private:
+    T value;
+public:
+    Box(T val) : value(val) {}
+    void setValue(T val) { value = val; }
+    T getValue() const { return value; }
+};
+
+// 使用
+Box<int> intBox(10);
+```
+
+### 元编程
+
+使用模板机制在编译期进行计算和逻辑操作，而不是在运行时执行
+
+```cpp
+template<int N>
+struct Factorial {
+    static const int value = N * Factorial<N - 1>::value;
+};
+
+template<>
+struct Factorial<0> {
+    static const int value = 1;
+};
+
+// 直接编译为常量 120
+std::cout << Factorial<5>::value;
 ```

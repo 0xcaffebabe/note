@@ -66,7 +66,7 @@ export default defineComponent({
           const target: any = event.target;
           const id = target.getAttribute("nodeid");
           if (id) {
-            const elm: HTMLElement = document.querySelector("#" + id)!;
+            const elm: HTMLElement = document.getElementById(id)!;
             window.scrollTo(0, elm.offsetTop - 80);
           }
         });

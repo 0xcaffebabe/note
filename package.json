@@ -22,7 +22,7 @@
     "less": "4.2.0",
     "lodash-es": "4.17.21",
     "marked": "13.0.3",
-    "mermaid": "10.9.1",
+    "mermaid": "11.1.0",
     "nprogress": "0.2.0",
     "prismjs": "1.29.0",
     "query-string": "9.1.0",

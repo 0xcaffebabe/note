@@ -2,16 +2,16 @@
   <el-drawer v-model="showDrawer" :size="$isMobile() ? '75%' : '44%'" :direction="$isMobile() ? 'btt' : 'rtl'"
     title="LLM" :modal="false" @close="$emit('close')" :lock-scroll="false" modal-class="operational-drawer-modal"
     class="operational-drawer">
-    <div class="llm-container" v-loading="loading">
+    <div class="llm-container">
       <div id="llm" class="content"></div>
       <el-select v-model="llmMode" style="width: 200px" @change="handleModeChange">
         <el-option v-for="item in presets" :key="item.value" :value="item.value" :label="item.name">{{ item.name
           }}</el-option>
       </el-select>
-      <el-input type="textarea" rows="5" v-model="query" @keyup="handleQueryKeyUp"/>
+      <el-input type="textarea" rows="5" v-model="query" @keyup="handleQueryKeyUp" />
       <el-row>
         <el-col :span="12">
-          <el-button type="primary" @click="handleSend" style="width:100%">发送</el-button>
+          <el-button type="primary" :loading="loading" @click="handleSend" style="width:100%">发送</el-button>
         </el-col>
         <el-col :span="12">
           <el-button type="success" @click="handleCopy" style="width:100%">复制</el-button>
@@ -27,7 +27,6 @@ import { defineComponent } from "vue";
 import { ElMessage } from "element-plus";
 import DocService from "@/service/DocService";
 import Content from '@/dto/Content'
-import axios from 'axios'
 import { marked } from 'marked'
 import CategoryService from "@/service/CategoryService";
 import Category from "@/dto/Category";
@@ -52,6 +51,38 @@ function tab(t: number) {
     str += ' '
   }
   return str
+}
+
+async function* stream(data: any) {
+  try {
+    console.log('Sending request');
+    const response = await fetch("https://llm.ismy.wang", {
+      method: 'POST',
+      headers: {
+        Accept: 'text/event-stream',
+        'Content-Type': 'application/json',
+      },
+      body: data,
+    });
+
+    if (response.body) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        const chunk = decoder.decode(value, { stream: true });
+        yield chunk;
+      }
+    }
+
+    console.log('Request sent');
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 export default defineComponent({
@@ -156,8 +187,8 @@ export default defineComponent({
     async handleModeChange() {
       const method = this.presets.filter(v => v.value == this.llmMode)[0].template
       const template = (await method())
-                        .split('\n').map((v: string) => v.replace(/(^\s*)|(\s*$)/g, "")).join('\n')
-      
+        .split('\n').map((v: string) => v.replace(/(^\s*)|(\s*$)/g, "")).join('\n')
+
       this.query = template
     },
     handleQueryKeyUp(event: KeyboardEvent) {
@@ -170,20 +201,7 @@ export default defineComponent({
       ElMessage.success("复制成功")
     },
     async handleSend() {
-      let stream = null
-      try {
-        stream = (await axios.post('https://llm.ismy.wang', this.query, {
-        headers: {
-          'Accept': 'text/event-stream',
-        },
-        responseType: 'stream',
-        adapter: 'fetch'
-      })).data;
-      }catch(err :any) {
-        ElMessage.error(err.message)
-      }
-
-      const reader = stream.pipeThrough(new TextDecoderStream()).getReader();
+      this.loading = true;
       this.llmContent = '';
       let data = '';
       const targetElement = document.getElementById('llm')!;  // 假设输出的元素ID是 'output'
@@ -214,11 +232,13 @@ export default defineComponent({
         }
       }
 
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
+      const streamGenerator = stream(this.query)
 
-        const arr = value.split('\n');
+      for await (const chunk of streamGenerator) {
+        if (!chunk) {
+          break;
+        }
+        const arr = chunk.split('\n');
         for (const i of arr) {
           if (i.trim() === 'data: [DONE]') {
             continue;
@@ -230,6 +250,7 @@ export default defineComponent({
           await addTextToElement(line);
         }
       }
+      this.loading = false
     }
   }
 });

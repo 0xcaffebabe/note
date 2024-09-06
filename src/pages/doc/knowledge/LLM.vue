@@ -1,5 +1,5 @@
 <template>
-  <el-drawer v-model="showDrawer" :size="$isMobile() ? '50%' : '44%'" :direction="$isMobile() ? 'btt' : 'rtl'"
+  <el-drawer v-model="showDrawer" :size="$isMobile() ? '75%' : '44%'" :direction="$isMobile() ? 'btt' : 'rtl'"
     title="LLM" :modal="false" @close="$emit('close')" :lock-scroll="false" modal-class="operational-drawer-modal"
     class="operational-drawer">
     <div class="llm-container" v-loading="loading">
@@ -9,7 +9,14 @@
           }}</el-option>
       </el-select>
       <el-input type="textarea" rows="5" v-model="query" @keyup="handleQueryKeyUp"/>
-      <el-button type="primary" @click="handleSend">发送</el-button>
+      <el-row>
+        <el-col :span="12">
+          <el-button type="primary" @click="handleSend" style="width:100%">发送</el-button>
+        </el-col>
+        <el-col :span="12">
+          <el-button type="success" @click="handleCopy" style="width:100%">复制</el-button>
+        </el-col>
+      </el-row>
     </div>
 
   </el-drawer>
@@ -17,18 +24,26 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import api from "@/api";
 import { ElMessage } from "element-plus";
 import DocService from "@/service/DocService";
 import Content from '@/dto/Content'
 import axios from 'axios'
 import { marked } from 'marked'
+import CategoryService from "@/service/CategoryService";
+import Category from "@/dto/Category";
 
 function contents2String(contents: Content[]): string {
   if (!contents || contents.length == 0) {
     return ''
   }
   return contents.map(v => tab(v.level) + "- " + v.name + "\n" + contents2String(v.chidren)).join('\n')
+}
+
+function categorys2String(categorys: Category[], level: number): string {
+  if (!categorys || categorys.length == 0) {
+    return ''
+  }
+  return categorys.map(v => tab(level) + "- " + v.name + "\n" + categorys2String(v.chidren, level + 1)).join('\n')
 }
 
 function tab(t: number) {
@@ -54,6 +69,7 @@ export default defineComponent({
       query: '',
       loading: false,
       presets: [
+        { name: '根据整个目录回答问题', value: 'answerByAllCategory', template: () => this.answerByAllCategoryTemplate() },
         { name: '概括总结', value: 'summary', template: () => this.summaryTemplate() },
         { name: '根据内容回答问题', value: 'ansuwerByContent', template: () => this.answerByContentTempalte() },
         { name: '根据目录回答问题', value: 'ansuwerByCategory', template: () => this.answerByCategoryTempalte() },
@@ -83,6 +99,20 @@ export default defineComponent({
         文本：
         ---
         ${file.content}
+        ---
+      `
+    },
+    async answerByAllCategoryTemplate() {
+      const categorys = await CategoryService.getCategoryList()
+      return `
+        以下是个人知识体系的目录，请根据目录回答问题：
+
+        问题：
+
+
+        目录：
+        ---
+        ${categorys2String(categorys, 0)}
         ---
       `
     },
@@ -134,6 +164,10 @@ export default defineComponent({
       if (event.ctrlKey && event.key === 'Enter') {
         this.handleSend()
       }
+    },
+    handleCopy() {
+      navigator.clipboard.writeText(this.query);
+      ElMessage.success("复制成功")
     },
     async handleSend() {
       let stream = null

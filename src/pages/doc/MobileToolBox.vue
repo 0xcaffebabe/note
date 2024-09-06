@@ -52,9 +52,8 @@ type ActionType =
     'goToDoc' | 
     'goToPpt' |
     'showKnowledgeSystem' | 
-    'showKwFinder'
-
-type LocalActionType = ActionType & 'showMoreSetting'
+    'showKwFinder' |
+    'showLlm'
 
 interface Action {
   name: string
@@ -90,7 +89,8 @@ export default defineComponent({
     'showKnowledgeReviewer',
     'showKnowledgeTrend',
     'showKnowledgeRedundancy',
-    'showKwFinder'
+    'showKwFinder',
+    'showLlm'
   ],
   data(){
     return {
@@ -103,7 +103,7 @@ export default defineComponent({
         {name: '知识体系', type: 'success', action: 'showKnowledgeSystem' },
         {name: '知识回顾', type: 'primary', action: 'showKnowledgeReviewer'},
         {name: '知识趋势', type: 'danger', action: 'showKnowledgeTrend'},
-        {name: '知识冗余', type: 'success', action: 'showKnowledgeRedundancy',},
+        {name: '知识助手', type: 'warning', action: 'showLlm'},
         {name: '阅读历史', type: 'primary', action: 'showReadingHistory', divided: true},
         {name: '文本搜索', type: 'warning', action: 'showKwFinder'},
         // {name: '添加书签', type: 'danger', action: 'showBookMarkAdder', divided: true},

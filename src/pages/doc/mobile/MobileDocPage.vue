@@ -25,7 +25,9 @@
     @showKnowledgeNetwork="showKnowledgeNetwork"
     @showKnowledgeTrend="showKnowledgeTrend"
     @showKwFinder="showKwFinder"
+    @showLlm="showLLM"
   />
+  <LLM :doc="doc" ref="llm"/>
   <key-word-finder ref="kwFinder" :kw="kw" @kwChanged="handleKwChanged"/>
 </template>
 
@@ -50,6 +52,7 @@ import KeyWordFinder from '../KeyWordFinder.vue'
 import TouchUtils from '@/util/TouchUtils'
 import SelectionPopover from '../tool/SelectionPopover.vue'
 import MermaidShower from '../mermaid-shower/MermaidShower.vue';
+import LLM from '../knowledge/LLM.vue';
 
 export default defineComponent({
   components: {
@@ -66,6 +69,7 @@ export default defineComponent({
     KeyWordFinder,
     SelectionPopover,
     MermaidShower,
+    LLM,
 },
   setup() {
     const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
@@ -73,6 +77,7 @@ export default defineComponent({
     const readingHistory = ref<InstanceType<typeof ReadingHistory>>()
     const mindGraph = ref<InstanceType<typeof MindGraph>>()
     const kwFinder = ref<InstanceType<typeof KeyWordFinder>>()
+    const llm = ref<InstanceType<typeof LLM>>()
     const showReadingHistory = () => {
       readingHistory.value?.show()
     }
@@ -85,11 +90,15 @@ export default defineComponent({
     const showKnowledgeNetwork = () => {
       knowledgeNetwork.value?.show()
     }
+    const showLLM = () => {
+      llm.value?.show();
+    }
     return {
       readingHistory,showReadingHistory,
       knowledgeReviewer, showKnowledgeReviewer,
       knowledgeNetwork, showKnowledgeNetwork,
       mindGraph, showMindGraph,
+      llm, showLLM,
       kwFinder
     }
   },

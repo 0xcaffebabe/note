@@ -248,6 +248,9 @@ class DocService implements Cacheable{
       return `<p class="img-wrapper"><img src='${localImageProxy(href)}' width="480" height="240" crossorigin="anonymous"/><p class="img-title">${text}</p></p>`
     }
     const reg = new RegExp(knowledgeLinkList.map(v => v.name).join('|'))
+    
+    // 自定义文本渲染
+    const oriTextRender = render.text;
     render.text = (token): string => {
       let text = token.text
       // 自定义文本渲染 若发现关键字包含标签 则插入标记
@@ -276,7 +279,8 @@ class DocService implements Cacheable{
       text = text.replace(/\[RFC\d+\]/gi, (str: string) => {
         return `<a href='https://www.rfc-editor.org/rfc/${str.toLowerCase().replace('[', '').replace(']', '')}'>${str}</a>`
       })
-      return text;
+      token.text = text
+      return oriTextRender.apply(render, [token]);
     }
     const slugger = new Slugger();
     const oriTableRender = render.table

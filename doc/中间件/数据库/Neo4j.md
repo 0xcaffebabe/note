@@ -229,10 +229,3 @@ RETURN point.distance(p1,p2)/1000 + 'km'
 WITH point({x:1,y:2}) AS p1, point({x:3,y:4}) AS p2
 RETURN point.distance(p1,p2)
 ```
-
-## 数据建模
-
-- 节点：一般就是领域中的名词
-- 标签：代表节点的通用名词
-- 关系：
-- 属性：

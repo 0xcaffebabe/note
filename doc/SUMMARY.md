@@ -396,7 +396,8 @@
     - -文档数据库-
     - [ElasticSearch](./中间件/数据库/ElasticSearch.md)
     - [MongoDB](./中间件/数据库/MongoDB.md)
-    - [Neo4j](./中间件/数据库/Neo4j.md)
+    - [图数据库](./中间件/数据库/图数据库.md)
+      - [Neo4j](./中间件/数据库/Neo4j.md)
   - [消息队列](./中间件/消息队列/消息队列.md)
     - [ActiveMQ](./中间件/消息队列/activeMQ.md)
     - [RabbitMQ](./中间件/消息队列/rabbitMQ.md)

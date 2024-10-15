@@ -5,7 +5,6 @@ import SearchIndexSegment from '@/dto/search/SearchIndexSegement';
 import Cacheable from '@/decorator/Cacheable';
 import Cache from '@/decorator/Cache'
 import SearchSuggestion from '@/dto/search/SearchSuggestion';
-import { text } from 'stream/consumers';
 import axios from 'axios';
 import SearchResult from '@/dto/search/SearchResult';
 

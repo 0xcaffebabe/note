@@ -51,7 +51,7 @@
     "jsdom": "25.0.1",
     "mime": "4.0.4",
     "node-global-proxy": "1.0.1",
-    "nodejieba": "2.6.0",
+    "nodejieba": "3.4.3",
     "rimraf": "6.0.1",
     "rollup-plugin-visualizer": "5.12.0",
     "simple-git": "3.7.1",

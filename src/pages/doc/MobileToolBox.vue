@@ -48,10 +48,8 @@ type ActionType =
     'showBookMarkList' |
     'copyDocPath' |
     'showLinkList' |
-    'showKnowledgeSystem' | 
     'goToDoc' | 
     'goToPpt' |
-    'showKnowledgeSystem' | 
     'showKwFinder' |
     'showLlm'
 
@@ -83,7 +81,6 @@ export default defineComponent({
     'showBookMarkList',
     'copyDocPath',
     'showLinkList',
-    'showKnowledgeSystem',
     'goToDoc',
     'goToPpt',
     'showKnowledgeReviewer',
@@ -100,7 +97,6 @@ export default defineComponent({
       actionList: [
         {name: '思维导图', type: 'success', action: 'showMindGraph'},
         {name: '知识网络', type: 'warning', action: 'showKnowledgeNetwork'},
-        {name: '知识体系', type: 'success', action: 'showKnowledgeSystem' },
         {name: '知识回顾', type: 'primary', action: 'showKnowledgeReviewer'},
         {name: '知识趋势', type: 'danger', action: 'showKnowledgeTrend'},
         {name: '知识助手', type: 'warning', action: 'showLlm'},

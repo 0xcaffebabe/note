@@ -65,9 +65,6 @@
     <knowledge-network ref="knowledgeNetwork" :doc="doc" @close="showAside = true;isDrawerShow = false"/>
   </keep-alive>
   <keep-alive>
-    <knowledge-system ref="knowledgeSystem" @close="showAside = true;isDrawerShow = false"/>
-  </keep-alive>
-  <keep-alive>
     <knowledge-trend ref="knowledgeTrend"/>
   </keep-alive>
   <keep-alive>

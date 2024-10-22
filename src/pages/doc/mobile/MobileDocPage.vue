@@ -14,7 +14,6 @@
   <knowledge-network ref="knowledgeNetwork" :doc="doc"/>
   <knowledge-trend ref="knowledgeTrend"/>
   <reading-history ref="readingHistory" />
-  <knowledge-system ref="knowledgeSystem"/>
   <knowledge-redundancy ref="knowledgeRedundancy"/>
   <mermaid-shower ref="mermaidShower"/>
   <selection-popover />

@@ -53,6 +53,9 @@ class TagService implements Cacheable{
    */
   @cache
   public getPredictTag(doc: string): string[] {
+    if (!doc) {
+      return []
+    }
     return this.docTagPredictions.filter(v => DocUtils.docUrl2Id(v[0]) == doc)[0][1]
   }
 

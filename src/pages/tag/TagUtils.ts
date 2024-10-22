@@ -11,7 +11,7 @@ function hashCode(str: string) {
   return hash;
 }
 
-const types = ["", "info", "warning", "success", "danger"];
+const types = ["primary", "info", "warning", "success", "danger"];
 const colors = ["#409EFF", "#909399", "#E6A23C", "#67C23A", "#F56C6C"]
 
 function calcTagType(tag: string): string{

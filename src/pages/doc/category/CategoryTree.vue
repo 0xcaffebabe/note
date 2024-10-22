@@ -18,8 +18,8 @@
         </div>
       </template>
       <category-item :value="value" v-if="value.link" :isParent="true" @contextmenu="handleContextMenu($event, value.link)" :title="value.link"/>
-
-      <category-tree :menuList="value.chidren" @contextmenu="handleContextMenu"></category-tree>
+      <!-- 如果当前菜单没有展开 则不渲染子菜单 -->
+      <category-tree v-if="value.show || currentOpenedMenu.has(convert(value) + 'p')" :menuList="value.chidren" @contextmenu="handleContextMenu"></category-tree>
     </el-sub-menu>
     <category-item v-else :value="value" :key="convert(value)" @contextmenu="handleContextMenu($event, value.link)"/>
   </template>
@@ -30,6 +30,16 @@ import { defineComponent, PropType } from "vue";
 import Category from "@/dto/Category";
 import CategoryItem from './CategoryItem.vue'
 import DocService from "@/service/DocService";
+
+function hashCode(str: string){
+    var hash = 0;
+    for (var i = 0; i < str.length; i++) {
+        var code = str.charCodeAt(i);
+        hash = ((hash<<5)-hash)+code;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash;
+}
 
 export default defineComponent({
   components: {
@@ -42,6 +52,11 @@ export default defineComponent({
     },
   },
   emits: ['contextmenu'],
+  data() {
+    return {
+      currentOpenedMenu: this.$store.state.currentOpenedMenu
+    }
+  },
   methods: {
     uuid(): string {
       return Math.random().toString();
@@ -51,7 +66,7 @@ export default defineComponent({
       if (category.link) {
         return DocService.docUrl2Id(category.link);
       }
-      return category.name + '-' + Math.random() * 1000000
+      return category.name + '-' + hashCode(category.name)
     },
     handleContextMenu(e: MouseEvent, link: string) {
       this.$emit('contextmenu', e, link)

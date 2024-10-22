@@ -12,6 +12,7 @@ declare module '@vue/runtime-core' {
     currentSearchKw: string,
     currentHeading: string,
     showCategory: boolean,
+    currentOpenedMenu: Set<string>
   }
 
   // provide typings for `this.$store`

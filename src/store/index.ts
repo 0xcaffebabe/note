@@ -15,9 +15,13 @@ export default function create(){
         currentHeading: '' as string,
         currentSearchKw: '' as string,
         showCategory: false as boolean,
+        currentOpenedMenu: new Set()
       }
     },
     mutations: {
+      addOpenedMenu(state: any, menu: string) {
+        state.currentOpenedMenu.add(menu)
+      },
       setCurrentCategory (state :any, category: Category) {
         state.currentCategory = category;
         const cateList :string[]= state.currentCategoryList;

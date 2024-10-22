@@ -48,6 +48,11 @@ export default defineComponent({
       loaded: false
     };
   },
+  watch: {
+    doc() {
+      this.markShowCateChain()
+    }
+  },
   computed: {
     isDark() {
       return this.$store.state.isDarkMode;
@@ -55,6 +60,8 @@ export default defineComponent({
   },
   methods: {
     handleOpen(index: string) {
+      this.$store.commit('addOpenedMenu', index)
+      console.log(index)
       if (!this.loaded) {
         this.loaded = true
         this.$emit('firstLoad')
@@ -88,11 +95,21 @@ export default defineComponent({
         this.$store.commit("setCurrentCategory", currentCate);
       }
     },
+    // 标记当前目录展示链
+    markShowCateChain() {
+      let cate = this.findCategoryById(this.doc!)
+      console.log(cate)
+      while(cate) {
+        cate.show = true
+        cate = cate.parent
+      }
+    }
   },
   async created() {
-    this.loading = true;
-    this.cateList = await categoryService.getCompiledCategoryList();
-    this.updateCurrentCategory(this.doc!);
+    this.loading = true
+    this.cateList = await categoryService.getCompiledCategoryList()
+    this.markShowCateChain()
+    this.updateCurrentCategory(this.doc!)
     this.$nextTick(() => {
       this.loading = false;
     });

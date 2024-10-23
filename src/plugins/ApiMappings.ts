@@ -89,12 +89,6 @@ const apiMappings: DocApiItem[] = [
   },
   {
     type: 'build&runtime',
-    name: '相似文本',
-    path: UrlConst.textSimilarJson,
-    method: async () => DocService.getTextSimilar()
-  },
-  {
-    type: 'build&runtime',
     name: '知识丰富度',
     path: UrlConst.knowledgeRichnessJson,
     method: async () => DocService.generateKnwoledgeRichness()

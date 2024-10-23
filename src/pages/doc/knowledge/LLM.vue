@@ -169,7 +169,7 @@ export default defineComponent({
   },
   data() {
     return {
-      showDrawer: true,
+      showDrawer: false,
       multiLLMShow: false,
       llmMode: '',
       model: '@cf/qwen/qwen1.5-14b-chat-awq',

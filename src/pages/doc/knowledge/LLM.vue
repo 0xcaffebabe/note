@@ -8,6 +8,9 @@
         <el-option v-for="item in presets" :key="item.value" :value="item.value" :label="item.name">{{ item.name
           }}</el-option>
       </el-select>
+      <el-select v-model="model" style="width: 200px">
+        <el-option v-for="item in moldes" :key="item" :value="item" :label="item">{{ item }}</el-option>
+      </el-select>
       <el-input type="textarea" rows="5" v-model="query" @keyup="handleQueryKeyUp" />
       <el-row>
         <el-col :span="12">
@@ -53,10 +56,10 @@ function tab(t: number) {
   return str
 }
 
-async function* stream(data: any) {
+async function* stream(model: string, data: any) {
   try {
     console.log('Sending request');
-    const response = await fetch("https://llm.ismy.wang", {
+    const response = await fetch("https://llm.ismy.wang?model=" + model, {
       method: 'POST',
       headers: {
         Accept: 'text/event-stream',
@@ -96,6 +99,13 @@ export default defineComponent({
     return {
       showDrawer: false,
       llmMode: '',
+      model: '@cf/qwen/qwen1.5-14b-chat-awq',
+      moldes: [
+        '@cf/qwen/qwen1.5-14b-chat-awq',
+        '@hf/google/gemma-7b-it', 
+        '@hf/nousresearch/hermes-2-pro-mistral-7b',
+        '@cf/meta/llama-3.1-70b-instruct'
+      ],
       llmContent: '',
       query: '',
       loading: false,
@@ -235,8 +245,6 @@ export default defineComponent({
       // 函数用于逐字添加文本到目标元素
       const addTextToElement = async (text: string) => {
         for (const char of text) {
-          // 暂存当前HTML内容
-          const currentContent = targetElement.innerHTML;
 
           // 将新字符添加到当前数据
           data += char;
@@ -255,7 +263,7 @@ export default defineComponent({
         }
       }
 
-      const streamGenerator = stream(this.query)
+      const streamGenerator = stream(this.model, this.query)
 
       for await (const chunk of streamGenerator) {
         if (!chunk) {

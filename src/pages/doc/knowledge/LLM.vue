@@ -4,24 +4,48 @@
     class="operational-drawer">
     <div class="llm-container">
       <div id="llm" class="content"></div>
-      <el-select v-model="llmMode" style="width: 200px" @change="handleModeChange">
-        <el-option v-for="item in presets" :key="item.value" :value="item.value" :label="item.name">{{ item.name
-          }}</el-option>
-      </el-select>
-      <el-select v-model="model" style="width: 200px">
-        <el-option v-for="item in moldes" :key="item" :value="item" :label="item">{{ item }}</el-option>
-      </el-select>
-      <el-input type="textarea" rows="5" v-model="query" @keyup="handleQueryKeyUp" />
-      <el-row>
-        <el-col :span="12">
-          <el-button type="primary" :loading="loading" @click="handleSend" style="width:100%">发送</el-button>
+      <el-row :gutter="12">
+        <el-col :span="8">
+          问答模板：
+          <el-select v-model="llmMode" @change="handleModeChange">
+            <el-option v-for="item in presets" :key="item.value" :value="item.value" :label="item.name">{{ item.name
+              }}</el-option>
+          </el-select>
         </el-col>
-        <el-col :span="12">
-          <el-button type="success" @click="handleCopy" style="width:100%">复制</el-button>
+        <el-col :span="8">
+          模型：
+          <el-select v-model="model">
+            <el-option v-for="item in models" :key="item" :value="item" :label="item">{{ item }}</el-option>
+          </el-select>
+        </el-col>
+      </el-row>
+
+
+      <el-input type="textarea" rows="5" v-model="query" @keyup="handleQueryKeyUp" />
+      <el-row :gutter="12">
+        <el-col :span="8">
+          <el-button type="primary" :loading="loading" @click="handleSend" style="width:100%">单模型问答</el-button>
+        </el-col>
+        <el-col :span="8">
+          <el-button type="warning" @click="handleMultiSend" style="width:100%">多模型问答</el-button>
+        </el-col>
+        <el-col :span="8">
+          <el-button type="success" @click="handleCopy" style="width:100%">复制提问</el-button>
         </el-col>
       </el-row>
     </div>
-
+    <!-- 多模型对比对话框 -->
+    <el-dialog v-model="multiLLMShow" title="多模型问答" width="1800" top="1vh">
+      <!-- 一个四列的 div -->
+      <div style="height: 840px;">
+        <el-row :gutter="12">
+          <el-col v-for="(item, index) in models" :key="item" :span="6">
+            <p>{{ item }}</p>
+            <div :id="'llm' + index" class="content" style="max-height: 800px"></div>
+          </el-col>
+        </el-row>
+      </div>
+    </el-dialog>
   </el-drawer>
 </template>
 
@@ -88,6 +112,54 @@ async function* stream(model: string, data: any) {
   }
 }
 
+async function requestLLMAndRender(model: string, containerId: string, query: string) {
+  let data = ''
+  const targetElement = document.getElementById(containerId)!;
+
+  // 清空目标元素内容
+  targetElement.innerHTML = '';
+
+  // 函数用于逐字添加文本到目标元素
+  const addTextToElement = async (text: string) => {
+    for (const char of text) {
+
+      // 将新字符添加到当前数据
+      data += char;
+
+      // 重新渲染Markdown为HTML
+      const renderedContent = marked(data) as string;
+
+      // 更新目标元素内容
+      targetElement.innerHTML = renderedContent;
+
+      // 保持滚动条在底部
+      targetElement.scrollTop = targetElement.scrollHeight;
+
+      // 等待一段时间以实现逐字显示效果
+      await new Promise(resolve => setTimeout(resolve, 10)); // 控制每个字符出现的速度
+    }
+  }
+
+  const streamGenerator = stream(model, query)
+
+  for await (const chunk of streamGenerator) {
+    if (!chunk) {
+      break;
+    }
+    const arr = chunk.split('\n');
+    for (const i of arr) {
+      if (i.trim() === 'data: [DONE]') {
+        continue;
+      }
+      if (i.trim().length === 0) {
+        continue;
+      }
+      const line = JSON.parse(i.replace('data: ', '')).response;
+      await addTextToElement(line);
+    }
+  }
+}
+
 export default defineComponent({
   props: {
     doc: {
@@ -97,12 +169,13 @@ export default defineComponent({
   },
   data() {
     return {
-      showDrawer: false,
+      showDrawer: true,
+      multiLLMShow: false,
       llmMode: '',
       model: '@cf/qwen/qwen1.5-14b-chat-awq',
-      moldes: [
+      models: [
         '@cf/qwen/qwen1.5-14b-chat-awq',
-        '@hf/google/gemma-7b-it', 
+        '@hf/google/gemma-7b-it',
         '@hf/nousresearch/hermes-2-pro-mistral-7b',
         '@cf/meta/llama-3.1-70b-instruct'
       ],
@@ -233,54 +306,15 @@ export default defineComponent({
       navigator.clipboard.writeText(this.query);
       ElMessage.success("复制成功")
     },
+    async handleMultiSend() {
+      this.multiLLMShow = true;
+      for (let i = 0; i < this.models.length; i++) {
+        requestLLMAndRender(this.models[i], 'llm' + i, this.query)
+      }
+    },
     async handleSend() {
       this.loading = true;
-      this.llmContent = '';
-      let data = '';
-      const targetElement = document.getElementById('llm')!;  // 假设输出的元素ID是 'output'
-
-      // 清空目标元素内容
-      targetElement.innerHTML = '';
-
-      // 函数用于逐字添加文本到目标元素
-      const addTextToElement = async (text: string) => {
-        for (const char of text) {
-
-          // 将新字符添加到当前数据
-          data += char;
-
-          // 重新渲染Markdown为HTML
-          const renderedContent = marked(data) as string;
-
-          // 更新目标元素内容
-          targetElement.innerHTML = renderedContent;
-
-          // 保持滚动条在底部
-          targetElement.scrollTop = targetElement.scrollHeight;
-
-          // 等待一段时间以实现逐字显示效果
-          await new Promise(resolve => setTimeout(resolve, 10)); // 控制每个字符出现的速度
-        }
-      }
-
-      const streamGenerator = stream(this.model, this.query)
-
-      for await (const chunk of streamGenerator) {
-        if (!chunk) {
-          break;
-        }
-        const arr = chunk.split('\n');
-        for (const i of arr) {
-          if (i.trim() === 'data: [DONE]') {
-            continue;
-          }
-          if (i.trim().length === 0) {
-            continue;
-          }
-          const line = JSON.parse(i.replace('data: ', '')).response;
-          await addTextToElement(line);
-        }
-      }
+      await requestLLMAndRender(this.model, 'llm', this.query)
       this.loading = false
     }
   }
@@ -305,5 +339,6 @@ export default defineComponent({
 .content {
   flex: 1;
   overflow: auto;
+  font-size: 16px;
 }
 </style>

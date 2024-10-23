@@ -308,9 +308,11 @@ export default defineComponent({
     },
     async handleMultiSend() {
       this.multiLLMShow = true;
-      for (let i = 0; i < this.models.length; i++) {
-        requestLLMAndRender(this.models[i], 'llm' + i, this.query)
-      }
+      setTimeout(() => {
+        for (let i = 0; i < this.models.length; i++) {
+          requestLLMAndRender(this.models[i], 'llm' + i, this.query)
+        }
+      }, 1000)
     },
     async handleSend() {
       this.loading = true;

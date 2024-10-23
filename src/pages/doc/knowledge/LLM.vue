@@ -104,7 +104,10 @@ export default defineComponent({
         { name: '概括总结', value: 'summary', template: () => this.summaryTemplate() },
         { name: '根据内容回答问题', value: 'ansuwerByContent', template: () => this.answerByContentTempalte() },
         { name: '根据目录回答问题', value: 'ansuwerByCategory', template: () => this.answerByCategoryTempalte() },
-        { name: '补充目录', value: 'category', template: () => this.categoryTempalte() }
+        { name: '补充目录', value: 'category', template: () => this.categoryTempalte() },
+        { name: '更新与趋势', value: 'trends', template: () => this.trendsTemplate() },
+        { name: '历史背景', value: 'history', template: () => this.historyTemplate() },
+        { name: '未来发展', value: 'future', template: () => this.futureTemplate() },
       ]
     };
   },
@@ -157,6 +160,26 @@ export default defineComponent({
 
 
         目录：
+        ---
+        ${text}
+        ---
+      `
+    },
+    async futureTemplate() {
+      return `
+        简单介绍一下关于 《${this.doc}》 的未来可能得发展方向与挑战
+      `
+    },
+    async historyTemplate() {
+      return `
+        简单介绍一下关于 《${this.doc}》 的历史背景，重点放在关于 《${this.doc}》 的发展历程
+      `
+    },
+    async trendsTemplate() {
+      const contents = await DocService.getContentByDocId(this.doc)
+      const text = contents2String(contents)
+      return `
+        以下是关于 《${this.doc}》 的目录，根据你最新的模型，列出该主题的最近更新与趋势，并附带年份
         ---
         ${text}
         ---

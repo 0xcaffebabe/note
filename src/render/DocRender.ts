@@ -140,8 +140,10 @@ export default class DocRender {
       text = text.replace(/\[RFC\d+\]/gi, (str: string) => {
         return `<a href='https://www.rfc-editor.org/rfc/${str.toLowerCase().replace('[', '').replace(']', '')}'>${str}</a>`
       })
-      token.text = text
-      return oriTextRender.apply(render, [token]);
+      if (token.tokens) {
+        return token.text
+      }
+      return text
     }
     const slugger = new Slugger();
     const oriTableRender = render.table

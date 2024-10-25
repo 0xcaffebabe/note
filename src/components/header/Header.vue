@@ -9,10 +9,6 @@
         </div>
         <div class="content">
           <div>
-            <instapaper-shower />
-            <el-divider direction="vertical" />
-            <datasource-selector />
-            <el-divider direction="vertical" />
             <!-- 正常/暗色模式切换按钮 -->
             <theme-switcher />
             <!-- 全屏/缓存清空 -->
@@ -34,7 +30,6 @@
               <el-button size="small" @click="enterZenMode" title="进入专注模式">
                 <el-icon><aim /></el-icon>
               </el-button>
-              <yueque-draft-shower />
             </el-button-group>
             <el-divider direction="vertical" />
             <!-- 搜索 -->
@@ -66,22 +61,16 @@
 <script setup lang="ts">
 import {Sunny, Moon, Monitor, Brush, Aim, Refresh } from '@element-plus/icons-vue';
 import EventBus from "@/components/EventBus";
-import InstapaperShower from "./InstapaperShower.vue";
-import YuequeDraftShower from "./YuequeDraftShower.vue";
 import ThemeSwitcher from "./ThemeSwitcher.vue";
 </script>
 
 <script lang="ts">
 import { defineComponent } from "vue";
 import config from "@/config";
-import DatasourceSelector from './datasource/DatasourceSelector.vue';
 import CacheService from "@/service/CacheService";
 import { ElMessage  } from 'element-plus';
 
 export default defineComponent({
-  components: {
-    DatasourceSelector
-  },
   data() {
     return {
       name: "my-book" as string,

@@ -4,12 +4,11 @@ import Cache from '@/decorator/Cache'
 import Cacheable from '@/decorator/Cacheable'
 import { StatisticInfo } from '@/dto/StatisticInfo'
 import DocUtils from '@/util/DocUtils'
-import {KnowledgeLinkNode, KnowledgeNode} from '@/dto/KnowledgeNode'
+import {KnowledgeNode} from '@/dto/KnowledgeNode'
 import DatasourceService from '@/service/DatasourceService'
 import UrlUtils from '@/util/UrlUtils'
 import UrlConst from '@/const/UrlConst'
 import CommitInfo from '@/dto/CommitInfo'
-import YuequeDraft from '@/dto/YuqueDraft'
 import Category from '@/dto/Category'
 import ClusterNode from '@/dto/ClusterNode'
 import DocQuality from '@/dto/doc/DocQuality'
@@ -163,25 +162,6 @@ class Api implements Cacheable{
   @cache
   public async getDocQualityData(): Promise<DocQuality[]> {
     return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.docQualityJson))).data
-  }
-
-  /**
-   *
-   * 获取instapaper原始html数据
-   * @return {*}  {Promise<string>}
-   * @memberof Api
-   */
-  public async getInstapaperRawData(): Promise<string> {
-    return (await axios.get("https://proxy.ismy.wang/api/instapaper/list")).data
-  }
-
-  public async getYuqueDraft(): Promise<YuequeDraft> {
-    const data = (await axios.get("https://proxy.ismy.wang/api/yuque/draft")).data
-    return {
-      content: data.data.content,
-      title: data.data.title,
-      updateAt: data.data.content_updated_at
-    }
   }
 
   private async requestDataUseJsDelivr(url: string): Promise<any> {

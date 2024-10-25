@@ -13,12 +13,9 @@
   <knowledge-reviewer ref="knowledgeReviewer" />
   <knowledge-network ref="knowledgeNetwork" :doc="doc"/>
   <knowledge-trend ref="knowledgeTrend"/>
-  <reading-history ref="readingHistory" />
-  <knowledge-redundancy ref="knowledgeRedundancy"/>
   <mermaid-shower ref="mermaidShower"/>
   <selection-popover />
   <mobile-tool-box 
-    @showReadingHistory="showReadingHistory"
     @showMindGraph="showMindGraph"
     @showKnowledgeReviewer="showKnowledgeReviewer"
     @showKnowledgeNetwork="showKnowledgeNetwork"
@@ -44,7 +41,6 @@ import MobileToolBox from '../MobileToolBox.vue'
 import KnowledgeReviewer from '../knowledge/KnowledgeReviewer.vue'
 import KnowledgeNetwork from '../knowledge/KnowledgeNetwork.vue'
 import KnowledgeTrend from '../knowledge/trend/KnowledgeTrend.vue'
-import ReadingHistory from '../history/ReadingHistory.vue'
 import DocMetadataInfo from '../metadata/DocMetadataInfo.vue'
 import MindGraph from '../mind/MindGraph.vue'
 import KeyWordFinder from '../KeyWordFinder.vue'
@@ -62,7 +58,6 @@ export default defineComponent({
     KnowledgeReviewer,
     KnowledgeNetwork,
     KnowledgeTrend,
-    ReadingHistory,
     DocMetadataInfo,
     MindGraph,
     KeyWordFinder,
@@ -73,13 +68,9 @@ export default defineComponent({
   setup() {
     const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
     const knowledgeNetwork = ref<InstanceType<typeof KnowledgeNetwork>>()
-    const readingHistory = ref<InstanceType<typeof ReadingHistory>>()
     const mindGraph = ref<InstanceType<typeof MindGraph>>()
     const kwFinder = ref<InstanceType<typeof KeyWordFinder>>()
     const llm = ref<InstanceType<typeof LLM>>()
-    const showReadingHistory = () => {
-      readingHistory.value?.show()
-    }
     const showMindGraph = () => {
       mindGraph.value?.show()
     }
@@ -93,7 +84,6 @@ export default defineComponent({
       llm.value?.show();
     }
     return {
-      readingHistory,showReadingHistory,
       knowledgeReviewer, showKnowledgeReviewer,
       knowledgeNetwork, showKnowledgeNetwork,
       mindGraph, showMindGraph,

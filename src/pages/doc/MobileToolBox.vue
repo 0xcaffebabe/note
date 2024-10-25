@@ -41,7 +41,6 @@ import { defineComponent } from "vue";
 import {Tools} from '@element-plus/icons-vue'
 
 type ActionType = 
-    'showReadingHistory' |
     'showMindGraph' |
     'showKnowledgeNetwork' |
     'showBookMarkAdder' |
@@ -99,16 +98,8 @@ export default defineComponent({
         {name: '知识网络', type: 'warning', action: 'showKnowledgeNetwork'},
         {name: '知识回顾', type: 'primary', action: 'showKnowledgeReviewer'},
         {name: '知识趋势', type: 'danger', action: 'showKnowledgeTrend'},
-        {name: '知识助手', type: 'warning', action: 'showLlm'},
-        {name: '阅读历史', type: 'primary', action: 'showReadingHistory', divided: true},
+        {name: '知识助手', type: 'warning', action: 'showLlm', divided: true},
         {name: '文本搜索', type: 'warning', action: 'showKwFinder'},
-        // {name: '添加书签', type: 'danger', action: 'showBookMarkAdder', divided: true},
-        // {name: '书签列表', type: 'info', action: 'showBookMarkList'},
-        // {name: '路径复制', type: 'success', action: 'copyDocPath'},
-        // {name: '链接列表', type: 'primary', action: 'showLinkList',},
-        // {name: '去到DOC', type: 'info', action: 'goToDoc', divided: true},
-        // {name: '去到PPT', type: 'danger', action: 'goToPpt'},
-        // {name: '更多设置', type: 'info', action: 'showMoreSetting' as LocalActionType, local: true, divided: true},
       ] as Action[]
     }
   },

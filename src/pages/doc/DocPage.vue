@@ -82,7 +82,6 @@ import Content from "@/dto/Content";
 import docService from "@/service/DocService";
 import ContentsList from "./contents/ContentsList.vue";
 import HistoryList from "./commit/HistoryList.vue";
-import ReadingHistory from "./history/ReadingHistory.vue"
 import MindGraph from './mind/MindGraph.vue'
 import MindNote from './mind/MindNote.vue'
 import LinkList from './LinkList.vue';
@@ -118,7 +117,6 @@ export default defineComponent({
   components: {
     ContentsList,
     HistoryList,
-    ReadingHistory,
     MindGraph,
     MindNote,
     ToolBox,
@@ -149,16 +147,12 @@ export default defineComponent({
     
   },
   setup(){
-    const readingHistory = ref<InstanceType<typeof ReadingHistory>>()
     const mindGraph = ref<InstanceType<typeof MindGraph>>()
     const knowledgeNetwork = ref<InstanceType<typeof KnowledgeNetwork>>()
     const linkList = ref<InstanceType<typeof LinkList>>()
     const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
     const kwFinder = ref<InstanceType<typeof KeyWordFinder>>()
     const llm = ref<InstanceType<typeof LLM>>()
-    const showReadingHistory = () => {
-      readingHistory.value?.show()
-    }
     const showMindGraph = () => {
       mindGraph.value?.show()
     }
@@ -175,7 +169,6 @@ export default defineComponent({
       llm.value?.show();
     }
     return {
-      readingHistory,showReadingHistory, 
       mindGraph, showMindGraph, 
       knowledgeNetwork, showKnowledgeNetwork,
       linkList, showLinkList,

@@ -20,11 +20,9 @@
     @showKnowledgeReviewer="showKnowledgeReviewer"
     @showKnowledgeNetwork="showKnowledgeNetwork"
     @showKnowledgeTrend="showKnowledgeTrend"
-    @showKwFinder="showKwFinder"
     @showLlm="showLLM"
   />
   <LLM :doc="doc" ref="llm"/>
-  <key-word-finder ref="kwFinder" :kw="kw" @kwChanged="handleKwChanged"/>
 </template>
 
 <script lang="ts">
@@ -43,7 +41,6 @@ import KnowledgeNetwork from '../knowledge/KnowledgeNetwork.vue'
 import KnowledgeTrend from '../knowledge/trend/KnowledgeTrend.vue'
 import DocMetadataInfo from '../metadata/DocMetadataInfo.vue'
 import MindGraph from '../mind/MindGraph.vue'
-import KeyWordFinder from '../KeyWordFinder.vue'
 import TouchUtils from '@/util/TouchUtils'
 import SelectionPopover from '../tool/SelectionPopover.vue'
 import MermaidShower from '../mermaid-shower/MermaidShower.vue';
@@ -60,7 +57,6 @@ export default defineComponent({
     KnowledgeTrend,
     DocMetadataInfo,
     MindGraph,
-    KeyWordFinder,
     SelectionPopover,
     MermaidShower,
     LLM,
@@ -69,7 +65,6 @@ export default defineComponent({
     const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
     const knowledgeNetwork = ref<InstanceType<typeof KnowledgeNetwork>>()
     const mindGraph = ref<InstanceType<typeof MindGraph>>()
-    const kwFinder = ref<InstanceType<typeof KeyWordFinder>>()
     const llm = ref<InstanceType<typeof LLM>>()
     const showMindGraph = () => {
       mindGraph.value?.show()
@@ -88,7 +83,6 @@ export default defineComponent({
       knowledgeNetwork, showKnowledgeNetwork,
       mindGraph, showMindGraph,
       llm, showLLM,
-      kwFinder
     }
   },
   computed: {
@@ -114,14 +108,8 @@ export default defineComponent({
         document.body.scrollTo(0, DocService.getDocReadRecord(this.doc))
         this.eventManager!.renderMermaid();
         this.eventManager!.syncHeading(headingId);
-        // 高亮关键词相关处理
-        this.hilightKeywords(docEl, kw);
-        this.kwFinder?.refresh();
         // 渲染数学公式
         this.eventManager!.renderLatex(docEl);
-        if (!kw && this.kwFinder?.showFinder) {
-          this.kwFinder.hide()
-        }
         this.registerNecessaryEvent(docEl);
       })
     },
@@ -133,21 +121,6 @@ export default defineComponent({
     },
     showKnowledgeTrend(kw?: string) {
       (this.$refs.knowledgeTrend as InstanceType<typeof KnowledgeTrend>).show(this.file, kw)
-    },
-    handleKwChanged(kw: string){
-      const docEl = this.$refs.markdownSection as HTMLElement;
-      // 清空高亮关键词
-      docEl.querySelectorAll('mark').forEach(e => e.replaceWith(...e.childNodes))
-      // 高亮关键词
-      this.hilightKeywords(docEl, kw, true);
-      // 重新注册事件(高亮关键词替换了html 导致原来的事件失效)
-      this.registerNecessaryEvent(docEl)
-    },
-    hilightKeywords(docEl: HTMLElement, kw?: string, refreshKwFinder: boolean = false) {
-      this.kwFinder?.hilightKeywords(docEl, kw, refreshKwFinder)
-    },
-    showKwFinder() {
-      this.kwFinder?.show()
     },
   },
   beforeRouteUpdate(to, from) {

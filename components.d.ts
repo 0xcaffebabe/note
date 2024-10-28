@@ -8,7 +8,6 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     CategorySearch: typeof import('./src/components/search/CategorySearch.vue')['default']
-    DatasourceSelector: typeof import('./src/components/header/datasource/DatasourceSelector.vue')['default']
     ElAffix: typeof import('element-plus/es')['ElAffix']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElAside: typeof import('element-plus/es')['ElAside']
@@ -49,7 +48,6 @@ declare module 'vue' {
     ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
     ElRow: typeof import('element-plus/es')['ElRow']
     ElSelect: typeof import('element-plus/es')['ElSelect']
-    'ElSelect-': typeof import('element-plus/es')['ElSelect-']
     ElSkeleton: typeof import('element-plus/es')['ElSkeleton']
     ElSlider: typeof import('element-plus/es')['ElSlider']
     ElSubMenu: typeof import('element-plus/es')['ElSubMenu']
@@ -63,7 +61,6 @@ declare module 'vue' {
     ElTimelineItem: typeof import('element-plus/es')['ElTimelineItem']
     Header: typeof import('./src/components/header/Header.vue')['default']
     ImageViewer: typeof import('./src/components/ImageViewer.vue')['default']
-    InstapaperShower: typeof import('./src/components/header/InstapaperShower.vue')['default']
     Mind: typeof import('./src/components/mind/Mind.vue')['default']
     MobileHeader: typeof import('./src/components/header/mobile/MobileHeader.vue')['default']
     MobileImageViewer: typeof import('./src/components/mobile/MobileImageViewer.vue')['default']
@@ -71,7 +68,6 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     Search: typeof import('./src/components/search/Search.vue')['default']
     ThemeSwitcher: typeof import('./src/components/header/ThemeSwitcher.vue')['default']
-    YuequeDraftShower: typeof import('./src/components/header/YuequeDraftShower.vue')['default']
   }
   export interface ComponentCustomProperties {
     vLoading: typeof import('element-plus/es')['ElLoadingDirective']

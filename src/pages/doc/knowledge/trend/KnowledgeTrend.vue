@@ -58,7 +58,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import * as echarts from "echarts/core";
-import i18n_zh from './components/i18n_zh';
 import {
   TitleComponent,
   TitleComponentOption,
@@ -134,9 +133,6 @@ export default defineComponent({
     
   },
   methods: {
-    localeName(geoCode: string, defaultVal: string) {
-      return (i18n_zh.countries as any)[geoCode] || defaultVal
-    },
     show(file: DocFileInfo, kw?: string) {
       if (kw) {
         this.keywords = [kw]

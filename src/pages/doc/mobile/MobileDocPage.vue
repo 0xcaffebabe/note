@@ -10,7 +10,7 @@
   <selection-popover ref="selectionPopover" @showKnowledgeTrend="showKnowledgeTrend"/>
   <mind-graph ref="mindGraph" />
   <mobile-image-viewer ref="imageViewer" />
-  <knowledge-reviewer ref="knowledgeReviewer" />
+  <knowledge-reviewer ref="knowledgeReviewer" :doc="doc" />
   <knowledge-network ref="knowledgeNetwork" :doc="doc"/>
   <knowledge-trend ref="knowledgeTrend"/>
   <mermaid-shower ref="mermaidShower"/>

@@ -38,25 +38,19 @@
   </el-container>
   <!-- 工具栏开始 -->
   <tool-box 
-    @showReadingHistory="showReadingHistory"
     @showMindGraph="showMindGraph();showAside = false;isDrawerShow = true"
     @showKnowledgeNetwork="showKnowledgeNetwork();showAside = false;isDrawerShow = true"
     @showKnowledgeTrend="showKnowledgeTrend()"
     @copyDocPath="handleCopyDocPath"
     @showLinkList="showLinkList"
-    @go-to-ppt="goToPpt"
     @showKnowledgeReviewer="showKnowledgeReviewer"
     @show-llm="showLLM();showAside = false;isDrawerShow = true"
     @open-in-editor="openInEditor"
   />
   <!-- 工具栏结束 -->
-  <!-- 关键词提示器开始 -->
-  <key-word-finder ref="kwFinder" :kw="kw" @kwChanged="handleKwChanged"/>
-  <!-- 关键词提示器结束 -->
   <link-popover ref="linkPopover"/>
   <selection-popover ref="selectionPopover" @showKnowledgeTrend="showKnowledgeTrend"/>
   <el-backtop :bottom="220" :right="26" />
-  <reading-history ref="readingHistory" />
   <mind-graph ref="mindGraph" @close="showAside = true;isDrawerShow = false" />
   <link-list :html="contentHtml" ref="linkList"/>
   <knowledge-reviewer ref="knowledgeReviewer" :doc="doc"/>
@@ -102,7 +96,6 @@ import DocPageEventMnager from './DocPageEventManager';
 import ResourceBrower from "./ResourceBrower.vue";
 import ImageViewer from "@/components/ImageViewer.vue";
 import KnowledgeReviewer from "./knowledge/KnowledgeReviewer.vue";
-import KeyWordFinder from "./KeyWordFinder.vue";
 import KnowledgeTrend from './knowledge/trend/KnowledgeTrend.vue'
 import DocMetadataInfo from './metadata/DocMetadataInfo.vue'
 import SelectionPopover from './tool/SelectionPopover.vue'
@@ -129,7 +122,6 @@ export default defineComponent({
     ResourceBrower,
     ImageViewer,
     KnowledgeReviewer,
-    KeyWordFinder,
     KnowledgeTrend,
     DocMetadataInfo,
     SelectionPopover,
@@ -151,7 +143,6 @@ export default defineComponent({
     const knowledgeNetwork = ref<InstanceType<typeof KnowledgeNetwork>>()
     const linkList = ref<InstanceType<typeof LinkList>>()
     const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
-    const kwFinder = ref<InstanceType<typeof KeyWordFinder>>()
     const llm = ref<InstanceType<typeof LLM>>()
     const showMindGraph = () => {
       mindGraph.value?.show()
@@ -173,8 +164,7 @@ export default defineComponent({
       knowledgeNetwork, showKnowledgeNetwork,
       linkList, showLinkList,
       knowledgeReviewer, showKnowledgeReviewer,
-      llm, showLLM,
-      kwFinder
+      llm, showLLM
     }
   },
   data() {
@@ -246,20 +236,8 @@ export default defineComponent({
         this.syncCategoryListScrollBar();
         // 更新知识网络
         (this.$refs.knowledgeNetwork as InstanceType<typeof KnowledgeNetwork>).init();
-        if (kw) {
-          // 高亮关键词
-          this.hilightKeywords(docEl, kw);
-          // 渲染mermaid
-          this.eventManager!.renderMermaid();
-        }
-        // 更新关键词寻找器状态
-        this.kwFinder?.refresh();
         // 渲染数学公式
         this.eventManager!.renderLatex(docEl);
-        // 如果关键词为空且关键词寻找器为显式状态
-        if (!kw && this.kwFinder?.showFinder) {
-          this.kwFinder.hide()
-        }
         this.registerNecessaryEvent(docEl)
       });
       this.loading = false;
@@ -275,26 +253,6 @@ export default defineComponent({
     },
     generateTOC() {
       this.contentsList = docService.getContent(this.contentHtml);
-    },
-    handleKwChanged(kw: string){
-      const docEl = this.$refs.markdownSection as HTMLElement;
-      // 清空高亮关键词
-      docEl.querySelectorAll('mark').forEach(e => e.replaceWith(...e.childNodes))
-      // 高亮关键词
-      this.hilightKeywords(docEl, kw, true);
-      // 重新注册事件(高亮关键词替换了html 导致原来的事件失效)
-      this.registerNecessaryEvent(docEl)
-    },
-    hilightKeywords(docEl: HTMLElement, kw?: string, refreshKwFinder: boolean = false) {
-      this.kwFinder?.hilightKeywords(docEl, kw, refreshKwFinder)
-    },
-    goToPpt(){
-      const heading = this.$store.state.currentHeading;
-      if (heading) {
-        this.$router.push(`/ppt/${this.doc}?headingId=${heading}`)
-      }else {
-        this.$router.push(`/ppt/${this.doc}`)
-      }
     },
     showKnowledgeTrend(kw?: string) {
       (this.$refs.knowledgeTrend as InstanceType<typeof KnowledgeTrend>).show(this.file, kw)
@@ -313,13 +271,6 @@ export default defineComponent({
     this.eventManager!.registerScrollListener();
     this.eventManager!.listenEventBus();
     this.showDoc(this.$route.params.doc.toString(), this.$route.query.headingId?.toString(), this.$route.query.kw?.toString());
-    // 全局快捷键监听
-    document.addEventListener("keydown", (e) => {
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() == "f") {
-        this.kwFinder?.toggle()
-        e.preventDefault();
-      }
-    });
   },
   unmounted(){
     // 一些清理操作

@@ -50,8 +50,6 @@ type ActionType =
     'showKnowledgeNetwork' |
     'copyDocPath' |
     'showLinkList' |
-    'goToDoc' | 
-    'goToPpt' |
     'openInEditor' |
     'showLlm'
 
@@ -107,8 +105,6 @@ export default defineComponent({
         {name: '路径复制', type: 'success', action: 'copyDocPath', hotkey: 'alt + c', divided: true},
         {name: '在VSC打开', type: 'danger', action: 'openInEditor', hotkey: 'alt + v'},
         {name: '链接列表', type: 'primary', action: 'showLinkList',},
-        {name: '去到DOC', type: 'info', action: 'goToDoc', divided: true},
-        {name: '去到PPT', type: 'danger', action: 'goToPpt'},
         {name: '随机复习', type: 'primary', action: 'randomReview' as LocalActionType, local: true, hotkey: 'alt + n'},
         {name: '更多设置', type: 'info', action: 'showMoreSetting' as LocalActionType, local: true, divided: true},
       ] as Action[]
@@ -159,7 +155,7 @@ export default defineComponent({
       }
     },
     handleFontSizeChange(val: number) {
-      const dom: HTMLElement = document.querySelector('.markdown-section')!;
+      const dom: HTMLElement = document.querySelector('.main.markdown-section')!;
       dom.style.fontSize = val + 'px';
     }
   },

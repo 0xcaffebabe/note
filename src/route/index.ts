@@ -34,7 +34,6 @@ const routes: RouteRecordRaw[] = [
         beforeEnter: tablet2Mobile
       },
       { path: "/tag", component: () => import("@/pages/tag/TagListPage.vue") },
-      { path: "/ppt/:doc", component: () => import("@/pages/ppt/PptPage.vue") },
       { path: "/cluster", component: () => import("@/pages/DocCluster.vue") },
     ] 
   },

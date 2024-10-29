@@ -171,7 +171,7 @@ export default defineComponent({
     return {
       showDrawer: false,
       multiLLMShow: false,
-      llmMode: '',
+      llmMode: 'category',
       model: '@cf/qwen/qwen1.5-14b-chat-awq',
       models: [
         '@cf/qwen/qwen1.5-14b-chat-awq',
@@ -319,6 +319,9 @@ export default defineComponent({
       await requestLLMAndRender(this.model, 'llm', this.query)
       this.loading = false
     }
+  },
+  async created() {
+    this.query = await this.categoryTempalte()
   }
 });
 </script>

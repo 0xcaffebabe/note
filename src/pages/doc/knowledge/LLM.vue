@@ -40,7 +40,7 @@
       <div style="height: 840px;">
         <el-row :gutter="12">
           <el-col v-for="(item, index) in models" :key="item" :span="6">
-            <p>{{ item }}</p>
+            <span>{{ item }}</span> <el-button type="primary" size="small" @click="regenerate(index)">重新生成</el-button>
             <div :id="'llm' + index" class="content" style="max-height: 800px"></div>
           </el-col>
         </el-row>
@@ -313,6 +313,9 @@ export default defineComponent({
           requestLLMAndRender(this.models[i], 'llm' + i, this.query)
         }
       }, 1000)
+    },
+    regenerate(index: number) {
+      requestLLMAndRender(this.models[index], 'llm' + index, this.query)
     },
     async handleSend() {
       this.loading = true;

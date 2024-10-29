@@ -1,4 +1,3 @@
-import queryString from 'query-string'
 
 /**
  *
@@ -58,25 +57,6 @@ function docId2Url(id: string): string {
   return id.split('-').join('/').replace(/@@/g, '-') + '.md'
 }
 
-function docId2UrlWithHeading(id: string): string {
-  if (!id) {
-    return ""
-  }
-  const arr = id.split('?');
-  id = arr[0];
-  const url = id.split('-').join('/').replace(/@@/g, '-') + '.md';
-  if (arr.length == 1) {
-    return url;
-  }else {
-    const headingId = queryString.parse(arr[1]).headingId;
-    if (headingId && headingId !== 'undefined') {
-      return url + '#' + queryString.parse(arr[1]).headingId;
-    }else {
-      return url;
-    }
-  }
-}
-
 export default {
-  docId2Url, docUrl2Id, resloveDocUrl, docId2UrlWithHeading
+  docId2Url, docUrl2Id, resloveDocUrl
 }

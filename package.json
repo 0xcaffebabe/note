@@ -15,7 +15,6 @@
     "echarts": "5.5.1",
     "echarts-wordcloud": "2.1.0",
     "element-plus": "2.8.4",
-    "hammerjs": "2.0.8",
     "js-yaml": "4.1.0",
     "jsmind": "0.8.5",
     "katex": "0.16.11",
@@ -34,7 +33,6 @@
   },
   "devDependencies": {
     "@types/diff": "5.2.2",
-    "@types/hammerjs": "2.0.45",
     "@types/js-yaml": "4.0.9",
     "@types/jsdom": "21.1.7",
     "@types/katex": "0.16.7",

@@ -7,7 +7,6 @@ import EventBus from "@/components/EventBus";
 import ImageViewerVue from "@/components/ImageViewer.vue";
 import MermaidUtils from "@/util/MermaidUtils";
 import MobileDocPage from "./mobile/MobileDocPage.vue";
-import Hammer from 'hammerjs'
 import SelectionPopover from "./tool/SelectionPopover.vue";
 import InstantPreviewer from './tool/InstantPreviewer.vue'
 import MermaidShower from './mermaid-shower/MermaidShower.vue';
@@ -15,6 +14,7 @@ import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 import katex from 'katex'
 import 'katex/dist/katex.css'
+import TouchUtils from "@/util/TouchUtils";
 
 class DocPageEventManager {
 
@@ -85,10 +85,21 @@ class DocPageEventManager {
           return false
         })
       }else {
-        new Hammer(a).on('press', e => {
-          const originLink = a.getAttribute('origin-link')!;
-          (this.getRef('linkPopover') as InstanceType<typeof LinkPopover>).show(originLink, e.center.x, e.center.y);
-          return false;
+        a.addEventListener('click', e => {
+          e.stopPropagation()
+          e.preventDefault()
+        })
+        const originLink = a.getAttribute('origin-link')!;
+        TouchUtils.onPress(a, (duration) => {
+          if (duration <= 500) {
+            this.docPageInstance.$router.push(a.getAttribute('href')!.replace('#/', ''))
+            console.log('click')
+            return;
+          }
+          if (duration > 500) {
+            (this.getRef('linkPopover') as InstanceType<typeof LinkPopover>).show(originLink, window.innerWidth / 10, 100);
+            return
+          }
         })
       }
     }

@@ -117,6 +117,14 @@ export default defineComponent({
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   z-index: 9999;
 }
+.preview-markdown {
+  max-height: 100%;
+}
+@media screen and(max-width: 800px) {
+  .popover {
+    width: 80%;
+  }
+}
 .close-button {
   float: right;
 }

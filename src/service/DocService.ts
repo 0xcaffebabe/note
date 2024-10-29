@@ -157,6 +157,9 @@ class DocService implements Cacheable{
    */
   @cache
   public renderMd(file: DocFileInfo) : string {
+    if (!file.content) {
+      return ''
+    }
     return this.renderMdFromText(file.content, file.id)
   }
 

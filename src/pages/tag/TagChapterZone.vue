@@ -1,17 +1,16 @@
 <template>
-  <div class="chapter-zone" v-show="chapters && chapters.length != 0">
-      <el-table :data="chapters" style="width: 100%">
-        <el-table-column label="匹配文章">
-          <template #default="scope">
-            <el-icon><timer /></el-icon>
-            <span style="margin-left: 10px">
-              <el-link type="primary" @click="$router.push('/doc/' + docUrl2Id(scope.row))" @contextmenu="handleDocLinkContextMenu(scope.row, $event)">{{docUrl2Id(scope.row)}}</el-link>
-            </span>
-          </template>
-        </el-table-column>
-      </el-table>
+  <div class="chapter-zone" v-if="chapters && chapters.length != 0">
+    <div>
+      <p>匹配文章</p>
+      <div v-for="c in chapters" :key="c" class="item">
+        <span style="margin-left: 10px">
+          <el-link type="primary" @click="$router.push('/doc/' + docUrl2Id(c))"
+            @contextmenu="handleDocLinkContextMenu(c, $event)">{{ extractDocName(c) }}</el-link>
+        </span>
+      </div>
     </div>
-    <!-- <link-popover ref="linkPopover" /> -->
+  </div>
+  <!-- <link-popover ref="linkPopover" /> -->
 </template>
 
 <script lang="ts" setup>
@@ -20,7 +19,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from 'vue'
-import {Timer} from '@element-plus/icons-vue'
+import { Timer } from '@element-plus/icons-vue'
 import DocUtils from "@/util/DocUtils";
 
 export default defineComponent({
@@ -33,11 +32,12 @@ export default defineComponent({
       type: Object as PropType<string[]>
     }
   },
-  setup() {
-    
-  },
   methods: {
-    docUrl2Id(url: string): string{
+    extractDocName(url: string) {
+      const arr = DocUtils.docUrl2Id(url).split("-");
+      return arr[arr.length - 1];
+    },
+    docUrl2Id(url: string): string {
       return DocUtils.docUrl2Id(url);
     },
     handleDocLinkContextMenu(docLink: string, event: MouseEvent) {
@@ -55,5 +55,12 @@ export default defineComponent({
   // max-width: 60%;
   text-align: center;
   margin: 0 auto;
+}
+.item {
+  padding: 4px 0;
+  display: inline-block;
+  .el-link {
+    font-size: 20px;
+  }
 }
 </style>

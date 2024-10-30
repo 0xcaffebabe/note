@@ -26,14 +26,13 @@
           <template #header>
             <h1 class="data-title">相关查询</h1>
           </template>
-          <el-table :data="releatedQueriesData" height="250" style="width: 100%">
-            <el-table-column prop="query" label="查询" >
-              <template #default="scope">
-                <el-link @click="search(scope.row.query)">{{scope.row.query}}</el-link>
-              </template>
-            </el-table-column>
-            <el-table-column prop="value" label="流行度"/>
-          </el-table>
+          <div>
+            <p>查询 / 流行度</p>
+            <p v-for="item in relatedQuery" :key="item">
+              <span class="related-query-kw">{{ item.query }}</span>
+              <span class="related-query-value">{{ item.value }}</span>
+            </p>
+          </div>
         </el-card>
       </el-col>
       <el-col :md="12" :xs="24">
@@ -41,14 +40,13 @@
           <template #header>
             <h1 class="data-title">相关主题</h1>
           </template>
-          <el-table :data="releatedTopicsData" height="250" style="width: 100%">
-            <el-table-column prop="topc.title" label="主题">
-               <template #default="scope">
-                  <el-link @click="search(scope.row.topic.title)">{{scope.row.topic.title}}</el-link>
-              </template>
-            </el-table-column>
-            <el-table-column prop="value" label="流行度"/>
-          </el-table>
+          <div>
+            <p>主题 / 流行度</p>
+            <p v-for="item in releatedTopicsData" :key="item">
+              <span class="related-topic-kw">{{ item.topic.title }}</span>
+              <span class="related-topic-value">{{ item.value }}</span>
+            </p>
+          </div>
         </el-card>
       </el-col>
     </el-row>

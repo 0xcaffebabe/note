@@ -1,7 +1,7 @@
 import BaseService from "../build/BaseService"
 import fs from 'fs'
 import jieba from 'nodejieba'
-import {cloneDeep} from 'lodash-es'
+import {cloneDeep} from '../util/DataUtils'
 
 const stopWords = ['的', '是', '在', '一个', '和',
                  '与', '批注', '可以', '使用', '通过', 'md', '据库', '这个', '截图', '没有',
@@ -60,7 +60,7 @@ function getDocVec(doc: string): number[] {
                 .filter(v => !isStopWord(v))
                 .forEach(i => map.set(i, (map.get(i) || 0) + 1))
   
-  const list = cloneDeep(totalList)
+  const list = cloneDeep(totalList) as [string, number][]
   list.forEach(v => v[1] = map.get(v[0]) || 0)
   return list.map(v => v[1])
 }

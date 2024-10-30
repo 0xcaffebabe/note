@@ -5,7 +5,7 @@ import util from 'util'
 import { cleanText } from '../util/StringUtils';
 import ClusterNode from '../dto/ClusterNode';
 import jieba from 'nodejieba'
-import {cloneDeep} from 'lodash-es'
+import {cloneDeep} from '../util/DataUtils'
 
 const reg = new RegExp("[\\u4E00-\\u9FFF]+", "g");
 
@@ -184,7 +184,7 @@ function getDocVec(file: string): number[] {
                 .filter(v => !isStopWord(v))
                 .forEach(i => map.set(i, (map.get(i) || 0) + 1))
   
-  const list = cloneDeep(totalList)
+  const list = cloneDeep(totalList) as [string, number][]
   list.forEach(v => v[1] = map.get(v[0]) || 0)
   const vec = list.map(v => v[1])
   vecCache.set(file, vec)

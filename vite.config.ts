@@ -110,7 +110,7 @@ export default defineConfig({
         manualChunks(id: string): string {
           const indepentDependcies = ['element-plus', 'vue', 'jspdf',
             'html2canvas', 'echarts', 'zrender', 'marked', 'mermaid',
-            'katex', 'lodash-es', 'elkjs', 'cytoscape']
+            'katex', 'elkjs', 'cytoscape']
           for (let depend of indepentDependcies) {
             if (id.includes('node_modules') && id.includes(depend)) {
               return depend

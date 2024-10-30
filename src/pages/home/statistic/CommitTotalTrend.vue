@@ -28,7 +28,7 @@ import {
 import { LineChart, LineSeriesOption } from 'echarts/charts';
 import { UniversalTransition } from 'echarts/features';
 import { CanvasRenderer } from 'echarts/renderers';
-import {cloneDeep} from 'lodash-es'
+import {cloneDeep} from '@/util/DataUtils'
 
 echarts.use([
   TitleComponent,
@@ -74,7 +74,7 @@ export default defineComponent({
   },
   methods: {
     async init() {
-      const data = cloneDeep(await api.getCommitTotalTrend());
+      const data = cloneDeep(await api.getCommitTotalTrend()) as [string, number, number, number][];
       const myChart = echarts.init(this.$refs.chartContainer as HTMLElement);
 
       if (this.type === 'relative') {

@@ -43,6 +43,11 @@ class TagService implements Cacheable{
     return JSON.parse(JSON.stringify(this.tagSumList));
   }
 
+  @cache
+  public getTagList(): string[] {
+    return this.tagList.map(v => v[0]);
+  }
+
 
   /**
    *

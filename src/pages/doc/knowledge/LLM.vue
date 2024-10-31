@@ -57,6 +57,7 @@ import Content from '@/dto/Content'
 import { marked } from 'marked'
 import CategoryService from "@/service/CategoryService";
 import Category from "@/dto/Category";
+import TagService from "@/service/TagService";
 
 function contents2String(contents: Content[]): string {
   if (!contents || contents.length == 0) {
@@ -176,7 +177,7 @@ export default defineComponent({
       models: [
         '@cf/qwen/qwen1.5-14b-chat-awq',
         '@hf/google/gemma-7b-it',
-        '@hf/nousresearch/hermes-2-pro-mistral-7b',
+        '@hf/thebloke/deepseek-coder-6.7b-instruct-awq',
         '@cf/meta/llama-3.1-70b-instruct'
       ],
       llmContent: '',
@@ -184,9 +185,10 @@ export default defineComponent({
       loading: false,
       presets: [
         { name: '根据整个目录回答问题', value: 'answerByAllCategory', template: () => this.answerByAllCategoryTemplate() },
-        { name: '概括总结', value: 'summary', template: () => this.summaryTemplate() },
         { name: '根据内容回答问题', value: 'ansuwerByContent', template: () => this.answerByContentTempalte() },
         { name: '根据目录回答问题', value: 'ansuwerByCategory', template: () => this.answerByCategoryTempalte() },
+        { name: '标签预测', value: 'predictTag', template: () => this.tagsPredicateTemplate() },
+        { name: '概括总结', value: 'summary', template: () => this.summaryTemplate() },
         { name: '补充目录', value: 'category', template: () => this.categoryTempalte() },
         { name: '更新与趋势', value: 'trends', template: () => this.trendsTemplate() },
         { name: '历史背景', value: 'history', template: () => this.historyTemplate() },
@@ -285,6 +287,20 @@ export default defineComponent({
         ---
         ${file.content}
         ---
+      `
+    },
+    async tagsPredicateTemplate() {
+      const tags = TagService.getTagList()
+      const file = await DocService.getDocFileInfo(this.doc)
+      return `
+      根据这篇 《${this.doc}》的内容，从标签列表中挑选出最合适的 5 个标签，标签尽量从标签列表选择，当然也可以根据文本内容生成，但是生成的标签应具备抽象通用的语义，标签不要太过具体
+      
+      标签列表：${tags.join(",")}
+
+      文本内容：
+      ---
+      ${file.content}
+      ---
       `
     },
     show() {

@@ -53,16 +53,10 @@ export default defineComponent({
     // 移动目录的滚动条 让当前选中菜单项处于可视区域
     syncCategoryListScrollBar() {
       const document = this.$refs.root as HTMLElement;
-      const categoryWrapper: HTMLElement =
-        document.querySelector(".category-wrapper")!;
       const activeMenu: HTMLElement = document.querySelector(
         ".el-menu-item.is-active"
       ) as HTMLElement;
       if (!activeMenu) {
-        return
-      }
-      const y = activeMenu.getBoundingClientRect().y
-      if (y > 0 && y < window.innerHeight) {
         return
       }
       activeMenu.scrollIntoView({behavior: 'smooth'})

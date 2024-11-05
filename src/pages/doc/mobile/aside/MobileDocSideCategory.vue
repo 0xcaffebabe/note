@@ -53,25 +53,13 @@ export default defineComponent({
     },
     // 移动目录的滚动条 让当前选中菜单项处于可视区域
     syncCategoryListScrollBar() {
-      const categoryWrapper: HTMLElement =
-        document.querySelector('.el-drawer__body')!
       const activeMenu: HTMLElement = document.querySelector(
         ".el-menu-item.is-active"
       ) as HTMLElement;
-      const activeMenuPos: number = activeMenu.getBoundingClientRect().y;
-      const amount = activeMenuPos < 350 ? -50 : 50;
-      let timer = setInterval(() => {
-        const activeMenuPos1: number = activeMenu.getBoundingClientRect().y;
-        if (
-          (activeMenuPos1 >= 350 &&
-            activeMenuPos1 <= categoryWrapper.offsetHeight - 350) ||
-          categoryWrapper.scrollTop + amount < 0
-        ) {
-          clearInterval(timer);
-          return;
-        }
-        categoryWrapper.scrollTo(0, categoryWrapper.scrollTop + amount);
-      }, 4);
+      if (!activeMenu) {
+        return
+      }
+      activeMenu.scrollIntoView({behavior: 'smooth'})
     },
   },
   components: { CategoryList, ArrowRightBold },

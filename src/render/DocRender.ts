@@ -141,7 +141,7 @@ export default class DocRender {
         return `<a href='https://www.rfc-editor.org/rfc/${str.toLowerCase().replace('[', '').replace(']', '')}'>${str}</a>`
       })
       if (token.tokens) {
-        return token.text
+        return oriTextRender.apply(render, [token])
       }
       return text
     }

@@ -1,11 +1,39 @@
 ---
-tags: ['数据库']
+tags: ['数据库', 'MySQL']
 ---
 # MYSQL
 
 ## 逻辑架构
 
-![MySQL逻辑架构](/assets/屏幕截图%202020-08-23%20142118.png)
+```mermaid
+---
+title: MySQL 逻辑架构
+---
+flowchart TB
+    subgraph 客户端
+        direction TB
+        Client1 --> Connection[连接/线程处理]
+    end
+
+    subgraph " "
+        direction TB
+        Connection --> Cache[查询缓存]
+        Connection --> Parser[解析器]
+        Parser --> Optimizer[优化器]
+    end
+
+    Optimizer --> 存储引擎
+
+    subgraph 存储引擎
+        direction LR
+        DB1[( )] 
+				DB2[( )]
+				DB3[( )]
+				DB4[( )]
+				DB5[( )]
+    end
+
+```
 
 取数据和发数据的流程：
 
@@ -241,7 +269,33 @@ Spring所表达的含义就是根据规则来决定要不要事务，怎么创�
 
 常用代理方式实现，代理服务器根据传进来的请求，决定将请求转发到哪台服务器
 
-![202031020242](/assets/202031020242.png)
+```mermaid
+flowchart LR
+    subgraph ApplicationLayer [Application layer]
+        Client[Web/Application/Client]
+    end
+
+    subgraph LoadBalancerLayer [Load balancer layer]
+        ReverseProxy
+    end
+
+    subgraph DatabaseClusterLayer [Database cluster layer]
+        Master[master]
+        Slave1[slave1]
+        Slave2[slave2]
+    end
+
+    ClusterControl[ClusterControl]
+
+    Client -- mysql --> ReverseProxy
+    ReverseProxy -- reads/writes --> Master
+    ReverseProxy -- reads --> Slave1
+    ReverseProxy -- reads --> Slave2
+    ClusterControl -.-> Master
+    ClusterControl -.-> Slave1
+    ClusterControl -.-> Slave2
+
+```
 
 ## 高可用性
 
@@ -411,3 +465,4 @@ ib_16384_x.dblwr   | 文件  | doublewrite 文件，格式为#ib_page_size_file_
 	mysql随机读的缓冲区大小
 - innodb_file_per_table
 	此参数确定为每张表分配一个新的文件
+

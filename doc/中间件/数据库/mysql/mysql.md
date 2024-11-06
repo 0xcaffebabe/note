@@ -44,7 +44,7 @@ flowchart TB
 
 ## 日志机制
 
-在数据更新写日志的时候，是先预提交写 redolog 和写 binlog，提交事务后再把redolog改成提交状态，要两阶段提交写的原因就是为了避免极端情况下两个日志的数据不一致
+在数据更新写日志的时候，是先预提交写 redolog 和写 binlog，提交事务后再把redolog 改成提交状态。要两阶段提交写的原因就是为了避免极端情况下两个日志的数据不一致
 
 ### redo log
 
@@ -52,7 +52,9 @@ flowchart TB
 - 记录的是修改后的值 无论是否提交都会被记录
 - 先写日志 再刷磁盘
 
-作用是在数据库崩溃时，用来恢复事务提交之前的数据修改，是一个循环写的日志文件，不断地被填写，当写满时，重新从开头开始覆盖
+![](/assets/2024116185859.webp)
+
+作用是在数据库崩溃时，用来恢复事务提交之前的数据修改，是一个循环写的日志文件，不断地被填写，当写满时，重新从开头开始覆盖。write pos 是当前记录的位置，一边写一边后移，写到第 3 号文件末尾后就回到 0 号文件开头。checkpoint 是当前要擦除的位置，也是往后推移并且循环的，擦除记录前要把记录更新到数据文件
 
 InnoDB 有一个后台线程，每隔 1 秒，就会把 redo log buffer 中的日志，调用 write 写到文件系统的 page cache，然后调用 fsync 持久化到磁盘，除此之外，redo log buffer 占用的空间即将达到 innodb_log_buffer_size 一半的时候，后台线程会主动写盘，另一种是，并行的事务提交的时候，顺带将这个事务的 redo log buffer 持久化到磁盘
 
@@ -97,7 +99,7 @@ InnoDB 有一个后台线程，每隔 1 秒，就会把 redo log buffer 中的�
 
 对比
 
-- 表级锁： MySQL中锁定 粒度最大 的一种锁，对当前操作的整张表加锁，实现简单，资源消耗也比较少，加锁快，不会出现死锁。其锁定粒度最大，触发锁冲突的概率最高，并发度最低，MyISAM和 InnoDB引擎都支持表级锁。
+- 表级锁： MySQL中锁定粒度最大的一种锁，对当前操作的整张表加锁，实现简单，资源消耗也比较少，加锁快，不会出现死锁。其锁定粒度最大，触发锁冲突的概率最高，并发度最低，MyISAM和 InnoDB引擎都支持表级锁。
 - 行级锁： MySQL中锁定 粒度最小的一种锁，只针对当前操作的行进行加锁。 行级锁能大大减少数据库操作的冲突。其加锁粒度最小，并发度高，但加锁的开销也最大，加锁慢，会出现死锁。
 
 MySQL的锁释放是在COMMIT或者ROLLBACK时释放的。隐式锁定是存储引擎根据隔离级别自动进行，但也可以进行显式锁定：
@@ -115,7 +117,7 @@ mysqldump 在备份时使用参数–single-transaction 的时候，导数据之
 ### 表级锁
 
 - lock tables … read/write：使用了之后在本线程之内只能操作这条语句指定的表及读写类型
-- 元数据锁（MDL）：主要防止修改表结构的同时其他事务修改数据
+- 元数据锁（MDL）：主要防止修改表结构的同时其他事务修改数据，事务中的 MDL 锁，在语句执行开始时申请，但是语句结束后并不会马上释放，而会等到整个事务提交后再释放
 
 为了防止拿不到元数据锁一直等待：一些 MySQL 的分支支持NOWAIT/WAIT n 这个语法，等待一段时间拿不到锁就终止 DDL 语句
 
@@ -263,40 +265,6 @@ Spring所表达的含义就是根据规则来决定要不要事务，怎么创�
 
 1、spring里面，方法嵌套调用外层读取数据和内层读取数据效果与数据库隔离级别的关系。
 
-#### 可重复读是默认，可不一定是常用的。乐观锁必不可少。
-
-#### 实现
-
-常用代理方式实现，代理服务器根据传进来的请求，决定将请求转发到哪台服务器
-
-```mermaid
-flowchart LR
-    subgraph ApplicationLayer [Application layer]
-        Client[Web/Application/Client]
-    end
-
-    subgraph LoadBalancerLayer [Load balancer layer]
-        ReverseProxy
-    end
-
-    subgraph DatabaseClusterLayer [Database cluster layer]
-        Master[master]
-        Slave1[slave1]
-        Slave2[slave2]
-    end
-
-    ClusterControl[ClusterControl]
-
-    Client -- mysql --> ReverseProxy
-    ReverseProxy -- reads/writes --> Master
-    ReverseProxy -- reads --> Slave1
-    ReverseProxy -- reads --> Slave2
-    ClusterControl -.-> Master
-    ClusterControl -.-> Slave1
-    ClusterControl -.-> Slave2
-
-```
-
 ## 高可用性
 
 ### 影响可用性的原因
@@ -376,7 +344,6 @@ ib_16384_x.dblwr   | 文件  | doublewrite 文件，格式为#ib_page_size_file_
 	- mysql存储引擎
 - skip-grant-tables
 	- 当忘记mysql的用户名密码的时候，可以在mysql配置文件中配置该参数，跳过权限表验证，不需要密码即可登录mysql
-
 
 ### character
 

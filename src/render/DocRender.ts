@@ -112,39 +112,39 @@ export default class DocRender {
 
     // 自定义文本渲染
     const oriTextRender = render.text;
-    render.text = (token): string => {
-      let text = token.text
-      // 自定义文本渲染 若发现关键字包含标签 则插入标记
-      for (const i of this.tagList) {
-        if (text.indexOf(i.tag) != -1) {
-          text = text.replace(i.tag, (str: string) => `<u class="doc-tag-main" tag="${i.tag}">${str}</u><sup class="doc-tag" tag="${i.tag}" style="background-color: ${TagUtils.calcTagColor(i.tag)}">${i.count}</sup>`);
-        }
-      }
-      // 自定义文本渲染 若发现关键字包含已存在的知识网络连接 则转为链接
-      text = text.replace(reg, (str: string) => {
-        const i = this.knowledgeLinkList.filter(v => v.name == str)[0];
-        if (!i) {
-          return str;
-        }
-        // 如果被插入的链接为当前渲染的文档 跳过
-        if (i.id == this.docId) {
-          return str;
-        }
-        // 如果被替换的关键字是标签 跳过
-        if (this.tagList.some(v => v.tag == str)) {
-          return str;
-        }
-        return `<a href='${buildDocLink(i.id, i.headingId!)}' class="potential-link" origin-link="${DocUtils.docId2Url(i.id)}">${str}</a>`
-      })
-      // 自动发现RFC
-      text = text.replace(/\[RFC\d+\]/gi, (str: string) => {
-        return `<a href='https://www.rfc-editor.org/rfc/${str.toLowerCase().replace('[', '').replace(']', '')}'>${str}</a>`
-      })
-      if (token.tokens) {
-        return oriTextRender.apply(render, [token])
-      }
-      return text
-    }
+    // render.text = (token): string => {
+    //   let text = token.text
+    //   // 自定义文本渲染 若发现关键字包含标签 则插入标记
+    //   for (const i of this.tagList) {
+    //     if (text.indexOf(i.tag) != -1) {
+    //       text = text.replace(i.tag, (str: string) => `<u class="doc-tag-main" tag="${i.tag}">${str}</u><sup class="doc-tag" tag="${i.tag}" style="background-color: ${TagUtils.calcTagColor(i.tag)}">${i.count}</sup>`);
+    //     }
+    //   }
+    //   // 自定义文本渲染 若发现关键字包含已存在的知识网络连接 则转为链接
+    //   text = text.replace(reg, (str: string) => {
+    //     const i = this.knowledgeLinkList.filter(v => v.name == str)[0];
+    //     if (!i) {
+    //       return str;
+    //     }
+    //     // 如果被插入的链接为当前渲染的文档 跳过
+    //     if (i.id == this.docId) {
+    //       return str;
+    //     }
+    //     // 如果被替换的关键字是标签 跳过
+    //     if (this.tagList.some(v => v.tag == str)) {
+    //       return str;
+    //     }
+    //     return `<a href='${buildDocLink(i.id, i.headingId!)}' class="potential-link" origin-link="${DocUtils.docId2Url(i.id)}">${str}</a>`
+    //   })
+    //   // 自动发现RFC
+    //   text = text.replace(/\[RFC\d+\]/gi, (str: string) => {
+    //     return `<a href='https://www.rfc-editor.org/rfc/${str.toLowerCase().replace('[', '').replace(']', '')}'>${str}</a>`
+    //   })
+    //   if (token.tokens) {
+    //     return oriTextRender.apply(render, [token])
+    //   }
+    //   return text
+    // }
     const slugger = new Slugger();
     const oriTableRender = render.table
     render.table = function (token) {

@@ -545,3 +545,7 @@ render(userInput)
 1. 最小权限原则
 2. 通用化的报错设置，避免暴露过多报错信息
 3. 修改默认账户信息
+
+### HSTS
+
+通过HTTP响应头中的Strict-Transport-Security字段来实现。当浏览器首次与支持HSTS的Web服务器建立安全连接时，服务器可以通过该响应头告知浏览器将来访问该站点时只使用HTTPS进行通信

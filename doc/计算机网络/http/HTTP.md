@@ -929,16 +929,3 @@ DELETE： | <http://www.example.com/users/1> | 删除用户ID为1的用户信息
 - REST本身没有传输可靠性支持 需要自己做好幂等性处理
 - REST缺乏对资源进行“部分”和“批量”的处理能力
 
-## 安全
-
-### HSTS
-
-通过HTTP响应头中的Strict-Transport-Security字段来实现。当浏览器首次与支持HSTS的Web服务器建立安全连接时，服务器可以通过该响应头告知浏览器将来访问该站点时只使用HTTPS进行通信
-
-### CSP
-
-通过响应头中的 Content-Security-Policy 字段告诉浏览器哪些资源可以加载到网页上，以及如何处理某些不安全行为，从而有效地减少了攻击者利用 XSS 等漏洞进行攻击的能力
-
-### X-Frame-Options
-
-用于控制浏览器是否允许页面被嵌入到 `<frame>`, `<iframe>`, `<object>` 或 `<embed>` 中。它是一种防止点击劫持攻击的安全机制

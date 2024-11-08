@@ -109,13 +109,25 @@ Thrift 里的 TBinaryProtocol 在顺序写入数据的过程中，不仅会写�
 
 ## 交互形式
 
-- 依赖中间做数据交互
+```mermaid
+---
+title: 依赖中间做数据交互
+---
+stateDiagram-v2
+  系统A --> 数据存储(DB、MQ、Redis)
+  系统B --> 数据存储(DB、MQ、Redis)
+  数据存储(DB、MQ、Redis) --> 系统B
+  数据存储(DB、MQ、Redis) --> 系统A
 
-![批注 2020-05-08 204733](/assets/批注%202020-05-08%20204733.png)
+```
 
-- 直接交互
-
-![批注 2020-05-08 204746](/assets/批注%202020-05-08%20204746.png)
+```mermaid
+---
+title: 直接交互 RESTful、.WebService、RPC、HTTP
+---
+stateDiagram-v2
+  客户端 --> 服务端: HTTP、RPC、WS
+```
 
 ## 核心原理
 

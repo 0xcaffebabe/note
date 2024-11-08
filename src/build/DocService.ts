@@ -73,10 +73,11 @@ class DocService extends BaseService implements Cacheable {
     if (!content.trim().startsWith("---")) {
       return "";
     }
-    const reg = new RegExp('^---$.*^---$', 'ms');
-    const result = content.match(reg)
+    // 匹配开头的 metadata 块，使用多行模式 (m) 和单行匹配 (s)，确保只匹配开头的元数据部分
+    const reg = new RegExp('^---[\\s\\S]+?^---', 'm');
+    const result = content.match(reg);
     if (result != null && result.length != 0) {
-      return result[0].replace(/---/g, '');
+      return result[0].replace(/---/g, '').trim();  // 去除前后 '---' 和多余的空白
     }
     return '';
   }

@@ -12,41 +12,45 @@
 ## 架构
 
 ```mermaid
-stateDiagram-v2
-    direction LR
-    处理流 --> 缓冲操作
-    缓冲操作 --> BufferedInputStream
-    缓冲操作 --> BufferedOutputStream
-    缓冲操作 --> BufferedReader
-    缓冲操作 --> BufferedWriter
-    处理流 --> 基本数据类型操作
-    基本数据类型操作 --> DataInputStream
-    基本数据类型操作 --> DataOutputStream
-    处理流 --> 对象序列化操作
-    对象序列化操作 --> ObjectInputStream
-    对象序列化操作 --> ObjectOutputStream
-    处理流 --> 转化控制
-    转化控制 --> InputStreamReader
-    转化控制 --> OutputStreamWriter
-    处理流 --> 打印控制
-    打印控制 --> PrintStream
-    打印控制 --> PrintWriter
+mindmap
+ 处理流
+    缓冲操作
+        BufferedInputStream
+        BufferedOutputStream
+        BufferedReader
+        BufferedWriter
+    基本数据类型操作
+        DataInputStream
+        DataOutputStream
+    对象序列化操作
+        ObjectInputStream
+        ObjectOutputStream
+    转化控制
+        InputStreamReader
+        OutputStreamWriter
+    打印控制
+        PrintStream
+        PrintWriter
+```
 
-    节点流 --> 文件操作
-    文件操作 --> FileInputStream
-    文件操作 --> FileOutputStream
-    文件操作 --> FileReader
-    文件操作 --> FileWriter
-    节点流 --> 管道操作
-    管道操作 --> PipedInputStream
-    管道操作 --> PipedOutputStream
-    管道操作 --> PipedReader
-    管道操作 --> PipedWriter
-    节点流 --> 数组操作
-    数组操作 --> ByteArrayInputStream
-    数组操作 --> ByteArrayOutputStream
-    数组操作 --> CharArrayReader
-    数组操作 --> CharArrayWriter
+```mermaid
+mindmap
+    节点流
+        文件操作
+            FileInputStream
+            FileOutputStream
+            FileReader
+            FileWriter
+        管道操作
+            PipedInputStream
+            PipedOutputStream
+            PipedReader
+            PipedWriter
+        数组操作
+            ByteArrayInputStream
+            ByteArrayOutputStream
+            CharArrayReader
+            CharArrayWriter
 ```
 
 大体分为几类：
@@ -80,7 +84,10 @@ FileDescriptor才是代表一个真实文件对象
 
 静态成员变量
 
-![批注 2019-08-03 083724](/assets/批注%202019-08-03%20083724.png)
+- public static final String separator
+- public static final String pathSeparator
+- public static final File separatorChar
+- public static final File pathSeparatorChar
 
 ### 获取
 
@@ -268,9 +275,31 @@ writer.close();
 new String(new byte[]{ -78, -52, -48, -20, -64, -92 },"gbk");
 ```
 
-String 编码时序图：
+```mermaid
+---
+title: String 编码时序图
+---
+sequenceDiagram
+    participant String
+    participant StringCoding
+    participant Charset
+    participant StringEncoder
+    participant CharsetEncoder
 
-![屏幕截图 2020-09-29 112623](/assets/屏幕截图%202020-09-29%20112623.png)
+    String->>StringCoding: getBytes(charsetName)
+    StringCoding->>StringCoding: encode
+    StringCoding->>StringCoding: lookupCharset
+    StringCoding->>Charset: Charset.forName
+    Charset-->>StringCoding: 返回找到的Charset
+    StringCoding->>StringEncoder: 根据Charset new StringEncoder对象
+    StringEncoder->>CharsetEncoder: encode
+    CharsetEncoder->>CharsetEncoder: encode
+    CharsetEncoder->>CharsetEncoder: 调用encodeLoop方法
+    CharsetEncoder-->>StringEncoder: 返回ByteBuffer
+    StringEncoder-->>StringCoding: 返回ByteBuffer
+    StringCoding-->>String: 返回byte[]
+
+```
 
 ### Web 中的编解码
 
@@ -302,7 +331,7 @@ tomcat中有一个配置：
 
 #### HTTP header 编解码
 
-对于request.getHeader() 默认是使用的ISO-8859-1编码 且无法指定编码 不要再Header中传递非ASCII 字符
+对于request.getHeader() 默认是使用的ISO-8859-1编码 且无法指定编码 不要在Header中传递非ASCII 字符
 
 #### 表单编解码
 

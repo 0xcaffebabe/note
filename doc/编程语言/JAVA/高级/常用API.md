@@ -142,7 +142,11 @@ unmodifiable 打头的方法则是会得到一些不可变集合，这些集合�
 
 Objects的equals内部的比较采用了deepEquals，这样即使两个对象是数组，也能放心比较
 
-![一些判空方法](/assets/202002191416.jfif)
+一些判空方法：
+
+- isNull
+- nonNull
+- requireNonNull
 
 ---
 
@@ -189,8 +193,6 @@ System.out.println(sb.toString());
 ```
 
 ## 包装类
-
-![02_包装类的概念](/assets/02_包装类的概念.bmp)
 
 基本数据类型，使用起来非常方便但是没有对应的方法来操作这些基本类型的数据
 

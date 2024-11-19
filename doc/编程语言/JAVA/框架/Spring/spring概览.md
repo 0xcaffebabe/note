@@ -15,7 +15,7 @@
 
 ## 容纳你的Bean
 
-### 常用上下文：
+### 常用上下文
 
 - **AnnotationConfigApplicationContext**
 - AnnotationConfigWebApplicationContext
@@ -25,10 +25,6 @@
 
 *ApplicationContext立即加载*
 *BeanFactory延迟加载*
-
-### bean的生命周期
-
-![202081181522](/assets/202081181522.jpg)
 
 ### Spring 模块
 

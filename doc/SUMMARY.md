@@ -257,7 +257,6 @@
       - [Freemarker](./编程语言/JAVA/JakartaEE/Freemarker.md)
     - -框架-
     - [🍃Spring](./编程语言/JAVA/框架/Spring/spring概览.md)
-      - [spring概览](./编程语言/JAVA/框架/Spring/spring概览.md)
       - [Bean注册](./编程语言/JAVA/框架/Spring/Bean注册.md)
       - [Bean生命周期](./编程语言/JAVA/框架/Spring/Bean生命周期.md)
       - [AOP](./编程语言/JAVA/框架/Spring/AOP.md)

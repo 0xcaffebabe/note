@@ -1,5 +1,24 @@
 # Bean 生命周期
 
+```mermaid
+flowchart TD
+    A[postProcessBeforeInstantiation] --> B{返回 null?}
+    A -- 自定义实例化过程 --> I
+    B -- 是 --> C[实例化 Bean]
+    C --> D[postProcessAfterInstantiation]
+    D -- 方法返回 false --> G[postProcessBeforeInitialization]
+    D -- 方法返回 true --> E[Bean 属性赋值]
+    E --> F[postProcessProperties]
+    F --> H[postProcessPropertyValues]
+    H --> G
+    G --> I[postProcessAfterInitialization]
+
+    I --> Bean可以被使用了
+    Bean可以被使用了 --> 容器被关闭
+    容器被关闭 --> 调用bean的destroy方法
+    调用bean的destroy()方法 --> 调用bean的自定义销毁方法
+```
+
 ## 初始化与销毁
 
 ### 使用@Bean时指定
@@ -89,8 +108,6 @@ public interface InstantiationAwareBeanPostProcessor extends BeanPostProcessor {
 	}
 }
 ```
-
-![屏幕截图 2021-05-27 152724](/assets/屏幕截图%202021-05-27%20152724.png)
 
 ## BeanFactoryPostProcessor
 

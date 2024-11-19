@@ -146,4 +146,8 @@ AbstractAutoProxyCreator 实现了BeanPostProcessor
 
 通过在Bean 实例化后，通过动态代理的方式 createProxy 对 Bean进行一层包裹 返回代理完成后的Bean
 
-AopProxy 目前Spring 有2种方式 ...
+AopProxy 目前Spring 有2种方式 ：
+
+1. JDK 动态代理：如果 bean 实现了接口，会使用这种方式。这种方式性能较好
+2. CGLIB 动态代理：如果 bean 没有实现接口，会使用这种方式
+

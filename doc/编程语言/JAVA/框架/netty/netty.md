@@ -13,11 +13,40 @@
 - 处理高并发
 - 一组线程接收请求，一组线程处理IO
 
-![Reactor主从多线程模型](/assets/202217154627.png)
+```mermaid
+stateDiagram
+    state "用户端" as Client {
+        [*] --> Client1 : 用户端 1
+        [*] --> Client2 : 用户端 2
+        [*] --> Client3 : 用户端 3
+    }
+    
+    state "事件分离器" as EventDispatcher {
+        MainReactor : Main Reactor Acceptor Thread Pool
+        SubReactor : Sub Reactor IO Thread Pool
+        MainReactor --> SubReactor : 触发 IO 事件
+        MainReactor --> Auth : 认证 (Auth)
+        MainReactor --> SLA : 服务质量 (SLA)
+    }
+
+    state "Handlers" as Handlers {
+        [*] --> Handler1 : Handler 1
+        [*] --> Handler2 : Handler 2
+        [*] --> Handler3 : Handler 3
+    }
+
+    Client --> MainReactor : 发起事件
+    SubReactor --> Handlers : 分发到 Handler
+
+```
 
 ## 特性
 
-![批注 2020-07-04 091702](/assets/批注%202020-07-04%20091702.png)
+分类|特性
+-|-
+设计|统一的API,支持多种传输类型，阻塞的和非阻塞的；简单而强大的线程模型；真正的无连接数据报套接字支持；链接逻辑组件以支持复用
+性能|拥有比Java的核心API更高的吞吐量以及更低的延迟；得益于池化和复用，拥有更低的资源消耗；最少的内存复制
+健壮性|不会因为慢速、快速或者超载的连接而导致OutofMemoryError；消除在高速网络中NIO应用程序常见的不公平读/写比率
 
 - 非阻塞网络调用使得我们可以不必等待一个操作的完成。完全异步的I/O正是基于这个特性构建的，并且更进一步：异步方法会立即返回，并且在它完成时，会直接或者在稍后的某个时间点通知用户。
 - 选择器使得我们能够通过较少的线程便可监视许多连接上的事件。
@@ -114,9 +143,9 @@ Server端需要两组EventLoop
 
 ### 线程池模型
 
-![批注 2020-07-08 111409](/assets/批注%202020-07-08%20111409.png)
+线程池管理着一些线程，当任务被提交时，就会被分配给其中一个线程进行处理。
 
-不能消除由上下文切换所带来的开销
+这种模型不能消除由上下文切换所带来的开销
 
 ### EventLoop
 
@@ -154,19 +183,15 @@ ScheduledFuture<?> future = ch.eventLoop().schedule(  ← --  创建一个Runnab
 
 ### 线程管理
 
-![批注 2020-07-08 112901](/assets/批注%202020-07-08%20112901.png)
+当一个任务交由 eventloop 执行时，如果当前线程是 eventloop 所属的线程，则就直接执行了。如果当前线程不是 eventloop 所属的线程，则将任务放入到任务队列中，等待 eventloop 线程来执行
 
 所以一定不能将一个长时间运行的任务放入到执行队列中 否则EventLoop会被阻塞
 
 ### 线程分配
 
-- 异步传输
+![异步传输](/assets/批注%202020-07-08%20113146.png)
 
-![批注 2020-07-08 113146](/assets/批注%202020-07-08%20113146.png)
-
-- 阻塞传输
-
-![批注 2020-07-08 113208](/assets/批注%202020-07-08%20113208.png)
+![阻塞传输](/assets/批注%202020-07-08%20113208.png)
 
 ## 单元测试
 

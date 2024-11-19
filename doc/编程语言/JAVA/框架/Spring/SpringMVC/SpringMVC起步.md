@@ -1,18 +1,28 @@
 # Spring MVC
 
-- 请求处理流程
+```mermaid
+---
+title: 请求处理流程
+---
+sequenceDiagram
+    participant Client as Client (Browser)
+    participant Dispatcher as Dispatcher Servlet
+    participant HandlerMapping as Handler Mappings
+    participant Controller as Controller (Handler)
+    participant ViewResolver as View Resolvers
+    participant View as View's
 
-![202081194833](/assets/202081194833.png)
-
-Step 1: 请求会被 DispatcherServlet 接收.
-
-Step 2: DispatcherServlet 根据 HandlerMapping 查找 Controller 类名与 相对应请求路径的映射.
-
-Step 3: 请求被转发到 Controller, controller会处理请求执行相对应的方法并返回ModelAndView object (包含 Model data 和视图名称)返回 DispatcherServlet.
-
-Step 4: DispatcherServlet发送model object给 ViewResolver 获取实际的页面.
-
-Step 5: 最终 DispatcherServlet 通过 Model object 渲染页面展示结果.
+    Client->>Dispatcher: 发送请求 (Request)
+    Dispatcher->>HandlerMapping: 查找 Handler (Request)
+    HandlerMapping->>Dispatcher: 返回 Controller
+    Dispatcher->>Controller: 调用 Controller (Request)
+    Controller->>Dispatcher: 返回 ModelAndView
+    Dispatcher->>ViewResolver: 查找 View (ViewName)
+    ViewResolver->>Dispatcher: 返回 View
+    Dispatcher->>View: 渲染数据 (Model)
+    View->>Dispatcher: 返回渲染结果
+    Dispatcher->>Client: 返回响应 (Response)
+```
 
 ## DispatcherServlet：前端控制器
 
@@ -24,7 +34,7 @@ Step 5: 最终 DispatcherServlet 通过 Model object 渲染页面展示结果.
 
 ## Handler：处理器
 
-> 它就是我们开发中要编写的具体业务控制器。由DispatcherServlet把用户请求转发到Handler。由Handler对具体的用户请求进行处理。
+> 它就是我们开发中要编写的 Controller。由DispatcherServlet把用户请求转发到Handler。由Handler对具体的用户请求进行处理。
 
 ## View Resolver：视图解析器
 
@@ -166,7 +176,7 @@ public @interface RequestMapping {
 
 #### 绑定集合
 
-````/user/hello?names=1&names=2```
+`/user/hello?names=1&names=2`
 
 ### 自定义类型转换器
 

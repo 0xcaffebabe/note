@@ -34,7 +34,17 @@ NIO 的线程模型
 
 ### Reactor
 
-![屏幕截图 2021-07-23 110347](/assets/屏幕截图%202021-07-23%20110347.png)
+```mermaid
+stateDiagram-v2
+    direction LR
+    state "Service Handler & Event Dispather" as dispatcher
+    input1 --> dispatcher
+    input2 --> dispatcher
+    input3 --> dispatcher
+    dispatcher --> RequestHandler1
+    dispatcher --> RequestHandler2
+    dispatcher --> RequestHandler3
+```
 
 事件驱动思想
 
@@ -222,46 +232,4 @@ while (true) {
 }
 ```
 
-## 系统层面的NIO
-
-### BIO模型
-
-![批注 2020-06-18 143426](/assets/批注%202020-06-18%20143426.png)
-
-- socket=3 bind(3,port) listen(3) accept(3)=block|5
-- recv(5)=block|data
-
-弊端：每连接一线程
-
-### 同步非阻塞 NIO 
-
-![批注 2020-06-18 143440](/assets/批注%202020-06-18%20143440.png)
-
-- fcntl 开启非阻塞
-
-使用一个线程处理N个连接读写
-
-每次循环会发生大量无用的系统调用
-
-### 多路复用器
-
-#### 同步IO模型
-
-**(select, pselect)：**
-
-- 传入fd列表，内核返回准备好的fd列表
-- 在用户空间对fd轮询
-
-弊端：需要在内核与用户空间之间拷贝fd
-
-![批注 2020-06-18 143959](/assets/批注%202020-06-18%20143959.png)
-
-**多路复用 无需再拷贝fd：**
-
-调用epoll_create创建一个fd指向共享空间
-
-将客户端fd存放在共享空间 使用 epoll_ctl_add epoll_ctl_mod  epoll_ctl_del 
-
-使用epoll_wait会返回可用fd列表 程序再对fd列表操作
-
-![批注 2020-06-18 144854](/assets/批注%202020-06-18%20144854.png)
+## [系统层面的NIO](/操作系统/输入输出.md#IO模型)

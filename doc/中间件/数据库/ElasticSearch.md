@@ -245,7 +245,7 @@ GET /heima/_search
 - Standard Analyzer 默认分词器，按词切分，小写处理
 - Simple Analyzer 按照非字母切分（符号被过滤），小写处理
 - Stop Analyzer 小写处理，停用词过滤(the,a,is)
-- Vhitespace Analyzer 按照空格切分，不转小写
+- Whitespace Analyzer 按照空格切分，不转小写
 - Keyword Analyzer 不分词，直接将输入当作输出
 - Patter Analyzer 正则表达式，默认\W+(非字符分隔)
 - Language Analyzers 内置 30 种语言的分词器
@@ -564,8 +564,8 @@ es 集群多个节点，会自动选举一个节点为 master 节点。master �
 ```mermaid
 graph LR
     A[es客户端] -->|将数据写入 primary shard| B[机器1\nes进程01\nshard 01 primary\nshard 03 replica]
-    A -->|读| C[机器2\nes进程02\nshard 02 primary\nshard 01 replica]
-    A -->|读| D[机器3\nes进程03\nshard 03 primary\nshard 02 replica]
+    A -->|读| C[机器2 es进程02 shard 02 primary shard 01 replica]
+    A -->|读| D[机器3 es进程03 shard 03 primary shard 02 replica]
     
     B -->|primary shard 将数据同步到 replica shard 上| C
     B -->|primary shard 将数据同步到 replica shard 上| D
@@ -687,14 +687,6 @@ Index,其对应的就是ES中的Shard
 
 删除的文档信息，保存在“.del”文件中
 
-索引的写入过程：
-
-1. 写入缓存：数据首先被写入内存缓冲区（buffer）和translog日志文件，这时索引尚未生成Segment，且缓存中的数据不可被查询
-2. refresh 操作：将数据从内存缓冲区写入操作系统缓存（os cache），生成一个Segment文件并清空缓冲区。同时建立倒排索引，使数据可以被客户端访问。默认每秒执行一次refresh操作。当缓冲区占满时，也会触发refresh操作
-3. translog 刷盘：在写缓存的时候，为了避免数据丢失，还会写入到translog中，translog会定时刷盘
-4. flush 操作：每隔一段时间或数据量达到一定值会将os cache中的数据以Segment文件形式持久化到磁盘
-5. merge 操作：随着时间推移，磁盘上的Segment数量增加，需要定期进行合并
-
 ### 部署架构
 
 不同节点类型所需资源：
@@ -702,10 +694,9 @@ Index,其对应的就是ES中的Shard
 - master eligible nodes: 负责集群状态(cluster state)的管理，使用低配置的CPU,RAM和磁盘
 - data nodes:负责数据存储及处理客户端请求，使用高配置的CPU,RAM和磁盘
 - ingest nodes:负责数据处理，使用高配置CPU;中等配置的RAM;低配置的磁盘
+- coordination only node：这种节点是专门负责搜索结果的 gather/reduce，对于大集群，可以配置专门的这种节点，防止大量占用内存的聚合操作导致 OOM 影响集群稳定
 
-coordination only node：这种节点是专门负责搜索结果的 gather/reduce，对于大集群，可以配置专门的这种节点，防止大量占用内存的聚合操作导致 OOM 影响集群稳定
-
-从高可用的角度，为了保证 master node，也要避免 master 与其他的节点混部
+从高可用的角度，要避免 master 与其他的节点混部
 
 #### 水平扩展
 
@@ -1014,26 +1005,34 @@ PUT _ilm/policy/my_policy
 
 ![批注 2020-03-19 083304](/assets/批注%202020-03-19%20083304.png)
 
-数据先写入内存 buffer，然后每隔 1s，将数据 refresh 到 os cache，到了 os cache 数据就能被搜索到
-
-每隔 5s，将数据写入 translog 文件（这样如果机器宕机，内存数据全没，最多会有 5s 的数据丢失），translog 大到一定程度，或者默认每隔 30mins，会触发 commit 操作，将缓冲区的数据都 flush 到 segment file 磁盘文件中
+1. 写入缓存：数据首先被写入内存缓冲区（buffer）和 translog 日志文件(page cache)，这时索引尚未生成 Segment，且缓存中的数据不可被查询
+2. refresh 操作：将数据从内存缓冲区写入操作系统缓存（os cache），生成一个Segment文件并清空缓冲区。同时建立倒排索引，使数据可以被客户端访问。默认每秒执行一次refresh操作。当缓冲区占满时，也会触发refresh操作
+3. translog 刷盘：在写缓存的时候，为了避免数据丢失，还会写入到translog中，translog会定时刷盘
+4. flush 操作：每隔一段时间或数据量达到一定值会将os cache中的数据以Segment文件形式持久化到磁盘
+5. merge 操作：随着时间推移，磁盘上的Segment数量增加，需要定期进行合并
 
 ### 读过程
 
 客户端选择一个协调节点（coordinating node）发送根据ID查询请求，协调节点会根据id进行哈希，得到doc所在的分片，将请求转发到对应的node
+
 这个node然后会在primary shard与replica中使用随机轮询，进行负载均衡，返回document给协调节点
+
 协调节点再把document返回给客户端
 
 ### 搜索过程
 
 客户端发送搜索请求给协调节点，协调节点将这个请求发送给所有的shard
-每个shard将自己的搜索结构返回给协调节点
+
+每个shard将自己的搜索结果返回给协调节点
+
 由协调节点进行数据的合并、排序、分页等操作，产出最终结果
+
 接着协调节点根据id再去查询对应的document的数据，返回给客户端
 
 ### 删除/更新过程
 
 删除操作，会生成一个对应document id的.del文件，标识这个document被删除
+
 如果是更新操作，就是将原来的 doc 标识为 deleted 状态，然后新写入一条数据
 
 每refresh一次，会生成一个segment file，系统会定期合并这些文件，合并这些文件的时候，会物理删除标记.del的document

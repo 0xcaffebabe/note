@@ -52,6 +52,8 @@ broker 和集群
   - 收集系统度量指标和日志
 - 日志系统
 - 流处理
+- 事件源
+- 消息队列
 
 ## 架构
 
@@ -84,15 +86,6 @@ Leader epoch：可以用来确定最新的分区副本，由两部分数据组�
 
 - Broker 注册 ：在 Zookeeper 上会有一个专门用来进行 Broker 服务器列表记录的节点
 - Topic 注册：分区信息及与 Broker 的对应关系也都是由 Zookeeper 在维护
-
-## 应用场景
-
-- 消息队列
-- 行为跟踪
-- 日志收集
-- 流处理
-- 事件源
-- 持久性日志
 
 ## 搭建
 
@@ -227,7 +220,11 @@ public final class LogOffsetMetadata {
 }
 ```
 
+消费者只能看到高水位之下的消息
+
 ![](/assets/2023113019631.webp)
+
+![屏幕截图 2020-08-21 144435](/assets/屏幕截图%202020-08-21%20144435.png)
 
 #### 日志段管理
 
@@ -363,23 +360,6 @@ final case object ControlledShutdownPartitionLeaderElectionStrategy extends Part
 
 当要变更分区状态，就由 Controller 发送相关消息给 broker 们，再由 broker 来执行对每个分区的元数据变更
 
-### 消费者组管理
-
-```mermaid
-stateDiagram-v2
-  Empty --> PreparingRebalance: 首个成员加入组
-  PreparingRebalance --> Empty
-  PreparingRebalance --> CompletingRebalance: 所有成员加入组
-  CompletingRebalance --> PreparingRebalance: 新成员加入组或已有成员退出组
-  CompletingRebalance --> Stable: leader成员指定好方案
-  CompletingRebalance --> Dead
-  Dead --> Dead
-  Stable --> Dead
-  Empty --> Dead
-  PreparingRebalance --> Dead
-  Stable --> PreparingRebalance: 新成员加入组或已有成员退出组
-```
-
 ## 集群成员关系
 
 broker通过创建临时节点把自己的 ID 注册到 Zookeeper
@@ -484,10 +464,6 @@ sequenceDiagram
   broker ->> 消费者: 消息
 ```
 
-所有同步副本复制了这些消息，才允许消费者读取它们
-
-![屏幕截图 2020-08-21 144435](/assets/屏幕截图%202020-08-21%20144435.png)
-
 ### 监控指标
 
 Kakfa 在 RequestChannel 内保存了一些关于请求的指标：
@@ -552,7 +528,7 @@ all： 首领在返回确认或错误响应之前，会等待所有同步副本�
 
 ### 消费者
 
-显示提交偏移量：
+显式提交偏移量：
 
 - 处理完事件再提交
 - 批量提交
@@ -620,9 +596,10 @@ POST localhost:8083/connectors
 - 带宽有限
 - 高成本
 
-中心架构：
-
 ```mermaid
+---
+title: 中心架构
+---
 stateDiagram-v2
   direction LR
   北京Kafka集群(部分数据) --> 中心指标Kafka集群(整体数据)
@@ -631,24 +608,27 @@ stateDiagram-v2
   厦门Kafka集群(部分数据) --> 中心指标Kafka集群(整体数据)
 ```
 
-主从架构：
-
 ```mermaid
+---
+title: 主从架构
+---
 stateDiagram-v2
   订单业务Kafka集群 --> 报表统计Kafka集群
 ```
 
-双活架构：
-
 ```mermaid
+---
+title: 双活架构
+---
 stateDiagram-v2
   北京Kafka集群 --> 广州Kafka集群
   广州Kafka集群 --> 北京Kafka集群
 ```
 
-主备架构：
-
 ```mermaid
+---
+title: 主备架构
+---
 stateDiagram-v2
   direction LR
   主Kafka集群 --> 备Kafka集群
@@ -763,61 +743,7 @@ stateDiagram-v2
 - 调优吞吐量：增加num.replica.fetchers、调整缓冲区、压缩算法配置以减少网络I/O、避免设置acks=all和开启重试。
 - 调优延时：在Producer端设置linger.ms=0、不启用压缩、避免设置acks=all，在Consumer端保持fetch.min.bytes=1。
 
-## 流式处理
-
-> 数据流:无边界数据集的抽象表示
-> 数据流是有序的, 不可变的, 可重播的
-> 流式处理是持续地从一个无边界的数据集读取数据，然后对它们进行处理并生成结果
-
-### 概念
-
-时间：
-
-- 事件时间
-  -  所追踪事件的发生时间和记录的创建时间
-- 处理时间
-  - 收到事件之后要对其进行处理的时间
-
-状态：
-
-- 内部状态
-  -  只能被单个应用程序实例访问
-- 外部状态
-  - 使用外部的数据存储来维护
-
-时间窗口：
-
-![屏幕截图 2020-08-23 112304](/assets/屏幕截图%202020-08-23%20112304.png)
-
-### 设计模式
-
-单事件处理：
-
-![屏幕截图 2020-08-23 112459](/assets/屏幕截图%202020-08-23%20112459.png)
-
-本地状态事件处理：
-
-![屏幕截图 2020-08-23 112551](/assets/屏幕截图%202020-08-23%20112551.png)
-
-多阶段处理：
-
-![屏幕截图 2020-08-23 112748](/assets/屏幕截图%202020-08-23%20112748.png)
-
-外部数据源填充：
-
-![屏幕截图 2020-08-23 112929](/assets/屏幕截图%202020-08-23%20112929.png)
-
-连接流：
-
-![屏幕截图 2020-08-23 113209](/assets/屏幕截图%202020-08-23%20113209.png)
-
-对乱序事件重排序
-
-重新处理：
-
-使用新处理程序从头读取数据流生成结果流
-
-### Kafka Streams 架构
+## Kafka Streams 架构
 
 拓扑结构：
 

@@ -210,10 +210,10 @@ stateDiagram-v2
 
 其他：
 
-·lpush+lpop=Stack
-·lpush+rpop=Queue
-·lpsh+ltrim=Capped Collection
-·lpush+brpop=Message Queue
+- lpush+lpop=Stack
+- lpush+rpop=Queue
+- lpsh+ltrim=Capped Collection
+- lpush+brpop=Message Queue
 
 ## 集合类型
 

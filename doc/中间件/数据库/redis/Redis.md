@@ -46,14 +46,15 @@ redis-cli shutdown # 关闭redis server
 
 ## 慢查询分析
 
-一条客户端命令的生命周期：
-
 ```mermaid
-stateDiagram-v2
-  客户端 --> Redis: 发送命令
-  Redis --> Redis: 命令排队
-  Redis --> Redis: 执行命令
-  Redis --> 客户端: 返回结果
+---
+title: 一条客户端命令的生命周期
+---
+sequenceDiagram
+    客户端 ->> Redis: 发送命令
+    Redis ->> Redis: 命令排队
+    Redis ->> Redis: 执行命令
+    Redis ->> 客户端 : 返回结果
 ```
 
 慢查询阈值设置：
@@ -397,9 +398,9 @@ noeviction      | 禁止驱逐数据，当内存不足时，写入操作会被�
 graph TB
   hset --> A{判断当前编码类型}
   A --> |hashtable| hashtable编码
-  A --> |ziplist| B{判断新数据长度\nhash-max-ziplist-value}
+  A --> |ziplist| B{判断新数据长度 hash-max-ziplist-value}
   B --> |大于| hashtable编码
-  B --> |小于等于| C{比较集合长度\nhash-max-ziplist-entries}
+  B --> |小于等于| C{比较集合长度 hash-max-ziplist-entries}
   C --> |大于| hashtable编码
   C --> |小于等于| ziplist编码
 ```
@@ -492,15 +493,15 @@ redis-cli evalsha "7a2054836e94e19da22c13f160bd987fbc9ef146" 0
 
 持久化文件是恢复数据的媒介
 
-误操作之后大AOF重写参数auto-aof-rewrite-percentage和auto-aof-rewrite-min-size，让Redis不能产生AOF自动重写
+误操作之后大调 AOF 重写参数 auto-aof-rewrite-percentage 和 auto-aof-rewrite-min-size，让Redis不能产生AOF自动重写
 
-以及拒绝手动bgrewriteaof
+以及拒绝手动 bgrewriteaof
 
 ### 安全
 
 - requirepass配置为Redis提供密码功能
 - rename-command伪装危险命令
-- bind指定的Redis和哪个网卡进行绑定
+- bind指定Redis和哪个网卡进行绑定
 
 ### bigkey处理
 

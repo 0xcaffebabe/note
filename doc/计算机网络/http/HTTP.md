@@ -329,6 +329,19 @@ Content-Type: text/plain
 
 ### 缓存控制
 
+```mermaid
+sequenceDiagram
+  participant B as 浏览器
+  participant S as 服务器
+  
+  B ->> S: 请求资源（如果有缓存，包含ETag/If-None-Match或Last-Modified/If-Modified-Since）
+  alt 初次请求或缓存过期
+    S ->> B: 200 OK，返回资源，包含ETag和Last-Modified
+  else 使用缓存
+    S ->> B: 304 Not Modified（资源未修改）
+  end
+```
+
 #### 禁止对响应进行缓存
 
 ```html
@@ -433,6 +446,17 @@ Expires: Wed, 04 Jul 2012 08:26:05 GMT
 
 - 许久不修改的 最近也认为不怎么修改
 - 最近修改的 最近修改的可能性更大
+
+### 浏览器缓存原则
+
+- **首页**可以看做是框架 应该禁用缓存，以保证加载的资源都是最新的
+- 还有一些场景下我们希望禁用浏览器缓存。比如轮训api上报数据数据
+- 浏览器缓存很难彻底禁用，大家的做法是加版本号，随机数等方法。
+- 只缓存200响应头的数据，像3XX这类跳转的页面不需要缓存。
+- 对于js，css这类可以缓存很久的数据，可以通过加版本号的方式更新内容
+- 不需要强一致性的数据，可以缓存几秒
+- 异步加载的接口数据，可以使用ETag来校验。
+- 在服务器添加Server头，有利于排查错误
 
 ## 通信数据转发
 

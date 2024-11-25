@@ -941,10 +941,10 @@ DELETE： | <http://www.example.com/users/1> | 删除用户ID为1的用户信息
 
 #### RMM成熟度
 
-0. The Swamp of Plain Old XML：完全不REST。另外，关于Plain Old XML这说法，SOA表示感觉有被冒犯到。
-1. Resources：开始引入资源的概念。
-2. HTTP Verbs：引入统一接口，映射到HTTP协议的方法上。
-3. Hypermedia Controls：超媒体控制在本文里面的说法是“超文本驱动”
+- 0：每个请求都指明了需要执行的操作和必要的参数
+- 1：引入了资源的概念，对资源进行操作
+- 2：使用HTTP动词来执行操作
+- 3：基于HAEOAS，超文本驱动，客户端无需硬编码REST链接。让客户端自行遍历与发现API，可以很好地隐藏低层细节，使得客户端与服务端之间实现了松耦合
 
 #### 不足
 

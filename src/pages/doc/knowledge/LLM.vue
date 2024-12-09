@@ -178,7 +178,7 @@ export default defineComponent({
         '@cf/qwen/qwen1.5-14b-chat-awq',
         '@hf/google/gemma-7b-it',
         '@hf/thebloke/deepseek-coder-6.7b-instruct-awq',
-        '@cf/meta/llama-3.1-70b-instruct'
+        '@cf/meta/llama-3.3-70b-instruct-fp8-fast'
       ],
       llmContent: '',
       query: '',

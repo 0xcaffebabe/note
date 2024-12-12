@@ -10,39 +10,6 @@ Kafka 是一个分布式的基于发布/订阅模式的消息队列（Message Qu
   -  broker可以不断扩展
 - 高性能
 
-## 基础概念
-
-消息和批次
-  - 消息是kafka的数据单元
-  - 批次是一组消息
-
-模式
-  - schema 使用额外的结构定义消息内容
-
-主题和分区
-  - 消息通过主题分类
-  - 主题被分为若干个分区 通过分区来实现数据冗余和伸缩性
-
-![屏幕截图 2020-08-12 152257](/assets/屏幕截图%202020-08-12%20152257.png)
-
-生产者和消费者
-  - 生产者创建消息
-  - 消费者读取消息 一个分区只能由一个组内消费者消费 通过偏移量记录消息消费位置
-
-![屏幕截图 2020-08-12 152638](/assets/屏幕截图%202020-08-12%20152638.png)
-
-broker 和集群
-  - broker 独立的 kafka 服务器
-  - 每个集群都有一个broker 充当集群控制器
-
-![屏幕截图 2020-08-12 152955](/assets/屏幕截图%202020-08-12%20152955.png)
-
-对于消息 kafka会保留一段时间或者达到一定大小的字节数 旧的消息会被删除
-
-多集群
-
-![屏幕截图 2020-08-12 153137](/assets/屏幕截图%202020-08-12%20153137.png)
-
 ## 使用场景
 
 - 活动跟踪
@@ -54,38 +21,6 @@ broker 和集群
 - 流处理
 - 事件源
 - 消息队列
-
-## 架构
-
-![屏幕截图 2020-08-03 133557](/assets/屏幕截图%202020-08-03%20133557.png)
-
-- Partition ：为了实现扩展性，一个非常大的 topic 可以分布到多个 broker（即服务器）上，
-一个 topic  可以分为多个 partition，每个 partition 是一个有序的队列；
-- Replica： ：副本，为保证集群中的某个节点发生故障时，该节点上的 partition 数据不丢失，且 kafka 仍然能够继续工作，kafka 提供了副本机制，一个 topic 的每个分区都有若干个副本，
-一个 leader 和若干个 follower。
-- leader ：每个分区多个副本的“主”，生产者发送数据的对象，以及消费者消费数据的对
-象都是 leader。
-  - 生产者和消费者只与 leader 副本交互,当 leader 副本发生故障时会从 follower 中选举出一个 leader,但是 follower 中如果有和 leader 同步程度达不到要求的参加不了 leader 的竞选
-- follower ：每个分区多个副本中的“从”，实时从 leader 中同步数据，保持和 leader 数据
-的同步。leader 发生故障时，某个 follower 会成为新的 follower。
-
-### 分区与副本机制
-
-- 各个 Partition 可以分布在不同的 Broker 上, 这样便能提供比较好的并发能力（负载均衡）
-- 副本极大地提高了消息存储的安全性, 提高了容灾能力，不过也相应的增加了所需要的存储空间
-
-ISR：中的副本都是与 leader 同步的副本
-
-为了描述一个副本是否与 leader 副本同步，replica.lag.time.max.ms 用来描述这个最大延迟，如果 follower 副本与 leader 副本的复制延迟超过这个时间，则认为不同步
-
-Leader epoch：可以用来确定最新的分区副本，由两部分数据组成。一个是Epoch,一个单调增加的版本号。每当副本领导权发生变更时，都会增加该版本号
-
-### zk的作用
-
-主要为 Kafka 提供元数据的管理的功能
-
-- Broker 注册 ：在 Zookeeper 上会有一个专门用来进行 Broker 服务器列表记录的节点
-- Topic 注册：分区信息及与 Broker 的对应关系也都是由 Zookeeper 在维护
 
 ## 搭建
 
@@ -130,41 +65,41 @@ broker 配置
 - message.max.bytes
   - 消息最大大小
 
-## 命令操作
+## 架构
 
-- 列出topic
+![屏幕截图 2020-08-12 152955](/assets/屏幕截图%202020-08-12%20152955.png)
 
-```sh
-./kafka-topics.sh --list --zookeeper 172.17.0.1:2181
-```
-
-- 创建topic
-
-```sh
-/opt/kafka/bin/kafka-topics.sh --create --zookeeper 172.17.0.1:2181 --replication-factor 1 --partitions 2 --topic my_log
-```
-
-- 生产者
-
-```sh
-./kafka-console-producer.sh --topic first --broker-list 172.17.0.1:9092
-```
-
-- 消费者
-
-```sh
-./kafka-console-consumer.sh --topic first --bootstrap-server 172.17.0.1:9092
-```
-
-## 工作流程
-
-![屏幕截图 2020-08-05 153846](/assets/屏幕截图%202020-08-05%20153846.png)
+- Partition ：为了实现扩展性，一个非常大的 topic 可以分布到多个 broker（即服务器）上，
+一个 topic  可以分为多个 partition，每个 partition 是一个有序的队列；
+- Replica： ：副本，为保证集群中的某个节点发生故障时，该节点上的 partition 数据不丢失，且 kafka 仍然能够继续工作，kafka 提供了副本机制，一个 topic 的每个分区都有若干个副本，
+一个 leader 和若干个 follower。
+- leader ：每个分区多个副本的“主”，生产者发送数据的对象，以及消费者消费数据的对
+象都是 leader。
+  - 生产者和消费者只与 leader 副本交互,当 leader 副本发生故障时会从 follower 中选举出一个 leader,但是 follower 中如果有和 leader 同步程度达不到要求的参加不了 leader 的竞选
+- follower ：每个分区多个副本中的“从”，实时从 leader 中同步数据，保持和 leader 数据
+的同步。leader 发生故障时，某个 follower 会成为新的 follower。
 
 Kafka 中消息是以 topic 进行分类的，生产者生产消息，消费者消费消息，都是面向 topic的
 
 每个 partition 对应于一个 log 文件，该 log 文件中存储的就是 producer 生产的数据
 
 消费者组中的每个消费者，都会实时记录自己消费到了哪个 offset，以便出错恢复时，从上次的位置继续消费
+
+### 主题和分区
+
+- 消息通过主题分类
+- 主题被分为若干个分区 通过分区来实现数据冗余和伸缩性
+
+![屏幕截图 2020-08-12 152257](/assets/屏幕截图%202020-08-12%20152257.png)
+
+消息和批次
+  - 消息是kafka的数据单元
+  - 批次是一组消息
+
+对于消息 kafka会保留一段时间或者达到一定大小的字节数 旧的消息会被删除
+
+模式
+  - schema 使用额外的结构定义消息内容
 
 ### 日志
 
@@ -360,48 +295,19 @@ final case object ControlledShutdownPartitionLeaderElectionStrategy extends Part
 
 当要变更分区状态，就由 Controller 发送相关消息给 broker 们，再由 broker 来执行对每个分区的元数据变更
 
-## 集群成员关系
+### zk的作用
 
-broker通过创建临时节点把自己的 ID 注册到 Zookeeper
+主要为 Kafka 提供元数据的管理的功能
 
-- 控制器：一个特殊的broker 通过在zk创建临时节点进行选举。控制器负责在节点加入或离开集群时进行分区首领选举，控制器使用epoch 来避免“脑裂”。当临时节点被释放或者内容发生更新，监听临时节点的其他 broker 就会收到通知，进行新一轮的选举。2.8 之后，Kafka 移除了对 zk 的依赖，使用 QuorumController 来实现元数据的管理
-
-```scala
-// 集群元数据
-class ControllerContext {
-  val stats = new ControllerStats // Controller统计信息类 
-  var offlinePartitionCount = 0   // 离线分区计数器
-  val shuttingDownBrokerIds = mutable.Set.empty[Int]  // 关闭中Broker的Id列表
-  private val liveBrokers = mutable.Set.empty[Broker] // 当前运行中Broker对象列表
-  private val liveBrokerEpochs = mutable.Map.empty[Int, Long]   // 运行中Broker Epoch列表
-  var epoch: Int = KafkaController.InitialControllerEpoch   // Controller当前Epoch值
-  var epochZkVersion: Int = KafkaController.InitialControllerEpochZkVersion  // Controller对应ZooKeeper节点的Epoch值
-  val allTopics = mutable.Set.empty[String]  // 集群主题列表
-  val partitionAssignments = mutable.Map.empty[String, mutable.Map[Int, ReplicaAssignment]]  // 主题分区的副本列表
-  val partitionLeadershipInfo = mutable.Map.empty[TopicPartition, LeaderIsrAndControllerEpoch]  // 主题分区的Leader/ISR副本信息
-  val partitionsBeingReassigned = mutable.Set.empty[TopicPartition]  // 正处于副本重分配过程的主题分区列表
-  val partitionStates = mutable.Map.empty[TopicPartition, PartitionState] // 主题分区状态列表 
-  val replicaStates = mutable.Map.empty[PartitionAndReplica, ReplicaState]  // 主题分区的副本状态列表
-  val replicasOnOfflineDirs = mutable.Map.empty[Int, Set[TopicPartition]]  // 不可用磁盘路径上的副本列表
-  val topicsToBeDeleted = mutable.Set.empty[String]  // 待删除主题列表
-  val topicsWithDeletionStarted = mutable.Set.empty[String]  // 已开启删除的主题列表
-  val topicsIneligibleForDeletion = mutable.Set.empty[String]  // 暂时无法执行删除的主题列表
-  ......
-}
-```
-
-Controller 是用来管理整个集群的，它会向其他 broker 发送三类请求：
-
-1. LeaderAndIsrRequest：告诉 Broker 相关主题各个分区的 Leader 副本位于哪台 Broker 上、ISR 中的副本都在哪些 Broker
-2. StopReplicaRequest：告知指定 Broker 停止它上面的副本对象，这个请求主要的使用场景是分区副本迁移和删除主题
-3. UpdateMetadataRequest：更新 Broker 上的元数据缓存
+- Broker 注册 ：在 Zookeeper 上会有一个专门用来进行 Broker 服务器列表记录的节点
+- Topic 注册：分区信息及与 Broker 的对应关系也都是由 Zookeeper 在维护
 
 ## 复制
 
 - leader 副本
-  - 所有生产者请求和消费者请求都会经过这个副本
+  - 所有生产者请求和消费者请求都会经过这个副本。各个 leader 副本可以分布在不同的 Broker 上, 这样便能提供比较好的并发能力（负载均衡）
 - follower 副本
-  - 从 leader 那里复制消息，保持与 leader 一致的状态
+  - 从 leader 那里复制消息，保持与 leader 一致的状态。foller 副本极大地提高了消息存储的安全性, 提高了容灾能力，不过也相应的增加了所需要的存储空间
 
 ### 副本管理
 
@@ -414,7 +320,13 @@ follower 会启动一个线程，不断执行以下操作：
 
 而消费者的读取请求，也会通过 ReplaceManager 来确定读取范围，再从底层的日志读取消息构建结果并返回
 
-副本管理还会根据接收到的请求，决定是否将当前副本提升为 leader 副本，同时，还会有一个线程定时检测当前副本与 leader 副本的滞后时间，当滞后时间超过 replica.lag.time.max.ms，将该副本移除出 ISR
+### 分区与副本机制
+
+ISR：中的副本都是与 leader 同步的副本
+
+为了描述一个副本是否与 leader 副本同步，replica.lag.time.max.ms 用来描述这个最大延迟，如果 follower 副本与 leader 副本的复制延迟超过这个时间，则认为不同步。副本管理还会根据接收到的请求，决定是否将当前副本提升为 leader 副本
+
+Leader epoch：可以用来确定最新的分区副本，由两部分数据组成。一个是Epoch,一个单调增加的版本号。每当副本领导权发生变更时，都会增加该版本号
 
 ## 请求处理
 
@@ -473,12 +385,6 @@ Kakfa 在 RequestChannel 内保存了一些关于请求的指标：
 - LocalTimeMs：计算 Request 实际被处理的时间。
 - RemoteTimeMs：等待其他 Broker 完成指定逻辑的时间。
 - TotalTimeMs：计算 Request 被处理的完整流程时间
-
-## 物理存储
-
-文件管理：
-
-分区分成若干个片段 当前正在写入数据的片段叫作活跃片段
 
 ## 可靠数据传递
 
@@ -588,6 +494,44 @@ POST localhost:8083/connectors
 - 数据冗余
 - 云迁移
 
+### 集群成员关系
+
+每个集群都有一个broker 充当集群控制器
+
+broker通过创建临时节点把自己的 ID 注册到 Zookeeper
+
+- 控制器：一个特殊的broker 通过在zk创建临时节点进行选举。控制器负责在节点加入或离开集群时进行分区首领选举，控制器使用epoch 来避免“脑裂”。当临时节点被释放或者内容发生更新，监听临时节点的其他 broker 就会收到通知，进行新一轮的选举。2.8 之后，Kafka 移除了对 zk 的依赖，使用 QuorumController 来实现元数据的管理
+
+```scala
+// 集群元数据
+class ControllerContext {
+  val stats = new ControllerStats // Controller统计信息类 
+  var offlinePartitionCount = 0   // 离线分区计数器
+  val shuttingDownBrokerIds = mutable.Set.empty[Int]  // 关闭中Broker的Id列表
+  private val liveBrokers = mutable.Set.empty[Broker] // 当前运行中Broker对象列表
+  private val liveBrokerEpochs = mutable.Map.empty[Int, Long]   // 运行中Broker Epoch列表
+  var epoch: Int = KafkaController.InitialControllerEpoch   // Controller当前Epoch值
+  var epochZkVersion: Int = KafkaController.InitialControllerEpochZkVersion  // Controller对应ZooKeeper节点的Epoch值
+  val allTopics = mutable.Set.empty[String]  // 集群主题列表
+  val partitionAssignments = mutable.Map.empty[String, mutable.Map[Int, ReplicaAssignment]]  // 主题分区的副本列表
+  val partitionLeadershipInfo = mutable.Map.empty[TopicPartition, LeaderIsrAndControllerEpoch]  // 主题分区的Leader/ISR副本信息
+  val partitionsBeingReassigned = mutable.Set.empty[TopicPartition]  // 正处于副本重分配过程的主题分区列表
+  val partitionStates = mutable.Map.empty[TopicPartition, PartitionState] // 主题分区状态列表 
+  val replicaStates = mutable.Map.empty[PartitionAndReplica, ReplicaState]  // 主题分区的副本状态列表
+  val replicasOnOfflineDirs = mutable.Map.empty[Int, Set[TopicPartition]]  // 不可用磁盘路径上的副本列表
+  val topicsToBeDeleted = mutable.Set.empty[String]  // 待删除主题列表
+  val topicsWithDeletionStarted = mutable.Set.empty[String]  // 已开启删除的主题列表
+  val topicsIneligibleForDeletion = mutable.Set.empty[String]  // 暂时无法执行删除的主题列表
+  ......
+}
+```
+
+Controller 是用来管理整个集群的，它会向其他 broker 发送三类请求：
+
+1. LeaderAndIsrRequest：告诉 Broker 相关主题各个分区的 Leader 副本位于哪台 Broker 上、ISR 中的副本都在哪些 Broker
+2. StopReplicaRequest：告知指定 Broker 停止它上面的副本对象，这个请求主要的使用场景是分区副本迁移和删除主题
+3. UpdateMetadataRequest：更新 Broker 上的元数据缓存
+
 ### 多集群架构
 
 跨数据中心通信：
@@ -637,6 +581,33 @@ stateDiagram-v2
 ```
 
 ### MirrorMaker
+
+```mermaid
+---
+title: 多集群架构复制
+---
+graph LR
+    subgraph 数据中心A
+        A1[生产者] --> A2[Kafka本地集群]
+        A2 --> A3[消费者]
+        A2 --> A4[MirrorMaker]
+    end
+
+    subgraph 数据中心B
+        B1[生产者] --> B2[Kafka本地集群]
+        B2 --> B3[消费者]
+        B2 --> B4[MirrorMaker]
+    end
+
+    subgraph 数据中心C
+        C1[消费者] --> C2[Kafka聚合集群]
+        C2 --> C3[MirrorMaker]
+    end
+
+    A4 --> D1[Kafka聚合集群]
+    B4 --> D1
+    D1 --> C2
+```
 
 ```mermaid
 stateDiagram-v2

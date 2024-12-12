@@ -14,21 +14,26 @@ import ContentsTree from "./ContentsTree.vue";
 import ContentList from "./ContentsList.vue";
 import DocService from "@/service/DocService";
 
-function hightHeading(instance: InstanceType<typeof ContentList>) {
-  const idList = document.querySelectorAll(
-    ".main.markdown-section h1, .main.markdown-section h2, .main.markdown-section h3, .main.markdown-section h4 .main.markdown-section h5, .main.markdown-section h6"
-  );
+let idList :NodeListOf<Element> | null= null
+
+function highlightHeading(instance: InstanceType<typeof ContentList>) {
+  if (!idList){
+    idList = document.querySelectorAll(
+      ".main.markdown-section h1, .main.markdown-section h2, .main.markdown-section h3, .main.markdown-section h4, .main.markdown-section h5, .main.markdown-section h6"
+    );
+  }
   let node = null;
-  for (let i = 0; i < idList.length; i++) {
-    const elm = idList[i];
-    if (elm instanceof HTMLElement) {
-      if (window.scrollY > elm.offsetTop - 160) {
-        node = elm;
-      }
-    }
-    // 滚动到顶部特殊处理
-    if (window.scrollY == 0) {
+  // 滚动到顶部特殊处理
+  if (window.scrollY == 0) {
       node = idList[0];
+  } else {
+    for (let i = 0; i < idList.length; i++) {
+      const elm = idList[i];
+      if (elm instanceof HTMLElement) {
+        if (window.scrollY > elm.offsetTop - 160) {
+          node = elm;
+        }
+      }
     }
   }
   if (node != null) {
@@ -109,12 +114,12 @@ export default defineComponent({
     registerWindowScrollListener() {
       let lastTime = new Date().getTime();
       document.addEventListener("scroll", (e) => {
-        // 两次触发的间隔至少200ms
+        // 两次触发的间隔至少50ms
         const currentTime = new Date().getTime();
-        if (currentTime < lastTime + 200) {
+        if (currentTime < lastTime + 50) {
           return;
         }
-        hightHeading(this);
+        highlightHeading(this)
         syncHeadingVisible(this);
         lastTime = new Date().getTime();
       });

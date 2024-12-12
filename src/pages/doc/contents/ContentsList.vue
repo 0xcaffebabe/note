@@ -17,11 +17,9 @@ import DocService from "@/service/DocService";
 let idList :NodeListOf<Element> | null= null
 
 function highlightHeading(instance: InstanceType<typeof ContentList>) {
-  if (!idList){
-    idList = document.querySelectorAll(
-      ".main.markdown-section h1, .main.markdown-section h2, .main.markdown-section h3, .main.markdown-section h4, .main.markdown-section h5, .main.markdown-section h6"
-    );
-  }
+  const idList = document.querySelectorAll(
+    ".main.markdown-section h1, .main.markdown-section h2, .main.markdown-section h3, .main.markdown-section h4, .main.markdown-section h5, .main.markdown-section h6"
+  );
   let node = null;
   // 滚动到顶部特殊处理
   if (window.scrollY == 0) {

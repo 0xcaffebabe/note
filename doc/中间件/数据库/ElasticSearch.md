@@ -343,7 +343,7 @@ Mapping 类似数据库中的schema的定义，作用：
 2. 定义字段的数据类型
 3. 进行字段，倒排索引的相关配置，(Analyzed or Not Analyzed,Analyzer)
 
-### Dymaic Mapping
+### Dynamic Mapping
 
 当向 Elasticsearch 插入一个新文档时，且文档包含的字段在索引中尚未定义时，Elasticsearch 会自动推断这些字段的数据类型，并在索引中创建相应的映射
 
@@ -377,7 +377,7 @@ Mapping 类似数据库中的schema的定义，作用：
 
 Index Templates 可以帮助设定 Mappings 和 Settings,并按照一定的规则，自动匹配到新创建的索引之上，可以通过设定多个 template，这些设置会被合并在一起，通过指定 order 的数值，来控制合并的过程
 
-### Dymaic Template
+### Dynamic Template
 
 用于在索引新文档时，自动根据字段名或字段类型来应用特定的映射规则。它可以在动态映射的基础上提供更细粒度的控制，使得可以指定某些字段的映射类型和其他属性，而不需要事先知道这些字段的名字或类型
 
@@ -563,7 +563,7 @@ es 集群多个节点，会自动选举一个节点为 master 节点。master �
 
 ```mermaid
 graph LR
-    A[es客户端] -->|将数据写入 primary shard| B[机器1\nes进程01\nshard 01 primary\nshard 03 replica]
+    A[es客户端] -->|将数据写入 primary shard| B[机器1 es进程01 shard01 primary shard 03 replica]
     A -->|读| C[机器2 es进程02 shard 02 primary shard 01 replica]
     A -->|读| D[机器3 es进程03 shard 03 primary shard 02 replica]
     
@@ -737,7 +737,7 @@ ES 可以通过 nodeattrs 标记节点类型，通过设置不同的 nodeattrs�
 
 7.0 之后，默认只有一个主分片，1 个主分片可以解决算法、聚合不准的问题，但单个主分片无法实现水平扩展
 
-理想情况，主分片数应该大于节点数，当集群增加新节点后，ES 会自动进行 rebalancing 操作。多分片如果分布在不同的节点，读写可以并行扩展，但过多的分片会带来额外的性能开销，除了每次读写要扩散到每个分片上进行读写，还有大量分片原数量给 master 带来的开销。
+理想情况，主分片数应该大于节点数，当集群增加新节点后，ES 会自动进行 rebalancing 操作。多分片如果分布在不同的节点，读写可以并行扩展，但过多的分片会带来额外的性能开销，除了每次读写要扩散到每个分片上进行读写，还有大量分片元数据给 master 带来的开销。
 
 ### 容量规划
 

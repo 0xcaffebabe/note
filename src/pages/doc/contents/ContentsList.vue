@@ -14,8 +14,6 @@ import ContentsTree from "./ContentsTree.vue";
 import ContentList from "./ContentsList.vue";
 import DocService from "@/service/DocService";
 
-let idList :NodeListOf<Element> | null= null
-
 function highlightHeading(instance: InstanceType<typeof ContentList>) {
   const idList = document.querySelectorAll(
     ".main.markdown-section h1, .main.markdown-section h2, .main.markdown-section h3, .main.markdown-section h4, .main.markdown-section h5, .main.markdown-section h6"

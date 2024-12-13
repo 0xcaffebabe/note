@@ -600,13 +600,13 @@ graph LR
     end
 
     subgraph 数据中心C
-        C1[消费者] --> C2[Kafka聚合集群]
-        C2 --> C3[MirrorMaker]
+        C1[消费者] --> C2
+        C3[MirrorMaker] --> C2[Kafka聚合集群]
     end
 
     A4 --> D1[Kafka聚合集群]
     B4 --> D1
-    D1 --> C2
+    D1 --> C3
 ```
 
 ```mermaid

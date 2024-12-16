@@ -48,6 +48,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate', 
       includeAssets: ['favicon.ico'],
+      workbox: {
+        globPatterns: ['**/index.html', '**/*.{js,css,json}'],
+      },
       manifest: {
         name: '知识体系',
         short_name: 'PKS',

@@ -293,7 +293,7 @@ CPU绑定：如果将Redis绑定在某个核上 那么在持久化的时候子�
 
 连接拒绝：网络闪断 连接数超过redis的最大连接数 linux文件符限制或者back_log限制导致的连接溢出
 
-网络延迟：避免物理具体过远
+网络延迟：避免物理距离过远
 
 网卡软中断：单个网卡队列只能使用一个CPU，高并发下网卡数据交互都集中在同一个CPU，导致无法充分利用多核CPU的情况
 
@@ -313,11 +313,11 @@ CPU绑定：如果将Redis绑定在某个核上 那么在持久化的时候子�
 属性名                      | 属性说明
 ------------------------ | -------------------------------------
 used_memory              | Redis 分配器分配的内存总量，也就是内部存储的所有数据内存占用量
-used memory_human        | 以可读的格式返回used_memory
-used_ memory_rss         | 从操作系统的角度显示Redis进程占用的物理内存总量
+used_memory_human        | 以可读的格式返回used_memory
+used_memory_rss         | 从操作系统的角度显示Redis进程占用的物理内存总量
 used_memory_peak         | 内存使用的最大值，表示used_memory 的峰值
-used _memory_ peak_human | 以可读的格式返回used_memory_peak
-used_ memory_lua         | Lua引擎所消耗的内存大小
+used_memory_peak_human | 以可读的格式返回used_memory_peak
+used_memory_lua         | Lua引擎所消耗的内存大小
 mem_fragmentation_ratio  | used_memory_rss/used_memory比值，表示内存碎片率
 mem_allocator            | Redis所使用的内存分配器。默认为jemalloc
 
@@ -359,18 +359,21 @@ graph TD
 
 循环执行指的是执行回收逻辑 直到不足25%或运行超时为止
 
+- 快模式：Redis 会将过期键的清理工作推迟到 事件循环的空闲时间，这样主线程就可以在忙碌的周期内继续处理其他任务
+- 慢模式：如果在这次检查中发现有超过 25% 的键已过期，Redis 会继续执行检查，并随机抽取更多的键进行判断，直到完成一定的检查量。这个过程可能会持续较长时间
+
 内存溢出淘汰策略：设置内存最大使用量，当内存使用量超出时，会执行数据淘汰策略
 
 策略              | 描述
 --------------- | --------------------------
-volatile-lru    | 从已设置过期时间的数据集中挑选最近最少使用的数据淘汰（**最常用**）
+volatile-lru    | 从已设置过期时间的数据集中挑选最近最少使用的数据淘汰（**最常用**）。< 3.0 的默认策略
 volatile-ttl    | 从已设置过期时间的数据集中挑选将要过期的数据淘汰
 volatile-random | 从已设置过期时间的数据集中任意选择数据淘汰
 volatile-lfu    | 从已设置过期时间的数据集中挑选访问频率最低的数据淘汰
 allkeys-lru     | 从所有数据集中挑选最近最少使用的数据淘汰
 allkeys-random  | 从所有数据集中任意选择数据进行淘汰
 allkeys-lfu     | 从所有数据集中挑选访问频率最低的数据淘汰
-noeviction      | 禁止驱逐数据，当内存不足时，写入操作会被拒绝
+noeviction      | 禁止驱逐数据，当内存不足时，写入操作会被拒绝。 >= 3.0 的默认策略
 
 内存溢出淘汰策略可以采用config set maxmemory-policy{policy}动态配置
 

@@ -214,7 +214,7 @@ export default defineComponent({
     },
     async showDoc(doc: string, headingId?: string, kw?: string) {
       // 将滚动条设置为上一次的状态
-      document.body.scrollTo(0, docService.getDocReadRecord(doc))
+      window.scrollTo(0, docService.getDocReadRecord(doc))
       this.loading = true;
       this.doc = doc;
       this.kw = kw || "";

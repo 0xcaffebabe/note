@@ -69,39 +69,6 @@ class DocPageEventManager {
           return false
         }
       };
-      if (!this.isMobile) {
-        const action = (e: MouseEvent) => {
-          const originLink = a.getAttribute('origin-link')!;
-          (this.getRef('linkPopover') as InstanceType<typeof LinkPopover>).show(originLink, e.clientX, e.clientY);
-          e.preventDefault();
-          e.stopPropagation();
-        }
-        a.addEventListener('contextmenu', (e: MouseEvent) => {
-          action(e)
-          return false;
-        });
-        a.addEventListener('mouseover', (e: MouseEvent) => {
-          action(e)
-          return false
-        })
-      }else {
-        a.addEventListener('click', e => {
-          e.stopPropagation()
-          e.preventDefault()
-        })
-        const originLink = a.getAttribute('origin-link')!;
-        TouchUtils.onPress(a, (duration) => {
-          if (duration <= 500) {
-            this.docPageInstance.$router.push(a.getAttribute('href')!.replace('#/', ''))
-            console.log('click')
-            return;
-          }
-          if (duration > 500) {
-            (this.getRef('linkPopover') as InstanceType<typeof LinkPopover>).show(originLink, window.innerWidth / 10, 100);
-            return
-          }
-        })
-      }
     }
     // 外部链接
     for(let i = 0;i < outterLinkList.length;i++){

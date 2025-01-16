@@ -39,7 +39,7 @@
     "@types/prismjs": "1.26.5",
     "@types/shelljs": "0.8.15",
     "@types/wordcloud": "1.2.2",
-    "@vitejs/plugin-vue": "5.2.0",
+    "@vitejs/plugin-vue": "5.2.1",
     "eruda": "3.4.1",
     "front-matter": "4.0.2",
     "jsdom": "25.0.1",
@@ -54,8 +54,8 @@
     "typescript": "5.6.3",
     "unplugin-auto-import": "0.18.5",
     "unplugin-vue-components": "0.27.4",
-    "vite": "5.4.11",
+    "vite": "6.0.7",
     "vite-plugin-prismjs": "0.0.11",
-    "vite-plugin-pwa": "0.21.0"
+    "vite-plugin-pwa": "0.21.1"
   }
 }

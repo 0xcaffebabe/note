@@ -88,7 +88,6 @@
           提交分布
         </template>
         <heat-map />
-        <three-dimension-heat-map />
         <hour-commit-heatmap />
         <commit-total-trend />
       </el-descriptions-item>
@@ -116,7 +115,6 @@
 
 <script setup lang="ts">
 import HourCommitHeatmap from "./HourCommitHeatmap.vue"
-import ThreeDimensionHeatMap from "./ThreeDimensionHeatMap.vue"
 import CommitTotalTrend from "./CommitTotalTrend.vue";
 </script>
 

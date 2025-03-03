@@ -173,9 +173,9 @@ export default defineComponent({
       showDrawer: false,
       multiLLMShow: false,
       llmMode: 'category',
-      model: '@cf/qwen/qwen1.5-14b-chat-awq',
+      model: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
       models: [
-        '@cf/qwen/qwen1.5-14b-chat-awq',
+        '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
         '@hf/google/gemma-7b-it',
         '@hf/thebloke/deepseek-coder-6.7b-instruct-awq',
         '@cf/meta/llama-3.3-70b-instruct-fp8-fast'

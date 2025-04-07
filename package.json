@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "2.3.1",
-    "algoliasearch": "4.24.0",
+    "algoliasearch": "5.23.3",
     "axios": "1.7.7",
     "echarts": "5.5.1",
     "echarts-wordcloud": "2.1.0",

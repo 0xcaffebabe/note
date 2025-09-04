@@ -39,7 +39,7 @@
     "@types/prismjs": "1.26.5",
     "@types/shelljs": "0.8.15",
     "@types/wordcloud": "1.2.2",
-    "@vitejs/plugin-vue": "5.2.1",
+    "@vitejs/plugin-vue": "6.0.1",
     "eruda": "3.4.1",
     "front-matter": "4.0.2",
     "jsdom": "25.0.1",

@@ -252,7 +252,6 @@
       - [Java 内存模型](./编程语言/JAVA/JVM/JAVA内存模型.md)
     - [Jakara EE](./编程语言/JAVA/JakartaEE/nav.md)
       - [Servlet](./编程语言/JAVA/JakartaEE/Servlet.md)
-      - [JSP](./编程语言/JAVA/JakartaEE/JSP.md)
       - [Cookie&Session](./编程语言/JAVA/JakartaEE/Cookie&Session.md)
       - [JPA](./编程语言/JAVA/JakartaEE/JPA.md)
       - [Freemarker](./编程语言/JAVA/JakartaEE/Freemarker.md)
@@ -287,8 +286,6 @@
     - [ES5](./编程语言/JavaScript/ES5.md)
     - [ES6](./编程语言/JavaScript/ES6.md)
     - [NodeJS](./编程语言/JavaScript/Node/NodeJs.md)
-      - [art-template](./编程语言/JavaScript/Node/art-template.md)
-      - [Express](./编程语言/JavaScript/Node/Express.md)
     - [模块化](./编程语言/JavaScript/模块化.md)
     - 第三方库/框架
     - [jQuery](./编程语言/JavaScript/Jquery.md)

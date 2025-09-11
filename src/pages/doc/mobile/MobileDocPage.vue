@@ -7,19 +7,15 @@
     </el-main>
   </el-container>
   <link-popover ref="linkPopover"/>
-  <selection-popover ref="selectionPopover" @showKnowledgeTrend="showKnowledgeTrend"/>
   <mind-graph ref="mindGraph" />
   <mobile-image-viewer ref="imageViewer" />
   <knowledge-reviewer ref="knowledgeReviewer" :doc="doc" />
   <knowledge-network ref="knowledgeNetwork" :doc="doc"/>
-  <knowledge-trend ref="knowledgeTrend"/>
   <mermaid-shower ref="mermaidShower"/>
-  <selection-popover />
   <mobile-tool-box 
     @showMindGraph="showMindGraph"
     @showKnowledgeReviewer="showKnowledgeReviewer"
     @showKnowledgeNetwork="showKnowledgeNetwork"
-    @showKnowledgeTrend="showKnowledgeTrend"
     @showLlm="showLLM"
   />
   <LLM :doc="doc" ref="llm"/>
@@ -38,11 +34,9 @@ import DocPageEventManager from '../DocPageEventManager'
 import MobileToolBox from '../MobileToolBox.vue'
 import KnowledgeReviewer from '../knowledge/KnowledgeReviewer.vue'
 import KnowledgeNetwork from '../knowledge/KnowledgeNetwork.vue'
-import KnowledgeTrend from '../knowledge/trend/KnowledgeTrend.vue'
 import DocMetadataInfo from '../metadata/DocMetadataInfo.vue'
 import MindGraph from '../mind/MindGraph.vue'
 import TouchUtils from '@/util/TouchUtils'
-import SelectionPopover from '../tool/SelectionPopover.vue'
 import MermaidShower from '../mermaid-shower/MermaidShower.vue';
 import LLM from '../knowledge/LLM.vue';
 
@@ -54,10 +48,8 @@ export default defineComponent({
     MobileToolBox,
     KnowledgeReviewer,
     KnowledgeNetwork,
-    KnowledgeTrend,
     DocMetadataInfo,
     MindGraph,
-    SelectionPopover,
     MermaidShower,
     LLM,
 },
@@ -118,10 +110,7 @@ export default defineComponent({
       this.eventManager!.registerLinkRouter(docEl);
       this.eventManager!.registerTextSelected(docEl);
       this.eventManager!.registerMermaidFullScreenClick(docEl);
-    },
-    showKnowledgeTrend(kw?: string) {
-      (this.$refs.knowledgeTrend as InstanceType<typeof KnowledgeTrend>).show(this.file, kw)
-    },
+    }
   },
   beforeRouteUpdate(to, from) {
     this.doc = to.params.doc.toString()

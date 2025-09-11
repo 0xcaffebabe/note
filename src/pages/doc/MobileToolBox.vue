@@ -83,7 +83,6 @@ export default defineComponent({
     'goToDoc',
     'goToPpt',
     'showKnowledgeReviewer',
-    'showKnowledgeTrend',
     'showKnowledgeRedundancy',
     'showKwFinder',
     'showLlm'
@@ -97,7 +96,6 @@ export default defineComponent({
         {name: '思维导图', type: 'success', action: 'showMindGraph'},
         {name: '知识网络', type: 'warning', action: 'showKnowledgeNetwork'},
         {name: '知识回顾', type: 'primary', action: 'showKnowledgeReviewer'},
-        {name: '知识趋势', type: 'danger', action: 'showKnowledgeTrend'},
         {name: '知识助手', type: 'warning', action: 'showLlm', divided: true},
         {name: '文本搜索', type: 'warning', action: 'showKwFinder'},
       ] as Action[]

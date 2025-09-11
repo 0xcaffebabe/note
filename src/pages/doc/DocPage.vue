@@ -40,7 +40,6 @@
   <tool-box 
     @showMindGraph="showMindGraph();showAside = false;isDrawerShow = true"
     @showKnowledgeNetwork="showKnowledgeNetwork();showAside = false;isDrawerShow = true"
-    @showKnowledgeTrend="showKnowledgeTrend()"
     @copyDocPath="handleCopyDocPath"
     @showLinkList="showLinkList"
     @showKnowledgeReviewer="showKnowledgeReviewer"
@@ -49,7 +48,6 @@
   />
   <!-- 工具栏结束 -->
   <link-popover ref="linkPopover"/>
-  <selection-popover ref="selectionPopover" @showKnowledgeTrend="showKnowledgeTrend"/>
   <el-backtop :bottom="220" :right="26" />
   <mind-graph ref="mindGraph" @close="showAside = true;isDrawerShow = false" />
   <link-list :html="contentHtml" ref="linkList"/>
@@ -57,9 +55,6 @@
   <mermaid-shower ref="mermaidShower"/>
   <keep-alive>
     <knowledge-network ref="knowledgeNetwork" :doc="doc" @close="showAside = true;isDrawerShow = false"/>
-  </keep-alive>
-  <keep-alive>
-    <knowledge-trend ref="knowledgeTrend"/>
   </keep-alive>
   <keep-alive>
     <LLM :doc="doc" ref="llm" @close="showAside = true;isDrawerShow = false"/>
@@ -96,9 +91,7 @@ import DocPageEventMnager from './DocPageEventManager';
 import ResourceBrower from "./ResourceBrower.vue";
 import ImageViewer from "@/components/ImageViewer.vue";
 import KnowledgeReviewer from "./knowledge/KnowledgeReviewer.vue";
-import KnowledgeTrend from './knowledge/trend/KnowledgeTrend.vue'
 import DocMetadataInfo from './metadata/DocMetadataInfo.vue'
-import SelectionPopover from './tool/SelectionPopover.vue'
 import InstantPreviewer from './tool/InstantPreviewer.vue'
 import { SysUtils } from "@/util/SysUtils";
 import config from '@/config';
@@ -122,9 +115,7 @@ export default defineComponent({
     ResourceBrower,
     ImageViewer,
     KnowledgeReviewer,
-    KnowledgeTrend,
     DocMetadataInfo,
-    SelectionPopover,
     InstantPreviewer,
     MermaidShower,
     LLM
@@ -253,10 +244,7 @@ export default defineComponent({
     },
     generateTOC() {
       this.contentsList = docService.getContent(this.contentHtml);
-    },
-    showKnowledgeTrend(kw?: string) {
-      (this.$refs.knowledgeTrend as InstanceType<typeof KnowledgeTrend>).show(this.file, kw)
-    },
+    }
   },
   beforeRouteUpdate(to, from) {
     const doc = to.params.doc.toString();

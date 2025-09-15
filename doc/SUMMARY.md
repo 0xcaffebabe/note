@@ -289,7 +289,6 @@
     - [NodeJS](./编程语言/JavaScript/Node/NodeJs.md)
     - [模块化](./编程语言/JavaScript/模块化.md)
     - 第三方库/框架
-    - [jQuery](./编程语言/JavaScript/Jquery.md)
     - [Vue](./编程语言/JavaScript/Vue/nav.md)
       - [数据渲染](./编程语言/JavaScript/Vue/数据渲染.md)
       - [属性操作](./编程语言/JavaScript/Vue/属性操作.md)

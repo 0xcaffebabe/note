@@ -255,7 +255,6 @@
       - [Servlet](./编程语言/JAVA/JakartaEE/Servlet.md)
       - [Cookie&Session](./编程语言/JAVA/JakartaEE/Cookie&Session.md)
       - [JPA](./编程语言/JAVA/JakartaEE/JPA.md)
-      - [Freemarker](./编程语言/JAVA/JakartaEE/Freemarker.md)
     - -框架-
     - [🍃Spring](./编程语言/JAVA/框架/Spring/spring概览.md)
       - [Bean注册](./编程语言/JAVA/框架/Spring/Bean注册.md)

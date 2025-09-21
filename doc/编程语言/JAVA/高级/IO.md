@@ -13,7 +13,7 @@
 
 ```mermaid
 mindmap
- 处理流
+ root((处理流))
     缓冲操作
         BufferedInputStream
         BufferedOutputStream
@@ -35,7 +35,7 @@ mindmap
 
 ```mermaid
 mindmap
-    节点流
+    root((节点流))
         文件操作
             FileInputStream
             FileOutputStream

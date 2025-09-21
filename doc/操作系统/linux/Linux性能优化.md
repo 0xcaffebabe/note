@@ -111,7 +111,7 @@ Linux 将中断处理过程分成了两个阶段，也就是上半部和下半�
 
 ```mermaid
 mindmap
-  内存性能指标
+  root((内存性能指标))
     系统内存指标
       已用内存
       剩余内存
@@ -192,7 +192,7 @@ Linux 提供了一个 /proc/sys/vm/swappiness 选项，用来调整使用 Swap �
 
 ```mermaid
 mindmap
-  IO 性能指标
+  root((IO 性能指标))
     磁盘
       使用率
       IOPS

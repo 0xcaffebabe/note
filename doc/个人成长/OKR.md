@@ -18,7 +18,7 @@
 
 ```mermaid
 mindmap
-  OKR
+  root((OKR))
     O1
       KR1
       KR2

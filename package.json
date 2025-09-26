@@ -14,7 +14,7 @@
     "axios": "1.12.2",
     "echarts": "5.6.0",
     "echarts-wordcloud": "2.1.0",
-    "element-plus": "2.11.3",
+    "element-plus": "2.11.4",
     "js-yaml": "4.1.0",
     "jsmind": "0.9.0",
     "katex": "0.16.22",
@@ -26,7 +26,7 @@
     "svg-pan-zoom": "3.6.2",
     "tiny-pinyin": "1.3.2",
     "viewerjs": "1.11.7",
-    "vue": "3.5.21",
+    "vue": "3.5.22",
     "vue-router": "4.5.1",
     "vuex": "4.1.0"
   },
@@ -54,7 +54,7 @@
     "typescript": "5.9.2",
     "unplugin-auto-import": "0.19.0",
     "unplugin-vue-components": "0.28.0",
-    "vite": "7.1.6",
+    "vite": "7.1.7",
     "vite-plugin-prismjs": "0.0.11",
     "vite-plugin-pwa": "1.0.3"
   }

@@ -400,8 +400,6 @@
     - [Jetty](./中间件/web中间件/Jetty.md)
     - [Nginx](./中间件/web中间件/Nginx.md)
   - [xxl-job](./中间件/xxl-job.md)
-  - [文件服务器](./中间件/文件服务器/文件服务器.md)
-    - [FastDFS](./中间件/文件服务器/FastDFS.md)
   - [浏览器](./中间件/浏览器/浏览器.md)
     - [V8](./中间件/浏览器/V8.md)
 

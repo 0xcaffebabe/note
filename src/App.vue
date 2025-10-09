@@ -1,5 +1,5 @@
 <template>
-  <el-container>
+  <el-container class="main-layout">
     <el-header v-show="showHeader">
       <el-affix :offset="0">
         <Header
@@ -8,16 +8,22 @@
         />
       </el-affix>
     </el-header>
-    <div class="header-toggle-button" :style="{'margin-top': showHeader ?'66px': '6px'}">
-      <el-button @click="showHeader = !showHeader" size="small" type="primary">
-        <el-icon>
-          <arrow-up-bold v-if="showHeader" />
-          <arrow-down-bold v-else />
-        </el-icon>
-      </el-button>
+    <div class="header-toggle-button" :style="{'margin-top': showHeader ? '60px' : '10px'}">
+      <el-button 
+        @click="showHeader = !showHeader" 
+        size="small" 
+        type="default"
+        :icon="showHeader ? ArrowUpBold : ArrowDownBold"
+        circle
+        :title="showHeader ? '隐藏顶部栏' : '显示顶部栏'"
+      />
     </div>
     <el-main>
-      <router-view></router-view>
+      <router-view v-slot="{ Component }">
+        <transition name="page" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </el-main>
   </el-container>
   <Search ref="search" />
@@ -55,7 +61,9 @@ export default defineComponent({
     }
     return {
       search, showSearch,
-      categorySearch, showCategorySearch
+      categorySearch, showCategorySearch,
+      ArrowUpBold,
+      ArrowDownBold
     }
   },
   watch : {
@@ -154,41 +162,59 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
-.el-container {
-  height: 100%;
+.main-layout {
+  min-height: 100vh;
+  transition: all 0.3s ease;
 }
+
 .el-main {
-  background-color: #fff;
-  height: 100%;
   padding: 0;
+  transition: all 0.3s ease;
 }
-.el-header {
-  padding: 0;
-  background-color: #fff;
-}
+
 .header-toggle-button {
   position: fixed;
-  // width: 100%;
-  right: 20px;
+  right: 16px;
   z-index: 1000;
+  transition: all 0.3s ease;
+  
   .el-button {
-    padding: 0 16px;
-    box-shadow: 2px 2px 13px #bbb;
+    padding: 8px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    box-shadow: var(--shadow-md);
+    background-color: var(--card-bg-color);
+    transition: all 0.2s ease;
+    
+    &:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-1px);
+    }
   }
 }
 
+// 页面过渡动画
+.page-enter-active,
+.page-leave-active {
+  transition: all 0.25s ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
 body[theme=dark] {
-  .el-main {
-    background-color:var(--main-dark-bg-color);
-    color: var(--main-dark-text-color);
-  }
-  .el-header {
-    background-color:var(--main-dark-bg-color);
-    color: var(--main-dark-text-color);
-  }
   .header-toggle-button {
     .el-button {
-      box-shadow: 2px 2px 13px #111;
+      background-color: var(--dark-card-bg-color);
+      border: 1px solid var(--default-dark-border-color);
     }
   }
 }

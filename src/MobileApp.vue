@@ -1,12 +1,16 @@
 <template>
-  <el-container ref="main">
-    <el-header>
+  <el-container class="mobile-layout" ref="main">
+    <el-header class="mobile-header">
       <el-affix>
         <mobile-header @showSearch="showSearch" @show-category-search="showCategorySearch"/>
       </el-affix>
     </el-header>
-    <el-main>
-      <router-view />
+    <el-main class="mobile-main">
+      <router-view v-slot="{ Component }">
+        <transition name="page" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </el-main>
   </el-container>
   <Search ref="search" />
@@ -39,26 +43,49 @@ export default defineComponent({
 
 
 <style lang="less" scoped>
-.el-main {
-    padding: 0 4px;
+.mobile-layout {
+  min-height: 100vh;
+  transition: all 0.3s ease;
 }
-.el-header {
+
+.mobile-main {
+  padding: var(--spacing-sm);
+  padding-top: 8px;
+  background-color: var(--card-bg-color);
+  transition: all 0.3s ease;
+}
+
+.mobile-header {
   padding: 0;
-  height: 40px;
+  height: 48px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--card-bg-color);
+  transition: all 0.3s ease;
 }
+
+// 页面过渡动画
+.page-enter-active,
+.page-leave-active {
+  transition: all 0.25s ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
 body[theme=dark] {
-  .el-main {
-    background-color:var(--main-dark-bg-color);
-    color: var(--main-dark-text-color);
+  .mobile-main {
+    background-color: var(--dark-card-bg-color);
   }
-  .el-header {
-    background-color:var(--main-dark-bg-color);
-    color: var(--main-dark-text-color);
-  }
-  .header-toggle-button {
-    .el-button {
-      box-shadow: 2px 2px 13px #111;
-    }
+  .mobile-header {
+    background-color: var(--dark-card-bg-color);
+    border-bottom: 1px solid var(--default-dark-border-color);
   }
 }
 </style>
@@ -66,8 +93,8 @@ body[theme=dark] {
 <style lang="less">
 #buildTime {
   transition: all .2s;
-  font-size: 10px!important;
-  bottom: 2px!important;
-  right: 2px!important;
+  font-size: 10px !important;
+  bottom: 4px !important;
+  right: 4px !important;
 }
 </style>

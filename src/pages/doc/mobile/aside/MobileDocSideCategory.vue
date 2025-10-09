@@ -3,13 +3,27 @@
     v-model="showCategory"
     direction="rtl"
     :with-header="false"
-    size="64%"
+    size="70%"
     :close-on-click-modal="true"
     :append-to-body="false"
-    custom-class="category-drawer"
+    custom-class="mobile-category-drawer"
+    :show-close="false"
   >
-    <div class="category-wrapper" style="height:100%">
-      <category-list :doc="doc" @first-load="handleFirstLoad"/>
+    <div class="mobile-category-wrapper">
+      <div class="drawer-header">
+        <el-button 
+          type="default" 
+          size="small" 
+          @click="showCategory = false"
+          :icon="ArrowRightBold"
+          circle
+          class="close-btn"
+        />
+        <h3 class="drawer-title">目录</h3>
+      </div>
+      <div class="category-content">
+        <category-list :doc="doc" @first-load="handleFirstLoad"/>
+      </div>
     </div>
   </el-drawer>
 </template>
@@ -71,17 +85,103 @@ export default defineComponent({
 </script>
 
 <style lang="less">
-.category-drawer .el-drawer__body {
-  padding: 0 !important;
+.mobile-category-drawer {
+  .el-drawer__body {
+    padding: 0 !important;
+    background-color: var(--card-bg-color);
+  }
 }
 </style>
 <style lang="less" scoped>
-.category-wrapper {
+.mobile-category-wrapper {
   height: 100%;
-  min-width: 64%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--card-bg-color);
 }
-.cate-fix-btn {
-  padding: 10px 8px;
-  margin-left: -13px;
+
+.drawer-header {
+  padding: var(--spacing-md) var(--spacing-md) var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--card-bg-color);
+  
+  .close-btn {
+    margin-right: var(--spacing-sm);
+    padding: 8px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    box-shadow: var(--shadow-md);
+    background-color: var(--card-bg-color);
+    transition: all 0.25s ease;
+    
+    &:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-1px);
+      background-color: var(--hover-bg-color);
+    }
+  }
+  
+  .drawer-title {
+    margin: 0;
+    font-size: 1.2em;
+    font-weight: 600;
+    color: var(--main-text-color);
+  }
+}
+
+.category-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-sm);
+  
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.1);
+    border-radius: 2px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,0,0,0.2);
+  }
+}
+
+body[theme=dark] {
+  .mobile-category-drawer {
+    .el-drawer__body {
+      background-color: var(--dark-card-bg-color);
+    }
+  }
+  
+  .mobile-category-wrapper {
+    background-color: var(--dark-card-bg-color);
+  }
+  
+  .drawer-header {
+    border-bottom: 1px solid var(--default-dark-border-color);
+    background-color: var(--dark-card-bg-color);
+    
+    .close-btn {
+      background-color: var(--dark-card-bg-color);
+      border: 1px solid var(--default-dark-border-color);
+      
+      &:hover {
+        background-color: var(--dark-hover-bg-color);
+      }
+    }
+    
+    .drawer-title {
+      color: var(--dark-text-color);
+    }
+  }
 }
 </style>

@@ -119,9 +119,19 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
+.el-skeleton {
+  padding: var(--spacing-sm);
+}
+
+.el-menu {
+  border-right: none;
+  background-color: transparent;
+  padding: 0;
+}
+
 body[theme="dark"] {
   .el-menu {
-    border-right-color: var(--default-dark-border-color) !important;
+    background-color: transparent;
   }
 }
 </style>

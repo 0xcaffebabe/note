@@ -291,7 +291,7 @@ export default defineComponent({
   padding-left: 1rem;
 }
 .main-content {
-  padding-top: 24px;
+  padding-top: 36px;
 }
 .markdown-section {
   :deep(mark) {

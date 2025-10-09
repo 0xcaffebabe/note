@@ -1,15 +1,47 @@
 <template>
   <transition name="fade">
-    <div ref="root" class="root" v-show="visible">
-      <el-button class="close-button" size="small" circle @click="hide">
-        <el-icon><close-bold /></el-icon>
-      </el-button>
-      <el-button-group>
-        <el-button size="small" class="menu-button" @click="$emit('toggleFixed');hide()" v-if="fixed">取消固定</el-button>
-        <el-button size="small" class="menu-button" @click="$emit('toggleFixed');hide()" v-else>固定菜单</el-button>
-        <el-button size="small" class="menu-button" :disabled="cateList.length <= 1" @click="closeCurrent">关闭</el-button>
-        <el-button size="small" class="menu-button" :disabled="cateList.length <= 1" @click="closeOthers">关闭其他</el-button>
-      </el-button-group>
+    <div ref="root" class="context-menu" v-show="visible">
+      <el-button 
+        class="close-btn" 
+        size="small" 
+        circle 
+        @click="hide"
+        :icon="CloseBold"
+      />
+      <div class="menu-items">
+        <el-button 
+          size="small" 
+          class="menu-item"
+          @click="$emit('toggleFixed');hide()" 
+          v-if="fixed"
+        >
+          取消固定
+        </el-button>
+        <el-button 
+          size="small" 
+          class="menu-item"
+          @click="$emit('toggleFixed');hide()" 
+          v-else
+        >
+          固定菜单
+        </el-button>
+        <el-button 
+          size="small" 
+          class="menu-item"
+          :disabled="cateList.length <= 1" 
+          @click="closeCurrent"
+        >
+          关闭
+        </el-button>
+        <el-button 
+          size="small" 
+          class="menu-item"
+          :disabled="cateList.length <= 1" 
+          @click="closeOthers"
+        >
+          关闭其他
+        </el-button>
+      </div>
     </div>
   </transition>
 </template>
@@ -64,7 +96,7 @@ export default defineComponent({
         index--;
       }
       const docId = DocUtils.docUrl2Id(this.cateList[index]);
-      // 只有在当前目录与要被关闭的目录的时候相同时才跳转
+      // 只有在当前目录与要被关闭的菜单项相同时才跳转
       if (this.currentCate.link == this.cateLink) {
         this.$router.push('/doc/' + docId);
       }
@@ -88,39 +120,93 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
-.root {
-  transition: all 0.2s;
-  background-color: #fff;
-  width: 100px;
+.context-menu {
   position: fixed;
-  z-index: 999;
-  top: 80px;
-  left: 400px;
-  padding: 10px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  background-color: var(--card-bg-color);
+  width: 160px;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-sm);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
 }
 
-.close-button {
-  float: right;
+.close-btn {
+  position: absolute;
+  top: var(--spacing-xs);
+  right: var(--spacing-xs);
+  padding: 4px;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background-color: transparent;
+  color: var(--secondary-text-color);
+  transition: all 0.2s ease;
+  
+  &:hover {
+    color: var(--main-text-color);
+    background-color: var(--hover-bg-color);
+  }
+  
+  body[theme=dark] & {
+    color: var(--dark-secondary-text-color);
+    
+    &:hover {
+      color: var(--dark-text-color);
+      background-color: var(--dark-hover-bg-color);
+    }
+  }
 }
-.menu-button {
+
+.menu-items {
+  padding-top: 26px; // 为关闭按钮留出空间
+}
+
+.menu-item {
   width: 100%;
+  justify-content: flex-start;
+  border-radius: var(--radius-md);
+  margin: 2px 0;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  
+  &:not(.is-disabled):hover {
+    background-color: var(--hover-bg-color);
+    border-color: var(--border-color);
+    transform: translateX(2px);
+  }
+  
+  &.is-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  body[theme=dark] & {
+    &:not(.is-disabled):hover {
+      background-color: var(--dark-hover-bg-color);
+      border-color: var(--default-dark-border-color);
+    }
+  }
 }
 
 // 动画
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.5s ease;
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+  transform: scale(0.95);
 }
 
 body[theme=dark] {
-  .root {
-    background-color: var(--second-dark-bg-color);
+  .context-menu {
+    background-color: var(--dark-card-bg-color);
+    border: 1px solid var(--default-dark-border-color);
   }
 }
 </style>

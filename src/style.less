@@ -1,96 +1,172 @@
 :root{
   scroll-behavior: smooth;
-  --main-dark-bg-color: #1E1E1E;
-  --second-dark-bg-color: #323233;
-  --third-dark-bg-color: rgb(60,60,60);
-
-  --default-dark-border-color: #61666b;
-  --skelon-bg-start-color: #2b2c2c;
-  --skelon-bg-end-color: #2b2e2e;
-
-  --main-dark-text-color: rgb(201, 209, 217);
-  --second-dark-text-color: rgb(139, 148, 158);
+  
+  // 简洁风格的浅色主题
+  --main-bg-color: #ffffff;
+  --main-text-color: #333333;
+  --secondary-text-color: #666666;
+  --border-color: #e0e0e0;
+  --divider-color: #f0f0f0;
+  --hover-bg-color: #f8f9fa;
+  --card-bg-color: #ffffff;
+  --primary-color: #409eff;
+  --primary-light-color: #ecf5ff;
+  
+  // 简洁风格的深色主题
+  --main-dark-bg-color: #1e1e1e;
+  --second-dark-bg-color: #252526;
+  --third-dark-bg-color: #2d2d30;
+  --default-dark-border-color: #454545;
+  --dark-text-color: #e0e0e0;
+  --dark-secondary-text-color: #a0a0a0;
+  --dark-hover-bg-color: #2a2d2e;
+  --dark-card-bg-color: #252526;
+  
+  // 间距系统
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  // 圆角系统
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  
+  // 阴影系统
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
 }
-.image-viewer-stop-scroll {
-  overflow: hidden;
+
+// 重置默认样式
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme:dark) {
-  body {
-    background-color: var(--main-dark-bg-color);
-  }
-}
-@media (prefers-color-scheme:light) {
-  body {
-    background-color: #fff;
-  }
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--main-text-color);
+  background-color: var(--main-bg-color);
+  transition: background-color, color 0.3s ease;
 }
 
 #app {
   height: 100%;
+  min-height: 100vh;
 }
-body {
-  padding: 0;
-  margin: 0;
-}
+
+// 简洁风格的滚动条
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
-  border-radius: 3px;
-  background: rgba(0,0,0,0.06);
-  box-shadow: inset 0 0 5px rgba(0,0,0,0.08);
+  background: transparent;
 }
-/* 滚动条滑块 */
+
 ::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
   border-radius: 3px;
-  background: rgba(0,0,0,0.12);
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+  transition: background 0.2s ease;
 }
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.3);
+}
+
+body[theme=dark] {
+  color: var(--dark-text-color);
+  background-color: var(--main-dark-bg-color);
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.3);
+  }
+}
+
+// 简洁风格的通用组件样式
+.el-container {
+  background-color: transparent;
+}
+
+.el-main {
+  padding: var(--spacing-md);
+  background-color: transparent;
+}
+
+.el-header {
+  padding: 0;
+  border-bottom: 1px solid var(--border-color);
+  background-color: transparent;
+  box-shadow: none;
+  transition: border-color 0.3s ease;
+}
+
+// 简洁风格的抽屉和模态框
 .drawer-modal-class {
-  background-color: rgba(0,0,0,0.2);
+  background-color: rgba(0,0,0,0.3);
 }
-.markdown-section {
-  z-index: 1;
-}
+
+// 简化标签样式
 .markdown-section .doc-tag {
   cursor: pointer;
-  padding: 0 6px;
+  padding: 2px 8px;
   color: white;
   font-size: 12px;
-  background-color: #F56C6C;
-  border-radius: 10px;
+  background-color: var(--primary-color);
+  border-radius: 12px;
+  border: none;
 }
+
+// 移除选中时的背景色
 .markdown-section .doc-tag::selection {
   background-color: transparent;
 }
+
+// 简化标签主样式
 .markdown-section .doc-tag-main {
   text-decoration: none;
-  border-bottom: 1px dashed #ccc;
+  border-bottom: 1px solid var(--border-color);
+  transition: border-color 0.2s ease;
 }
+
+.markdown-section .doc-tag-main:hover {
+  border-bottom: 1px solid var(--primary-color);
+}
+
+// 简化图片查看器样式
+.image-viewer-stop-scroll {
+  overflow: hidden;
+}
+
 // 底部可操作的抽屉遮罩
 .operational-drawer-modal {
   pointer-events: none;
 }
+
 // 底部可操作性的抽屉
 .operational-drawer {
   pointer-events: auto;
-  position:fixed;
+  position: fixed;
   z-index: 3000;
 }
 
-body[theme=dark] {
-  background-color:var(--main-dark-bg-color);
-  color: var(--main-dark-text-color);
-
-  /* 滚动条滑块 */
-  ::-webkit-scrollbar-thumb {
-    box-shadow: inset 0 0 10px var(--second-dark-text-color);
-  }
-
+// 简化页面切换过渡
+.page-transition-enter-active,
+.page-transition-leave-active {
+  transition: opacity 0.2s ease;
 }
-
-html ::-webkit-scrollbar-thumb {
-  box-shadow: inset 0 0 10px var(--second-dark-text-color);
+.page-transition-enter-from,
+.page-transition-leave-to {
+  opacity: 0;
 }

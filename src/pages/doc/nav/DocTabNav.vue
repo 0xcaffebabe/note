@@ -1,8 +1,13 @@
 <template>
-  <el-scrollbar wrap-class="tab-container-wrapper" class="tab-container" ref="tabContainer" :style="{top: parentShowHeader? 66 + 'px': 6 + 'px', position: fixed? 'fixed': 'absolute'}">
+  <el-scrollbar 
+    wrap-class="tab-container-wrapper" 
+    class="tab-container" 
+    ref="tabContainer" 
+    :style="{top: parentShowHeader? 66 + 'px': 6 + 'px', position: fixed? 'fixed': 'absolute'}"
+  >
     <el-button
-      class="nav-item"
-      size="small"
+      class="nav-tab-item"
+      size="default"
       v-for="cate in cateList"
       :key="cate"
       :url="cate"
@@ -13,12 +18,16 @@
       @click="$router.push('/doc/' + docUrl2Id(cate))"
       @dblclick="$emit('dbclick')"
     >
-      <div>
-      {{ cateName(cate) }}
-      <span class="nav-item-sign">{{findRootCategoryFirstLetter(cate)}}</span>
-      <span class="close-btn" @click.prevent.stop="close(cate)" v-if="cateList.length > 1">
-        <el-icon><close-bold /></el-icon>
-      </span>
+      <div class="tab-content">
+        <span class="tab-name">{{ cateName(cate) }}</span>
+        <span class="tab-category">{{findRootCategoryFirstLetter(cate)}}</span>
+        <el-icon 
+          v-if="cateList.length > 1" 
+          class="close-btn" 
+          @click.prevent.stop="close(cate)"
+        >
+          <close-bold />
+        </el-icon>
       </div>
     </el-button>
   </el-scrollbar>
@@ -137,15 +146,41 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .tab-container {
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   max-width: 60%;
-  height: 32px;
+  height: 40px;
   white-space: nowrap;
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: hidden;
   z-index: 999;
+  background-color: var(--card-bg-color);
+  border-bottom: 1px solid var(--border-color);
+  padding: 4px 0;
+  
   :deep(.el-scrollbar__bar.is-vertical) {
     display: none;
+  }
+  
+  :deep(.el-scrollbar__wrap) {
+    display: flex;
+    align-items: center;
+  }
+  
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.1);
+    border-radius: 2px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,0,0,0.2);
   }
 }
 
@@ -155,60 +190,136 @@ export default defineComponent({
   }
 }
 
-.nav-item {
-  display: inline-block;
-  position: relative;
+.nav-tab-item {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  min-width: 120px;
+  max-width: 200px;
+  margin: 0 4px;
+  padding: 0 12px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  border: 1px solid transparent;
+  border-bottom: none;
+  background-color: var(--hover-bg-color);
+  color: var(--secondary-text-color);
+  font-size: 13px;
+  transition: all 0.2s ease;
   cursor: pointer;
-  border-radius: 0;
-  border-right-width: 0;
-  padding: 0px 28px;
-  height: 28px;
-  font-size: 14px;
-  margin-left: 0!important;
-  .close-btn {
-    position: absolute;
-    right: 10px;
-    bottom: 4px;
-    display: none;
-    border-radius: 4px;
+  position: relative;
+  flex-shrink: 0;
+  
+  &:first-child {
+    margin-left: 8px;
   }
-  .nav-item-sign {
-    position: absolute;
-    left: 8px;
-    font-weight: 700;
-    color: #ddf;
+  
+  &:last-child {
+    margin-right: 8px;
   }
-  .close-btn:hover {
-    background-color: #ddd;
+  
+  &:hover {
+    color: var(--main-text-color);
+    background-color: var(--card-bg-color);
+    border-color: var(--border-color);
+    
+    .close-btn {
+      opacity: 1;
+      visibility: visible;
+    }
   }
-}
-.nav-item:last-child {
-  border-right-width: 1px !important;
-}
-.nav-item.active {
-  background: rgba(64,158,255,.8);
-  color: white;
-  .close-btn {
-    display: inline-block;
-  }
-}
-.nav-item:hover {
-  background: rgba(64,158,255,.8);
-  color: white;
-  .close-btn {
-    display: inline-block;
+  
+  &.active {
+    color: var(--primary-color);
+    background-color: var(--card-bg-color);
+    border-color: var(--border-color);
+    border-bottom: 1px solid var(--card-bg-color) !important;
+    font-weight: 500;
+    
+    .tab-category {
+      background-color: var(--primary-color);
+      color: white;
+    }
   }
 }
+
+.tab-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  overflow: hidden;
+}
+
+.tab-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 6px;
+}
+
+.tab-category {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: var(--primary-light-color);
+  color: var(--primary-color);
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.close-btn {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  margin-left: 6px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  color: var(--secondary-text-color);
+  
+  &:hover {
+    background-color: var(--hover-bg-color);
+    color: var(--main-text-color);
+  }
+}
+
 body[theme="dark"] {
-  .nav-item {
-    background-color: var(--second-dark-bg-color);
-    color: var(--main-dark-text-color);
+  .tab-container {
+    background-color: var(--dark-card-bg-color);
+    border-bottom: 1px solid var(--default-dark-border-color);
   }
-  .nav-item.active {
-    background-color: var(--main-dark-bg-color);
+  
+  .nav-tab-item {
+    background-color: var(--dark-hover-bg-color);
+    color: var(--dark-secondary-text-color);
+    border-color: var(--default-dark-border-color);
+    
+    &:hover {
+      color: var(--dark-text-color);
+      background-color: var(--dark-card-bg-color);
+      border-color: var(--default-dark-border-color);
+    }
+    
+    &.active {
+      color: var(--primary-color);
+      background-color: var(--dark-card-bg-color);
+      border-color: var(--default-dark-border-color);
+      border-bottom: 1px solid var(--dark-card-bg-color) !important;
+    }
   }
-  .nav-item:hover {
-    background-color: var(--main-dark-bg-color);
+  
+  .close-btn {
+    &:hover {
+      background-color: var(--dark-hover-bg-color);
+      color: var(--dark-text-color);
+    }
   }
 }
 </style>

@@ -1,23 +1,31 @@
 <template>
-  <div position="bottom" :offset="20" class="tool-box" :style="{'top': parentShowHeader? '66px': '6px'}">
-    <el-dropdown>
-      <div>
-
-      <el-button type="primary" round size="small" class="fix-button">
-        <el-icon style="vertical-align: middle"><tools /></el-icon> 工具栏
-      </el-button>
-      </div>
+  <div class="tool-box" :style="{'top': parentShowHeader? '66px': '6px'}">
+    <el-dropdown trigger="click" placement="bottom-end">
+      <el-button 
+        type="default" 
+        size="small" 
+        class="tool-button"
+        :icon="Tools"
+        circle
+        title="工具栏"
+      />
       <template #dropdown>
-        <el-dropdown-menu>
-          <el-dropdown-item v-for="action in actionList" :key="action.name" :divided="action.divided || false"
-            ><el-button
-              class="box-item"
+        <el-dropdown-menu class="dropdown-menu">
+          <el-dropdown-item 
+            v-for="action in actionList" 
+            :key="action.name" 
+            :divided="action.divided || false"
+            class="dropdown-item"
+          >
+            <el-button
+              class="action-btn"
               @click="action.local ? localActionDispatch(action.action) : $emit(action.action)"
               :type="action.type"
-              size="small"
-              >{{action.name}} <kbd v-if="action.hotkey">{{action.hotkey}}</kbd> </el-button
-            ></el-dropdown-item
-          >
+              size="default"
+              >{{action.name}} 
+              <span class="hotkey" v-if="action.hotkey">{{action.hotkey}}</span>
+            </el-button>
+          </el-dropdown-item>
         </el-dropdown-menu>
       </template>
     </el-dropdown>
@@ -26,11 +34,21 @@
     v-model="showDrawer"
     title="更多设置"
     :lock-scroll="false"
+    size="300px"
+    class="setting-drawer"
   >
     <div class="more-setting-container">
-      <div>
-        <span>字体大小</span>
-        <el-slider v-model="fontSize" :min="16" :max="48" :step="1" @input="handleFontSizeChange"></el-slider>
+      <div class="setting-item">
+        <span class="setting-label">字体大小</span>
+        <el-slider 
+          v-model="fontSize" 
+          :min="14" 
+          :max="24" 
+          :step="1" 
+          @input="handleFontSizeChange"
+          class="setting-slider"
+        />
+        <span class="setting-value">{{fontSize}}px</span>
       </div>
     </div>
   </el-drawer>
@@ -97,7 +115,7 @@ export default defineComponent({
   data(){
     return {
       showDrawer: false,
-      fontSize: 1,
+      fontSize: 16,
       parentShowHeader: true,
       flatCategoryList: [] as Category[],
       actionList: [
@@ -175,10 +193,11 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .tool-box {
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   position: fixed;
   right: 300px;
   z-index: 1000;
+  padding: 4px;
 }
 
 @media screen and(max-width: 1366px) {
@@ -187,37 +206,146 @@ export default defineComponent({
   }
 }
 
-.box-item {
-  width: 140px;
-  padding: 6px 0;
+.tool-button {
+  width: 36px;
+  height: 36px;
+  padding: 8px;
+  border: none;
+  box-shadow: var(--shadow-md);
+  background-color: var(--card-bg-color);
+  transition: all 0.25s ease;
+  
+  &:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+    background-color: var(--hover-bg-color);
+  }
 }
+
+.dropdown-menu {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+  padding: var(--spacing-sm) 0;
+}
+
+.dropdown-item {
+  padding: 0;
+  margin: 2px 0;
+  
+  &:first-child {
+    margin-top: 0;
+  }
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.action-btn {
+  width: 100%;
+  justify-content: space-between;
+  border-radius: var(--radius-md);
+  margin: 0 var(--spacing-xs);
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  
+  &:not(.is-disabled):hover {
+    background-color: var(--hover-bg-color);
+    border-color: var(--border-color);
+  }
+  
+  &.is-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  body[theme=dark] & {
+    &:not(.is-disabled):hover {
+      background-color: var(--dark-hover-bg-color);
+      border-color: var(--default-dark-border-color);
+    }
+  }
+}
+
+.hotkey {
+  font-size: 12px;
+  background-color: var(--hover-bg-color);
+  color: var(--secondary-text-color);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+
 .more-setting-container {
-  padding: 10px;
+  padding: var(--spacing-md);
 }
-.fix-button {
-  box-shadow: 2px 2px 13px #bbb;
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.setting-label {
+  min-width: 60px;
+  margin-right: var(--spacing-md);
+  color: var(--secondary-text-color);
+}
+
+.setting-slider {
+  flex: 1;
+  margin-right: var(--spacing-md);
+}
+
+.setting-value {
+  min-width: 30px;
+  text-align: left;
+  color: var(--primary-color);
+  font-weight: 500;
 }
 
 body[theme=dark] {
-  .el-dropdown-menu {
-    background-color: var(--second-dark-bg-color);
+  .dropdown-menu {
+    background-color: var(--dark-card-bg-color);
+    border: 1px solid var(--default-dark-border-color);
   }
-  .el-dropdown-menu__item--divided {
-    border-top: 1px solid var(--main-dark-bg-color);
+  
+  .dropdown-item {
+    .el-dropdown-menu__item:focus, 
+    .el-dropdown-menu__item:not(.is-disabled):hover {
+      background-color: var(--dark-hover-bg-color);
+    }
   }
-}
-</style>
-
-<style lang="less">
-body[theme=dark] {
-  .el-dropdown__popper {
-    border-color: var(--default-dark-border-color)!important;
+  
+  .hotkey {
+    background-color: var(--dark-hover-bg-color);
+    color: var(--dark-secondary-text-color);
+    border: 1px solid var(--default-dark-border-color);
   }
-  .el-dropdown-menu__item:focus, .el-dropdown-menu__item:not(.is-disabled):hover {
-    background-color: var(--main-dark-bg-color);
+  
+  .setting-label {
+    color: var(--dark-secondary-text-color);
   }
-  .fix-button {
-    box-shadow: 2px 2px 13px #111;
+  
+  .setting-value {
+    color: var(--primary-color);
+  }
+  
+  .tool-button {
+    background-color: var(--dark-card-bg-color);
+    border: 1px solid var(--default-dark-border-color);
+    
+    &:hover {
+      background-color: var(--dark-hover-bg-color);
+    }
   }
 }
 </style>

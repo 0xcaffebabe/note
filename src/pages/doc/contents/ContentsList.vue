@@ -1,10 +1,15 @@
 <template>
-  <ul class="toc" ref="toc">
-    <contents-tree
-      :contentsList="contentList"
-      @item-click="handleTocItemClick"
-    />
-  </ul>
+  <div class="toc-container">
+    <div class="toc-header">
+      <h3 class="toc-title">文档目录</h3>
+    </div>
+    <ul class="toc" ref="toc">
+      <contents-tree
+        :contentsList="contentList"
+        @item-click="handleTocItemClick"
+      />
+    </ul>
+  </div>
 </template>
 
 <script lang="ts">
@@ -148,51 +153,97 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
+.toc-container {
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--card-bg-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.toc-header {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+  
+  .toc-title {
+    margin: 0;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--main-text-color);
+  }
+}
+
 .toc {
-  width: 220px;
+  flex: 1;
   overflow-y: auto;
-  border-left: 1px solid #ccc;
-  overflow-y: hidden;
-  max-height: calc(100% - 40px);
-  margin: 0;
-  margin-top: 8px;
+  padding: var(--spacing-sm) 0;
+  max-height: calc(100vh - 250px);
+  
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.1);
+    border-radius: 2px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,0,0,0.2);
+  }
+  
+  &:hover {
+    overflow-y: auto;
+  }
 }
-.toc:hover {
-  overflow-y: auto;
-  // max-width: 306px;
-}
+
 .toc :deep(a) {
-  color: rgb(116, 129, 141);
+  display: block;
+  color: var(--secondary-text-color);
   text-decoration: none;
   font-weight: 400;
   font-size: 14px;
-  text-decoration: none;
+  padding: 6px var(--spacing-md);
+  margin: 2px 0;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  
+  &:hover {
+    color: var(--primary-color) !important;
+    background-color: var(--hover-bg-color);
+    font-weight: 500;
+    transform: translateX(4px);
+  }
 }
-:deep(a:hover) {
-  color: #3e90e8 !important;
-  font-weight: 600;
-}
+
 :deep(.active) {
-  transition: all 0.2s;
-  color: #3e90e8 !important;
+  transition: all 0.2s ease;
+  color: var(--primary-color) !important;
   font-weight: 600 !important;
+  background-color: var(--primary-light-color) !important;
+  border-left: 3px solid var(--primary-color);
+  margin-left: 4px;
 }
+
 ul,
 :deep(ul) {
-  padding: 0 12px;
+  padding: 0;
   list-style: none;
 }
+
 :deep(li) {
-  padding: 4px 0;
-  white-space: nowrap;
-  word-wrap: break-word;
-  word-break: break-all;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-.toc:first-child:before {
-  content: "📋 目录列表";
-  color: rgb(116, 129, 141);
+  list-style: none;
+  margin: 0;
 }
 
 .progress {
@@ -200,12 +251,32 @@ ul,
 }
 
 body[theme="dark"] {
-  .toc {
-    border-left: 1px solid var(--default-dark-border-color);
+  .toc-container {
+    background-color: var(--dark-card-bg-color);
   }
+  
+  .toc-header {
+    border-bottom: 1px solid var(--default-dark-border-color);
+    
+    .toc-title {
+      color: var(--dark-text-color);
+    }
+  }
+  
   .toc :deep(a) {
-    color: var(--main-dark-text-color);
+    color: var(--dark-secondary-text-color);
+    
+    &:hover {
+      color: var(--primary-color) !important;
+      background-color: var(--dark-hover-bg-color);
+    }
   }
+  
+  :deep(.active) {
+    background-color: rgba(64, 158, 255, 0.1) !important;
+    border-left: 3px solid var(--primary-color);
+  }
+  
   .progress {
     opacity: 0.75;
   }

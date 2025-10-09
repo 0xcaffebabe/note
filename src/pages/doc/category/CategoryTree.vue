@@ -85,29 +85,73 @@ export default defineComponent({
 <style lang="less" scoped>
 .el-menu-item.is-active {
   transition: all 0.2s;
-  border-left: 4px solid #409eef;
+  background-color: var(--primary-light-color) !important;
+  border-left: 3px solid var(--primary-color);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  
+  body[theme=dark] & {
+    background-color: rgba(64, 158, 255, 0.1) !important;
+  }
 }
+
 :deep(.el-sub-menu__title *) {
   vertical-align: middle!important;
 }
 
-body[theme=dark] {
-  .el-menu-item:hover {
-    background-color: var(--main-dark-bg-color);
-  }
-  :deep(.el-sub-menu .el-sub-menu__title:hover) {
-    background-color: var(--main-dark-bg-color)!important;
-  }
-  :deep(.el-icon.el-sub-menu__icon-arrow) {
-    background-color: var(--main-dark-text-color)!important;
+:deep(.el-menu) {
+  border-right: none;
+  background-color: transparent;
+}
+
+:deep(.el-menu-item) {
+  border-radius: var(--radius-sm);
+  margin: 2px 8px;
+  transition: all 0.2s ease;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  
+  &:hover {
+    background-color: var(--hover-bg-color);
+    
+    body[theme=dark] & {
+      background-color: var(--dark-hover-bg-color);
+    }
   }
 }
-</style>
 
-<style lang="less">
+:deep(.el-sub-menu__title) {
+  border-radius: var(--radius-sm);
+  margin: 2px 8px;
+  transition: all 0.2s ease;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  
+  &:hover {
+    background-color: var(--hover-bg-color);
+    
+    body[theme=dark] & {
+      background-color: var(--dark-hover-bg-color);
+    }
+  }
+}
+
 body[theme=dark] {
-  .el-sub-menu .el-sub-menu__title:hover {
-    background-color: var(--main-dark-bg-color)!important;
+  .el-menu-item:hover {
+    background-color: var(--dark-hover-bg-color);
+  }
+  
+  :deep(.el-sub-menu .el-sub-menu__title:hover) {
+    background-color: var(--dark-hover-bg-color) !important;
+  }
+  
+  :deep(.el-icon.el-sub-menu__icon-arrow) {
+    color: var(--dark-text-color) !important;
+  }
+  
+  :deep(.el-sub-menu__icon-arrow) {
+    transition: transform 0.2s ease;
   }
 }
 </style>

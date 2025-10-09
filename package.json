@@ -48,7 +48,7 @@
     "nodejieba": "3.5.2",
     "rimraf": "6.0.1",
     "rollup-plugin-visualizer": "6.0.3",
-    "simple-git": "3.7.1",
+    "simple-git": "3.16.0",
     "tsconfig-paths": "4.2.0",
     "tsx": "^4.19.3",
     "typescript": "5.9.2",

@@ -89,9 +89,6 @@ interface Action {
 
 export default defineComponent({
   inject: ['showHeader'],
-  components: {
-    Tools
-  },
   watch: {
     showHeader: {
       handler(val){
@@ -180,7 +177,11 @@ export default defineComponent({
       dom.style.fontSize = val + 'px';
     }
   },
-  setup() {},
+  setup() {
+    return {
+      Tools
+    }
+  },
   async created(){
     document.addEventListener('keydown', this.handleKeyDown);
     this.flatCategoryList = await CategoryService.getFlatCategoryList();;

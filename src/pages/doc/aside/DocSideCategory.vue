@@ -38,8 +38,6 @@ import { ArrowLeftBold, ArrowRightBold } from "@element-plus/icons-vue";
 export default defineComponent({
   components: {
     CategoryList,
-    ArrowLeftBold,
-    ArrowRightBold,
   },
   emits: ["toggleAside"],
   inject: ["showHeader"],
@@ -77,7 +75,12 @@ export default defineComponent({
       immediate: true,
     },
   },
-  setup() {},
+  setup() {
+    return {
+      ArrowLeftBold,
+      ArrowRightBold
+    }
+  },
 });
 </script>
 

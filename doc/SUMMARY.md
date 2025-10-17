@@ -267,7 +267,6 @@
         - [渲染WEB视图](./编程语言/JAVA/框架/Spring/SpringMVC/渲染WEB视图.md)
         - [SpringMVC高级特性](./编程语言/JAVA/框架/Spring/SpringMVC/SpringMVC高级特性.md)
       - [SpringData](./编程语言/JAVA/框架/Spring/SpringData.md)
-      - [SpringSecurity](./编程语言/JAVA/框架/Spring/SpringSecurity/springSecurity.md)
       - [SpringBoot](./编程语言/JAVA/框架/SpringBoot/nav.md)
       - [SpringWebFlux](./编程语言/JAVA/框架/SpringWebFlux.md)
     - [Mybatis](./编程语言/JAVA/框架/Mybatis.md)

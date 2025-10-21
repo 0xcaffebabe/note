@@ -19,11 +19,7 @@
       />
     </div>
     <el-main>
-      <router-view v-slot="{ Component }">
-        <transition name="page" mode="out-in">
-          <component :is="Component" />
-        </transition>
-      </router-view>
+      <router-view />
     </el-main>
   </el-container>
   <Search ref="search" />

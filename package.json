@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@types/js-yaml": "4.0.9",
-    "@types/jsdom": "21.1.7",
+    "@types/jsdom": "27.0.0",
     "@types/katex": "0.16.7",
     "@types/node": "24.7.0",
     "@types/nprogress": "0.2.3",
@@ -42,7 +42,7 @@
     "@vitejs/plugin-vue": "6.0.1",
     "eruda": "3.4.3",
     "front-matter": "4.0.2",
-    "jsdom": "25.0.1",
+    "jsdom": "27.0.1",
     "mime": "4.1.0",
     "node-global-proxy": "1.0.1",
     "nodejieba": "3.5.2",

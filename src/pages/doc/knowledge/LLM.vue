@@ -1,51 +1,25 @@
 <template>
   <el-drawer v-model="showDrawer" :size="$isMobile() ? '75%' : '44%'" :direction="$isMobile() ? 'btt' : 'rtl'"
-    title="LLM" :modal="false" @close="$emit('close')" :lock-scroll="false" modal-class="operational-drawer-modal"
+    title="模板生成问题" :modal="false" @close="$emit('close')" :lock-scroll="false" modal-class="operational-drawer-modal"
     class="operational-drawer">
     <div class="llm-container">
-      <div id="llm" class="content"></div>
       <el-row :gutter="12">
-        <el-col :span="8">
-          问答模板：
-          <el-select v-model="llmMode" @change="handleModeChange">
+        <el-col :span="24">
+          问题模板：
+          <el-select v-model="llmMode" @change="handleModeChange" style="width: 100%;">
             <el-option v-for="item in presets" :key="item.value" :value="item.value" :label="item.name">{{ item.name
               }}</el-option>
           </el-select>
         </el-col>
-        <el-col :span="8">
-          模型：
-          <el-select v-model="model">
-            <el-option v-for="item in models" :key="item" :value="item" :label="item">{{ item }}</el-option>
-          </el-select>
-        </el-col>
       </el-row>
 
-
-      <el-input type="textarea" rows="5" v-model="query" @keyup="handleQueryKeyUp" />
-      <el-row :gutter="12">
-        <el-col :span="8">
-          <el-button type="primary" :loading="loading" @click="handleSend" style="width:100%">单模型问答</el-button>
-        </el-col>
-        <el-col :span="8">
-          <el-button type="warning" @click="handleMultiSend" style="width:100%">多模型问答</el-button>
-        </el-col>
-        <el-col :span="8">
+      <el-input type="textarea" rows="15" v-model="query" @keyup="handleQueryKeyUp" />
+      <el-row :gutter="12" style="margin-top: 10px;">
+        <el-col :span="24">
           <el-button type="success" @click="handleCopy" style="width:100%">复制提问</el-button>
         </el-col>
       </el-row>
     </div>
-    <!-- 多模型对比对话框 -->
-    <el-dialog v-model="multiLLMShow" title="多模型问答" width="1800" top="1vh">
-      <!-- 一个四列的 div -->
-      <div style="height: 840px;">
-        <el-row :gutter="12">
-          <el-col v-for="(item, index) in models" :key="item" :span="6">
-            <span>{{ item }}</span> <el-button type="primary" size="small" @click="regenerate(index)">重新生成</el-button>
-            <div :id="'llm' + index" class="content" style="max-height: 800px"></div>
-          </el-col>
-        </el-row>
-      </div>
-    </el-dialog>
   </el-drawer>
 </template>
 
@@ -54,7 +28,6 @@ import { defineComponent } from "vue";
 import { ElMessage } from "element-plus";
 import DocService from "@/service/DocService";
 import Content from '@/dto/Content'
-import { marked } from 'marked'
 import CategoryService from "@/service/CategoryService";
 import Category from "@/dto/Category";
 import TagService from "@/service/TagService";
@@ -81,86 +54,6 @@ function tab(t: number) {
   return str
 }
 
-async function* stream(model: string, data: any) {
-  try {
-    console.log('Sending request');
-    const response = await fetch("https://llm.ismy.wang?model=" + model, {
-      method: 'POST',
-      headers: {
-        Accept: 'text/event-stream',
-        'Content-Type': 'application/json',
-      },
-      body: data,
-    });
-
-    if (response.body) {
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          break;
-        }
-        const chunk = decoder.decode(value, { stream: true });
-        yield chunk;
-      }
-    }
-
-    console.log('Request sent');
-  } catch (error) {
-    console.error(error)
-  }
-}
-
-async function requestLLMAndRender(model: string, containerId: string, query: string) {
-  let data = ''
-  const targetElement = document.getElementById(containerId)!;
-
-  // 清空目标元素内容
-  targetElement.innerHTML = '';
-
-  // 函数用于逐字添加文本到目标元素
-  const addTextToElement = async (text: string) => {
-    for (const char of text) {
-
-      // 将新字符添加到当前数据
-      data += char;
-
-      // 重新渲染Markdown为HTML
-      const renderedContent = marked(data) as string;
-
-      // 更新目标元素内容
-      targetElement.innerHTML = renderedContent;
-
-      // 保持滚动条在底部
-      targetElement.scrollTop = targetElement.scrollHeight;
-
-      // 等待一段时间以实现逐字显示效果
-      await new Promise(resolve => setTimeout(resolve, 10)); // 控制每个字符出现的速度
-    }
-  }
-
-  const streamGenerator = stream(model, query)
-
-  for await (const chunk of streamGenerator) {
-    if (!chunk) {
-      break;
-    }
-    const arr = chunk.split('\n');
-    for (const i of arr) {
-      if (i.trim() === 'data: [DONE]') {
-        continue;
-      }
-      if (i.trim().length === 0) {
-        continue;
-      }
-      const line = JSON.parse(i.replace('data: ', '')).response;
-      await addTextToElement(line);
-    }
-  }
-}
-
 export default defineComponent({
   props: {
     doc: {
@@ -171,18 +64,8 @@ export default defineComponent({
   data() {
     return {
       showDrawer: false,
-      multiLLMShow: false,
       llmMode: 'category',
-      model: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
-      models: [
-        '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
-        '@hf/google/gemma-7b-it',
-        '@hf/thebloke/deepseek-coder-6.7b-instruct-awq',
-        '@cf/meta/llama-3.3-70b-instruct-fp8-fast'
-      ],
-      llmContent: '',
       query: '',
-      loading: false,
       presets: [
         { name: '根据整个目录回答问题', value: 'answerByAllCategory', template: () => this.answerByAllCategoryTemplate() },
         { name: '根据内容回答问题', value: 'ansuwerByContent', template: () => this.answerByContentTempalte() },
@@ -193,6 +76,15 @@ export default defineComponent({
         { name: '更新与趋势', value: 'trends', template: () => this.trendsTemplate() },
         { name: '历史背景', value: 'history', template: () => this.historyTemplate() },
         { name: '未来发展', value: 'future', template: () => this.futureTemplate() },
+        { name: '核心概念解释', value: 'concepts', template: () => this.conceptsTemplate() },
+        { name: '实践应用场景', value: 'applications', template: () => this.applicationsTemplate() },
+        { name: '常见问题与解答', value: 'faq', template: () => this.faqTemplate() },
+        { name: '知识对比分析', value: 'comparison', template: () => this.comparisonTemplate() },
+        { name: '学习路径规划', value: 'learningPath', template: () => this.learningPathTemplate() },
+        { name: '关键要点梳理', value: 'keyPoints', template: () => this.keyPointsTemplate() },
+        { name: '案例分析', value: 'caseStudy', template: () => this.caseStudyTemplate() },
+        { name: '错误概念纠正', value: 'misconceptions', template: () => this.misconceptionsTemplate() },
+        { name: '知识关联图谱', value: 'relations', template: () => this.relationsTemplate() },
       ]
     };
   },
@@ -313,30 +205,132 @@ export default defineComponent({
 
       this.query = template
     },
+    async conceptsTemplate() {
+      const file = await DocService.getDocFileInfo(this.doc)
+      return `
+        请详细解释关于 《${this.doc}》 的核心概念和定义，并提供易于理解的示例。
+        
+        文本内容：
+        ---
+        ${file.content}
+        ---
+      `
+    },
+    async applicationsTemplate() {
+      const file = await DocService.getDocFileInfo(this.doc)
+      return `
+        请列举关于 《${this.doc}》 的实际应用场景，并详细说明在不同场景中如何运用相关知识。
+        
+        文本内容：
+        ---
+        ${file.content}
+        ---
+      `
+    },
+    async faqTemplate() {
+      const file = await DocService.getDocFileInfo(this.doc)
+      const contents = await DocService.getContentByDocId(this.doc)
+      const text = contents2String(contents)
+      return `
+        基于以下关于 《${this.doc}》 的内容和目录，请提出并回答可能遇到的常见问题。
+        
+        目录：
+        ---
+        ${text}
+        ---
+        
+        内容：
+        ---
+        ${file.content}
+        ---
+      `
+    },
+    async comparisonTemplate() {
+      const file = await DocService.getDocFileInfo(this.doc)
+      return `
+        请将 《${this.doc}》 与其他相关概念或技术进行对比，突出它们之间的异同点。
+        
+        文本内容：
+        ---
+        ${file.content}
+        ---
+      `
+    },
+    async learningPathTemplate() {
+      const file = await DocService.getDocFileInfo(this.doc)
+      const contents = await DocService.getContentByDocId(this.doc)
+      const text = contents2String(contents)
+      return `
+        基于 《${this.doc}》 的知识体系，请设计一个循序渐进的学习路径，包括前置知识、学习顺序和实践建议。
+        
+        目录：
+        ---
+        ${text}
+        ---
+        
+        内容：
+        ---
+        ${file.content}
+        ---
+      `
+    },
+    async keyPointsTemplate() {
+      const file = await DocService.getDocFileInfo(this.doc)
+      return `
+        请梳理 《${this.doc}》 的关键要点，并按重要性排序，提供简洁的摘要。
+        
+        文本内容：
+        ---
+        ${file.content}
+        ---
+      `
+    },
+    async caseStudyTemplate() {
+      const file = await DocService.getDocFileInfo(this.doc)
+      return `
+        请基于 《${this.doc}》 的知识，提供一个相关的案例分析，包括背景、问题、解决方案和结果。
+        
+        文本内容：
+        ---
+        ${file.content}
+        ---
+      `
+    },
+    async misconceptionsTemplate() {
+      const file = await DocService.getDocFileInfo(this.doc)
+      return `
+        指出在学习 《${this.doc}》 过程中常见的错误概念或误解，并提供正确的理解。
+        
+        文本内容：
+        ---
+        ${file.content}
+        ---
+      `
+    },
+    async relationsTemplate() {
+      const file = await DocService.getDocFileInfo(this.doc)
+      const contents = await DocService.getContentByDocId(this.doc)
+      const text = contents2String(contents)
+      return `
+        分析 《${this.doc}》 与其他相关知识领域的关联，绘制知识关系图谱。
+        
+        目录：
+        ---
+        ${text}
+        ---
+        
+        内容：
+        ---
+        ${file.content}
+        ---
+      `
+    },
     handleQueryKeyUp(event: KeyboardEvent) {
-      if (event.ctrlKey && event.key === 'Enter') {
-        this.handleSend()
-      }
+      // 移除了发送功能，保留复制功能
     },
     handleCopy() {
       navigator.clipboard.writeText(this.query);
       ElMessage.success("复制成功")
-    },
-    async handleMultiSend() {
-      this.multiLLMShow = true;
-      setTimeout(() => {
-        for (let i = 0; i < this.models.length; i++) {
-          requestLLMAndRender(this.models[i], 'llm' + i, this.query)
-        }
-      }, 1000)
-    },
-    regenerate(index: number) {
-      requestLLMAndRender(this.models[index], 'llm' + index, this.query)
-    },
-    async handleSend() {
-      this.loading = true;
-      await requestLLMAndRender(this.model, 'llm', this.query)
-      this.loading = false
     }
   },
   async created() {

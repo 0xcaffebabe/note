@@ -256,12 +256,7 @@
       - [Cookie&Session](./编程语言/JAVA/JakartaEE/Cookie&Session.md)
       - [JPA](./编程语言/JAVA/JakartaEE/JPA.md)
     - -框架-
-    - [🍃Spring](./编程语言/JAVA/框架/Spring/spring概览.md)
-      - [Bean注册](./编程语言/JAVA/框架/Spring/Bean注册.md)
-      - [Bean生命周期](./编程语言/JAVA/框架/Spring/Bean生命周期.md)
-      - [AOP](./编程语言/JAVA/框架/Spring/AOP.md)
-      - [事务](./编程语言/JAVA/框架/Spring/事务.md)
-      - [事件](./编程语言/JAVA/框架/Spring/事件.md)
+    - [🍃Spring](./编程语言/JAVA/框架/Spring/Spring.md)
       - [SpringMVC](./编程语言/JAVA/框架/Spring/SpringMVC.md)
       - [SpringData](./编程语言/JAVA/框架/Spring/SpringData.md)
       - [SpringBoot](./编程语言/JAVA/框架/SpringBoot/nav.md)

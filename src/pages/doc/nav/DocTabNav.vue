@@ -123,14 +123,7 @@ export default defineComponent({
       if (!root) {
         return '📋'
       }
-      while(root.parent) {
-        root = root?.parent
-      }
-      for(let i of root.name) {
-        return i
-      }
-      return root.name.substring(0, 1)
-
+      return Array.from(root.name)[0] || '📋';
     }
   },
   computed: {

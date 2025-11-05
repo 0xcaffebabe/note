@@ -95,7 +95,34 @@ sequenceDiagram
 
 ## 体系结构
 
-![批注 2019-08-09 093125](/assets/批注%202019-08-09%20093125.png)
+```mermaid
+classDiagram
+    class Serializable
+    class ServletConfig
+    class Servlet
+
+    class GenericServlet {
+    }
+
+    class HttpServlet {
+    }
+
+    class MyServlet {
+    }
+
+    class WebServlet {
+        <<annotation>>
+    }
+
+    GenericServlet ..|> Serializable
+    GenericServlet ..|> ServletConfig
+    GenericServlet ..|> Servlet
+
+    HttpServlet --|> GenericServlet
+    MyServlet --|> HttpServlet
+    MyServlet ..> WebServlet : <<annotates>>
+
+```
 
 ## 配置
 
@@ -371,7 +398,30 @@ inputStream.setReadListener(new ReadListener() {
 
 体系结构：
 
-![屏幕截图 2020-10-06 105912](/assets/屏幕截图%202020-10-06%20105912.png)
+```mermaid
+classDiagram
+    class Servlet {
+        <<interface>>
+    }
+    class ServletConfig {
+        <<interface>>
+    }
+    class ServletContext {
+        <<interface>>
+    }
+    class ServletRequest {
+        <<interface>>
+    }
+    class ServletResponse {
+        <<interface>>
+    }
+
+    Servlet --> ServletConfig : uses
+    ServletConfig --> ServletContext : uses
+    Servlet --> ServletRequest : uses
+    Servlet --> ServletResponse : uses
+
+```
 
 ServletContexnt：贯穿请求的上下文
 

@@ -22,6 +22,7 @@ import Slugger from "../util/Slugger";
 import KnowledgeRichnessNode from "../dto/KnowledgeRichnessNode";
 import CategoryService from "./CategoryService";
 import Category from "../dto/Category";
+import DocQualityCalculator, { QualityInputData } from "../util/DocQualityCalculator";
 
 const cache = Cache()
 
@@ -222,7 +223,7 @@ class DocService extends BaseService implements Cacheable {
     // 每个文档的外链数 外部 -> 自己
     const outLinksMap = new Map<string, number>()
     // 每个文档的内链数 自己 -> 外部
-    const inLinksMap= new Map<string, number>()
+    const inLinksMap = new Map<string, number>()
     for(let node of knowledgeNodes) {
       if (!inLinksMap.has(node.id)) {
         inLinksMap.set(node.id, node.links?.length || 0)
@@ -234,29 +235,50 @@ class DocService extends BaseService implements Cacheable {
 
     const ignoreDoc = ['README', 'SUMMARY', '参考文献'];
     const fileList = BaseService.listFilesBySuffix('md', 'doc')
-    const taskList :Promise<DocQuality>[] = []
-    const that = this
-    async function task(file: string): Promise<DocQuality> {
-        const id = DocUtils.docUrl2Id(file)
-        /*
-          文档质量 = 每千字数 + 外链数 + 内链数 + git提交数
-        */
-       const docQuality = new DocQuality()
-       docQuality.id = id
-       const md = (await fs.promises.readFile(file)).toString()
-       const commitList = await GitService.getFileCommitList(file)
-       docQuality.quality = that.cleanText(md).length / 1000 
-                              + (outLinksMap.get(id) || 0) 
-                              + (inLinksMap.get(id) || 0)
-                              + (commitList.length / 10)
-       docQuality.segementQuality = that.md2TextSegement(md).map(v => v.txt.length / 1000)
-       return docQuality
+    
+    // 准备输入数据
+    const inputDataList: QualityInputData[] = []
+    const fileContents = new Map<string, string>()
+    const commitLists = new Map<string, CommitInfo[]>()
+    
+    // 并行读取所有文件和提交历史
+    const fileReadPromises = fileList.map(async file => {
+      const content = (await fs.promises.readFile(file)).toString()
+      const id = DocUtils.docUrl2Id(file)
+      fileContents.set(id, content)
+      return { id, content }
+    })
+    
+    const commitPromises = fileList.map(async file => {
+      const commitList = await GitService.getFileCommitList(file)
+      const id = DocUtils.docUrl2Id(file)
+      commitLists.set(id, commitList)
+      return { id, commitList }
+    })
+    
+    await Promise.all([...fileReadPromises, ...commitPromises])
+    
+    // 构建输入数据
+    for(const file of fileList) {
+      const id = DocUtils.docUrl2Id(file)
+      const content = fileContents.get(id) || ''
+      const commitList = commitLists.get(id) || []
+      
+      const inputData: QualityInputData = {
+        contentLength: this.cleanText(content).length,
+        outLinksCount: outLinksMap.get(id) || 0,
+        inLinksCount: inLinksMap.get(id) || 0,
+        commitList: commitList,
+        metadata: this.resolveMetadata(content),
+        knowledgeNodes: knowledgeNodes,
+        docId: id
+      }
+      
+      inputDataList.push(inputData)
     }
-    for(let file of fileList) {
-      taskList.push(task(file))
-    }
-    return (await Promise.all(taskList))
-      .filter(v => v.id.indexOf("leetcode") == -1)
+    
+    // 使用文档质量计算器批量计算
+    return DocQualityCalculator.calculateBatchQuality(inputDataList)
       .filter(v => ignoreDoc.indexOf(v.id) == -1)
       .sort((a, b) => b.totalQuality - a.totalQuality)
   }

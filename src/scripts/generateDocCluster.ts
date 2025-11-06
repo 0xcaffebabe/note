@@ -14,7 +14,8 @@ const stopWords = ['的', '是', '在', '一个', '和',
                  '进行', '如果', '需要', '务器', '屏幕', '不会', '就是', '或者', '并且',
                  '其他', '之后', '那么', '什么', '可能', '为了', '第一', '不是', '大小'
                  ]
-let totalList: [string, number][] = []
+// 存储 [词, IDF值] 的列表
+let wordIdfList: [string, number][] = []
 
 function similar(c1: string, c2: string) {
   const v1 = getDocVec(c1)
@@ -150,28 +151,57 @@ function isStopWord(word: string): boolean{
 
 async function getAllWords() {
   const fileList = BaseService.listAllMdFile()
+  const fileCount = fileList.length; // 总文档数
+  if (fileCount === 0) {
+    console.warn("No files found, IDF will be undefined.");
+    wordIdfList = [];
+    return;
+  }
+
   const tasks = []
   for(const file of fileList) {
     tasks.push(fs.promises.readFile(file))
   }
   const buffers = await Promise.all(tasks)
 
-  const allWords = buffers.map(v => v.toString())
-      .map(cleanText)
-      .map(v => jieba.cut(v))
-      .flatMap(v => v)
-      .filter(v => !isStopWord(v))
-  const map = new Map<string, number>()
-  for(const i of allWords) {
-    if (map.has(i)){
-      map.set(i, map.get(i)! + 1)
-    }else {
-      map.set(i, 1)
+  // 存储每个文档的词集合，用于计算包含词的文档数
+  const docWordSets: Set<string>[] = [];
+  // 存储所有文档中的所有词，用于计算全局词频（如果需要）
+  const allWordsWithDoc: { word: string; docIndex: number }[] = [];
+
+  for (let i = 0; i < buffers.length; i++) {
+    const content = buffers[i].toString();
+    const words = jieba.cut(cleanText(content));
+    const uniqueWordsInDoc = new Set<string>();
+
+    for (const word of words) {
+      if (!isStopWord(word)) {
+        uniqueWordsInDoc.add(word);
+        allWordsWithDoc.push({ word, docIndex: i });
+      }
+    }
+    docWordSets.push(uniqueWordsInDoc);
+  }
+
+  // 计算包含每个词的文档数
+  const wordDocCount = new Map<string, number>();
+  for (const wordSet of docWordSets) {
+    for (const word of wordSet) {
+      wordDocCount.set(word, (wordDocCount.get(word) || 0) + 1);
     }
   }
-  totalList = Array.from(map)
-                      .sort(function(a,b){return a[1] - b[1]})
-                      .reverse();
+
+  // 计算每个词的IDF
+  const wordIdfMap = new Map<string, number>();
+  for (const [word, docFreq] of wordDocCount.entries()) {
+    // IDF = log(总文档数 / 包含该词的文档数)
+    const idf = Math.log(fileCount / docFreq);
+    wordIdfMap.set(word, idf);
+  }
+
+  // 构建 wordIdfList，按IDF值降序排列（可选，保持与原 totalList 排序逻辑类似）
+  wordIdfList = Array.from(wordIdfMap.entries())
+                    .sort((a, b) => b[1] - a[1]); // 按IDF值降序
 }
 const vecCache = new Map<string, number[]>()
 function getDocVec(file: string): number[] {
@@ -179,14 +209,30 @@ function getDocVec(file: string): number[] {
     return vecCache.get(file)!
   }
   const content = fs.readFileSync(file).toString()
-  const map = new Map<string, number>()
-  jieba.cut(content || '')
-                .filter(v => !isStopWord(v))
-                .forEach(i => map.set(i, (map.get(i) || 0) + 1))
   
-  const list = cloneDeep(totalList) as [string, number][]
-  list.forEach(v => v[1] = map.get(v[0]) || 0)
-  const vec = list.map(v => v[1])
+  // 对当前文档进行分词和过滤
+  const words = jieba.cut(content || '').filter(v => !isStopWord(v));
+  
+  // 计算文档中每个词的词频 (TF)
+  const wordTfMap = new Map<string, number>();
+  for (const word of words) {
+    wordTfMap.set(word, (wordTfMap.get(word) || 0) + 1);
+  }
+
+  // 计算文档长度（用于TF计算，这里使用出现最多的词的次数作为分母，或者总词数）
+  // 这里采用 TF = 词在文档中的出现次数 / 文档中最频繁词的出现次数 的方式
+  const maxFreq = Math.max(...Array.from(wordTfMap.values()), 1); // 防止除零
+  // 或者使用总词数: const docLength = words.length;
+  
+  // 根据 wordIdfList 构建 TF-IDF 向量
+  const vec: number[] = [];
+  for (const [word, idf] of wordIdfList) {
+    const tf = (wordTfMap.get(word) || 0) / maxFreq; // 计算TF值
+    // const tf = (wordTfMap.get(word) || 0) / docLength; // 或者使用总词数作为分母
+    const tfidf = tf * idf; // 计算TF-IDF值
+    vec.push(tfidf);
+  }
+
   vecCache.set(file, vec)
   return vec
 }

@@ -1,3 +1,7 @@
+---
+tags: ['Web服务器', '反向代理', '中间件']
+---
+
 # Nginx
 
 Nginx ("engine x") 是一个高性能的 **HTTP** 和 **反向代理** 服务器，也是一个 IMAP/POP3/SMTP 代理服务器

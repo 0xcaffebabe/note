@@ -1,3 +1,7 @@
+---
+tags: ['目标管理', '绩效管理', '个人成长']
+---
+
 # OKR
 
 > OKR = Objective + Key Results

@@ -1,3 +1,7 @@
+---
+tags: ['数据库', 'MySQL', '性能监控']
+---
+
 # MYSQL performance schema详解
 
 ### 0、performance_schema的介绍

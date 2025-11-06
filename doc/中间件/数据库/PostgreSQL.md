@@ -1,4 +1,8 @@
 
+---
+tags: ['数据库', '关系型数据库', 'PostgreSQL']
+---
+
 # PostgreSQL
 
 ## 事务

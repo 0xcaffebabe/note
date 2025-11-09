@@ -22,7 +22,7 @@
             </div>
             <!-- 提交历史结束 -->
             <!-- toc开始 -->
-            <div class="toc-wrapper" :style="{'top': parentShowHeader ? '66px': '6px', 'height': parentShowHeader ? 'calc(80 % - 60px)': '80%'}">
+            <div class="toc-wrapper" :style="{'top': parentShowHeader ? '66px': '6px', 'height': parentShowHeader ? 'calc(80 % - 60px)': '80%', 'display': showContentsList ? 'block' : 'none'}">
               <keep-alive>
                 <contents-list :doc="doc" @item-click="handleTocItemClick"/>
               </keep-alive>
@@ -31,6 +31,12 @@
               </keep-alive>
             </div>
             <!-- toc结束 -->
+
+            <!-- 目录切换按钮 -->
+            <div class="toc-toggle-btn" @click="toggleContentsList">
+              <el-icon v-if="showContentsList"><FolderOpened /></el-icon>
+              <el-icon v-else><Folder /></el-icon>
+            </div>
           </div>
         </template>
       </el-skeleton>
@@ -97,6 +103,7 @@ import { SysUtils } from "@/util/SysUtils";
 import config from '@/config';
 import MermaidShower from './mermaid-shower/MermaidShower.vue';
 import LLM from './knowledge/LLM.vue';
+import {Folder, FolderOpened } from '@element-plus/icons-vue';
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -118,7 +125,9 @@ export default defineComponent({
     DocMetadataInfo,
     InstantPreviewer,
     MermaidShower,
-    LLM
+    LLM,
+    Folder,
+    FolderOpened
 },
   watch: {
     showHeader: {
@@ -168,6 +177,7 @@ export default defineComponent({
       showAside: true as boolean,
       isDrawerShow: false as boolean,
       parentShowHeader: true as boolean,
+      showContentsList: window.innerWidth > 1180, // 根据屏幕宽度初始化显示状态
       eventManager: null as DocPageEventMnager | null
     };
   },
@@ -244,6 +254,17 @@ export default defineComponent({
     },
     generateTOC() {
       this.contentsList = docService.getContent(this.contentHtml);
+    },
+    toggleContentsList() {
+      this.showContentsList = !this.showContentsList;
+    },
+    handleResize() {
+      // 当窗口大小改变时，根据宽度决定是否显示ContentsList
+      if (window.innerWidth <= 1180) {
+        this.showContentsList = false; // 小屏幕默认隐藏
+      } else {
+        this.showContentsList = true; // 大屏幕默认显示
+      }
     }
   },
   beforeRouteUpdate(to, from) {
@@ -259,10 +280,16 @@ export default defineComponent({
     this.eventManager!.registerScrollListener();
     this.eventManager!.listenEventBus();
     this.showDoc(this.$route.params.doc.toString(), this.$route.query.headingId?.toString(), this.$route.query.kw?.toString());
+    
+    // 监听窗口大小变化
+    window.addEventListener('resize', this.handleResize);
   },
   unmounted(){
     // 一些清理操作
     this.eventManager!.removeAllScrollListener();
+    
+    // 移除窗口大小监听器
+    window.removeEventListener('resize', this.handleResize);
   }
 });
 </script>
@@ -307,14 +334,48 @@ export default defineComponent({
     right: 2px;
   }
 }
-@media screen and(max-width: 1180px) {
+@media screen and (max-width: 1180px) {
   .center {
     padding-left: 0rem;
   }
   .markdown-section {
-    width: 66%!important;
+    width: calc(100% - 40px)!important;
+    margin-right: 40px;
+  }
+  .toc-wrapper {
+    display: none;
+  }
+  .toc-toggle-btn {
+    display: block !important;
+    right: 20px;
   }
 }
+
+.toc-toggle-btn {
+  display: none; /* 默认隐藏按钮 */
+  position: fixed;
+  right: 20px;
+  top: 400px;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  background-color: var(--primary-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 999;
+  transition: all 0.3s ease;
+  color: white;
+  font-size: 18px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+body[theme=dark] .toc-toggle-btn {
+  background-color: var(--dark-primary-color);
+}
+
 .el-backtop {
   transition: all .1s;
 }

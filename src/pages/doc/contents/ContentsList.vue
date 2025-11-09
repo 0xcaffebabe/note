@@ -186,6 +186,7 @@ export default defineComponent({
 <style lang="less" scoped>
 .toc-container {
   width: 260px;
+  min-width: 260px;
   display: flex;
   flex-direction: column;
   background-color: var(--card-bg-color);
@@ -193,6 +194,17 @@ export default defineComponent({
   box-shadow: var(--shadow-md);
   overflow: hidden;
   transition: all 0.3s ease;
+}
+
+@media (max-width: 1180px) {
+  .toc-container {
+    position: fixed;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: calc(100vh - 200px);
+    z-index: 998;
+  }
 }
 
 .toc-header {

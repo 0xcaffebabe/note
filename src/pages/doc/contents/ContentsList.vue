@@ -16,58 +16,81 @@
 import Category from "@/dto/Category";
 import { defineComponent } from "vue";
 import ContentsTree from "./ContentsTree.vue";
-import ContentList from "./ContentsList.vue";
 import DocService from "@/service/DocService";
 
-function highlightHeading(instance: InstanceType<typeof ContentList>) {
+function highlightHeading(instance: any) {
   const idList = document.querySelectorAll(
     ".main.markdown-section h1, .main.markdown-section h2, .main.markdown-section h3, .main.markdown-section h4, .main.markdown-section h5, .main.markdown-section h6"
   );
+  if (idList.length === 0) return;
+  
   let node = null;
+  const scrollPosition = window.scrollY || window.pageYOffset;
+  
   // 滚动到顶部特殊处理
-  if (window.scrollY == 0) {
-      node = idList[0];
+  if (scrollPosition <= 0) {
+    node = idList[0];
   } else {
+    // 寻找当前滚动位置对应的标题
     for (let i = 0; i < idList.length; i++) {
-      const elm = idList[i];
-      if (elm instanceof HTMLElement) {
-        if (window.scrollY > elm.offsetTop - 160) {
-          node = elm;
-        }
+      const elm = idList[i] as HTMLElement;
+      // 使用元素顶部位置和一半高度的组合，以改善高亮的准确性
+      const elementTop = elm.offsetTop;
+      if (scrollPosition >= elementTop - 160) {
+        node = elm;
+      } else {
+        // 如果当前元素的顶部位置超过了滚动位置，则之前的元素就是我们要找的
+        break;
       }
     }
   }
-  if (node != null) {
-    const previousNode = document.querySelector(".toc .active");
-    if (previousNode !== null) {
-      previousNode.classList.remove("active");
+  
+  if (node !== null) {
+    // 移除之前的高亮状态
+    const previousActive = document.querySelector(".toc .active");
+    if (previousActive) {
+      previousActive.classList.remove("active");
     }
-    // 高亮当前标题
-    const id = node.id.replace(/<mark>/gi, '').replace(/<\/mark>/gi, '')
-    document
-      .querySelector(`.toc a[href='#${id}']`)
-      ?.classList.add("active");
-    // 记录当前标题
-    instance.$store.commit("setCurrentHeading", id);
+    
+    // 获取标题的ID并清理可能存在的mark标签
+    let id = node.id;
+    if (id) {
+      id = id.replace(/<mark>/gi, '').replace(/<\/mark>/gi, '');
+      
+      // 高亮TOC中对应的项
+      const tocLink = document.querySelector(`.toc a[href='#${id}']`);
+      if (tocLink) {
+        tocLink.classList.add("active");
+      }
+      
+      // 记录当前标题
+      instance.$store.commit("setCurrentHeading", id);
+    }
   }
 }
 
 // 判断激活的目录item是否不可见 不可见则滚动到可见
-function syncHeadingVisible(instance: InstanceType<typeof ContentList>) {
+function syncHeadingVisible(instance: any) {
   const tocElm: HTMLElement | null = document.querySelector(".toc");
-  const activeTocItem: HTMLElement | null =
-    document.querySelector(".toc .active");
+  const activeTocItem: HTMLElement | null = document.querySelector(".toc .active");
+  
   if (activeTocItem && tocElm) {
-    const topBound = tocElm.scrollTop;
-    const bottomBound = tocElm.scrollTop + tocElm.offsetHeight;
-    const itemPos = activeTocItem.offsetTop;
-    // 位置超出下边界
-    if (itemPos > bottomBound) {
-      tocElm.scrollTo(0, itemPos / 2);
-    }
-    // 位置超出上边界
-    if (itemPos < topBound) {
-      tocElm.scrollTo(0, itemPos / 2 - topBound);
+    const containerRect = tocElm.getBoundingClientRect();
+    const itemRect = activeTocItem.getBoundingClientRect();
+    
+    // 计算相对于容器的偏移
+    const itemTop = activeTocItem.offsetTop;
+    const itemBottom = itemTop + activeTocItem.offsetHeight;
+    const containerTop = tocElm.scrollTop;
+    const containerBottom = containerTop + tocElm.clientHeight;
+    
+    // 位置超出下边界 - 滚动使项目底部对齐到容器底部
+    if (itemBottom > containerBottom) {
+      tocElm.scrollTop = itemBottom - tocElm.clientHeight;
+    } 
+    // 位置超出上边界 - 滚动使项目顶部对齐到容器顶部
+    else if (itemTop < containerTop) {
+      tocElm.scrollTop = itemTop;
     }
   }
 }
@@ -91,7 +114,8 @@ export default defineComponent({
   data() {
     return {
       contentList: [] as Category[],
-      currentId: ''
+      currentId: '',
+      scrollHandler: null as ((e: Event) => void) | null
     };
   },
   watch: {
@@ -113,9 +137,9 @@ export default defineComponent({
   },
   methods: {
     registerWindowScrollListener() {
-      let lastTime = new Date().getTime();
-      document.addEventListener("scroll", (e) => {
-        // 两次触发的间隔至少50ms
+      // 定义节流的滚动处理器
+      let lastTime = 0;
+      this.scrollHandler = (e: Event) => {
         const currentTime = new Date().getTime();
         if (currentTime < lastTime + 50) {
           return;
@@ -123,7 +147,10 @@ export default defineComponent({
         highlightHeading(this)
         syncHeadingVisible(this);
         lastTime = new Date().getTime();
-      });
+      };
+
+      // 添加滚动事件监听器
+      document.addEventListener("scroll", this.scrollHandler);
     },
     handleTocItemClick(id: string) {
       this.$emit("item-click", id);
@@ -147,7 +174,11 @@ export default defineComponent({
     }
   },
   unmounted() {
-    document.onscroll = null;
+    // 移除滚动事件监听器
+    if (this.scrollHandler) {
+      document.removeEventListener("scroll", this.scrollHandler);
+      this.scrollHandler = null;
+    }
   },
 });
 </script>
@@ -155,6 +186,7 @@ export default defineComponent({
 <style lang="less" scoped>
 .toc-container {
   width: 260px;
+  min-width: 260px;
   display: flex;
   flex-direction: column;
   background-color: var(--card-bg-color);
@@ -162,6 +194,17 @@ export default defineComponent({
   box-shadow: var(--shadow-md);
   overflow: hidden;
   transition: all 0.3s ease;
+}
+
+@media (max-width: 1180px) {
+  .toc-container {
+    position: fixed;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: calc(100vh - 200px);
+    z-index: 998;
+  }
 }
 
 .toc-header {

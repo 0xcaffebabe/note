@@ -379,7 +379,6 @@
     - [😺Tomcat](./中间件/web中间件/Tomcat.md)
     - [Jetty](./中间件/web中间件/Jetty.md)
     - [Nginx](./中间件/web中间件/Nginx.md)
-  - [⏰xxl-job](./中间件/xxl-job.md)
   - [🌐浏览器](./中间件/浏览器/浏览器.md)
     - [V8引擎](./中间件/浏览器/V8.md)
 

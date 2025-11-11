@@ -1,412 +1,237 @@
-# AJAX
+---
+tags: ['异步通信', '前端开发', 'Web架构']
+---
 
-- 传统网站的弊端
+# AJAX：从异步通信到交互架构的演化哲学
 
-## 应用场景
+> AJAX 不仅是一次前端技术革新，更是 Web 世界中“时间解耦”与“交互连续性”的范式转变。
+> 它让浏览器从“被动渲染文档”演进为“主动协调状态”的智能界面。
 
-- 动态数据加载
-- 表单验证
+---
 
-## 实现
+## 一、核心定义与哲学本质
 
-### 原生方式
+### 1.1 本质认知
+
+* **本质**：网络请求与用户界面的异步解耦机制
+* **核心价值**：让用户在等待网络响应时仍能与界面交互
+* **解决的问题**：同步阻塞导致的交互停顿与体验断层
+
+> AJAX 的真正意义在于：**将时间从交互中抽离**。
+> 它使界面不再与请求同步，而成为“时间并行”的体验系统。
+
+### 1.2 思想抽象
+
+* 从“页面刷新”到“状态更新”的思维转变
+* 从“命令式交互”到“事件驱动”的架构转变
+* 从“静态文档”到“动态系统”的认知转变
+
+**一句话总结：**
+
+> AJAX 是浏览器世界中“异步哲学”的第一次具象化。
+
+---
+
+## 二、架构原理与模型体系
+
+### 2.1 异步通信模型：时间的解耦
+
+异步通信是 **事件驱动的非阻塞模型**。
+其核心逻辑是：UI 主线程与网络 I/O 分离，通过事件循环协调响应。
+
+**抽象模型：**
+
+```
+请求发起 → 等待响应（异步） → 回调触发 → UI 更新
+```
+
+这代表了典型的“**状态驱动通信模型**”：
+
+* 程序不等待结果，而是注册回调
+* 系统以事件为时间单位，驱动逻辑前进
+
+> AJAX 是浏览器端的“并发模型原型”，它在前端世界实现了 I/O 异步化。
+
+---
+
+### 2.2 状态管理模型：异步过程的可控性
+
+XMLHttpRequest 定义了一个有限状态机（Finite State Machine）：
+
+| 状态码 | 含义    | 阶段抽象 |
+| --- | ----- | ---- |
+| 0   | 未初始化  | 初始态  |
+| 1   | 连接建立  | 准备态  |
+| 2   | 请求发送  | 运行态  |
+| 3   | 响应处理中 | 中间态  |
+| 4   | 请求完成  | 终止态  |
+
+这一机制让异步过程**具备可观测性与可管理性**，是前端工程中“状态模式”的典型实现。
+
+> AJAX 的状态管理体现了**时间复杂度的结构化**思想——以状态机方式管理不可预测的异步时序。
+
+---
+
+### 2.3 数据流管理模型：序列化与反序列化的通道
+
+异步通信的另一个核心模型是**数据流抽象**：
+
+```
+对象 → 序列化 → 网络传输 → 反序列化 → 对象
+```
+
+无论是 XML 还是 JSON，本质上都是“数据语义化传输协议”，体现出“数据独立于界面”的思想基础。
+
+---
+
+## 三、安全边界与跨域哲学
+
+### 3.1 同源策略的本质
+
+同源策略并非限制，而是一种**信任域边界控制模型**。
+其核心思想源于安全哲学中的**最小权限原则（Least Privilege Principle）**：
+
+> 浏览器只信任同源资源，从而最小化潜在攻击面。
+
+### 3.2 跨域通信的信任机制
+
+| 方案        | 原理                   | 特点          |
+| --------- | -------------------- | ----------- |
+| **CORS**  | 服务端声明可被访问的源          | 标准、安全、可控    |
+| **JSONP** | 利用 `<script>` 绕过同源策略 | 兼容好，仅支持 GET |
+| **代理转发**  | 通过中间服务重定向请求          | 通用，对前端透明    |
+
+**抽象思想：**
+
+> 跨域通信是“在安全边界上构建受控信任通道”的过程。
+
+---
+
+## 四、设计模式与架构协同
+
+AJAX 的实现并非单一函数调用，而是一组**模式协同系统**：
+
+| 模式        | 作用        | 抽象意义      |
+| --------- | --------- | --------- |
+| **观察者模式** | 响应事件触发与回调 | 异步驱动的基础   |
+| **状态模式**  | 管理请求生命周期  | 控制异步过程复杂性 |
+| **委托模式**  | 封装请求逻辑    | 降低网络调用耦合度 |
+| **工厂模式**  | 统一请求创建接口  | 提高复用性与扩展性 |
+
+> AJAX 的架构体现了前端工程中“模式化解复杂”的思想。
+> 它将异步逻辑的混乱，转化为有组织的模式协作。
+
+---
+
+## 五、技术演进与趋势脉络
+
+### 5.1 历史演化逻辑
+
+| 阶段                        | 特征                  | 驱动力        |
+| ------------------------- | ------------------- | ---------- |
+| **传统 Web (1990s-2000s)**  | 整页刷新                | 页面渲染为中心    |
+| **AJAX 诞生 (2005)**        | 异步局部更新              | 用户体验流畅性    |
+| **Web 2.0 (2000s-2010s)** | Gmail、Maps 等应用推动    | 动态交互与数据分离  |
+| **现代 Web (2010s-至今)**     | Promise、Fetch、Axios | 简化模型与接口一致性 |
+
+> 每一次技术演进，都是对“异步解耦”这一核心思想的不同实现。
+
+---
+
+### 5.2 技术方案对比
+
+| 实现方式               | 优势             | 局限         |
+| ------------------ | -------------- | ---------- |
+| **XMLHttpRequest** | 兼容性强，底层可控      | 接口复杂，回调层级深 |
+| **Fetch API**      | Promise 化、语义简洁 | 错误处理需额外设计  |
+| **Axios**          | 拦截器、统一封装       | 依赖库，封装层次更高 |
+
+### 5.3 未来趋势
+
+* **Fetch 标准化**：成为浏览器异步通信的统一接口
+* **WebSocket 普及**：实现实时双向通信
+* **GraphQL 模型化**：以声明式方式获取数据
+* **边缘计算分发**：API 调用靠近用户节点
+* **AI 预测加载**：智能缓存与自适应预取
+
+> 技术在演化，思想在恒定。异步通信仍是前端架构的时间中枢。
+
+---
+
+## 六、工程实现与优化策略
+
+### 6.1 原生实现示例
 
 ```js
 let xhr = new XMLHttpRequest();
-// 发送get请求 通过url传递参数
-xhr.open('get',"/home");
+xhr.open('GET', '/api/data');
+xhr.onload = function() {
+    if (xhr.status === 200) {
+        console.log('响应数据：', JSON.parse(xhr.responseText));
+    }
+};
 xhr.send();
-xhr.onload = function(){
-    console.log(xhr.responseText);
-}
 ```
 
-- post
+### 6.2 Fetch 实现示例
 
 ```js
-xhr.open('post',"/home");
-xhr.setRequestHeader('Content-Type',"application/json");
-xhr.send('{"name":"jntm"}');
+fetch('/api/data')
+    .then(res => res.json())
+    .then(data => console.log('响应数据：', data))
+    .catch(err => console.error('请求失败：', err));
 ```
 
-#### ajax状态码
+### 6.3 错误与性能策略
 
-- 0：请求未初始化(还没有调用open())
-- 1：请求已经建立，但是还没有发送(还没有调用send())
-- 2：请求已经发送
-- 3：请求正在处理中，通常响应中已经有部分数据可以用了
-- 4：响应已经完成，可以获取并使用服务器的响应了
+* 网络错误：连接失败与超时处理
+* 服务器错误：响应状态非 2xx
+* 数据错误：格式与契约不符
 
-```js
-xhr.onreadystatechange = function(){
-    console.log(xhr.readyState);
-}
-```
+**性能优化方向：**
 
-区别描述          | onload事件 | onreadystatechange事件
-------------- | -------- | --------------------
-是否兼容IE低版本     | 不兼容      | 兼容
-是否需要判断Ajax状态码 | 不需要      | 需要
-被调用次数         | 一次       | 多次
+* 请求合并与批量传输
+* 智能缓存与本地持久化
+* 取消机制与节流策略
+* 加载进度与反馈感知
 
-#### 错误处理
+> 异步优化的本质是**用户感知延迟的最小化**。
 
-- 后端能调通，但是返回错误
+---
 
-```js
-xhr.status
-```
+## 七、稳定知识总结：异步通信的恒定价值
 
-- 网络中断，后端无法调通
+* **稳定抽象**：异步通信是一种时间解耦的系统模式
+* **设计哲学**：以事件驱动实现交互的连续性
+* **工程本质**：以状态机方式管理不可预测的网络过程
+* **认知提升**：AJAX 是“时间协作”思想的前端实现
 
-会触发xhr对象下面的onerror事件，在onerror事件处理函数中对错误进行处理
+> AJAX 的意义超越了技术本身。
+> 它是 Web 架构从“同步阻塞”走向“并行交互”的分水岭，
+> 是前端世界理解“异步系统”的起点。
 
-- 低版本ie存在ajax缓存问题
+## 相关文档链接
 
-#### ajax封装
+以下文档与AJAX技术或相关概念有关联：
 
-```js
-function ajax(req) {
-    let xhr = new XMLHttpRequest();
-    let params = "";
-    for (let attr in req.data) {
-        params += attr + "=" + req.data[attr] + "&";
-    }
-    params = params.substr(0, params.length - 1);
-    xhr.open(req.type, req.type != 'get' ? req.url:req.url + "?" + params);
+### JavaScript核心机制相关
+- [/编程语言/JavaScript/BOM.md](/编程语言/JavaScript/BOM.md) - 涉及JS执行机制、事件循环等与AJAX异步特性相关的内容
+- [/编程语言/JavaScript/事件.md](/编程语言/JavaScript/事件.md) - 涉及事件驱动模型，与AJAX的回调机制相关
+- [/编程语言/JavaScript/ES6.md](/编程语言/JavaScript/ES6.md) - 涉及Promise等现代异步处理方式，是AJAX发展的重要演进
 
-    for(let attr in req.headers){
-        xhr.setRequestHeader(attr,req.headers[attr]);
-    }
+### 网络协议与安全相关
+- [/计算机网络/http/HTTP.md](/计算机网络/http/HTTP.md) - 涉及HTTP协议、跨域问题等与AJAX通信基础相关的内容
 
-    if (req.type == 'get'){
-        xhr.send();
-    }else{
-        if (req.headers['Content-Type']=='application/json'){
-            xhr.send(JSON.stringify(req.data));
-        }else{
-            xhr.send(params);
-        }
-    }
-    xhr.onload = function () {
-        let contentType = xhr.getResponseHeader("Content-Type");
-        let responseText = xhr.responseText;
+### 异步编程与架构模式相关
+- [/编程语言/并发模型.md](/编程语言/并发模型.md) - 涉及异步性模式、Future/Promise等概念
+- [/编程语言/编程范式/响应式编程.md](/编程语言/编程范式/响应式编程.md) - 涉及异步流处理
+- [/软件工程/架构模式/响应式架构.md](/软件工程/架构模式/响应式架构.md) - 涉及异步消息驱动
+- [/中间件/消息队列/消息队列.md](/中间件/消息队列/消息队列.md) - 涉及异步处理机制
 
-        if (contentType.includes("application/json")){
-            responseText = JSON.parse(responseText);
-        }
-        if (xhr.status === 200) {
-            req.success && req.success(responseText);
-        } else {
-            req.error && req.error(responseText);
-        }
-    };
-}
+### 前端框架与优化相关
+- [/软件工程/架构/Web前端/Web前端.md](/软件工程/架构/Web前端/Web前端.md) - 涉及AJAX技术及Promise等异步处理方式
+- [/中间件/浏览器/前端性能优化.md](/中间件/浏览器/前端性能优化.md) - 涉及可缓存的AJAX等优化策略
 
-ajax({
-    url: '/home',
-    type: 'get',
-    data: {name: "cxk", age: 18},
-    headers:{
-        "Content-Type":"application/json"
-    },
-    success: function (res) {
-        console.log('normal res', res);
-    },
-    error: function (res) {
-        console.error('error res', res);
-    }
-})
-```
-
-### JQuery实现方式
-
-- ajax
-
-```js
-$.ajax({
-    url:"./" , // 请求路径
-    type:"POST" , //请求方式
-    //data: "username=jack&age=23",//请求参数
-    data:{"username":"jack","age":23},
-    success:function (data) {
-        alert(data);
-    },//响应成功后的回调函数
-    error:function () {
-        alert("出错啦...")
-    },//表示如果请求响应出现错误，会执行的回调函数
-});
-```
-
-发送jsonp请求
-
-```js
-$.ajax({
-    url: 'http://www.example.com',
-    // 指定当前发送jsonp请求
-    dataType: 'jsonp',
-    // 修改callback参数名称
-    jsonp: 'cb',
-    // 指定函数名称
-    jsonCallback: 'fnName',
-    success: function (response) {} 
-})
-```
-
-- $.get
-- $.post
-- serialize
-
-```js
-$("#form").serialize(); // 将表单输入的内容转换成如k=v&a=b这种形式
-```
-
-#### 全局事件
-
-```js
-.ajaxStart()     // 当请求开始发送时触发
-.ajaxComplete()  // 当请求完成时触发
-```
-
-配合nprogress来实现页面加载进度条
-
-## FormData
-
-- 表单上传
-- 二进制文件上传
-
-### 简单使用
-
-```html
-<form id="form">
-    <input type="text" name="username"/>
-    <input type="password" name="password"/>
-    <input type="file" name="file">
-    <input type="button" id="btn"/>
-</form>
-```
-
-```js
-let form = document.querySelector("#form");
-let formData = new FormData(form);
-let xhr = new XMLHttpRequest();
-xhr.open('post','/formData');
-xhr.send(formData);
-```
-
-### 实例方法
-
-```js
-// 获取表单对象属性
-formData.get('username');
-// 设置表单对象属性
-formData.set("username","cxk");
-// 删除表单对象属性
-formData.delete("username");
-// 追加表单对象属性,属性名已存在的情况下,set会覆盖,append会保留
-formData.append("username","cxk");
-```
-
-### 文件上传进度展示
-
-```js
-xhr.upload.onprogress = function (ev) {
-    console.log(ev.loaded / ev.total)
-}
-```
-
-### 图片上传实时预览
-
-```java
-var file = document.querySelector('#file');
-file.onchange = function(){
-    var reader = new FileReader();
-    reader.readAsDataURL(this.files[0]);
-    reader.onload = function(){
-        document.querySelector('.img-thumbnail').src = reader.result;
-    }
-}
-```
-
-### 使用Promise发送ajax
-
-```js
-function query() {
-    return new Promise((resolve, reject) => {
-        let xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState != 4) {
-                return;
-            }
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                resolve(xhr.responseText);
-            } else {
-                reject(xhr.status);
-            }
-        };
-        xhr.open('get', '/home');
-        xhr.send();
-    });
-}
-
-query().then(r => console.log(r)).catch(r => console.error(r))
-```
-
-## fetch
-
-Fetch API是新的ajax解决方案
-
-**fetch不是ajax的进一步封装，而是原生js，没有使用XMLHttpRequest对象**
-
-```js
-fetch('/home').then(data=>{
-    return data.text();
-})
-.then(data=>{
-    console.log(data);
-});
-```
-
-data是一个response对象，其中包括返回的一堆原始字节，这些字节需要在收到后，需要我们通过调用方法将其转换为相应格式的数据，比如`JSON`，`BLOB`或者`TEXT`等等
-
-- 传递参数
-
-```js
-let formData = new FormData();
-formData.append('username','cxk');
-formData.append('password','jntm');
-fetch('/formData',{
-    method:'post',
-    body:formData
-})
-```
-
-## axios
-
-```js
-axios.get('/home')
-    .then(res=>{
-        console.log(res);
-    })
-```
-```js
-let formData = new FormData();
-formData.append('username','cxk');
-formData.append('password','jntm');
-// 默认传递的是json
-axios.post('/formData',formData)
- .then(res=>{
-     console.log(res);
- })
-```
-
-- 同步调用
-
-```js
-async function f(){
-    let res =  await axios.post('/formData',formData);
-    console.log(res);
-}
-```
-
-### 全局参数
-
-```js
-// 配置公共的请求头 
-axios.defaults.baseURL = 'https://api.example.com';
-// 配置 超时时间
-axios.defaults.timeout = 2500;
-// 配置公共的请求头
-axios.defaults.headers.common['Authorization'] = AUTH_TOKEN;
-// 配置公共的 post 的 Content-Type
-axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
-```
-
-### 拦截器
-
-```js
-// 请求拦截器
-axios.interceptors.request.use(function(config) {
-    console.log(config.url)
-    // 这里一定要return   否则配置不成功
-    return config;
-}, function(err){
-    // 对请求错误做点什么
-    console.log(err)
-})
-// 响应拦截器
-axios.interceptors.response.use(function(res) {
-    console.log(res.data);
-    return res.data;
-}, function(err){
-    console.log(err)
-});
-```
-
-## 同源策略
-
-ajax受同源策略限制
-
-### JSONP
-
-原理：
-
-客户端定义一个函数：
-
-```js
-function fn (data) { // 接收到服务器data后的一些处理 }
-```
-
-服务端返回一个函数调用：
-
-```js
-const data = 'fn({name: "张三", age: "20"})';
-```
-
-客户端使用script可以跨域加载数据
-
-```html
-<script src="server_ajax_address"></script>
-```
-
-这样客户端就可以获取服务端的数据
-
-```js
-function fn(data){
-    console.log('server res',data);
-}
-let script = document.createElement('script');
-script.src = '/jsonp?v=1';
-document.body.appendChild(script);
-```
-
-```java
-@GetMapping("/jsonp")
-public String jsonp(){
-    return "fn({name:'cxk',age:18})";
-}
-```
-
-#### 优化
-
-- 回调函数名称参数化
-- 回调函数参数化
-  - 注意回调函数覆盖问题
-- url参数化 
-- 接收到回调后删除script标签
-
-### CORS
-
-全称为 Cross-origin resource sharing，即跨域资源共享，它允许浏览器向跨域服务器发送 Ajax 请求，克服了 Ajax 只能同源使用的限制
-
-通过设置`Access-Control-Allow-Origin`和`Access-Control-Allow-Methods`响应头来允许哪些源可以使用哪些方法访问
-
-```java
-@RestController
-@CrossOrigin("*")
-public class Controller {...}
-```
-
-withCredentials：指定在涉及到跨域请求时，是否携带cookie信息，默认值为false
-
-### 使用后端服务器辅助访问
+### 安全与网络相关
+- [/计算机网络/http/HTTP.md](/计算机网络/http/HTTP.md) - 涉及跨域问题的解决方案
+- [/计算机网络/网络安全/Web安全.md](/计算机网络/网络安全/Web安全.md) - 涉及CORS等相关的安全问题

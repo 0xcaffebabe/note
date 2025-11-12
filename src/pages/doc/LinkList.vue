@@ -1,5 +1,5 @@
 <template>
-  <el-drawer v-model="showDrawer" size="20%" title="链接列表">
+  <el-drawer v-model="showDrawer" size="20%" title="链接列表" modal-penetrable resizable :modal="false">
     <ul>
       <li v-for="item in linkList" :key="item.link" :title="item.link">
         <el-link type="primary" :disabled="!effecientMap[item.link]" @click.prevent="$router.push(item.link.replace('/#', ''));showDrawer = false">

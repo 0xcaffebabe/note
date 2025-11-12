@@ -1,7 +1,6 @@
 <template>
   <el-drawer v-model="showDrawer" :size="$isMobile() ? '75%' : '44%'" :direction="$isMobile() ? 'btt' : 'rtl'"
-    title="模板生成问题" :modal="false" @close="$emit('close')" :lock-scroll="false" modal-class="operational-drawer-modal"
-    class="operational-drawer">
+    title="模板生成问题" :modal="false" @close="$emit('close')" :lock-scroll="false" modal-penetrable resizable>
     <div class="llm-container">
       <el-row :gutter="12">
         <el-col :span="24">

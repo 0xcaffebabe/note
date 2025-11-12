@@ -5,11 +5,11 @@
     :direction="$isMobile() ? 'btt': 'rtl'"
     :with-header="false"
     :modal="false"
+    modal-penetrable
+    resizable
     title="知识网络"
     @close="$emit('close')"
     :lock-scroll="false"
-    modal-class="operational-drawer-modal"
-    class="operational-drawer"
   >
   <div class="tool-zone">
     <div>

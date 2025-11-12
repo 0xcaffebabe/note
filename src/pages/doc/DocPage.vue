@@ -345,10 +345,6 @@ export default defineComponent({
   .toc-wrapper {
     display: none;
   }
-  .toc-toggle-btn {
-    display: block !important;
-    right: 20px;
-  }
 }
 
 .toc-toggle-btn {

@@ -7,6 +7,7 @@
     :modal="false"
     modal-penetrable
     resizable
+    class="knowledge-network-drawer"
     title="知识网络"
     @close="$emit('close')"
     :lock-scroll="false"
@@ -108,6 +109,7 @@ export default defineComponent({
     return {
       showDrawer: false,
       chart: null as echarts.ECharts | null,
+      resizeObserver: null as ResizeObserver | null,
       mode: 'force' as "force" | "circular" | "none" | undefined,
       displayMode: ['force', 'circular'],
       onlySelfRelated: true,
@@ -140,12 +142,66 @@ export default defineComponent({
     }
   },
   setup() {},
+  mounted() {
+    // 初始化时创建 ResizeObserver
+    this.setupResizeObserver();
+  },
+  beforeUnmount() {
+    // 组件销毁前断开观察器并清理图表
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
+    if (this.chart) {
+      this.chart.dispose();
+    }
+  },
   methods: {
+    setupResizeObserver() {
+      const chartDom = document.querySelector('.knowledge-network-drawer');
+      if (chartDom) {
+        const debouncedResize = this.debounce(() => {
+          this.chart?.resize();
+        }, 300);
+
+        this.resizeObserver = new ResizeObserver(() => {
+          debouncedResize();
+        });
+
+        this.resizeObserver.observe(chartDom);
+      }
+    },
+    
+    // 优化图表渲染性能
+    optimizeChartRender() {
+      if (this.chart) {
+        // 设置渲染配置以提高性能
+        this.chart.setOption({
+          animation: false, // 在调整大小时不触制动效
+        });
+        
+        // 稍微延迟后恢复动画
+        setTimeout(() => {
+          if (this.chart) {
+            this.chart.setOption({
+              animation: true,
+            });
+          }
+        }, 300);
+      }
+    },
     show() {
       this.showDrawer = true;
       this.$nextTick(() => {
         this.init();
       });
+    },
+    // 防抖函数
+    debounce<T extends (...args: any[]) => void>(func: T, wait: number) {
+      let timeout: ReturnType<typeof setTimeout> | null = null;
+      return function (this: ThisParameterType<T>, ...args: Parameters<T>) {
+        if (timeout) clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
     },
     async init(potentialProcess : boolean = true) {
       const stream = (await KnowledgeNetworkService.getDocStream(this.doc)).flatMap(v => v)
@@ -417,6 +473,7 @@ export default defineComponent({
 <style lang="less" scoped>
 #knowledgeNetwork {
   height: 100%;
+  width: 100%;
 }
 .close-btn {
   position:absolute;

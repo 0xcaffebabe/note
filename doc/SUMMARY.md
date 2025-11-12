@@ -195,6 +195,7 @@
       - [🔍信息收集](./计算机网络/网络安全/信息收集.md)
     - [🔒Web安全](./计算机网络/网络安全/Web安全.md)
     - [🔒业务安全](./计算机网络/网络安全/业务安全.md)
+    - [🔒安全架构](./计算机网络/网络安全/安全架构.md)
     - [🔑密码学](./计算机网络/网络安全/密码学/密码学.md)
 
 - [👨‍💻编程语言](./编程语言/编程语言.md)
@@ -264,7 +265,6 @@
       - [⚡SpringWebFlux](./编程语言/JAVA/框架/SpringWebFlux.md)
     - [🔗Dubbo](./编程语言/JAVA/框架/Dubbo.md)
     - [🧪JUnit](./编程语言/JAVA/框架/Junit.md)
-    - [🔒Shiro](./编程语言/JAVA/框架/Shiro.md)
   - [🌐JavaScript](./编程语言/JavaScript/JavaScript.md)
     - [🏗️DOM](./编程语言/JavaScript/DOM.md)
     - [⚡事件](./编程语言/JavaScript/事件.md)

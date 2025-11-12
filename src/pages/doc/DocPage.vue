@@ -47,6 +47,7 @@
     @showMindGraph="showMindGraph();showAside = false;isDrawerShow = true"
     @showKnowledgeNetwork="showKnowledgeNetwork();showAside = false;isDrawerShow = true"
     @copyDocPath="handleCopyDocPath"
+    @copyDocContent="handleCopyDocContent"
     @showLinkList="showLinkList"
     @showKnowledgeReviewer="showKnowledgeReviewer"
     @show-llm="showLLM();showAside = false;isDrawerShow = true"
@@ -194,6 +195,33 @@ export default defineComponent({
       const url = "/" + DocUtils.docId2Url(this.doc);
       await navigator.clipboard.writeText(url);
       ElMessage.success('复制成功: ' + url);
+    },
+    async handleCopyDocContent(){
+      try {
+        // 使用DocService获取文档文件信息，直接获取原始markdown内容
+        const fileInfo = await DocService.getDocFileInfo(this.doc);
+        if (fileInfo && fileInfo.content) {
+          await navigator.clipboard.writeText(fileInfo.content);
+          ElMessage.success('知识复制成功！');
+        } else {
+          ElMessage.error('未能获取文档内容');
+        }
+      } catch (error) {
+        console.error('复制文档内容失败:', error);
+        try {
+          // 如果无法获取原始markdown，则复制渲染后的文本内容
+          const markdownSection = document.querySelector('.main.markdown-section');
+          if (markdownSection) {
+            await navigator.clipboard.writeText(markdownSection.textContent || '');
+            ElMessage.success('知识复制成功（复制了渲染后的内容）！');
+          } else {
+            ElMessage.error('未能获取文档内容');
+          }
+        } catch (fallbackError) {
+          console.error('复制文档内容失败:', fallbackError);
+          ElMessage.error('知识复制失败');
+        }
+      }
     },
     handleTocItemClick(id: string) {
       const elmList:NodeListOf<HTMLElement> = document.querySelector('.main.markdown-section')?.querySelectorAll('h1,h2,h3,h4,h5,h6')!

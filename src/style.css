@@ -62,13 +62,6 @@ body {
   text-decoration: none;
   border-bottom: 1px dashed #ccc;
 }
-.operational-drawer-modal {
-  all: unset;
-}
-.operational-drawer {
-  position: fixed;
-  z-index: 3000;
-}
 body[theme=dark] {
   background-color: var(--main-dark-bg-color);
   color: var(--main-dark-text-color);

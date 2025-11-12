@@ -1,5 +1,5 @@
 <template>
-  <el-drawer v-model="showDrawer" :size="$isMobile() ? '90%' : '84%'" title="知识回顾" :lock-scroll="true" custom-class="knowledge-review">
+  <el-drawer v-model="showDrawer" :size="$isMobile() ? '90%' : '84%'" title="知识回顾" :lock-scroll="true" resizable>
     <el-row style="height:100%">
       <el-col :md="18" :xs="24">
         <knowledge-scatter ref="knowledgeScatter" :doc="doc"/>

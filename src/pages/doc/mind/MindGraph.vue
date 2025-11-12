@@ -8,9 +8,9 @@
     :lock-scroll="false"
     :append-to-body="false"
     :modal="false"
+    modal-penetrable
+    resizable
     @close="$emit('close')"
-    modal-class="operational-drawer-modal"
-    class="operational-drawer"
   >
     <el-button text class="close-btn" @click="showDrawer = false">
       <el-icon><close-bold /></el-icon>

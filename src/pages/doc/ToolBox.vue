@@ -72,6 +72,7 @@ type ActionType =
     'showMindGraph' |
     'showKnowledgeNetwork' |
     'copyDocPath' |
+    'copyDocContent' |
     'showLinkList' |
     'openInEditor' |
     'showLlm'
@@ -102,6 +103,7 @@ export default defineComponent({
     'showMindGraph',
     'showKnowledgeNetwork',
     'copyDocPath',
+    'copyDocContent',
     'showLinkList',
     'goToDoc',
     'goToPpt',
@@ -121,6 +123,7 @@ export default defineComponent({
         {name: '知识回顾', type: 'primary', action: 'showKnowledgeReviewer', hotkey: 'alt + r'},
         {name: '知识助手', type: 'warning', action: 'showLlm', hotkey: 'alt + i'},
         {name: '路径复制', type: 'success', action: 'copyDocPath', hotkey: 'alt + c', divided: true},
+        {name: '知识复制', type: 'warning', action: 'copyDocContent', hotkey: 'alt + x'},
         {name: '在VSC打开', type: 'danger', action: 'openInEditor', hotkey: 'alt + v'},
         {name: '链接列表', type: 'primary', action: 'showLinkList',},
         {name: '随机复习', type: 'primary', action: 'randomReview' as LocalActionType, local: true, hotkey: 'alt + n'},

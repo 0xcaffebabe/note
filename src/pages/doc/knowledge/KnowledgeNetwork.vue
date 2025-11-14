@@ -259,12 +259,12 @@ export default defineComponent({
               color: v == this.doc ? '#F56C6C': stream.some(vv => v == vv) ? '#95d475' : nodeColorMapping(20)
             }
           };
-          // 节点扇出数越多 大小越大
+          // 根据节点的扇出数 进行颜色映射
         } else {
           return {
             name: v,
             category: v == this.doc ? 1 : stream.some(vv => v == vv) ? 2 : 0,
-            symbolSize: 20 * (1 + (list[0].links?.length || 0) / 3),
+            symbolSize: 20,
             draggable: true,
             itemStyle: {
               color: v == this.doc ? '#F56C6C': stream.some(vv => v == vv) ? '#95d475' : nodeColorMapping(20 * (1 + (list[0].links?.length || 0) / 3))

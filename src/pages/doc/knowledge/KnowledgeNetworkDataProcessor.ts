@@ -23,47 +23,49 @@ export class KnowledgeNetworkDataProcessor {
    * @param category 文档分类
    * @returns 颜色值
    */
-  static categoryColorMapping(category: string): string {
-    // 定义颜色映射表
-    const colorMap: { [key: string]: string } = {
-      'ai': '#409EFF',     // 蓝色 - AI
-      'web': '#67C23A',     // 绿色 - Web开发
-      'backend': '#E6A23C', // 橙色 - 后端
-      'frontend': '#F56C6C', // 红色 - 前端
-      'mobile': '#905AFD',  // 紫色 - 移动端
-      'devops': '#F272BD',  // 粉色 - DevOps
-      'database': '#409EFF', // 蓝色 - 数据库
-      'tool': '#34BFAE',    // 青色 - 工具
-      'other': '#909399',   // 灰色 - 其他
+  static categoryColorMapping(name: string): string {
+    const COLOR_PALETTE = [
+      "#E57373", "#9575CD", "#7986CB",
+      "#64B5F6", "#4DB6AC", "#81C784",
+      "#AED581", "#FFD54F", "#FFB74D",
+      "#FF8A65", "#A1887F", "#90A4AE", "#F44336",
+      "#9C27B0", "#673AB7", "#3F51B5", "#2196F3",
+      "#00BCD4", "#009688", "#4CAF50", "#8BC34A"
+    ];
+
+    const colorMapping: { [key: string]: string } = {
+      '算法与数据结构': COLOR_PALETTE[0],
+      '数学': COLOR_PALETTE[1],
+      '操作系统': COLOR_PALETTE[2],
+      '软件工程': COLOR_PALETTE[3],
+      '计算机系统': COLOR_PALETTE[4],
+      '数字逻辑电路': COLOR_PALETTE[5],
+      '计算机网络': COLOR_PALETTE[6],
+      '编译原理': COLOR_PALETTE[7],
+      'DSL': COLOR_PALETTE[8],
+      '数据技术': COLOR_PALETTE[9],
+      '中间件': COLOR_PALETTE[10],
+      '音视频开发': COLOR_PALETTE[11],
+      '开发工具': COLOR_PALETTE[12],
+      '产品': COLOR_PALETTE[13],
+      '其他': COLOR_PALETTE[14],
+      '个人成长': COLOR_PALETTE[15],
+      '通识': COLOR_PALETTE[16],
+      '运维': COLOR_PALETTE[17],
+      '编程语言': COLOR_PALETTE[18],
     };
 
-    const color = colorMap[category.toLowerCase()];
-    if (color) {
-      return color;
+    if (colorMapping[name]) {
+      return colorMapping[name];
     }
-
-    // 如果分类未定义，生成一个随机颜色
-    return KnowledgeNetworkDataProcessor.stringToColor(category);
-  }
-
-  /**
-   * 根据字符串生成固定颜色
-   * @param str 输入字符串
-   * @returns 颜色值
-   */
-  static stringToColor(str: string): string {
-    // 使用字符串的哈希值来确定色调，以确保相同字符串始终生成相同颜色
+    
     let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
 
-    // 将哈希值映射到色相环（0-360度），饱和度和亮度固定
-    const hue = Math.abs(hash) % 360;
-    const saturation = 70 + (hash % 20); // 70-90% 确保颜色饱和
-    const lightness = 45 + (hash % 10); // 45-55% 确保可读性
-
-    return KnowledgeNetworkDataProcessor.hslToHex(hue, saturation, lightness);
+    const idx = Math.abs(hash) % COLOR_PALETTE.length;
+    return COLOR_PALETTE[idx];
   }
 
   /**
@@ -154,20 +156,18 @@ export class KnowledgeNetworkDataProcessor {
     const isCurrentNode = nodeId === docId;
     const isStreamNode = stream.some((streamItem) => streamItem === nodeId);
     const category = KnowledgeNetworkDataProcessor.getDocCategory(nodeId);
-
+    console.log('category:', category);
     // 根据节点的扇出数进行颜色映射
     if (relatedNodes.length > 0) {
       return {
         name: nodeId,
-        category: isCurrentNode ? 1 : isStreamNode ? 2 : 0, // 保持数字索引，实际分类信息用于颜色映射
+        category: category, // 保持数字索引，实际分类信息用于颜色映射
         symbolSize: 20,
         draggable: true,
         itemStyle: {
           color: isCurrentNode
             ? '#F56C6C' // 红色 - 当前节点
-            : isStreamNode
-              ? '#95d475' // 绿色 - 上下游节点
-              : KnowledgeNetworkDataProcessor.categoryColorMapping(category) // 使用文档分类颜色
+            : KnowledgeNetworkDataProcessor.categoryColorMapping(category) // 使用文档分类颜色
         },
         // 保存分类信息用于图表配置
         docCategory: category
@@ -176,11 +176,11 @@ export class KnowledgeNetworkDataProcessor {
       // 默认节点渲染样式
       return {
         name: nodeId,
-        category: isCurrentNode ? 1 : isStreamNode ? 2 : 0, // 保持数字索引，实际分类信息用于颜色映射
+        category: category, // 保持数字索引，实际分类信息用于颜色映射
         symbolSize: 20,
         draggable: true,
         itemStyle: {
-          color: isCurrentNode ? '#F56C6C' : isStreamNode ? '#95d475' : KnowledgeNetworkDataProcessor.categoryColorMapping(category) // 使用文档分类颜色
+          color: isCurrentNode ? '#F56C6C' : KnowledgeNetworkDataProcessor.categoryColorMapping(category) // 使用文档分类颜色
         },
         // 保存分类信息用于图表配置
         docCategory: category

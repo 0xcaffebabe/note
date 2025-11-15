@@ -26,9 +26,6 @@
               <keep-alive>
                 <contents-list :doc="doc" @item-click="handleTocItemClick"/>
               </keep-alive>
-              <keep-alive>
-                <mind-note/>
-              </keep-alive>
             </div>
             <!-- toc结束 -->
 
@@ -72,9 +69,9 @@
   <instant-previewer ref="instantPreviewer"/>
   <resource-brower ref="resourceBrower" />
 
-  <!-- 右下角知识网络组件（无工具栏） -->
-  <div class="knowledge-network-content-container">
-    <knowledge-network-chart :doc="doc" mode="force" :onlySelfRelated="true" :isPotential="false" :degree="3"/>
+  <!-- 右下角整合面板（思维笔记和知识网络） -->
+  <div class="right-bottom-panel-container">
+    <right-bottom-panel :doc="doc" />
   </div>
 </template>
 
@@ -92,6 +89,7 @@ import ToolBox from './ToolBox.vue';
 import KnowledgeNetwork from "./knowledge/KnowledgeNetwork.vue";
 import KnowledgeNetworkContent from "./knowledge/KnowledgeNetworkContent.vue";
 import KnowledgeNetworkChart from "./knowledge/KnowledgeNetworkChart.vue";
+import RightBottomPanel from "./knowledge/RightBottomPanel.vue";
 import LinkPopover from "./LinkPopover.vue";
 import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
@@ -131,6 +129,7 @@ export default defineComponent({
     KnowledgeNetwork,
     KnowledgeNetworkContent,
     KnowledgeNetworkChart,
+    RightBottomPanel,
     DocBreadcrumbNav,
     DocTabNav,
     ResourceBrower,
@@ -462,36 +461,39 @@ export default defineComponent({
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
-.knowledge-network-content-container {
+.right-bottom-panel-container {
   position: fixed;
   bottom: 0px;
   right: 0px;
   width: 400px;
   height: 200px;
   z-index: 999;
-  background-color: rgba(255,255,255,.8);
-  border: 1px solid #ccc;
-  border-bottom: none;
-  border-right: none;
-  border-top-left-radius: 8px;
-  overflow: hidden;
+
+  :deep(.right-bottom-panel) {
+    width: 100%;
+    height: 100%;
+  }
 
   :deep(#knowledgeNetwork) {
     height: 100%;
     width: 100%;
   }
-}
 
-@media screen and(max-width: 1366px) {
-  .knowledge-network-content-container {
-    width: 300px;
-    height: 160px;
+  :deep(.mind-note) {
+    height: 100%;
+    width: 100%;
+    position: static;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
   }
 }
 
-body[theme=dark] .knowledge-network-content-container {
-  background-color: var(--main-dark-bg-color);
-  border-color: var(--second-dark-bg-color);
+@media screen and(max-width: 1366px) {
+  .right-bottom-panel-container {
+    width: 300px;
+    height: 160px;
+  }
 }
 
 body[theme=dark] .toc-toggle-btn {

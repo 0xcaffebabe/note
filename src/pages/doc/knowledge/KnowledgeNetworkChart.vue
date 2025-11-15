@@ -56,6 +56,10 @@ export default defineComponent({
     degree: {
       type: Number,
       default: 3
+    },
+    showLegend: {
+      type: Boolean,
+      default: true
     }
   },
   data() {
@@ -288,7 +292,7 @@ export default defineComponent({
         },
         legend: {
           x: "center",
-          show: true,
+          show: this.showLegend,
           data: legendData,
           textStyle: {
             color: this.isDark ? '#eee' : '#555'

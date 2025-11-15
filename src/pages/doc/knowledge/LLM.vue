@@ -63,10 +63,11 @@ export default defineComponent({
   data() {
     return {
       showDrawer: false,
-      llmMode: 'category',
+      llmMode: 'review',
       query: '',
       presets: [
         { name: '审视文章优缺点和建议', value: 'review', template: () => this.reviewTemplate() },
+        { name: '文档升维处理', value: 'upscaling', template: () => this.upscalingTemplate() },
         { name: '知识错误纠正', value: 'misconceptions', template: () => this.misconceptionsTemplate() },
         { name: '标签预测', value: 'predictTag', template: () => this.tagsPredicateTemplate() },
         { name: '概括总结', value: 'summary', template: () => this.summaryTemplate() },
@@ -582,37 +583,178 @@ ${file.content}
 
       `
     },
+    async upscalingTemplate() {
+      const file = await DocService.getDocFileInfo(this.doc)
+      const contents = await DocService.getContentByDocId(this.doc)
+      const text = contents2String(contents)
+      return `
+你是知识体系专家和文档升维专家。
+
+任务：将输入的原始文档 (${this.doc}) 升维为高抽象度、体系化、逻辑严谨的知识文档。请输出完整知识文档版本。
+
+---
+
+【顶层结构模块选择】：
+
+1. 技术/系统架构文档：
+   - 概述（Overview）
+   - 本质（Essence）
+   - 模型（Model）
+   - 能力体系（Capability System）
+   - 架构模型（Architecture Model）
+   - 类型体系（Taxonomy）
+   - 边界与生态（Boundary & Ecosystem）
+   - 治理体系（Governance System）
+   - 演进趋势（Evolution）
+   - 选型方法论（Selection Framework）
+   - 总结（Conclusion）
+
+2. 产品/业务方法论文档：
+   - 概述/目标价值
+   - 本质/核心原则
+   - 流程模型（Process Model）
+   - 能力模型（Capability Model）
+   - 角色与职责（Roles & Responsibilities）
+   - 治理体系（Governance System）
+   - 演进趋势（Evolution）
+   - 总结（Conclusion）
+
+3. 流程规范文档：
+   - 概述
+   - 核心流程（Core Process）
+   - 输入输出（Input/Output）
+   - 角色职责（Roles & Responsibilities）
+   - 策略规则（Policies & Rules）
+   - 治理与监控（Governance & Monitoring）
+   - 优化与演进（Optimization & Evolution）
+   - 总结
+
+4. 知识概念/学科文档：
+   - 概述
+   - 本质/定义
+   - 核心概念（Core Concepts）
+   - 分类体系（Taxonomy）
+   - 应用场景（Use Cases / Applications）
+   - 关联关系（Relations / Dependencies）
+   - 发展趋势（Evolution / Trends）
+   - 总结
+
+---
+
+【生成要求】：
+
+1. 对每个模块：
+   - 提炼核心概念、定义和作用
+   - 可使用表格、流程图或 mermaid 图增强可读性
+   - 抽象概念优先，工程或实践示例可选
+
+2. 输出风格：
+   - 知识文档风格、逻辑严谨、层次清晰
+   - 概念和边界明确
+   - 可作为团队内部标准参考
+
+3. 可选增强：
+   - 能力树图示
+   - 流程图或模型关系图
+   - 演进路线图
+   - 选型/决策表格或决策树
+
+---
+
+【输入文档】：
+---
+${file.content}
+---
+
+      `
+    },
     async reviewTemplate() {
       const file = await DocService.getDocFileInfo(this.doc)
       const contents = await DocService.getContentByDocId(this.doc)
       const text = contents2String(contents)
       return `
-你是一名专业的内容审阅专家，具备深厚的领域知识和文章分析能力。
+你是文章审阅与知识分析专家。
 
-【任务目标】
-全面审视《${this.doc}》这篇文章，从内容结构、知识准确性、表达清晰度、实用价值等方面进行评估，并提出优缺点及改进建议。
+任务：对输入文章 (${this.doc}) 进行全面审视，输出文章的**优缺点分析与改进建议**，并根据文档类型动态适配分析维度。
 
-【输出格式要求】
-1. 优点分析
-2. 缺点分析
-3. 改进建议
-4. 总体评价（简要总结）
-5. 使用 Markdown 格式，结构清晰
-
-【输入数据】
-文章目录：
 ---
-${text}
+
+【分析逻辑】：
+
+1. **技术/系统架构文档**
+   - **优点分析**：
+     - 技术结构清晰性（架构、模块划分、层次性）
+     - 概念准确性（核心概念、模型、边界）
+     - 实用性（示例、可执行性、可复用性）
+     - 可观测性与治理体系体现
+   - **缺点分析**：
+     - 抽象不足或概念混淆
+     - 缺少可视化图表或模型关系
+     - 部分设计原则不明确
+     - 缺少演进趋势或选型参考
+   - **改进建议**：
+     - 增加抽象概念和模块化模型
+     - 补充可视化能力树、流程图
+     - 明确边界和职责
+     - 加入演进趋势和选型方法论
+
+2. **产品/业务方法论文档**
+   - **优点分析**：
+     - 核心原则明确
+     - 流程/方法模型完整
+     - 角色职责清晰
+     - 与业务目标或价值关联
+   - **缺点分析**：
+     - 流程或能力模型不够抽象
+     - 缺少实践示例或可量化指标
+     - 逻辑顺序不够清晰
+   - **改进建议**：
+     - 梳理流程模型和能力树
+     - 补充实践案例和可量化指标
+     - 明确角色、责任、协作关系
+
+3. **流程规范文档**
+   - **优点分析**：
+     - 流程步骤完整
+     - 输入输出、角色职责清晰
+     - 策略规则明确
+   - **缺点分析**：
+     - 流程抽象层次不足
+     - 缺少优化或治理建议
+     - 可视化图表不足
+   - **改进建议**：
+     - 增加流程图或泳道图
+     - 明确策略与监控指标
+     - 提供优化和演进方案
+
+4. **知识概念/学科文档**
+   - **优点分析**：
+     - 核心概念定义准确
+     - 分类体系完整
+     - 应用场景和关联关系清晰
+   - **缺点分析**：
+     - 概念抽象度不够
+     - 缺少发展趋势或演进分析
+     - 逻辑层次不够清晰
+   - **改进建议**：
+     - 强化概念抽象和边界定义
+     - 补充发展趋势和应用示例
+     - 增加分类关系图或概念图
+
 ---
-文章内容：
+
+【输出要求】：
+1. 输出**优点分析**、**缺点分析**、**改进建议**三个部分
+2. 每条分析建议都应简明、具体、可操作
+3. 可使用表格或列表增强可读性
+4. 逻辑清晰、条理分明，便于团队复用和改进
+
+---
+
+【输入文章】：
 ---
 ${file.content}
 ---
-
-【重要规则】
-- 评价必须基于文章实际内容，客观公正。
-- 优缺点分析要有具体依据。
-- 建议要具体可行，具有针对性。
 
       `
     },

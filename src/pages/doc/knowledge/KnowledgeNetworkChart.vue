@@ -71,6 +71,7 @@ export default defineComponent({
       id: this.generateRandomId(),
       chart: null as echarts.ECharts | null,
       resizeObserver: null as ResizeObserver | null,
+      graphZoom: 1,
       nodes: [] as any[],
     };
   },
@@ -142,6 +143,7 @@ export default defineComponent({
       };
     },
     async init(potentialProcess: boolean = true) {
+      console.log(this.graphZoom)
       console.log('init')
       const stream = (await KnowledgeNetworkService.getDocStream(this.doc)).flatMap(v => v)
       // 若是潜在知识网络 默认设置为圆圈展示模式
@@ -318,6 +320,7 @@ export default defineComponent({
             roam: true,
             draggable: true,
             categories: categoryList,
+            zoom: this.graphZoom,
             // 节点的文字样式
             label: {
               show: true,
@@ -377,6 +380,12 @@ export default defineComponent({
       };
 
       this.chart.setOption(option);
+      this.chart.on('graphRoam', (params: any) => {
+        console.log(params)
+        let zoom = (this.chart as any)._coordSysMgr._coordinateSystems[0]._zoom;
+        this.graphZoom = zoom;
+        console.log('zoom', zoom)
+      })
     }
   },
 });

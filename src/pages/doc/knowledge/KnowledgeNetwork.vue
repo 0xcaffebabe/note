@@ -44,7 +44,7 @@ export default defineComponent({
       this.showDrawer = true;
     },
     init() {
-      (this.$refs.contentRef as any).init();
+      (this.$refs.contentRef as any)?.init();
     }
   },
 });

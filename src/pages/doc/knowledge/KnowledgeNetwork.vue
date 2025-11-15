@@ -68,6 +68,7 @@ import { KnowledgeNode } from "@/dto/KnowledgeNode";
 import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
 import KnowledgeNetworkService from "@/service/KnowledgeNetworkService";
+import { KnowledgeNetworkDataProcessor } from "@/pages/doc/knowledge/KnowledgeNetworkDataProcessor";
 
 echarts.use([
   TitleComponent,
@@ -80,20 +81,6 @@ echarts.use([
 type EChartsOption = echarts.ComposeOption<
   TitleComponentOption | TooltipComponentOption | GraphSeriesOption
 >;
-
-function nodeColorMapping(size: number): string {
-  if (size <= 20) {
-    return '#84c0ff'
-  }
-  if (size > 20 && size <= 40) {
-    return '#409eff'
-  }
-  return '#1D8CFF'
-}
-
-function buildSummaryDocInfo(file: DocFileInfo): string {
-  return DocService.buildSummaryDocInfo(file)
-}
 
 export default defineComponent({
   components: {
@@ -216,77 +203,16 @@ export default defineComponent({
       if (this.onlySelfRelated) {
         // 非隐式知识网络才能进行度数过滤
         if (!this.isPotential) {
-          const direct: KnowledgeNode[] = knowledgeNetwork.filter(v => v.id == this.doc || v.links?.find(cv => this.doc == cv.id));
-          for(let i = 0; i < this.degree; i++) {
-            const list = knowledgeNetwork.filter(v => direct.some(d => d.id == v.id) || v.links?.find(cv => direct.some(d => d.id == cv.id)));
-            direct.push(...list);
-            direct.push(...list.flatMap(v => v.links || []).filter(v => direct.some(d => d.id == v.id)));
-          }
-          // direct.forEach(v => {
-          //     v.links = v.links?.filter(cv => direct.some(d => d.id == cv.id))
-          //   })
-          knowledgeNetwork = direct;
+          knowledgeNetwork = KnowledgeNetworkDataProcessor.filterByDegree(knowledgeNetwork, this.doc, this.degree);
         } else {
-          knowledgeNetwork = knowledgeNetwork
-          .filter(v => v.id == this.doc || v.links?.find(cv => cv.id == this.doc))
-          .map(v => {
-            if (v.id != this.doc) {
-              v.links = v.links?.filter(cv => cv.id == this.doc)
-            }
-            return v
-          })
-        }
-        
-      }
-      // 提取所有节点
-      let nodes = Array.from(
-        new Set(
-          knowledgeNetwork.flatMap((v) => [
-            v.id,
-            ...(v.links?.map((ln) => ln.id) || []),
-          ])
-        )
-      ).map((v) => {
-        const list = knowledgeNetwork.filter((item) => item.id == v);
-        // 默认节点渲染样式
-        if (list.length == 0) {
-          return {
-            name: v,
-            category: v == this.doc ? 1 : stream.some(vv => v == vv) ? 2 : 0,
-            symbolSize: 20,
-            draggable: true,
-            itemStyle: {
-              color: v == this.doc ? '#F56C6C': stream.some(vv => v == vv) ? '#95d475' : nodeColorMapping(20)
-            }
-          };
-          // 根据节点的扇出数 进行颜色映射
-        } else {
-          return {
-            name: v,
-            category: v == this.doc ? 1 : stream.some(vv => v == vv) ? 2 : 0,
-            symbolSize: 20,
-            draggable: true,
-            itemStyle: {
-              color: v == this.doc ? '#F56C6C': stream.some(vv => v == vv) ? '#95d475' : nodeColorMapping(20 * (1 + (list[0].links?.length || 0) / 3))
-            }
-          };
-        }
-      });
-      // 节点下标映射<节点, index>
-      const nodeMap = new Map(nodes.map((v, i) => [v.name, i]));
-      // 节点关系处理
-      const links: any[] = [];
-      for (let i of knowledgeNetwork) {
-        if (i.links) {
-          for (let j of i.links) {
-            links.push({
-              target: i.id,
-              source: j.id,
-              value: decodeURI(j.headingId ? "#" + j.headingId : "-")
-            });
-          }
+          knowledgeNetwork = KnowledgeNetworkDataProcessor.filterByCurrentDoc(knowledgeNetwork, this.doc);
         }
       }
+
+      // 创建节点和边的数据
+      const nodes = KnowledgeNetworkDataProcessor.createNodes(knowledgeNetwork, this.doc, stream);
+      const nodeMap = KnowledgeNetworkDataProcessor.buildNodeMap(nodes);
+      const links = KnowledgeNetworkDataProcessor.createLinks(knowledgeNetwork);
       // 图表创建、参数设置
       if (!this.chart) {
         const chartDom = document.getElementById("knowledgeNetwork")!;
@@ -330,20 +256,17 @@ export default defineComponent({
             if (!name) {
               return `${params.data.source}->${params.data.target} ${params.data.value}`
             }
-            if (!name) {
-              return 'none'
-            }
             const result: Promise<DocFileInfo> | DocFileInfo = DocService.getDocFileInfo(name)
             if (result instanceof Promise) {
               result
               .then(file => {
-                callback(ticket, buildSummaryDocInfo(file))
+                callback(ticket, KnowledgeNetworkDataProcessor.buildSummaryDocInfo(file))
               })
               .catch(err => {
                 callback(ticket, `${err}`)
               })
             }else {
-              return buildSummaryDocInfo(result)
+              return KnowledgeNetworkDataProcessor.buildSummaryDocInfo(result)
             }
             return 'loading'
           }

@@ -332,7 +332,7 @@ export default defineComponent({
                 const name: string = (params.data as any).name;
                 const arr = name.split("-");
                 return [`{title|${arr[arr.length - 1]}}`,
-                        `{category|『${name.replaceAll(/-/g, '/')}』}`
+                        // `{category|『${name.replaceAll(/-/g, '/')}』}`
                 ].join("\n");
               },
               rich: {

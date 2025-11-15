@@ -101,97 +101,231 @@ export default defineComponent({
     async answerByContentTempalte() {
       const file = await DocService.getDocFileInfo(this.doc)
       return `
-        请根据以下文本回答问题：
+你是一名内容理解与知识抽取专家。
 
-        问题：
+【任务目标】
+根据《${this.doc}》的全文内容回答用户的问题。
 
+【输出格式要求】
+1. 回答必须基于文本内容，不得超出文本范围。
+2. 使用 Markdown 格式输出。
+3. 若文本无相关内容，请明确指出。
 
-        文本：
-        ---
-        ${file.content}
-        ---
+【输入数据】
+《${this.doc}》内容：
+---
+${file.content}
+---
+
+【重要规则】
+- 所有结论必须来源于内容。
+- 不得脑补内容。
+- 如内容不足，要提醒用户补充问题上下文。
+
+【问题】
+
       `
     },
     async answerByAllCategoryTemplate() {
       const categorys = await CategoryService.getCategoryList()
       return `
-        以下是个人知识体系的目录，请根据目录回答问题：
+你是一名知识体系分析专家。
 
-        问题：
+【任务目标】
+根据整个知识体系目录结构回答用户的问题。
 
+【输出格式要求】
+1. 输出应基于目录结构推论，不得凭空创造不存在的内容。
+2. 回答保持结构化（使用 Markdown）。
+3. 若目录无法提供足够信息，请明确指出信息不足之处。
 
-        目录：
-        ---
-        ${categorys2String(categorys, 0)}
-        ---
+【输入数据】
+知识体系目录：
+---
+${categorys2String(categorys, 0)}
+---
+
+【重要规则】
+- 只能利用目录中的主题推断，不得捏造细节内容。
+- 避免输出与当前知识体系无关的内容。
+
+【问题】（请在此处填写问题）
+
       `
     },
     async answerByCategoryTempalte() {
       const contents = await DocService.getContentByDocId(this.doc)
       const text = contents2String(contents)
       return `
-        以下是关于 《${this.doc}》 的目录，请根据目录回答问题：
+你是一名文档结构理解与知识推理专家。
 
-        问题：
+【任务目标】
+根据《${this.doc}》的目录，回答用户提出的问题。
 
+【输出格式要求】
+1. 回答需与目录结构严格对应，不得臆造目录中不存在的主题。
+2. 使用 Markdown 格式，结构清晰。
+3. 若目录信息不足以回答问题，请明确说明。
 
-        目录：
-        ---
-        ${text}
-        ---
+【输入数据】
+《${this.doc}》目录：
+---
+${text}
+---
+
+【重要规则】
+- 所有回答必须基于目录结构，不允许编造细节。
+- 未在目录中出现的概念不要提供内容。
+
+【问题】
+
       `
     },
     async futureTemplate() {
       return `
-        简单介绍一下关于 《${this.doc}》 的未来可能得发展方向与挑战
+你是一名趋势分析专家。
+
+【任务目标】
+基于内容推断《${this.doc}》未来 3~5 年的可能发展方向与挑战。
+
+【输出格式要求】
+1. 推动力（技术/需求/限制）
+2. 未来可能的演进方向
+3. 潜在风险和挑战
+4. 可能的突破点（如内容可推断）
+
+
+【重要规则】
+- 不得凭空编造具体年份预测。
+- 所有趋势必须能从内容推导或来自通用行业规律。
+
       `
     },
     async historyTemplate() {
       return `
-        简单介绍一下关于 《${this.doc}》 的历史背景，重点放在关于 《${this.doc}》 的发展历程
+你是一名知识体系发展史研究员。
+
+【任务目标】
+基于结构与内容分析《${this.doc}》对应领域的演进脉络（抽象演化而非具体年份）。
+
+【输出格式要求】
+1. 起源阶段
+2. 发展阶段
+3. 体系成熟阶段
+4. 当前状态
+5. 全程禁止虚构具体年份
+
+【重要规则】
+- 若内容缺乏时间信息，则以“逻辑演进阶段”代替。
+
       `
     },
     async trendsTemplate() {
       const contents = await DocService.getContentByDocId(this.doc)
       const text = contents2String(contents)
       return `
-        以下是关于 《${this.doc}》 的目录，根据你最新的模型，列出该主题的最近更新与趋势，并附带年份
-        ---
-        ${text}
-        ---
+你是一名知识趋势追踪专家。
+
+【任务目标】
+结合当前模型知识，分析《${this.doc}》主题的“近年来趋势”，并尽可能标注年份。
+
+【输出格式要求】
+1. 按年份/阶段列出趋势
+2. 使用 Markdown 列表
+3. 若年份不确定，用“约 202x 年”表达
+
+【输入数据】
+目录：
+---
+${text}
+---
+
+【重要规则】
+- 年份必须是行业公认趋势，不得凭空创造特定事件。
+
       `
     },
     async categoryTempalte() {
       const contents = await DocService.getContentByDocId(this.doc)
       const text = contents2String(contents)
       return `
-        以下是关于 《${this.doc}》 的目录，还有哪些方面的内容还可以补充
-        ---
-        ${text}
-        ---
+你是一名知识体系结构设计专家。
+
+【任务目标】
+分析《${this.doc}》当前目录结构，指出可补充的知识点、缺失部分或更合理的结构拓展方向。
+
+【输出格式要求】
+1. 使用 Markdown 列表格式，展示补充建议。
+2. 按类别（基础概念 / 机制原理 / 设计哲学 / 实践应用 / 扩展阅读等）整理建议。
+3. 不要修改现有结构，仅给出可补充内容。
+
+【输入数据】
+《${this.doc}》目录：
+---
+${text}
+---
+
+【重要规则】
+- 只能基于目录提出“合理可补充项”，不得幻想目录不存在的具体内容。
+- 若当前目录已经较完整，需要说明“已较完整，可适当补充 xx”。
+
+
       `
     },
     async summaryTemplate() {
       const file = await DocService.getDocFileInfo(this.doc)
       return `
-        概括以下文本的内容：
-        ---
-        ${file.content}
-        ---
+你是一名文档摘要与知识提炼专家。
+
+【任务目标】
+对以下《${this.doc}》文本进行结构化总结，提炼主要思想。
+
+【输出格式要求】
+1. 使用 Markdown 输出以下四部分内容：
+   - 核心观点摘要
+   - 关键论点
+   - 重要概念提炼
+   - 适用场景与限制（如内容中可推导）
+2. 结构清晰，避免无关内容。
+
+【输入数据】
+文本内容：
+---
+${file.content}
+---
+
+【重要规则】
+- 摘要必须可从原文推导，不得添加文中未出现的观点。
+
       `
     },
     async tagsPredicateTemplate() {
       const tags = TagService.getTagList()
       const file = await DocService.getDocFileInfo(this.doc)
       return `
-      根据这篇 《${this.doc}》的内容，从标签列表中挑选出最合适的 5 个标签，标签尽量从标签列表选择，当然也可以根据文本内容生成，但是生成的标签应具备抽象通用的语义，标签不要太过具体
-      
-      标签列表：${tags.join(",")}
+你是一名文本分类与标签抽象专家。
 
-      文本内容：
-      ---
-      ${file.content}
-      ---
+【任务目标】
+从标签列表中选出最适合《${this.doc}》内容的标签，如必要可生成新的抽象标签，但必须具有通用性。
+
+【输出格式要求】
+1. 输出“最终标签列表 (最多 5 个)”
+2. 每个标签需附一句理由说明
+3. 若生成新标签，需要说明其抽象语义
+
+【输入数据】
+标签列表：
+${tags.join(",")}
+
+文本内容：
+---
+${file.content}
+---
+
+【重要规则】
+- 不允许生成具体到“案例”“年份”“技术版本号”的标签。
+- 所有标签必须与文本高度相关。
+
       `
     },
     show() {
@@ -207,23 +341,54 @@ export default defineComponent({
     async conceptsTemplate() {
       const file = await DocService.getDocFileInfo(this.doc)
       return `
-        请详细解释关于 《${this.doc}》 的核心概念和定义，并提供易于理解的示例。
-        
-        文本内容：
-        ---
-        ${file.content}
-        ---
+你是《${this.doc}》领域的专业讲解者。
+
+【任务目标】
+解释该主题的核心概念、关键术语与本质思想。
+
+【输出格式要求】
+1. 包含以下部分：
+   - 核心概念定义
+   - 本质思想（核心逻辑）
+   - 关键术语解释
+   - 易混淆点澄清
+   - 简单示例帮助理解
+2. 全文使用 Markdown。
+
+【输入数据】
+---
+${file.content}
+---
+
+【重要规则】
+- 定义必须可从文本推断，不得创造不存在的概念。
+
       `
     },
     async applicationsTemplate() {
       const file = await DocService.getDocFileInfo(this.doc)
       return `
-        请列举关于 《${this.doc}》 的实际应用场景，并详细说明在不同场景中如何运用相关知识。
-        
-        文本内容：
-        ---
-        ${file.content}
-        ---
+你是一名技术应用与场景分析专家。
+
+【任务目标】
+基于《${this.doc}》提取可应用的实践场景并解释如何落地使用。
+
+【输出格式要求】
+1. 按场景分类（如业务场景/技术场景/流程场景）
+2. 每个场景必须包含：
+   - 场景描述
+   - 如何使用相关知识
+   - 注意事项
+3. Markdown 格式输出
+
+【输入数据】
+---
+${file.content}
+---
+
+【重要规则】
+- 场景必须能由文档内容推导。
+
       `
     },
     async faqTemplate() {
@@ -247,12 +412,27 @@ export default defineComponent({
     async comparisonTemplate() {
       const file = await DocService.getDocFileInfo(this.doc)
       return `
-        请将 《${this.doc}》 与其他相关概念或技术进行对比，突出它们之间的异同点。
-        
-        文本内容：
-        ---
-        ${file.content}
-        ---
+你是一名知识对比与差异化分析专家。
+
+【任务目标】
+对《${this.doc}》与相关概念/技术进行对比分析。
+
+【输出格式要求】
+1. 输出对比表格（优势/劣势/适用场景）
+2. 须包含以下部分：
+   - 概念对比
+   - 原理对比
+   - 应用对比
+   - 适用边界分析
+
+【输入数据】
+---
+${file.content}
+---
+
+【重要规则】
+- 所有对比必须基于内容和行业常识。
+
       `
     },
     async learningPathTemplate() {
@@ -260,50 +440,107 @@ export default defineComponent({
       const contents = await DocService.getContentByDocId(this.doc)
       const text = contents2String(contents)
       return `
-        基于 《${this.doc}》 的知识体系，请设计一个循序渐进的学习路径，包括前置知识、学习顺序和实践建议。
-        
-        目录：
-        ---
-        ${text}
-        ---
-        
-        内容：
-        ---
-        ${file.content}
-        ---
+你是一名学习路径设计专家。
+
+【任务目标】
+基于《${this.doc}》设计系统化学习路径，包括前置知识 → 核心学习 → 进阶扩展 → 实践建议。
+
+【输出格式要求】
+1. 学习分四阶段：
+   - 前置知识
+   - 基础理解
+   - 深入进阶
+   - 实践应用
+2. 每阶段附学习建议与目标
+3. 使用 Markdown
+
+【输入数据】
+目录：
+---
+${text}
+---
+内容：
+---
+${file.content}
+---
+
+【重要规则】
+- 路径必须与文档结构一致。
+
       `
     },
     async keyPointsTemplate() {
       const file = await DocService.getDocFileInfo(this.doc)
       return `
-        请梳理 《${this.doc}》 的关键要点，并按重要性排序，提供简洁的摘要。
-        
-        文本内容：
-        ---
-        ${file.content}
-        ---
+你是一名知识结构化与要点提炼专家。
+
+【任务目标】
+提炼《${this.doc}》的关键要点并按重要性排序。
+
+【输出格式要求】
+1. 输出“重要性排序列表”
+2. 每个要点用一句话说明理由
+3. 保持 Markdown 格式
+
+【输入数据】
+---
+${file.content}
+---
+
+【重要规则】
+- 不得加入原文中未提到的要点。
+
       `
     },
     async caseStudyTemplate() {
       const file = await DocService.getDocFileInfo(this.doc)
       return `
-        请基于 《${this.doc}》 的知识，提供一个相关的案例分析，包括背景、问题、解决方案和结果。
-        
-        文本内容：
-        ---
-        ${file.content}
-        ---
+你是一名结构化案例分析专家。
+
+【任务目标】
+根据《${this.doc}》的内容，构造一个合理的示例案例（不依赖真实世界厂商/产品）。
+
+【输出格式要求】
+案例需包含：
+1. 背景
+2. 问题
+3. 解决方案（应用文档知识）
+4. 效果与启发
+5. 使用 Markdown 展示
+
+【输入数据】
+---
+${file.content}
+---
+
+【重要规则】
+- 案例必须是“抽象化案例”，避免虚构具体公司名称或真实数据。
+
       `
     },
     async misconceptionsTemplate() {
       const file = await DocService.getDocFileInfo(this.doc)
       return `
-        指出在学习 《${this.doc}》 过程中常见的错误概念或误解，并提供正确的理解。
-        
-        文本内容：
-        ---
-        ${file.content}
-        ---
+你是一名知识纠偏专家。
+
+【任务目标】
+指出所给出的《${this.doc}》中常见的有误的表述。
+
+【输出格式要求】
+1. 每条误解包含：
+   - 错误表述
+   - 正确表述
+   - 简明解释
+2. 使用 Markdown 列表
+
+【输入数据】
+---
+${file.content}
+---
+
+【重要规则】
+- 误解必须基于所输入的数据，不要编造错误。
+
       `
     },
     async relationsTemplate() {
@@ -311,17 +548,32 @@ export default defineComponent({
       const contents = await DocService.getContentByDocId(this.doc)
       const text = contents2String(contents)
       return `
-        分析 《${this.doc}》 与其他相关知识领域的关联，绘制知识关系图谱。
-        
-        目录：
-        ---
-        ${text}
-        ---
-        
-        内容：
-        ---
-        ${file.content}
-        ---
+你是一名知识图谱构建专家。
+
+【任务目标】
+分析《${this.doc}》与其他知识点的关联，生成“关系说明列表”。
+
+【输出格式要求】
+1. 以 Markdown 列表展示以下内容：
+   - 内部概念关联
+   - 外部相关领域关联
+   - 前置与后置关系
+2. 如可推导，可给出“关系解释”
+
+【输入数据】
+目录：
+---
+${text}
+---
+内容：
+---
+${file.content}
+---
+
+【重要规则】
+- 不创建不存在的概念节点。
+- 所有关联必须符合文本或常识推理。
+
       `
     },
     handleQueryKeyUp(event: KeyboardEvent) {

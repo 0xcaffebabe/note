@@ -1,35 +1,45 @@
 <template>
   <div class="right-bottom-panel">
-    <el-tabs v-model="activeTab" class="tabs-container" type="border-card" tab-position="left">
-      <el-tab-pane label="知识导图" name="mind-note">
-        <mind-note class="tab-content" />
-      </el-tab-pane>
-      <el-tab-pane label="知识网络" name="knowledge-network">
-        <knowledge-network-chart
-          class="tab-content"
-          :doc="doc"
-          mode="force"
-          :onlySelfRelated="true"
-          :isPotential="false"
-          :showLegend="false"
-          :degree="3"
-        />
-      </el-tab-pane>
-    </el-tabs>
+    <!-- Carousel 组件替换原来的 Tabs -->
+    <el-carousel
+      class="carousel-container"
+      height="100%"
+      direction="vertical"
+      :autoplay="false">
+      <el-carousel-item>
+        <div class="carousel-item-content">
+          <knowledge-network-chart
+            class="carousel-content"
+            :doc="doc"
+            mode="force"
+            :onlySelfRelated="true"
+            :isPotential="false"
+            :showLegend="false"
+            :resizeListener="false"
+            :degree="3"
+          />
+        </div>
+      </el-carousel-item>
+      <el-carousel-item>
+        <div class="carousel-item-content">
+          <mind-note class="carousel-content" />
+        </div>
+      </el-carousel-item>
+    </el-carousel>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { ElTabs, ElTabPane } from 'element-plus';
+import { ElCarousel, ElCarouselItem } from 'element-plus';
 import MindNote from "../mind/MindNote.vue";
 import KnowledgeNetworkChart from "./KnowledgeNetworkChart.vue";
 
 export default defineComponent({
   name: "RightBottomPanel",
   components: {
-    ElTabs,
-    ElTabPane,
+    ElCarousel,
+    ElCarouselItem,
     MindNote,
     KnowledgeNetworkChart
   },
@@ -39,18 +49,66 @@ export default defineComponent({
       required: true
     }
   },
-  data() {
-    return {
-      activeTab: 'mind-note' as 'mind-note' | 'knowledge-network',
-    };
-  }
+  // 移除了 activeTab，因为 Carousel 有自己的内部状态管理
 });
 </script>
 
 <style lang="less" scoped>
-.tabs-container {
+.carousel-container {
   height: 100%;
+  width: 100%;
+
+  // 调整 Carousel 的样式以匹配原来的面板样式
+  :deep(.el-carousel__container) {
+    height: 100%;
+  }
+
+  :deep(.el-carousel__item) {
+    background-color: transparent;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :deep(.el-carousel__indicators) {
+    // 调整指示器的样式和位置
+    margin-bottom: 10px;
+
+    .el-carousel__indicator {
+      // 指示器项的样式
+      button {
+        background-color: #d8dce5; // 默认指示器颜色
+      }
+
+      &.is-active {
+        button {
+          background-color: var(--primary-color); // 激活的指示器颜色
+        }
+      }
+    }
+  }
+
+  // 为 Carousel 内容设置结构
+  .carousel-item-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .carousel-label {
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: bold;
+    background-color: rgba(245, 245, 245, 0.9);
+    border-bottom: 1px solid #d8dce5;
+    flex-shrink: 0; // 防止标签栏被压缩
+  }
+
+  .carousel-content {
+    flex-grow: 1; // 占据剩余空间
+    width: 100%;
+  }
 }
+
 .right-bottom-panel {
   height: 100%;
   width: 100%;
@@ -61,93 +119,35 @@ export default defineComponent({
   border-top-left-radius: 8px;
   overflow: hidden;
 
-  :deep(.el-tabs) {
+  // 确保整个面板的高度被正确利用
+  .carousel-container {
     height: 100%;
-    border: none;
-    background: transparent;
-
-    &.el-tabs--border-card {
-      height: 100%;
-      background: transparent;
-      border: none;
-
-      > .el-tabs__header {
-        background: transparent;
-        border: none;
-        margin: 0;
-
-        .el-tabs__nav {
-          border: none;
-
-          .el-tabs__item {
-            border: 1px solid transparent;
-            border-bottom: 1px solid #d8dce5;
-            background-color: rgba(245, 245, 245, 0.9);
-
-            &:first-child {
-              border-left: 1px solid #d8dce5;
-            }
-
-            &:last-child {
-              border-right: 1px solid #d8dce5;
-            }
-
-            &.is-active {
-              background-color: var(--primary-color);
-              color: white;
-              border: 1px solid #d8dce5;
-              border-bottom: 1px solid var(--primary-color);
-            }
-          }
-        }
-      }
-
-      > .el-tabs__content {
-        height: calc(100% - 40px); // 减去标签头的高度
-        padding: 0;
-      }
-    }
-
-    .el-tab-pane {
-      height: 100%;
-    }
-  }
-
-  .tab-content {
-    height: 100%;
-    width: 100%;
-
-    :deep(.mind-note) {
-      position: static !important;  /* 覆盖 MindNote 的固定定位 */
-      width: 100% !important;
-      height: 100% !important;
-      border: none !important;
-      background: transparent !important;
-      z-index: auto !important;
-    }
   }
 }
 
+// 暗色主题样式
 body[theme=dark] .right-bottom-panel {
   background-color: var(--main-dark-bg-color);
   border-color: var(--second-dark-bg-color);
 
-  :deep(.el-tabs) {
-    &.el-tabs--border-card {
-      > .el-tabs__header {
-        .el-tabs__nav {
-          .el-tabs__item {
-            background-color: var(--second-dark-bg-color);
-            border-color: var(--default-dark-border-color);
+  .carousel-container {
+    :deep(.el-carousel__indicators) {
+      .el-carousel__indicator {
+        button {
+          background-color: var(--default-dark-border-color); // 暗色主题下的指示器颜色
+        }
 
-            &.is-active {
-              background-color: var(--dark-primary-color);
-              border-color: var(--default-dark-border-color);
-              border-bottom-color: var(--dark-primary-color);
-            }
+        &.is-active {
+          button {
+            background-color: var(--dark-primary-color); // 暗色主题下的激活指示器颜色
           }
         }
       }
+    }
+
+    .carousel-label {
+      background-color: var(--second-dark-bg-color);
+      border-bottom-color: var(--default-dark-border-color);
     }
   }
 }

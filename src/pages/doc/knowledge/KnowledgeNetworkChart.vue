@@ -1,6 +1,6 @@
 <template>
   <div class="knowledge-network-chart">
-    <div id="knowledgeNetwork"></div>
+    <div :id="id" class="knowledge-network-chart-container"></div>
   </div>
 </template>
 
@@ -60,10 +60,15 @@ export default defineComponent({
     showLegend: {
       type: Boolean,
       default: true
+    },
+    resizeListener: {
+      type: Boolean,
+      default: true
     }
   },
   data() {
     return {
+      id: this.generateRandomId(),
       chart: null as echarts.ECharts | null,
       resizeObserver: null as ResizeObserver | null,
       nodes: [] as any[],
@@ -93,7 +98,9 @@ export default defineComponent({
   },
   mounted() {
     // 初始化时创建 ResizeObserver
-    this.setupResizeObserver();
+    if (this.resizeListener) {
+      this.setupResizeObserver();
+    }
     // 初始化图表
     this.$nextTick(() => {
       this.init();
@@ -109,8 +116,11 @@ export default defineComponent({
     }
   },
   methods: {
+    generateRandomId(): string {
+      return 'knowledgeNetwork' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    },
     setupResizeObserver() {
-      const chartDom = document.querySelector('.knowledge-network-chart') || document.getElementById('knowledgeNetwork');
+      const chartDom = document.querySelector('.knowledge-network-chart') || document.getElementById(this.id);
       if (chartDom) {
         const debouncedResize = this.debounce(() => {
           this.chart?.resize();
@@ -132,6 +142,7 @@ export default defineComponent({
       };
     },
     async init(potentialProcess: boolean = true) {
+      console.log('init')
       const stream = (await KnowledgeNetworkService.getDocStream(this.doc)).flatMap(v => v)
       // 若是潜在知识网络 默认设置为圆圈展示模式
       if (this.isPotential && potentialProcess) {
@@ -158,7 +169,7 @@ export default defineComponent({
       if (this.chart) {
         this.chart.dispose();
       }
-        const chartDom = document.getElementById("knowledgeNetwork")!;
+        const chartDom = document.getElementById(this.id)!;
         this.chart = echarts.init(chartDom);
         // 点击事件
         this.chart.on("click", (e) => {
@@ -237,7 +248,7 @@ export default defineComponent({
       if (currentNodeIndex !== -1) {
         // 为当前节点设置固定位置在图表中心
         // 先获取图表DOM元素的尺寸
-        const chartDom = document.getElementById("knowledgeNetwork");
+        const chartDom = document.getElementById(this.id);
         if (chartDom) {
           // 初始设置中心坐标，实际坐标将在图表渲染后调整
           (nodes[currentNodeIndex] as any).x = chartDom.clientWidth / 2;
@@ -378,7 +389,7 @@ export default defineComponent({
   position: relative;
 }
 
-#knowledgeNetwork {
+.knowledge-network-chart-container {
   height: 100%;
   width: 100%;
 }

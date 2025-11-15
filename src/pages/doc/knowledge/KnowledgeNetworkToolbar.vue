@@ -26,7 +26,7 @@
         inactive-color="#409EFF"
         inactive-text="显式知识网络"
         active-text="隐式知识网络"
-        @change="init"
+        @change="$emit('change')"
       />
     </div>
     <div>

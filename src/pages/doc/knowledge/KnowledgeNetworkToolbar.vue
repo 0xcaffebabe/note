@@ -17,11 +17,11 @@
       </el-radio-group>
     </div>
     <div>
-      <el-checkbox v-model="onlySelfRelated" label="只看跟本节点关联的" size="large" />
+      <el-checkbox v-model="onlySelfRelatedValue" label="只看跟本节点关联的" size="large" />
     </div>
     <div>
       <el-switch
-        v-model="isPotential"
+        v-model="potentialValue"
         active-color="#409EFF"
         inactive-color="#409EFF"
         inactive-text="显式知识网络"
@@ -30,7 +30,7 @@
       />
     </div>
     <div>
-      度数: <el-input type="number" size="small" v-model="degree" :disabled="!onlySelfRelated || isPotential"></el-input>
+      度数: <el-input type="number" size="small" v-model="degreeValue" :disabled="!onlySelfRelated || isPotential"></el-input>
     </div>
   </div>
 </template>
@@ -76,6 +76,32 @@ export default defineComponent({
         this.$emit('update:modelValue', value);
       }
     },
+    degreeValue: {
+      get() {
+        return this.degree;
+      },
+      set(value: number) {
+        // 确保输入值是数字类型
+        const numValue = Number(value);
+        this.$emit('update:degree', isNaN(numValue) ? 0 : numValue);
+      }
+    },
+    potentialValue: {
+      get() {
+        return this.isPotential;
+      },
+      set(value: boolean) {
+        this.$emit('update:isPotential', value);
+      }
+    },
+    onlySelfRelatedValue: {
+      get() {
+        return this.onlySelfRelated;
+      },
+      set(value: boolean) {
+        this.$emit('update:onlySelfRelated', value);
+      }
+    }
   }
 });
 </script>

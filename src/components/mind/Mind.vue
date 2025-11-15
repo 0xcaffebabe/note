@@ -205,7 +205,6 @@ export default defineComponent({
 }
 
 :deep(.jsmind-inner) {
-  background-color: var(--card-bg-color) !important;
   
   &::-webkit-scrollbar {
     display: none;

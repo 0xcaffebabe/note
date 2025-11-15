@@ -43,7 +43,7 @@
     </el-main>
   </el-container>
   <!-- 工具栏开始 -->
-  <tool-box 
+  <tool-box
     @showMindGraph="showMindGraph();showAside = false;isDrawerShow = true"
     @showKnowledgeNetwork="showKnowledgeNetwork();showAside = false;isDrawerShow = true"
     @copyDocPath="handleCopyDocPath"
@@ -52,6 +52,7 @@
     @showKnowledgeReviewer="showKnowledgeReviewer"
     @show-llm="showLLM();showAside = false;isDrawerShow = true"
     @open-in-editor="openInEditor"
+    @handleRandomReview="handleRandomReview"
   />
   <!-- 工具栏结束 -->
   <link-popover ref="linkPopover"/>
@@ -91,6 +92,7 @@ import { ElMessage } from 'element-plus'
 import './markdown-v1.less'
 import './code-hl-vsc.less'
 import DocUtils from "@/util/DocUtils";
+import CategoryService from "@/service/CategoryService";
 import DocSideCategory from './aside/DocSideCategory.vue';
 import DocBreadcrumbNav from "./nav/DocBreadcrumbNav.vue";
 import DocTabNav from "./nav/DocTabNav.vue";
@@ -102,6 +104,7 @@ import DocMetadataInfo from './metadata/DocMetadataInfo.vue'
 import InstantPreviewer from './tool/InstantPreviewer.vue'
 import { SysUtils } from "@/util/SysUtils";
 import config from '@/config';
+import api from "@/api";
 import MermaidShower from './mermaid-shower/MermaidShower.vue';
 import LLM from './knowledge/LLM.vue';
 import {Folder, FolderOpened } from '@element-plus/icons-vue';
@@ -285,6 +288,59 @@ export default defineComponent({
     },
     toggleContentsList() {
       this.showContentsList = !this.showContentsList;
+    },
+    async handleRandomReview() {
+      // 检查知识网络组件是否存在且是否显示
+      const knowledgeNetworkRef = this.$refs.knowledgeNetwork as InstanceType<typeof KnowledgeNetwork>;
+      if (knowledgeNetworkRef && knowledgeNetworkRef.showDrawer) {
+        // 知识网络开启，从与当前文档有直接关联的文档中随机选择一篇
+        try {
+          // 获取知识网络数据
+          const network = await api.getKnowledgeNetwork();
+
+          // 找到与当前文档直接关联的文档
+          let relatedDocs: string[] = [];
+
+          // 查找当前文档的出链
+          const currentNode = network.find(node => node.id === this.doc);
+          if (currentNode && currentNode.links) {
+            relatedDocs.push(...currentNode.links.map(link => link.id));
+          }
+
+          // 查找指向当前文档的入链
+          const inboundLinks = network.filter(node =>
+            node.links && node.links.some(link => link.id === this.doc)
+          );
+          relatedDocs.push(...inboundLinks.map(node => node.id));
+
+          // 去重
+          relatedDocs = [...new Set(relatedDocs)];
+
+          // 如果有关联文档，则随机选择一个
+          if (relatedDocs.length > 0) {
+            const randomIndex = Math.floor(Math.random() * relatedDocs.length);
+            const selectedDoc = relatedDocs[randomIndex];
+            this.$router.push("/doc/" + selectedDoc);
+            console.log('随机选择的文档：', selectedDoc);
+          } else {
+            // 如果没有关联文档，使用原来的随机策略
+            const flatCategoryList = await CategoryService.getFlatCategoryList();
+            const randomCategory = flatCategoryList[Math.floor(Math.random() * flatCategoryList.length)];
+            this.$router.push("/doc/" + DocUtils.docUrl2Id(randomCategory.link));
+          }
+        } catch (error) {
+          console.error('获取知识网络数据失败:', error);
+          // 出错时使用原来的随机策略
+          const flatCategoryList = await CategoryService.getFlatCategoryList();
+          const randomCategory = flatCategoryList[Math.floor(Math.random() * flatCategoryList.length)];
+          this.$router.push("/doc/" + DocUtils.docUrl2Id(randomCategory.link));
+        }
+      } else {
+        // 知识网络未开启，使用原来的随机策略
+        const flatCategoryList = await CategoryService.getFlatCategoryList();
+        const randomCategory = flatCategoryList[Math.floor(Math.random() * flatCategoryList.length)];
+        this.$router.push("/doc/" + DocUtils.docUrl2Id(randomCategory.link));
+      }
     },
     handleResize() {
       // 当窗口大小改变时，根据宽度决定是否显示ContentsList

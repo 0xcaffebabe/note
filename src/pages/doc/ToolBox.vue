@@ -145,8 +145,8 @@ export default defineComponent({
       }
     },
     handleRandomReview() {
-      const category = this.flatCategoryList[random(0, this.flatCategoryList.length - 1)];
-      this.$router.push("/doc/" + DocUtils.docUrl2Id(category.link));
+      // 通过 emit 事件将处理逻辑交给父组件 (DocPage.vue)
+      this.$emit('handleRandomReview');
     },
     handleKeyDown(e: KeyboardEvent){
       const actions = this.actionList.filter(v => v.hotkey)

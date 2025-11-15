@@ -157,17 +157,19 @@ export class KnowledgeNetworkDataProcessor {
     const isStreamNode = stream.some((streamItem) => streamItem === nodeId);
     const category = KnowledgeNetworkDataProcessor.getDocCategory(nodeId);
     console.log('category:', category);
+    const color = isCurrentNode
+      ? '#F56C6C' // 红色 - 当前节点
+      : KnowledgeNetworkDataProcessor.categoryColorMapping(category); // 使用文档分类颜色
+
     // 根据节点的扇出数进行颜色映射
     if (relatedNodes.length > 0) {
       return {
         name: nodeId,
-        category: category, // 保持数字索引，实际分类信息用于颜色映射
+        category: 0, 
         symbolSize: 20,
         draggable: true,
         itemStyle: {
-          color: isCurrentNode
-            ? '#F56C6C' // 红色 - 当前节点
-            : KnowledgeNetworkDataProcessor.categoryColorMapping(category) // 使用文档分类颜色
+          color: color
         },
         // 保存分类信息用于图表配置
         docCategory: category
@@ -176,11 +178,11 @@ export class KnowledgeNetworkDataProcessor {
       // 默认节点渲染样式
       return {
         name: nodeId,
-        category: category, // 保持数字索引，实际分类信息用于颜色映射
+        category: 0,
         symbolSize: 20,
         draggable: true,
         itemStyle: {
-          color: isCurrentNode ? '#F56C6C' : KnowledgeNetworkDataProcessor.categoryColorMapping(category) // 使用文档分类颜色
+          color: color
         },
         // 保存分类信息用于图表配置
         docCategory: category

@@ -9,6 +9,83 @@ import DocService from "@/service/DocService";
  */
 export class KnowledgeNetworkDataProcessor {
   /**
+   * 根据文档名称进行分类
+   * @param nodeId 文档ID
+   * @returns 文档分类
+   */
+  static getDocCategory(nodeId: string): string {
+    const parts = nodeId.split('-');
+    return parts.length > 0 ? parts[0] : 'other';
+  }
+
+  /**
+   * 根据文档分类映射节点颜色
+   * @param category 文档分类
+   * @returns 颜色值
+   */
+  static categoryColorMapping(category: string): string {
+    // 定义颜色映射表
+    const colorMap: { [key: string]: string } = {
+      'ai': '#409EFF',     // 蓝色 - AI
+      'web': '#67C23A',     // 绿色 - Web开发
+      'backend': '#E6A23C', // 橙色 - 后端
+      'frontend': '#F56C6C', // 红色 - 前端
+      'mobile': '#905AFD',  // 紫色 - 移动端
+      'devops': '#F272BD',  // 粉色 - DevOps
+      'database': '#409EFF', // 蓝色 - 数据库
+      'tool': '#34BFAE',    // 青色 - 工具
+      'other': '#909399',   // 灰色 - 其他
+    };
+
+    const color = colorMap[category.toLowerCase()];
+    if (color) {
+      return color;
+    }
+
+    // 如果分类未定义，生成一个随机颜色
+    return KnowledgeNetworkDataProcessor.stringToColor(category);
+  }
+
+  /**
+   * 根据字符串生成固定颜色
+   * @param str 输入字符串
+   * @returns 颜色值
+   */
+  static stringToColor(str: string): string {
+    // 使用字符串的哈希值来确定色调，以确保相同字符串始终生成相同颜色
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    // 将哈希值映射到色相环（0-360度），饱和度和亮度固定
+    const hue = Math.abs(hash) % 360;
+    const saturation = 70 + (hash % 20); // 70-90% 确保颜色饱和
+    const lightness = 45 + (hash % 10); // 45-55% 确保可读性
+
+    return KnowledgeNetworkDataProcessor.hslToHex(hue, saturation, lightness);
+  }
+
+  /**
+   * 将HSL颜色转换为十六进制颜色
+   * @param h 色相 (0-360)
+   * @param s 饱和度 (0-100)
+   * @param l 亮度 (0-100)
+   * @returns 十六进制颜色值
+   */
+  private static hslToHex(h: number, s: number, l: number): string {
+    // 将HSL转换为RGB
+    l /= 100;
+    const a = s * Math.min(l, 1 - l) / 100;
+    const f = (n: number) => {
+      const k = (n + h / 30) % 12;
+      const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1, -1), -1);
+      return Math.round(255 * color).toString(16).padStart(2, '0');   // 转换为2位十六进制
+    };
+    return `#${f(0)}${f(8)}${f(4)}`;
+  }
+
+  /**
    * 根据节点数量映射节点颜色
    * @param size 节点数量
    * @returns 颜色值
@@ -76,32 +153,37 @@ export class KnowledgeNetworkDataProcessor {
   ) {
     const isCurrentNode = nodeId === docId;
     const isStreamNode = stream.some((streamItem) => streamItem === nodeId);
-    
+    const category = KnowledgeNetworkDataProcessor.getDocCategory(nodeId);
+
     // 根据节点的扇出数进行颜色映射
     if (relatedNodes.length > 0) {
       return {
         name: nodeId,
-        category: isCurrentNode ? 1 : isStreamNode ? 2 : 0,
+        category: isCurrentNode ? 1 : isStreamNode ? 2 : 0, // 保持数字索引，实际分类信息用于颜色映射
         symbolSize: 20,
         draggable: true,
         itemStyle: {
-          color: isCurrentNode 
-            ? '#F56C6C' 
-            : isStreamNode 
-              ? '#95d475' 
-              : KnowledgeNetworkDataProcessor.nodeColorMapping(20 * (1 + (relatedNodes[0].links?.length || 0) / 3))
-        }
+          color: isCurrentNode
+            ? '#F56C6C' // 红色 - 当前节点
+            : isStreamNode
+              ? '#95d475' // 绿色 - 上下游节点
+              : KnowledgeNetworkDataProcessor.categoryColorMapping(category) // 使用文档分类颜色
+        },
+        // 保存分类信息用于图表配置
+        docCategory: category
       };
     } else {
       // 默认节点渲染样式
       return {
         name: nodeId,
-        category: isCurrentNode ? 1 : isStreamNode ? 2 : 0,
+        category: isCurrentNode ? 1 : isStreamNode ? 2 : 0, // 保持数字索引，实际分类信息用于颜色映射
         symbolSize: 20,
         draggable: true,
         itemStyle: {
-          color: isCurrentNode ? '#F56C6C' : isStreamNode ? '#95d475' : KnowledgeNetworkDataProcessor.nodeColorMapping(20)
-        }
+          color: isCurrentNode ? '#F56C6C' : isStreamNode ? '#95d475' : KnowledgeNetworkDataProcessor.categoryColorMapping(category) // 使用文档分类颜色
+        },
+        // 保存分类信息用于图表配置
+        docCategory: category
       };
     }
   }

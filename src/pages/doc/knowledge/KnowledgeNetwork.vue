@@ -238,6 +238,69 @@ export default defineComponent({
           }
         });
       }
+      // 生成文档分类的类别和图例
+      const docCategories = new Set<string>();
+      nodes.forEach((node: any) => {
+        if (node.docCategory) {
+          docCategories.add(node.docCategory);
+        }
+      });
+
+      // 定义特殊类别（当前节点和上下游节点）
+      const specialCategories = [
+        {
+          name: "当前",
+          itemStyle: {
+            color: "#F56C6C",
+            opacity: this.isDark ? 0.9 : 1
+          },
+        },
+        // {
+        //   name: "上下游",
+        //   itemStyle: {
+        //     color: "#95d475",
+        //     opacity: this.isDark ? 0.9 : 1
+        //   },
+        // },
+        // {
+        //   name: "联系",
+        //   itemStyle: {
+        //     color: "#409EFF",
+        //     opacity: this.isDark ? 0.9 : 1
+        //   },
+        // },
+      ];
+
+      // 生成文档分类的类别配置
+      const categoryList = [...specialCategories];
+      const legendData = [
+        { name: "当前", icon: "circle", textStyle: { color: this.isDark ? '#eee' : '#555' }},
+        { name: "上下游", icon: "circle", textStyle: { color: this.isDark ? '#eee' : '#555' }},
+        { name: "联系", icon: "circle", textStyle: { color: this.isDark ? '#eee' : '#555' }}
+      ];
+
+      docCategories.forEach(category => {
+        if (!['联系', '当前', '上下游'].includes(category)) {
+          // 查找节点获取颜色
+          const node = nodes.find((n: any) => n.docCategory === category);
+          if (node) {
+            const color = node.itemStyle?.color || '#909399'; // 默认灰色
+            categoryList.push({
+              name: category,
+              itemStyle: {
+                color: color,
+                opacity: this.isDark ? 0.9 : 1
+              },
+            });
+            legendData.push({
+              name: category,
+              icon: "circle",
+              textStyle: { color: this.isDark ? '#eee' : '#555' }
+            });
+          }
+        }
+      });
+
       const option: EChartsOption = {
         title: {
           text: "知识网络",
@@ -285,7 +348,7 @@ export default defineComponent({
         legend: {
           x: "center",
           show: true,
-          data: ["联系", "当前", "上下游"],
+          data: legendData,
           textStyle: {
             color: this.isDark ? '#eee' : '#555'
           }
@@ -297,29 +360,7 @@ export default defineComponent({
             symbolSize: 45,
             focusNodeAdjacency: true,
             roam: true,
-            categories: [
-              {
-                name: "联系",
-                itemStyle: {
-                  color: "#409EFF",
-                  opacity: this.isDark ? 0.9 : 1
-                },
-              },
-              {
-                name: "当前",
-                itemStyle: {
-                  color: "#F56C6C",
-                  opacity: this.isDark ? 0.9 : 1
-                },
-              },
-              {
-                name: "上下游",
-                itemStyle: {
-                  color: "#95d475",
-                  opacity: this.isDark ? 0.9 : 1
-                },
-              },
-            ],
+            categories: categoryList,
             // 节点的文字样式
             label: {
               show: true,

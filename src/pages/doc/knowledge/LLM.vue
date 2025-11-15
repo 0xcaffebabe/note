@@ -66,6 +66,7 @@ export default defineComponent({
       llmMode: 'category',
       query: '',
       presets: [
+        { name: '审视文章优缺点和建议', value: 'review', template: () => this.reviewTemplate() },
         { name: '知识错误纠正', value: 'misconceptions', template: () => this.misconceptionsTemplate() },
         { name: '标签预测', value: 'predictTag', template: () => this.tagsPredicateTemplate() },
         { name: '概括总结', value: 'summary', template: () => this.summaryTemplate() },
@@ -556,14 +557,14 @@ ${file.content}
 你是一名知识图谱构建专家。
 
 【任务目标】
-分析《${this.doc}》与其他知识点的关联，生成“关系说明列表”。
+分析《${this.doc}》与其他知识点的关联，生成"关系说明列表"。
 
 【输出格式要求】
 1. 以 Markdown 列表展示以下内容：
    - 内部概念关联
    - 外部相关领域关联
    - 前置与后置关系
-2. 如可推导，可给出“关系解释”
+2. 如可推导，可给出"关系解释"
 
 【输入数据】
 目录：
@@ -578,6 +579,40 @@ ${file.content}
 【重要规则】
 - 不创建不存在的概念节点。
 - 所有关联必须符合文本或常识推理。
+
+      `
+    },
+    async reviewTemplate() {
+      const file = await DocService.getDocFileInfo(this.doc)
+      const contents = await DocService.getContentByDocId(this.doc)
+      const text = contents2String(contents)
+      return `
+你是一名专业的内容审阅专家，具备深厚的领域知识和文章分析能力。
+
+【任务目标】
+全面审视《${this.doc}》这篇文章，从内容结构、知识准确性、表达清晰度、实用价值等方面进行评估，并提出优缺点及改进建议。
+
+【输出格式要求】
+1. 优点分析
+2. 缺点分析
+3. 改进建议
+4. 总体评价（简要总结）
+5. 使用 Markdown 格式，结构清晰
+
+【输入数据】
+文章目录：
+---
+${text}
+---
+文章内容：
+---
+${file.content}
+---
+
+【重要规则】
+- 评价必须基于文章实际内容，客观公正。
+- 优缺点分析要有具体依据。
+- 建议要具体可行，具有针对性。
 
       `
     },

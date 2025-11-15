@@ -132,7 +132,7 @@ async function generateDocTagPrediction() {
       mapping.get(file)!.push([tag[0], avgDis])
     }
     mapping.get(file)!.sort((b,a) => a[1] - b[1])
-    mapping.set(file, mapping.get(file)!.splice(0,5))
+    mapping.set(file, mapping.get(file)!.splice(0,10))
   }
   const res = new Map<string, string[]>()
   for(const file of files) {

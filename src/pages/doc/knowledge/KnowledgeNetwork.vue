@@ -349,12 +349,9 @@ export default defineComponent({
               }
             },
             force: {
-              // 节点之间的斥力因子,值越大则斥力越大
-              repulsion: [nodeMap.size * 4, nodeMap.size * 6],
-              // 节点受到的向中心的引力因子。该值越大节点越往中心点靠拢
-              gravity: nodeMap.size / 800,
-              // 网络边长 节点数越多 边越长
-              edgeLength: [nodeMap.size * 1.2, nodeMap.size * 2],
+              repulsion: [nodeMap.size * 1, nodeMap.size * 100],
+              gravity: nodeMap.size / 1000,
+              edgeLength: [nodeMap.size * 1, nodeMap.size * 4],
             },
             edgeSymbolSize: 6,
             edgeSymbol: ["arrow"],

@@ -37,6 +37,7 @@
               <el-icon v-if="showContentsList"><FolderOpened /></el-icon>
               <el-icon v-else><Folder /></el-icon>
             </div>
+
           </div>
         </template>
       </el-skeleton>
@@ -70,6 +71,11 @@
   <image-viewer ref="imageViewer" />
   <instant-previewer ref="instantPreviewer"/>
   <resource-brower ref="resourceBrower" />
+
+  <!-- 右下角知识网络组件（无工具栏） -->
+  <div class="knowledge-network-content-container">
+    <knowledge-network-chart :doc="doc" mode="force" :onlySelfRelated="true" :isPotential="false" :degree="3"/>
+  </div>
 </template>
 
 
@@ -84,6 +90,8 @@ import MindNote from './mind/MindNote.vue'
 import LinkList from './LinkList.vue';
 import ToolBox from './ToolBox.vue';
 import KnowledgeNetwork from "./knowledge/KnowledgeNetwork.vue";
+import KnowledgeNetworkContent from "./knowledge/KnowledgeNetworkContent.vue";
+import KnowledgeNetworkChart from "./knowledge/KnowledgeNetworkChart.vue";
 import LinkPopover from "./LinkPopover.vue";
 import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
@@ -107,7 +115,7 @@ import config from '@/config';
 import api from "@/api";
 import MermaidShower from './mermaid-shower/MermaidShower.vue';
 import LLM from './knowledge/LLM.vue';
-import {Folder, FolderOpened } from '@element-plus/icons-vue';
+import {Folder, FolderOpened, Management } from '@element-plus/icons-vue';
 
 export default defineComponent({
   inject: ['showHeader'],
@@ -121,6 +129,8 @@ export default defineComponent({
     DocSideCategory,
     LinkList,
     KnowledgeNetwork,
+    KnowledgeNetworkContent,
+    KnowledgeNetworkChart,
     DocBreadcrumbNav,
     DocTabNav,
     ResourceBrower,
@@ -131,7 +141,8 @@ export default defineComponent({
     MermaidShower,
     LLM,
     Folder,
-    FolderOpened
+    FolderOpened,
+    Management
 },
   watch: {
     showHeader: {
@@ -140,7 +151,6 @@ export default defineComponent({
       },
       immediate: true,
     }
-    
   },
   setup(){
     const mindGraph = ref<InstanceType<typeof MindGraph>>()
@@ -245,7 +255,6 @@ export default defineComponent({
       window.open(`vscode://file/${config.localUrl}/${docService.docId2Url(this.doc)}/`, '_blank')
     },
     async showDoc(doc: string, headingId?: string, kw?: string) {
-      console.log('showdoc')
       // 将滚动条设置为上一次的状态
       window.scrollTo(0, docService.getDocReadRecord(doc))
       this.loading = true;
@@ -451,6 +460,38 @@ export default defineComponent({
   color: white;
   font-size: 18px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.knowledge-network-content-container {
+  position: fixed;
+  bottom: 0px;
+  right: 0px;
+  width: 400px;
+  height: 200px;
+  z-index: 999;
+  background-color: rgba(255,255,255,.8);
+  border: 1px solid #ccc;
+  border-bottom: none;
+  border-right: none;
+  border-top-left-radius: 8px;
+  overflow: hidden;
+
+  :deep(#knowledgeNetwork) {
+    height: 100%;
+    width: 100%;
+  }
+}
+
+@media screen and(max-width: 1366px) {
+  .knowledge-network-content-container {
+    width: 300px;
+    height: 160px;
+  }
+}
+
+body[theme=dark] .knowledge-network-content-container {
+  background-color: var(--main-dark-bg-color);
+  border-color: var(--second-dark-bg-color);
 }
 
 body[theme=dark] .toc-toggle-btn {

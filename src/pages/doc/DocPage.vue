@@ -70,7 +70,7 @@
   <resource-brower ref="resourceBrower" />
 
   <!-- 右下角整合面板（思维笔记和知识网络） -->
-  <div class="right-bottom-panel-container">
+  <div class="right-bottom-panel-container" v-if="showContentsList">
     <right-bottom-panel :doc="doc" />
   </div>
 </template>

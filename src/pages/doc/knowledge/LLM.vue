@@ -66,15 +66,16 @@ export default defineComponent({
       llmMode: 'category',
       query: '',
       presets: [
-        { name: '根据整个目录回答问题', value: 'answerByAllCategory', template: () => this.answerByAllCategoryTemplate() },
-        { name: '根据内容回答问题', value: 'ansuwerByContent', template: () => this.answerByContentTempalte() },
-        { name: '根据目录回答问题', value: 'ansuwerByCategory', template: () => this.answerByCategoryTempalte() },
+        { name: '知识错误纠正', value: 'misconceptions', template: () => this.misconceptionsTemplate() },
         { name: '标签预测', value: 'predictTag', template: () => this.tagsPredicateTemplate() },
         { name: '概括总结', value: 'summary', template: () => this.summaryTemplate() },
-        { name: '补充目录', value: 'category', template: () => this.categoryTempalte() },
         { name: '更新与趋势', value: 'trends', template: () => this.trendsTemplate() },
         { name: '历史背景', value: 'history', template: () => this.historyTemplate() },
         { name: '未来发展', value: 'future', template: () => this.futureTemplate() },
+        { name: '根据整个目录回答问题', value: 'answerByAllCategory', template: () => this.answerByAllCategoryTemplate() },
+        { name: '根据内容回答问题', value: 'ansuwerByContent', template: () => this.answerByContentTempalte() },
+        { name: '根据目录回答问题', value: 'ansuwerByCategory', template: () => this.answerByCategoryTempalte() },
+        { name: '补充目录', value: 'category', template: () => this.categoryTempalte() },
         { name: '核心概念解释', value: 'concepts', template: () => this.conceptsTemplate() },
         { name: '实践应用场景', value: 'applications', template: () => this.applicationsTemplate() },
         { name: '常见问题与解答', value: 'faq', template: () => this.faqTemplate() },
@@ -82,7 +83,6 @@ export default defineComponent({
         { name: '学习路径规划', value: 'learningPath', template: () => this.learningPathTemplate() },
         { name: '关键要点梳理', value: 'keyPoints', template: () => this.keyPointsTemplate() },
         { name: '案例分析', value: 'caseStudy', template: () => this.caseStudyTemplate() },
-        { name: '错误概念纠正', value: 'misconceptions', template: () => this.misconceptionsTemplate() },
         { name: '知识关联图谱', value: 'relations', template: () => this.relationsTemplate() },
       ]
     };
@@ -320,6 +320,11 @@ ${tags.join(",")}
 文本内容：
 ---
 ${file.content}
+---
+
+【输出格式要求】
+---
+tags: ['标签1', '标签2', '标签3']
 ---
 
 【重要规则】

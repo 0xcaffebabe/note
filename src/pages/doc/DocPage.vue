@@ -3,7 +3,7 @@
     <doc-side-category :doc="doc" :showAside="showAside" @toggle-aside="showAside = !showAside" ref="docSideCategory" />
     <el-main class="main">
       <keep-alive>
-        <doc-tab-nav @dbclick="handleTabNavDbclick" />
+        <doc-tab-nav @dbclick="handleTabNavDbclick" :style="{'width': isDrawerShow ? '920px': '74%'}"/>
       </keep-alive>
       <el-skeleton :rows="25" animated :loading="loading" :throttle="50" style="max-width: 80%;margin-top:20px;position:fixed">
         <template #default>

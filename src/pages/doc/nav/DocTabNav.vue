@@ -2,6 +2,7 @@
   <el-scrollbar 
     wrap-class="tab-container-wrapper" 
     class="tab-container" 
+    v-bind="$attrs"
     ref="tabContainer" 
     :style="{top: parentShowHeader? 66 + 'px': 6 + 'px', position: fixed? 'fixed': 'absolute'}"
   >
@@ -146,8 +147,6 @@ export default defineComponent({
   overflow-x: auto;
   overflow-y: hidden;
   z-index: 999;
-  background-color: var(--card-bg-color);
-  border-bottom: 1px solid var(--border-color);
   padding: 4px 0;
   
   :deep(.el-scrollbar__bar.is-vertical) {
@@ -191,9 +190,6 @@ export default defineComponent({
   max-width: 200px;
   margin: 0 4px;
   padding: 0 12px;
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-  border: 1px solid transparent;
-  border-bottom: none;
   background-color: var(--hover-bg-color);
   color: var(--secondary-text-color);
   font-size: 13px;
@@ -284,10 +280,6 @@ export default defineComponent({
 }
 
 body[theme="dark"] {
-  .tab-container {
-    background-color: var(--dark-card-bg-color);
-    border-bottom: 1px solid var(--default-dark-border-color);
-  }
   
   .nav-tab-item {
     background-color: var(--dark-hover-bg-color);

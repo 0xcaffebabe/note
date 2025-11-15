@@ -245,6 +245,7 @@ export default defineComponent({
       window.open(`vscode://file/${config.localUrl}/${docService.docId2Url(this.doc)}/`, '_blank')
     },
     async showDoc(doc: string, headingId?: string, kw?: string) {
+      console.log('showdoc')
       // 将滚动条设置为上一次的状态
       window.scrollTo(0, docService.getDocReadRecord(doc))
       this.loading = true;

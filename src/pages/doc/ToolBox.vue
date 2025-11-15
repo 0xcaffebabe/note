@@ -75,7 +75,8 @@ type ActionType =
     'copyDocContent' |
     'showLinkList' |
     'openInEditor' |
-    'showLlm'
+    'showLlm' | 
+    'handleRandomReview'
 
 type LocalActionType = ActionType & 'showMoreSetting' & 'randomReview'
 
@@ -109,7 +110,8 @@ export default defineComponent({
     'goToPpt',
     'showKnowledgeReviewer',
     'openInEditor',
-    'showLlm'
+    'showLlm',
+    'handleRandomReview'
   ],
   data(){
     return {

@@ -97,6 +97,7 @@ export default defineComponent({
       showDrawer: false,
       chart: null as echarts.ECharts | null,
       resizeObserver: null as ResizeObserver | null,
+      nodes: [] as any[],
       mode: 'force' as "force" | "circular" | "none" | undefined,
       displayMode: ['force', 'circular'],
       onlySelfRelated: true,
@@ -211,10 +212,14 @@ export default defineComponent({
 
       // 创建节点和边的数据
       const nodes = KnowledgeNetworkDataProcessor.createNodes(knowledgeNetwork, this.doc, stream);
+      this.nodes = nodes; // 存储nodes以便在autoFitChart方法中使用
       const nodeMap = KnowledgeNetworkDataProcessor.buildNodeMap(nodes);
       const links = KnowledgeNetworkDataProcessor.createLinks(knowledgeNetwork);
       // 图表创建、参数设置
-      if (!this.chart) {
+      // if (!this.chart) {
+      if (this.chart) {
+        this.chart.dispose();
+      }
         const chartDom = document.getElementById("knowledgeNetwork")!;
         this.chart = echarts.init(chartDom);
         // 点击事件
@@ -237,7 +242,7 @@ export default defineComponent({
               .then((data) => this.init());
           }
         });
-      }
+      // }
       // 生成文档分类的类别和图例
       const docCategories = new Set<string>();
       nodes.forEach((node: any) => {
@@ -288,6 +293,21 @@ export default defineComponent({
       nodes.forEach(node => {
         node.category = categoryList.findIndex(item => item.name === node.docCategory)
       })
+
+      // 找到当前节点（文档名称匹配的节点）
+      const currentNodeIndex = nodes.findIndex(node => node.name === this.doc);
+      if (currentNodeIndex !== -1) {
+        // 为当前节点设置固定位置在图表中心
+        // 先获取图表DOM元素的尺寸
+        const chartDom = document.getElementById("knowledgeNetwork");
+        if (chartDom) {
+          // 初始设置中心坐标，实际坐标将在图表渲染后调整
+          (nodes[currentNodeIndex] as any).x = chartDom.clientWidth / 2;
+          (nodes[currentNodeIndex] as any).y = chartDom.clientHeight / 2;
+          (nodes[currentNodeIndex] as any).fixed = true; // 固定节点位置
+        }
+      }
+
       const option: EChartsOption = {
         title: {
           text: "知识网络",
@@ -347,6 +367,7 @@ export default defineComponent({
             symbolSize: 45,
             focusNodeAdjacency: true,
             roam: true,
+            draggable: true,
             categories: categoryList,
             // 节点的文字样式
             label: {
@@ -407,7 +428,8 @@ export default defineComponent({
       };
 
       this.chart.setOption(option);
-    },
+      
+    }
   },
 });
 </script>

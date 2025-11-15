@@ -24,11 +24,9 @@ export class KnowledgeNetworkDataProcessor {
    * @returns 颜色值
    */
   static categoryColorMapping(name: string): string {
-    const COLOR_PALETTE = [
-      "#E57373", "#9575CD", "#7986CB",
+    const COLOR_PALETTE = ["#9575CD", "#7986CB",
       "#64B5F6", "#4DB6AC", "#81C784",
-      "#AED581", "#FFD54F", "#FFB74D",
-      "#FF8A65", "#A1887F", "#90A4AE", "#F44336",
+      "#AED581", "#FFD54F", "#FFB74D", "#A1887F", "#90A4AE",
       "#9C27B0", "#673AB7", "#3F51B5", "#2196F3",
       "#00BCD4", "#009688", "#4CAF50", "#8BC34A"
     ];
@@ -156,7 +154,6 @@ export class KnowledgeNetworkDataProcessor {
     const isCurrentNode = nodeId === docId;
     const isStreamNode = stream.some((streamItem) => streamItem === nodeId);
     const category = KnowledgeNetworkDataProcessor.getDocCategory(nodeId);
-    console.log('category:', category);
     const color = isCurrentNode
       ? '#F56C6C' // 红色 - 当前节点
       : KnowledgeNetworkDataProcessor.categoryColorMapping(category); // 使用文档分类颜色

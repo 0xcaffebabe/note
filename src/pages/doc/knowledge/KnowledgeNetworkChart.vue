@@ -151,8 +151,6 @@ export default defineComponent({
       };
     },
     async init(potentialProcess: boolean = true) {
-      console.log(this.graphZoom)
-      console.log('init')
       const stream = (await KnowledgeNetworkService.getDocStream(this.doc)).flatMap(v => v)
       // 若是潜在知识网络 默认设置为圆圈展示模式
       if (this.isPotential && potentialProcess) {
@@ -183,7 +181,6 @@ export default defineComponent({
         this.chart = echarts.init(chartDom);
         // 点击事件
         this.chart.on("click", (e) => {
-          console.log(e);
           const doc = (e.data as any).name || (e.data as any).target;
           const headingId = (e.data as any).value?.replace("#", "");
           // 路由跳转后重新初始化更新图表
@@ -224,13 +221,18 @@ export default defineComponent({
       // 生成文档分类的类别配置
       const categoryList = [...specialCategories];
       const legendData = [
-        { name: "当前", icon: "circle", textStyle: { color: this.isDark ? '#eee' : '#555' }},
+        { name: "当前", icon: "roundRect",
+        itemStyle: {
+          color: "#F56C6C",
+          opacity: this.isDark ? 0.9 : 1
+        },
+         textStyle: { color: this.isDark ? '#eee' : '#555' }},
       ];
 
       docCategories.forEach(category => {
         if (!['当前'].includes(category)) {
           // 查找节点获取颜色
-          const node = nodes.find((n: any) => n.docCategory === category);
+          const node = nodes.find((n: any) => n.docCategory === category && n.name !== this.doc);
           if (node) {
             const color = node.itemStyle?.color || '#909399'; // 默认灰色
             categoryList.push({
@@ -242,7 +244,11 @@ export default defineComponent({
             });
             legendData.push({
               name: category,
-              icon: "circle",
+              icon: "roundRect",
+              itemStyle: {
+                color: color,
+                opacity: this.isDark ? 0.9 : 1,
+              },
               textStyle: { color: this.isDark ? '#eee' : '#555' }
             });
           }
@@ -250,6 +256,9 @@ export default defineComponent({
       });
 
       nodes.forEach(node => {
+        if (node.name == this.doc) {
+          return;
+        }
         node.category = categoryList.findIndex(item => item.name === node.docCategory)
       })
 

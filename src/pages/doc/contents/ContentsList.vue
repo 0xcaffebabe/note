@@ -17,6 +17,7 @@ import Category from "@/dto/Category";
 import { defineComponent } from "vue";
 import ContentsTree from "./ContentsTree.vue";
 import DocService from "@/service/DocService";
+import { ElMessage } from "element-plus";
 
 function highlightHeading(instance: any) {
   const idList = document.querySelectorAll(
@@ -125,7 +126,11 @@ export default defineComponent({
         if (!this.doc) {
           return;
         }
-        this.contentList = await DocService.getContentByDocId(this.doc);
+        try {
+          this.contentList = await DocService.getContentByDocId(this.doc);
+        } catch (e: any) {
+          ElMessage.error(e.message);
+        }
         // 高亮当前heading
         this.$nextTick(() => {
           if (this.currentId) {

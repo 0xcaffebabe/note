@@ -298,11 +298,14 @@ export default defineComponent({
     toggleContentsList() {
       this.showContentsList = !this.showContentsList;
     },
+    async randomizedReview() { 
+      // 如果没有关联文档，使用原来的随机策略
+      const flatCategoryList = await CategoryService.getFlatCategoryList();
+      const randomCategory = flatCategoryList[Math.floor(Math.random() * flatCategoryList.length)];
+      this.$router.push("/doc/" + DocUtils.docUrl2Id(randomCategory.link));
+    },
     async handleRandomReview() {
-      // 检查知识网络组件是否存在且是否显示
-      const knowledgeNetworkRef = this.$refs.knowledgeNetwork as InstanceType<typeof KnowledgeNetwork>;
-      if (knowledgeNetworkRef && knowledgeNetworkRef.showDrawer) {
-        // 知识网络开启，从与当前文档有直接关联的文档中随机选择一篇
+
         try {
           // 获取知识网络数据
           const network = await api.getKnowledgeNetwork();
@@ -329,13 +332,17 @@ export default defineComponent({
           if (relatedDocs.length > 0) {
             const randomIndex = Math.floor(Math.random() * relatedDocs.length);
             const selectedDoc = relatedDocs[randomIndex];
+            try {
+              await DocService.getDocFileInfo(selectedDoc)
+            }catch (error) {
+              console.error('获取文档信息失败:', error);
+              await this.randomizedReview();
+              return;
+            }
             this.$router.push("/doc/" + selectedDoc);
             console.log('随机选择的文档：', selectedDoc);
           } else {
-            // 如果没有关联文档，使用原来的随机策略
-            const flatCategoryList = await CategoryService.getFlatCategoryList();
-            const randomCategory = flatCategoryList[Math.floor(Math.random() * flatCategoryList.length)];
-            this.$router.push("/doc/" + DocUtils.docUrl2Id(randomCategory.link));
+            await this.randomizedReview();
           }
         } catch (error) {
           console.error('获取知识网络数据失败:', error);
@@ -344,12 +351,6 @@ export default defineComponent({
           const randomCategory = flatCategoryList[Math.floor(Math.random() * flatCategoryList.length)];
           this.$router.push("/doc/" + DocUtils.docUrl2Id(randomCategory.link));
         }
-      } else {
-        // 知识网络未开启，使用原来的随机策略
-        const flatCategoryList = await CategoryService.getFlatCategoryList();
-        const randomCategory = flatCategoryList[Math.floor(Math.random() * flatCategoryList.length)];
-        this.$router.push("/doc/" + DocUtils.docUrl2Id(randomCategory.link));
-      }
     },
     handleResize() {
       // 当窗口大小改变时，根据宽度决定是否显示ContentsList

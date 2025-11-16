@@ -417,6 +417,9 @@ class DocService implements Cacheable{
   @cache
   public resolveMetadata(file: DocFileInfo): DocMetadata {
     const metadata = yaml.load(file.metadata) as DocMetadata;
+    if (metadata as any == 'undefined') {
+      return EMPTY_DOC_METADATA
+    }
     if (metadata) {
       for(const key in EMPTY_DOC_METADATA) {
         if (!(metadata as any)[key]) {

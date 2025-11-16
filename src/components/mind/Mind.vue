@@ -1,27 +1,4 @@
 <template>
-  <el-button-group class="control-group">
-    <el-button 
-      size="small" 
-      @click="zoomOut"
-      :icon="Minus"
-      circle
-      title="缩小"
-    />
-    <el-button 
-      size="small" 
-      @click="zoomIn"
-      :icon="Plus"
-      circle
-      title="放大"
-    />
-    <el-button 
-      size="small" 
-      @click="$emit('onFullScreen')"
-      :icon="FullScreen"
-      circle
-      title="全屏"
-    />
-  </el-button-group>
   <div :id="id" class="mind-container"></div>
 </template>
 

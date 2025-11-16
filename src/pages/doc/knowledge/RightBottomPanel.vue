@@ -16,7 +16,7 @@
             :isPotential="false"
             :showLegend="false"
             :resizeListener="false"
-            :degree="3"
+            :degree="2"
           />
         </div>
       </el-carousel-item>

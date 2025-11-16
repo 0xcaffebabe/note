@@ -219,21 +219,87 @@ export class KnowledgeNetworkDataProcessor {
    * @returns 过滤后的知识网络
    */
   static filterByDegree(knowledgeNetwork: KnowledgeNode[], docId: string, degree: number) {
-    const direct: KnowledgeNode[] = knowledgeNetwork.filter(
-      node => node.id === docId || node.links?.find(link => docId === link.id)
-    );
-    
-    for (let i = 0; i < degree; i++) {
-      const list = knowledgeNetwork.filter(node => 
-        direct.some(d => d.id === node.id) || 
-        node.links?.find(link => direct.some(d => d.id === link.id))
-      );
-      
-      direct.push(...list);
-      direct.push(...list.flatMap(node => node.links || []).filter(link => direct.some(d => d.id === link.id)));
+    if (degree < 0) return [];
+
+    // 构建邻接表，将图转换为无向图（因为不考虑方向）
+    const adjacencyMap = new Map<string, Set<string>>();
+    const nodeMap = new Map<string, KnowledgeNode>();
+
+    // 填充邻接表和节点映射
+    knowledgeNetwork.forEach(node => {
+      nodeMap.set(node.id, node);
+      if (!adjacencyMap.has(node.id)) {
+        adjacencyMap.set(node.id, new Set<string>());
+      }
+
+      // 添加当前节点指向的节点
+      if (node.links) {
+        node.links.forEach(link => {
+          adjacencyMap.get(node.id)!.add(link.id);
+
+          // 由于图是无向的，也要添加反向连接
+          if (!adjacencyMap.has(link.id)) {
+            adjacencyMap.set(link.id, new Set<string>());
+          }
+          adjacencyMap.get(link.id)!.add(node.id);
+        });
+      }
+    });
+
+    // BFS算法
+    const visited = new Set<string>();
+    const queue: { nodeId: string, currentDegree: number }[] = [{ nodeId: docId, currentDegree: 0 }];
+    visited.add(docId);
+
+    // 记录需要返回的节点
+    const resultNodes = new Set<string>();
+    resultNodes.add(docId); // 添加起始节点
+
+    while (queue.length > 0) {
+      const { nodeId, currentDegree } = queue.shift()!;
+
+      // 如果当前度数等于目标度数，将节点添加到结果集中
+      if (currentDegree === degree) {
+        resultNodes.add(nodeId);
+        continue; // 不再继续扩展这个节点
+      }
+
+      // 如果当前度数已经超过目标度数，则跳过
+      if (currentDegree > degree) {
+        continue;
+      }
+
+      // 获取当前节点的所有邻居
+      const neighbors = adjacencyMap.get(nodeId) || new Set<string>();
+
+      for (const neighborId of neighbors) {
+        if (!visited.has(neighborId)) {
+          visited.add(neighborId);
+          queue.push({ nodeId: neighborId, currentDegree: currentDegree + 1 });
+
+          // 如果当前度数小于目标度数，则也将该节点添加到结果中（保持连接性）
+          if (currentDegree < degree) {
+            resultNodes.add(neighborId);
+          }
+        }
+      }
     }
-    
-    return direct;
+
+    // 将结果ID集合转换为知识节点数组，保留原有的连接信息
+    // 但仅包括在结果中的节点的连接
+    const result: KnowledgeNode[] = [];
+    for (const id of resultNodes) {
+      const originalNode = nodeMap.get(id);
+      if (originalNode) {
+        // 过滤掉不在结果中的连接节点
+        const filteredLinks = originalNode.links?.filter(link => resultNodes.has(link.id)) || [];
+        result.push({
+          ...originalNode,
+          links: filteredLinks
+        });
+      }
+    }
+    return result;
   }
 
   /**

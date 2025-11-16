@@ -23,8 +23,19 @@ cache,caching,cache-design 是三个标签，语义相同，你可以将它们�
 
 步骤3：
 
-把你语义去重后的标签列表，以 json 形式输出，格式如下：
+把你语义去重后的标签映射关系，以 JSON 形式输出，格式如下：
 
 ```json
-['tag1', 'tag2']
+{
+  "cache-design": "cache",
+  "caching": "cache"
+}
+```
+
+步骤4：
+
+执行如下命令自动替换所有文档中的旧标签：
+
+```sh
+node .agents/tools/replace_tags.js ./ '{ "cache-design": "cache", "caching": "cache" }'
 ```

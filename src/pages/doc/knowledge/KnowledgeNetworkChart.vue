@@ -281,13 +281,13 @@ export default defineComponent({
             if (result instanceof Promise) {
               result
               .then(file => {
-                callback(ticket, KnowledgeNetworkDataProcessor.buildSummaryDocInfo(file))
+                callback(ticket, KnowledgeNetworkDataProcessor.buildSummaryDocInfo(file, knowledgeNetwork))
               })
               .catch(err => {
                 callback(ticket, `${err}`)
               })
             }else {
-              return KnowledgeNetworkDataProcessor.buildSummaryDocInfo(result)
+              return KnowledgeNetworkDataProcessor.buildSummaryDocInfo(result, knowledgeNetwork)
             }
             return 'loading'
           }

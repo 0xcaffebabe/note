@@ -103,10 +103,11 @@ export class KnowledgeNetworkDataProcessor {
   /**
    * 构建文档摘要信息
    * @param file 文档文件信息
+   * @param knowledgeNetwork 知识网络数据用于计算入度和出度
    * @returns 文档摘要信息字符串
    */
-  static buildSummaryDocInfo(file: DocFileInfo): string {
-    return DocService.buildSummaryDocInfo(file);
+  static buildSummaryDocInfo(file: DocFileInfo, knowledgeNetwork?: KnowledgeNode[]): string {
+    return DocService.buildSummaryDocInfo(file, knowledgeNetwork);
   }
 
   /**

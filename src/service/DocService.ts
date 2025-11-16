@@ -257,7 +257,27 @@ class DocService implements Cacheable{
   }
 
   @cache
-  public buildSummaryDocInfo(file: DocFileInfo): string {
+  public buildSummaryDocInfo(file: DocFileInfo, knowledgeNetwork?: KnowledgeNode[]): string {
+    // 计算入度和出度
+    let inDegree = 0;
+    let outDegree = 0;
+
+    if (knowledgeNetwork) {
+      // 出度：当前节点指向其他节点的数量
+      const currentNode = knowledgeNetwork.find(node => node.id === file.id);
+      outDegree = currentNode?.links?.length || 0;
+
+      // 入度：其他节点指向当前节点的数量
+      inDegree = [...new Set(knowledgeNetwork.filter(node =>
+        node.links && node.links.some(link => link.id === file.id)
+      ).map(v => v.id))].length;
+    }
+
+    let connectDegree = '';
+    if (knowledgeNetwork) {
+      connectDegree = `<div>📈 入度: ${inDegree}, 出度: ${outDegree}</div>`;
+    }
+
     return [
       `<p>${file.name}(${file.id})</p>`,
       `<div>创建时间: ${new Date(file.createTime).toLocaleString()}</div>`,
@@ -267,6 +287,7 @@ class DocService implements Cacheable{
           (new Date().getTime() - new Date(file.commitList[0].date).getTime()) / (3600 * 24 * 1000)
         )
         }天前更新, ✏️${cleanText(file.content).length}字, ⚽${this.calcQuanlityStr(file.id)}</div>`,
+      `${connectDegree}`,
       `<div>${this.resolveTagList(file) || ''}</div>`
     ].join("\n")
   }

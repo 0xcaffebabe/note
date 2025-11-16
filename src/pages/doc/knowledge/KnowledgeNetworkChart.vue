@@ -181,22 +181,30 @@ export default defineComponent({
         this.chart = echarts.init(chartDom);
         // 点击事件
         this.chart.on("click", (e) => {
-          const doc = (e.data as any).name || (e.data as any).target;
-          const headingId = (e.data as any).value?.replace("#", "");
-          // 路由跳转后重新初始化更新图表
-          if (!headingId || headingId == "") {
-            this.$router.push("/doc/" + doc).then((data) => this.init());
-          } else {
-            // 拥有锚点
-            this.$router
-              .push({
-                path: "/doc/" + doc,
-                query: {
-                  headingId: headingId == "-" ? "" : headingId,
-                },
-              })
-              .then((data) => this.init());
+          if (e.componentType !== 'legend') {
+            const doc = (e.data as any).name || (e.data as any).target;
+            const headingId = (e.data as any).value?.replace("#", "");
+            // 路由跳转后重新初始化更新图表
+            if (!headingId || headingId == "") {
+              this.$router.push("/doc/" + doc).then((data) => this.init());
+            } else {
+              // 拥有锚点
+              this.$router
+                .push({
+                  path: "/doc/" + doc,
+                  query: {
+                    headingId: headingId == "-" ? "" : headingId,
+                  },
+                })
+                .then((data) => this.init());
+            }
           }
+        });
+
+        // 添加图例点击事件监听器
+        this.chart.on('highlight', (params) => {
+          // 当图例选择状态改变时处理高亮
+          this.handleHighlight(params);
         });
       // }
       // 生成文档分类的类别和图例
@@ -400,11 +408,143 @@ export default defineComponent({
 
       this.chart.setOption(option);
       this.chart.on('graphRoam', (params: any) => {
-        console.log(params)
         let zoom = (this.chart as any)._coordSysMgr._coordinateSystems[0]._zoom;
         this.graphZoom = zoom;
-        console.log('zoom', zoom)
       })
+    },
+
+    /**
+     * 处理图例选择状态改变事件
+     * 当点击图例时，高亮对应类型的节点和关系
+     */
+    handleHighlight(params: any) {
+      if (params.batch) {
+        return
+      }
+      if (!this.chart) return;
+
+      // 获取系列中的分类信息
+      const option = this.chart.getOption() as any;
+      const categories = option.series[0].categories || [];
+
+      // 找到分类的索引
+      const categoryIndex = categories.findIndex((cat: any) => cat.name === params.name);
+      if (categoryIndex !== -1) {
+        // 找到属于该分类的所有节点索引
+        const seriesData = option.series[0].data;
+        const nodeDataIndexes: number[] = [];
+
+        seriesData.forEach((node: any, index: number) => {
+          if (node.category === categoryIndex) {
+            nodeDataIndexes.push(index);
+          }
+        });
+
+        // 找到与这些节点相关的边的索引
+        const links = option.series[0].links || [];
+        const linkDataIndexes: number[] = [];
+
+        links.forEach((link: any, index: number) => {
+          // 检查边的源节点或目标节点是否在高亮节点列表中
+          const sourceIndex = seriesData.findIndex((node: any) => node.name === link.source);
+          const targetIndex = seriesData.findIndex((node: any) => node.name === link.target);
+
+          if (nodeDataIndexes.includes(sourceIndex) || nodeDataIndexes.includes(targetIndex)) {
+            linkDataIndexes.push(index);
+          }
+        });
+
+        console.log('nodeDataIndexes', nodeDataIndexes)
+        // 高亮节点和边
+        this.chart.dispatchAction({ type: 'highlight', seriesIndex:0, 
+          batch:[
+            {dataIndex: nodeDataIndexes},
+            // {dataType: 'edge', dataIndex: linkDataIndexes}
+          ]}
+        )
+      }
+    },
+
+    /**
+     * 根据分类高亮节点和相关边
+     */
+    highlightNodesByCategory(categoryName: string) {
+      if (!this.chart) return;
+
+      // 先取消所有高亮
+      this.clearHighlight();
+
+      // 获取系列中的分类信息
+      const option = this.chart.getOption() as any;
+      const categories = option.series[0].categories || [];
+
+      // 找到分类的索引
+      const categoryIndex = categories.findIndex((cat: any) => cat.name === categoryName);
+      console.log()
+      if (categoryIndex !== -1) {
+        // 找到属于该分类的所有节点索引
+        const seriesData = option.series[0].data;
+        const nodeDataIndexes: number[] = [];
+
+        seriesData.forEach((node: any, index: number) => {
+          if (node.category === categoryIndex) {
+            nodeDataIndexes.push(index);
+          }
+        });
+
+        // 找到与这些节点相关的边的索引
+        const links = option.series[0].links || [];
+        const linkDataIndexes: number[] = [];
+
+        links.forEach((link: any, index: number) => {
+          // 检查边的源节点或目标节点是否在高亮节点列表中
+          const sourceIndex = seriesData.findIndex((node: any) => node.name === link.source);
+          const targetIndex = seriesData.findIndex((node: any) => node.name === link.target);
+
+          if (nodeDataIndexes.includes(sourceIndex) || nodeDataIndexes.includes(targetIndex)) {
+            linkDataIndexes.push(index);
+          }
+        });
+
+        console.log('nodeDataIndexes', nodeDataIndexes)
+        // 高亮节点和边
+        if (nodeDataIndexes.length > 0) {
+          this.chart.dispatchAction({
+            type: 'highlight',
+            seriesIndex: 0,
+            dataIndex: nodeDataIndexes
+          });
+        }
+
+        if (linkDataIndexes.length > 0) {
+          this.chart.dispatchAction({
+            type: 'highlight',
+            seriesIndex: 0,
+            dataType: 'edge', // 指定高亮边
+            dataIndex: linkDataIndexes
+          });
+        }
+      }
+    },
+
+    /**
+     * 清除所有高亮
+     */
+    clearHighlight() {
+      if (!this.chart) return;
+
+      // 清除节点高亮
+      this.chart.dispatchAction({
+        type: 'downplay',
+        seriesIndex: 0
+      });
+
+      // 清除边高亮
+      this.chart.dispatchAction({
+        type: 'downplay',
+        seriesIndex: 0,
+        dataType: 'edge'
+      });
     }
   },
 });

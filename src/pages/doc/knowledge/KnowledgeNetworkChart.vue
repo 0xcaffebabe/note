@@ -64,6 +64,14 @@ export default defineComponent({
     resizeListener: {
       type: Boolean,
       default: true
+    },
+    showTooltip: {
+      type: Boolean,
+      default: true
+    },
+    showChartText: {
+      type: Boolean,
+      default: true
     }
   },
   data() {
@@ -262,11 +270,13 @@ export default defineComponent({
       const option: EChartsOption = {
         title: {
           text: "知识网络",
+          show: this.showChartText,
           top: 'bottom',
           left: 'right'
         },
         darkMode: this.isDark,
         tooltip: {
+          show: this.showTooltip,
           backgroundColor: this.isDark ? 'var(--main-dark-bg-color)' :'#fff',
           textStyle: {
             color: this.isDark ? 'var(--main-dark-text-color)' :'',

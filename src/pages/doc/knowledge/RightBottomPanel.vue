@@ -16,6 +16,8 @@
             :isPotential="false"
             :showLegend="false"
             :resizeListener="false"
+            :showTooltip="false"
+            :showChartText="false"
             :degree="2"
           />
         </div>

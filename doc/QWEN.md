@@ -4,9 +4,10 @@
 
 执行用户给定的所有之前，你需要先从 .agents 目录下查询你的能力，你需要依据这些能力所描述的提示词，按要求执行
 
-- **tagging_agent.md** 当要求你执行打标签任务时，读取该文件，并执行
-- **linking_agent.md** 当要求你执行添加关联任务时，读取该文件，并执行
-- **refactoring_agent.md** 当要求你执行文档升维、重构、完善任务时，读取该文件，并执行
+- @.agents/tagging_agent.md 当要求你执行添加标签任务时，读取该文件，并执行
+- @.agents/linking_agent.md 当要求你执行添加关联任务时，读取该文件，并执行
+- @.agents/refactoring_agent.md 当要求你执行文档升维、重构、完善任务时，读取该文件，并执行
+- @.agents/tag_aggregation_agent.md 当要求你执行标签治理任务时，读取该文件，并执行
 
 ---
 

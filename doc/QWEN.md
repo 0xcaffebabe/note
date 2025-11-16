@@ -8,6 +8,7 @@
 - @.agents/linking_agent.md 当要求你执行添加关联任务时，读取该文件，并执行
 - @.agents/refactoring_agent.md 当要求你执行文档升维、重构、完善任务时，读取该文件，并执行
 - @.agents/tag_aggregation_agent.md 当要求你执行标签治理任务时，读取该文件，并执行
+- @.agents/link_validation_agent.md 当要求你执行失效链接修复任务时，读取该文件，并执行
 
 ## 核心语言规则
 

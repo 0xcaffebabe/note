@@ -1,5 +1,5 @@
 ---
-tags: ['数据库', 'MySQL', '性能监控']
+tags: ['数据库', '监控']
 ---
 
 # MYSQL performance schema详解

@@ -1,5 +1,5 @@
 ---
-tags: ['数据库', '关系型数据库', 'PostgreSQL']
+tags: ['数据库']
 ---
 
 # PostgreSQL

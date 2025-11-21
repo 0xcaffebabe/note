@@ -1,104 +1,178 @@
+---
+tags: ['数据库', '事务管理', 'Java', '连接池', '数据访问']
+---
+
 # JDBC
 
-> Java数据库连接，（Java Database Connectivity，简称JDBC）是Java语言中用来规范客户端程序如何来访问数据库的应用程序接口，提供了诸如查询和更新数据库中数据的方法。JDBC也是Sun Microsystems的商标。JDBC是面向关系型数据库的。
+## 概述
 
-## 常用类
+Java 数据库连接（Java Database Connectivity，JDBC）是 Java 平台提供的用于访问关系型数据库的标准 API。JDBC 规范定义了客户端程序与数据库交互的方式，包括数据查询、更新、事务控制以及连接管理等功能。通过 JDBC，Java 程序可以实现与各种数据库的无缝互操作，而无需依赖特定数据库厂商的实现。
 
-接口或类                | 作用
-------------------- | ----------------------------------------------------------------------
-DriverManager 类     | 1) 管理和注册数据库驱动 2) 得到数据库连接对象
-Connection 接口       | 一个连接对象，可用于创建 Statement 和 PreparedStatement 对象
-Statement 接口        | 一个 SQL 语句对象，用于将 SQL 语句发送给数据库服务器。
-PreparedStatemen 接口 | 一个 SQL 语句对象，是 Statement 的子接口 ResultSet 接口 用于封装数据库查询的结果集，返回给客户端 Java 程序
+**核心价值：**
 
-_从 JDBC3 开始，目前已经普遍使用的版本。可以不用注册驱动而直接使用。Class.forName 这句话可以省略_
+* 提供统一的数据访问接口
+* 支持多种关系型数据库
+* 支持事务与并发控制
+* 可扩展的连接池管理与优化
 
-## 数据类型
+---
 
-SQL 类型          | JDBC 对应方法           | 返回类型
---------------- | ------------------- | -----------------------
-BIT(1),bit(n)   | getBoolean()        | boolean
-TINYINT         | getByte()           | byte
-SAMLLINT        | getShort()          | short
-INT             | getInt()            | int
-BIGINT          | getLong()           | long
-CHAR,VHARCHAR   | getString()         | String
-Text(Clob),Blob | getClob(),getBlob() | Clob,Blob
-DATE            | getDate()           | java.sql.Date 日期
-TIME            | getTime()           | java.sql.time 时间
-TIMESTAMP       | getTime()           | java.sql.TimeStamp 日期时间
+## 本质
 
-## 经典查询
+JDBC 的本质是**数据库访问抽象层**，将数据库操作与底层数据库实现解耦。它通过接口定义和驱动机制，使得应用程序可以专注于业务逻辑而无需考虑具体数据库的通信细节。
 
-```java
-try(Connection connection = DriverManager.getConnection("jdbc:mysql:///test?user=root&password=123")){
-ResultSet rs = connection.createStatement().executeQuery("select * from account");
-while (rs.next()){
-    System.out.println(rs.getString("name")+"|"+rs.getDouble("balance"));
-}
-}catch (SQLException e){
-    e.printStackTrace();
-}
+* **抽象接口**：Connection、Statement、ResultSet 等
+* **驱动机制**：DriverManager 管理不同数据库驱动
+* **事务管理**：支持显式或隐式事务控制
+* **资源管理**：通过连接池与工具类优化连接创建和释放
+
+---
+
+## 模型
+
+JDBC 访问模型可抽象为以下几个核心组件：
+
+```mermaid
+graph TD
+A[JDBC API] --> B[DriverManager]
+A --> C[Connection]
+C --> D[Statement]
+C --> E[PreparedStatement]
+D --> F[ResultSet]
+E --> F
 ```
 
-## SQL注入与PreparedStatement
+* **DriverManager**：管理和注册数据库驱动
+* **Connection**：表示与数据库的会话
+* **Statement / PreparedStatement**：执行 SQL 语句
+* **ResultSet**：封装查询结果
 
-使用 PreparedStatement 避免 SQL注入
+---
 
-## 事务控制
+## 核心能力体系
 
-```java
-connection.setAutoCommit(false);
-connection.commit();
-connection.rollback();
+| 能力模块    | 描述                                   |
+| ------- | ------------------------------------ |
+| 连接管理    | 获取、释放数据库连接，支持多种驱动与数据库                |
+| SQL 执行  | 提供 Statement、PreparedStatement 等执行方式 |
+| 数据类型映射  | Java 与 SQL 数据类型相互映射                  |
+| 事务控制    | 支持手动提交、回滚及自动提交                       |
+| 资源管理    | 通过 JDBCUtils 或连接池（c3p0、Druid）管理资源    |
+| 并发与性能优化 | 池化连接、检测空闲连接、避免死锁                     |
+| 安全防护    | 使用 PreparedStatement 避免 SQL 注入       |
+
+---
+
+## 架构模型
+
+JDBC 的架构可分为三层：
+
+1. **API 层**：提供标准接口供应用程序使用
+2. **驱动层**：实现对特定数据库的访问（Type 1~4 驱动）
+3. **数据库层**：关系型数据库实际存储与执行
+
+```mermaid
+graph LR
+A[应用程序] --> B[JDBC API]
+B --> C[DriverManager/Driver]
+C --> D[具体数据库]
 ```
 
-## 数据库连接池
+---
 
-> 数据库连接池负责分配、管理和释放数据库连接，它允许应用程序重复使用一个现有的数据库连接，而不是再重新建立一个；释放空闲时间超过最大空闲时间的数据库连接来避免因为没有释放数据库连接而引起的数据库连接遗漏。这项技术能明显提高对数据库操作的性能。
+## 类型体系（数据类型映射）
 
-- c3p0
-- druid
+| SQL 类型           | JDBC 方法              | Java 返回类型          |
+| ---------------- | -------------------- | ------------------ |
+| BIT(1), BIT(n)   | getBoolean()         | boolean            |
+| TINYINT          | getByte()            | byte               |
+| SMALLINT         | getShort()           | short              |
+| INT              | getInt()             | int                |
+| BIGINT           | getLong()            | long               |
+| CHAR, VARCHAR    | getString()          | String             |
+| TEXT(CLOB), BLOB | getClob(), getBlob() | Clob, Blob         |
+| DATE             | getDate()            | java.sql.Date      |
+| TIME             | getTime()            | java.sql.Time      |
+| TIMESTAMP        | getTimestamp()       | java.sql.Timestamp |
 
-## 参数
+---
 
-- 空闲线程数：初始化线程，还没被使用
-- 活动线程数：正在被使用的
-- 最大线程数：限制最多只能创建的线程数
+## 边界与生态
 
-## JDBCUtils
+JDBC 面向关系型数据库，其生态包括：
 
-- 提供静态代码块加载配置文件，初始化连接池对象
-- 提供方法
+* **主流数据库**：MySQL、PostgreSQL、Oracle、SQL Server
+* **连接池框架**：c3p0、Druid
+* **工具类**：JDBCUtils 提供便捷的连接、释放、配置管理
+* **注意事项**：空闲连接超时、并发写入阻塞、SQL 注入防护
 
-  - 获取连接方法：通过数据库连接池获取连接
-  - 释放资源
-  - 获取连接池的方法
+---
 
-## DruidDatasource在并发环境下卡死的问题
+## 治理体系
 
-在测试一个并发写入时，当线程数超过一定量时，发现线程阻塞住了。使用VisualVM 分析线程栈
+治理体系主要针对资源管理与性能优化：
 
-发现线程在druid相关代码附近处于wating状态：
+| 维度       | 实践方法                           |
+| -------- | ------------------------------ |
+| 连接池管理    | 设置最大活动连接数、空闲检测、释放超时连接          |
+| SQL 执行安全 | 使用 PreparedStatement 避免 SQL 注入 |
+| 事务管理     | 显式事务提交和回滚，避免自动提交带来的数据不一致       |
+| 并发控制     | 调整池大小、避免线程阻塞，必要时监控连接持有状态       |
+| 性能监控     | 使用工具如 VisualVM 分析线程和连接阻塞情况     |
 
-![屏幕截图 2021-06-10 102911](/assets/屏幕截图%202021-06-10%20102911.png)
+---
 
-出现这个的问题原因在于每个线程可能都会开启事务，然后申请一些连接做一些操作，当并发上去后，每个线程都会持有住一些连接，都在等待其他线程释放连接以能继续获取连接做操作，进而导致这些线程互相等待，阻塞在那边
+## 演进趋势
 
-druid 默认的最大连接为8 将其调大一点即可。
+* **JDBC 版本升级**：JDBC 4+ 支持自动驱动加载，无需手动 Class.forName
+* **连接池智能化**：动态调整池大小、心跳检测空闲连接
+* **响应式数据库访问**：结合 R2DBC 和异步非阻塞模型提升并发性能
+* **云数据库适配**：原生支持云端数据库连接和高可用部署
 
-```yml
-max-active: 50
-remove-abandoned: true
-```
+---
 
-## 池化
+## 选型方法论
 
-核心思想是空间换时间，期望使用预先创建好的对象来减少频繁创建对象的性能开销
+选型关键维度：
 
-数据库连接池相比线程池的一个设计要点就是保活检测，大部分数据库都会在连接空闲一段时间关闭连接，这部分客户端是无感知，使用关闭的连接就会抛出异常，这点在早期使用单个连接的项目遇到过，MySQL连接空闲超过8个小时，再使用就报错，当时的解决方案是调高服务端的空闲超时时间
+| 维度    | 推荐策略                           |
+| ----- | ------------------------------ |
+| 数据库类型 | 关系型数据库优先，NoSQL 可通过专门驱动或 ORM 支持 |
+| 连接池选择 | 小并发选择 c3p0，企业高并发选择 Druid       |
+| 并发量   | 根据线程数和事务复杂度设置池大小               |
+| 安全性   | 必须使用 PreparedStatement 或参数化查询  |
+| 事务要求  | 高一致性选择显式事务管理，低延迟可使用自动提交        |
 
-但对于连接池，可以通过两种方式来避免出现这种错误：
+---
 
-1. 定期发送select 1语句检测
-2. 在每次获取到连接后，检测连接是否可用，但这种方式会引入多余的开销
+## 总结
+
+JDBC 是 Java 数据访问的核心标准，其价值在于**统一接口、事务管理、资源治理与扩展性**。高级使用涉及以下关键点：
+
+1. 熟练掌握 Connection、Statement、PreparedStatement、ResultSet 的使用
+2. 理解数据类型映射及其影响
+3. 精通事务控制与异常处理
+4. 使用连接池优化性能并防止死锁或资源泄露
+5. 安全性设计（防 SQL 注入）
+6. 并发环境下合理配置连接池参数，结合监控工具进行性能调优
+
+通过体系化的理解，JDBC 不仅是一个 API，更是一套数据库访问和管理的能力体系。
+
+## 关联内容（自动生成）
+
+- [/DSL/SQL.md](/DSL/SQL.md) JDBC 是 Java 对 SQL 语言的访问接口，通过 Connection、Statement、PreparedStatement 等对象执行 SQL 语句，实现对关系型数据库的操作
+- [/中间件/数据库/数据库.md](/中间件/数据库/数据库.md) JDBC 是应用程序与数据库交互的桥梁，提供了标准的数据库访问接口，是数据库管理系统的重要组成部分
+- [/中间件/数据库/数据库系统/事务管理/事务.md](/中间件/数据库/数据库系统/事务管理/事务.md) JDBC 提供了事务管理能力，支持 ACID 特性，通过 Connection 对象的 commit()、rollback() 方法实现事务控制
+- [/中间件/数据库/mysql/mysql.md](/中间件/数据库/mysql/mysql.md) MySQL 是 JDBC 常连接的关系型数据库之一，JDBC 通过 MySQL 驱动实现对 MySQL 数据库的访问
+- [/软件工程/架构模式/分层架构.md](/软件工程/架构模式/分层架构.md) JDBC 通常用于分层架构中的数据访问层，实现业务逻辑层与数据库之间的解耦
+- [/编程语言/JAVA/框架/ORM.md](/编程语言/JAVA/框架/ORM.md) JDBC 是 ORM 框架的基础，ORM 框架如 MyBatis、Hibernate 在 JDBC 基础上提供了更高层次的抽象
+- [/中间件/数据库/分库分表中间件.md](/中间件/数据库/分库分表中间件.md) 分库分表中间件通过 JDBC 驱动拦截 SQL 语句，实现对分布式数据库的访问
+- [/软件工程/架构/系统设计/分布式/分布式事务.md](/软件工程/架构/系统设计/分布式/分布式事务.md) JDBC 在分布式事务中扮演重要角色，支持 XA 事务协议，实现跨多个数据库的事务一致性
+- [/软件工程/软件设计/代码质量/软件测试/单元测试.md](/软件工程/软件设计/代码质量/软件测试/单元测试.md) JDBC 数据访问层需要特别的单元测试策略，通常使用内存数据库如 H2 进行数据访问层的测试
+- [/计算机网络/网络安全/Web安全.md](/计算机网络/网络安全/Web安全.md) JDBC 使用 PreparedStatement 可有效防止 SQL 注入攻击，是 Web 安全的重要防护手段
+- [/软件工程/架构/系统设计/高并发.md](/软件工程/架构/系统设计/高并发.md) JDBC 连接池是高并发系统中的重要组件，通过连接池管理可有效提升数据库访问性能
+- [/软件工程/架构/系统设计/可用性.md](/软件工程/架构/系统设计/可用性.md) JDBC 连接管理对系统可用性至关重要，当数据库不可用时，合理的连接池配置和异常处理可提升系统可用性
+- [/中间件/数据库/数据库系统/数据库设计.md](/中间件/数据库/数据库系统/数据库设计.md) JDBC 访问数据库时需要考虑数据库设计规范，如数据类型映射、索引使用等
+- [/软件工程/架构/系统设计/流量控制.md](/软件工程/架构/系统设计/流量控制.md) JDBC 连接池大小是流量控制的重要参数，通过控制连接数可对数据库访问流量进行限制
+- [/软件工程/微服务/集成.md](/软件工程/微服务/集成.md) 在微服务架构中，JDBC 在服务内部的数据访问层发挥作用，每个服务通过 JDBC 管理自己的数据访问
+- [/中间件/数据库/mysql/查询优化.md](/中间件/数据库/mysql/查询优化.md) JDBC 与查询优化密切相关，PreparedStatement 的使用和合理的 SQL 语句设计是查询优化的重要方面

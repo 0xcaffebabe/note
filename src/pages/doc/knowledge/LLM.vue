@@ -769,7 +769,7 @@ ${file.content}
     }
   },
   async created() {
-    this.query = await this.categoryTempalte()
+    this.query = await this.reviewTemplate()
   }
 });
 </script>

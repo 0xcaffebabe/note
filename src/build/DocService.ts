@@ -296,8 +296,10 @@ class DocService extends BaseService implements Cacheable {
     for(let file of fileList) {
       taskList.push(GitService.getFileLastCommit(file).then(commit => [file, commit]))
     }
+    const ignoreDoc = ['README', 'SUMMARY'];
     return (await Promise.all(taskList))
       .sort((a, b) => new Date(a[1].date).getTime() - new Date(b[1].date).getTime())
+      .filter(v => ignoreDoc.indexOf(DocUtils.docUrl2Id(v[0])) == -1)
       .map(v => [DocUtils.docUrl2Id(v[0]), v[1]])
   }
 

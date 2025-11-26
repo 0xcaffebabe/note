@@ -124,7 +124,9 @@ export default defineComponent({
           (new Date(i[1].date).getTime() - minTime) / (1000 * 3600 * 24);
       }
       for (let i of docQualityList) {
-        map.get(i.id)![1] = i.quality;
+        if (map.get(i.id)) {
+          map.get(i.id)![1] = i.quality;
+        }
       }
       return Array.from(map.entries()).map((v) => [...v[1], v[0]]);
     },

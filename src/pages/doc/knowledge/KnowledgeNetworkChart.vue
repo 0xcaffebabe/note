@@ -391,15 +391,16 @@ export default defineComponent({
             data: nodes,
             links,
             lineStyle: {
-              opacity: 0.9,
+              opacity: 0.4,
               curveness: 0,
-              width: 2,
-              color: "#38B3FF",
+              width: 1,
+              color: this.isDark ? "#666" : "#aaa",
             },
             emphasis: {
               focus: "adjacency",
               lineStyle: {
-                width: 10,
+                opacity: 0.6,
+                width: 2,
               },
             },
           },

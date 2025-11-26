@@ -412,6 +412,13 @@ export default defineComponent({
         let zoom = (this.chart as any)._coordSysMgr._coordinateSystems[0]._zoom;
         this.graphZoom = zoom;
       })
+      this.chart.getZr().on('mousewheel', (params: any) =>{
+        if (params.target) {
+          params.event.stopPropagation();
+          params.event.preventDefault();
+          return false;
+        }
+      } )
     },
 
     /**

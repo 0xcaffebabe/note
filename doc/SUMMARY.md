@@ -270,7 +270,6 @@
     - [⚡事件](./编程语言/JavaScript/事件.md)
     - [🌐BOM](./编程语言/JavaScript/BOM.md)
     - [⚙️函数](./编程语言/JavaScript/函数.md)
-    - [🔍正则表达式](./编程语言/JavaScript/正则表达式.md)
     - [🌐AJAX](./编程语言/JavaScript/AJAX.md)
     - [⚙️ES6](./编程语言/JavaScript/ES6.md)
     - [🌐NodeJS](./编程语言/JavaScript/Node/NodeJs.md)

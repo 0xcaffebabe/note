@@ -8,19 +8,31 @@
       :autoplay="false">
       <el-carousel-item>
         <div class="carousel-item-content">
-          <knowledge-network-chart
-            class="carousel-content"
-            :doc="doc"
-            mode="force"
-            :onlySelfRelated="true"
-            :isPotential="false"
-            :showLegend="false"
-            :resizeListener="false"
-            :showTooltip="false"
-            :showChartText="false"
-            :zoom="0.2"
-            :degree="2"
-          />
+          <div class="chart-container">
+            <knowledge-network-chart
+              class="carousel-content"
+              :doc="doc"
+              mode="force"
+              :onlySelfRelated="true"
+              :isPotential="false"
+              :showLegend="false"
+              :resizeListener="false"
+              :showTooltip="false"
+              :showChartText="false"
+              :zoom="0.6"
+              :degree="degree"
+            />
+            <div class="control-panel">
+              <el-input-number
+                v-model="degree"
+                :min="1"
+                :max="10"
+                label="度数"
+                size="small"
+                class="degree-input"
+              />
+            </div>
+          </div>
         </div>
       </el-carousel-item>
       <el-carousel-item>
@@ -34,7 +46,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { ElCarousel, ElCarouselItem } from 'element-plus';
+import { ElCarousel, ElCarouselItem, ElInputNumber } from 'element-plus';
 import MindNote from "../mind/MindNote.vue";
 import KnowledgeNetworkChart from "./KnowledgeNetworkChart.vue";
 
@@ -44,13 +56,19 @@ export default defineComponent({
     ElCarousel,
     ElCarouselItem,
     MindNote,
-    KnowledgeNetworkChart
+    KnowledgeNetworkChart,
+    ElInputNumber
   },
   props: {
     doc: {
       type: String,
       required: true
     }
+  },
+  data() {
+    return {
+      degree: 1 // 默认度数为1
+    };
   },
   // 移除了 activeTab，因为 Carousel 有自己的内部状态管理
 });
@@ -151,6 +169,33 @@ body[theme=dark] .right-bottom-panel {
     .carousel-label {
       background-color: var(--second-dark-bg-color);
       border-bottom-color: var(--default-dark-border-color);
+    }
+  }
+}
+
+// 新增样式：使知识网络图表容器占满空间，并在左下角放置控制面板
+.chart-container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+
+  .knowledge-network-chart {
+    height: 100%;
+    width: 100%;
+  }
+
+  .control-panel {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px;
+
+    .degree-input {
+      width: 74px;
     }
   }
 }

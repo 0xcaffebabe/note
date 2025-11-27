@@ -261,7 +261,6 @@
     - [ORM](./编程语言/JAVA/框架/ORM.md)
     - [🍃Spring](./编程语言/JAVA/框架/Spring/Spring.md)
       - [🌐SpringMVC](./编程语言/JAVA/框架/Spring/SpringMVC.md)
-      - [📦SpringData](./编程语言/JAVA/框架/Spring/SpringData.md)
       - [📦SpringBoot](./编程语言/JAVA/框架/SpringBoot.md)
       - [⚡SpringWebFlux](./编程语言/JAVA/框架/SpringWebFlux.md)
     - [🔗Dubbo](./编程语言/JAVA/框架/Dubbo.md)

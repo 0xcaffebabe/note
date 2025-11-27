@@ -18,6 +18,7 @@
             :resizeListener="false"
             :showTooltip="false"
             :showChartText="false"
+            :zoom="0.2"
             :degree="2"
           />
         </div>

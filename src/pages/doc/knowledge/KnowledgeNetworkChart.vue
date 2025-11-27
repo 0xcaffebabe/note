@@ -72,6 +72,10 @@ export default defineComponent({
     showChartText: {
       type: Boolean,
       default: true
+    },
+    zoom: {
+      type: Number,
+      default: 1
     }
   },
   data() {
@@ -79,7 +83,7 @@ export default defineComponent({
       id: this.generateRandomId(),
       chart: null as echarts.ECharts | null,
       resizeObserver: null as ResizeObserver | null,
-      graphZoom: 1,
+      graphZoom: this.zoom,
       nodes: [] as any[],
     };
   },

@@ -285,7 +285,6 @@
   - [📝TypeScript](./编程语言/typescript.md)
   - [🦀Rust](./编程语言/Rust.md)
   - [🐦Swift](./编程语言/Swift.md)
-  - [ Kotlin](./编程语言/Kotlin.md)
   - [📝C++](./编程语言/C++.md)
   - [🌐WebAssembly](./编程语言/WebAssembly.md)
 

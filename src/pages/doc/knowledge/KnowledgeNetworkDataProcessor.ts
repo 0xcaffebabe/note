@@ -1,6 +1,54 @@
 import { KnowledgeNode } from "@/dto/KnowledgeNode";
 import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
+import CategoryService from "@/service/CategoryService";
+import Category from "@/dto/Category";
+import { COLOR_PALETTE } from "./ColorGenerator";
+
+/**
+ * 生成任意数量的高对比颜色数组
+ * @param n - 需要生成的颜色数量
+ * @returns 颜色数组，格式为 Hex (#RRGGBB)
+ */
+function generateDistinctColors(n: number): string[] {
+  const colors: string[] = [];
+  const saturation = 70; // 饱和度 %
+  const lightness = 50;  // 亮度 %
+
+  for (let i = 0; i < n; i++) {
+    const hue = Math.round((360 * i) / n); // 色相均匀分布
+    const color = hslToHex(hue, saturation, lightness);
+    colors.push(color);
+  }
+
+  return colors;
+}
+
+/**
+ * HSL 转 Hex
+ * @param h - 色相 0~360
+ * @param s - 饱和度 0~100
+ * @param l - 亮度 0~100
+ * @returns Hex颜色字符串 (#RRGGBB)
+ */
+function hslToHex(h: number, s: number, l: number): string {
+  s /= 100;
+  l /= 100;
+
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) =>
+    l - a * Math.max(-1, Math.min(Math.min(k(n) - 3, 9 - k(n)), 1));
+
+  const r = Math.round(f(0) * 255);
+  const g = Math.round(f(8) * 255);
+  const b = Math.round(f(4) * 255);
+
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b)
+    .toString(16)
+    .slice(1)
+    .toUpperCase()}`;
+}
 
 /**
  * 知识网络数据处理器
@@ -8,6 +56,38 @@ import DocService from "@/service/DocService";
  * 核心价值：通过关系可视化揭示知识间的内在关联性
  */
 export class KnowledgeNetworkDataProcessor {
+  // 缓存的顶级分类列表
+  private static topLevelCategories: string[] = [];
+  // 颜色映射缓存
+  private static colorMappingCache: { [key: string]: string } = {};
+  // 标记是否已初始化
+  private static isInitialized: boolean = false;
+
+  // static COLOR_PALETTE = ColorGen
+
+  /**
+   * 初始化顶级分类列表
+   */
+  static async initializeTopLevelCategories(): Promise<void> {
+    if (this.isInitialized) {
+      return; // 如果已经初始化，直接返回
+    }
+
+    try {
+      const categories = await CategoryService.getCompiledCategoryList();
+      this.topLevelCategories = categories.map(category => category.name);
+
+
+      this.topLevelCategories.forEach((category, index) => {
+        this.colorMappingCache[category] = COLOR_PALETTE[index % COLOR_PALETTE.length];
+      });
+
+      this.isInitialized = true;
+    } catch (error) {
+      console.error('Failed to initialize top level categories:', error);
+    }
+  }
+
   /**
    * 根据文档名称进行分类
    * @param nodeId 文档ID
@@ -24,39 +104,22 @@ export class KnowledgeNetworkDataProcessor {
    * @returns 颜色值
    */
   static categoryColorMapping(name: string): string {
-    const COLOR_PALETTE = ["#9575CD", "#7986CB",
-      "#64B5F6", "#4DB6AC", "#81C784",
-      "#AED581", "#FFD54F", "#FFB74D", "#A1887F", "#90A4AE",
-      "#9C27B0", "#673AB7", "#3F51B5", "#2196F3",
-      "#00BCD4", "#009688", "#4CAF50", "#8BC34A"
-    ];
-
-    const colorMapping: { [key: string]: string } = {
-      '算法与数据结构': COLOR_PALETTE[0],
-      '数学': COLOR_PALETTE[1],
-      '操作系统': COLOR_PALETTE[2],
-      '软件工程': COLOR_PALETTE[3],
-      '计算机系统': COLOR_PALETTE[4],
-      '数字逻辑电路': COLOR_PALETTE[5],
-      '计算机网络': COLOR_PALETTE[6],
-      '编译原理': COLOR_PALETTE[7],
-      'DSL': COLOR_PALETTE[8],
-      '数据技术': COLOR_PALETTE[9],
-      '中间件': COLOR_PALETTE[10],
-      '音视频开发': COLOR_PALETTE[11],
-      '开发工具': COLOR_PALETTE[12],
-      '产品': COLOR_PALETTE[13],
-      '其他': COLOR_PALETTE[14],
-      '个人成长': COLOR_PALETTE[15],
-      '通识': COLOR_PALETTE[16],
-      '运维': COLOR_PALETTE[17],
-      '编程语言': COLOR_PALETTE[18],
-    };
-
-    if (colorMapping[name]) {
-      return colorMapping[name];
+    // 如果已经初始化，则使用缓存的颜色映射
+    if (this.isInitialized && this.colorMappingCache[name]) {
+      return this.colorMappingCache[name];
     }
-    
+
+    // 如果该分类在顶级分类列表中，返回对应的颜色
+    const topLevelCategoryIndex = this.topLevelCategories.findIndex(cat => cat === name);
+    if (topLevelCategoryIndex !== -1 && this.isInitialized) {
+      // 如果缓存中还没有颜色，则生成一个
+      if (!this.colorMappingCache[name]) {
+        this.colorMappingCache[name] = COLOR_PALETTE[topLevelCategoryIndex % COLOR_PALETTE.length];
+      }
+      return this.colorMappingCache[name];
+    }
+
+    // 如果以上都不匹配，使用哈希算法计算颜色
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
       hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -133,7 +196,7 @@ export class KnowledgeNetworkDataProcessor {
 
     return uniqueNodeIds.map((nodeId) => {
       const relatedNodes = knowledgeNetwork.filter((node) => node.id === nodeId);
-      
+
       return KnowledgeNetworkDataProcessor.createNodeData(nodeId, relatedNodes, docId, stream);
     });
   }
@@ -163,7 +226,7 @@ export class KnowledgeNetworkDataProcessor {
     if (relatedNodes.length > 0) {
       return {
         name: nodeId,
-        category: 0, 
+        category: 0,
         symbolSize: 20,
         draggable: true,
         itemStyle: {
@@ -195,7 +258,7 @@ export class KnowledgeNetworkDataProcessor {
    */
   static createLinks(knowledgeNetwork: KnowledgeNode[]) {
     const links: any[] = [];
-    
+
     for (const node of knowledgeNetwork) {
       if (node.links) {
         for (const link of node.links) {
@@ -207,7 +270,7 @@ export class KnowledgeNetworkDataProcessor {
         }
       }
     }
-    
+
     return links;
   }
 
@@ -310,7 +373,7 @@ export class KnowledgeNetworkDataProcessor {
   static buildNodeMap(nodes: any[]) {
     return new Map(nodes.map((node, index) => [node.name, index]));
   }
-  
+
   /**
    * 根据当前文档ID过滤知识网络(隐式网络)
    * @param knowledgeNetwork 原始知识网络

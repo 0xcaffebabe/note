@@ -428,6 +428,12 @@ export default defineComponent({
     right: 2px;
   }
 }
+@media screen and (max-width: 1370px) {
+  .markdown-section {
+    width: 70%!important;
+    margin-right: 40px;
+  }
+}
 @media screen and (max-width: 1180px) {
   .center {
     padding-left: 0rem;

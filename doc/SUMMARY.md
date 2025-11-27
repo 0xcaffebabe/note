@@ -284,7 +284,6 @@
     - [💾内存模型](./编程语言/Go/内存模型.md)
   - [📝TypeScript](./编程语言/typescript.md)
   - [ Erlang](./编程语言/Erlang.md)
-  - [Clojure](./编程语言/Clojure.md)
   - [🦀Rust](./编程语言/Rust.md)
   - [🐦Swift](./编程语言/Swift.md)
   - [ Kotlin](./编程语言/Kotlin.md)

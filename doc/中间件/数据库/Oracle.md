@@ -105,5 +105,5 @@ select * from (select rownum r ,emp.* from emp) b where b.r >5 and b.r <11
 
 # 索引
 
-# [PLSQL](./PLSQL.md)
+# PLSQL
 

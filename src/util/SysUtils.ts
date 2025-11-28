@@ -24,6 +24,10 @@ export namespace SysUtils {
     document.title = `${config.siteName}`
   }
 
+  export function isDarkMode(): boolean {
+    return localStorage.getItem('system::theme') == 'dark'
+  }
+
   export function enterDarkMode(vm: ComponentPublicInstance ) {
     vm.$store.commit('setIsDarkMode', true);
     document.body.setAttribute('theme', 'dark');

@@ -215,7 +215,6 @@ fetch('/api/data')
 以下文档与AJAX技术或相关概念有关联：
 
 ### JavaScript核心机制相关
-- [/编程语言/JavaScript/BOM.md](/编程语言/JavaScript/BOM.md) - 涉及JS执行机制、事件循环等与AJAX异步特性相关的内容
 - [/编程语言/JavaScript/事件.md](/编程语言/JavaScript/事件.md) - 涉及事件驱动模型，与AJAX的回调机制相关
 - [/编程语言/JavaScript/ES6.md](/编程语言/JavaScript/ES6.md) - 涉及Promise等现代异步处理方式，是AJAX发展的重要演进
 

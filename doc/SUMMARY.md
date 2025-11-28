@@ -102,6 +102,7 @@
           - [🐧Linux性能优化](./操作系统/linux/Linux性能优化.md)
           - [⚙️JVM性能优化](./编程语言/JAVA/JVM/自动内存管理/调优.md)
           - [⚡前端性能优化](./中间件/浏览器/前端性能优化.md)
+          - [数据库优化](./中间件/数据库/数据库优化.md)
           - [⚡MySQL优化](./中间件/数据库/mysql/数据库优化.md)
             - [performance schema](./中间件/数据库/mysql/performance.md)
             - [schema与数据类型优化](./中间件/数据库/mysql/schema与数据类型优化.md)

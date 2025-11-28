@@ -8,9 +8,6 @@ import 'nprogress/nprogress.css'
 import axios from 'axios'
 import createStore from '@/store'
 import { SysUtils } from './util/SysUtils'
-import { registerSW } from 'virtual:pwa-register';
-
-registerSW({ immediate: true });
 
 const app = createApp(App)
 

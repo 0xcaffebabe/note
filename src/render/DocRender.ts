@@ -108,10 +108,10 @@ export default class DocRender {
       }
       return `<p class="img-wrapper"><img loading="lazy" src='${localImageProxy(href)}' width="480" height="240" crossorigin="anonymous"/><p class="img-title">${text}</p></p>`
     }
-    const reg = new RegExp(this.knowledgeLinkList.map(v => v.name).join('|'))
+    //const reg = new RegExp(this.knowledgeLinkList.map(v => v.name).join('|'))
 
     // 自定义文本渲染
-    const oriTextRender = render.text;
+    //const oriTextRender = render.text;
     // render.text = (token): string => {
     //   let text = token.text
     //   // 自定义文本渲染 若发现关键字包含标签 则插入标记

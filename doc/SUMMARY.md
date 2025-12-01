@@ -267,7 +267,6 @@
   - [🌐JavaScript](./编程语言/JavaScript/JavaScript.md)
     - [🏗️DOM](./编程语言/JavaScript/DOM.md)
     - [⚡事件](./编程语言/JavaScript/事件.md)
-    - [⚙️函数](./编程语言/JavaScript/函数.md)
     - [🌐AJAX](./编程语言/JavaScript/AJAX.md)
     - [⚙️ES6](./编程语言/JavaScript/ES6.md)
     - [🌐NodeJS](./编程语言/JavaScript/Node/NodeJs.md)

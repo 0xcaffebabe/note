@@ -346,9 +346,9 @@
       - [🔄复制](./中间件/数据库/redis/复制.md)
       - [🛡️哨兵](./中间件/数据库/redis/哨兵.md)
       - [🔗集群](./中间件/数据库/redis/集群.md)
-    - -文档数据库-
-    - [🔍ElasticSearch](./中间件/数据库/ElasticSearch.md)
-    - [🍃MongoDB](./中间件/数据库/MongoDB.md)
+    - [文档数据库](./中间件/数据库/文档数据库.md)
+      - [🔍ElasticSearch](./中间件/数据库/ElasticSearch.md)
+      - [🍃MongoDB](./中间件/数据库/MongoDB.md)
     - [图数据库](./中间件/数据库/图数据库.md)
       - [Neo4j](./中间件/数据库/Neo4j.md)
   - [🔄消息队列](./中间件/消息队列/消息队列.md)

@@ -270,7 +270,6 @@
     - [🌐AJAX](./编程语言/JavaScript/AJAX.md)
     - [⚙️ES6](./编程语言/JavaScript/ES6.md)
     - [🌐NodeJS](./编程语言/JavaScript/Node/NodeJs.md)
-    - [⚙️模块化](./编程语言/JavaScript/模块化.md)
     - 第三方库/框架
     - [💚Vue](./编程语言/JavaScript/Vue.md)
     - [⚛️React](./编程语言/JavaScript/React.md)

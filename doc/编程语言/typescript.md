@@ -212,7 +212,6 @@ TypeScript 是一套以 **类型系统** 为核心、以 **语言层增强** 为
 ## 关联内容（自动生成）
 
 - [/编程语言/JavaScript/JavaScript.md](/编程语言/JavaScript/JavaScript.md) TypeScript 基于 JavaScript 扩展而来，继承了 JavaScript 的所有基础类型、变量声明、类型转换等核心概念，理解 JavaScript 是掌握 TypeScript 的前提
-- [/编程语言/JavaScript/ES6.md](/编程语言/JavaScript/ES6.md) TypeScript 实现了对 ES6+ 语法的前瞻支持，如 let/const 块级作用域、解构赋值、箭头函数、类、模块化等特性，是 TypeScript 语言增强模型的重要组成部分
 - [/编程语言/JavaScript/React.md](/编程语言/JavaScript/React.md) React 与 TypeScript 结合使用可实现强类型 React 应用开发，TypeScript 提供的类型系统能有效提升 React 组件的可维护性和开发效率，是前端工程化的重要实践
 - [/编译原理/编译原理.md](/编译原理/编译原理.md) TypeScript 的编译器实现涉及词法分析、语法分析、语义分析、代码生成等经典编译原理，理解编译原理有助于深入掌握 TypeScript 类型检查与代码转换机制
 - [/编程语言/JavaScript/Node/NodeJs.md](/编程语言/JavaScript/Node/NodeJs.md) Node.js 作为 TypeScript 的重要运行环境，使 TypeScript 在后端开发中得到广泛应用，体现了 TypeScript 跨平台的工程化能力

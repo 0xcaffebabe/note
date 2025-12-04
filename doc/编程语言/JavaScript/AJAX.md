@@ -216,7 +216,6 @@ fetch('/api/data')
 
 ### JavaScript核心机制相关
 - [/编程语言/JavaScript/事件.md](/编程语言/JavaScript/事件.md) - 涉及事件驱动模型，与AJAX的回调机制相关
-- [/编程语言/JavaScript/ES6.md](/编程语言/JavaScript/ES6.md) - 涉及Promise等现代异步处理方式，是AJAX发展的重要演进
 
 ### 网络协议与安全相关
 - [/计算机网络/http/HTTP.md](/计算机网络/http/HTTP.md) - 涉及HTTP协议、跨域问题等与AJAX通信基础相关的内容

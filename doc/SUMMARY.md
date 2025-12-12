@@ -255,7 +255,6 @@
     - [🔗Dubbo](./编程语言/JAVA/框架/Dubbo.md)
   - [🌐JavaScript](./编程语言/JavaScript/JavaScript.md)
     - [🏗️DOM](./编程语言/JavaScript/DOM.md)
-    - [⚡事件](./编程语言/JavaScript/事件.md)
     - [🌐AJAX](./编程语言/JavaScript/AJAX.md)
     - [🌐NodeJS](./编程语言/JavaScript/Node/NodeJs.md)
     - 第三方库/框架

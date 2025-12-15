@@ -1,97 +1,230 @@
+---
+tags: ['并发编程', '高并发', '性能', 'java', '无锁架构']
+---
+
 # Disruptor
 
-## 设计方案
+## 一、问题背景：为什么需要 Disruptor 这种并发模型
 
-- 环形数组结构
-  - 为了避免垃圾回收，采用数组而非链表。同时，数组对处理器的缓存机制更加友好。
+在高并发系统中，传统的并发队列模型（如 BlockingQueue）普遍面临三个根本性瓶颈：
 
-![利用填充使缓存友好](/assets/20227721135.webp)
+1. **内存分配与 GC 压力**
 
-环形数组也有能充分利用[局部性原理](/计算机系统/程序结构和执行/存储器层次结构.md#局部性), 可以一齐加载通过缓存行加载到CPU高速缓存，数据的遍历访问可以更有效地利用了 CPU 里面的多级[流水线](/计算机系统/程序结构和执行/处理器体系架构.md#流水线的通用原理)
+   * 链表或节点对象频繁创建
+   * 对象生命周期短，触发频繁 GC
 
-- 元素位置定位
-  - 数组长度2^n，通过位运算，加快定位的速度。下标采取递增的形式。不用担心index溢出的问题。index是long类型，即使100万QPS的处理速度，也需要30万年才能用完。
-- 无锁设计
-  - 每个生产者或者消费者线程，会先申请可以操作的元素在数组中的位置，申请到之后，通过CAS在该位置写入或者读取数据。
+2. **锁与上下文切换成本**
 
-**@Contended注解**：可以用于类级别的修饰，同时也可以用于字段级别的修饰，当应用于字段级别时，被注释的字段将和其他字段隔离开来，会被加载在独立的缓存行上，字段级别上，@Contended还支持一个“contention group”属性，同一group的字段们在内存上将是连续（64字节范围内）
+   * 锁竞争导致线程阻塞
+   * 上下文切换破坏 CPU Cache 局部性
 
-如果在类上应用该注解，将使整个字段块的两端都被填充，就跟Disruptor自己定义7个变量一样
+3. **CPU Cache 未被视为一等公民**
 
-使用7个变量的原因在于：前后7个就是因为8个long正好64byte，这样cache line无论在哪个位置被加载，这64个byte在第一次加载到cache line
+   * 并发设计停留在“线程安全”层面
+   * 忽略 Cache Line、False Sharing、流水线等硬件事实
 
-填充cache line的手法是为了防止False Sharing：多线程修改互相独立的变量时，如果这些变量共享同一个缓存行，就会无意中影响彼此的性能
+**Disruptor 的本质目标**：
 
-## 开发
+> 在不引入复杂锁结构的前提下，构建一种**面向 CPU 与内存层次结构的高吞吐、低延迟并发数据通道**。
 
-- 定义Event - 队列中需要处理的元素
-- 定义Event工厂，用于填充队列
+---
 
-disruptor初始化的时候，会调用Event工厂，对ringBuffer进行内存的提前分配 GC产生频率会降低
+## 二、第一性原理：Disruptor 的设计哲学
 
-```java
-public class StringEventFactory implements EventFactory<String> {
-    @Override
-    public String newInstance() {
-        return UUID.randomUUID().toString();
-    }
-}
-```
+Disruptor 并不是“更快的队列”，而是基于以下第一性原理构建的并发体系。
 
-- 定义EventHandler（消费者），处理容器中的元素
+### 1. 数据连续性优先于结构灵活性
 
-```java
-public class StringEventHandler implements EventHandler<String> {
-    @Override
-    public void onEvent(String s, long l, boolean b) throws Exception {
-        System.out.println(Thread.currentThread().getName() + "handle " + s);
-    }
-}
-```
+* 连续内存（数组）比离散内存（链表）更符合 CPU 访问模型
+* 连续访问可最大化 Cache Line 命中率
 
-```java
-StringEventFactory eventFactory = new StringEventFactory();
-int bufferSize = 1024;
+> **设计结论**：
+> 使用固定长度的环形数组（RingBuffer），放弃动态结构带来的灵活性，换取确定性的性能。
 
-Disruptor<String> disruptor =
-        new Disruptor<>(eventFactory, bufferSize, Executors.defaultThreadFactory());
-disruptor.handleEventsWith(new StringEventHandler());
-disruptor.start();
+---
 
-RingBuffer<String> ringBuffer = disruptor.getRingBuffer();
-for (int i = 0; i < 10; i++) {
-    ringBuffer.publishEvent((s, l) -> {});
-}
-```
+### 2. 顺序一致性优先于互斥同步
 
-## 生产者线程模式
+* 并发的本质问题不是“互斥”，而是“顺序”
+* 只要生产与消费在**序号因果关系**上达成一致，就不需要传统意义上的锁
 
-ProducerType有两种模式 Producer.MULTI和Producer.SINGLE
+> **设计结论**：
+> 以 Sequence（递增序号）作为并发协调的核心原语，而不是 Lock。
 
-默认是MULTI，表示在多线程模式下产生sequence
+---
 
-如果确认是单线程生产者，那么可以指定SINGLE，效率会提升
+### 3. CPU Cache 是并发系统的一部分
 
-## 等待策略
+* Cache Line 是 CPU 可见性的最小单位
+* False Sharing 会导致无意义的 Cache 抖动
 
-1，(常用）BlockingWaitStrategy：通过线程阻塞的方式，等待生产者唤醒，被唤醒后，再循环检查依赖的sequence是否已经消费。
+> **设计结论**：
+> 通过 Cache Line Padding（填充）显式避免 False Sharing，使线程间的状态真正独立。
 
-2，BusySpinWaitStrategy：线程一直自旋等待，可能比较耗cpu
+---
 
-3，LiteBlockingWaitStrategy：线程阻塞等待生产者唤醒，与BlockingWaitStrategy相比，区别在signalNeeded.getAndSet,如果两个线程同时访问一个访问waitfor,一个访问signalAll时，可以减少lock加锁次数.
+## 三、核心架构模型：基于序号的并发协作体系
 
-4，LiteTimeoutBlockingWaitStrategy：与LiteBlockingWaitStrategy相比，设置了阻塞时间，超过时间后抛异常。
+### 1. 架构抽象视图
 
-5，PhasedBackoffWaitStrategy：根据时间参数和传入的等待策略来决定使用哪种等待策略
+Disruptor 的核心架构可以抽象为三类角色：
 
-6，TimeoutBlockingWaitStrategy：相对于BlockingWaitStrategy来说，设置了等待时间，超过后抛异常
+* **共享数据结构**：RingBuffer
+* **状态推进器**：Sequence
+* **协作策略**：WaitStrategy
 
-7，（常用）YieldingWaitStrategy：尝试100次，然后Thread.yield()让出cpu
+它们共同构成一个**基于序号因果关系的并发执行模型**。
 
-8，（常用）SleepingWaitStrategy : sleep
+---
 
-## 消费者异常处理
+### 2. RingBuffer：并发系统的共享内存平面
 
-默认：disruptor.setDefaultExceptionHandler()
+#### 本质定义
 
-覆盖：disruptor.handleExceptionFor().with()
+RingBuffer 是一个：
+
+* 固定大小
+* 预分配
+* 可重复使用
+
+的**循环数组**。
+
+#### 架构价值
+
+* 消除运行期内存分配 → 降低 GC
+* 利用内存局部性 → 提高 CPU Cache 命中
+* 通过取模位运算快速定位元素
+
+> 数组长度强制为 2ⁿ，使下标定位可通过位运算完成，而非取模运算。
+
+---
+
+### 3. Sequence：并发因果关系的抽象
+
+#### Sequence 的角色定位
+
+Sequence 不是简单的计数器，而是：
+
+> **描述“事件在并发系统中所处阶段”的状态指针**。
+
+在系统中至少存在三类 Sequence：
+
+* Cursor：生产者已发布的最大序号
+* Producer Sequence：生产进度
+* Consumer Sequence：消费进度
+
+#### 核心思想
+
+* 所有线程只关心“我能否推进到某个序号”
+* 并发冲突被转化为**序号可见性判断**
+
+---
+
+### 4. 无锁的本质：CAS + 有界推进
+
+Disruptor 并非完全“无同步”，而是：
+
+* 使用 CAS 保证序号推进的原子性
+* 使用 RingBuffer 的容量约束避免无限制写入
+
+> **本质结论**：
+> Disruptor 将并发控制从“数据互斥”转化为“进度协调”。
+
+---
+
+## 四、Cache Line 与 False Sharing 治理
+
+### 1. 问题本质
+
+当多个线程频繁修改位于同一 Cache Line 的不同变量时，会产生 False Sharing，导致性能急剧下降。
+
+### 2. Disruptor 的解决方案
+
+* 使用 Cache Line Padding
+* 使用 @Contended 或显式 long 填充字段
+
+> 通过人为扩大变量间距，使每个热点状态独占一个 Cache Line。
+
+这不是 Java 技巧，而是**并发系统必须面对的硬件现实**。
+
+---
+
+## 五、生产者模型：并发写入的架构选择
+
+### ProducerType 的架构含义
+
+| 模式     | 并发假设  | 架构代价   | 适用场景   |
+| ------ | ----- | ------ | ------ |
+| SINGLE | 单线程写入 | 最低     | 明确单写场景 |
+| MULTI  | 多线程写入 | CAS 竞争 | 多生产者系统 |
+
+> 这是一个典型的“用约束换性能”的架构决策点。
+
+---
+
+## 六、WaitStrategy：CPU 与延迟的博弈策略
+
+WaitStrategy 并非实现细节，而是**系统调度哲学**。
+
+### 抽象维度
+
+WaitStrategy 在以下维度上做权衡：
+
+* CPU 占用率
+* 响应延迟
+* 线程切换成本
+
+### 常见策略分类
+
+* **自旋型**：极低延迟，高 CPU 占用
+* **让步型**：折中方案
+* **阻塞型**：低 CPU，占用高延迟
+
+> 选择 WaitStrategy，本质上是在选择系统的性能性格。
+
+---
+
+## 七、异常处理：并发系统的稳定性边界
+
+### 异常的架构影响
+
+* 异常并不只是业务问题
+* 可能导致 Sequence 停滞，进而引发系统级阻塞
+
+### Disruptor 的处理模型
+
+* 全局默认异常处理器
+* 针对特定消费者的定制异常策略
+
+> 并发系统必须显式定义“异常是否中断数据流”。
+
+---
+
+## 八、适用性与选型边界
+
+### 适合场景
+
+* 极低延迟要求
+* 高吞吐、内存可控
+* 事件处理逻辑相对简单
+
+### 不适合场景
+
+* IO 密集型任务
+* 复杂阻塞逻辑
+* 动态消费者拓扑
+
+## 关联内容（自动生成）
+- [/编程语言/JAVA/JAVA并发编程/JAVA并发编程.md](/编程语言/JAVA/JAVA并发编程/JAVA并发编程.md) Java并发编程涉及锁、线程同步等概念，与Disruptor的无锁设计形成对比
+- [/编程语言/并发模型.md](/编程语言/并发模型.md) 探讨了各种并发模型，与Disruptor的基于序号的并发协作体系密切相关
+- [/编程语言/JAVA/JAVA并发编程/基础概念.md](/编程语言/JAVA/JAVA并发编程/基础概念.md) Java并发编程基础概念中的锁和同步机制，与Disruptor的无锁设计思想相关
+- [/计算机系统/程序结构和执行/存储器层次结构.md](/计算机系统/程序结构和执行/存储器层次结构.md) 详细解释了CPU Cache、Cache Line及伪共享概念，这是理解Disruptor设计原理的重要硬件基础
+- [/操作系统/死锁.md](/操作系统/死锁.md) 死锁问题与并发编程密切相关，Disruptor的无锁设计可避免传统锁导致的死锁问题
+- [/编程语言/JAVA/JAVA并发编程/并发工具类.md](/编程语言/JAVA/JAVA并发编程/并发工具类.md) 介绍了Java并发包中的各种工具类，与Disruptor作为高性能并发工具对比
+- [/软件工程/架构/系统设计/高并发.md](/软件工程/架构/系统设计/高并发.md) 高并发系统设计与Disruptor的应用场景密切相关，Disruptor是实现高并发的底层技术之一
+- [/中间件/消息队列/消息队列.md](/中间件/消息队列/消息队列.md) 消息队列与Disruptor在高并发数据传输方面有相似应用场景，可对比两者优缺点
+- [/计算机网络/网络编程.md](/计算机网络/网络编程.md) 网络编程是高并发场景的重要组成部分，Disruptor常用于处理网络请求的高性能场景
+- [/计算机网络/IO模型.md](/计算机网络/IO模型.md) I/O模型涉及高并发系统中的I/O处理模式，与Disruptor的高性能数据通道理念相关
+- [/操作系统/进程与线程.md](/操作系统/进程与线程.md) 涉及进程与线程的基本概念，是理解Disruptor并发模型的基础
+- [/中间件/数据库/数据库系统/事务管理/事务.md](/中间件/数据库/数据库系统/事务管理/事务.md) 数据库事务的并发控制与Disruptor的并发协调机制有相似之处，都需处理并发一致性问题
+- [/计算机系统/程序结构和执行/优化程序性能.md](/计算机系统/程序结构和执行/优化程序性能.md) 程序性能优化与Disruptor的高性能设计目标一致，特别是并行性优化部分

@@ -1,416 +1,248 @@
+---
+tags: ['编程语言', '类型系统', '数值模型', '语言陷阱', '工程化']
+---
+
 # JavaScript
 
-## 类型
+## 一、JavaScript 的第一性原理
 
-除了 Object 类型是引用类型，其他类型都是原始类型
+### 1.1 语言诞生背景与核心约束
 
-原始类型的数据值都是直接保存在“栈”中的，引用类型的值是存放在“堆”中的
+JavaScript 并非为“构建大型系统”而生，而是为了解决浏览器中的三个现实约束：
 
-栈主要管运行，堆主要管存储
+1. **环境不可信**：运行在用户浏览器，代码随时可能中断
+2. **开发者水平参差**：需要极低的入门门槛
+3. **交互驱动**：以事件为核心，而非批处理计算
 
-### Undefined 
+由此决定了 JavaScript 的核心设计取向：
 
-该类型表示未定义，它的类型只有一个值，就是 undefined，由于undefined是一个全局变量，并非是一个关键字, 所以部分编程规范要求用 void 0 代替 undefined
+> **容错优先于严谨，可运行优先于完全正确**
 
-```js
-undefined = 2
+这也是理解 JS 所有“怪异行为”的总钥匙。
+
+---
+
+## 二、值模型（Value Model）
+
+### 2.1 值语义与引用语义
+
+JavaScript 从根本上区分两类值：
+
+* **原始类型（Primitive）**：值语义
+* **对象类型（Object）**：引用语义
+
+这并非内存结构的区分，而是**语义层面的复制规则**：
+
+* 值语义：复制即拷贝值本身
+* 引用语义：复制的是“访问路径”
+
+> “栈 / 堆”只是实现细节，不是语言语义
+
+### 2.2 原始类型体系
+
+JavaScript 的原始类型包括：
+
+* Undefined：未绑定值的占位符
+* Null：有意为空的语义标记
+* Boolean：逻辑判断的最小闭包
+* String：UTF‑16 编码的有序字符序列
+* Number：IEEE‑754 双精度浮点数
+* Symbol：用于构建**非字符串命名空间**的唯一标识
+
+#### Number 的工程含义
+
+* JS 没有整数类型
+* 所有数值均为浮点数
+* 精度边界是语言的**内在限制，而非实现缺陷**
+
+因此：
+
+> JavaScript 不适合做高精度数值计算，除非引入专用抽象（BigInt / Decimal）
+
+---
+
+## 三、类型系统与转换规则
+
+### 3.1 动态类型的本质
+
+JavaScript 是**运行期绑定类型**的语言：
+
+* 变量无类型
+* 值才有类型
+
+这带来的不是“灵活”，而是：
+
+> **类型错误被延迟到运行期暴露**
+
+### 3.2 ToPrimitive 抽象操作
+
+对象参与运算前，必须被转换为原始值：
+
+1. 调用 valueOf
+2. 再调用 toString
+
+这是 JavaScript 所有隐式转换的底层机制。
+
+### 3.3 相等性模型
+
+`==` 的存在不是偶然，而是为了：
+
+* 降低新手心智负担
+* 允许跨类型“勉强可用”的比较
+
+但工程实践证明：
+
+> 其不可预测性远大于便利性
+
+因此现代工程规范中：
+
+* **禁止 `==`**
+* **统一使用 `===`**
+
+---
+
+## 四、执行模型与控制流
+
+### 4.1 作用域与执行上下文
+
+JavaScript 的执行以**函数调用**为边界：
+
+* 每次调用都会创建新的执行上下文
+* 上下文通过作用域链访问外部变量
+
+### 4.2 控制流语句的设计哲学
+
+if / for / while 并不特殊，它们只是：
+
+> **条件驱动的执行路径选择器**
+
+理解这一点，比记住语法形式更重要。
+
+---
+
+## 五、语法容错机制（ASI）
+
+### 5.1 自动分号插入的设计动机
+
+ASI 的目标只有一个：
+
+> **让不完整的代码尽可能继续执行**
+
+代价是：
+
+* 语义偶尔违背直觉
+* 可读性下降
+
+### 5.2 no LineTerminator here 的本质
+
+这些规则并非“怪癖”，而是为了保证：
+
+* 语法树仍然可被唯一解析
+
+工程实践结论：
+
+> **始终显式写分号，避免依赖 ASI**
+
+---
+
+## 六、对象系统与内建抽象
+
+### 6.1 对象的本质
+
+JavaScript 的对象不是“类的实例”，而是：
+
+> **一组可动态扩展的键值映射**
+
+原型链只是对象复用的一种机制。
+
+### 6.2 函数是一等对象
+
+函数的本质不是“代码块”，而是：
+
+* 可调用
+* 可传递
+* 可组合的对象
+
+这使得：
+
+* 回调
+* 高阶函数
+* 控制反转
+
+成为语言的自然能力。
+
+---
+
+## 七、工程模型示例：动画系统
+
+动画的抽象模型是：
+
+```
+时间 → 状态变化 → 渲染
 ```
 
-在ES5之前的时候，undefined是可以被赋值的。在现代浏览器当中已经把undefined设置为一个non-configurable, non-writable属性的值了
+setInterval 只是其中一种时间源，并非动画本身。
 
-### Null
+现代实践中，应优先使用：
 
-类型也只有一个值，就是 null，它的语义表示空值
+* requestAnimationFrame
 
-### Boolean
-### String
+以对齐浏览器的渲染节奏。
 
-用于表示文本数据。String 有最大长度是 2^53 - 1，字符串的操作 charAt、charCodeAt、length 等方法针对的都是 UTF16 编码
+---
 
-### Number
+## 八、宿主环境与边界意识
 
-有 18437736874454810627(即 2^64-2^53+3) 个值
+### 8.1 ECMAScript vs 浏览器 API
 
-几个例外情况：
+必须明确区分：
 
-1. NaN，占用了 9007199254740990，这原本是符合 IEEE 规则的数字
-2. Infinity，无穷大；
-3. -Infinity，负无穷大
+* 语言标准（ECMAScript）
+* 宿主能力（DOM / Window / Storage）
 
-有效的整数范围是 -0x1fffffffffffff 至 0x1fffffffffffff，所以 Number 无法精确表示此范围外的整数
+混淆两者会导致错误的技术判断。
 
-对于浮点数的比较要注意浮点数的特点：
+### 8.2 本地存储的工程边界
 
-```js
-// 误差是否在精度值之内
-Math.abs(0.1 + 0.2 - 0.3) <= Number.EPSILON
-```
+localStorage / sessionStorage：
 
-### Symbol
+* 不是数据库
+* 没有事务
+* 不保证安全性
 
-是一切非字符串的对象 key 的集合
+> 只能用于**低价值、可丢失的数据缓存**
 
-```js
-o[Symbol.iterator] = function() {
-  var v = 0 
-  return { 
-    next: function() {
-       return { value: v++, done: v > 10 } 
-    } 
-  } 
-};
-```
+---
 
-### Object
+## 九、语言演进与现代实践
 
-## 变量
+JavaScript 的发展史是一部**兼容性妥协史**。
 
-```javascript
-var a = 5;
-```
+因此现代工程应：
 
-- typeof
+* 使用 let / const
+* 禁用 eval
+* 引入类型系统（TypeScript）
+* 借助工具弥补语言缺陷
 
-### 类型转换
+---
 
-JavaScript 中的“ == ”运算，因为试图实现跨类型的比较，它的规则复杂到几乎没人可以记住，某些规范强制要求使用 ===
+## 十、总结：如何正确"使用"JavaScript
 
-类型不同的变量比较时==运算只有三条规则：
+> 不要把 JavaScript 当作"设计严谨的语言"，
+> 而要把它当作：
+>
+> **一门需要工程纪律约束的灵活工具**
 
-- undefined 与 null 相等；
-- 字符串和 bool 都转为数字再比较；
-- 对象转换成 primitive 类型再比较。
+理解其原理，才能驾驭其不完美。
 
-#### 字符串转数值
+## 关联内容（自动生成）
 
-parseInt默认只支持 16 进制前缀“0x”，而且会忽略非数字字符，也不支持科学计数法当传入第二个参数，可以解析：
-
-```js
-parseInt("1e3", 30)
-```
-
-而 parseFloat 则直接把原字符串作为十进制来解析，它不会引入任何的其他进制
-
-#### 装拆箱
-
-```js
-// 使用内置的 Object 函数，我们可以在 JavaScript 代码中显式调用装箱能力
-Object(1)
-```
-
-拆箱转换会尝试调用 valueOf 和 toString 来获得拆箱后的基本类型。如果 valueOf 和 toString 都不存在，或者没有返回基本类型，则会产生类型错误 TypeError
-
-### 运算符
-
-- 一元运算符
-
-  ```javascript
-  ++ -- + -
-  ```
-
-- 算术运算符
-
-  ```javascript
-  + - * / % ...
-  ```
-
-- 赋值运算符
-
-  ```javascript
-  = += -+....
-  ```
-
-- 比较运算符
-
-  ```javascript
-  > < >= <= == ===
-  ```
-
-- 逻辑运算符
-
-  ```javascript
-  && || !
-  ```
-
-  - 其他对象转boolean
-
-    - number：0或NaN为假，其他为真
-    - string：除了空字符串("")，其他都是true
-    - null&undefined:都是false
-    - 对象：所有对象都为true
-
-- 三元运算符
-
-## JS特殊语法
-
-### 分号自动插入
-
-JS的语句若没有分号，会按照以下规则插入分号：
-
-1. 要有换行符，且下一个符号是不符合语法的，那么就尝试插入分号。
-2. 有换行符，且语法中规定此处不能有换行符，那么就自动插入分号。
-3. 源代码结束处，不能形成完整的脚本或者模块结构，那么就自动插入分号
-
-#### no LineTerminator here 规则
-
-- 带标签的continue语句,不能在continue后插入换行
-- 带标签的break语句,不能在break后插入换行
-- return后不能插入换行
-- 后自增、后自减运算符前不能插入换行
-- throw和Exception之间不能插入换行
-- 凡是async关键字,后面都不能插入换行
-- 箭头函数的箭头前,也不能插入换行
-- yield之后,不能插入换行
-
-#### 一些不加分号容易出错的情况
-
-1. 以括号开头
-
-```js
-(function(a){
-   console.log(a);
-})()/*这里没有被自动插入分号*/
-(function(a){
-  console.log(a);
-})()
-```
-
-2. 以数组开头
-
-```js
-var a = [[]]/*这里没有被自动插入分号*/
-[3, 2, 1, 0].forEach(e => console.log(e))
-```
-
-3. 以正则表达式开头
-
-```js
-var x = 1, g = {test:()=>0}, b = 1/*这里没有被自动插入分号*/
-/(a)/g.test("abc")
-console.log(RegExp.$1)
-```
-
-4. 以Template开头
-
-```js
-var f = function(){
-  return "";
-}
-var g = f/*这里没有被自动插入分号*/
-`Template`.match(/(a)/);
-console.log(RegExp.$1)
-```
-
-### 指令序言
-
-```js
-"no lint";
-"use strict";
-function doSth(){
-    //......
-}
-//......
-```
-
-## 流程控制语句
-
-- if..else...
-- switch
-- while
-- do...while
-- for
-
-## 基本对象
-
-### Function
-
-```javascript
-function f(x){
-    ...
-}
-
-var f = function(){
-    ...
-}
-```
-
-### Array
-
-- 创建
-
-```javascript
-new Array(元素列表);
-new Array(长度);
-[1,2,3,4];
-```
-
-- 特点
-
-  - 元素类型可变
-  - 长度可变
-
-- 方法
-
-  - join：拼接成字符串
-  - push
-
-### Date
-
-- [常用方法](https://www.w3school.com.cn/jsref/jsref_obj_date.asp)
-
-### Math
-
-- [常用方法](https://www.w3school.com.cn/jsref/jsref_obj_math.asp)
-
-### Gloal
-
-- encodeURI
-- decodeURI
-- encodeURIComponent:编码范围更广
-
-- parseInt
-
-- isNaN
-
-- eval
-
-## 立即执行函数
-
-```javascript
-(
-    function(){
-        //...
-    }
-)()
-```
-
-### window
-
-### 方法
-
-与弹出框有关的方法：
-
-- alert() 显示带有一段消息和一个确认按钮的警告框。
-- confirm() 显示带有一段消息以及确认按钮和取消按钮的对话框。
-
-  - 如果用户点击确定按钮，则方法返回true
-  - 如果用户点击取消按钮，则方法返回false
-
-- prompt() 显示可提示用户输入的对话框。
-
-  - 返回值：获取用户输入的值
-
-与打开关闭有关的方法：
-
-- close() 关闭浏览器窗口。
-
-  - 谁调用我 ，我关谁
-
-- open() 打开一个新的浏览器窗口
-
-  - 返回新的Window对象
-
-## 动画函数封装
-
-> 核心原理：通过定时器 setInterval() 不断移动盒子位置。
-
-- 利用 JS 是一门动态语言，可以很方便的给当前对象添加属性来将定时器添加到对象中
-
-### 缓动效果
-
-- 核心算法： (目标值 - 现在的位置) / 10 做为每次移动的距离步长
-
-### 动函数添加回调函数
-
-回调函数原理：函数可以作为一个参数。将这个函数作为参数传到另一个函数里面，当那个函数执行完之后，再执行传进去的这个函数，这个过程就叫做回调
-
-### 完整代码
-
-```javascript
-function animate(obj,target,callback){
-    clearInterval(obj.timer);
-    obj.timer = setInterval(() => {
-        var step = Math.ceil((target - obj.offsetLeft)/10);
-        if (obj.offsetLeft >= target){
-            clearInterval(obj.timer);
-            callback();
-        }
-        obj.style.left = obj.offsetLeft + step + 'px';
-    }, 15);
-}
-```
-
-## JSON
-
-### 语法
-
-- 数据在名称/值对中：json数据是由键值对构成的
-- 数据由逗号分隔：多个键值对由逗号分隔
-- 花括号保存对象：使用{}定义json 格式
-- 方括号保存数组：[]
-
-### 获取数据
-
-- json对象.键名
-- json对象["键名"]
-- 数组对象[索引]
-
-### 转换
-
-```javascript
-JSON.stringify({username:'name'}) // to text
-JSON.parse(str) // to obj
-```
-
-### 后端解析
-
-- 常见的解析器：Jsonlib，Gson，fastjson，jackson
-
-## 移动端常用插件
-
-- Swiper 插件：轮播图插件
-- lsuperslide：常用特效插件
-- l iscroll：平滑滚动
-- zy.media.js：移动端视频插件
-
-## 移动端常用框架
-
-- bootstrap
-
-## 本地存储
-
-### 特性
-
-1、数据存储在用户浏览器中
-
-2、设置、读取方便、甚至页面刷新不丢失数据
-
-3、容量较大，sessionStorage约5M、localStorage约20M
-
-4、只能存储字符串，可以将对象JSON.stringify() 编码后
-
-### sessionStorage
-
-1、生命周期为关闭浏览器窗口
-
-2、在同一个窗口(页面)下数据可以共享
-
-3、以键值对的形式存储使用
-
-```js
-// 存储
-sessionStorage.setItem(key, value);
-// 获取
-sessionStorage.getItem(key);
-// 删除
-sessionStorage.removeItem(key);
-// 清除所有
-sessionStorage.clear();
-```
-
-### localStorage
-
-- 生命周期永久，除非手动删除
-- 多窗口共享
-
-使用方式同sessionStorage
+- [/编程语言/JavaScript/Vue.md](/编程语言/JavaScript/Vue.md) Vue 作为基于 JavaScript 的前端框架，体现了声明式、响应式、组件化等现代前端架构思想，是对 JavaScript 语言能力的高层次封装和工程化实践
+- [/编程语言/JavaScript/Node/NodeJs.md](/编程语言/JavaScript/Node/NodeJs.md) Node.js 基于 JavaScript 实现了服务端运行环境，通过事件驱动和非阻塞 I/O 模型扩展了 JavaScript 的应用场景，展现了 JavaScript 在服务端的工程化潜力
+- [/编程语言/typescript.md](/编程语言/typescript.md) TypeScript 为 JavaScript 提供了可选的静态类型系统，在不改变 JavaScript 运行时的前提下提升了代码的可维护性和工程化能力，是解决 JavaScript 动态类型缺陷的有效方案
+- [/中间件/浏览器/V8.md](/中间件/浏览器/V8.md) V8 是 JavaScript 的高性能引擎实现，理解其对象内存布局、运行时、字节码执行和优化机制有助于更好掌握 JavaScript 的性能特点和优化策略
+- [/编译原理/编译原理.md](/编译原理/编译原理.md) JavaScript 的解释执行和即时编译（JIT）机制体现了经典的编译原理，包括词法分析、语法分析、字节码生成、优化编译等阶段
+- [/中间件/浏览器/浏览器.md](/中间件/浏览器/浏览器.md) 浏览器是 JavaScript 的主要宿主环境之一，提供了 DOM、BOM 等 Web API，理解浏览器工作机制有助于更好地使用 JavaScript 进行前端开发
+- [/软件工程/架构/Web前端/前端工程化.md](/软件工程/架构/Web前端/前端工程化.md) JavaScript 项目的工程化实践包括模块化、构建、测试、部署等环节，是实现大规模项目可维护性的重要保障
+- [/软件工程/架构/Web前端/Web前端.md](/软件工程/架构/Web前端/Web前端.md) JavaScript 是现代前端开发的核心技术之一，与 HTML、CSS 共同构成前端技术栈，理解前端架构有助于全面掌握前端开发生态

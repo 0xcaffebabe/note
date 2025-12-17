@@ -1,241 +1,254 @@
+---
+tags: ['编程语言', '编译原理', '执行与运行时', '计算模型', '类型系统']
+---
 
 # WebAssembly
 
-- 一种基于堆栈式虚拟机的二进制指令集
+## 一、WebAssembly 的本质定位
 
-对于可以应用在诸如 i386、X86-64 等实际存在的物理系统架构上的指令集，我们一般称之为 ISA（Instruction Set Architecture，指令集架构）。而对另外一种使用在虚拟架构体系中的指令集，我们通常称之为 V-ISA，也就是 Virtual（虚拟）的 ISA，JVM 跟 WASM 都属于后者
+WebAssembly（Wasm）并不是一门编程语言，而是一种**面向多宿主环境的虚拟指令集架构（Virtual ISA, V-ISA）**。
 
-## 模块组成
+* 对应物理世界中的 ISA（如 x86 / ARM），Wasm 作用于**虚拟执行体系**
+* JVM 与 Wasm 同属 V-ISA，但设计目标不同：
 
-每一个不同的 Section 都描述了关于这个 Wasm 模块的一部分信息。而模块内的所有 Section 放在一起，便描述了整个模块在二进制层面的组成结构
+  * JVM 面向对象与托管运行时
+  * Wasm 面向**可验证、安全、可移植的底层执行模型**
 
-### Type Section
+**第一性原理**：
 
-存放了 Wasm 模块使用到的所有函数类型（签名）
+> Wasm 的核心目标不是"替代 JavaScript"，而是提供一种 *跨语言、跨平台、可沙箱化执行的最小通用计算抽象*。
 
-### Start Section
+---
 
-通过这个 Section，我们可以为模块指定在其初始化过程完成后，需要首先被宿主环境执行的函数
+## 二、整体系统分层模型（认知骨架）
 
-### Global Section
-
-主要存放了整个模块中使用到的全局数据（变量）信息
-
-### Custom Section
-
-主要用来存放一些与模块本身主体结构无关的数据，比如调试信息、source-map 信息等等
-
-### Import Section 和 Export Section
-
-Import 定义了所有从外界宿主环境导入到模块对象中的资源，这些资源将会在模块的内部被使用，能够在 Wasm 模块之间，以及 Wasm 模块与宿主环境之间共享代码和数据
-
-Export 可以将一些资源导出到虚拟机所在的宿主环境中
-
-### Function Section 和 Code Section
-
-Function Section 存放了模块内每个函数对应的函数类型，即具体的函数与类型对应关系；而在 Code Section 中存放的则是每个函数的具体定义，也就是实现部分
-
-### Table Section 和 Element Section
-
-目前 Table Section 的作用并不大，你只需要知道我们可以在其对应的 Table 结构中存放类型为 “anyfunc” 的函数指针，并且还可以通过指令 “call_indirect” 来调用这些函数指针所指向的函数
-
-通过 Element Section，我们便可以为 Table Section 所描述的 Table 对象填充实际的数据
-
-### Memory Section 和 Data Section
-
-Memory Section 可以描述一个 Wasm 模块内所使用的线性内存段的基本情况，比如这段内存的初始大小、以及最大可用大小等等
-
-使用 Data Section 为线性内存段填充实际的二进制数据
-
-### 魔数和版本号
-
-开头的前四个字节分别为 “（高地址）0x6d 0x73 0x61 0x0（低地址）”
-
-四个字节对应的 ASCII 可见字符为 “asm”
-
-接下来的四个字节，用来表示当前 Wasm 二进制文件所使用的 Wasm 标准版本号，版本号1即为 0x0 0x0 0x0 0x1
-
-## 数字类型
-
-Wasm 将其模块内部所使用到的数字值分为以下三种类型：
-
-1. uintN（N = 8 / 16 / 32） 表示了一个占用 N 个 bit 的无符号整数。该整数由 N/8 个字节组成，并以小端模式进行存储
-2. varuintN（N = 1 / 7 / 32） 使用 Unsigned LEB-128 编码，具有 N 个 bit 长度的可变长无符号整数
-3. varintN（N = 7 / 32 / 64） 表示的是使用 Signed LEB-128 编码，具有 N 个 bit 长度的可变长有符号整数
-
-## WAT
-
-- WebAssembly 可读文本格式
-
-一种与 Wasm 字节码格式完全等价，可用于编码 Wasm 模块及其相关定义的文本格式
-
-```wasm
-(func $factorial (; 0 ;) (param $0 i32) (result i32)
- (local $1 i32)
- (local $2 i32)
- (block $label$0
-  (br_if $label$0
-   (i32.eqz
-    (get_local $0)
-   )
-  )
-  (set_local $2
-   (i32.const 1)
-  )
-  (loop $label$1
-   (set_local $2
-    (i32.mul
-     (get_local $0)
-     (get_local $2)
-    )
-   )
-   (set_local $0
-    (tee_local $1
-     (i32.add
-      (get_local $0)
-      (i32.const -1)
-     )
-    )
-   )
-   (br_if $label$1
-    (get_local $1)
-   )
-  )
-  (return
-   (get_local $2)
-  )
- )
- (i32.const 1)
-)
+```
+┌────────────────────────────┐
+│        应用 / 语言层        │  C / C++ / Rust / Go / …
+├────────────────────────────┤
+│        编译与 IR 层         │  LLVM IR → WASM Binary
+├────────────────────────────┤
+│     WebAssembly 指令集      │  Stack VM / Binary Format
+├────────────────────────────┤
+│   系统抽象层（WASI）        │  Capability-based API
+├────────────────────────────┤
+│        Wasm 运行时          │  Wasmtime / Wasmer / WAMR
+├────────────────────────────┤
+│        宿主环境             │  Browser / OS / Cloud / Edge
+└────────────────────────────┘
 ```
 
-### S表达式
+该分层模型体现了 Wasm 的核心设计思想：**强边界、弱假设、最小抽象**。
 
-求值会从最内层的括号表达式开始，类似于Lisp
+---
 
-### Flat-WAT
+## 三、Wasm 二进制模块的架构模型
 
-平铺即通过“嵌套”与“小括号”的方式指定了各个表达式的求值顺序
+Wasm 模块是一种**自描述、可验证、与平台无关的二进制单元**。其内部结构由一组 Section 组成，但 Section 的本质并非“文件格式”，而是**系统能力的声明集合**。
 
-```wasm
+### 3.1 模块能力分类模型
 
-(func $factorial (param $0 i32) (result i32)
- block $label$0
-  local.get $0
-  i32.eqz
-  br_if $label$0
-  local.get $0
-  i32.const 255
-  i32.add
-  i32.const 255
-  i32.and
-  call $factorial
-  local.get $0
-  i32.mul
-  i32.const 255
-  i32.and
-  return
- end
- i32.const 1)
-```
+| 能力维度 | 对应 Section             | 设计意图      |
+| ---- | ---------------------- | --------- |
+| 类型系统 | Type                   | 行为签名的前置声明 |
+| 行为映射 | Function / Code        | 类型与实现的分离  |
+| 状态模型 | Global / Memory / Data | 显式状态与线性内存 |
+| 动态分发 | Table / Element        | 间接调用与多态   |
+| 生命周期 | Start                  | 模块初始化钩子   |
+| 边界接口 | Import / Export        | 能力与依赖显式化  |
+| 元数据  | Custom                 | 调试与工具支持   |
 
-### 模块结构
+### 3.2 魔数与版本
 
-```wasm
+* 魔数：`0x00 0x61 0x73 0x6d`（"\0asm"）
+* 版本号：MVP 为 `0x01`
 
-(module
- (table 0 anyfunc)
- (memory $0 1)
- (export "memory" (memory $0))
- (export "factorial" (func $factorial))
- ...
-)
-```
+**意义**：确保模块在加载前即可被快速识别与验证。
 
-### 相关工具
+---
 
-- wasm2wat：该工具主要用于将指定文件内的 Wasm 二进制代码转译为对应的 WAT 可读文本代码
-- wat2wasm：该工具的作用恰好与 wasm2wat 相反。它可以将输入文件内的 WAT 可读文本代码转译为对应的 Wasm 二进制代码
-- wat-desugar：该工具主要用于将输入文件内的，基于 “S- 表达式” 形式表达的 WAT 可读文本代码“拍平”成对应的 Flat-WAT 代码
+## 四、执行模型：栈式虚拟机与指令设计
 
-## WASI
+Wasm 采用**栈式虚拟机模型**，其设计权衡包括：
 
-- 这个抽象层允许了在 Web 场景之外使用 Wasm
+* 指令紧凑，便于二进制压缩与网络传输
+* 易于静态验证（无隐式寄存器依赖）
+* 降低后端 JIT / AOT 的复杂度
 
-![20221129103749](/assets/20221129103749.webp)
+### 4.1 数值与编码模型
 
-WASI 在 Wasm 字节码与虚拟机之间，增加了一层“系统调用抽象层”提供了可移植性
+* 固定宽度整数：`uintN`
+* 变长整数：`varuintN / varintN`
+* 统一使用 LEB128 编码
 
-另外一点，基础设施，即虚拟机在实现WASI标准时，便会采用 “Capability-based Security” 的方式来控制每一个 Wasm 模块实例所拥有的 capability
+**设计哲学**：以编码复杂度换取传输与存储效率。
 
-## 浏览器加载
+---
 
-能够使用 Wasm 来实现的功能，现阶段都可以通过 JavaScript 来实现
+## 五、WAT：可读的等价表示
 
-- fetch 将被使用到的 Wasm 二进制模块，从网络上的某个位置通过 HTTP 请求的方式，加载到浏览器中
-- compile 将从远程位置获取到的 Wasm 模块二进制代码，编译为可执行的平台相关代码和数据结构
-- instantiate 浏览器引擎开始执行在上一步中生成的代码
-- call 可以直接通过上一阶段生成的动态 Wasm 模块对象，来调用从 Wasm 模块内导出的方法
+WebAssembly Text Format（WAT）是 Wasm 二进制的**语义等价文本表示**，主要用于：
 
-对应的 js 方法：
+* 人类阅读与调试
+* 工具链中间表示
 
-```js
-bufferSource = new Int8Array([...]); 
-let module = new WebAssembly.Module(bufferSource);
+### 5.1 S-表达式与 Flat-WAT
 
-let memory = new WebAssembly.Memory({
-  initial:10, 
-  maximum:100,
-});
+* S-表达式：强调嵌套求值顺序（类似 Lisp）
+* Flat-WAT：显式指令序列，贴近 VM 执行模型
 
-WebAssembly.compile(bufferSource)
+### 5.2 工具链
 
-WebAssembly.instantiate(bufferSource, importObject)
-```
+* `wasm2wat`
+* `wat2wasm`
+* `wat-desugar`
 
-### Web API
+---
 
-- 流式实例化 WebAssembly.instantiateStreaming(source, importObject)
-- 流式编译 WebAssembly.compileStreaming(source)
+## 六、运行时模型与内存体系
 
-### 运行时
+### 6.1 实例化语义
 
-- 每一个经过实例化的 Wasm 模块对象，都会在运行时维护自己唯一的“调用栈”
-- 每一个实例化的 Wasm 模块对象都有着自己的（在 MVP 下只能有一个）线性内存段
+* 每个 Wasm 模块实例：
 
-![20221129114714](/assets/20221129114714.webp)
+  * 拥有独立调用栈
+  * 拥有私有线性内存（MVP 阶段仅 1 个）
 
-### 内存模型
+### 6.2 线性内存模型
 
-在 Web 浏览器这个宿主环境中，一个内存实例通常可以由 JavaScript 中的 ArrayBuffer 类型来进行表示
+* 内存以 Page（64KB）为单位增长
+* 在浏览器中通常映射为 `ArrayBuffer`
 
-![20221129115134](/assets/20221129115134.webp)
+**核心思想**：
 
-### 局限
+> 无指针共享、无隐式对象、无宿主内存污染。
 
-- 想要在Wasm 二进制模块内引用外部 DOM，目前需要通过封装导入对象来实现
-- 复杂数据类型需要进行编解码
+---
 
-## 应用
+## 七、WASI：系统调用的抽象层
 
-- 作为一种中间表示的字节码格式
-- 在浏览器中适合计算密集型的操作
+WASI（WebAssembly System Interface）是 Wasm 在 Web 之外可运行的关键。
 
-## 纳米进程
+### 7.1 设计目标
 
-每一个模块实例都拥有着自己独立的数据资源及可用权限，因此我们可以称每一个实例化的模块为一个独立的 “nanoprocess”
+* 与操作系统解耦
+* 与具体平台无关
+* 明确能力边界
 
-为了避免依赖的第三方模块是恶意模块，每个模块拥有的权限，都是来源于其调用者，即全部来自于最上层的调用者
+### 7.2 Capability-based Security
 
-![20221130112341](/assets/20221130112341.webp)
+* 模块默认无权限
+* 权限通过 Import 显式授予
+* 权限不可隐式扩散
 
-## 运行时
+**对比传统 OS**：
 
-- wasmtime 可以被独立作为 CLI 命令行工具进行使用，或者是被嵌入到其他的应用程序或系统中 可以被应用到IoT 与云原生领域
-- WAMR 基于 C 语言开发，更倾向于被应用在诸如 IoT、嵌入式芯片等对功耗和硬件资源要求较为严格的 Wasm 场景中
-- Wasmer 提供了对多达数十种编程语言的 Wasm 运行时绑定支持
-- WasmEdge 
+* fd / socket ≈ capability handle
 
-## 编译
+---
 
-利用 LLVM 的能力，可以将许多语言的源代码先转为 LLVM 的中间产物，通过LLVM的llc 编译为 WASM
+## 八、纳米进程（Nanoprocess）模型
+
+在 Wasm 语义下：
+
+> **模块实例 = 最小隔离执行单元**
+
+特征：
+
+* 私有内存
+* 私有栈
+* 显式能力集
+* 无全局共享状态
+
+权限规则：
+
+* 所有 capability 均来自调用者
+* 不存在“越权系统调用”
+
+该模型天然适配：
+
+* Serverless
+* Edge Computing
+* 多租户环境
+
+---
+
+## 九、宿主环境与加载模型（以浏览器为例）
+
+### 9.1 生命周期
+
+1. fetch：获取二进制
+2. compile：编译为平台代码
+3. instantiate：绑定导入并初始化
+4. call：执行导出函数
+
+### 9.2 Web API
+
+* `WebAssembly.Module`
+* `WebAssembly.instantiate`
+* Streaming API
+
+---
+
+## 十、运行时实现生态
+
+| 运行时      | 特点        | 适用场景           |
+| -------- | --------- | -------------- |
+| Wasmtime | 标准友好、性能稳定 | 云 / Server     |
+| Wasmer   | 多语言绑定     | 平台集成           |
+| WAMR     | 轻量、C 实现   | IoT / Embedded |
+| WasmEdge | 云原生导向     | Edge / AI      |
+
+---
+
+## 十一、编译体系与语言生态
+
+* 多语言 → LLVM IR
+* `llc` → WASM
+
+**本质**：
+
+> Wasm 是 LLVM 生态的可执行终点之一。
+
+---
+
+## 十二、能力边界与局限性
+
+* DOM 操作需经宿主桥接
+* 复杂数据类型需显式编解码
+
+这是 Wasm **强隔离换取安全与可移植性** 的必然代价。
+
+---
+
+## 十三、应用定位与长期演进
+
+### 当前稳定价值
+
+* 浏览器中的计算密集任务
+* 统一的跨语言执行格式
+
+### 演进方向
+
+* Component Model
+* WASI Preview 2
+* 更强的模块组合能力
+
+---
+
+## 总结
+
+WebAssembly 是一种：
+
+> **以安全、可验证、最小能力集为核心的通用执行抽象**。
+
+它不是某一语言的替代品，而是未来多计算环境的**公共底座**。
+
+---
+
+## 关联内容（自动生成）
+
+- [/编译原理/编译原理.md](/编译原理/编译原理.md) WebAssembly与编译原理密切相关，Wasm作为编译目标，连接了高级语言与底层执行模型，体现了编译器前端、中间表示和后端优化的完整流程
+- [/编程语言/Rust.md](/编程语言/Rust.md) Rust是WebAssembly生态系统中最活跃的语言之一，Rust的内存安全特性与Wasm的安全执行模型相结合，为Wasm生态提供了强大的底层开发能力
+- [/软件工程/架构/Web前端/Web前端.md](/软件工程/架构/Web前端/Web前端.md) WebAssembly与前端技术密切相关，是现代Web前端架构中的重要组成部分，用于提升计算密集型任务的性能
+- [/操作系统/操作系统.md](/操作系统/操作系统.md) WebAssembly的虚拟指令集架构与操作系统的虚拟化和抽象概念有相似之处，Wasm的执行模型借鉴了操作系统的安全和隔离机制

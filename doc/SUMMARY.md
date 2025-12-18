@@ -244,7 +244,7 @@
       - [⚙️前端编译与优化](./编程语言/JAVA/JVM/前端编译与优化.md)
       - [⚙️后端编译与优化](./编程语言/JAVA/JVM/后端编译与优化.md)
       - [🔗Java 内存模型](./编程语言/JAVA/JVM/JAVA内存模型.md)
-    - [☕Jakara EE](./编程语言/JAVA/JakartaEE/nav.md)
+    - ☕Jakara EE
       - [🌐Servlet](./编程语言/JAVA/JakartaEE/Servlet.md)
       - [🍪Cookie&Session](./编程语言/JAVA/JakartaEE/Cookie&Session.md)
     - -框架-

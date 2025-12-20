@@ -26,37 +26,58 @@
         </el-button>
       </div>
 
-      <div class="knowledge-index-body">
-        <el-tree
-          v-if="filteredCategories.length > 0"
-          :data="filteredCategories"
-          :props="treeProps"
-          :filter-node-method="filterNode"
-          @node-click="handleNodeClick"
-          class="knowledge-index-tree"
-          node-key="link"
-          default-expand-all
+      <div class="knowledge-index-main">
+        <div
+          class="index-body"
+          :style="{ height: indexBodyHeight + 'px' }"
         >
-          <template #default="{ node, data }">
-            <span class="tree-node">
-              <span class="node-label" :title="data.name">{{ data.name }}</span>
-            </span>
-          </template>
-        </el-tree>
+          <el-tree
+            v-if="filteredCategories.length > 0"
+            :data="filteredCategories"
+            :props="treeProps"
+            :filter-node-method="filterNode"
+            @node-click="handleNodeClick"
+            class="knowledge-index-tree"
+            node-key="link"
+            default-expand-all
+          >
+            <template #default="{ node, data }">
+              <span class="tree-node">
+                <span class="node-label" :title="data.name">{{ data.name }}</span>
+              </span>
+            </template>
+          </el-tree>
 
-        <div v-else class="empty-state">
-          <el-empty description="暂无知识索引" />
+          <div v-else class="empty-state">
+            <el-empty description="暂无知识索引" />
+          </div>
         </div>
-      </div>
 
-      <div v-if="currentContent" class="knowledge-content-panel">
-        <div class="content-header">
-          <h3>{{ currentTitle }}</h3>
-          <el-button @click="currentContent = null" size="small" type="info" plain>
-            关闭内容
-          </el-button>
+        <!-- 拖拽分割线 -->
+        <div
+          class="resize-divider"
+          @mousedown="startResize"
+          :style="{ top: indexBodyHeight + 'px' }"
+        >
+          <div class="divider-line"></div>
+          <div class="divider-handle">
+            <el-icon><More /></el-icon>
+          </div>
         </div>
-        <div class="content-body" v-html="currentContent" @click="handleContentClick"></div>
+
+        <div
+          v-if="currentContent"
+          class="knowledge-content-panel"
+          :style="{ height: `calc(100% - ${indexBodyHeight}px - 30px)` }"
+        >
+          <div class="content-header">
+            <h3>{{ currentTitle }}</h3>
+            <el-button @click="currentContent = null" size="small" type="primary">
+              关闭内容
+            </el-button>
+          </div>
+          <div class="content-body" v-html="currentContent" @click="handleContentClick"></div>
+        </div>
       </div>
     </div>
   </el-drawer>
@@ -65,7 +86,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { ElTree, ElInput, ElButton, ElIcon, ElEmpty, ElDrawer } from "element-plus";
-import { Close } from "@element-plus/icons-vue";
+import { Close, More } from "@element-plus/icons-vue";
 import CategoryService from '@/service/CategoryService';
 import Category from '@/dto/Category';
 import DocService from '@/service/DocService';
@@ -78,6 +99,7 @@ export default defineComponent({
     ElButton,
     ElIcon,
     Close,
+    More,
     ElEmpty,
     ElDrawer
   },
@@ -99,14 +121,101 @@ export default defineComponent({
         children: 'chidren',
         label: 'name',
         disabled: 'disabled'
-      }
+      },
+      indexBodyHeight: 200, // 默认高度
+      isResizing: false,
+      initialHeight: 0, // 初始高度
+      initialY: 0, // 初始鼠标Y位置
+      minHeight: 100, // 最小高度
+      maxHeight: 500, // 最大高度
+      storageKey: 'knowledge-index-body-height' // 存储高度的键
     };
   },
   methods: {
     show() {
       this.showDrawer = true;
+      this.loadSavedHeight(); // 从localStorage加载高度
       this.init();
     },
+
+    loadSavedHeight() {
+      try {
+        const savedHeight = localStorage.getItem(this.storageKey);
+        if (savedHeight) {
+          const height = parseInt(savedHeight, 10);
+          // 验证高度在有效范围内
+          if (height >= this.minHeight && height <= this.maxHeight) {
+            this.indexBodyHeight = height;
+          }
+        }
+      } catch (error) {
+        console.error('加载保存的高度失败:', error);
+      }
+    },
+
+    saveCurrentHeight() {
+      try {
+        localStorage.setItem(this.storageKey, this.indexBodyHeight.toString());
+      } catch (error) {
+        console.error('保存高度到localStorage失败:', error);
+      }
+    },
+
+    startResize(event: MouseEvent) {
+      event.preventDefault();
+      this.isResizing = true;
+
+      // 记录初始状态
+      this.initialHeight = this.indexBodyHeight;
+      this.initialY = event.clientY;
+
+      // 添加全局事件监听器
+      document.addEventListener('mousemove', this.handleResize);
+      document.addEventListener('mouseup', this.stopResize);
+
+      // 防止文本选择
+      document.body.style.userSelect = 'none';
+    },
+
+    handleResize(event: MouseEvent) {
+      if (!this.isResizing) return;
+
+      // 获取容器元素
+      const drawerElement = document.querySelector('.knowledge-index-content') as HTMLElement;
+      if (!drawerElement) return;
+
+      // 计算鼠标移动的偏移量
+      const deltaY = event.clientY - this.initialY;
+      const newHeight = this.initialHeight + deltaY;
+
+      // 更新高度，确保在最小值和最大值之间
+      let finalHeight = Math.max(this.minHeight, Math.min(newHeight, this.maxHeight));
+
+      // 确保剩余空间足够显示内容面板
+      const totalHeight = drawerElement.clientHeight;
+      if (totalHeight - finalHeight < 100) { // 至少留100px给内容面板
+        finalHeight = totalHeight - 100;
+      }
+
+      this.indexBodyHeight = finalHeight;
+    },
+
+    stopResize() {
+      if (this.isResizing) {
+        this.isResizing = false;
+
+        // 移除全局事件监听器
+        document.removeEventListener('mousemove', this.handleResize);
+        document.removeEventListener('mouseup', this.stopResize);
+
+        // 恢复文本选择
+        document.body.style.userSelect = '';
+
+        // 保存当前高度到localStorage
+        this.saveCurrentHeight();
+      }
+    },
+
     async init() {
       try {
         // 获取所有目录
@@ -250,6 +359,19 @@ export default defineComponent({
         this.filterCategories();
       });
     }
+  },
+  beforeUnmount() {
+    // 清理事件监听器
+    if (this.isResizing) {
+      document.removeEventListener('mousemove', this.handleResize);
+      document.removeEventListener('mouseup', this.stopResize);
+      document.body.style.userSelect = '';
+    }
+
+    // 重置状态
+    this.isResizing = false;
+    this.initialHeight = 0;
+    this.initialY = 0;
   }
 });
 </script>
@@ -260,10 +382,11 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   background: var(--bg-color);
+  position: relative; /* 为分割线定位做准备 */
 }
 
 .knowledge-index-toolbar {
-  padding: 10px;
+  padding: 12px;
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
@@ -271,7 +394,7 @@ export default defineComponent({
 
   .el-input {
     flex: 1;
-    margin-right: 10px;
+    margin-right: 12px;
   }
 
   .close-btn {
@@ -279,10 +402,18 @@ export default defineComponent({
   }
 }
 
-.knowledge-index-body {
+.knowledge-index-main {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.index-body {
   overflow: auto;
-  padding: 10px;
+  padding: 12px;
+  min-height: 100px; /* 确保最小高度 */
 
   .knowledge-index-tree {
     :deep(.el-tree-node__content) {
@@ -314,15 +445,65 @@ export default defineComponent({
   }
 }
 
+/* 拖拽分割线样式 */
+.resize-divider {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ns-resize; /* 南北调整光标，显示上下双箭头 */
+  z-index: 10;
+  background: var(--bg-color-2);
+
+  .divider-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--border-color);
+  }
+
+  .divider-handle {
+    position: relative;
+    width: 40px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-color-2);
+    z-index: 11;
+    color: var(--text-color-3);
+    border-radius: 12px;
+    box-shadow: 0 0 2px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+
+    .el-icon {
+      font-size: 14px;
+    }
+  }
+
+  &:hover {
+    .divider-handle {
+      color: var(--primary-color);
+      background: var(--bg-color);
+      box-shadow: 0 0 6px rgba(0,0,0,0.15);
+      transform: scale(1.1);
+    }
+  }
+}
+
 .knowledge-content-panel {
-  border-top: 1px solid var(--border-color);
   background: var(--bg-color);
   display: flex;
   flex-direction: column;
-  max-height: 50%;
+  overflow: hidden; /* 防止内容溢出 */
 
   .content-header {
-    padding: 10px;
+    padding: 12px;
     border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;

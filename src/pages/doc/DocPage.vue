@@ -44,6 +44,7 @@
   <tool-box
     @showMindGraph="showMindGraph();showAside = false;isDrawerShow = true"
     @showKnowledgeNetwork="showKnowledgeNetwork();showAside = false;isDrawerShow = true"
+    @showKnowledgeIndex="showKnowledgeIndex();showAside = false;isDrawerShow = true"
     @copyDocPath="handleCopyDocPath"
     @copyDocContent="handleCopyDocContent"
     @showLinkList="showLinkList"
@@ -61,6 +62,9 @@
   <mermaid-shower ref="mermaidShower"/>
   <keep-alive>
     <knowledge-network ref="knowledgeNetwork" :doc="doc" @close="showAside = true;isDrawerShow = false"/>
+  </keep-alive>
+  <keep-alive>
+    <knowledge-index ref="knowledgeIndex" :doc="doc" @close="showAside = true;isDrawerShow = false" @navigate="handleNavigate"/>
   </keep-alive>
   <keep-alive>
     <LLM :doc="doc" ref="llm" @close="showAside = true;isDrawerShow = false"/>
@@ -89,6 +93,7 @@ import ToolBox from './ToolBox.vue';
 import KnowledgeNetwork from "./knowledge/KnowledgeNetwork.vue";
 import KnowledgeNetworkContent from "./knowledge/KnowledgeNetworkContent.vue";
 import KnowledgeNetworkChart from "./knowledge/KnowledgeNetworkChart.vue";
+import KnowledgeIndex from "./knowledge/KnowledgeIndex.vue";
 import RightBottomPanel from "./knowledge/RightBottomPanel.vue";
 import LinkPopover from "./LinkPopover.vue";
 import DocFileInfo from "@/dto/DocFileInfo";
@@ -129,6 +134,7 @@ export default defineComponent({
     KnowledgeNetwork,
     KnowledgeNetworkContent,
     KnowledgeNetworkChart,
+    KnowledgeIndex,
     RightBottomPanel,
     DocBreadcrumbNav,
     DocTabNav,
@@ -154,6 +160,7 @@ export default defineComponent({
   setup(){
     const mindGraph = ref<InstanceType<typeof MindGraph>>()
     const knowledgeNetwork = ref<InstanceType<typeof KnowledgeNetwork>>()
+    const knowledgeIndex = ref<InstanceType<typeof KnowledgeIndex>>()
     const linkList = ref<InstanceType<typeof LinkList>>()
     const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
     const llm = ref<InstanceType<typeof LLM>>()
@@ -162,6 +169,9 @@ export default defineComponent({
     }
     const showKnowledgeNetwork = () => {
       knowledgeNetwork.value?.show()
+    }
+    const showKnowledgeIndex = () => {
+      knowledgeIndex.value?.show()
     }
     const showLinkList = () => {
       linkList.value?.show()
@@ -173,8 +183,9 @@ export default defineComponent({
       llm.value?.show();
     }
     return {
-      mindGraph, showMindGraph, 
+      mindGraph, showMindGraph,
       knowledgeNetwork, showKnowledgeNetwork,
+      knowledgeIndex, showKnowledgeIndex,
       linkList, showLinkList,
       knowledgeReviewer, showKnowledgeReviewer,
       llm, showLLM

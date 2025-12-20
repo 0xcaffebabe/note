@@ -253,7 +253,6 @@
     - [🍃Spring](./编程语言/JAVA/框架/Spring/Spring.md)
       - [🌐SpringMVC](./编程语言/JAVA/框架/Spring/SpringMVC.md)
       - [📦SpringBoot](./编程语言/JAVA/框架/SpringBoot.md)
-    - [🔗Dubbo](./编程语言/JAVA/框架/Dubbo.md)
   - [🌐JavaScript](./编程语言/JavaScript/JavaScript.md)
     - [🌐AJAX](./编程语言/JavaScript/AJAX.md)
     - [🌐NodeJS](./编程语言/JavaScript/Node/NodeJs.md)
@@ -352,7 +351,6 @@
     - [V8引擎](./中间件/浏览器/V8.md)
 
 - [🎥音视频开发](./音视频开发/音视频开发.md)
-  - [🎬视频技术](./音视频开发/视频技术.md)
   - [🎵音频技术](./音视频开发/音频技术.md)
 
 - [🖼️产品](./产品/产品.md)

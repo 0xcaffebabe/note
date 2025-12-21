@@ -386,7 +386,7 @@ export default defineComponent({
               edgeLength: [nodeMap.size * 1, nodeMap.size * 4],
             },
             edgeSymbolSize: 6,
-            edgeSymbol: ["arrow"],
+            edgeSymbol: ['', ''], // 移除箭头符号，实现无向图效果
             edgeLabel: {
               show: false,
               fontSize: 10,

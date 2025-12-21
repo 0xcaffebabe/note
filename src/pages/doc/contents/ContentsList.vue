@@ -187,8 +187,8 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .toc-container {
-  width: 260px;
-  min-width: 260px;
+  width: 100%; /* 宽度与父组件一致 */
+  min-width: 200px; /* 设置最小宽度 */
   display: flex;
   flex-direction: column;
   background-color: var(--card-bg-color);
@@ -226,24 +226,25 @@ export default defineComponent({
   overflow-y: auto;
   padding: var(--spacing-sm) 0;
   max-height: calc(100vh - 250px);
-  
+  width: 100%; /* 确保与父容器同宽 */
+
   &::-webkit-scrollbar {
     width: 4px;
   }
-  
+
   &::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   &::-webkit-scrollbar-thumb {
     background: rgba(0,0,0,0.1);
     border-radius: 2px;
   }
-  
+
   &::-webkit-scrollbar-thumb:hover {
     background: rgba(0,0,0,0.2);
   }
-  
+
   &:hover {
     overflow-y: auto;
   }

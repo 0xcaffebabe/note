@@ -96,7 +96,7 @@ export default defineComponent({
   transition: all 0.2s;
   position: fixed;
   right: 16px;
-  width: 300px; /* 设置容器宽度 */
+  width: 400px; /* 设置容器宽度 */
   overflow: hidden; /* 防止内容溢出 */
   display: flex;
   flex-direction: column;
@@ -105,7 +105,6 @@ export default defineComponent({
 .toc-wrapper-flex {
   flex: 1; /* 占据可用的剩余空间 */
   overflow-y: auto; /* 允许垂直滚动 */
-  margin-top: 8px; /* 与上方panel留一点间距 */
   min-height: 0; /* 允许flex子元素收缩到内容以下 */
 
   // 隐藏滚动条（可选）
@@ -151,7 +150,7 @@ export default defineComponent({
 
 .right-bottom-panel-container {
   flex: 0 0 auto; /* 固定高度，不伸缩 */
-  height: 200px; /* 固定高度 */
+  height: 250px; /* 固定高度 */
   z-index: 999;
   overflow: hidden; /* 防止内容溢出 */
 

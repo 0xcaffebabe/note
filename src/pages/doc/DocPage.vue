@@ -21,19 +21,13 @@
               </div>
             </div>
             <!-- 提交历史结束 -->
-            <!-- toc开始 -->
-            <div class="toc-wrapper" :style="{'top': parentShowHeader ? '66px': '6px', 'height': parentShowHeader ? 'calc(80 % - 60px)': '80%', 'display': showContentsList ? 'block' : 'none'}">
-              <keep-alive>
-                <contents-list :doc="doc" @item-click="handleTocItemClick"/>
-              </keep-alive>
-            </div>
-            <!-- toc结束 -->
-
-            <!-- 目录切换按钮 -->
-            <div class="toc-toggle-btn" @click="toggleContentsList">
-              <el-icon v-if="showContentsList"><FolderOpened /></el-icon>
-              <el-icon v-else><Folder /></el-icon>
-            </div>
+            <!-- 目录和面板整合组件 -->
+            <doc-contents-and-panel
+              :doc="doc"
+              :parentShowHeader="parentShowHeader"
+              @item-click="handleTocItemClick"
+              @toggle-contents="showContentsList = $event"
+            />
 
           </div>
         </template>
@@ -73,10 +67,7 @@
   <instant-previewer ref="instantPreviewer"/>
   <resource-brower ref="resourceBrower" />
 
-  <!-- 右下角整合面板（思维笔记和知识网络） -->
-  <div class="right-bottom-panel-container" v-if="showContentsList">
-    <right-bottom-panel :doc="doc" />
-  </div>
+  
 </template>
 
 
@@ -118,6 +109,7 @@ import config from '@/config';
 import api from "@/api";
 import MermaidShower from './mermaid-shower/MermaidShower.vue';
 import LLM from './knowledge/LLM.vue';
+import DocContentsAndPanel from './contents/DocContentsAndPanel.vue';
 import {Folder, FolderOpened, Management } from '@element-plus/icons-vue';
 
 export default defineComponent({
@@ -145,6 +137,7 @@ export default defineComponent({
     InstantPreviewer,
     MermaidShower,
     LLM,
+    DocContentsAndPanel,
     Folder,
     FolderOpened,
     Management
@@ -365,6 +358,7 @@ export default defineComponent({
     },
     handleResize() {
       // 当窗口大小改变时，根据宽度决定是否显示ContentsList
+      // 现在由 DocContentsAndPanel 组件管理，但保持父组件状态同步
       if (window.innerWidth <= 1180) {
         this.showContentsList = false; // 小屏幕默认隐藏
       } else {
@@ -409,11 +403,6 @@ export default defineComponent({
   padding-left: 4em;
   padding-bottom: 20px;
 }
-.toc-wrapper {
-  transition: all 0.2s;
-  position: fixed;
-  right: 16px;
-}
 .footer-wrapper {
   display: flex;
   justify-content: space-between;
@@ -435,9 +424,6 @@ export default defineComponent({
   .center {
     padding-left: 0rem;
   }
-  .toc-wrapper {
-    right: 2px;
-  }
 }
 @media screen and (max-width: 1370px) {
   .markdown-section {
@@ -453,69 +439,6 @@ export default defineComponent({
     width: calc(100% - 40px)!important;
     margin-right: 40px;
   }
-  .toc-wrapper {
-    display: none;
-  }
-}
-
-.toc-toggle-btn {
-  display: none; /* 默认隐藏按钮 */
-  position: fixed;
-  right: 20px;
-  top: 400px;
-  transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
-  background-color: var(--primary-color);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 999;
-  transition: all 0.3s ease;
-  color: white;
-  font-size: 18px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-}
-
-.right-bottom-panel-container {
-  position: fixed;
-  bottom: 0px;
-  right: 0px;
-  width: 400px;
-  height: 200px;
-  z-index: 999;
-
-  :deep(.right-bottom-panel) {
-    width: 100%;
-    height: 100%;
-  }
-
-  :deep(#knowledgeNetwork) {
-    height: 100%;
-    width: 100%;
-  }
-
-  :deep(.mind-note) {
-    height: 100%;
-    width: 100%;
-    position: static;
-    border: none;
-    box-shadow: none;
-    border-radius: 0;
-  }
-}
-
-@media screen and(max-width: 1366px) {
-  .right-bottom-panel-container {
-    width: 300px;
-    height: 160px;
-  }
-}
-
-body[theme=dark] .toc-toggle-btn {
-  background-color: var(--dark-primary-color);
 }
 
 .el-backtop {

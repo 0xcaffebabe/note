@@ -1,20 +1,24 @@
 <template>
   <div class="doc-contents-and-panel">
-    <!-- 目录区域 -->
-    <div 
-      class="toc-wrapper" 
+    <!-- 目录区域和右下方面板的容器 -->
+    <div
+      class="contents-panel-container"
       :style="{
-        'top': parentShowHeader ? '66px': '6px', 
-        'height': parentShowHeader ? 'calc(80 % - 60px)': '80%', 
-        'display': showContentsList ? 'block' : 'none'
+        'top': parentShowHeader ? '66px': '6px',
+        'height': parentShowHeader ? 'calc(100vh - 66px)': '100vh',
+        'display': showContentsList ? 'flex' : 'none',
+        'flex-direction': 'column'
       }"
     >
-      <contents-list :doc="doc" @item-click="handleTocItemClick" />
-    </div>
+      <!-- 右下角整合面板（思维笔记和知识网络） -->
+      <div class="right-bottom-panel-container">
+        <right-bottom-panel :doc="doc" />
+      </div>
 
-    <!-- 右下角整合面板（思维笔记和知识网络） -->
-    <div class="right-bottom-panel-container" v-if="showContentsList">
-      <right-bottom-panel :doc="doc" />
+      <!-- 目录区域 -->
+      <div class="toc-wrapper-flex">
+        <contents-list :doc="doc" @item-click="handleTocItemClick" />
+      </div>
     </div>
 
     <!-- 目录切换按钮 -->
@@ -88,10 +92,40 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
-.toc-wrapper {
+.contents-panel-container {
   transition: all 0.2s;
   position: fixed;
   right: 16px;
+  width: 300px; /* 设置容器宽度 */
+  overflow: hidden; /* 防止内容溢出 */
+  display: flex;
+  flex-direction: column;
+}
+
+.toc-wrapper-flex {
+  flex: 1; /* 占据可用的剩余空间 */
+  overflow-y: auto; /* 允许垂直滚动 */
+  margin-top: 8px; /* 与上方panel留一点间距 */
+  min-height: 0; /* 允许flex子元素收缩到内容以下 */
+
+  // 隐藏滚动条（可选）
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
 }
 
 .toc-toggle-btn {
@@ -116,12 +150,10 @@ export default defineComponent({
 }
 
 .right-bottom-panel-container {
-  position: fixed;
-  bottom: 0px;
-  right: 0px;
-  width: 400px;
-  height: 200px;
+  flex: 0 0 auto; /* 固定高度，不伸缩 */
+  height: 200px; /* 固定高度 */
   z-index: 999;
+  overflow: hidden; /* 防止内容溢出 */
 
   :deep(.right-bottom-panel) {
     width: 100%;
@@ -143,21 +175,25 @@ export default defineComponent({
   }
 }
 
+/* 为小屏幕调整 */
 @media screen and(max-width: 1366px) {
   .right-bottom-panel-container {
-    width: 300px;
     height: 160px;
+  }
+
+  .contents-panel-container {
+    width: 260px;
   }
 }
 
 @media screen and (max-width: 1370px) {
-  .toc-wrapper {
+  .contents-panel-container {
     right: 2px;
   }
 }
 
 @media screen and (max-width: 1180px) {
-  .toc-wrapper {
+  .contents-panel-container {
     display: none;
   }
   .toc-toggle-btn {
@@ -167,5 +203,20 @@ export default defineComponent({
 
 body[theme=dark] .toc-toggle-btn {
   background-color: var(--dark-primary-color);
+}
+
+// 暗黑模式滚动条样式
+body[theme=dark] .toc-wrapper-flex {
+  &::-webkit-scrollbar-track {
+    background: #3a3a3c;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #5a5a5c;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #6a6a6c;
+  }
 }
 </style>

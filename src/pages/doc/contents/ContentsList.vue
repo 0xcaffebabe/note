@@ -1,8 +1,5 @@
 <template>
   <div class="toc-container">
-    <div class="toc-header">
-      <h3 class="toc-title">文档目录</h3>
-    </div>
     <ul class="toc" ref="toc">
       <contents-tree
         :contentsList="contentList"

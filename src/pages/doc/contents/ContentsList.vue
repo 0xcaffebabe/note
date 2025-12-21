@@ -73,23 +73,7 @@ function syncHeadingVisible(instance: any) {
   const activeTocItem: HTMLElement | null = document.querySelector(".toc .active");
   
   if (activeTocItem && tocElm) {
-    const containerRect = tocElm.getBoundingClientRect();
-    const itemRect = activeTocItem.getBoundingClientRect();
-    
-    // 计算相对于容器的偏移
-    const itemTop = activeTocItem.offsetTop;
-    const itemBottom = itemTop + activeTocItem.offsetHeight;
-    const containerTop = tocElm.scrollTop;
-    const containerBottom = containerTop + tocElm.clientHeight;
-    
-    // 位置超出下边界 - 滚动使项目底部对齐到容器底部
-    if (itemBottom > containerBottom) {
-      tocElm.scrollTop = itemBottom - tocElm.clientHeight;
-    } 
-    // 位置超出上边界 - 滚动使项目顶部对齐到容器顶部
-    else if (itemTop < containerTop) {
-      tocElm.scrollTop = itemTop;
-    }
+    activeTocItem.scrollIntoView();
   }
 }
 

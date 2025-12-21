@@ -141,7 +141,7 @@ export default defineComponent({
 <style lang="less" scoped>
 .tab-container {
   transition: all 0.3s ease;
-  max-width: 60%;
+  // max-width: 60%;
   height: 40px;
   white-space: nowrap;
   overflow-x: auto;

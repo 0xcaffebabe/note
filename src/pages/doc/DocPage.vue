@@ -3,7 +3,7 @@
     <doc-side-category :doc="doc" :showAside="showAside" @toggle-aside="showAside = !showAside" ref="docSideCategory" />
     <el-main class="main">
       <keep-alive>
-        <doc-tab-nav @dbclick="handleTabNavDbclick" :style="{'width': isDrawerShow ? '920px': '74%'}"/>
+        <doc-tab-nav @dbclick="handleTabNavDbclick" :style="{'width': isDrawerShow ? '920px': 'calc(100% - 800px)'}"/>
       </keep-alive>
       <el-skeleton :rows="25" animated :loading="loading" :throttle="50" style="max-width: 80%;margin-top:20px;position:fixed">
         <template #default>
@@ -427,7 +427,7 @@ export default defineComponent({
 }
 @media screen and (max-width: 1370px) {
   .markdown-section {
-    width: 70%!important;
+    width: 60%!important;
     margin-right: 40px;
   }
 }

@@ -22,7 +22,7 @@
               :zoom="0.6"
               :degree="degree"
             />
-            <div class="control-panel">
+            <!-- <div class="control-panel">
               <el-input-number
                 v-model="degree"
                 :min="1"
@@ -31,7 +31,7 @@
                 size="small"
                 class="degree-input"
               />
-            </div>
+            </div> -->
           </div>
         </div>
       </el-carousel-item>

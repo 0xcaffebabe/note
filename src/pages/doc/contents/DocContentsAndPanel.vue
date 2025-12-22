@@ -96,7 +96,7 @@ export default defineComponent({
   transition: all 0.2s;
   position: fixed;
   right: 16px;
-  width: 400px; /* 设置容器宽度 */
+  width: 300px; /* 设置容器宽度 */
   overflow: hidden; /* 防止内容溢出 */
   display: flex;
   flex-direction: column;

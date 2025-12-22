@@ -204,7 +204,7 @@ export default defineComponent({
 .tool-box {
   transition: all 0.3s ease;
   position: fixed;
-  right: 420px;
+  right: 360px;
   z-index: 1000;
   padding: 4px;
 }

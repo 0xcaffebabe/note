@@ -383,7 +383,7 @@ export default defineComponent({
             force: {
               repulsion: [nodeMap.size * 1, nodeMap.size * 100],
               gravity: nodeMap.size / 1000,
-              edgeLength: [nodeMap.size * 1, nodeMap.size * 4],
+              edgeLength: [nodeMap.size * 6, nodeMap.size * 12],
             },
             edgeSymbolSize: 6,
             edgeSymbol: ['', ''], // 移除箭头符号，实现无向图效果

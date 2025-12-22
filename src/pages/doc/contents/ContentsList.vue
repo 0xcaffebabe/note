@@ -184,12 +184,12 @@ export default defineComponent({
 
 @media (max-width: 1180px) {
   .toc-container {
-    position: fixed;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    height: calc(100vh - 200px);
-    z-index: 998;
+    // position: fixed;
+    // right: 10px;
+    // top: 50%;
+    // transform: translateY(-50%);
+    // height: calc(100vh - 200px);
+    // z-index: 998;
   }
 }
 

@@ -67,15 +67,16 @@ function random(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-type ActionType = 
+type ActionType =
     'showReadingHistory' |
     'showMindGraph' |
     'showKnowledgeNetwork' |
+    'showKnowledgeIndex' |
     'copyDocPath' |
     'copyDocContent' |
     'showLinkList' |
     'openInEditor' |
-    'showLlm' | 
+    'showLlm' |
     'handleRandomReview'
 
 type LocalActionType = ActionType & 'showMoreSetting' & 'randomReview'
@@ -103,6 +104,7 @@ export default defineComponent({
     'showReadingHistory',
     'showMindGraph',
     'showKnowledgeNetwork',
+    'showKnowledgeIndex',
     'copyDocPath',
     'copyDocContent',
     'showLinkList',
@@ -122,6 +124,7 @@ export default defineComponent({
       actionList: [
         {name: '思维导图', type: 'success', action: 'showMindGraph', hotkey: 'alt + l'},
         {name: '知识网络', type: 'warning', action: 'showKnowledgeNetwork', hotkey: 'alt + k'},
+        {name: '知识索引', type: 'primary', action: 'showKnowledgeIndex', hotkey: 'alt + j'},
         {name: '知识回顾', type: 'primary', action: 'showKnowledgeReviewer', hotkey: 'alt + r'},
         {name: '知识助手', type: 'warning', action: 'showLlm', hotkey: 'alt + i'},
         {name: '路径复制', type: 'success', action: 'copyDocPath', hotkey: 'alt + c', divided: true},
@@ -201,7 +204,7 @@ export default defineComponent({
 .tool-box {
   transition: all 0.3s ease;
   position: fixed;
-  right: 300px;
+  right: 360px;
   z-index: 1000;
   padding: 4px;
 }

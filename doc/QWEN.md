@@ -11,6 +11,7 @@
 - @.agents/link_validation_agent.md 当要求你执行失效链接修复任务时，读取该文件，并执行
 - @.agents/reviewing_agent.md 当要求你执行文档审视、审查任务时，读取该文件，并执行
 - @.agents/fragment_discovery_agent.md 当要求你执行知识碎片发现任务时，读取该文件，并执行
+- @.agents/indexing_agent.md 当要求你执行生成知识索引任务时，读取该文件，并执行
 
 ## 核心语言规则
 

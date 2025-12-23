@@ -1,8 +1,5 @@
 <template>
   <div class="toc-container">
-    <div class="toc-header">
-      <h3 class="toc-title">文档目录</h3>
-    </div>
     <ul class="toc" ref="toc">
       <contents-tree
         :contentsList="contentList"
@@ -76,23 +73,7 @@ function syncHeadingVisible(instance: any) {
   const activeTocItem: HTMLElement | null = document.querySelector(".toc .active");
   
   if (activeTocItem && tocElm) {
-    const containerRect = tocElm.getBoundingClientRect();
-    const itemRect = activeTocItem.getBoundingClientRect();
-    
-    // 计算相对于容器的偏移
-    const itemTop = activeTocItem.offsetTop;
-    const itemBottom = itemTop + activeTocItem.offsetHeight;
-    const containerTop = tocElm.scrollTop;
-    const containerBottom = containerTop + tocElm.clientHeight;
-    
-    // 位置超出下边界 - 滚动使项目底部对齐到容器底部
-    if (itemBottom > containerBottom) {
-      tocElm.scrollTop = itemBottom - tocElm.clientHeight;
-    } 
-    // 位置超出上边界 - 滚动使项目顶部对齐到容器顶部
-    else if (itemTop < containerTop) {
-      tocElm.scrollTop = itemTop;
-    }
+    activeTocItem.scrollIntoView();
   }
 }
 
@@ -190,8 +171,8 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .toc-container {
-  width: 260px;
-  min-width: 260px;
+  width: 100%; /* 宽度与父组件一致 */
+  min-width: 200px; /* 设置最小宽度 */
   display: flex;
   flex-direction: column;
   background-color: var(--card-bg-color);
@@ -203,12 +184,12 @@ export default defineComponent({
 
 @media (max-width: 1180px) {
   .toc-container {
-    position: fixed;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    height: calc(100vh - 200px);
-    z-index: 998;
+    // position: fixed;
+    // right: 10px;
+    // top: 50%;
+    // transform: translateY(-50%);
+    // height: calc(100vh - 200px);
+    // z-index: 998;
   }
 }
 
@@ -229,24 +210,25 @@ export default defineComponent({
   overflow-y: auto;
   padding: var(--spacing-sm) 0;
   max-height: calc(100vh - 250px);
-  
+  width: 100%; /* 确保与父容器同宽 */
+
   &::-webkit-scrollbar {
     width: 4px;
   }
-  
+
   &::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   &::-webkit-scrollbar-thumb {
     background: rgba(0,0,0,0.1);
     border-radius: 2px;
   }
-  
+
   &::-webkit-scrollbar-thumb:hover {
     background: rgba(0,0,0,0.2);
   }
-  
+
   &:hover {
     overflow-y: auto;
   }

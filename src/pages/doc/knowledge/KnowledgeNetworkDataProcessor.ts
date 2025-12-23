@@ -258,15 +258,25 @@ export class KnowledgeNetworkDataProcessor {
    */
   static createLinks(knowledgeNetwork: KnowledgeNode[]) {
     const links: any[] = [];
+    const addedEdges = new Set<string>(); // 用于记录已添加的边，避免重复
 
     for (const node of knowledgeNetwork) {
       if (node.links) {
         for (const link of node.links) {
-          links.push({
-            target: node.id,
-            source: link.id,
-            value: decodeURI(link.headingId ? "#" + link.headingId : "-")
-          });
+          // 创建唯一的边标识符，确保无向图中每对节点之间只有一条边
+          const edgeKey = [node.id, link.id].sort().join('-');
+
+          // 检查是否已添加过这条边
+          if (!addedEdges.has(edgeKey)) {
+            links.push({
+              target: node.id,
+              source: link.id,
+              value: decodeURI(link.headingId ? "#" + link.headingId : "-")
+            });
+
+            // 将边标识符添加到集合中
+            addedEdges.add(edgeKey);
+          }
         }
       }
     }

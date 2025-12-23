@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div style="max-width: 70%;">
     <el-popover
     popper-class="tag-popover"
     :width="400"

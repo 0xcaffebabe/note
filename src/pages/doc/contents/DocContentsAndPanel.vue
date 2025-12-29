@@ -95,8 +95,8 @@ export default defineComponent({
 .contents-panel-container {
   transition: all 0.2s;
   position: fixed;
-  right: 16px;
-  width: 300px; /* 设置容器宽度 */
+  right: 8px;
+  width: 290px; /* 设置容器宽度 */
   overflow: hidden; /* 防止内容溢出 */
   display: flex;
   flex-direction: column;

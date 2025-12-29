@@ -1,3 +1,7 @@
+---
+tags: ['容器化', '虚拟化', '运维', '云原生', '隔离']
+---
+
 # Docker
 
 > Docker 是一个开源的应用容器引擎，让开发者可以打包他们的应用以及依赖包到一个可移植的镜像中，然后发布到任何流行的 Linux或Windows 机器上，也可以实现虚拟化。容器是完全使用沙箱机制，相互之间不会有任何接口
@@ -24,14 +28,6 @@
 
 - 镜像与容器
   - 容器是镜像的实例
-
-## 安装
-
-- 安装脚本
-
-```shell
-wget https://get.docker.com
-```
 
 ## 引擎
 
@@ -105,26 +101,6 @@ docker 会复用已存在的镜像层
 
 ![2020823154458](/assets/2020823154458.png)
 
-#### 搭建
-
-```shell
-docekr pull registry
-```
-
-```shell
-docker run -di --name=registry 5000:5000 registry   
-```
-
-## 上传镜像到私服
-
-```shell
-docker tag nginx 127.0.0.1:5000/nginx 
-```
-
-```shell
-docker push 127.0.0.1:5000/nginx 
-```
-
 ## 容器
 
 ### 持久化
@@ -141,115 +117,20 @@ docker push 127.0.0.1:5000/nginx
 - unless-stoped
 - on-failed
 
-### 容器使用
-
-- 查看容器
-
-```shell
-docker ps
-```
-
-- 运行一个容器
-
-```shell
-docker run -p 8080:80 -d daocloud.io/nginx
-```
-
-- 复制文件到容器中
-
-```shell
-docker cp index.html e07dc4e0236a://usr/share/nginx/html
-```
-
-- 从容器中复制出文件
-
-```shell
-docker cp name:容器文件路径 宿主路径
-```
-
-- 停止容器
-
-```shell
-docker stop name
-# 优雅关闭并删除：stop rm
-```
-
-- 启动容器
-
-```shell
-docker start name
-```
-
-- 进入容器内部
-
-```shell
-docker exec -it <name> bash
-```
-
-- 目录挂载
-  - 在启动容器时，使用`-v`参数
-
-- 查看容器信息
-
-```shell
-docker inspect name
-```
-
-- 查看容器日志
-
-```sh
-docker logs name
-```
-
-## 常用软件部署
-
-- mysql
-
-```shell
-# 将宿主机33306映射到容器3306，指定root密码为123
-docker run -di --name=mysql1 -p 33306:3306 -e MYSQL_ROOT_PASSWORD=123 mysql 
-```
-
-- tomcat
-
-```shell
-docker run -di --name=mytomcat -p 9000:8080 -v /usr/local/webapps:/usr/local/tomcat/webapps tomcat 
-```
-
-- nginx
-
-```shell
-docker run -di --name=mynginx2 -p 8080:80 nginx-update 
-```
-
-## 迁移与备份
-
-
-- 保存镜像
-
-```shell
-docker commit -m 'update' e07dc4e0236a nginx-update
-```
-
-- 保存为压缩包
-
-```shell
-docker save -o nginx-update.tar nginx-update
-```
-
-- 把压缩包恢复成镜像
-
-```shell
-docker load -i nginx-update.tar
-```
-
 ## 容器化
 
 ![202082316156](/assets/202082316156.png)
 
 ### Dockerfile
 
-![批注 2019-07-25 153841](/assets/批注%202019-07-25%20153841.png)
+命令|用途
+-|-
+FROM|base image
+RUN|执行命令
+ADD|添加文件
+COPY|拷贝文件
+CMD|执行命令
+EXPOSE|暴露端口
 
 编写Dockerfile文件：
 
@@ -264,76 +145,6 @@ EXPOSE 80
 ```
 
 每一个RUN指令会新增一个镜像层。因此，通过使用&& 连接多个命令以及使用反斜杠（\ ）换行的方法，将多个命令包含在一个RUN指令中，通常来说是一种值得提倡的方式
-
-根据文件构建镜像：
-
-```shell
-docker build -t='name' .
-```
-
-### DockerMaven插件
-
-- 开启docker接受远程操作
-- 添加maven插件
-
-```xml
-<plugin>
-    <groupId>com.spotify</groupId>
-    <artifactId>docker-maven-plugin</artifactId>
-    <version>0.4.12</version>
-    <configuration>
-      <!-- 注意imageName一定要是符合正则[a-z0-9-_.]的，否则构建不会成功 -->
-      <!-- 详见：https://github.com/spotify/docker-maven-plugin    Invalid repository name ... only [a-z0-9-_.] are allowed-->
-      <imageName>my-pc:5000/${project.artifactId}:${project.version}</imageName>
-        <baseImage>java</baseImage>
-        <entryPoint>["java", "-jar", "/${project.build.finalName}.jar"]</entryPoint>
-          <resources>
-              <resource>
-                  <targetPath>/</targetPath>
-                  <directory>${project.build.directory}</directory>
-                  <include>${project.build.finalName}.jar</include>
-              </resource>
-          </resources>
-        <dockerHost>http://my-pc:2375</dockerHost>
-     </configuration>
-</plugin>
-```
-
-- JDK8以上的版本需要添加如下依赖
-
-```xml
-<dependencies>
-    <dependency>
-        <groupId>javax.activation</groupId>
-        <artifactId>activation</artifactId>
-        <version>1.1.1</version>
-    </dependency>
-</dependencies>
-```
-
-- 构建并推送
-
-```shell
-mvn clean package docker:build -DpushImage
-```
-
-
-### 推送到仓库
-
-```sh
-docker images push
-```
-
-![202082316201](/assets/202082316201.png)
-
-### 多阶段构建
-
-```Dockerfile
-FROM xxx AS T1
-
-FROM xxx AS T2
-COPY --from=T1 ...
-```
 
 ### 最佳实践
 
@@ -352,34 +163,6 @@ no-install-recommends：
 - 若使用的是APT包管理器，则应该在执行apt-get install 命令时增加no-install-recommends 参数。这能够确保APT仅安装核心依赖（Depends 中定义）包
 
 不要安装MSI包（Windows）
-
-## Compose
-
-编写docker-compose.yml:
-
-```yml
-version: "3.5"
-services:
-  redis:
-    image: "redis:alpine"
-    networks:
-      my-net:
-  nginx:
-    image: "nginx"
-    networks:
-      my-net:
-networks:
-  my-net:
-
-volumes:
-  my-net:
-```
-
-启动：
-
-```sh
-docker-compose up
-```
 
 ## Docker 网络
 
@@ -505,14 +288,6 @@ docker run -P <name>
 - 对象存储
   - 适用于较大且长期存储的、很少变更的二进制数据存储。通常对象存储是根据内容寻址
 
-### 卷操作
-
-```sh
-docker volume create myv
-docker volume inspect myv
-docker run ... --mount source=bizvol,target=/vol # 指定容器存储卷
-```
-
 ## 安全
 
 ![202082516037](/assets/202082516037.png)
@@ -558,28 +333,15 @@ Docker 提供的容器环境是和 Linux 内核隔离的。想要实现这种隔
 - 最小精简镜像
 - 使用User 指令指定运行用户
 
-## 容器管理
+## 关联内容（自动生成）
 
-### Rancher
-
-可以对容器进行分类、分环境管理，以图形化界面操作docker
-Rancher是一个开源的企业级全栈化容器部署及管理平台。Rancher为容器提供一揽 子基础架构服务：CNI兼容的网络服务、存储服务、主机管理、负载均衡、防护墙…… Rancher让上述服务跨越公有云、私有云、虚拟机、物理机环境运行，真正实现一键式应 用部署和管理
-
-- 主机
-- 应用
-- 容器
-- 服务
-- 扩容缩容
-
-### influxDB
-
->InfluxDB是一个由InfluxData开发的开源时序型数据库。它由Go写成，着力于高性能地查询与存储时序型数据。InfluxDB被广泛应用于存储系统的监控数据，IoT行业的实时数据等场景
-
-### cAdvisor
-
->CAdvisor是Google开源的一款用于展示和分析容器运行状态的可视化工具。通过在主机上运行CAdvisor用户可以轻松的获取到当前主机上容器的运行统计信息，并以图表的形式向用户展示
-
-### Grafana
-
->grafana 是一款采用 go 语言编写的开源应用，主要用于大规模指标数据的可视化展现，是网络架构和应用分析中最流行的时序数据展示工具，目前已经支持绝大部分常用的时序数据库
-
+- [/操作系统/容器化.md](/操作系统/容器化.md) 容器化技术是Docker的核心，该文档深入探讨了容器的本质、实现原理和系统架构
+- [/操作系统/虚拟化.md](/操作系统/虚拟化.md) Docker作为容器化技术的一种实现，与虚拟化技术有密切关系，该文档介绍了虚拟化的基本概念和实现方式
+- [/运维/K8s.md](/运维/K8s.md) Kubernetes是容器编排的事实标准，与Docker密切相关，该文档介绍了K8s的架构和核心概念
+- [/软件工程/架构/系统设计/云原生.md](/软件工程/架构/系统设计/云原生.md) Docker是云原生技术栈的重要组成部分，该文档介绍了云原生的核心理念和架构模式
+- [/软件工程/DevOps.md](/软件工程/DevOps.md) Docker在DevOps实践中扮演重要角色，该文档介绍了DevOps的核心理念和实践方法
+- [/中间件/数据库/ElasticSearch.md](/中间件/数据库/ElasticSearch.md) 该文档介绍了如何使用Docker部署ElasticSearch，提供了实际应用示例
+- [/操作系统/linux/内核.md](/操作系统/linux/内核.md) Docker容器技术依赖于Linux内核的namespace和cgroup机制，该文档深入解析了这些内核机制
+- [/软件工程/微服务/ServiceMesh/ServiceMesh.md](/软件工程/微服务/ServiceMesh/ServiceMesh.md) Service Mesh是云原生架构的重要组件，与Docker容器技术密切相关
+- [/数据技术/任务调度系统.md](/数据技术/任务调度系统.md) 该文档介绍了容器调度相关内容，与Docker容器的运行和管理相关
+- [/软件工程/架构/架构.md](/软件工程/架构/架构.md) 该文档涉及微服务与K8s架构，与Docker容器化部署相关

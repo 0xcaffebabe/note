@@ -1,9 +1,51 @@
+---
+tags: ['前端开发', 'javascript引擎', '声明式编程', '组件化', '函数式编程']
+---
 
 # React
 
-## JSX
+## 0. React 的第一性原理（Why React Exists）
 
-JSX 是一套声明 React 组件的语法。
+### 0.1 React 要解决的本质问题
+
+> **如何在状态不断变化的情况下，稳定、可预测、高性能地描述 UI？**
+
+React 的核心假设：
+
+```text
+UI = f(state)
+```
+
+* UI 是状态的纯函数
+* 开发者只关心“状态长什么样”
+* 框架负责“如何更新 UI”
+
+👉 React 的本质不是 DOM 库，而是一个 **UI 描述 + 调度系统**
+
+---
+
+### 0.2 React 的三层稳定架构
+
+```
+┌────────────────────────────┐
+│ 表达层（What）             │ JSX / React Element
+├────────────────────────────┤
+│ 计算层（How to describe）  │ Component / Hooks
+├────────────────────────────┤
+│ 调度层（When & How apply） │ Fiber / Reconciliation / Commit
+└────────────────────────────┘
+```
+
+这是理解 React 的**总心智模型**，后续所有概念都可以落在这三层中。
+
+---
+
+## 1. JSX：UI 描述语言（表达层）
+
+### 1.1 JSX 的本质
+
+> JSX 不是模板，也不是 HTML
+> **JSX 是 UI 的结构化描述语言**
 
 ```jsx
 <header className="App-header">
@@ -11,335 +53,276 @@ JSX 是一套声明 React 组件的语法。
 </header>
 ```
 
-17 之前会编译成 JS 代码：
+其本质等价于：
 
 ```js
-React.createElement("header", {className: "App-header"},
-  React.createElement("h1", null, "main")
-);
+React.createElement(type, props, children)
 ```
 
-17 之后引入了一个 jsx-runtime，其是通过将 JSX 转为结构化描述传给 runtime 进行渲染
+无论 React 17 前后的实现如何变化，**不变的是：**
 
-### 注意事项
+* JSX → React Element（不可变对象）
+* Element = UI 的“快照描述”，不是组件实例
 
-1. 以下语法会渲染空结果
+---
 
-```jsx
-return 
-    <div>main</div> /* 没有用()包裹且换行 */
+### 1.2 Element / Component / DOM 的边界
+
+| 概念            | 本质             |
+| ------------- | -------------- |
+| JSX           | 语法糖            |
+| React Element | UI 的结构化描述      |
+| Component     | 生成 Element 的函数 |
+| DOM           | Element 的物理投影  |
+
+👉 **React 从不“操作 DOM”，它只比较描述**
+
+---
+
+### 1.3 JSX 的工程约束（为什么会踩坑）
+
+* `return` 换行问题：
+  👉 JSX 本质仍是 JavaScript 的表达式语法
+* 组件首字母大写：
+  👉 React 用**类型**区分 DOM Element 与 Component Element
+
+---
+
+## 2. 渲染与协调：描述如何变成现实（调度层）
+
+## 2.1 两棵树模型
+
+React 内部永远在处理两棵树：
 
 ```
-
-### 命名规则
-
-- 自定义 React 组件时，组件本身采用的变量名或者函数名，需要以大写字母开头
-- props 使用小写字母开头，驼峰格式
-
-### 元素类型
-
-- `<div></div> <img />` 等真实 DOM 元素
-- 自定义的组件，会调用对应组件的渲染方法
-- React Fragment 元素，用来包裹多个子元素，不会在 DOM 中生成真实元素
-
-### 子元素类型
-
-1. 字符串，最终会被渲染成 HTML 标签里的字符串；
-2. 另一段 JSX，会嵌套渲染；
-3. JS 表达式，会在渲染过程中执行，并让返回值参与到渲染过程中；
-4. 布尔值、null 值、undefined 值，不会被渲染出来；
-5. 以上各种类型组成的数组。
-
-## 渲染机制
-
-React 的组件会渲染出一棵元素树。因为开发者使用的是 React 的声明式 API，在此基础上，每次有 props、state 等数据变动时，组件会渲染出新的元素树，React 框架会与之前的树做 Diffing 对比，将元素的变动最终体现在浏览器页面的 DOM 中。这一过程就称为协调（Reconciliation）
-
-diffing 算法：
-
-1. 递归对比：从根元素开始，递归对比两棵树的根元素和子元素。
-2. 不同类型的元素：如果元素类型不同（例如HTML元素与React组件元素），React会直接清理旧元素及其子树，然后建立新的树。
-3. 不同HTML标签：如果两者都是HTML元素，但标签不同，React会直接清理旧元素及其子树，然后建立新的树。
-4. 不同组件类或函数：如果两者都是React组件元素，但组件类或函数不同，React会卸载旧元素及其子树，然后挂载新的元素树。
-5. 相同HTML标签：如果HTML标签相同，React会保留该元素，并记录有改变的属性。例如，value属性从"old"变成"new"。
-6. 相同组件类或函数：如果组件类或函数相同，React会保留组件实例，更新props，并触发组件的生命周期方法或Hooks
-
-在对比两棵树对应节点的子元素时，如果子元素形成一个列表，那么 React 会按顺序尝试匹配新旧两个列表的元素，会利用 key 属性值来判断前后两个列表的元素变化情况优化插入性能
-
-触发协调的时机：
-
-当 props、state、context 数据发生变化时，会触发对当前组件触发协调过程，最终按照 Diffing 结果更改页面
-
-## CSS In JS
-
-Emotion 通过在组件的 css 属性编写 CSS 代码，再在编译后的 style 标签中插入对应的 CSS 代码，实现这个效果
-
-## 生命周期
-
-### 类组件
-
-![](/assets/202472220345.webp)
-
-- 渲染阶段：异步过程，主要负责更新虚拟 DOM（ FiberNode ）树，而不会操作真实 DOM，这一过程可能会被 React 暂停和恢复，甚至并发处理，因此要求渲染阶段的生命周期方法必须是没有任何副作用（Side-effect）的纯函数（Pure Function）
-- 提交阶段：同步过程，根据渲染阶段的比对结果修改真实 DOM
-
-挂载：
-
-1. 组件构造函数。如果需要为类组件的 state 设置初始值，或者将类方法的 this 绑定到类实例上，那么可以为类组件定义构造函数；如果不需要设置或绑定的话，就可以省略掉构造函数
-2. static getDerivedStateFromProps 。如果类组件定义了这个静态方法，在组件挂载过程中，React 会调用这个方法，根据返回值来设置 state
-3. render ，类组件必须要实现这个方法。通常在返回值中会使用 JSX 语法，React 在挂载过程中会调用 render 方法获得组件的元素树。根据元素树，React 最终会生成对应的 DOM 树
-4. componentDidMount 。当 React 首次完成对应 DOM 树的创建，会调用这个生命周期方法。可以在里面访问真实 DOM 元素，也可以调用 this.setState() 触发再次渲染，但要注意避免性能问题
-
-更新：
-
-1. static getDerivedStateFromProps 。这个静态方法不仅会在挂载时被调用，也会在更新时调用，而且无论组件 props 是否有更改，只要渲染组件，都会调用这个方法。这个特性有可能造成组件内部的 state 被意外覆盖，根据 React 官方的建议，应谨慎使用这个方法
-2. shouldComponentUpdate 。如果类组件定义了这个方法且返回值是 false ，则组件在这一次更新阶段不会重新渲染，后续的 render 等方法也不会被执行，直到下一次更新。这在 React 早期版本是最常见的性能优化方法之一，也是最常写出 Bug 的 API 之一。为了尽量避免跳过必要更新，应优先使用 React 的PureComponent 组件
-3. render。只要没有被前面 shouldComponentUpdate 方法返回 false 所取消，render 方法在更新阶段也会被调用，调用的返回值会形成新的 DOM 树
-4. getSnapshotBeforeUpdate 。在本次更新真实 DOM 之前，有一次访问原始 DOM 树的机会，就是这个生命周期方法，不过不常用
-5. componentDidUpdate 。组件完成更新时会调用这个方法，你可以在这里操作 DOM，也可以处理网络请求，但要注意，需要通过比对新旧 props 或 state 来避免死循环
-
-卸载：
-
-组件即将被卸载时，React 会调用它的 componentWillUnmount 方法，你可以在这个方法中清理定时器、取消不受 React 管理的事件订阅等
-
-错误处理：
-
-如果组件本身定义了 static getDerivedStateFromError 和 componentDidCatch 这两个生命周期方法中的一个，或者两个都定义了，这个组件就成为了错误边界（Error Boundary），这两个方法会被 React 调用来处理错误。如果当前组件不是错误边界，React 就会去找父组件；如果父组件也不是，就会继续往上，直到根组件；如果谁都没接住，应用就挂了
-
-### React.memo
-
-```js
-const MyPureComponent = React.memo(MyComponent);
-//    ---------------              -----------
-//           ^                          ^
-//           |                          |
-//         纯组件                       组件
-
-const MyPureComponent = React.memo(MyComponent, compare);
-//    ---------------              -----------  -------
-//           ^                          ^          ^
-//           |                          |          |
-//         纯组件                       组件      自定义对比函数
+旧 Element Tree
+新 Element Tree
 ```
 
-其对组件进行装饰，默认用法在 props 浅比较没有发生变化，则不会进行渲染，原组件内部不应该有 state 和 context 操作，否则就算 props 没变，原组件还是有可能因为 props 之外的原因重新渲染
+> React 不关心“你改了什么”，
+> **它只比较“你现在想要什么”**
 
-### Hooks
+---
 
-Hooks 是一套为函数组件设计的，用于访问 React 内部状态或执行副作用操作，以函数形式存在的 React API
+## 2.2 Reconciliation 的设计哲学
 
-![](/assets/202472220924.webp)
+React Diff 的核心不是“最优”，而是：
 
-挂载阶段。React 会执行组件函数，在函数执行过程中遇到的 useState 、 useMemo 等 Hooks 依次挂载到 FiberNode 上，useEffect 其实也会被挂载，但它包含的副作用（Side-effect，在 Fiber 引擎中称为 Effect）会保留到提交阶段
+> **在 O(n) 时间内，得到足够好的更新结果**
 
-更新阶段。当组件接收到新 props，调用 useState 返回的 setter 或者 useReducer 返回的 dispatch 修改了状态，组件会进入更新阶段。组件函数本身会被再次执行，Hooks 会依次与 FiberNode 上已经挂载的 Hooks 一一匹配，并根据需要更新。组件函数的返回值用来更新 FiberNode 树
+### 三条稳定原则
 
-提交阶段，React 会更新真实 DOM。随后 React 会先执行上一轮 Effect 的清除函数，然后再次执行 Effect。这里的 Effect 包括 useEffect 与useLayoutEffect ，两者特性很相像。其中useLayoutEffect 的 Effect 是在更新真实 DOM 之后同步执行的，与类组件的 componentDidMount、componentDidUpdate 更相似一些；而 useEffect 的 Effect 是异步执行的，一般晚于 useLayoutEffect
+1. **类型决定命运**
 
-卸载阶段。主要是执行 Effect 的清除函数
+   * 不同类型 → 整棵子树重建
+2. **Key 决定身份**
 
-函数组件的错误处理依赖于父组件或祖先组件提供的错误边界
+   * Key 是元素的“社会身份”，不是索引
+3. **顺序假设**
 
-#### 状态 Hooks
+   * 默认假设列表是顺序稳定的
 
-useState：
+👉 这是**工程取舍**，不是算法缺陷。
 
-```js
-import React, { useState } from 'react';
-// ...省略
-function App() {
-  const [showAdd, setShowAdd] = useState(false);
-  //     -------  ----------             -----
-  //        ^         ^                    ^
-  //        |         |                    |
-  //    state变量  state更新函数           state初始值
-  const [todoList, setTodoList] = useState([/* ...省略 */]);
+---
+
+## 3. Fiber：为什么 React 可以中断渲染
+
+### 3.1 Fiber 的本质
+
+> Fiber = **可中断的工作单元（Work Unit）**
+
+* 每个 FiberNode = 一个组件或元素
+* Fiber 构成一棵可遍历、可暂停的链表结构
+
+---
+
+### 3.2 Render Phase vs Commit Phase
+
+| 阶段           | 特性        | 约束    |
+| ------------ | --------- | ----- |
+| Render Phase | 可中断 / 可重做 | 必须纯函数 |
+| Commit Phase | 同步 / 不可中断 | 允许副作用 |
+
+👉 这就是为什么：
+
+* render / 函数组件 **不能有副作用**
+* effect 被延迟执行
+
+---
+
+## 4. 组件模型：描述 UI 的计算单元（计算层）
+
+## 4.1 组件的本质
+
+> Component = `(props, state, context) → Element`
+
+* 类组件：状态挂在实例上
+* 函数组件：状态由 Hooks 外挂管理
+
+---
+
+## 4.2 数据流的第一性原则
+
+### 单向数据流不是限制，而是治理手段
+
+```
+State → Props → Child
+           ↑
+        Callback
 ```
 
-每次渲染函数时，useState 都会被执行， React 根据 useState 的次数以及它们的调用顺序来判断不同的 state
+* 保证因果关系清晰
+* 保证更新路径可追踪
+* 为调试、并发、回放打基础
 
-useReducer：
+---
 
-```js
-function reducer(state, action) {
-  switch (action.type) {
-    case 'show':
-      return true;
-    case 'hide':
-    default:
-      return false;
-  }
-}
+## 5. 生命周期：从“过程 API”到“阶段模型”
 
-function App() {
-  const [showAdd, dispatch] = useReducer(reducer, false);
-  // ...省略
-  dispatch({ type: 'show' });
-```
+### 5.1 类组件生命周期的真实价值
 
-useRef：调用 useRef 会返回一个可变 ref 对象，而且会保证组件每次重新渲染过程中，同一个 useRef Hook 返回的可变 ref 对象都是同一个对象。可变 ref 对象有一个可供读写的 current 属性，组件重新渲染本身不会影响 current 属性的值；反过来，变更 current 属性值也不会触发组件的重新渲染
+生命周期不是为了“用”，而是为了**划分阶段**：
 
-```js
-const Component = () => {
-  const myRef = useRef(null);
-  //    -----          ----
-  //      ^              ^
-  //      |              |
-  //   可变ref对象     可变ref对象current属性初始值
+| 阶段         | 本质      |
+| ---------- | ------- |
+| Render     | 描述 UI   |
+| Pre-Commit | 读取旧 DOM |
+| Commit     | 应用变更    |
+| Cleanup    | 释放资源    |
 
-  // 读取可变值
-  const value = myRef.current;
-  // 更新可变值
-  myRef.current = newValue;
+👉 Hooks 本质上是**对生命周期的函数化重构**
 
-  return (<div></div>);
-};
-```
+---
 
-#### 副作用 Hooks
+## 6. Hooks：函数组件的状态与副作用系统
 
-useEffect：
+## 6.1 Hooks 的第一性原理
 
-```js
-useEffect(() => {/* 省略 */});
-//        -----------------
-//                ^
-//                |
-//           副作用回调函数
-// 第一种用法：useEffect 在每次组件渲染（包括挂载和更新阶段）时都会被调用，但作为参数的副作用回调函数是在提交阶段才会被调用的，这时副作用回调函数可以访问到组件的真实 DOM
-```
+> Hooks = **在函数执行过程中，为 Fiber 绑定状态单元**
 
-```js
-useEffect(() => {/* 省略 */}, [var1, var2]);
-//        -----------------   -----------
-//                ^                ^
-//                |                |
-//           副作用回调函数       依赖值数组
-// 第二种用法：在渲染组件时，会记录下当时的依赖值数组，下次渲染时会把依赖值数组里的值依次与前一次记录下来的值做浅对比（Shallow Compare）
-// 如果有不同，才会在提交阶段执行副作用回调函数，否则就跳过这次执行，下次渲染再继续对比依赖值数组
-// 依赖项中定义的变量一定是会在回调函数中用到的，否则声明依赖项其实是没有意义的
-```
+关键约束来源：
 
-useEffect 可以返回一个清除函数，组件在下一次提交阶段执行同一个副作用回调函数之前，或者是组件即将被卸载之前，会调用这个清除函数
+* Hooks 以**链表**形式挂在 FiberNode 上
+* 顺序即身份
 
-useMemo：
+👉 所有 Hooks 规则都来自这一事实
 
-```js
-const memoized = useMemo(() => createByHeavyComputing(a, b), [a, b]);
-//    --------           ----------------------------------  ------
-//       ^                            ^                         ^
-//       |                            |                         |
-//   工厂函数返回值                   工厂函数                  依赖值数组
-// 只有依赖值数组中的依赖值有变化时，该 Hook 才会调用工厂函数重新计算
-```
+---
 
-useCallback：
+## 6.2 状态 Hooks 的分工模型
 
-```js
-const memoizedFunc = useCallback(() => {/*省略*/}, [a, b]);
-//    ------------               ---------------   -----
-//         ^                            ^            ^
-//         |                            |            |
-//   记忆化的回调函数                   回调函数      依赖值数组
-// 会把作为第一个参数的回调函数返回给组件，只要第二个参数依赖值数组的依赖项不改变，它就会保证一直返回同一个回调函数（引用），而不是新建一个函数，这也保证了回调函数的闭包也是不变的
-```
+| Hook       | 解决的问题     |
+| ---------- | --------- |
+| useState   | 局部状态      |
+| useReducer | 复杂状态机     |
+| useRef     | 脱离渲染的可变容器 |
 
-#### Hooks 使用规则
+---
 
-1. 只能在 React 的函数组件中调用 Hooks
-2. 只能在组件函数的最顶层调用 Hooks。因为 Hooks 的实现，是根据调用次数及调用顺序，底层存储为一个链表，在循环判断中使用 Hooks，会造成结果不确定
+## 6.3 副作用 Hooks 的时间语义
 
-## 合成事件
+| Hook            | 执行时机      | 用途      |
+| --------------- | --------- | ------- |
+| useLayoutEffect | DOM 更新后同步 | 布局测量    |
+| useEffect       | 提交后异步     | IO / 订阅 |
 
-React 对原生 DOM 事件进行了包装，提供了与原生事件相同的接口，但行为更加统一和一致
+👉 Effect 的存在，是为了**保护 Render Phase 的纯度**
 
-## 组件
+---
 
-### 数据流
+## 6.4 useMemo / useCallback 的本质
 
-props：自定义 React 组件接受一组输入参数，用于改变组件运行时的行为，不可变。
+> React 性能问题 ≠ 计算慢
+> **而是“引用不稳定”**
 
-```js
-function MyComponent({ prop1, prop2, optionalProp = 'default' }) {...}
-```
+* useMemo：缓存“值”
+* useCallback：缓存“引用”
 
-state：通过调用 useState / useReducer Hooks 创建组件转专有的状态，要修改 state 只能通过 setXxx / dispatch
+它们不是优化工具，而是**稳定性工具**
 
-context：
+---
 
-```js
-// 创建一个Context
-const MyContext = React.createContext('没路用的初始值');
+## 7. 组件复用与扩展机制
 
-// Context消费者
-function MyGrandchildComponent() {
-  const value = useContext(MyContext);
-  return (
-    <li>{value}</li>
-  );
-}
+### 7.1 React.memo：渲染的幂等性保证
 
-// Context提供者
-function MyComponent() {
-  const [obj, setObj] = useState({ key1: '文本' })
-  // ...
-  return (
-    <MyContext.Provider value={obj}>
-      <MyChildComponent />
-    </MyContext.Provider>
-  );
-}
-```
+> memo = 声明式的 shouldComponentUpdate
 
-React 的数据流是单向的，只能从父组件流向子组件，子组件不能直接修改父组件的状态，只能通过父组件传递一个回调函数，让子组件调用，修改父组件的状态
+前提：
 
-### 接口
+* 组件必须是**纯函数**
+* 副作用必须外置
 
-把 React 组件的 props 和 context 看作是接口，包括但不限于：
+---
 
-1. 哪些字段作为 props 暴露出来？
-2. 哪些抽取为 context 从全局获取？
-3. 哪些数据实现为组件内部的 state？
+### 7.2 高阶组件（HOC）
 
-### 高阶组件
+本质模式：**装饰器**
 
-```js
-const EnhancedComponent = withSomeFeature(args)(WrappedComponent);
-//    -----------------   --------------- ----  ----------------
-//          |                    |         |            |
-//          |                    V         V            |
-//          |                 高阶函数     参数           |
-//          |             ---------------------         |
-//          |                       |                   |
-//          V                       V                   V
-//       增强组件                 高阶组件               原组件
-```
+* 横切关注点（日志、权限、注入）
+* 与 Hooks 的主要区别：
 
-装饰器模式的应用，可以为组件添加一些公用的功能
+  * HOC 是结构级
+  * Hooks 是逻辑级
 
-## 应用状态管理
+---
 
-### Redux
+## 8. 事件系统：一致性优先于原生行为
 
-```js
-import { createSlice, configureStore } from '@reduxjs/toolkit';
+> React 合成事件的目标不是“更快”，
+> 而是 **跨浏览器一致性 + 可控传播模型**
 
-const counter = createSlice({
-  name: 'counter',
-  initialState: 0,
-  reducers: {
-    set(state, action) {
-      state = action.payload.val;
-      return state
-    }
-  },
-});
-export const { set } = counter.actions;
+---
 
-const store = configureStore({
-  reducer: counter.reducer
-});
-// 监听
-store.subscribe(() => console.log(store.getState()));
-// 更新
-store.dispatch(set({ val: 2 }));
-```
+## 9. 应用状态管理：何时需要 Redux？
+
+## 9.1 状态的分层治理模型
+
+| 状态层级 | 工具       |
+| ---- | -------- |
+| 组件私有 | useState |
+| 组件协作 | Props    |
+| 跨层共享 | Context  |
+| 全局业务 | Redux    |
+
+👉 Redux 的核心价值不是“存状态”，而是：
+
+* 可预测
+* 可回溯
+* 可观测
+
+---
+
+## 10. React 的长期演进方向（稳定认知）
+
+### 不变的部分
+
+* UI = f(state)
+* 单向数据流
+* 描述优先于命令
+
+### 演进的部分
+
+* Class → Function
+* Sync → Concurrent
+* Client → Server Components
+
+---
+
+## 11. 总结：React 的工程哲学
+
+> React 是一套：
+>
+> * 用**函数描述 UI**
+> * 用**调度管理复杂度**
+> * 用**约束换取可维护性**
+>   的系统
+
+## 关联内容（自动生成）
+
+- [/编程语言/JavaScript/Vue.md](/编程语言/JavaScript/Vue.md) 作为现代前端框架的代表，Vue 与 React 在「声明式」「响应式」「组件化」方面有着相似的理念，对比学习有助于深入理解前端框架的本质
+- [/编程语言/JavaScript/JavaScript.md](/编程语言/JavaScript/JavaScript.md) React 的实现基础是 JavaScript，理解 JavaScript 的值模型、类型系统和语言特性对于掌握 React 的工作机制至关重要
+- [/软件工程/架构/Web前端/Web前端.md](/软件工程/架构/Web前端/Web前端.md) React 是现代 Web 前端开发的重要组成部分，了解整个前端生态系统有助于理解 React 的定位和作用
+- [/软件工程/架构/Web前端/前端工程化.md](/软件工程/架构/Web前端/前端工程化.md) React 项目的成功实施离不开前端工程化体系的支持，包括构建、部署、测试等环节
+- [/编程语言/编程范式/函数式编程.md](/编程语言/编程范式/函数式编程.md) React 的设计理念深受函数式编程影响，特别是不可变数据和纯函数的概念在 Hooks 和组件设计中得到了广泛应用

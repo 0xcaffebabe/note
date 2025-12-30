@@ -1,472 +1,254 @@
 ---
-tags: ['编程语言']
+tags: ['c++', '编程语言', 'raii', '资源管理', '编译期计算', '性能优化']
 ---
 
 # C++
 
-## 生命周期
 
-- 编码
-- 预处理：目的是文字替换，用到的就是各种预处理指令，比如 #include、#define、#if 等
-- 编译
-- 链接
-- 运行
+## 一、C++ 的核心设计哲学（认知锚点）
 
-### 预处理阶段编程
+C++ 并非“复杂”，而是**将复杂性显式暴露给程序员**。
 
-```cpp
-#include <iostream> // 可以包含任意的文件，只是编译器无法识别
-// 避免头文件被多次包含
-#ifndef _XXX_H_INCLUDED_
-#define _XXX_H_INCLUDED_
+### 1. 资源即对象（RAII）
 
-...    // 头文件内容
+* 一切资源（内存、锁、文件、线程）都应绑定到对象生命周期
+* 析构函数是**隐式但确定的回收点**
+* 这是 C++ 没有 GC 却依然安全的根本原因
 
-#endif // _XXX_H_INCLUDED_
+> 本质：**用作用域替代运行时回收策略**
 
-#ifdef AUTH_PWD                  // 检查是否已经有宏定义
-#  undef AUTH_PWD                // 取消宏定义
-#endif                           // 宏定义检查结束
-#define AUTH_PWD "xxx"           // 重新宏定义
+---
 
-// 条件编译
-#elif (NGX_LINUX)
-#  include <ngx_linux.h>
+### 2. 编译期优先原则
 
-#endif
-```
+* 能在编译期发现的问题，绝不留到运行期
+* 类型系统是第一道防线，而不是测试
 
-### 编译阶段编程
+体现形式：
 
-属性：编译阶段的“标签”，用来标记变量、函数或者类
+* static_assert
+* 模板 / 元编程
+* constexpr / decltype
 
-```cpp
-[[deprecated("过时")]] // c++14 or later
-//[[gnu::deprecated]] // c+11 or later
-int old_func()
-{
-    //[[gnu::deprecated("I hate this")]]
-    int value = 0;
-    return value;
-}
+---
 
-int main() {
-  old_func();
-  return 1;
-}
-```
+### 3. 零成本抽象（Zero-cost Abstraction）
 
-静态断言：在编译阶段计算常数和类型，如果断言失败就会导致编译错误
+* 抽象不是免费，但不用的抽象不应付出成本
+* 高层表达 ≠ 低性能
 
-```cpp
-static_assert(1 != 1, "1 is 1");
-```
+> 这是 C++ 区别于脚本语言和托管语言的根本分野
 
-## RAII
+---
 
-RAII（Resource Acquisition Is Initialization）通过对象的生命周期来控制资源的分配和释放。RAII的核心思想是将资源的获取与对象的初始化绑定在一起，将资源的释放与对象的销毁绑定在一起
+### 4. 显式控制与性能透明
 
-```cpp
-std::mutex mtx;
-    {
-        std::lock_guard<std::mutex> lock(mtx); // 构造函数中加锁
-        // 临界区代码
-    }
-```
+* 程序员对性能、内存、并发负责
+* 抽象不能隐藏成本模型
 
-## 面向对象
+---
 
-```cpp
-#include <iostream>
-
-class Animal {
-  private:
-    int age = 0;
-  public:
-    friend class Dog;
-    // 构造函数
-    Animal() = default; // 明确告诉编译器，使用默认实现
-    // 析构函数
-    ~Animal() {
-      std::cout << "~Animal\n" << std::endl;
-    }
-    void test() {
-      std::cout << "Animal\n";
-    }
-    virtual void test1() {
-      std::cout << "Animal\n";
-    }
-};
-
-// 继承
-class Dog: public Animal {
-private:
-  int name = 0;
-public:
-  Dog() = default;
-  Dog(int name) {
-    this->name = name;
-  }
-  void test() {
-    std::cout << "Dog\n";
-  }
-
-  // 方法覆写
-  void test1() override {
-    std::cout << "Dog\n";
-  }
-
-  void test2(const Animal& a) {
-    // 访问友元类的私有数据
-    a.age;
-  }
-
-  // 运算符重载
-  Dog operator+(const Dog & dog) {
-    std::cout << "two dog plus\n";
-    return Dog(2);
-  }
-};
-
-int main() {
-  Animal* a = new Dog();
-  a->test(); // Animal
-  a->test1(); // Dog
-
-  Animal b = Dog();
-  b.test1(); // Animal
-
-  Dog c;
-  Dog d;
-  Dog e = c + d;
-  
-}
-```
-
-## 变量
-
-### 自动类型推导
-
-- auto 只能用在初始化语句中
-- auto 总是推导出“值类型”，绝不会是“引用”
-- auto 可以附加上 const、volatile、*、& 这样的类型修饰符，得到新的类型
-
-```cpp
-auto        x = 10L;    // auto推导为long，x是long
-
-auto&       x1 = x;      // auto推导为long，x1是long&
-auto*       x2 = &x;    // auto推导为long，x2是long*
-const auto& x3 = x;        // auto推导为long，x3是const long&
-auto        x4 = &x3;    // auto推导为const long*，x4是const long*
-
-// c++14后 auto也能用在函数返回值中
-auto f() {
-  return 1;
-}
-```
-
-decltype 的形式很像函数，后面的圆括号里就是可用于计算类型的表达式（和 sizeof 有点类似），其他方面就和 auto 一样了，也能加上 const、*、& 来修饰
-
-```cpp
-void (*signal(int signo, void (*func)(int)))(int);
-// 使用decltype可以轻松得到函数指针类型
-using sig_func_ptr_t = decltype(&signal);
-
-// 获取复杂类型
-std::set s = {1,2,3};
-using iterator_type = decltype(s.cbegin());
-iterator_type iterator = s.cbegin();
-```
-
-### 初始化
-
-```cpp
-// 列表初始化
-// 编译器的魔法只是对 {1, 2, 3} 这样的表达式自动生成一个初始化列表，在这个例子里其类型是 initializer_list。只需要声明一个接受 initializer_list 的构造函数即可使用
-vector<int> v{1, 2, 3, 4, 5};
-```
-
-### const/volatile/mutable
-
-const
-
-- 它是一个类型修饰符，可以给任何对象附加上“只读”属性，保证安全
-- 它可以修饰引用和指针，“const &”可以引用任何类型，是函数入口参数的最佳类型
-- 它还可以修饰成员函数，表示函数是“只读”的，const 对象只能调用 const 成员函数
-
-volatile
-
-- 表示变量可能会被“不被察觉”地修改，禁止编译器优化，每次使用时，都要去内存中读
-
-mutable
-
-- 对于一些特殊的变量，给它加上 mutable 修饰，解除 const 的限制，让任何成员函数都可以操作它
-
-```cpp
-class A {
-  public:
-    int a = 1;
-    mutable int b = 2;
-    void test() {
-      a = 2;
-    }
-    void test1() const {
-      // a = 2; 不行
-      b = 2;
-    }
-};
-
-int main() {
-  const A a = A();
-  // a.test(); 无法调用
-  a.test1();
-  return 1;
-}
-```
-
-### 智能指针
-
-智能指针是代理模式的具体应用，它使用 RAII 技术代理了裸指针，能够自动释放内存，无需程序员干预
-
-unique_ptr：
-
-unique_ptr 是一个对象。不要对它调用 delete，它会自动管理初始化时的指针，在离开作用域时析构释放内存，它也没有定义加减运算，不能随意移动指针地址，也不能通过拷贝赋值，要通过 move 语义进行指针的所有权转移
-
-```cpp
-class A {
-public:
-  ~A() {
-    cout << "~A";
-  }
-};
-
-int main() {
-  {
-    unique_ptr<A> p1(new A());
-    // auto p2 = p1; ERROR
-    auto p2 = move(p1); // 要通过 move 进行指针所有权转移
-  }
-  cout << "exit";
-  return 1;
-}
-```
-
-shared_ptr：
-
-其所有权是可以被安全共享的，其内部有个引用计数，会导致循环引用的问题。如果发生拷贝赋值——也就是共享的时候，引用计数就增加，而发生析构销毁的时候，引用计数就减少。只有当引用计数减少到 0，内存就会被回收
-
-```cpp
-shared_ptr<A> p3(new A());
-auto p4 = p3;
-```
-
-weak_ptr：
-
-只观察指针，不会增加引用计数（弱引用），但在需要的时候，可以调用成员函数 lock()，获取 shared_ptr（强引用）
-
-## 异常
-
-```mermaid
-stateDiagram-v2
-  direction BT
-  bad_alloc --> expcetion
-  runtime_error --> expcetion
-  logic_error --> expcetion
-  bad_cast --> expcetion
-  range_error --> runtime_error
-  overflow_error --> runtime_error
-  invalid_argument --> runtime_error
-  length_error --> runtime_error
+## 二、C++ 能力三角（总体结构模型）
 
 ```
-
-```cpp
-try {
-    throw runtime_error("runtime_error");
-  }catch(const exception& e) {
-    cout << e.what();
-  }catch(const runtime_error& e) { // 只会按照顺序匹配，而不会根据异常继承树匹配最佳
-    cout << e.what();
-  }
-
-// noexcept 告知编译器该函数不会抛异常，可以做一些优化，但如果真的发生异常，程序直接崩掉
-int f() noexcept {
-  throw runtime_error("runtime_error");
-}
+        编译期能力
+            ▲
+            │
+            │
+资源管理 ◄───┼───► 性能与并发
+            │
+            │
+            ▼
+        运行期执行
 ```
 
-### 异常安全
+接下来的所有内容，均可映射到这三个稳定维度。
 
-当代码抛出异常时，程序的状态仍然保持一致，不会导致资源泄漏或数据损坏
+---
 
-基本保证：即使发生异常，程序中的所有对象仍然处于有效状态，且不发生资源泄漏。程序的状态可能会改变，但不会有未定义行为
+## 三、编译期能力：把错误前移
 
-强保证：操作失败并抛出异常，程序状态将保持不变。操作要么成功，要么在失败时不会对程序的状态产生影响
+### 3.1 程序生命周期的本质分层
 
-无异常保证：操作保证不会抛出任何异常
+| 阶段  | 本质职责         |
+| --- | ------------ |
+| 预处理 | 文本层替换（非语言）   |
+| 编译  | 类型检查、语义分析、优化 |
+| 链接  | 符号解析与组合      |
+| 运行  | 指令执行         |
 
-## lambda
+> 预处理不是 C++，而是历史包袱
 
-```cpp
-int n = 1;
-// = 捕获外层变量，值类型。 &捕获外层变量，引用类型
-auto f1 = [=](const int& a, const int& b) {
-  return a + b + n;
-};
-```
+---
 
-## 标准库
+### 3.2 编译期约束：static_assert
 
-### 字符串
+* 编译期验证假设
+* 类型与常量的逻辑校验
 
-字面量后缀：
+> 本质：**把运行期崩溃转为编译期失败**
 
-明确地表示它是 string 字符串类型，而不是 C 字符串
+---
 
-```cpp
-using namespace std::literals::string_literals; //必须打开名字空间
-auto str = "hello"s;
-```
+### 3.3 类型推导的设计意图（auto / decltype）
 
-原始字符串：
+* auto：减少冗余，不削弱类型系统
+* decltype：在不破坏抽象的前提下获取精确类型
 
-```cpp
-auto s = R"(\n123\n)"; // 输出\n123\n
-```
+> 类型推导 ≠ 动态类型
 
-字符串转换函数：
+---
 
-```cpp
-using namespace std;
-cout << s;
-cout << stoi("123");
-cout << stol("123");
-cout << stod("123.0");
-```
+### 3.4 模板与编译期计算
 
-字符串视图：内部只保存一个指针和长度，无论是拷贝，还是修改，都非常廉价
+模板的真实目的：
 
-```cpp
-auto view = new string_view("aaa")
-```
+* 类型抽象 + 性能保留
 
-### 容器
+元编程的历史意义：
 
-```cpp
-// 动态数组
-vector<int> v(2);
-v.emplace_back(3);
-// 队列
-deque<int> d;
-d.emplace_back(4);
-// 集合
-set s = {7, 3, 9};
-// 散列表
-unordered_map<int, int> map;
-map.emplace(1,2);
-```
+* 在 constexpr 出现前模拟编译期计算
 
-迭代器：
+> 现代 C++ 倾向用 constexpr，而非复杂 TMP
 
-容器一般都会提供 begin()、end() 成员函数，调用它们就可以得到表示两个端点的迭代器。迭代器和指针类似，可以前进和后退，但不能假设它一定支持“++”“--”操作符
+---
 
-```cpp
-for(auto it = v.begin(); it != v.end(); it++) {
-  cout << *it;
-}
-// 更加通用的迭代器操作
-for(auto it = v.begin(); it != v.end(); advance(it, distance(it, next(it)))) {
-  cout << *it;
-}
-```
+## 四、资源与生命周期：RAII 统治一切
 
-```mermaid
-graph TD
-    A[Iterator<br>支持 ++ 和 *] --> B[InputIterator<br>用 * 读取]
-    A --> C[OutputIterator<br>用 * 输出]
-    B --> D[ForwardIterator<br>可反复读取]
-    D --> E[BidirectionalIterator<br>支持 --]
-    E --> F[RandomAccessIterator<br>支持跳跃和比较]
-    F --> G[ContiguousIterator<br>存储连续]
-```
+### 4.1 RAII 的第一性原理
 
-### 线程
+* 构造函数 = 资源获取
+* 析构函数 = 资源释放
+* 作用域 = 安全边界
 
-```cpp
-static once_flag flag;        // 全局的初始化标志
-thread_local int n = 0; // 线程本地变量
-atomic<int> at = {0}; // 原子变量
+这解决了两个根本问题：
 
-thread t1([&](){
-  n += 10;
-  cout << "t1, " << n;
-  at++;
-  // 只会被调用一次
-  call_once(flag, []{ cout << "Hello, once" << endl; });
-  cout << "t1, " << this_thread::get_id() << endl;
-});
-thread t2([](){
-  n += 20;
-  cout << "t2, " << n;
-  // 只会被调用一次
-  call_once(flag, []{ cout << "Hello, once" << endl; });
-  cout << "t2, " << this_thread::get_id() << endl;
-});
+1. 异常路径下的资源泄漏
+2. 多出口函数的清理复杂度
 
-t1.join();
-t2.join();
-// 异步执行代码块返回future
-auto f = async([](){cout << "async" << endl;});
-f.wait();
-```
+---
 
-## 模板
+### 4.2 对象模型与多态的真实边界
 
-### 函数模板
+* 非虚函数：静态绑定，性能透明
+* 虚函数：运行期多态，付出间接调用成本
 
-允许编写与类型无关的函数。可以使用模板参数来指定函数中的参数和返回值类型。编译器会在使用函数模板时根据传递的参数推导出具体的类型，并生成对应的函数
+> 多态是能力，不是默认选择
 
-```cpp
-template <typename T>
-T add(T a, T b) {
-    return a + b;
-}
-```
+---
 
-### 类模板
+### 4.3 智能指针的本质分类
 
-允许定义一个通用的类，类似于函数模板，但它是针对类的。可以定义一个类，其中的成员变量、成员函数的类型可以通过模板参数来指定
+| 类型         | 本质语义   | 适用场景  |
+| ---------- | ------ | ----- |
+| unique_ptr | 独占所有权  | 默认选择  |
+| shared_ptr | 共享生命周期 | 架构级共享 |
+| weak_ptr   | 观察关系   | 破循环   |
 
-```cpp
-template <typename T>
-class Box {
-private:
-    T value;
-public:
-    Box(T val) : value(val) {}
-    void setValue(T val) { value = val; }
-    T getValue() const { return value; }
-};
+> shared_ptr 是设计信号，而非便利工具
 
-// 使用
-Box<int> intBox(10);
-```
+---
 
-### 元编程
+### 4.4 异常与异常安全
 
-使用模板机制在编译期进行计算和逻辑操作，而不是在运行时执行
+异常存在的理由：
 
-```cpp
-template<int N>
-struct Factorial {
-    static const int value = N * Factorial<N - 1>::value;
-};
+* 分离正常路径与错误路径
 
-template<>
-struct Factorial<0> {
-    static const int value = 1;
-};
+异常安全等级：
 
-// 直接编译为常量 120
-std::cout << Factorial<5>::value;
-```
+* 基本保证：不泄漏
+* 强保证：事务语义
+* 不抛异常保证：系统边界
+
+> RAII 是异常安全的前提条件
+
+---
+
+## 五、性能与并发：程序员责任区
+
+### 5.1 容器与迭代器的抽象哲学
+
+* 容器管理存储
+* 算法管理行为
+* 迭代器是两者的解耦接口
+
+> 这是 STL 的核心架构思想
+
+---
+
+### 5.2 迭代器层级的意义
+
+迭代器能力 = 可承诺的操作复杂度
+
+* RandomAccess ≠ 所有容器
+* 抽象不意味着能力一致
+
+---
+
+### 5.3 并发模型的底层认知
+
+稳定原则：
+
+* 数据竞争是未定义行为
+* 原子 ≠ 无锁万能解
+
+工具只是表象：
+
+* thread / atomic / once_flag
+
+真正重要的是：
+
+* happens-before
+* 可见性与顺序保证
+
+---
+
+## 六、语言演进的稳定方向
+
+### 6.1 从 C 到现代 C++
+
+演进主线：
+
+* 手动 → 自动（RAII）
+* 运行期 → 编译期
+* 宏 → 类型系统
+
+---
+
+### 6.2 什么在变，什么不变
+
+| 稳定不变  | 快速变化 |
+| ----- | ---- |
+| RAII  | API  |
+| 类型系统  | 语法糖  |
+| 编译期能力 | 库实现  |
+| 性能透明  | 具体工具 |
+
+---
+
+## 七、如何正确学习与使用 C++
+
+* 从哲学到机制，而不是反过来
+* 默认选择：
+
+  * 组合 > 继承
+  * unique_ptr > shared_ptr
+  * 编译期 > 运行期
+
+> C++ 是一门**对认知成熟度有要求的语言**
+
+## 关联内容（自动生成）
+
+- [/编程语言/C.md](/编程语言/C.md) C++在C语言基础上增加了面向对象、模板、智能指针等特性，了解C++有助于理解C语言的演进和设计哲学
+- [/编程语言/Rust.md](/编程语言/Rust.md) Rust和C++都关注内存安全和性能优化，但使用不同的方法：Rust通过所有权系统，C++通过RAII
+- [/计算机系统/程序结构和执行/优化程序性能.md](/计算机系统/程序结构和执行/优化程序性能.md) C++的性能优化与底层程序性能优化有密切关系，包括编译器优化、内存访问模式、CPU指令调度等技术
+- [/编程语言/并发模型.md](/编程语言/并发模型.md) C++提供了线程、原子操作等并发编程原语，是理解并发模型的重要实践语言
+- [/编程语言/编程范式/面向对象.md](/编程语言/编程范式/面向对象.md) C++是支持面向对象编程的多范式语言，与面向对象设计原则和实现密切相关
+- [/操作系统/操作系统.md](/操作系统/操作系统.md) C++程序直接与操作系统交互，其资源管理、内存管理、并发模型与操作系统原理紧密相关
+- [/中间件/浏览器/V8.md](/中间件/浏览器/V8.md) V8引擎部分使用C++实现，体现了C++在高性能系统中的应用
+- [/软件工程/性能工程/性能优化.md](/软件工程/性能工程/性能优化.md) C++是性能敏感型语言，其设计与性能优化原则密切相关，包括零成本抽象等理念
+- [/编程语言/JAVA/JVM/类加载机制.md](/编程语言/JAVA/JVM/类加载机制.md) JVM的启动类加载器使用C++实现，体现了C++在底层系统实现中的重要性
+- [/编程语言/JAVA/JVM/JAVA内存模型.md](/编程语言/JAVA/JVM/JAVA内存模型.md) C++和Java都使用了操作系统的同步机制，对比学习有助于理解不同语言的并发实现
+- [/计算机网络/IO模型.md](/计算机网络/IO模型.md) C++的网络编程库(如Muduo, Boost.Asio)基于系统级IO模型实现，是高性能网络编程的重要选择
+- [/编程语言/python.md](/编程语言/python.md) Python在性能关键部分常使用C/C++扩展，体现了C++在构建高性能组件中的作用

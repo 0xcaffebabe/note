@@ -233,7 +233,6 @@
     - [🔄Lambda 表达式](./编程语言/JAVA/高级/Lambda表达式.md)
     - [🔄Stream 流](./编程语言/JAVA/高级/Stream流.md)
     - [🔗JDBC](./编程语言/JAVA/高级/JDBC.md)
-    - [🍬语法糖](./编程语言/JAVA/高级/语法糖.md)
     - [⚙️Java 运行管理](./编程语言/JAVA/高级/JAVA运行管理.md)
     - [⚙️编译原理](./编程语言/JAVA/编译原理.md)
     - [⚙️JVM](./编程语言/JAVA/JVM/JVM.md)

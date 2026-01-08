@@ -1,5 +1,8 @@
+---
+tags: ['java', 'java-ee', 'web-架构', '设计模式', '架构设计']
+---
 
-# Servlet 深度解析：规范、架构与设计思想
+# Servlet
 
 ## 1. 技术本质与核心架构
 
@@ -207,3 +210,14 @@ Servlet 是 Java Web 技术体系的根基。
 > Servlet 是 Web 世界的“JVM 级抽象层”——
 > 它以标准化接口定义了 Web 组件的生命形式，
 > 以容器化架构实现了高可移植、高扩展的企业级应用运行环境。
+
+## 关联内容（自动生成）
+
+- [/中间件/web中间件/Tomcat.md](/中间件/web中间件/Tomcat.md) Tomcat是Servlet容器的一种重要实现，深入阐述了Servlet容器的架构原理和工作机制
+- [/中间件/web中间件/Jetty.md](/中间件/web中间件/Jetty.md) Jetty是另一个流行的Servlet容器，提供了轻量级的Web服务器和Servlet容器功能
+- [/编程语言/JAVA/框架/Spring/SpringMVC.md](/编程语言/JAVA/框架/Spring/SpringMVC.md) Spring MVC框架基于Servlet规范构建，DispatcherServlet是其核心前端控制器
+- [/软件工程/设计模式/设计模式.md](/软件工程/设计模式/设计模式.md) Servlet规范中体现了多种经典设计模式，如模板方法模式、单例模式、工厂模式等
+- [/软件工程/设计模式/行为模式.md](/软件工程/设计模式/行为模式.md) Servlet中的FilterChain体现了责任链模式，Listener机制体现了观察者模式
+- [/编程语言/JAVA/高级/注解.md](/编程语言/JAVA/高级/注解.md) Servlet 3.0开始支持基于注解的配置，替代传统的web.xml配置方式
+- [/编程语言/JAVA/高级/反射.md](/编程语言/JAVA/高级/反射.md) Servlet容器使用反射机制来创建和管理Servlet实例
+- [/编程语言/JAVA/高级/IO.md](/编程语言/JAVA/高级/IO.md) Servlet处理HTTP请求和响应时涉及到大量的IO操作

@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 
-const ignorePrefixs = ['.git', 'node_modules', 'dist']
+const ignorePrefixs = ['.git', 'node_modules', 'dist', 'doc/.agents', 'doc/知识索引']
 
 export default class BaseService {
 

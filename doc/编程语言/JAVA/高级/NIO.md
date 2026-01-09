@@ -1,235 +1,276 @@
-# NIO
+---
+tags: ['java-nio', 'io-模型', 'reactor模型', '网络编程', '性能']
+---
 
-## 与BIO的区别
+# Java NIO
 
-- BIO是面向流的，NIO是面向缓冲区的；
-- BIO流是阻塞的，NIO流是不阻塞的;
-- NIO有选择器，而IO没有。
+## 一、IO 的第一性原理（本质层）
 
-## 传统BIO模型的缺点
+### 1. IO 的根本问题是什么？
 
-- 严重依赖于线程 线程是很昂贵的
-  - 线程内存资源 上下文切换成本
+**IO 的本质不是读写数据，而是：**
 
-![202073116749](/assets/202073116749.jpg)
+> 如何在“外部事件完成时间不可预测”的前提下，
+> 高效使用有限的计算资源（CPU / 线程 / 内存）。
 
-NIO 的线程模型
+换句话说：
 
-```java
- while(channel=Selector.select()){//选择就绪的事件和对应的连接
-      if(channel.event==accept){
-         registerNewChannelHandler(channel);//如果是新连接，则注册一个新的读写处理器
-      }
-      if(channel.event==write){
-         getChannelHandler(channel).channelWritable(channel);//如果可以写，则执行写事件
-      }
-      if(channel.event==read){
-          getChannelHandler(channel).channelReadable(channel);//如果可以读，则执行读事件
-      }
-    }
-   }
-```
+* 计算是可控、可预测的
+* IO 等待是不可控、不可预测的
 
-## NIO 的 Reactor Proactor
+👉 **所有 IO 模型、NIO、Reactor 的存在，都是为了解决这一不对称性。**
 
-### Reactor
+---
 
-```mermaid
-stateDiagram-v2
-    direction LR
-    state "Service Handler & Event Dispather" as dispatcher
-    input1 --> dispatcher
-    input2 --> dispatcher
-    input3 --> dispatcher
-    dispatcher --> RequestHandler1
-    dispatcher --> RequestHandler2
-    dispatcher --> RequestHandler3
-```
+### 2. IO 系统中的三大核心矛盾
 
-事件驱动思想
+| 矛盾           | 说明                |
+| ------------ | ----------------- |
+| 等待 vs 计算     | IO 等待期间 CPU 是否被浪费 |
+| 连接数 vs 线程数   | 外部连接规模远大于可用线程     |
+| 同步语义 vs 系统吞吐 | 易理解的同步模型限制并发      |
 
-- 多线程模型
-  - 一个接收线程，多个处理线程
+所有 IO 架构，本质上都是在这三者之间做权衡。
 
-- 步骤1：等待事件到来（Reactor负责）。
-- 步骤2：将读就绪事件分发给用户定义的处理器（Reactor负责）。
-- 步骤3：读数据（用户处理器负责）。
-- 步骤4：处理数据（用户处理器负责）。
+---
 
-### Proactor
+## 二、资源模型：为什么 BIO 天生不可扩展
 
-![202172311918](/assets/202172311918.png)
+### 1. BIO 的隐含假设
 
-- 步骤1：等待事件到来（Proactor负责）。
-- 步骤2：得到读就绪事件，执行读数据（现在由Proactor负责）。
-- 步骤3：将读完成事件分发给用户处理器（Proactor负责）。
-- 步骤4：处理数据（用户处理器负责）。
+BIO（Blocking IO）并不是“设计得差”，而是基于以下假设：
 
-Proactor 中，直接监听读/写操作是否完成，也就是说读/写操作是否 OS 来完成，并将读写数据放入一个缓冲区提供给程序
+* IO 操作很快完成
+* 连接数有限
+* 线程资源充足
 
-## Buffer
+其真实模型是：
 
-- DirectByteBuffer 可以减少内存从内核到用户的拷贝 但是创建消费成本更高 需要池化
-- HeapByteBuffer 使用堆内存
+> **一个 IO 会话 = 一个线程的生命周期**
 
-## 核心类
+---
 
-![屏幕截图 2020-09-28 140403](/assets/屏幕截图%202020-09-28%20140403.png)
+### 2. BIO 的根本问题（不是“线程多”）
 
-- Buffer：数据容器，除了布尔类型，所有原始数据类型都有相应的 Buffer 实现
-- Channel：类似 Linux 之类操作系统上的文件描述符
-- Selector：可以实现单线程对多 Channel 的高效管理，Linux 上依赖于epoll，Windows 上 NIO2（AIO）模式则是依赖于iocp
+BIO 的问题不在于“线程数量”，而在于：
 
-### ByteBuffer
+* 线程被**绑定**到不可预测的等待
+* 线程在等待期间无法执行任何计算
 
-属性：
+即：
 
-- capacity 缓冲区数组总长度
-- position 下一个要操作的数据元素位置
-- limit 缓冲区不可操作的下一个元素的位置 limit<=capacity
-- mark 类似于书签
+> **计算资源被无意义地占用**
 
-![屏幕截图 2020-09-28 141745](/assets/屏幕截图%202020-09-28%20141745.png)
+这就是 BIO 在高并发、长连接场景下必然崩溃的原因。
 
-对比项    | HeapByteBuffer             | DirectByteBuffer
--|-|-
-存储位置 | Java Heap中                 | Native内存中
-I/O  | 需要在用户地址空间和操作系统内核地址空间复制数据   | 不需复制
-内存管理 | Java GC回收，创建和回收开销少          | 通过调用System.gc要释放掉Java对象引用的DirectByteBuffer内空间， 如果Java对象长时间持有引用可能会导致Native内存泄漏，创建和回收内存开销较大
-适用场景 | 并发连接数少于1000, I/O 操作较少时比较合适 | 数据量比较大、生命周期比较长的情况下比较合适
+---
 
-大多数垃圾收集过程中，都不会主动收集 DirectBuffer，其内部使用 Cleaner 和虚引用（PhantomReference）机制，其本身不是 public 类型，内部实现了一个 Deallocator 负责销毁的逻辑
+## 三、IO 模型的演进（操作系统层）
 
-#### [零拷贝](/操作系统/输入输出.md#零拷贝)
+> OS 层 IO 模型解决的是：
+> **“进程如何感知 IO 何时就绪”**
 
-- MappedByteBuffer 是 NIO 基于内存映射（mmap）这种零拷贝方式的提供的一种实现
-- DirectByteBuffer 在 MappedByteBuffer 的基础上提供了内存映像文件的随机读取 get() 和写入 write() 的操作
-- FileChannel.transferXXX 是 sendfile 的实现
+### 1. IO 的两个阶段（统一抽象）
 
-### 文件输出例子
+所有 IO 都可拆为两个阶段：
 
-```java
-FileOutputStream fos = new FileOutputStream("file.txt");
-FileChannel channel = fos.getChannel();
-ByteBuffer buffer = ByteBuffer.allocate(1024);
-buffer.put("20191204".getBytes());
-// 翻转缓冲区
-buffer.flip();
-channel.write(buffer);
-fos.close();
-```
+1. 等待数据就绪（数据到达内核）
+2. 数据拷贝（内核 → 用户态）
 
-### 文件输入
+---
 
-```java
-File file = new File("file.txt");
-FileInputStream fis = new FileInputStream(file);
-ByteBuffer buffer = ByteBuffer.allocate((int) file.length());
-FileChannel channel = fis.getChannel();
-channel.read(buffer);
-System.out.println(new String(buffer.array()));
-fis.close();
-```
+### 2. 五种经典 IO 模型（OS 视角）
 
-### 文件复制
+| 模型      | 第一阶段   | 第二阶段 | 本质      |
+| ------- | ------ | ---- | ------- |
+| 阻塞 IO   | 阻塞     | 阻塞   | 线程绑定 IO |
+| 非阻塞 IO  | 轮询     | 阻塞   | CPU 换延迟 |
+| IO 多路复用 | 阻塞在选择器 | 阻塞   | 事件集中管理  |
+| 信号驱动 IO | 信号通知   | 阻塞   | 回调感知    |
+| 异步 IO   | 非阻塞    | 非阻塞  | 内核完成一切  |
 
-```java
-FileInputStream fis = new FileInputStream("file.txt");
-FileOutputStream fos = new FileOutputStream("file1.txt");
-FileChannel source = fis.getChannel();
-FileChannel target = fos.getChannel();
-target.transferFrom(source,0,source.size());
-source.close();
-target.close();
-```
+**关键结论：**
 
-## 网络编程
+> 前四种仍是“同步 IO”，只有异步 IO 在两个阶段都解耦了线程。
 
-- Selector
+---
 
-它是Java NIO核心组件中的一个，用于检查一个或多个NIO Channel（通道）的状态是否处于可读、可写。如此可以实现单线程管理多个channels,也就是可以管理多个网络链接
+## 四、架构模式层：从 IO 模型到系统设计
 
-```mermaid
-stateDiagram-v2
-    Selector --> Channel1: 轮询
-    Selector --> Channel2: 轮询
-    Selector --> Channel3: 轮询
-    Selector --> Channel4: 轮询
-```
+> 架构模式解决的是：
+> **“应用如何组织代码来消费 IO 能力”**
 
-- SelectionKey
+---
 
-一个SelectionKey键表示了一个特定的通道对象和一个特定的选择器对象之间的注册关系
+### 1. Thread-Per-Request 模式（BIO 架构）
 
-- ServerSocketChannel
+* 一个连接对应一个线程
+* 编程模型简单
+* 吞吐能力与线程数强绑定
 
-Java NIO 中的 ServerSocketChannel 是一个可以监听新进来的 TCP 连接的通道, 就像标准 IO 中的 ServerSocket一样
+适用场景：
 
-- SocketChannel
+* 低并发
+* 短连接
 
-Java NIO 中的 SocketChannel 是一个连接到 TCP 网络套接字的通道
+---
 
-### 客户端
+### 2. Reactor 模式（事件驱动）
 
-```java
-// 得到一个网络通道
-SocketChannel channel = SocketChannel.open();
-// 设置非阻塞方式
-channel.configureBlocking(false);
-// 提供服务器IP与端口
-InetSocketAddress address = new InetSocketAddress("127.0.0.1", 1999);
-// 连接
-if (!channel.connect(address)) {
-    while (!channel.finishConnect()) {
-        System.out.println("客户端：正在连接服务器");
-    }
-}
-// 发送数据
-ByteBuffer buffer = ByteBuffer.wrap("cxk 打篮球".getBytes());
-channel.write(buffer);
-```
+#### Reactor 要解决的核心问题
 
-### 服务端框架
+> 如何让**少量线程**同时管理**大量连接**？
 
-```java
-// 获取网络通道
-ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
-// 获取选择器
-Selector selector = Selector.open();
-// 绑定端口
-serverSocketChannel.bind(new InetSocketAddress(1999));
-// 设置为非阻塞方式(accept时不阻塞)
-serverSocketChannel.configureBlocking(false);
-// 注册选择器，让选择器监听连接事件
-serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-while (true) {
-    // 每2000ms轮询一次，select返回的结果是客户数
-    if (selector.select(2000) == 0){
-        System.out.println("等待客户连接");
-        continue;
-    }
-    // 获取准备连接的所有客户
-    Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
-    while (iterator.hasNext()){
-        SelectionKey key = iterator.next();
-        if (key.isAcceptable()){
-            // 客户端连接事件
-            System.out.println("客户端连接");
-            SocketChannel socketChannel = serverSocketChannel.accept();
-            socketChannel.configureBlocking(false); // 读取客户端数据时不会阻塞
-            socketChannel.register(selector,SelectionKey.OP_READ, ByteBuffer.allocate(1024));
-        }
-        if (key.isReadable()){
-            // 读取客户端数据事件
-            SocketChannel channel = (SocketChannel) key.channel();
-            ByteBuffer buffer = (ByteBuffer) key.attachment();
-            channel.read(buffer);
-            System.out.println("客户端发来数据:"+new String(buffer.array()));
-        }
-        // 删除客户key，防止重复处理
-        iterator.remove();
-    }
-}
-```
+#### 核心思想
 
-## [系统层面的NIO](/操作系统/输入输出.md#IO模型)
+* 连接 ≠ 线程
+* 线程只处理“已就绪事件”
+* IO 状态由事件驱动
+
+#### 角色拆分
+
+| 角色            | 职责                 |
+| ------------- | ------------------ |
+| Reactor       | 事件监听与分发            |
+| Demultiplexer | 事件检测（select/epoll） |
+| Handler       | 业务处理               |
+
+Reactor 的本质：
+
+> **用事件循环 + 状态机，替代线程阻塞。**
+
+---
+
+### 3. Proactor 模式（完成驱动）
+
+#### Proactor 的前提条件
+
+* 内核可完成 IO 全流程
+* 提供完成通知机制
+
+#### 核心思想
+
+* 用户态不关心“何时可读”
+* 只关心“何时已完成”
+
+> Proactor = 把 IO 生命周期完全下沉到内核
+
+---
+
+## 五、Java NIO 的定位（JVM 层）
+
+### 1. Java NIO 是什么？
+
+> **Java NIO 是 Reactor 模式在 JVM 上的标准实现。**
+
+它并不是 OS 级异步 IO，而是：
+
+* 基于 IO 多路复用
+* 基于事件就绪通知
+
+---
+
+### 2. 抽象层级映射关系
+
+| 抽象层      | 对应概念                  |
+| -------- | --------------------- |
+| OS IO 模型 | IO 多路复用               |
+| 架构模式     | Reactor               |
+| JVM 抽象   | Selector / Channel    |
+| OS 实现    | epoll / poll / select |
+
+---
+
+## 六、Java NIO 核心组件的“设计动机”
+
+### 1. Channel：连接的抽象
+
+* 对应 OS 的文件描述符
+* 表示“可进行 IO 的实体”
+
+---
+
+### 2. Selector：事件多路分发器
+
+* 一个 Selector 管理多个 Channel
+* 线程阻塞在“事件”，而非“连接”
+
+**本质：**
+
+> 将“等待 IO”这一行为集中化、共享化。
+
+---
+
+### 3. Buffer：数据与状态的统一体
+
+Buffer 的价值不在于“数组”，而在于：
+
+* 显式建模 IO 状态（position / limit）
+* 避免隐式拷贝
+
+#### Heap vs Direct
+
+| 类型           | 设计取舍          |
+| ------------ | ------------- |
+| HeapBuffer   | GC 友好，IO 性能一般 |
+| DirectBuffer | 减少拷贝，管理复杂     |
+
+DirectBuffer 的本质：
+
+> **用内存管理复杂度，换取 IO 路径性能。**
+
+---
+
+## 七、零拷贝的本质（性能哲学）
+
+零拷贝不是“不拷贝”，而是：
+
+> **避免无意义的用户态 / 内核态来回搬运。**
+
+| 技术         | 本质                 |
+| ---------- | ------------------ |
+| mmap       | 共享内存视图             |
+| sendfile   | 内核态直传              |
+| transferTo | JVM 对 sendfile 的封装 |
+
+---
+
+## 八、工程实践的正确打开方式
+
+### 1. 网络 IO 的正确理解
+
+* Selector = Reactor
+* SelectionKey = 连接状态
+* Handler = 状态机节点
+
+### 2. 何时不该使用 NIO
+
+* 低并发
+* 强一致、简单系统
+* 团队不熟悉事件驱动
+
+---
+
+## 九、IO 架构选型方法论（稳定知识）
+
+| 场景             | 推荐模型            |
+| -------------- | --------------- |
+| 管理后台           | BIO             |
+| 高并发长连接         | Reactor + NIO   |
+| 文件分发           | 零拷贝             |
+| Windows 高性能 IO | Proactor / IOCP |
+
+## 关联内容（自动生成）
+
+- [/计算机网络/IO模型.md](/计算机网络/IO模型.md) 详细介绍了各种IO模型（阻塞、非阻塞、多路复用、异步IO等），与Java NIO的底层原理和实现机制密切相关
+- [/计算机网络/网络编程.md](/计算机网络/网络编程.md) 探讨了网络编程中的I/O模型、线程模型和高并发实践，与Java NIO在高并发网络编程中的应用紧密相关
+- [/编程语言/JAVA/框架/netty/netty.md](/编程语言/JAVA/框架/netty/netty.md) Netty是基于Java NIO构建的高性能网络编程框架，体现了NIO在实际项目中的应用和最佳实践
+- [/操作系统/输入输出.md](/操作系统/输入输出.md) 从操作系统层面解释了I/O的基本概念和实现机制，为理解Java NIO的底层原理提供基础
+- [/编程语言/JAVA/高级/IO.md](/编程语言/JAVA/高级/IO.md) 介绍了Java中的传统IO（BIO）模型，与NIO形成对比，有助于理解NIO的设计动机和优势
+- [/软件工程/架构/系统设计/高并发.md](/软件工程/架构/系统设计/高并发.md) 高并发系统设计中大量使用NIO技术来处理海量连接，是NIO应用的重要场景
+- [/中间件/数据库/redis/Redis.md](/中间件/数据库/redis/Redis.md) Redis使用了高效的I/O模型处理大量客户端连接，其设计思想与NIO有相似之处
+- [/编程语言/JAVA/JAVA并发编程/线程池.md](/编程语言/JAVA/JAVA并发编程/线程池.md) NIO与线程池结合使用，可以实现高效的并发处理，是现代Java应用的标准实践
+- [/编程语言/编程范式/响应式编程.md](/编程语言/编程范式/响应式编程.md) 响应式编程与NIO的非阻塞特性相契合，都是为了提高系统吞吐量和响应性
+- [/软件工程/架构/系统设计/网关.md](/软件工程/架构/系统设计/网关.md) 现代网关如Spring Cloud Gateway、Zuul等底层常使用NIO实现高性能网络通信
+- [/中间件/消息队列/Kafka/Kafka.md](/中间件/消息队列/Kafka/Kafka.md) Kafka作为高吞吐量的消息系统，其网络层使用了NIO技术来处理大量客户端连接
+- [/操作系统/linux/内核.md](/操作系统/linux/内核.md) Linux内核的epoll机制是Java NIO在Linux平台上的重要实现基础，理解内核机制有助于深入理解NIO

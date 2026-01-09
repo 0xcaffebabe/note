@@ -467,7 +467,6 @@ class Object {
 - [/编程语言/JAVA/JAVA并发编程/JAVA并发编程.md](/编程语言/JAVA/JAVA并发编程/JAVA并发编程.md) 并发编程中涉及大量的Java语言特性，该文档与Java谜题中的类型比较、循环控制等概念有密切关联
 - [/编程语言/JAVA/高级/异常.md](/编程语言/JAVA/高级/异常.md) 深入讲解Java异常处理机制，与Java谜题中关于异常模型的部分形成呼应
 - [/编程语言/JAVA/JVM/自动内存管理/垃圾回收.md](/编程语言/JAVA/JVM/自动内存管理/垃圾回收.md) 了解垃圾回收机制有助于理解Java谜题中关于对象比较和内存使用相关的陷阱
-- [/编程语言/JAVA/编译原理.md](/编程语言/JAVA/编译原理.md) 解释Java编译过程，有助于理解Java谜题中编译期处理如Unicode转义等特性
 - [/编程语言/JAVA/高级/NIO.md](/编程语言/JAVA/高级/NIO.md) 了解NIO机制可以帮助认识Java谜题中类型转换和数值处理在I/O操作中的表现
 - [/编程语言/JAVA/JVM/JAVA内存模型.md](/编程语言/JAVA/JVM/JAVA内存模型.md) Java内存模型是理解Java谜题中线程安全、对象比较问题的关键基础
 - [/编程语言/JAVA/框架/Spring/Spring.md](/编程语言/JAVA/框架/Spring/Spring.md) Spring框架大量使用Java语言特性，理解Java谜题有助于避免在Spring开发中遇到相关陷阱

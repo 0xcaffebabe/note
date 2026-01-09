@@ -224,7 +224,6 @@
     - [🔄Stream 流](./编程语言/JAVA/高级/Stream流.md)
     - [🔗JDBC](./编程语言/JAVA/高级/JDBC.md)
     - [⚙️Java 运行管理](./编程语言/JAVA/高级/JAVA运行管理.md)
-    - [⚙️编译原理](./编程语言/JAVA/编译原理.md)
     - [⚙️JVM](./编程语言/JAVA/JVM/JVM.md)
       - **⚙️自动内存管理**
         - [💾内存结构](./编程语言/JAVA/JVM/自动内存管理/内存结构.md)

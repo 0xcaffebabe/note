@@ -107,7 +107,6 @@
           - ⚡MySQL优化
             - [performance schema](./中间件/数据库/mysql/performance.md)
             - [schema与数据类型优化](./中间件/数据库/mysql/schema与数据类型优化.md)
-            - [执行计划](./中间件/数据库/mysql/执行计划.md)
             - [查询优化](./中间件/数据库/mysql/查询优化.md)
         - [📊容量保障](./软件工程/容量保障.md)
         - [🚨故障管理](./软件工程/架构/系统设计/故障管理.md)

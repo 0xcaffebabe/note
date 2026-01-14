@@ -241,7 +241,6 @@
       - [🌐SpringMVC](./编程语言/JAVA/框架/Spring/SpringMVC.md)
       - [📦SpringBoot](./编程语言/JAVA/框架/SpringBoot.md)
   - [🌐JavaScript](./编程语言/JavaScript/JavaScript.md)
-    - [🌐AJAX](./编程语言/JavaScript/AJAX.md)
     - [🌐NodeJS](./编程语言/JavaScript/Node/NodeJs.md)
     - 第三方库/框架
     - [💚Vue](./编程语言/JavaScript/Vue.md)

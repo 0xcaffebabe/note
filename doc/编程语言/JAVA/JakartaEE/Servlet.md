@@ -214,7 +214,6 @@ Servlet 是 Java Web 技术体系的根基。
 ## 关联内容（自动生成）
 
 - [/中间件/web中间件/Tomcat.md](/中间件/web中间件/Tomcat.md) Tomcat是Servlet容器的一种重要实现，深入阐述了Servlet容器的架构原理和工作机制
-- [/中间件/web中间件/Jetty.md](/中间件/web中间件/Jetty.md) Jetty是另一个流行的Servlet容器，提供了轻量级的Web服务器和Servlet容器功能
 - [/编程语言/JAVA/框架/Spring/SpringMVC.md](/编程语言/JAVA/框架/Spring/SpringMVC.md) Spring MVC框架基于Servlet规范构建，DispatcherServlet是其核心前端控制器
 - [/软件工程/设计模式/设计模式.md](/软件工程/设计模式/设计模式.md) Servlet规范中体现了多种经典设计模式，如模板方法模式、单例模式、工厂模式等
 - [/软件工程/设计模式/行为模式.md](/软件工程/设计模式/行为模式.md) Servlet中的FilterChain体现了责任链模式，Listener机制体现了观察者模式

@@ -287,7 +287,6 @@ VIP 才是系统真正的入口。
 - [/中间件/web中间件/web中间件.md](/中间件/web中间件/web中间件.md) Web服务器是应用层协议的具体实现，与HTTP协议的应用密切相关，Nginx作为典型的Web服务器，是该文档所述概念的具体实现
 - [/计算机网络/应用层.md](/计算机网络/应用层.md) Nginx是HTTP协议的重要实现，与应用层协议的实际部署和应用相关，涉及协议理解与优化
 - [/计算机网络/网络编程.md](/计算机网络/网络编程.md) Nginx底层使用了I/O多路复用和事件驱动机制，与网络编程中的Reactor模型和epoll等技术密切相关
-- [/中间件/web中间件/Jetty.md](/中间件/web中间件/Jetty.md) 作为另一种Web服务器，Jetty与Nginx在架构设计和功能实现上存在对比关系，有助于理解Web服务器的不同实现方式
 - [/数据技术/数据集成.md](/数据技术/数据集成.md) Nginx的事件驱动特性和负载均衡能力在数据集成的实时/流式集成和事件驱动集成模式中有类似应用
 - [/中间件/web中间件/Tomcat.md](/中间件/web中间件/Tomcat.md) Tomcat与Nginx经常配合使用，Nginx处理静态资源和负载均衡，Tomcat处理动态请求，两者分工合作
 - [/编程语言/JavaScript/Node/NodeJs.md](/编程语言/JavaScript/Node/NodeJs.md) Node.js采用事件驱动和非阻塞I/O模型，与Nginx的事件驱动架构在设计思想上有相似之处

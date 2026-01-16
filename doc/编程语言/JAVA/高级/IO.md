@@ -1,399 +1,419 @@
-# IO
-
-网络框架设计模式：
-
-- Reactor模式：主动模式 应用程序不断轮询 询问底层IO是否准备就绪
-- Proactor模式：被动模式 read write都交给底层 通过回调完成操作
-
-服务器网络编程 1 + N + M 模型
-
-1个监听线程 N个IO线程 M个worker线程
-
-## 架构
-
-```mermaid
-mindmap
- root((处理流))
-    缓冲操作
-        BufferedInputStream
-        BufferedOutputStream
-        BufferedReader
-        BufferedWriter
-    基本数据类型操作
-        DataInputStream
-        DataOutputStream
-    对象序列化操作
-        ObjectInputStream
-        ObjectOutputStream
-    转化控制
-        InputStreamReader
-        OutputStreamWriter
-    打印控制
-        PrintStream
-        PrintWriter
-```
-
-```mermaid
-mindmap
-    root((节点流))
-        文件操作
-            FileInputStream
-            FileOutputStream
-            FileReader
-            FileWriter
-        管道操作
-            PipedInputStream
-            PipedOutputStream
-            PipedReader
-            PipedWriter
-        数组操作
-            ByteArrayInputStream
-            ByteArrayOutputStream
-            CharArrayReader
-            CharArrayWriter
-```
-
-大体分为几类：
-
-- 字节操作流 InputStream 与 OutputStream等 
-- 字符操作流 Writer 与 Reader
-- 磁盘IO File
-- 网络操作 Socekt等
-
-节点流可以从或向一个特定的地方（节点）读写数据，处理流则是对一个已存在的流的连接和封装，通过所封装的流的功能调用实现数据读写，是一种[装饰器](/软件工程/设计模式/结构型模式.md#装饰器)
-
-字节到字符的转换十分耗时 非常容易出现乱码问题 这是字符流的用处
-
-InputStreamReader 与 OutputStreamWriter 是字节流与字符流之间的桥梁
-
-## File类
-
-File并不代表一个真实存在的真实对象
-
-FileDescriptor才是代表一个真实文件对象
-
-从磁盘读取文件：
-
-![屏幕截图 2020-09-28 133112](/assets/屏幕截图%202020-09-28%20133112.png)
-
-构造方法
-
-- public File(String pathname) ：通过将给定的路径名字符串转换为抽象路径名来创建新的 File实例。
-- public File(String parent, String child) ：从父路径名字符串和子路径名字符串创建新的 File实例。
-- public File(File parent, String child) ：从父抽象路径名和子路径名字符串创建新的 File实例
-
-静态成员变量
-
-- public static final String separator
-- public static final String pathSeparator
-- public static final File separatorChar
-- public static final File pathSeparatorChar
-
-### 获取
-
-- public String getAbsolutePath() ：返回此File的绝对路径名字符串。
-- public String getPath() ：将此File转换为路径名字符串。
-- public String getName() ：返回由此File表示的文件或目录的名称。
-- public long length() ：返回由此File表示的文件的长度。
-
-### 判断
-
-- public boolean exists() ：此File表示的文件或目录是否实际存在。
-- public boolean isDirectory() ：此File表示的是否为目录。
-- public boolean isFile() ：此File表示的是否为文件。
-
-### 创建删除
-
-- public boolean createNewFile() ：当且仅当具有该名称的文件尚不存在时，创建一个新的空文件。
-- public boolean delete() ：删除由此File表示的文件或目录。
-- public boolean mkdir() ：创建由此File表示的目录。
-- public boolean mkdirs() ：创建由此File表示的目录，包括任何必需但不存在的父目录。
-
-### 目录遍历
-
-- public String[] list() ：返回一个String数组，表示该File目录中的所有子文件或目录。
-- public File[] listFiles() ：返回一个File数组，表示该File目录中的所有的子文件或目录。
-
-### 文件过滤器
-
-- FileFilter
-- FileNameFilter
-
-## IO
-
-### 顶级父类
-
-项   | 输入流               | 输出流
---- | ----------------- | ------------------
-字节流 | 字节输入流 InputStream | 字节输出流 OutputStream
-字符流 | 字符输入流 Reader      | 字符输出流 Writer
-
-### 字节输出流【OutputStream】
-
-- public void close() ：关闭此输出流并释放与此流相关联的任何系统资源。
-- public void flush() ：刷新此输出流并强制任何缓冲的输出字节被写出。
-- public void write(byte[] b) ：将 b.length字节从指定的字节数组写入此输出流。
-- public void write(byte[] b, int off, int len) ：从指定的字节数组写入 len字节，从偏移量 oﬀ开始输 出到此输出流。
-- public abstract void write(int b) ：将指定的字节输出流。
-
-### FileOutputStream
-
-```java
-FileOutputStream fos = new FileOutputStream("fos.txt");
-
-for (int i =0;i<100;i++){
-    fos.write(("hello"+i+"\n").getBytes());
-}
-fos.flush();
-fos.close();
-```
-
-- 数据追加续写
-
-```java
-FileOutputStream fos = new FileOutputStream("fos.txt",true);
-```
-
-### 字节输入流【InputStream】
-
-- public void close() ：关闭此输入流并释放与此流相关联的任何系统资源。
-- public abstract int read() ： 从输入流读取数据的下一个字节。
-- public int read(byte[] b) ： 从输入流中读取一些字节数，并将它们存储到字节数组 b中 。
-
-### FileInputStream
-
-构造方法
-
-- FileInputStream(File file) ： 通过打开与实际文件的连接来创建一个 FileInputStream ，该文件由文件系统中的 File对象 ﬁle命名。
-- FileInputStream(String name) ： 通过打开与实际文件的连接来创建一个 FileInputStream ，该文件由文件 系统中的路径名 name命名。
-
-```java
-FileInputStream fis = new FileInputStream("fos.txt");
-int c = -1;
-while ((c = fis.read()) != -1) {
-    System.out.print((char)c);
-}
-fis.close();
-```
-
-### 字符流
-
-Reader
-
-- public void close() ：关闭此流并释放与此流相关联的任何系统资源。
-- public int read() ： 从输入流读取一个字符。
-- public int read(char[] cbuf) ： 从输入流中读取一些字符，并将它们存储到字符数组 cbuf中 。
-
-FileReader
-
-```java
-FileReader reader = new FileReader("fos.txt");
-int c = -1;
-while ((c = reader.read()) != -1){
-    System.out.print((char)c);
-}
-```
-
-Writer
-
-- void write(int c) 写入单个字符。
-- void write(char[] cbuf) 写入字符数组。
-- abstract void write(char[] cbuf, int off, int len) 写入字符数组的某一部分,oﬀ数组的开始索引,len 写的字符个数。
-- void write(String str) 写入字符串。
-- void write(String str, int off, int len) 写入字符串的某一部分,oﬀ字符串的开始索引,len写的字符个 数。
-- void flush() 刷新该流的缓冲。
-- void close() 关闭此流，但要先刷新它。
-
-FileWriter
-
-```java
-FileWriter writer = new FileWriter("fos.txt");
-writer.append("hh种");
-writer.flush();
-writer.close();
-```
-
-- flush与close的区别
-
-## JDK7中IO的异常处理
-
-```java
-// JDK7
-try (FileWriter writer = new FileWriter("fos.txt")) {
-    writer.append("hh种");
-    writer.flush();
-    
-} catch (IOException e) {
-    e.printStackTrace();
-}
-// JDK9
-FileWriter writer = new FileWriter("fos.txt");
-try (writer) {
-    writer.append("hh种");
-    writer.flush();
-
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-## Properties
-
-- public Object setProperty(String key, String value) ： 保存一对属性。 
-- public String getProperty(String key) ：使用此属性列表中指定的键搜索属性值。 
-- `public Set<String> stringPropertyNames()` ：所有键的名称的集合。
-
-### 与流相关的方法
-
-- store
-- load
-
-## 缓冲流
-
-- 字节缓冲流： BufferedInputStream ， BufferedOutputStream 
-- 字符缓冲流： BufferedReader ， BufferedWriter
-
-## 编码
-
-### IO 操作中的编解码
-
-```java
-InputStreamReader reader = new InputStreamReader(new FileInputStream("gbk.txt"),"gbk");
-
-OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream("utf8.txt"), StandardCharsets.UTF_8);
-int c = -1;
-while ((c= reader.read()) != -1){
-    writer.write(c);
-}
-writer.close();
-```
-
-### 内存编解码
-
-```java
-"蔡徐坤".getBytes("gbk");
-new String(new byte[]{ -78, -52, -48, -20, -64, -92 },"gbk");
-```
-
-```mermaid
 ---
-title: String 编码时序图
+tags: ['java', 'io-模型', '第一性原理', '设计模式', '架构设计']
 ---
-sequenceDiagram
-    participant String
-    participant StringCoding
-    participant Charset
-    participant StringEncoder
-    participant CharsetEncoder
 
-    String->>StringCoding: getBytes(charsetName)
-    StringCoding->>StringCoding: encode
-    StringCoding->>StringCoding: lookupCharset
-    StringCoding->>Charset: Charset.forName
-    Charset-->>StringCoding: 返回找到的Charset
-    StringCoding->>StringEncoder: 根据Charset new StringEncoder对象
-    StringEncoder->>CharsetEncoder: encode
-    CharsetEncoder->>CharsetEncoder: encode
-    CharsetEncoder->>CharsetEncoder: 调用encodeLoop方法
-    CharsetEncoder-->>StringEncoder: 返回ByteBuffer
-    StringEncoder-->>StringCoding: 返回ByteBuffer
-    StringCoding-->>String: 返回byte[]
+# Java IO
+
+## 一、IO 的第一性原理
+
+### 1. IO 的本质
+
+无论何种编程语言、何种框架，IO 的本质始终只有一句话：
+
+> **IO = 数据在不同介质之间的流动**
+
+它包含三个核心要素：
 
 ```
-
-### Web 中的编解码
-
-![屏幕截图 2020-09-29 113656](/assets/屏幕截图%202020-09-29%20113656.png)
-
-#### URL编解码
-
-`/页面?name=页面`
-
-这个URL被编码成`%2f%e9%a1%b5%e9%9d%a2%3fname%3d%e9%a1%b5%e9%9d%a2`
-
-不同浏览器的编码可能并不一致 那么服务端是如何解析的？
-
-tomcat中有一个配置：
-
-```xml
-<Connector URLEncoding="UTF-8"> 
+数据源（Source） → 数据传输（Stream） → 数据宿（Sink）
 ```
 
-这个配置就是用来对路径部分进行解码的
+从抽象角度看：
 
-至于queryString 要不是body中的charset 要不就是ISO-8859-1
+* 程序本身只是一个“数据处理器”
+* IO 是程序与外部世界的桥梁
+* 一切 IO 都是在解决“时间与空间”的矛盾
 
-并且如果使用要body的charset的话 需要配置
+---
 
-```xml
-<Connector useBodyEncodingForURI="true"/>
+### 2. IO 的核心矛盾
+
+所有 IO 技术的演进，本质上都在解决三对矛盾：
+
+| 矛盾维度 | 表现           |
+| ---- | ------------ |
+| 速度差异 | CPU 远快于磁盘/网络 |
+| 表示差异 | 字节 vs 字符     |
+| 同步差异 | 阻塞 vs 非阻塞    |
+
+Java IO 的设计，就是围绕这些矛盾构建的一套抽象体系。
+
+---
+
+## 二、Java IO 的设计哲学
+
+Java IO 并不是一堆 API，而是一套高度工程化的设计体系，其核心哲学包括：
+
+### 1. 抽象分层
+
+Java IO 将复杂的 IO 世界拆解为清晰的层次：
+
+```
+应用逻辑层
+    ↑
+字符处理层（Reader / Writer）
+    ↑
+字节处理层（InputStream / OutputStream）
+    ↑
+操作系统 IO
 ```
 
-#### HTTP header 编解码
+---
 
-对于request.getHeader() 默认是使用的ISO-8859-1编码 且无法指定编码 不要在Header中传递非ASCII 字符
+### 2. 责任分离
 
-#### 表单编解码
+Java IO 将功能拆解为：
 
-浏览器会根据ContentType的Charset对表单参数进行编码
+* 数据来源职责
+* 数据处理职责
+* 数据增强职责
 
-服务端可以在Servlet容器中获取参数之前调用request.setCharacterEncoding()来指定服务器解码方式 如果没有调用此方法 那么会按照系统默认的编码方式解析
+这正是“节点流 + 处理流”模型的由来。
 
-#### Body 编解码
+---
 
-服务端通过response.setCharacterEncoding来设置 这个方法的本质是设置响应头ContentType
+### 3. 组合优于继承
 
-浏览器端按照以下顺序进行解码：
+Java IO 大量使用：
 
-- ContentType的charset
-- html meta标签的charset属性
-- 浏览器默认方式
+> **装饰器模式（Decorator Pattern）**
 
-#### js文件编码问题
+而不是通过继承堆积功能。
 
-如果外部引入的js文件与当前html不一致 需要
-
-```html
-<script charset="utf8" src="xxx"></script>
-```
-
-#### 常见编码问题
-
-![屏幕截图 2020-09-29 131724](/assets/屏幕截图%202020-09-29%20131724.png)
-![屏幕截图 2020-09-29 131741](/assets/屏幕截图%202020-09-29%20131741.png)
-![屏幕截图 2020-09-29 131801](/assets/屏幕截图%202020-09-29%20131801.png)
-
-## 序列化
-
-- ObjectOutputStream
-- ObjectInputStream
+例如：
 
 ```java
-ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("object"));
-oos.writeObject(new Person("jav",15));
-
-ObjectInputStream ois = new ObjectInputStream(new FileInputStream("object"));
-Person p = (Person)ois.readObject();
+new BufferedInputStream(
+    new FileInputStream("a.txt")
+)
 ```
 
-序列化的类需要实现 `Serializable` 接口
+这种设计带来：
 
-最好手动设置 serialVersionUID 的值, 类修改时根据是否兼容来调整这个值，serialVersionUID 值不一致会抛出序列化运行时异常。
+* 功能可插拔
+* 扩展灵活
+* 职责单一
 
-**transient关键字**修饰的变量不会被序列化
+---
 
-序列化的目的：**持久化、传输**
+### 4. 面向抽象编程
 
-其他方式的序列化：
+* InputStream / OutputStream 是抽象
+* Reader / Writer 是抽象
 
-- Hessian 效率很高 跨语言
-- Kryo 序列化
-- JSON 存在的一个问题是可能存在类型丢失
+应用程序只依赖抽象，而不依赖具体实现。
 
-序列化一些复杂对象：
+---
 
-- 父类继承Serializable接口 所有子类都可以序列化
-- 子类实现Serializable接口 序列化后父类的属性会丢失
-- 成员变量如果要被序列化 需要实现Serializable接口 否则会报错
-- 反序列化时 成员如果发生修改 则发生修改的这些成员变量数据会丢失
-- 如果 serialVersionUID 被修改 反序列化会失败
+## 三、Java IO 的统一认知模型
+
+### 1. 四层模型
+
+从架构角度看，Java IO 可以抽象为四层：
+
+```
+┌───────────────────────────┐
+│       应用层 API           │
+└─────────────▲─────────────┘
+              │
+┌─────────────┴─────────────┐
+│        处理流层            │  ← 缓冲、编码、对象化
+└─────────────▲─────────────┘
+              │
+┌─────────────┴─────────────┐
+│        节点流层            │  ← 文件、网络、内存
+└─────────────▲─────────────┘
+              │
+┌─────────────┴─────────────┐
+│      操作系统 IO          │
+└───────────────────────────┘
+```
+
+---
+
+### 2. 两大维度
+
+Java IO 的所有类，本质上只解决两个维度问题：
+
+| 维度   | 目的       |
+| ---- | -------- |
+| 数据形态 | 字节 or 字符 |
+| 功能职责 | 节点 or 处理 |
+
+---
+
+## 四、IO 的类型体系
+
+### 1. 字节流 vs 字符流
+
+这是 Java IO 中最根本的划分：
+
+| 类型  | 抽象                         | 面向    |
+| --- | -------------------------- | ----- |
+| 字节流 | InputStream / OutputStream | 二进制数据 |
+| 字符流 | Reader / Writer            | 文本数据  |
+
+#### 本质区别
+
+* 字节流：**面向机器**
+* 字符流：**面向人类**
+
+---
+
+### 2. 节点流与处理流
+
+#### 节点流（Node Stream）
+
+代表真实的数据来源或去向：
+
+* FileInputStream
+* SocketInputStream
+* ByteArrayInputStream
+
+> 解决：数据从哪里来、到哪里去
+
+#### 处理流（Filter Stream）
+
+对已有流进行增强：
+
+* BufferedInputStream
+* DataInputStream
+* ObjectInputStream
+
+> 解决：如何更好地处理数据
+
+---
+
+### 3. IO 体系的矩阵结构
+
+可以抽象为一个二维模型：
+
+|       | 字节流                 | 字符流                |
+| ----- | ------------------- | ------------------ |
+| 节点流   | FileInputStream     | FileReader         |
+| 缓冲处理流 | BufferedInputStream | BufferedReader     |
+| 转换流   | InputStreamReader   | OutputStreamWriter |
+| 对象化流  | ObjectInputStream   | -                  |
+
+---
+
+## 五、File 抽象模型
+
+### 1. File 的本质
+
+Java 中的 `File` 并不是文件本身，而是：
+
+> **路径的抽象描述**
+
+真正代表操作系统文件的是：
+
+> FileDescriptor
+
+---
+
+### 2. File 的三层语义
+
+File 类承载三层含义：
+
+| 层次   | 含义    |
+| ---- | ----- |
+| 路径表示 | 抽象路径  |
+| 元数据  | 文件信息  |
+| 操作接口 | 创建/删除 |
+
+---
+
+### 3. File 与流的关系
+
+```
+File → FileInputStream → InputStream
+```
+
+File 只是入口，真正的 IO 行为由流完成。
+
+---
+
+## 六、缓冲的工程本质
+
+### 1. 为什么需要缓冲？
+
+核心原因：
+
+> **减少系统调用次数**
+
+IO 的最大成本在于：
+
+* 磁盘访问
+* 系统调用
+
+Buffered 流的价值：
+
+```
+多次小 IO → 一次大 IO
+```
+
+---
+
+### 2. 缓冲流的定位
+
+BufferedStream 的本质：
+
+> 用空间换时间
+
+---
+
+## 七、编码与解码的本质模型
+
+### 1. 乱码问题的根源
+
+所有编码问题都可以归结为一句话：
+
+> **编码与解码使用了不同的字符集**
+
+---
+
+### 2. Java 中的转换桥梁
+
+```
+字节流 ←→ 字符流
+```
+
+由两个类承担：
+
+* InputStreamReader
+* OutputStreamWriter
+
+它们是：
+
+> 字节世界与字符世界的桥梁
+
+---
+
+### 3. 编码模型
+
+统一认知：
+
+```
+字符（Char） 
+   ↕ Charset
+字节（Byte）
+```
+
+---
+
+## 八、网络 IO 模型
+
+### 1. IO 的两种驱动模式
+
+| 模式       | 思想   |
+| -------- | ---- |
+| Reactor  | 主动轮询 |
+| Proactor | 被动回调 |
+
+---
+
+### 2. 线程模型
+
+经典的服务器模型：
+
+```
+1 + N + M
+```
+
+* 1 个监听线程
+* N 个 IO 线程
+* M 个业务线程
+
+体现的是：
+
+> IO 与业务解耦的思想
+
+---
+
+## 九、序列化的工程意义
+
+### 1. 序列化的本质
+
+> 对象 → 字节流
+
+两大目的：
+
+* 持久化
+* 传输
+
+---
+
+### 2. Java 序列化的约束
+
+* 实现 Serializable
+* serialVersionUID 控制版本
+* transient 控制忽略字段
+
+---
+
+### 3. 序列化的工程权衡
+
+| 方式      | 特点     |
+| ------- | ------ |
+| Java 原生 | 稳定但臃肿  |
+| Hessian | 跨语言    |
+| Kryo    | 高性能    |
+| JSON    | 易读但类型弱 |
+
+---
+
+## 十、IO 技术的演进
+
+### 1. 从 BIO 到 NIO
+
+Java IO 的发展史：
+
+| 阶段  | 特点          |
+| --- | ----------- |
+| BIO | 阻塞 + 面向流    |
+| NIO | 非阻塞 + 面向缓冲区 |
+| AIO | 真正异步        |
+
+---
+
+### 2. 演进的本质
+
+演进方向始终是：
+
+> 提高并发能力 + 降低线程成本
+
+---
+
+## 十一、IO 的工程选型原则
+
+### 1. 选择字节流还是字符流？
+
+| 场景    | 选择  |
+| ----- | --- |
+| 图片/视频 | 字节流 |
+| 文本处理  | 字符流 |
+
+---
+
+### 2. 是否需要缓冲？
+
+几乎所有生产代码：
+
+> 都应该使用 Buffered
+
+---
+
+### 3. 编码原则
+
+永远遵循：
+
+> 明确指定编码
+
+## 关联内容（自动生成）
+
+- [/编程语言/JAVA/高级/NIO.md](/编程语言/JAVA/高级/NIO.md) Java NIO是对传统IO的升级，提供了非阻塞IO能力，基于Reactor模式和IO多路复用实现高效并发处理
+- [/计算机网络/网络编程.md](/计算机网络/网络编程.md) 网络编程是IO的重要应用场景，涉及多种IO模型如BIO、NIO、AIO，与Java IO模型密切相关
+- [/计算机网络/IO模型.md](/计算机网络/IO模型.md) 详细介绍了五种经典IO模型（阻塞、非阻塞、IO多路复用、信号驱动、异步IO），有助于深入理解Java IO演进
+- [/操作系统/输入输出.md](/操作系统/输入输出.md) 从操作系统层面解释了IO硬件管理方式（程序化IO、中断驱动IO、DMA）和零拷贝技术，是理解Java IO底层机制的基础
+- [/编程语言/JavaScript/Node/NodeJs.md](/编程语言/JavaScript/Node/NodeJs.md) Node.js同样采用事件驱动、非阻塞IO模型，与Java NIO在设计理念上有相似之处，可作对比参考
+- [/编程语言/C.md](/编程语言/C.md) C语言的IO模型提供了更接近系统调用的视角，有助于理解Java IO封装的底层机制

@@ -355,7 +355,6 @@ Node 赋能前端：
 - [/编程语言/JavaScript/Vue.md](/编程语言/JavaScript/Vue.md) Vue是现代前端开发的重要框架之一，其响应式系统、组件化设计等概念与Web前端架构演进密切相关
 - [/中间件/浏览器/前端性能优化.md](/中间件/浏览器/前端性能优化.md) 前端性能优化是Web前端开发的关键环节，与本章浏览器执行环境、渲染体系、网络协议等知识直接相关
 - [/软件工程/架构/系统设计/前端监控.md](/软件工程/架构/系统设计/前端监控.md) 前端监控是前端可观测性体系的重要实现，与本章前端观测体系部分直接相关
-- [/DSL/HTML.md](/DSL/HTML.md) HTML是Web前端三层结构中的结构层，是前端开发的基础
 - [/DSL/CSS.md](/DSL/CSS.md) CSS是Web前端三层结构中的表现层，是前端开发的基础
 - [/编程语言/JavaScript/JavaScript.md](/编程语言/JavaScript/JavaScript.md) JavaScript是Web前端三层结构中的行为层，是前端开发的基础
 - [/计算机网络/http/HTTP.md](/计算机网络/http/HTTP.md) HTTP协议是前端与后端通信的基础协议，与本章网络与协议体系部分密切相关

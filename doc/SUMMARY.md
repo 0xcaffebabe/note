@@ -236,6 +236,7 @@
       - [🍪Cookie&Session](./编程语言/JAVA/JakartaEE/Cookie&Session.md)
     - -框架-
     - [ORM](./编程语言/JAVA/框架/ORM.md)
+    - [依赖注入](./编程语言/JAVA/框架/依赖注入.md)
     - [🍃Spring](./编程语言/JAVA/框架/Spring/Spring.md)
       - [🌐SpringMVC](./编程语言/JAVA/框架/Spring/SpringMVC.md)
       - [📦SpringBoot](./编程语言/JAVA/框架/SpringBoot.md)

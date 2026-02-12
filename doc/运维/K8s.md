@@ -434,5 +434,4 @@ Kubernetes 不是什么：
 - [/中间件/数据库/redis/哨兵.md](/中间件/数据库/redis/哨兵.md) Kubernetes的高可用架构设计，提供了另一种分布式系统高可用的实现思路
 - [/数据技术/任务调度系统.md](/数据技术/任务调度系统.md) 涉及CronJob定时任务机制、Job与CronJob在Kubernetes中的调度实现
 - [/数据技术/数据运维.md](/数据技术/数据运维.md) K8s作为云原生应用的编排系统，其提供的资源调度、弹性伸缩、健康检查等能力为数据应用的运维提供了新的模式，是云原生数据运维的重要基础设施
-- [/编程语言/JAVA/框架/SpringBoot.md](/编程语言/JAVA/框架/SpringBoot.md) Spring Boot 与 Kubernetes 原生集成，支持蓝绿发布、滚动升级与金丝雀策略
 - [/编程语言/JAVA/高级/注解.md](/编程语言/JAVA/高级/注解.md) Kubernetes资源定义中也使用注解来存储元数据，与Java注解在概念上有相似之处

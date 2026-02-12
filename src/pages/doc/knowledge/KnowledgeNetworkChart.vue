@@ -102,6 +102,10 @@ export default defineComponent({
     },
     degree() {
       this.init();
+    },
+    zoom(newVal) {
+      this.graphZoom = newVal;
+      this.updateChartZoom();
     }
   },
   computed: {
@@ -412,10 +416,28 @@ export default defineComponent({
       };
 
       this.chart.setOption(option);
+      
+      // 监听图表漫游事件以更新当前缩放级别
+      this.chart.on('mouseup', () => {
+        // 在鼠标释放后获取当前缩放级别
+        setTimeout(() => {
+          if (this.chart) {
+            const chartInstance: any = this.chart;
+            if (chartInstance._coordSysMgr && chartInstance._coordSysMgr._coordinateSystems[0]) {
+              const zoom = chartInstance._coordSysMgr._coordinateSystems[0]._zoom;
+              if (zoom) {
+                this.graphZoom = zoom;
+              }
+            }
+          }
+        }, 100);
+      });
+      
       this.chart.on('graphRoam', (params: any) => {
         let zoom = (this.chart as any)._coordSysMgr._coordinateSystems[0]._zoom;
         this.graphZoom = zoom;
       })
+      
       this.chart.getZr().on('mousewheel', (params: any) =>{
         if (params.target) {
           params.event.stopPropagation();
@@ -423,6 +445,13 @@ export default defineComponent({
           return false;
         }
       } )
+    },
+    
+    updateChartZoom() {
+      // 重新初始化图表以应用新的缩放级别
+      this.$nextTick(() => {
+        this.init(false);
+      });
     },
 
     /**

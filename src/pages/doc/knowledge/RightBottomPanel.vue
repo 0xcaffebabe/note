@@ -19,19 +19,27 @@
               :resizeListener="false"
               :showTooltip="false"
               :showChartText="false"
-              :zoom="0.6"
+              :zoom="currentZoom"
               :degree="degree"
             />
-            <!-- <div class="control-panel">
-              <el-input-number
+            <div class="control-panel">
+              <el-button-group>
+                <el-button size="small" @click="zoomIn">
+                  <el-icon><ZoomIn /></el-icon>
+                </el-button>
+                <el-button size="small" @click="zoomOut">
+                  <el-icon><ZoomOut /></el-icon>
+                </el-button>
+              </el-button-group>
+              <!-- <el-input-number
                 v-model="degree"
                 :min="1"
                 :max="10"
                 label="度数"
                 size="small"
                 class="degree-input"
-              />
-            </div> -->
+              /> -->
+            </div>
           </div>
         </div>
       </el-carousel-item>
@@ -46,7 +54,8 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { ElCarousel, ElCarouselItem, ElInputNumber } from 'element-plus';
+import { ElCarousel, ElCarouselItem, ElInputNumber, ElButton, ElButtonGroup, ElIcon } from 'element-plus';
+import { ZoomIn, ZoomOut } from '@element-plus/icons-vue';
 import MindNote from "../mind/MindNote.vue";
 import KnowledgeNetworkChart from "./KnowledgeNetworkChart.vue";
 
@@ -57,7 +66,12 @@ export default defineComponent({
     ElCarouselItem,
     MindNote,
     KnowledgeNetworkChart,
-    ElInputNumber
+    ElInputNumber,
+    ElButton,
+    ElButtonGroup,
+    ElIcon,
+    ZoomIn,
+    ZoomOut
   },
   props: {
     doc: {
@@ -67,8 +81,24 @@ export default defineComponent({
   },
   data() {
     return {
-      degree: 1 // 默认度数为1
+      degree: 1, // 默认度数为1
+      currentZoom: 0.6, // 当前缩放级别
+      minZoom: 0.1, // 最小缩放级别
+      maxZoom: 2, // 最大缩放级别
+      zoomStep: 0.1 // 缩放步长
     };
+  },
+  methods: {
+    zoomIn() {
+      if (this.currentZoom < this.maxZoom) {
+        this.currentZoom = Math.min(this.maxZoom, this.currentZoom + this.zoomStep);
+      }
+    },
+    zoomOut() {
+      if (this.currentZoom > this.minZoom) {
+        this.currentZoom = Math.max(this.minZoom, this.currentZoom - this.zoomStep);
+      }
+    }
   },
   // 移除了 activeTab，因为 Carousel 有自己的内部状态管理
 });
@@ -184,7 +214,7 @@ body[theme=dark] .right-bottom-panel {
   }
 
   .control-panel {
-    position: fixed;
+    position: absolute;
     bottom: 10px;
     left: 10px;
     z-index: 10;
@@ -192,10 +222,19 @@ body[theme=dark] .right-bottom-panel {
     align-items: center;
     gap: 5px;
     padding: 5px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
     .degree-input {
       width: 74px;
     }
   }
+}
+
+// 暗色主题下的控制面板样式
+body[theme=dark] .right-bottom-panel .chart-container .control-panel {
+  background: rgba(40, 40, 40, 0.8);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 </style>

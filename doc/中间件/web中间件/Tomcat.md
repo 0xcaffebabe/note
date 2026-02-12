@@ -1,5 +1,5 @@
 ---
-tags: ['Web服务器', '中间件', 'Java']
+tags: ['中间件', 'Java']
 ---
 
 # Tomcat

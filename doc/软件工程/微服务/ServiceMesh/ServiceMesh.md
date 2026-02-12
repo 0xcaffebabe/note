@@ -1,5 +1,5 @@
 ---
-tags: ['微服务', '服务治理', '云原生', '容器化', 'kubernetes']
+tags: ['分布式系统']
 ---
 
 # Service Mesh

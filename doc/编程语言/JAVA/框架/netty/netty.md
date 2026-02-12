@@ -1,5 +1,5 @@
 ---
-tags: ['netty', 'reactor模型', 'eventloop', '网络框架', 'java']
+tags: ['网络', '编程语言']
 ---
 
 # Netty

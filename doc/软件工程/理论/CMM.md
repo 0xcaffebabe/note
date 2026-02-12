@@ -1,5 +1,5 @@
 ---
-tags: ['软件工程', '过程模型', '成熟度模型', '项目管理', '组织能力']
+tags: ['软件工程', '个人成长']
 ---
 
 # CMM（Capability Maturity Model）

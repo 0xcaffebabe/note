@@ -1,5 +1,5 @@
 ---
-tags: ['中间件', '搜索引擎', '分布式系统', 'elasticsearch', '全文检索']
+tags: ['中间件', '分布式系统', '数据库']
 ---
 
 # ElasticSearch

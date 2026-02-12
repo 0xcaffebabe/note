@@ -1,5 +1,5 @@
 ---
-tags: ['java-nio', 'io-模型', 'reactor模型', '网络编程', '性能']
+tags: ['网络', 'io-模型', '性能']
 ---
 
 # Java NIO

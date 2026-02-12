@@ -1,5 +1,5 @@
 ---
-tags: ['Java', '微服务']
+tags: ['Java', '分布式系统']
 ---
 
 # Spring Boot：现代应用开发的工程化抽象

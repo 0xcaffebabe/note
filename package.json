@@ -42,7 +42,7 @@
     "@vitejs/plugin-vue": "6.0.2",
     "eruda": "3.4.3",
     "front-matter": "4.0.2",
-    "jsdom": "27.2.0",
+    "jsdom": "28.1.0",
     "mime": "4.1.0",
     "node-global-proxy": "1.0.1",
     "nodejieba": "3.5.2",

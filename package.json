@@ -47,7 +47,7 @@
     "node-global-proxy": "1.0.1",
     "nodejieba": "3.5.2",
     "rimraf": "6.1.2",
-    "rollup-plugin-visualizer": "6.0.5",
+    "rollup-plugin-visualizer": "7.0.0",
     "simple-git": "3.30.0",
     "tsconfig-paths": "4.2.0",
     "tsx": "^4.19.3",

@@ -252,7 +252,6 @@
 - 🔨DSL
   - [ ↔️GraphQL](./DSL/GraphQL.md)
   - [📊SQL](./DSL/SQL.md)
-  - [🔍正则表达式](./DSL/正则表达式.md)
 
 - 📊数据管理
   - 📊数据科学

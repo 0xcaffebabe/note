@@ -52,10 +52,12 @@ export default defineComponent({
       gridMask: null as GridMask | null,
       placedWords: [] as WordItem[],
       wordsData2D: [] as WordItem[], // 保存 2D 布局数据
-      is3D: false,
-      rotationAngle: 0,
+      is3D: true,
+      rotationAngleX: 0, // 绕 X 轴旋转（垂直方向）
+      rotationAngleY: 0, // 绕 Y 轴旋转（水平方向）
       isDragging: false,
       lastMouseX: 0,
+      lastMouseY: 0,
       animationId: null as number | null,
       tooltip: null as HTMLDivElement | null,
       boundDrag: null as ((e: MouseEvent) => void) | null,
@@ -89,7 +91,8 @@ export default defineComponent({
           cancelAnimationFrame(this.animationId);
           this.animationId = null;
         }
-        this.rotationAngle = 0;
+        this.rotationAngleX = 0;
+        this.rotationAngleY = 0;
         // 恢复 2D 数据
         if (this.wordsData2D.length > 0) {
           this.placedWords = [...this.wordsData2D];
@@ -196,17 +199,27 @@ export default defineComponent({
       const centerY = this.canvas.height / 2;
       const focalLength = Math.min(centerX, centerY) * 0.8;
 
-      // 绕 Y 轴旋转
-      const cosR = Math.cos(this.rotationAngle);
-      const sinR = Math.sin(this.rotationAngle);
+      // 绕 Y 轴旋转（水平方向）
+      const cosY = Math.cos(this.rotationAngleY);
+      const sinY = Math.sin(this.rotationAngleY);
 
-      const rotX = word.baseX * cosR - word.baseZ * sinR;
-      const rotZ = word.baseX * sinR + word.baseZ * cosR;
+      // 绕 X 轴旋转（垂直方向）
+      const cosX = Math.cos(this.rotationAngleX);
+      const sinX = Math.sin(this.rotationAngleX);
+
+      // 先绕 Y 轴旋转
+      let rotX = word.baseX * cosY - word.baseZ * sinY;
+      let rotZ = word.baseX * sinY + word.baseZ * cosY;
+      let rotY = word.baseY;
+
+      // 再绕 X 轴旋转
+      const finalY = rotY * cosX - rotZ * sinX;
+      const finalZ = rotY * sinX + rotZ * cosX;
 
       // 透视投影
-      const scale = focalLength / (focalLength + rotZ);
+      const scale = focalLength / (focalLength + finalZ);
       const projX = centerX + rotX * scale;
-      const projY = centerY + word.baseY * scale;
+      const projY = centerY + finalY * scale;
 
       return { x: projX, y: projY, scale };
     },
@@ -217,26 +230,45 @@ export default defineComponent({
 
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-      // 根据 z 值排序，远的先画
-      const sortedWords = [...this.placedWords].sort((a, b) => {
-        const aZ = a.baseZ || 0;
-        const bZ = b.baseZ || 0;
-        return bZ - aZ;
-      });
-
-      sortedWords.forEach(word => {
-        if (!word.baseX || !word.baseY || !word.baseZ) return;
-
-        const projected = this.project3D(word);
-
-        // 只绘制正面的词
-        if (projected.scale > 0.3) {
+      // 先计算每个词旋转后的实际 Z 值，并保存投影信息
+      const wordsWithDepth = this.placedWords
+        .filter(word => word.baseX && word.baseY && word.baseZ)
+        .map(word => {
+          const projected = this.project3D(word);
           const projectedSize = word.size! * projected.scale;
           word.projectedSize = projectedSize;
           word.x = projected.x;
           word.y = projected.y;
 
-          // 根据深度调整透明度
+          // 计算旋转后的实际 Z 值（用于排序）
+          const cosY = Math.cos(this.rotationAngleY);
+          const sinY = Math.sin(this.rotationAngleY);
+          const cosX = Math.cos(this.rotationAngleX);
+          const sinX = Math.sin(this.rotationAngleX);
+
+          // 与 project3D 相同的旋转计算
+          let rotX = word.baseX! * cosY - word.baseZ! * sinY;
+          let rotZ = word.baseX! * sinY + word.baseZ! * cosY;
+          let rotY = word.baseY!;
+
+          const finalZ = rotY * sinX + rotZ * cosX;
+
+          return {
+            word,
+            projected,
+            finalZ,
+          };
+        });
+
+      // 根据旋转后的 Z 值排序，远的（Z 值大的）先画
+      wordsWithDepth.sort((a, b) => b.finalZ - a.finalZ);
+
+      wordsWithDepth.forEach(({ word, projected }) => {
+        // 只绘制正面的词
+        if (projected.scale > 0.3) {
+          const projectedSize = word.projectedSize!;
+
+          // 根据深度调整透明度和颜色
           const alpha = Math.max(0.3, Math.min(1, projected.scale));
           this.ctx.save();
           this.ctx.font = `bold ${projectedSize}px "Microsoft YaHei", sans-serif`;
@@ -253,16 +285,23 @@ export default defineComponent({
       if (!this.is3D) return;
       this.isDragging = true;
       this.lastMouseX = e.clientX;
+      this.lastMouseY = e.clientY;
       this.canvas!.style.cursor = "grabbing";
     },
 
     drag(e: MouseEvent) {
       if (!this.is3D || !this.isDragging) return;
-      
+
       const deltaX = e.clientX - this.lastMouseX;
+      const deltaY = e.clientY - this.lastMouseY;
       this.lastMouseX = e.clientX;
-      this.rotationAngle += deltaX * 0.01;
-      
+      this.lastMouseY = e.clientY;
+
+      // 水平拖动改变 Y 轴旋转角度（左右旋转）
+      this.rotationAngleY += deltaX * 0.01;
+      // 垂直拖动改变 X 轴旋转角度（上下旋转）
+      this.rotationAngleX += deltaY * 0.01;
+
       this.render3D();
     },
 
@@ -466,7 +505,7 @@ export default defineComponent({
           const bottom = cssY + height / 2;
 
           if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom) {
-            this.$store.commit("setSearchKw", word.name);
+            // this.$store.commit("setSearchKw", word.name);
             break;
           }
         }
@@ -530,7 +569,7 @@ export default defineComponent({
         const bottom = projected.y + height / 2;
 
         if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom && projected.scale > 0.3) {
-          this.$store.commit("setSearchKw", word.name);
+          // this.$store.commit("setSearchKw", word.name);
           break;
         }
       }
@@ -606,6 +645,14 @@ export default defineComponent({
 
       // 创建 tooltip
       this.createTooltip();
+
+      // 默认初始化 3D 布局并渲染
+      this.init3DLayout();
+      this.render3D();
+      if (this.canvas) {
+        this.canvas.style.cursor = "grab";
+      }
+      this.setup3DEvents();
     },
   },
   async mounted() {

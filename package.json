@@ -13,7 +13,6 @@
     "algoliasearch": "4.26.0",
     "axios": "1.13.2",
     "echarts": "5.6.0",
-    "echarts-wordcloud": "2.1.0",
     "element-plus": "2.13.2",
     "js-yaml": "4.1.1",
     "jsmind": "0.9.1",

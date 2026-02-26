@@ -22,7 +22,7 @@
               :zoom="currentZoom"
               :degree="degree"
             />
-            <div class="control-panel">
+            <!-- <div class="control-panel">
               <el-button-group>
                 <el-button size="small" @click="zoomIn">
                   <el-icon><ZoomIn /></el-icon>
@@ -31,15 +31,15 @@
                   <el-icon><ZoomOut /></el-icon>
                 </el-button>
               </el-button-group>
-              <!-- <el-input-number
+               <el-input-number
                 v-model="degree"
                 :min="1"
                 :max="10"
                 label="度数"
                 size="small"
                 class="degree-input"
-              /> -->
-            </div>
+              />
+            </div> -->
           </div>
         </div>
       </el-carousel-item>

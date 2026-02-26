@@ -80,7 +80,7 @@ export default defineComponent({
   }, 
   data() {
     return {
-      showHeader: true,
+      showHeader: false,
       lastClickTime: 0,
     };
   },

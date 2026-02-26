@@ -230,6 +230,59 @@
   list-style-type: square;
 }
 
+/* Ordered List Badge Style */
+.markdown-section ol {
+  counter-reset: ol-counter;
+  list-style: none;
+  padding-left: 0;
+}
+
+.markdown-section ol > li {
+  counter-increment: ol-counter;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 7px 16px 7px 12px;
+  margin-bottom: 6px;
+  background: var(--hover-bg-color);
+  border-radius: var(--radius-md);
+
+  &::before {
+    content: counter(ol-counter);
+    min-width: 22px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+}
+
+/* 嵌套有序列表恢复默认样式 */
+.markdown-section ol ol {
+  list-style: decimal;
+  padding-left: var(--spacing-lg);
+  margin: var(--spacing-xs) 0;
+
+  > li {
+    background: none;
+    display: list-item;
+    padding: 2px 0;
+    margin-bottom: 0;
+
+    &::before {
+      display: none;
+    }
+  }
+}
+
 /* Link
 -------------------- */
 
@@ -385,9 +438,13 @@ body[theme=dark] {
     p {
         color: var(--dark-secondary-text-color);
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
       color: var(--dark-text-color);
+    }
+
+    ol > li {
+      background: var(--dark-hover-bg-color);
     }
     
     blockquote {

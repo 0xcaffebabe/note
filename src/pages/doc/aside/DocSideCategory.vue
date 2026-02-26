@@ -6,7 +6,12 @@
         :style="{ height: parentShowHeader ? 'calc(100vh - 60px)' : '100vh' }"
       >
         <div class="category-header">
-          <h3 class="category-title">文档</h3>
+          <router-link to="/home" class="sidebar-logo">
+            <div class="logo-icon">
+              <el-icon><Reading /></el-icon>
+            </div>
+            <span class="logo-text">{{ siteName }}</span>
+          </router-link>
         </div>
         <div class="category-content">
           <keep-alive>
@@ -33,7 +38,8 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import CategoryList from "../category/CategoryList.vue";
-import { ArrowLeftBold, ArrowRightBold } from "@element-plus/icons-vue";
+import { ArrowLeftBold, ArrowRightBold, Reading } from "@element-plus/icons-vue";
+import config from "@/config";
 
 export default defineComponent({
   components: {
@@ -49,6 +55,11 @@ export default defineComponent({
     return {
       parentShowHeader: true,
     };
+  },
+  computed: {
+    siteName() {
+      return config.siteName;
+    },
   },
   methods: {
     // 移动目录的滚动条 让当前选中菜单项处于可视区域
@@ -78,7 +89,8 @@ export default defineComponent({
   setup() {
     return {
       ArrowLeftBold,
-      ArrowRightBold
+      ArrowRightBold,
+      Reading,
     }
   },
 });
@@ -110,12 +122,36 @@ export default defineComponent({
 .category-header {
   padding: var(--spacing-md) var(--spacing-lg);
   border-bottom: 1px solid var(--border-color);
-  
-  .category-title {
-    margin: 0;
-    font-size: 1.1em;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, #409eff 0%, #6979f8 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-size: 1.05em;
     font-weight: 600;
     color: var(--main-text-color);
+    white-space: nowrap;
+  }
+
+  &:hover .logo-text {
+    color: var(--primary-color);
   }
 }
 
@@ -172,15 +208,15 @@ body[theme=dark] {
     background-color: var(--dark-card-bg-color);
     border: 1px solid var(--default-dark-border-color);
   }
-  
+
   .category-header {
     border-bottom: 1px solid var(--default-dark-border-color);
-    
-    .category-title {
-      color: var(--dark-text-color);
-    }
   }
-  
+
+  .sidebar-logo .logo-text {
+    color: var(--dark-text-color);
+  }
+
   .aside-toggle-btn {
     background-color: var(--dark-card-bg-color);
     border: 1px solid var(--default-dark-border-color);

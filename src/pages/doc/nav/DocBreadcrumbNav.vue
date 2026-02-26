@@ -4,7 +4,7 @@
               :to="{ path: '/doc/' + docUrl2Id(chain.link) }"
               v-for="(chain, index) in categoryChainList"
               :key="chain.name"
-            ><span class="chain-name" :class="{last: index == categoryChainList.length - 1}">{{ chain.name }}</span></el-breadcrumb-item>
+            ><span class="chain-name" :class="{last: index == categoryChainList.length - 1}"><span v-if="index == categoryChainList.length - 1" class="hash-prefix"># </span>{{ chain.name }}</span></el-breadcrumb-item>
           </el-breadcrumb>
 </template>
 
@@ -45,6 +45,12 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
+.hash-prefix {
+  color: var(--primary-color);
+  font-weight: 600;
+  margin-right: 1px;
+}
+
 body[theme=dark] {
   .chain-name {
     color: var(--main-dark-text-color);

@@ -45,6 +45,11 @@ export default defineComponent({
       this.init()
     },
   },
+  mounted() {
+    if (this.mindData && (this.mindData as MindNode).id) {
+      this.init();
+    }
+  },
   methods: {
     mousewheel(event: any) {
       // 取消浏览器默认的放大缩小网页行为

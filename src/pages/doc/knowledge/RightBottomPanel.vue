@@ -5,7 +5,8 @@
       class="carousel-container"
       height="100%"
       direction="vertical"
-      :autoplay="false">
+      :autoplay="false"
+      @change="onCarouselChange">
       <el-carousel-item>
         <div class="carousel-item-content">
           <div class="chart-container">
@@ -22,56 +23,79 @@
               :zoom="currentZoom"
               :degree="degree"
             />
-            <!-- <div class="control-panel">
-              <el-button-group>
-                <el-button size="small" @click="zoomIn">
-                  <el-icon><ZoomIn /></el-icon>
-                </el-button>
-                <el-button size="small" @click="zoomOut">
-                  <el-icon><ZoomOut /></el-icon>
-                </el-button>
-              </el-button-group>
-               <el-input-number
-                v-model="degree"
-                :min="1"
-                :max="10"
-                label="度数"
-                size="small"
-                class="degree-input"
-              />
-            </div> -->
           </div>
         </div>
       </el-carousel-item>
       <el-carousel-item>
         <div class="carousel-item-content">
-          <mind-note class="carousel-content" />
+          <mind id="panelMind" class="carousel-content" :mind-data="mindData" />
         </div>
       </el-carousel-item>
     </el-carousel>
+
+    <!-- 右下角放大按钮 -->
+    <el-button class="expand-btn" size="small" circle @click="openExpanded">
+      <el-icon><FullScreen /></el-icon>
+    </el-button>
+
+    <!-- 全屏展示对话框 -->
+    <el-dialog
+      v-model="isExpanded"
+      title="知识图谱"
+      width="90%"
+      class="expand-dialog"
+      align-center
+      append-to-body
+      destroy-on-close>
+      <template #header>
+        <el-segmented v-model="dialogTab" :options="dialogTabOptions" />
+      </template>
+      <div class="expand-content">
+        <knowledge-network-chart
+          v-if="dialogTab === 'graph'"
+          :doc="doc"
+          mode="force"
+          :onlySelfRelated="true"
+          :isPotential="false"
+          :showLegend="true"
+          :showTooltip="true"
+          :showChartText="true"
+          :zoom="0.8"
+          :degree="degree"
+        />
+        <mind v-else id="expandedMind" :mind-data="mindData" />
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { ElCarousel, ElCarouselItem, ElInputNumber, ElButton, ElButtonGroup, ElIcon } from 'element-plus';
-import { ZoomIn, ZoomOut } from '@element-plus/icons-vue';
-import MindNote from "../mind/MindNote.vue";
+import { ElCarousel, ElCarouselItem, ElInputNumber, ElButton, ElButtonGroup, ElIcon, ElDialog, ElSegmented } from 'element-plus';
+import { ZoomIn, ZoomOut, FullScreen } from '@element-plus/icons-vue';
+import Mind from "@/components/mind/Mind.vue";
 import KnowledgeNetworkChart from "./KnowledgeNetworkChart.vue";
+import DocService from "@/service/DocService";
+import MindNode from "@/dto/mind/MindNode";
+
+const EMPTY_NODE = { id: '', topic: '', children: [], expanded: false, direction: 'left' } as MindNode;
 
 export default defineComponent({
   name: "RightBottomPanel",
   components: {
     ElCarousel,
     ElCarouselItem,
-    MindNote,
+    Mind,
     KnowledgeNetworkChart,
     ElInputNumber,
     ElButton,
     ElButtonGroup,
     ElIcon,
+    ElDialog,
+    ElSegmented,
     ZoomIn,
-    ZoomOut
+    ZoomOut,
+    FullScreen
   },
   props: {
     doc: {
@@ -81,14 +105,33 @@ export default defineComponent({
   },
   data() {
     return {
-      degree: 1, // 默认度数为1
-      currentZoom: 0.6, // 当前缩放级别
-      minZoom: 0.1, // 最小缩放级别
-      maxZoom: 2, // 最大缩放级别
-      zoomStep: 0.1 // 缩放步长
+      degree: 1,
+      currentZoom: 0.6,
+      minZoom: 0.1,
+      maxZoom: 2,
+      zoomStep: 0.1,
+      currentIndex: 0,
+      isExpanded: false,
+      dialogTab: 'graph' as 'graph' | 'mind',
+      dialogTabOptions: [
+        { label: '知识关系图', value: 'graph' },
+        { label: '思维导图', value: 'mind' }
+      ],
+      mindData: EMPTY_NODE as MindNode
     };
   },
+  watch: {
+    doc(val: string) {
+      this.loadMindData(val);
+    }
+  },
+  async mounted() {
+    this.loadMindData(this.doc);
+  },
   methods: {
+    async loadMindData(doc: string) {
+      this.mindData = await DocService.generateMindData(doc);
+    },
     zoomIn() {
       if (this.currentZoom < this.maxZoom) {
         this.currentZoom = Math.min(this.maxZoom, this.currentZoom + this.zoomStep);
@@ -98,9 +141,15 @@ export default defineComponent({
       if (this.currentZoom > this.minZoom) {
         this.currentZoom = Math.max(this.minZoom, this.currentZoom - this.zoomStep);
       }
+    },
+    onCarouselChange(index: number) {
+      this.currentIndex = index;
+    },
+    openExpanded() {
+      this.dialogTab = this.currentIndex === 0 ? 'graph' : 'mind';
+      this.isExpanded = true;
     }
-  },
-  // 移除了 activeTab，因为 Carousel 有自己的内部状态管理
+  }
 });
 </script>
 
@@ -161,6 +210,7 @@ export default defineComponent({
 }
 
 .right-bottom-panel {
+  position: relative;
   height: 100%;
   width: 100%;
   background-color: rgba(255, 255, 255, 0.8);
@@ -232,9 +282,44 @@ body[theme=dark] .right-bottom-panel {
   }
 }
 
+// 右下角放大按钮
+.expand-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 10;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
 // 暗色主题下的控制面板样式
 body[theme=dark] .right-bottom-panel .chart-container .control-panel {
   background: rgba(40, 40, 40, 0.8);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+</style>
+
+<!-- 全屏对话框使用 append-to-body，scoped 样式不生效，需独立 style 块 -->
+<style lang="less">
+.expand-dialog {
+  .el-dialog__header {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+  }
+
+  .el-dialog__body {
+    padding: 0;
+    height: 80vh;
+  }
+
+  .expand-content {
+    height: 100%;
+    width: 100%;
+  }
 }
 </style>

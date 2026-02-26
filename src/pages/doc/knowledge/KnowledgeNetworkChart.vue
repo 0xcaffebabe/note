@@ -437,14 +437,17 @@ export default defineComponent({
         let zoom = (this.chart as any)._coordSysMgr._coordinateSystems[0]._zoom;
         this.graphZoom = zoom;
       })
-      
-      this.chart.getZr().on('mousewheel', (params: any) =>{
+
+      // 鼠标在节点上时 ECharts 不会自动处理滚轮缩放，需手动处理
+      // 同时阻止事件冒泡到页面，避免触发页面滚动
+      this.chart.getZr().on('mousewheel', (params: any) => {
+        params.event.preventDefault();
         if (params.target) {
-          params.event.stopPropagation();
-          params.event.preventDefault();
-          return false;
+          const zoomFactor = params.wheelDelta > 0 ? 1.1 : 0.9;
+          this.graphZoom = this.graphZoom * zoomFactor;
+          this.chart!.setOption({ series: [{ zoom: this.graphZoom }] });
         }
-      } )
+      });
     },
     
     updateChartZoom() {

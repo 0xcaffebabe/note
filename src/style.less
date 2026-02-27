@@ -2,12 +2,12 @@
   scroll-behavior: smooth;
   
   // 简洁风格的浅色主题
-  --main-bg-color: #ffffff;
-  --main-text-color: #333333;
-  --secondary-text-color: #666666;
-  --border-color: #e0e0e0;
-  --divider-color: #f0f0f0;
-  --hover-bg-color: #f8f9fa;
+  --main-bg-color: #F1F5F9;
+  --main-text-color: #1e293b;
+  --secondary-text-color: #64748b;
+  --border-color: #e2e8f0;
+  --divider-color: #f1f5f9;
+  --hover-bg-color: #f8fafc;
   --card-bg-color: #ffffff;
   --primary-color: #409eff;
   --primary-light-color: #ecf5ff;
@@ -33,11 +33,15 @@
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
-  
+  --radius-xl: 16px;
+
+  // 动效基准
+  --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
   // 阴影系统
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-  --shadow-md: 0 2px 8px rgba(0,0,0,0.08);
-  --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
+  --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.05);
+  --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.04);
 }
 
 // 重置默认样式
@@ -48,9 +52,9 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Segoe UI', sans-serif;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.7;
   color: var(--main-text-color);
   background-color: var(--main-bg-color);
   transition: background-color, color 0.3s ease;
@@ -100,7 +104,7 @@ body[theme=dark] {
 }
 
 .el-main {
-  padding: var(--spacing-md);
+  padding: 0;
   background-color: transparent;
 }
 

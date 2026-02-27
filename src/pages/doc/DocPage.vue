@@ -399,16 +399,17 @@ export default defineComponent({
   justify-content: space-between;
 }
 .main {
-  background-color: #fff;
+  background-color: var(--card-bg-color);
   padding-left: 4em;
-  padding-bottom: 20px;
+  padding-bottom: 40px;
+  min-height: 100vh;
 }
 .footer-wrapper {
   display: flex;
   justify-content: space-between;
 }
 .center {
-  transition: all 0.2s;
+  transition: var(--transition-smooth);
   padding-left: 1rem;
 }
 .main-content {
@@ -418,6 +419,8 @@ export default defineComponent({
   :deep(mark) {
     color: white;
     background-color: #E6A23C;
+    border-radius: 3px;
+    padding: 0 2px;
   }
 }
 @media screen and(max-width: 1366px) {

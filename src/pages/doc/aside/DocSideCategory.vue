@@ -179,6 +179,9 @@ export default defineComponent({
 }
 
 .toggle-affix {
+  flex: 0 0 0;
+  width: 0;
+  overflow: visible;
   height: 100px;
 }
 

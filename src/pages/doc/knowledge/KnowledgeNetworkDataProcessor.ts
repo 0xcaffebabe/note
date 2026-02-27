@@ -219,7 +219,7 @@ export class KnowledgeNetworkDataProcessor {
     const isStreamNode = stream.some((streamItem) => streamItem === nodeId);
     const category = KnowledgeNetworkDataProcessor.getDocCategory(nodeId);
     const color = isCurrentNode
-      ? '#F56C6C' // 红色 - 当前节点
+      ? '#000000' // 黑色 - 当前节点
       : KnowledgeNetworkDataProcessor.categoryColorMapping(category); // 使用文档分类颜色
 
     // 根据节点的扇出数进行颜色映射

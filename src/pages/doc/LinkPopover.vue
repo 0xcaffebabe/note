@@ -120,7 +120,7 @@ export default defineComponent({
 .preview-markdown {
   max-height: 100%;
 }
-@media screen and(max-width: 800px) {
+@media screen and (max-width: 800px) {
   .popover {
     width: 80%;
   }

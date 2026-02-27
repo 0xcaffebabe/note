@@ -176,7 +176,7 @@ export default defineComponent({
   }
 }
 
-@media screen and(max-width: 1366px) {
+@media screen and (max-width: 1366px) {
   .tab-container {
     max-width: 44%;
   }

@@ -89,7 +89,7 @@ export default defineComponent({
   height: 90%!important;
   width: 60%!important;
 }
-  @media screen and(max-width: 1366px) {
+  @media screen and (max-width: 1366px) {
     .mind-note {
       width: 300px;
       height: 160px;

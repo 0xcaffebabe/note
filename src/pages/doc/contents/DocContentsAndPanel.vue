@@ -175,7 +175,7 @@ export default defineComponent({
 }
 
 /* 为小屏幕调整 */
-@media screen and(max-width: 1366px) {
+@media screen and (max-width: 1366px) {
   .right-bottom-panel-container {
     height: 160px;
   }

@@ -209,7 +209,7 @@ export default defineComponent({
   padding: 4px;
 }
 
-@media screen and(max-width: 1366px) {
+@media screen and (max-width: 1366px) {
   .tool-box {
     right: 74px;
   }

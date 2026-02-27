@@ -423,7 +423,7 @@ export default defineComponent({
     padding: 0 2px;
   }
 }
-@media screen and(max-width: 1366px) {
+@media screen and (max-width: 1366px) {
   .center {
     padding-left: 0rem;
   }

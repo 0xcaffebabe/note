@@ -2,7 +2,33 @@
 import {ViteDevServer} from 'vite'
 import fs from 'fs'
 import path from 'path'
-import mime from 'mime'
+
+const MIME_TYPES: Record<string, string> = {
+  '.html': 'text/html',
+  '.css': 'text/css',
+  '.js': 'application/javascript',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.webp': 'image/webp',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+  '.pdf': 'application/pdf',
+  '.md': 'text/markdown',
+  '.txt': 'text/plain',
+  '.xml': 'application/xml',
+  '.mp4': 'video/mp4',
+  '.mp3': 'audio/mpeg',
+}
+
+function getMimeType(ext: string): string {
+  return MIME_TYPES[ext.toLowerCase()] ?? 'application/octet-stream'
+}
 import GitService from '../build/GitService'
 import DocService from '../build/DocService'
 import ApiMappings from './ApiMappings'
@@ -24,7 +50,7 @@ export default function DocServer(){
             next()
             return
           }
-          res.writeHead(200, { 'Content-Type': `${mime.getType(path.extname(uri))};charset=utf8` });
+          res.writeHead(200, { 'Content-Type': `${getMimeType(path.extname(uri))};charset=utf8` });
           res.write(fs.readFileSync(fileUri))
           res.end()
         }else{

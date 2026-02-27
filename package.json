@@ -41,7 +41,6 @@
     "eruda": "3.4.3",
     "front-matter": "4.0.2",
     "jsdom": "27.4.0",
-    "mime": "4.1.0",
     "nodejieba": "3.5.2",
     "rollup-plugin-visualizer": "7.0.0",
     "simple-git": "3.32.2",

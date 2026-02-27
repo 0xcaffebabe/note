@@ -1,3 +1,4 @@
+import { http } from '@/util/http'
 import SearchResultItem from '@/dto/search/SearchResultItem';
 import algoliasearch from 'algoliasearch'
 import { SearchResponse } from '@algolia/client-search';
@@ -5,7 +6,6 @@ import SearchIndexSegment from '@/dto/search/SearchIndexSegement';
 import Cacheable from '@/decorator/Cacheable';
 import Cache from '@/decorator/Cache'
 import SearchSuggestion from '@/dto/search/SearchSuggestion';
-import axios from 'axios';
 import SearchResult from '@/dto/search/SearchResult';
 
 interface DocHits {
@@ -108,7 +108,7 @@ class SearchService implements Cacheable{
       }
     }
     const serviceUrl = "https://search.ismy.wang"
-    const raw = (await axios.get(`${serviceUrl}/search?kw=${encodeURI(kw)}`)).data
+    const raw = await http(`${serviceUrl}/search?kw=${encodeURI(kw)}`).then(r => r.json())
     const hits = raw.hits.hits as ESHits[]
     if (hits) {
       const result = hits.map(v => {

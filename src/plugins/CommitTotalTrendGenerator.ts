@@ -1,6 +1,5 @@
 import StatisticService from "../build/StatisticService";
 import { ResolvedConfig } from "vite"
-import axios from 'axios'
 import fs from "fs";
 import UrlConst from "../const/UrlConst";
 
@@ -8,7 +7,7 @@ async function getCommitTotalTrendFromGitHub(): Promise<[string, number, number]
   let tries = 0
   while(tries < 3) {
     try {
-      return (await axios.get("https://github.com/0xcaffebabe/note/raw/gh-pages/commitTotalTrend.json")).data
+      return fetch("https://github.com/0xcaffebabe/note/raw/gh-pages/commitTotalTrend.json").then(r => r.json())
     }catch(err: any) {
       console.log("请求github提交总量趋势异常", err)
     }

@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { http } from '@/util/http'
 import DocFileInfo from '@/dto/DocFileInfo'
 import Cache from '@/decorator/Cache'
 import Cacheable from '@/decorator/Cacheable'
@@ -35,11 +35,11 @@ class Api implements Cacheable{
       throw Error("doc id不得为空")
     }
     id = baseUrl() + DocUtils.docId2Url(id) + ".json"
-    const data = await axios.get(id)
-    if (!data.data) {
+    const data = await http(id).then(r => r.json())
+    if (!data) {
       throw Error('无法获取文档 ' + id)
     }
-    return data.data
+    return data
   }
 
 
@@ -51,8 +51,7 @@ class Api implements Cacheable{
    */
   @cache
   public async getCategory() : Promise<DocFileInfo>{
-    const data = await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.summaryJson))
-    return data.data;
+    return http(UrlUtils.concatUrl(baseUrl(), UrlConst.summaryJson)).then(r => r.json())
   }
 
   /**
@@ -63,8 +62,7 @@ class Api implements Cacheable{
    */
   @cache
   public async getCompiledCategory() : Promise<Category[]>{
-    const data = await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.category))
-    return data.data;
+    return http(UrlUtils.concatUrl(baseUrl(), UrlConst.category)).then(r => r.json())
   }
 
 
@@ -77,26 +75,22 @@ class Api implements Cacheable{
    */
   @cache
   public async getWordCloud(): Promise<[string, number][]>{
-    const data = await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.wordcloudJson))
-    return data.data
+    return http(UrlUtils.concatUrl(baseUrl(), UrlConst.wordcloudJson)).then(r => r.json())
   }
 
   @cache
   public async getDocCluster(): Promise<ClusterNode[]> {
-    const data = await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.docClusterJson))
-    return data.data
+    return http(UrlUtils.concatUrl(baseUrl(), UrlConst.docClusterJson)).then(r => r.json())
   }
 
   @cache
   public async getKnowledgeRichness(): Promise<KnowledgeRichnessNode[]> {
-    const data = await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.knowledgeRichnessJson))
-    return data.data
+    return http(UrlUtils.concatUrl(baseUrl(), UrlConst.knowledgeRichnessJson)).then(r => r.json())
   }
 
   @cache
   public async getDocTagPrediction(): Promise<[string, string[]][]> {
-    const data = await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.docTagPrediction))
-    return data.data
+    return http(UrlUtils.concatUrl(baseUrl(), UrlConst.docTagPrediction)).then(r => r.json())
   }
 
 
@@ -108,12 +102,12 @@ class Api implements Cacheable{
    */
   @cache
   public async getStatisticInfo(): Promise<StatisticInfo> {
-    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.statisticInfoUrl))).data
+    return http(UrlUtils.concatUrl(baseUrl(), UrlConst.statisticInfoUrl)).then(r => r.json())
   }
 
   @cache
   public async getCommitHeatmap(): Promise<[string, number][]> {
-    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.yearCommitHeatmapUrl))).data
+    return http(UrlUtils.concatUrl(baseUrl(), UrlConst.yearCommitHeatmapUrl)).then(r => r.json())
   }
 
   /**
@@ -124,7 +118,7 @@ class Api implements Cacheable{
    */
   @cache
   public async getHourCommitHeatmap(): Promise<[string, number][]> {
-    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.hourCommitHeatmap))).data
+    return http(UrlUtils.concatUrl(baseUrl(), UrlConst.hourCommitHeatmap)).then(r => r.json())
   }
 
 
@@ -136,32 +130,32 @@ class Api implements Cacheable{
    */
   @cache
   public async getKnowledgeNetwork(): Promise<KnowledgeNode[]> {
-    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.knowledgeNetworkJson))).data
+    return http(UrlUtils.concatUrl(baseUrl(), UrlConst.knowledgeNetworkJson)).then(r => r.json())
   }
 
   @cache
   public async getPotentialKnowledgeNetwork(): Promise<KnowledgeNode[]> {
-    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.potentialKnowledgeNetwork))).data
+    return http(UrlUtils.concatUrl(baseUrl(), UrlConst.potentialKnowledgeNetwork)).then(r => r.json())
   }
 
   @cache
   public async getTagMapping(): Promise<[string,string[]][]> {
-    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.tagMappingJson))).data;
+    return http(UrlUtils.concatUrl(baseUrl(), UrlConst.tagMappingJson)).then(r => r.json())
   }
 
   @cache
   public async getDescCommitDocList(): Promise<[string, CommitInfo][]> {
-    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.descCommitTimeDocList))).data;
+    return http(UrlUtils.concatUrl(baseUrl(), UrlConst.descCommitTimeDocList)).then(r => r.json())
   }
 
   @cache
   public async getCommitTotalTrend(): Promise<[string, number, number, number][]> {
-    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.commitTotalTrend))).data
+    return http(UrlUtils.concatUrl(baseUrl(), UrlConst.commitTotalTrend)).then(r => r.json())
   }
 
   @cache
   public async getDocQualityData(): Promise<DocQuality[]> {
-    return (await axios.get(UrlUtils.concatUrl(baseUrl(), UrlConst.docQualityJson))).data
+    return http(UrlUtils.concatUrl(baseUrl(), UrlConst.docQualityJson)).then(r => r.json())
   }
 
   public static getInstance(){

@@ -11,7 +11,6 @@
   "dependencies": {
     "@element-plus/icons-vue": "2.3.2",
     "algoliasearch": "4.26.0",
-    "axios": "1.13.5",
     "echarts": "6.0.0",
     "element-plus": "2.13.2",
     "js-yaml": "4.1.1",

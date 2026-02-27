@@ -1,4 +1,4 @@
-import axios from "axios"
+import { http } from '@/util/http'
 
 class EnhancerService {
   private static instance: EnhancerService = new EnhancerService()
@@ -8,7 +8,7 @@ class EnhancerService {
   public static newInstance(){return EnhancerService.instance}
 
   public async openBook(bookName: string): Promise<boolean> {
-    const data = (await axios.get(`http://127.0.0.1:12945/openPDF?name=${bookName}`)).data
+    const data = await http(`http://127.0.0.1:12945/openPDF?name=${bookName}`).then(r => r.json())
     return data.success as boolean
   }
 }

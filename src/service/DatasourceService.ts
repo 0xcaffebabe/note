@@ -1,7 +1,7 @@
+import { http } from '@/util/http'
 import DatasourceConst from "@/const/DatasourceConst"
 import DatasourceItem from "@/dto/DatasourceItem"
 import { StatisticInfo } from "@/dto/StatisticInfo"
-import axios from 'axios'
 
 class DatasourceService {
 
@@ -53,7 +53,7 @@ class DatasourceService {
    */
   public static async testDelay(id: string): Promise<[number, string]> {
     const startTime = new Date().getTime();
-    const data: StatisticInfo = (await axios.get(DatasourceService.getDatasourceById(id).url + 'info.json')).data
+    const data: StatisticInfo = await http(DatasourceService.getDatasourceById(id).url + 'info.json').then(r => r.json())
     const endTime = new Date().getTime();
     return [endTime - startTime, data.generateTime];
   }

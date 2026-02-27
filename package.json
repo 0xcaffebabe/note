@@ -38,7 +38,6 @@
     "@types/shelljs": "0.10.0",
     "@types/wordcloud": "1.2.2",
     "@vitejs/plugin-vue": "6.0.4",
-    "eruda": "3.4.3",
     "front-matter": "4.0.2",
     "jsdom": "27.4.0",
     "nodejieba": "3.5.2",

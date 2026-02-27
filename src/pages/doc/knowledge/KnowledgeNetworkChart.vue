@@ -280,17 +280,18 @@ export default defineComponent({
 
       // 找到当前节点（文档名称匹配的节点）
       const currentNodeIndex = nodes.findIndex(node => node.name === this.doc);
+      const chartDomForPos = document.getElementById(this.id);
       if (currentNodeIndex !== -1) {
         // 为当前节点设置固定位置在图表中心
-        // 先获取图表DOM元素的尺寸
-        const chartDom = document.getElementById(this.id);
-        if (chartDom) {
-          // 初始设置中心坐标，实际坐标将在图表渲染后调整
-          (nodes[currentNodeIndex] as any).x = chartDom.clientWidth / 2;
-          (nodes[currentNodeIndex] as any).y = chartDom.clientHeight / 2;
-          (nodes[currentNodeIndex] as any).fixed = true; // 固定节点位置
+        if (chartDomForPos) {
+          (nodes[currentNodeIndex] as any).x = chartDomForPos.clientWidth / 2;
+          (nodes[currentNodeIndex] as any).y = chartDomForPos.clientHeight / 2;
+          (nodes[currentNodeIndex] as any).fixed = true;
         }
       }
+
+      // 按分类预设初始位置，让同类节点从聚类中心出发
+      this.assignClusterPositions(nodes, categoryList, chartDomForPos);
 
       const option: EChartsOption = {
         title: {
@@ -454,6 +455,57 @@ export default defineComponent({
       // 重新初始化图表以应用新的缩放级别
       this.$nextTick(() => {
         this.init(false);
+      });
+    },
+
+    /**
+     * 按分类为节点预设初始位置，使同类节点聚集在各自的区域中心附近
+     * 力导向布局会以这些初始位置为起点进行模拟，从而保持聚类效果
+     */
+    assignClusterPositions(nodes: any[], categoryList: any[], chartDom: HTMLElement | null) {
+      if (!chartDom || this.mode !== 'force') return;
+
+      const centerX = chartDom.clientWidth / 2;
+      const centerY = chartDom.clientHeight / 2;
+      const clusterRadius = Math.min(centerX, centerY) * 0.55;
+
+      // 过滤出非"当前"的分类
+      const categories = categoryList
+        .filter(c => c.name !== '当前')
+        .map(c => c.name);
+      const categoryCount = categories.length;
+      if (categoryCount === 0) return;
+
+      // 将各分类中心均匀分布在以图表中心为圆心的圆上
+      const clusterCenters: Record<string, { x: number; y: number }> = {};
+      categories.forEach((cat, index) => {
+        const angle = (index / categoryCount) * 2 * Math.PI - Math.PI / 2;
+        clusterCenters[cat] = {
+          x: centerX + clusterRadius * Math.cos(angle),
+          y: centerY + clusterRadius * Math.sin(angle),
+        };
+      });
+
+      // 同类节点均匀排布在各自聚类中心附近
+      const categoryCounts: Record<string, number> = {};
+      const categoryIndexMap: Record<string, number> = {};
+      nodes.forEach(node => {
+        if (node.fixed || !node.docCategory || node.docCategory === '当前') return;
+        categoryCounts[node.docCategory] = (categoryCounts[node.docCategory] || 0) + 1;
+      });
+      nodes.forEach(node => {
+        if (node.fixed || !node.docCategory || node.docCategory === '当前') return;
+        const center = clusterCenters[node.docCategory];
+        if (!center) return;
+        const total = categoryCounts[node.docCategory] || 1;
+        const idx = categoryIndexMap[node.docCategory] || 0;
+        categoryIndexMap[node.docCategory] = idx + 1;
+        // 同类节点均匀排在聚类中心的小圆上，再加少量随机抖动
+        const spreadRadius = Math.min(60, total * 8);
+        const angle = (idx / total) * 2 * Math.PI;
+        const jitter = 15;
+        node.x = center.x + spreadRadius * Math.cos(angle) + (Math.random() - 0.5) * jitter;
+        node.y = center.y + spreadRadius * Math.sin(angle) + (Math.random() - 0.5) * jitter;
       });
     },
 

@@ -354,6 +354,7 @@ export default defineComponent({
             symbolSize: 45,
             focusNodeAdjacency: true,
             roam: true,
+            roamTrigger: 'global',
             draggable: true,
             categories: categoryList,
             zoom: this.graphZoom,
@@ -418,35 +419,28 @@ export default defineComponent({
 
       this.chart.setOption(option);
       
-      // 监听图表漫游事件以更新当前缩放级别
-      this.chart.on('mouseup', () => {
-        // 在鼠标释放后获取当前缩放级别
-        setTimeout(() => {
-          if (this.chart) {
-            const chartInstance: any = this.chart;
-            if (chartInstance._coordSysMgr && chartInstance._coordSysMgr._coordinateSystems[0]) {
-              const zoom = chartInstance._coordSysMgr._coordinateSystems[0]._zoom;
-              if (zoom) {
-                this.graphZoom = zoom;
-              }
-            }
-          }
-        }, 100);
-      });
-      
+      // 通过 graphRoam 事件的 params.zoom（缩放倍率）累积跟踪当前缩放级别
       this.chart.on('graphRoam', (params: any) => {
-        let zoom = (this.chart as any)._coordSysMgr._coordinateSystems[0]._zoom;
-        this.graphZoom = zoom;
-      })
+        if (params.zoom != null) {
+          this.graphZoom = this.graphZoom * params.zoom;
+        }
+      });
 
       // 鼠标在节点上时 ECharts 不会自动处理滚轮缩放，需手动处理
       // 同时阻止事件冒泡到页面，避免触发页面滚动
+      // 注意：必须使用 dispatchAction 而不是 setOption，否则会触发完整重渲染，
+      //       导致 force layout 重启，破坏拖拽交互状态
       this.chart.getZr().on('mousewheel', (params: any) => {
         params.event.preventDefault();
         if (params.target) {
           const zoomFactor = params.wheelDelta > 0 ? 1.1 : 0.9;
-          this.graphZoom = this.graphZoom * zoomFactor;
-          this.chart!.setOption({ series: [{ zoom: this.graphZoom }] });
+          this.chart!.dispatchAction({
+            type: 'graphRoam',
+            seriesIndex: 0,
+            zoom: zoomFactor,
+            originX: params.offsetX,
+            originY: params.offsetY,
+          });
         }
       });
     },

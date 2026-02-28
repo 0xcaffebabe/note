@@ -1,15 +1,17 @@
-import dayjs from 'dayjs'
+function formatDate(time: number): string {
+  return new Date(time).toISOString().slice(0, 10)
+}
 
 export default {
   fillTimeRange(data: [string, number][]){
     const map = new Map<string, number>(data);
     const range = [data[0][0], data[data.length - 1][0]];
-    const start = +dayjs(range[0]);
-    const end = +dayjs(range[1]);
+    const start = new Date(range[0]).getTime();
+    const end = new Date(range[1]).getTime();
     const dayTime = 3600 * 24 * 1000;
     const results: [string, number][] = [];
     for (let time = start; time < end; time += dayTime) {
-      const date = dayjs(time).format("YYYY-MM-DD");
+      const date = formatDate(time);
       results.push([date, map.get(date) || 0]);
     }
     return results;

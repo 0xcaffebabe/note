@@ -1,5 +1,4 @@
 import mermaid from "mermaid"
-import svgPanZoom from 'svg-pan-zoom'
 import { SysUtils } from "./SysUtils"
 
 function initWithDark() {

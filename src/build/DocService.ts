@@ -9,7 +9,6 @@ import { getMidString } from '../util/StringUtils';
 import {KnowledgeNode, KnowledgeLinkNode} from "../dto/KnowledgeNode";
 import DocUtils from "../util/DocUtils";
 import yaml from 'js-yaml'
-import fm from 'front-matter';
 import {DocMetadata} from "@/dto/doc/DocMetadata";
 import Cacheable from "@/decorator/Cacheable";
 import ArrayUtils from "../util/ArrayUtils";
@@ -48,7 +47,11 @@ class DocService extends BaseService implements Cacheable {
   @cache
   public async getFileInfo(path: string): Promise<DocFileInfo> {
     const callResult = await Promise.all([GitService.getFileCommitList(path), fs.promises.readFile(path)])
-    const { body, frontmatter } = fm(callResult[1].toString())
+    const rawContent = callResult[1].toString()
+    const frontmatter = this.resolveMetadata(rawContent)
+    const body = frontmatter
+      ? rawContent.replace(/^---[\s\S]+?^---\s*/m, '')
+      : rawContent
     return {
       name: path.split('/')[path.split('/').length-1].replace('.md', ''),
       id: DocUtils.docUrl2Id(path),

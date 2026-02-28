@@ -224,11 +224,15 @@ export default defineComponent({
       });
 
       // 定义特殊类别（当前节点和上下游节点）
+      // 取当前节点的实际颜色
+      const currentNodeData = nodes.find((n: any) => n.name === this.doc);
+      const currentNodeColor = currentNodeData?.itemStyle?.color || '#000000';
+
       const specialCategories = [
         {
           name: "当前",
           itemStyle: {
-            color: "#F56C6C",
+            color: currentNodeColor,
             opacity: this.isDark ? 0.9 : 1
           },
         },
@@ -239,7 +243,7 @@ export default defineComponent({
       const legendData = [
         { name: "当前", icon: "roundRect",
         itemStyle: {
-          color: "#F56C6C",
+          color: currentNodeColor,
           opacity: this.isDark ? 0.9 : 1
         },
          textStyle: { color: this.isDark ? '#eee' : '#555' }},

@@ -171,7 +171,7 @@ class GitService extends BaseService implements Cacheable{
     return {
       date: v.date,
       author: v.author_name,
-      message: v.message,
+      message: v.message.split("\n")[0],
       hash: v.hash,
       insertions: v.diff?.insertions,
       deletions: v.diff?.deletions,

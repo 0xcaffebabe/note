@@ -121,6 +121,98 @@ body[theme=dark] {
   background-color: rgba(0,0,0,0.3);
 }
 
+// el-dialog 全局样式覆盖 —— 贴合整体简洁风格
+.el-dialog {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg-color);
+
+  .el-dialog__header {
+    padding: 14px var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+    margin-right: 0;
+  }
+
+  .el-dialog__title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--main-text-color);
+    letter-spacing: 0.01em;
+  }
+
+  .el-dialog__headerbtn {
+    top: 10px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: var(--hover-bg-color);
+
+      .el-dialog__close {
+        color: var(--main-text-color);
+      }
+    }
+
+    .el-dialog__close {
+      color: var(--secondary-text-color);
+      font-size: 15px;
+      transition: color 0.15s ease;
+    }
+  }
+
+  .el-dialog__body {
+    padding: var(--spacing-lg);
+    color: var(--main-text-color);
+  }
+
+  .el-dialog__footer {
+    padding: 12px var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+  }
+}
+
+// 暗色主题下的 el-dialog
+body[theme=dark] {
+  .el-dialog {
+    background-color: var(--second-dark-bg-color);
+    border-color: var(--default-dark-border-color);
+
+    .el-dialog__header {
+      border-bottom-color: var(--default-dark-border-color);
+    }
+
+    .el-dialog__title {
+      color: var(--dark-text-color);
+    }
+
+    .el-dialog__headerbtn {
+      &:hover {
+        background-color: var(--dark-hover-bg-color);
+
+        .el-dialog__close {
+          color: var(--dark-text-color);
+        }
+      }
+
+      .el-dialog__close {
+        color: var(--dark-secondary-text-color);
+      }
+    }
+
+    .el-dialog__body {
+      color: var(--dark-text-color);
+    }
+
+    .el-dialog__footer {
+      border-top-color: var(--default-dark-border-color);
+    }
+  }
+}
+
 // 简化标签样式
 .markdown-section .doc-tag {
   cursor: pointer;

@@ -253,8 +253,8 @@ HTTP **擅长**：
 - [/中间件/web中间件/Tomcat.md](/中间件/web中间件/Tomcat.md) Tomcat处理HTTP协议，是Java Web应用服务器的代表
 - [/软件工程/架构/Web前端/Web前端.md](/软件工程/架构/Web前端/Web前端.md) 前端与HTTP协议紧密相关，包括缓存、协议优化等内容
 - [/软件工程/架构/Web前端/前后端分离.md](/软件工程/架构/Web前端/前后端分离.md) 前后端分离依赖HTTP协议进行通信，涉及RESTful API设计、CORS跨域等问题
-- [/编程语言/JAVA/JakartaEE/Servlet.md](/编程语言/JAVA/JakartaEE/Servlet.md) Servlet规范定义了HTTP请求处理的标准接口，是Java Web开发的基础
-- [/编程语言/JAVA/JakartaEE/Cookie&Session.md](/编程语言/JAVA/JakartaEE/Cookie&Session.md) HTTP协议的无状态特性催生了Cookie和Session等状态管理机制
+- [/编程语言/JAVA/高级/Servlet.md](/编程语言/JAVA/高级/Servlet.md) Servlet规范定义了HTTP请求处理的标准接口，是Java Web开发的基础
+- [/计算机网络/http/Cookie&Session.md](/计算机网络/http/Cookie&Session.md) HTTP协议的无状态特性催生了Cookie和Session等状态管理机制
 - [/软件工程/架构/系统设计/网关.md](/软件工程/架构/系统设计/网关.md) 现代网关系统处理HTTP协议，提供路由、认证、限流等功能
 - [/计算机网络/多媒体网络.md](/计算机网络/多媒体网络.md) 介绍基于HTTP的流媒体协议，如DASH等自适应流媒体技术
 - [/计算机网络/物联网.md](/计算机网络/物联网.md) 讨论HTTP协议在物联网中的应用，与轻量级协议CoAP的对比

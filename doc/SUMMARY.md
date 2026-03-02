@@ -176,6 +176,7 @@
   - [📡应用层](./计算机网络/应用层.md)
     - [🔗RPC](./计算机网络/rpc.md)
     - [🌐HTTP](./计算机网络/http/HTTP.md)
+      - [🍪状态管理设计哲学](./计算机网络/http/Cookie&Session.md)
       - [🕷️爬虫](./计算机网络/http/爬虫/爬虫.md)
         - [🔒反爬虫](./计算机网络/http/爬虫/反爬虫.md)
   - [📦运输层](./计算机网络/运输层.md)
@@ -215,6 +216,7 @@
       - [⚡Disruptor](./编程语言/JAVA/JAVA并发编程/Disruptor.md)
     - 🌐网络编程
       - [⚡NIO](./编程语言/JAVA/高级/NIO.md)
+      - [🌐Servlet](./编程语言/JAVA/高级/Servlet.md)
       - [🔗Netty](./编程语言/JAVA/框架/netty/netty.md)
     - [🔄Lambda 表达式](./编程语言/JAVA/高级/Lambda表达式.md)
     - [🔄Stream 流](./编程语言/JAVA/高级/Stream流.md)
@@ -229,9 +231,6 @@
       - [⚙️前端编译与优化](./编程语言/JAVA/JVM/前端编译与优化.md)
       - [⚙️后端编译与优化](./编程语言/JAVA/JVM/后端编译与优化.md)
       - [🔗Java 内存模型](./编程语言/JAVA/JVM/JAVA内存模型.md)
-    - ☕Jakara EE
-      - [🌐Servlet](./编程语言/JAVA/JakartaEE/Servlet.md)
-      - [🍪Cookie&Session](./编程语言/JAVA/JakartaEE/Cookie&Session.md)
     - -框架-
     - [ORM](./编程语言/JAVA/框架/ORM.md)
     - [依赖注入](./编程语言/JAVA/框架/依赖注入.md)

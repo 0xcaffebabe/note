@@ -333,6 +333,6 @@ Bootstrap = **系统拓扑的声明式构建器**
 - [/编程语言/JAVA/JAVA并发编程/线程池.md](/编程语言/JAVA/JAVA并发编程/线程池.md) Netty的EventLoopGroup本质上是线程池的特殊实现，用于处理I/O事件和业务逻辑
 - [/编程语言/编程范式/响应式编程.md](/编程语言/编程范式/响应式编程.md) Netty的异步非阻塞特性与响应式编程理念相契合，都是为了解决高并发场景下的性能问题
 - [/软件工程/架构/系统设计/网关.md](/软件工程/架构/系统设计/网关.md) 现代网关如Spring Cloud Gateway、Zuul等底层常使用Netty实现高性能网络通信
-- [/编程语言/JAVA/JakartaEE/Servlet.md](/编程语言/JAVA/JakartaEE/Servlet.md) Netty作为异步非阻塞框架，与传统的基于Servlet的同步阻塞模型形成对比
+- [/编程语言/JAVA/高级/Servlet.md](/编程语言/JAVA/高级/Servlet.md) Netty作为异步非阻塞框架，与传统的基于Servlet的同步阻塞模型形成对比
 - [/软件工程/架构/系统设计/即时消息系统设计.md](/软件工程/架构/系统设计/即时消息系统设计.md) 即时消息系统需要处理大量长连接，Netty是实现此类系统的重要技术选型
 - [/编程语言/JAVA/JAVA并发编程/Disruptor.md](/编程语言/JAVA/JAVA并发编程/Disruptor.md) Netty和Disruptor都是高性能并发框架，都采用了减少锁竞争和内存拷贝的优化策略

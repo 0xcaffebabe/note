@@ -396,7 +396,7 @@ Tomcat 本质不是 Web 服务器实现，而是：
 
 ## 关联内容（自动生成）
 
-- [/编程语言/JAVA/JakartaEE/Servlet.md](/编程语言/JAVA/JakartaEE/Servlet.md) Servlet规范定义了Java Web容器的标准接口，Tomcat是其重要实现
+- [/编程语言/JAVA/高级/Servlet.md](/编程语言/JAVA/高级/Servlet.md) Servlet规范定义了Java Web容器的标准接口，Tomcat是其重要实现
 - [/中间件/web中间件/web中间件.md](/中间件/web中间件/web中间件.md) Web中间件是位于网络协议层与应用业务逻辑层之间的系统软件，Tomcat是其中的Web容器实现
 - [/编程语言/JAVA/JVM/类加载机制.md](/编程语言/JAVA/JVM/类加载机制.md) Tomcat的类加载机制基于JVM的类加载体系，实现了Web应用的隔离
 - [/计算机网络/http/HTTP.md](/计算机网络/http/HTTP.md) Tomcat作为HTTP服务器，处理HTTP协议的请求和响应

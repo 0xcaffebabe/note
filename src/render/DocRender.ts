@@ -162,7 +162,7 @@ export default class DocRender {
 
       return `<h${level} id="${id}">${text}</h${level}>\n`;
     }
-    return marked.parse(this.mdContent, { renderer: render }) as string
+    return marked.parse(this.mdContent, { renderer: render, breaks: true }) as string
   }
 
   private hightlightCode(code: string, lang: string | undefined): string {

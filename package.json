@@ -37,7 +37,7 @@
     "jsdom": "27.4.0",
     "nodejieba": "3.5.2",
     "rollup-plugin-visualizer": "7.0.0",
-    "simple-git": "3.32.2",
+    "simple-git": "3.32.3",
     "tsx": "^4.19.3",
     "typescript": "5.9.3",
     "unplugin-auto-import": "21.0.0",

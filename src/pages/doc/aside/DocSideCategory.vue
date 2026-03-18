@@ -71,7 +71,7 @@ export default defineComponent({
       if (!activeMenu) {
         return
       }
-      activeMenu.scrollIntoView({behavior: 'smooth'})
+      activeMenu.scrollIntoView({behavior: 'smooth', block: 'center'})
     },
     updateCurrentCategory(doc: string) {
       const categoryListRef: any = this.$refs.categoryList;

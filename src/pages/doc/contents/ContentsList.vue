@@ -73,7 +73,7 @@ function syncHeadingVisible(instance: any) {
   const activeTocItem: HTMLElement | null = document.querySelector(".toc .active");
   
   if (activeTocItem && tocElm) {
-    activeTocItem.scrollIntoView();
+    activeTocItem.scrollIntoView({ block: "center" });
   }
 }
 

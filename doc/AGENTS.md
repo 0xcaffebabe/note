@@ -4,15 +4,16 @@
 
 执行用户给定的所有任务之前，你需要先从 .agents 目录下查询赋予给你的能力，你需要依据这些能力所描述的提示词，按要求执行
 
-- @.agents/tagging_agent.md 当要求你执行添加标签任务时，读取该文件，并执行
-- @.agents/linking_agent.md 当要求你执行添加关联任务时，读取该文件，并执行
-- @.agents/refactoring_agent.md 当要求你执行文档升维、重构、完善任务时，读取该文件，并执行
-- @.agents/tag_aggregation_agent.md 当要求你执行标签治理任务时，读取该文件，并执行
-- @.agents/link_validation_agent.md 当要求你执行失效链接修复任务时，读取该文件，并执行
-- @.agents/reviewing_agent.md 当要求你执行文档审视、审查任务时，读取该文件，并执行
-- @.agents/fragment_discovery_agent.md 当要求你执行知识碎片发现任务时，读取该文件，并执行
-- @.agents/indexing_agent.md 当要求你执行生成知识索引任务时，读取该文件，并执行
-- @.agents/typesetting_agent.md 当要求你执行排版优化任务时，读取该文件，并执行
+- .agents/tagging_agent.md 当要求你执行添加标签任务时，读取该文件，并执行
+- .agents/linking_agent.md 当要求你执行添加关联任务时，读取该文件，并执行
+- .agents/refactoring_agent.md 当要求你执行文档升维、重构、完善任务时，读取该文件，并执行
+- .agents/tag_aggregation_agent.md 当要求你执行标签治理任务时，读取该文件，并执行
+- .agents/link_validation_agent.md 当要求你执行失效链接修复任务时，读取该文件，并执行
+- .agents/reviewing_agent.md 当要求你执行文档审视、审查任务时，读取该文件，并执行
+- .agents/fragment_discovery_agent.md 当要求你执行知识碎片发现任务时，读取该文件，并执行
+- .agents/indexing_agent.md 当要求你执行生成知识索引任务时，读取该文件，并执行
+- .agents/typesetting_agent.md 当要求你执行排版优化任务时，读取该文件，并执行
+- .agents/overview_agent.md 当要求你执行概览生成任务时，读取该文件，并执行
 
 ## 核心语言规则
 
@@ -96,6 +97,10 @@
 工具用法 → 工程思想
   示例：Docker容器化 → 环境一致性的本质价值
 ```
+
+## 知识结构、模式
+
+- overview.md 是对本知识库的知识模式、结构、特性的概览性模式，在生成任何输出之前，你都需要读取本文件，以明白本知识库内的知识模型、特性以及结构。
 
 ## 知识处理框架
 

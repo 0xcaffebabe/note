@@ -249,7 +249,6 @@
 - [⚙️编译原理](./编译原理/编译原理.md)
 
 - 🔨DSL
-  - [ ↔️GraphQL](./DSL/GraphQL.md)
   - [📊SQL](./DSL/SQL.md)
 
 - 📊数据管理

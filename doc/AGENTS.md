@@ -27,10 +27,10 @@
 - 除了 mcp__MiniMax__web_search 外，你还可以使用另外一个搜索，通过 `node .agents/tools/geekbang_search.js 最相关的一个关键词`执行
 - 每次搜索同时使用两者搜索工具，以得到全面的搜索结果
 
-### 网页获取工具使用要求
+### WebFetch 工具使用要求
 
 - 优先通过 WebFetch 工具获取网页内容
-- 如果 WebFetch 工具获取网页内容失败（4xx错误或无法获取到内容），你应该再次尝试通过`node .agents/tools/web_fetch.js url`执行获取网页，若该工具还是失败，则放弃
+- **重要**：如果 WebFetch 工具获取网页内容失败（401错误、451错误、403错误，或无法获取到内容），应该再次尝试通过`node .agents/tools/web_fetch.js url`获取网页内容，若该工具还是失败，则放弃
 
 ## 核心语言规则
 

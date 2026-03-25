@@ -5,7 +5,7 @@
 执行用户给定的所有任务之前，你需要先从 .agents 目录下查询赋予给你的能力，你需要依据这些能力所描述的提示词，按要求执行
 
 - .agents/tagging_agent.md 当要求你执行添加标签任务时，读取该文件，并执行
-- .agents/linking_agent.md 当要求你执行添加关联任务时，读取该文件，并执行
+- .agents/linking_agent.md 当要求你执行添加关联或者更新关联任务时，读取该文件，并执行
 - .agents/boundary_breakthrough_agent.md 当要求你执行知识边界突破任务时，读取该文件，并执行
 - .agents/refactoring_agent.md 当要求你执行文档升维、重构、完善任务时，读取该文件，并执行
 - .agents/tag_aggregation_agent.md 当要求你执行标签治理任务时，读取该文件，并执行
@@ -21,7 +21,16 @@
 
 ## 工具使用要求
 
+### 搜索工具使用要求
+
 - 优先使用 mcp__MiniMax__web_search 而非 WebSearch
+- 除了 mcp__MiniMax__web_search 外，你还可以使用另外一个搜索，通过 `node .agents/tools/geekbang_search.js 最相关的一个关键词`执行
+- 每次搜索同时使用两者搜索工具，以得到全面的搜索结果
+
+### 网页获取工具使用要求
+
+- 优先通过 WebFetch 工具获取网页内容
+- 如果 WebFetch 工具获取网页内容失败（4xx错误或无法获取到内容），你应该再次尝试通过`node .agents/tools/web_fetch.js url`执行获取网页，若该工具还是失败，则放弃
 
 ## 核心语言规则
 

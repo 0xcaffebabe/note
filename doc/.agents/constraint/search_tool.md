@@ -1,6 +1,10 @@
 
 ## 搜索工具使用要求
 
-- 优先使用 mcp__MiniMax__web_search 而非 WebSearch
-- 除了 mcp__MiniMax__web_search 外，你还可以使用另外一个搜索，通过 `node .agents/tools/geekbang_search.js 最相关的一个关键词`执行
-- 每次搜索同时使用两者搜索工具，以得到全面的搜索结果
+**不要使用 WebSearch**
+
+每次搜索你应同时使用以下三个搜索工具，以获得全面的搜索结果：
+
+- MiniMax 大模型厂商提供的搜索接口：`mcp__MiniMax__web_search`，每天有次数限制
+- 极客时间搜索：`node .agents/tools/geekbang_search.js 最相关的一个关键词`
+- 必应搜索：`node .agents/tools/bing_search.js 最相关的一个关键词`

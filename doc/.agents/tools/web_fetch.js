@@ -13,7 +13,7 @@ await page.goto(url);
 await page.setViewport({width: 1080, height: 1024});
 
 await page.waitForNetworkIdle({
-  idleTime: 5000
+  idleTime: 1000
 })
 
 const selector = await page.locator('body').waitHandle()

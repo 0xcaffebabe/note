@@ -14,6 +14,7 @@ if (process.env.http_proxy) {
   args.push(`--proxy-server=${process.env.http_proxy}`);
 }
 
+const fetchStartTime = Date.now();
 const browser = await puppeteer.launch({ args });
 const page = await browser.newPage();
 
@@ -33,8 +34,8 @@ await page.goto(url, {
 
 try {
   await page.waitForNetworkIdle({
-    idleTime: 1000,
-    timeout: 5000,
+    idleTime: 800,
+    timeout: 1000,
   });
 } catch (e) {
   // 某些页面不会真正 idle，忽略即可
@@ -47,6 +48,14 @@ try{
 } catch (e) {
   // 忽略
 }
+
+const fetchDuration = Date.now() - fetchStartTime;
+const claudeStartTime = Date.now();
+
+// if (true) {
+//   console.log(JSON.stringify({ success: true, message: 'success', url, content: text, fetchDuration }));
+//   process.exit(0);
+// }
 
 if (!text.trim()) {
   console.log(JSON.stringify({ success: false, message: 'page body is empty', url, content: '' }));
@@ -87,17 +96,18 @@ claude.stderr.on('data', (chunk) => {
 });
 
 claude.on('close', (code) => {
+  const claudeDuration = Date.now() - claudeStartTime;
   // Claude 有时 stderr 只是 warning，不一定代表失败
   if (code !== 0) {
     // 失败时回退输出原始文本
-    console.log(JSON.stringify({ success: false, message: `claude exited with code ${code}`, url, content: text }));
+    console.log(JSON.stringify({ success: false, message: `claude exited with code ${code}`, url, content: text, fetchDuration, claudeDuration }));
     return;
   }
 
   if (stdout.trim()) {
-    console.log(JSON.stringify({ success: true, message: 'success', url, content: stdout.trim() }));
+    console.log(JSON.stringify({ success: true, message: 'success', url, content: stdout.trim(), fetchDuration, claudeDuration }));
   } else {
-    console.log(JSON.stringify({ success: false, message: 'claude returned empty, falling back to original text', url, content: text }));
+    console.log(JSON.stringify({ success: false, message: 'claude returned empty, falling back to original text', url, content: text, fetchDuration, claudeDuration }));
   }
 });
 

@@ -10,3 +10,5 @@
 - 必应搜索：`node .agents/tools/bing_search.js 最相关的一个关键词`
 - 百度搜索：`node .agents/tools/baidu_search.js 最相关的一个关键词`
 - 搜狗搜索：`node .agents/tools/sogou_search.js 最相关的一个关键词`
+
+当某个搜索工具搜索失败时，应继续使用其他工具进行搜索。

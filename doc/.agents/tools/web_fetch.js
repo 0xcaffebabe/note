@@ -52,10 +52,11 @@ try{
 const fetchDuration = Date.now() - fetchStartTime;
 const claudeStartTime = Date.now();
 
-// if (true) {
-//   console.log(JSON.stringify({ success: true, message: 'success', url, content: text, fetchDuration }));
-//   process.exit(0);
-// }
+if (true) {
+  // console.log(JSON.stringify({ success: true, message: 'success', url, content: text, fetchDuration }));
+  console.log(text);
+  process.exit(0);
+}
 
 if (!text.trim()) {
   console.log(JSON.stringify({ success: false, message: 'page body is empty', url, content: '' }));

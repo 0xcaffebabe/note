@@ -41,6 +41,7 @@
 - .agents/compare_agent.md 当要求你执行搜索比较任务时，读取该文件，并执行
 - .agents/verify_agent.md 当要求你执行文档核查任务时，读取该文件，并执行
 - .agents/research_agent.md 当要求你执行某一主题的调研任务时，读取该文件，并执行
+- .agents/daily_info_agent.md 当要求你执行今日信息、今日热点汇总任务时，读取该文件，并执行
 
 ## 核心语言规则
 

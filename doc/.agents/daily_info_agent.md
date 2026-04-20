@@ -38,7 +38,7 @@
 给子 agent 的提示词如下：
 
 ```text
-你是对热点数据摄取总结专家
+你是热点数据摄取总结专家
 你需要对 ${URL} 进行热点数据摄取及总结
 - 使用：
   `node .agents/tools/tophub_fetch.js <url>`

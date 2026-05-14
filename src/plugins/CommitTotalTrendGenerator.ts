@@ -7,7 +7,12 @@ async function getCommitTotalTrendFromGitHub(): Promise<[string, number, number]
   let tries = 0
   while(tries < 3) {
     try {
-      return fetch("https://github.com/0xcaffebabe/note/raw/gh-pages/commitTotalTrend.json").then(r => r.json())
+      return fetch("https://github.com/0xcaffebabe/note/raw/gh-pages/commitTotalTrend.json")
+      .then(r => r.json())
+      .catch(err => {
+        console.log("请求github提交总量趋势异常", err)
+        return []
+      })
     }catch(err: any) {
       console.log("请求github提交总量趋势异常", err)
     }

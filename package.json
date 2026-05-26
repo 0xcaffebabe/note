@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "@types/js-yaml": "4.0.9",
-    "@types/jsdom": "27.0.0",
+    "@types/jsdom": "28.0.3",
     "@types/katex": "0.16.8",
     "@types/node": "24.10.13",
     "@types/prismjs": "1.26.6",

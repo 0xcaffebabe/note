@@ -113,7 +113,10 @@ export default defineConfig({
         manualChunks(id: string): string {
           const indepentDependcies = ['element-plus', 'vue', 'jspdf',
             'html2canvas', 'echarts', 'zrender', 'marked',
-            'mermaid-parser','sequenceDiagram','c4Diagram','blockDiagram','flowDiagram', 'mermaid',
+            'mermaid-parser','sequenceDiagram','c4Diagram','blockDiagram','flowDiagram',
+            'ganttDiagram','xychartDiagram','quadrantDiagram','gitGraphDiagram',
+            'requirementDiagram','erDiagram','journeyDiagram','architectureDiagram',
+            'wardleyDiagram','mindmap','vennDiagram','kanban','ishikawaDiagram','sankeyDiagram', 'mermaid',
             'katex', 'elkjs', 'cytoscape']
           for (let depend of indepentDependcies) {
             if (id.includes('node_modules') && id.includes(depend)) {

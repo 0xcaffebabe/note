@@ -36,7 +36,7 @@
     "@vitejs/plugin-vue": "6.0.6",
     "jsdom": "29.1.1",
     "nodejieba": "3.5.2",
-    "puppeteer": "24.40.0",
+    "puppeteer": "25.1.0",
     "rollup-plugin-visualizer": "7.0.0",
     "simple-git": "3.36.0",
     "tsx": "4.19.3",

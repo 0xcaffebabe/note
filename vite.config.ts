@@ -117,6 +117,7 @@ export default defineConfig({
             'ganttDiagram','xychartDiagram','quadrantDiagram','gitGraphDiagram',
             'requirementDiagram','erDiagram','journeyDiagram','architectureDiagram',
             'wardleyDiagram','mindmap','vennDiagram','kanban','ishikawaDiagram','sankeyDiagram', 'mermaid',
+            'lodash','prismjs','dagre-d3',
             'katex', 'elkjs', 'cytoscape']
           for (let depend of indepentDependcies) {
             if (id.includes('node_modules') && id.includes(depend)) {

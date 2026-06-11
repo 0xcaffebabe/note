@@ -11,6 +11,7 @@ export default function DataGenerator(){
       config = rconfig
     },
     async buildStart(options: any) {
+      fs.mkdirSync(config.build.outDir, { recursive: true })
       for(let api of apiMappings) {
         if (!api.type || api.type?.indexOf("build") == -1) {
           continue

@@ -70,6 +70,13 @@ export default function DocBuildMove(){
     name: "doc-build-move",
     async configResolved(rconfig: ResolvedConfig) {
       config = rconfig
+      // 清空必须在 configResolved 完成: 其他插件的 buildStart 会异步往 outDir 写文件,
+      // 若清空动作晚于这些写入, 先完成的文件会被误删
+      if (config.command == 'build') {
+        console.log("doc-build-move 清空outDir")
+        fs.rmSync(config.build.outDir, { recursive: true, force: true })
+        PathUtils.ensureDirectoryExistence(config.build.outDir)
+      }
     },
     transformIndexHtml(html: String) {
       return html.replace('{summary}', summaryHtml)
@@ -77,9 +84,6 @@ export default function DocBuildMove(){
     async buildStart(options: any) {
       // build 模式移动doc目录
       if (config.command == 'build') {
-        console.log("doc-build-move 清空outDir")
-        fs.rmSync(config.build.outDir, { recursive: true, force: true })
-        PathUtils.ensureDirectoryExistence(config.build.outDir)
         console.log("doc-build-move 移动doc目录")
         for(let sourceFile of BaseService.listAllFile('doc')) {
           const targetFilename = config.build.outDir + '/' + sourceFile.replace('doc/', '')

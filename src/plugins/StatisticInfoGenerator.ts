@@ -12,6 +12,7 @@ export default function StatisticInfoGenerator(){
       config = rconfig
     },
     async buildStart(options: any) {
+      fs.mkdirSync(config.build.outDir, { recursive: true })
       console.log('准备生成统计信息')
       statisticService.generateStatistic().then(info => {
         fs.writeFileSync(config.build.outDir + "/info.json", JSON.stringify(info))

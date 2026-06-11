@@ -34,6 +34,7 @@ export default function CommitTotalTrendGenerator(){
         return
       }
       console.log('提交总量趋势构建开始')
+      fs.mkdirSync(config.build.outDir, { recursive: true })
       const data = await getCommitTotalTrendFromGitHub()
       let localGenerate = false
       if (data.length == 0) {

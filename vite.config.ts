@@ -14,6 +14,18 @@ import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// vite 8 的 runner 配置加载器会把装饰器转译引入的虚拟模块（\0 前缀路径）记入配置依赖，
+// dev server 的文件监听对含空字节的路径执行 stat 会直接崩溃，这里将其从依赖列表剔除
+const stripVirtualConfigDeps: Plugin = {
+  name: 'strip-virtual-config-deps',
+  configResolved(config) {
+    const deps = config.configFileDependencies as string[]
+    for (let i = deps.length - 1; i >= 0; i--) {
+      if (deps[i].includes('\0')) deps.splice(i, 1)
+    }
+  }
+}
+
 const plugins: Plugin[] = [];
 
 // 打包生产环境才引入的插件
@@ -33,7 +45,7 @@ if (process.env.NODE_ENV === "production") {
 export default defineConfig({
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src")
+      "@": path.resolve(import.meta.dirname, "src")
     },
   },
   server: {
@@ -44,6 +56,7 @@ export default defineConfig({
     hmr: { clientPort: process.env.CODESPACES ? 443 : undefined }
   },
   plugins: [
+    stripVirtualConfigDeps,
     ...plugins,
     VitePWA({
       registerType: 'autoUpdate', 

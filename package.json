@@ -3,9 +3,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "serve": "vite preview",
+    "dev": "vite --configLoader runner",
+    "build": "vite build --configLoader runner",
+    "serve": "vite preview --configLoader runner",
     "update-index": "npx tsx ./src/scripts/updateSearchIndex.ts"
   },
   "dependencies": {
@@ -33,7 +33,7 @@
     "@types/katex": "0.16.8",
     "@types/node": "24.10.13",
     "@types/prismjs": "1.26.6",
-    "@vitejs/plugin-vue": "6.0.6",
+    "@vitejs/plugin-vue": "6.0.7",
     "jsdom": "29.1.1",
     "nodejieba": "3.5.2",
     "puppeteer": "24.40.0",
@@ -43,7 +43,7 @@
     "typescript": "6.0.3",
     "unplugin-auto-import": "21.0.0",
     "unplugin-vue-components": "32.0.0",
-    "vite": "7.3.3",
+    "vite": "8.0.16",
     "vite-plugin-prismjs": "0.0.11",
     "vite-plugin-pwa": "1.3.0"
   }

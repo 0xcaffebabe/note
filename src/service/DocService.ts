@@ -14,10 +14,16 @@ import MindNode from '@/dto/mind/MindNode'
 import { MindUtils } from '@/pages/doc/mind/MindUtils'
 import ClusterNode from '@/dto/ClusterNode'
 import DocRender from '../render/DocRender'
+import { KnowledgeNode } from '@/dto/KnowledgeNode'
 import TagService from '../service/TagService'
 import KnowledgeNetworkService from '../service/KnowledgeNetworkService'
 
 const cache = Cache()
+// 以下方法的参数包含整篇文档内容/HTML 用自定义键避免每次缓存查找都序列化大参数
+// 文档内容在会话内不变（getDocFileInfo按id缓存）以id/原串做键是安全的
+const cacheByFileId = Cache((file: DocFileInfo) => file.id)
+const cacheByDocId = Cache((_mdContent: string, docId: string) => docId)
+const cacheByHtml = Cache((docHtml: string) => docHtml)
 
 
 class DocService implements Cacheable{
@@ -104,7 +110,7 @@ class DocService implements Cacheable{
    * @return {*}  {DocSegement[]}
    * @memberof DocService
    */
-  @cache
+  @cacheByFileId
   public renderMdWithStructed(file: DocFileInfo): DocSegement[] {
     const html = this.renderMd(file)
     const doc = new DOMParser().parseFromString(html, 'text/html').querySelector('body')!;
@@ -155,7 +161,7 @@ class DocService implements Cacheable{
    * @return {*}  {string}
    * @memberof DocService
    */
-  @cache
+  @cacheByFileId
   public renderMd(file: DocFileInfo) : string {
     if (!file.content) {
       return ''
@@ -163,7 +169,7 @@ class DocService implements Cacheable{
     return this.renderMdFromText(file.content, file.id)
   }
 
-  @cache
+  @cacheByDocId
   public renderMdFromText(mdContent: string, docId: string): string {
     return new DocRender(mdContent, docId, 
               TagService.getTagSumList(), KnowledgeNetworkService.getAllLinks()).render()
@@ -256,7 +262,8 @@ class DocService implements Cacheable{
     return readingRecords
   }
 
-  @cache
+  // 不做缓存：本身是廉价的字符串拼接 且依赖异步加载的文档质量数据和当前时间
+  // 旧实现用JSON.stringify(arguments)做键 会把整个知识网络数组序列化进缓存键
   public buildSummaryDocInfo(file: DocFileInfo, knowledgeNetwork?: KnowledgeNode[]): string {
     // 计算入度和出度
     let inDegree = 0;
@@ -315,7 +322,7 @@ class DocService implements Cacheable{
    * @return {*}  {Promise<Content[]>}
    * @memberof DocService
    */
-  @cache
+  @cacheByHtml
   public getContent(docHtml: string): Content[] {
     const elm = new DOMParser().parseFromString(docHtml, 'text/html')
     const allHead:NodeListOf<HTMLElement> = elm.querySelectorAll('h1, h2, h3, h4, h5, h6')
@@ -400,7 +407,7 @@ class DocService implements Cacheable{
    * @return {*}  {string[]}
    * @memberof DocService
    */
-  @cache
+  @cacheByFileId
   public resolveTagList(file: DocFileInfo): string[] {
     const json = yaml.load(file.metadata) as DocMetadata;
     return json?.tags
@@ -414,7 +421,7 @@ class DocService implements Cacheable{
    * @return {*}  {DocMetadata}
    * @memberof DocService
    */
-  @cache
+  @cacheByFileId
   public resolveMetadata(file: DocFileInfo): DocMetadata {
     const metadata = yaml.load(file.metadata) as DocMetadata;
     if (metadata as any == 'undefined') {
@@ -431,12 +438,12 @@ class DocService implements Cacheable{
     return EMPTY_DOC_METADATA
   }
 
-  @cache
+  // 不做缓存：Map查找本身就是O(1) 且质量数据由异步init填充 过早缓存会冻结空结果
   public getDocQuality(id: string): DocQuality | null {
     return this.docQualityMap.get(id) || null
   }
 
-  @cache
+  // 不做缓存：理由同getDocQuality
   public calcQuanlityStr(id: string): string {
     const docQuality = this.getDocQuality(id)
     if (!docQuality) {

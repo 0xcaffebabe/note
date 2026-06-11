@@ -12,14 +12,15 @@ import InstantPreviewer from './tool/InstantPreviewer.vue'
 import MermaidShower from './mermaid-shower/MermaidShower.vue';
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
-import katex from 'katex'
-import 'katex/dist/katex.css'
+import DocPostRender from '@/render/DocPostRender'
 import TouchUtils from "@/util/TouchUtils";
 
 class DocPageEventManager {
 
   private docPageInstance: InstanceType<typeof DocPage | typeof MobileDocPage>
   private isMobile: boolean;
+  private cancelLatexTask: (() => void) | null = null;
+  private cancelHighlightTask: (() => void) | null = null;
 
   constructor(docPageInstance: InstanceType<typeof DocPage | typeof MobileDocPage>, isMobile: boolean = false) {
     this.docPageInstance = docPageInstance;
@@ -134,29 +135,36 @@ class DocPageEventManager {
 
   /**
    *
-   * 渲染数学公式
+   * 渲染数学公式（空闲分片执行 不阻塞主线程）
    * @param {HTMLElement} docEl
    * @memberof DocPageEventManager
    */
   public renderLatex(docEl: HTMLElement) {
-    docEl.querySelectorAll('.tex')
-        .forEach(e => {
-          const element = e as HTMLElement
-          try {
-            katex.render(
-                // 如果在`%`字符前没有`\`字符，则在`%`前添加`\`后再渲染
-                element.getAttribute("raw")!.replace(/[^\\](%)/g, (match)=>{return match[0] + '\\' + '%'}),
-                element,
-                {
-                    // 取消对中文内容渲染的警告
-                    strict: false,
-                    throwOnError: true,
-                }
-            )
-          } catch(e) {
-            element.innerHTML = `<span style='color:red'>${(e as Error).message}</span>`
-          }
-        })
+    this.cancelLatexTask?.()
+    this.cancelLatexTask = DocPostRender.renderLatex(docEl)
+  }
+
+  /**
+   *
+   * 代码块高亮（空闲分片执行 不阻塞主线程）
+   * @param {HTMLElement} docEl
+   * @memberof DocPageEventManager
+   */
+  public renderCodeHighlight(docEl: HTMLElement) {
+    this.cancelHighlightTask?.()
+    this.cancelHighlightTask = DocPostRender.highlightCode(docEl)
+  }
+
+  /**
+   *
+   * 取消尚未完成的后处理渲染任务
+   * @memberof DocPageEventManager
+   */
+  public cancelPendingRender() {
+    this.cancelLatexTask?.()
+    this.cancelHighlightTask?.()
+    this.cancelLatexTask = null
+    this.cancelHighlightTask = null
   }
 
 

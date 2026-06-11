@@ -13,7 +13,7 @@
         category-name="test"
         ref="categoryItemContent"
       />
-      <div class="markdown-section preview-markdown" v-html="contentHtml" draggable="false"></div>
+      <div class="markdown-section preview-markdown" ref="previewSection" v-html="contentHtml" draggable="false"></div>
     </div>
   </transition>
 </template>
@@ -25,6 +25,7 @@ import CategoryItemContent from "./category/CategoryItemContent.vue";
 import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
 import DocUtils from "@/util/DocUtils";
+import DocPostRender from "@/render/DocPostRender";
 
 export default defineComponent({
   components: {
@@ -84,6 +85,10 @@ export default defineComponent({
     },
     async initDoc() {
       this.file = await DocService.getDocFileInfo(DocUtils.docUrl2Id(this.docLink));
+      this.$nextTick(() => {
+        // 预览内容的代码块高亮
+        DocPostRender.highlightCode(this.$refs.previewSection as HTMLElement);
+      });
     },
     hide() {
       if (this.pin) {

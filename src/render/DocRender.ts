@@ -8,8 +8,27 @@ import KatexExtension from './KatexExtension'
 import Slugger from '@/util/Slugger'
 import { marked } from 'marked'
 import DocUtils from '@/util/DocUtils'
-import prism from 'prismjs'
 import DatasourceService from '@/service/DatasourceService'
+
+// katex扩展只需注册一次 重复use会向marked全局实例累加扩展
+marked.use(KatexExtension({}))
+
+// 复用同一个DOMParser实例 避免每个链接token都新建
+// 惰性创建 保证Node环境(jsdom)下在全局DOMParser就绪后才实例化
+let domParserInstance: DOMParser | null = null
+function domParser(): DOMParser {
+  if (!domParserInstance) {
+    domParserInstance = new DOMParser()
+  }
+  return domParserInstance
+}
+
+function escapeHtml(code: string): string {
+  return code
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
 
 const baseUrl = () => {
   return DatasourceService.getCurrentDatasource().url
@@ -63,7 +82,6 @@ export default class DocRender {
   }
 
   public render(): string {
-    marked.use(KatexExtension({}))
     const render = new marked.Renderer();
 
     // 自定义url渲染
@@ -73,7 +91,7 @@ export default class DocRender {
       if (!href?.startsWith('http')) {
         const { id, headingId } = DocUtils.resloveDocUrl(href!)
         // 当text为html的情况下 排除掉dom中sup节点 文本化
-        text = Array.from(new DOMParser().parseFromString(text!, 'text/html').body.childNodes)
+        text = Array.from(domParser().parseFromString(text!, 'text/html').body.childNodes)
           .filter(n => (n as HTMLElement).tagName != 'SUP')
           .map(n => n.textContent)
           .join('');
@@ -97,7 +115,8 @@ export default class DocRender {
           </div>
         `
       }
-      return `<pre><code class="language-${language}">${this.hightlightCode(code, language)}</code></pre>`
+      // 代码高亮不在解析阶段同步执行 由DocPostRender在内容上屏后分片处理
+      return `<pre><code class="language-${language}">${escapeHtml(code)}</code></pre>`
     }
     // 自定义图片渲染
     render.image = (token): string => {
@@ -163,15 +182,5 @@ export default class DocRender {
       return `<h${level} id="${id}">${text}</h${level}>\n`;
     }
     return marked.parse(this.mdContent, { renderer: render, breaks: true }) as string
-  }
-
-  private hightlightCode(code: string, lang: string | undefined): string {
-    if (!lang) {
-      lang = 'clike';
-    }
-    if (!prism.languages[lang]) {
-      lang = 'clike';
-    }
-    return prism.highlight(code, prism.languages[lang], lang)
   }
 }

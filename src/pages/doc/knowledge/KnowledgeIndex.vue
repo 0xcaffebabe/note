@@ -76,7 +76,7 @@
               关闭内容
             </el-button>
           </div>
-          <div class="content-body" v-html="currentContent" @click="handleContentClick"></div>
+          <div class="content-body" ref="contentBody" v-html="currentContent" @click="handleContentClick"></div>
         </div>
       </div>
     </div>
@@ -91,6 +91,7 @@ import CategoryService from '@/service/CategoryService';
 import Category from '@/dto/Category';
 import DocService from '@/service/DocService';
 import DocUtils from "@/util/DocUtils";
+import DocPostRender from "@/render/DocPostRender";
 
 export default defineComponent({
   components: {
@@ -322,6 +323,10 @@ export default defineComponent({
           // 使用 DocService 的渲染方法来渲染 Markdown
           this.currentContent = DocService.renderMd(fileInfo);
           this.currentTitle = data.name;
+          this.$nextTick(() => {
+            // 预览内容的代码块高亮
+            DocPostRender.highlightCode(this.$refs.contentBody as HTMLElement);
+          });
         } catch (error) {
           console.error('获取文档内容失败:', error);
           this.currentContent = '<p>内容加载失败</p>';

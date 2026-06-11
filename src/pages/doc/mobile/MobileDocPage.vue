@@ -102,6 +102,8 @@ export default defineComponent({
         this.eventManager!.syncHeading(headingId);
         // 渲染数学公式
         this.eventManager!.renderLatex(docEl);
+        // 代码块高亮
+        this.eventManager!.renderCodeHighlight(docEl);
         this.registerNecessaryEvent(docEl);
       })
     },

@@ -1,5 +1,5 @@
-import katex, {type KatexOptions} from 'katex'
-import 'katex/dist/katex.css'
+// 仅引入类型 katex运行时由DocPostRender按需动态加载
+import {type KatexOptions} from 'katex'
 import { MarkedExtension, TokenizerAndRendererExtension } from 'marked'
 
 export default function (options: KatexOptions = {}): MarkedExtension {

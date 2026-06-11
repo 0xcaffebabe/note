@@ -283,6 +283,8 @@ export default defineComponent({
         (this.$refs.knowledgeNetwork as InstanceType<typeof KnowledgeNetwork>).init();
         // 渲染数学公式
         this.eventManager!.renderLatex(docEl);
+        // 代码块高亮
+        this.eventManager!.renderCodeHighlight(docEl);
         this.registerNecessaryEvent(docEl)
       });
       this.loading = false;
@@ -385,6 +387,7 @@ export default defineComponent({
   },
   unmounted(){
     // 一些清理操作
+    this.eventManager!.cancelPendingRender();
     this.eventManager!.removeAllScrollListener();
     
     // 移除窗口大小监听器

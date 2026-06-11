@@ -121,28 +121,5 @@ export default defineConfig({
   build: {
     assetsDir: "resource",
     emptyOutDir: false,
-    rollupOptions: {
-      output: {
-        manualChunks(id: string): string {
-          const indepentDependcies = ['element-plus', 'vue', 'jspdf',
-            'html2canvas', 'echarts', 'zrender', 'marked',
-            'mermaid-parser','sequenceDiagram','c4Diagram','blockDiagram','flowDiagram',
-            'ganttDiagram','xychartDiagram','quadrantDiagram','gitGraphDiagram',
-            'requirementDiagram','erDiagram','journeyDiagram','architectureDiagram',
-            'wardleyDiagram','mindmap','vennDiagram','kanban','ishikawaDiagram','sankeyDiagram', 'mermaid',
-            'lodash','prismjs','dagre-d3',
-            'katex', 'elkjs', 'cytoscape']
-          for (let depend of indepentDependcies) {
-            if (id.includes('node_modules') && id.includes(depend)) {
-              return depend
-            }
-          }
-          if (id.includes('node_modules')) {
-            return 'vendor'
-          }
-          return ''
-        }
-      }
-    }
   },
 })

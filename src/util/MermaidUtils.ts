@@ -1,11 +1,35 @@
-import mermaid from "mermaid"
 import { SysUtils } from "./SysUtils"
 
-function initWithDark() {
+type Mermaid = typeof import("mermaid").default
+
+// mermaid 体积大（约800KB），延迟到页面真正出现图表时才加载
+let mermaidPromise: Promise<Mermaid> | null = null
+let loadedMermaid: Mermaid | null = null
+
+function load(): Promise<Mermaid> {
+  if (!mermaidPromise) {
+    mermaidPromise = import("mermaid").then(m => {
+      loadedMermaid = m.default
+      applyCurrentTheme(loadedMermaid)
+      return loadedMermaid
+    })
+  }
+  return mermaidPromise
+}
+
+function applyCurrentTheme(mermaid: Mermaid) {
+  if (SysUtils.isDarkMode()) {
+    applyDarkTheme(mermaid)
+  } else {
+    applyNormalTheme(mermaid)
+  }
+}
+
+function applyDarkTheme(mermaid: Mermaid) {
   mermaid.initialize({theme: 'dark', startOnLoad: false})
 }
 
-function initWithNormal() {
+function applyNormalTheme(mermaid: Mermaid) {
   mermaid.initialize({
     theme: 'base', startOnLoad: false,
     themeVariables: {
@@ -23,7 +47,7 @@ function initWithNormal() {
         .node rect, .node circle, .node polygon, .node path { stroke-width: 1.5px; }
         .edgePath .path { stroke-width: 1.5px; }
         .cluster rect { stroke-dasharray: 4 4; stroke: #d4d4d4; fill: #fafafa; }
-        
+
         /* XYChart styles - Sophisticated muted tones */
         .line-plot-0 path { stroke: #5B7C99 !important; stroke-width: 3px !important; } /* Muted slate blue */
         .line-plot-1 path { stroke: #6B9080 !important; stroke-width: 3px !important; } /* Sage green */
@@ -39,13 +63,26 @@ function initWithNormal() {
   })
 }
 
-function initAllNode() {
-  if (SysUtils.isDarkMode()) {
-    initWithDark()
-  } else {
-    initWithNormal()
+// 主题切换时只需重配已加载的实例；未加载则等首次渲染时按当前主题初始化
+function initWithDark() {
+  if (loadedMermaid) {
+    applyDarkTheme(loadedMermaid)
   }
+}
+
+function initWithNormal() {
+  if (loadedMermaid) {
+    applyNormalTheme(loadedMermaid)
+  }
+}
+
+async function initAllNode() {
   const nodeList = document.querySelectorAll('[id^=mermaid-]')
+  if (nodeList.length === 0) {
+    return
+  }
+  const mermaid = await load()
+  applyCurrentTheme(mermaid)
   nodeList.forEach(
     v => {
       mermaid.render(v.id + '-svg', v.textContent!)
@@ -57,8 +94,8 @@ function initAllNode() {
 }
 
 export default {
+  load,
   initWithDark,
   initWithNormal,
   initAllNode
 }
-

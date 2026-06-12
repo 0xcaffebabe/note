@@ -142,6 +142,10 @@ export default defineComponent({
     this.init(this.doc, headingId, kw)
     this.eventManager = new DocPageEventManager(this, true)
     this.eventManager!.registerScrollListener();
+  },
+  unmounted() {
+    this.eventManager!.cancelPendingRender();
+    this.eventManager!.removeAllScrollListener();
   }
 })
 </script>

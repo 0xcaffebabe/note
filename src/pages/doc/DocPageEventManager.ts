@@ -21,6 +21,8 @@ class DocPageEventManager {
   private isMobile: boolean;
   private cancelLatexTask: (() => void) | null = null;
   private cancelHighlightTask: (() => void) | null = null;
+  private scrollHandler: ((e: Event) => void) | null = null;
+  private scrollTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(docPageInstance: InstanceType<typeof DocPage | typeof MobileDocPage>, isMobile: boolean = false) {
     this.docPageInstance = docPageInstance;
@@ -197,16 +199,17 @@ class DocPageEventManager {
    * @memberof DocPageEventManager
    */
   public registerScrollListener() {
-    let timer: NodeJS.Timeout;
-    document.addEventListener("scroll", (e) => {
+    this.removeAllScrollListener();
+    this.scrollHandler = () => {
       // 限流更新阅读位置
-      clearTimeout(timer);
-      timer = setTimeout(() => {
+      clearTimeout(this.scrollTimer);
+      this.scrollTimer = setTimeout(() => {
         DocService.setDocReadRecrod(this.docPageInstance.doc, window.scrollY);
       }, 1000);
       // 滚动的同时将link-popover隐藏掉
       this.getRef('linkPopover') && (this.getRef('linkPopover') as InstanceType<typeof LinkPopover>).hide();
-    });
+    };
+    document.addEventListener("scroll", this.scrollHandler);
   }
 
 
@@ -259,7 +262,11 @@ class DocPageEventManager {
    * @memberof DocPageEventManager
    */
   public removeAllScrollListener(){
-    document.onscroll = null
+    if (this.scrollHandler) {
+      document.removeEventListener("scroll", this.scrollHandler)
+      this.scrollHandler = null
+    }
+    clearTimeout(this.scrollTimer)
   }
 
 

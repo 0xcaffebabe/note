@@ -62,7 +62,31 @@ export default defineConfig({
       registerType: 'autoUpdate', 
       includeAssets: ['favicon.ico'],
       workbox: {
-        globPatterns: ['**/index.html', '**/*.{js,css,json}'],
+        // 只预缓存应用入口，避免首次访问就在后台下载全站约10MB资源
+        // （含mermaid/echarts/cytoscape等懒加载chunk和300+个文档JSON）
+        globPatterns: ['**/index.html'],
+        runtimeCaching: [
+          {
+            // 带内容哈希的静态资源不会变更，缓存优先
+            urlPattern: /\/resource\/.*\.(?:js|css)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'hashed-assets',
+              expiration: { maxEntries: 300, maxAgeSeconds: 30 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // 文档与统计数据按需缓存，先返回缓存同时后台刷新
+            urlPattern: /\.json$/,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'doc-data',
+              expiration: { maxEntries: 500 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
       },
       manifest: {
         name: '知识体系',

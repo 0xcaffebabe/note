@@ -104,8 +104,7 @@ export default defineComponent({
       this.init();
     },
     zoom(newVal) {
-      this.graphZoom = newVal;
-      this.updateChartZoom();
+      this.updateChartZoom(newVal);
     }
   },
   computed: {
@@ -449,10 +448,25 @@ export default defineComponent({
       });
     },
     
-    updateChartZoom() {
-      // 重新初始化图表以应用新的缩放级别
-      this.$nextTick(() => {
-        this.init(false);
+    updateChartZoom(newZoom: number) {
+      // 图表未创建时只记录目标缩放，等init时生效
+      if (!this.chart) {
+        this.graphZoom = newZoom;
+        return;
+      }
+      // 用相对缩放动作更新，避免销毁重建图表导致力导向布局重跑
+      // this.graphZoom 由 graphRoam 事件回调同步
+      const factor = newZoom / this.graphZoom;
+      if (!isFinite(factor) || factor <= 0 || factor === 1) {
+        return;
+      }
+      const chartDom = document.getElementById(this.id);
+      this.chart.dispatchAction({
+        type: 'graphRoam',
+        seriesIndex: 0,
+        zoom: factor,
+        originX: (chartDom?.clientWidth ?? 0) / 2,
+        originY: (chartDom?.clientHeight ?? 0) / 2,
       });
     },
 

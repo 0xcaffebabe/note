@@ -59,15 +59,25 @@ app.use(createStore())
 const router = createRouter()
 
 
-// 屏幕顶端进度条开始
+// 屏幕顶端进度条: 一次逻辑导航最多占用一个pending
+// 守卫重定向(自愈/移动端跳转)会让beforeEach触发多次而afterEach只触发一次
+// 守卫异常/懒加载chunk失败则只触发onError 不配对会让pending永不归零 进度条永驻
+let navInProgress = false
 router.beforeEach((to, from, next) => {
-  NProgress.start()
+  if (!navInProgress) {
+    navInProgress = true
+    NProgress.start()
+  }
   next()
 })
-router.afterEach(() => {
-  NProgress.done()
-})
-
+const finishNav = () => {
+  if (navInProgress) {
+    navInProgress = false
+    NProgress.done()
+  }
+}
+router.afterEach(finishNav)
+router.onError(finishNav)
 // 屏幕顶端进度条结束
 
 app.use(router)

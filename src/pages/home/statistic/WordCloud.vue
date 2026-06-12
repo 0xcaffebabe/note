@@ -700,9 +700,9 @@ export default defineComponent({
       }
       
       &.active {
-        background: #409eff;
+        background: var(--primary-color);
         color: white;
-        border-color: #409eff;
+        border-color: var(--primary-color);
       }
     }
   }

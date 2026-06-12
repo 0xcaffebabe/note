@@ -64,7 +64,20 @@ class DocService implements Cacheable{
    */
   private docQualityOrderMap = new Map<string, number>()
 
+  private qualityRequested = false
+
   private constructor(){
+  }
+
+  /**
+   * 懒加载文档质量数据: 非首屏关键 且dev端按需生成耗时极长(约30-60s的git分析)会阻塞文档请求
+   * 由文档页在正文渲染完成后触发 消费方(侧栏tooltip/知识回顾)在数据就绪前按空值降级
+   */
+  public ensureQualityLoaded() {
+    if (this.qualityRequested) {
+      return
+    }
+    this.qualityRequested = true
     this.init()
   }
 
@@ -344,8 +357,11 @@ class DocService implements Cacheable{
         topLevel = level
       }
       const content = new Content();
-      // 这里考虑到标题里面可能由html标签构成 排除掉sup标签 转为文本内容
-      content.name = Array.from(head.childNodes).filter(v => v.nodeName.toUpperCase() != 'SUP').map(v => v.textContent).join('');
+      // 这里考虑到标题里面可能由html标签构成 排除掉sup标签与锚点图标 转为文本内容
+      content.name = Array.from(head.childNodes)
+        .filter(v => v.nodeName.toUpperCase() != 'SUP')
+        .filter(v => !((v as HTMLElement).classList?.contains('heading-anchor')))
+        .map(v => v.textContent).join('');
       content.link = head.getAttribute("id")!
       content.level = level;
       contentMap[level] = content

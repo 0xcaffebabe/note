@@ -30,8 +30,27 @@ function escapeHtml(code: string): string {
     .replace(/>/g, '&gt;')
 }
 
+function escapeAttr(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
 const baseUrl = () => {
   return DatasourceService.getCurrentDatasource().url
+}
+
+// GFM admonition标记 → callout样式与中文标签
+const CALLOUT_META: Record<string, {cls: string, label: string}> = {
+  NOTE: {cls: 'note', label: '提示'},
+  INFO: {cls: 'note', label: '信息'},
+  TIP: {cls: 'tip', label: '技巧'},
+  IMPORTANT: {cls: 'important', label: '重要'},
+  WARNING: {cls: 'warning', label: '注意'},
+  CAUTION: {cls: 'danger', label: '警告'},
+  DANGER: {cls: 'danger', label: '危险'},
 }
 
 function localImageProxy(url: string | null): string | null{
@@ -97,7 +116,7 @@ export default class DocRender {
           .join('');
         return `<a href='${buildDocLink(id, headingId!)}' origin-link='${href}'>${text}</a>`
       } else {
-        return `<a href='${href}' target="_blank">${text}</a>`
+        return `<a href='${href}' target="_blank" rel="noopener noreferrer">${text}</a>`
       }
     }
     // 自定义代码块渲染
@@ -107,16 +126,21 @@ export default class DocRender {
       // 如果语言是mermaid 特殊处理 转为mermaid
       if (language == 'mermaid') {
         return `
-          <div class="mermaid-wrapper" data-raw='${code}'>
+          <div class="mermaid-wrapper" data-raw="${escapeAttr(code)}">
             <div class="fullscreen">
-              <button>全屏</button>
+              <button type="button" aria-label="全屏查看图表">全屏</button>
             </div>
-            <div id='mermaid-${IdGenUtils.uuid()}'>${code}</div>
+            <div id='mermaid-${IdGenUtils.uuid()}' class="mermaid-source">${escapeHtml(code)}</div>
           </div>
         `
       }
       // 代码高亮不在解析阶段同步执行 由DocPostRender在内容上屏后分片处理
-      return `<pre><code class="language-${language}">${escapeHtml(code)}</code></pre>`
+      const lang = language || 'text'
+      return `<div class="code-block" data-lang="${escapeAttr(lang)}">`
+        + `<div class="code-block-toolbar"><span class="code-lang">${escapeAttr(lang)}</span>`
+        + `<button class="code-copy" type="button" aria-label="复制代码">复制</button></div>`
+        + `<pre><code class="language-${escapeAttr(lang)}">${escapeHtml(code)}</code></pre>`
+        + `</div>`
     }
     // 自定义图片渲染
     render.image = (token): string => {
@@ -125,7 +149,9 @@ export default class DocRender {
       if (href?.startsWith('/')) {
         href = baseUrl() + href.replace('/', '')
       }
-      return `<p class="img-wrapper"><img loading="lazy" src='${localImageProxy(href)}' width="480" height="240" crossorigin="anonymous"/><p class="img-title">${text}</p></p>`
+      // 不加crossorigin: 外链图床多数不返回CORS头 加了反而导致本可正常显示的图被拒绝渲染
+      // figure/figcaption语义化 替代非法的p嵌套p; 不写假宽高 由CSS按自然尺寸约束
+      return `<figure class="img-wrapper"><img loading="lazy" src='${localImageProxy(href)}' alt="${escapeAttr(text || '')}"/><figcaption class="img-title">${text}</figcaption></figure>`
     }
     //const reg = new RegExp(this.knowledgeLinkList.map(v => v.name).join('|'))
 
@@ -170,16 +196,34 @@ export default class DocRender {
       const tableRenderText = oriTableRender.call(render, token)
       return `<div class="table-wrapper">${tableRenderText}</div>`
     }
-    render.heading = function (token) {
-      const text = this.parser.parseInline(token.tokens);
-      const level = token.depth + 1
+    // GFM风格提示块: > [!NOTE] / [!TIP] / [!WARNING]... 渲染为语义callout卡片
+    const oriBlockquoteRender = render.blockquote
+    render.blockquote = function (token) {
+      const html = oriBlockquoteRender.call(render, token)
+      const match = html.match(/^<blockquote>\s*<p>\[!([A-Z]+)\]\s*(<br\s*\/?>\s*)?/i)
+      const meta = match && CALLOUT_META[match[1].toUpperCase()]
+      if (!meta) {
+        return html
+      }
+      const inner = html
+        .replace(match[0], '<blockquote><p>')
+        .replace(/^<blockquote>\s*<p>\s*<\/p>/, '<blockquote>')
+        .replace(/^<blockquote>/, '')
+        .replace(/<\/blockquote>\s*$/, '')
+      return `<div class="callout callout-${meta.cls}"><p class="callout-title">${meta.label}</p>${inner}</div>`
+    }
+    render.heading = (token) => {
+      const text = render.parser.parseInline(token.tokens);
+      // 保持站内"md一级标题渲染为h2"的层级约定 但夹紧到h6 避免产生非法的h7
+      const level = Math.min(token.depth + 1, 6)
       const raw = token.raw
         .toLowerCase()
         .trim()
         .replace(/<[!\/a-z].*?>/gi, '');
       const id = slugger.slug(raw);
-
-      return `<h${level} id="${id}">${text}</h${level}>\n`;
+      // hover显现的锚链接: 中键/修饰键点击可新开标签 普通点击由事件层复制链接
+      const anchor = `<a class="heading-anchor" href="${buildDocLink(this.docId, id)}" aria-label="标题锚点">#</a>`
+      return `<h${level} id="${id}">${text}${anchor}</h${level}>\n`;
     }
     return marked.parse(this.mdContent, { renderer: render, breaks: true }) as string
   }

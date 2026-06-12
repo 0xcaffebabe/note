@@ -1,11 +1,9 @@
 <template>
+  <a class="skip-link" href="#main-content">跳到正文</a>
   <el-container class="main-layout">
     <el-header v-show="showHeader">
       <el-affix :offset="0">
-        <Header
-          @search="showSearch"
-          @category-search="showCategorySearch"
-        />
+        <Header @search="showSearch" />
       </el-affix>
     </el-header>
     <div class="header-toggle-button" :style="{'margin-top': showHeader ? '60px' : '10px'}">
@@ -18,19 +16,17 @@
         :title="showHeader ? '隐藏顶部栏' : '显示顶部栏'"
       />
     </div>
-    <el-main>
+    <el-main id="main-content" tabindex="-1">
       <router-view />
     </el-main>
   </el-container>
-  <Search ref="search" />
-  <category-search ref="categorySearch" />
+  <command-palette ref="commandPalette" />
 </template>
 
 <script lang="ts">
 import { defineComponent, computed, ref } from "vue";
 import Header from "./components/header/Header.vue";
-import Search from "@/components/search/Search.vue";
-import CategorySearch from "@/components/search/CategorySearch.vue";
+import CommandPalette from "@/components/search/CommandPalette.vue";
 import { ArrowUpBold, ArrowDownBold } from "@element-plus/icons-vue";
 import EventBus from "./components/EventBus";
 import ConfigService from "./service/ConfigService";
@@ -41,23 +37,20 @@ const cateListKey='system::currentCategoryList';
 export default defineComponent({
   components: {
     Header,
-    Search,
-    CategorySearch,
+    CommandPalette,
     ArrowUpBold,
     ArrowDownBold,
   },
   setup() {
-    const search = ref<InstanceType<typeof Search>>()
-    const categorySearch = ref<InstanceType<typeof CategorySearch>>()
+    const commandPalette = ref<InstanceType<typeof CommandPalette>>()
     const showSearch = () => {
-      search.value?.show()
+      commandPalette.value?.show()
     }
     const showCategorySearch = () => {
-      categorySearch.value?.show()
+      commandPalette.value?.show('category')
     }
     return {
-      search, showSearch,
-      categorySearch, showCategorySearch,
+      commandPalette, showSearch, showCategorySearch,
       ArrowUpBold,
       ArrowDownBold
     }
@@ -80,7 +73,8 @@ export default defineComponent({
   }, 
   data() {
     return {
-      showHeader: false,
+      // 顶栏默认常驻显示(承载全局导航与搜索入口) 禅模式或用户手动收起后保持偏好
+      showHeader: true,
       lastClickTime: 0,
     };
   },
@@ -89,27 +83,30 @@ export default defineComponent({
     const actionList = [
       {
         hotkey: 'ctrl + q',
-        action: () => (this.$refs.categorySearch as any).show()
+        action: () => (this.$refs.commandPalette as any).show('category')
       },
       {
         hotkey: 'ctrl + k',
-        action: () => (this.$refs.search as any).show()
-      },
-      {
-        hotkey: 'ctrl + l',
-        action: () => this.clearCache()
+        action: () => (this.$refs.commandPalette as any).show()
       },
       {
         hotkey: 'db + shift',
-        action: () => (this.$refs.categorySearch as any).show()
+        action: () => (this.$refs.commandPalette as any).show('category')
       },
       {
         hotkey: 'db + s',
-        action: () => (this.$refs.search as any).show()
+        action: () => (this.$refs.commandPalette as any).show()
       },
     ]
     const clickTimeMap = new Map<string, number>()
     document.addEventListener('keydown', (e) => {
+      // 输入场景下禁用双击类快捷键 避免正常打字误触
+      const target = e.target as HTMLElement
+      const typing = target && (
+        target.tagName == 'INPUT' ||
+        target.tagName == 'TEXTAREA' ||
+        target.isContentEditable
+      )
       for(let action of actionList) {
         const mainKey = action.hotkey.split('+')[0].trim();
         const subKey = action.hotkey.split('+')[1].trim();
@@ -118,13 +115,14 @@ export default defineComponent({
           mainKeyPressed = e.altKey;
         }
         if (mainKey == 'ctrl') {
-          mainKeyPressed = e.ctrlKey;
+          // metaKey兼容macOS的Cmd组合键
+          mainKeyPressed = e.ctrlKey || e.metaKey;
         }
         if (mainKey == 'shift') {
           mainKeyPressed = e.shiftKey;
         }
         // 双击按键处理
-        if (mainKey == 'db' && e.key.toLowerCase() == subKey) {
+        if (mainKey == 'db' && !typing && e.key.toLowerCase() == subKey) {
           const diff = new Date().getTime() - (clickTimeMap.get(subKey)! || 0);
           if (diff <= 300) {
             action.action()
@@ -132,8 +130,9 @@ export default defineComponent({
           }
           clickTimeMap.set(subKey, new Date().getTime())
         }
-        // 组合按键处理
-        if (mainKeyPressed && e.key.toUpperCase() == subKey.toUpperCase()) {
+        // 组合按键处理: 同时匹配e.key与e.code 兼容输入法激活时key被置为Process的情况
+        const physicalKey = e.code.toLowerCase().replace('key', '')
+        if (mainKeyPressed && [e.key.toLowerCase(), physicalKey].includes(subKey.toLowerCase())) {
           action.action()
           return e.preventDefault();
         }
@@ -206,11 +205,11 @@ export default defineComponent({
   transform: translateY(-10px);
 }
 
+// 暗色专属: 暗色下阴影对比弱, 需补充边框勾勒按钮轮廓; 亮色侧为 border: none, 无法用同一令牌表达
 body[theme=dark] {
   .header-toggle-button {
     .el-button {
-      background-color: var(--dark-card-bg-color);
-      border: 1px solid var(--default-dark-border-color);
+      border: 1px solid var(--border-color);
     }
   }
 }

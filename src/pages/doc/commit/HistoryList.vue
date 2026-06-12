@@ -56,7 +56,7 @@ export default defineComponent({
   margin: 0;
   a {
     text-decoration: none;
-    color: #74818d;
+    color: var(--secondary-text-color);
     font-weight: 400;
     font-size: 14px;
   }
@@ -70,12 +70,4 @@ export default defineComponent({
   :deep(.el-timeline-item__timestamp) {
     text-align: left!important;;
   }
-
-body[theme=dark] {
-  .history-message {
-    a {
-      color: var(--main-dark-text-color);
-    }
-  }
-}
 </style>

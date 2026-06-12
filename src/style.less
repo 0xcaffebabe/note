@@ -1,18 +1,77 @@
+// ============================================================
+// 设计令牌(单轨制): 所有组件只引用下面的语义令牌
+// 暗色模式通过 html.dark 作用域重定义同名变量实现 组件无需写第二份样式
+// ============================================================
 :root{
   scroll-behavior: smooth;
-  
-  // 简洁风格的浅色主题
+  color-scheme: light;
+
+  // 色彩 —— 主色对齐 Element Plus 令牌 改品牌色只需覆盖 --el-color-primary
+  --primary-color: var(--el-color-primary, #409eff);
+  --primary-light-color: var(--el-color-primary-light-9, #ecf5ff);
+
+  // 色彩 —— 表面与文本
   --main-bg-color: #F1F5F9;
+  --card-bg-color: #ffffff;
+  --elevated-bg-color: #ffffff;   // 弹层/菜单等悬浮表面
+  --hover-bg-color: #f8fafc;
   --main-text-color: #1e293b;
   --secondary-text-color: #64748b;
   --border-color: #e2e8f0;
   --divider-color: #f1f5f9;
-  --hover-bg-color: #f8fafc;
-  --card-bg-color: #ffffff;
-  --primary-color: #409eff;
-  --primary-light-color: #ecf5ff;
-  
-  // 简洁风格的深色主题
+
+  // 间距系统
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  // 圆角系统
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 16px;
+
+  // 字号阶梯与行高
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-md: 15px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 22px;
+  --font-size-3xl: 28px;
+  --leading-tight: 1.4;
+  --leading-normal: 1.6;
+  --leading-relaxed: 1.8;
+
+  // 字体栈
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  // 动效基准: fast用于hover等微交互 normal用于面板/布局变化
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+  --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  // 层级体系
+  --z-aside: 10;
+  --z-float: 100;
+  --z-header: 200;
+  --z-overlay: 1000;
+
+  // 阴影系统
+  --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.05);
+  --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.04);
+
+  // 滚动条
+  --scrollbar-thumb-color: rgba(0,0,0,0.15);
+  --scrollbar-thumb-hover-color: rgba(0,0,0,0.3);
+
+  // ----------------------------------------------------------
+  // [废弃 仅兼容] 旧暗色平行变量: 迁移期间保留 引用清零后删除
   --main-dark-bg-color: #1e1e1e;
   --second-dark-bg-color: #252526;
   --third-dark-bg-color: #2d2d30;
@@ -21,27 +80,27 @@
   --dark-secondary-text-color: #a0a0a0;
   --dark-hover-bg-color: #2a2d2e;
   --dark-card-bg-color: #252526;
-  
-  // 间距系统
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  
-  // 圆角系统
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 16px;
+}
 
-  // 动效基准
-  --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+// 暗色模式: 同名令牌换值(html.dark与Element Plus暗色变量同一作用域)
+html.dark {
+  color-scheme: dark;
 
-  // 阴影系统
-  --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
-  --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.05);
-  --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.04);
+  --main-bg-color: #1e1e1e;
+  --card-bg-color: #252526;
+  --elevated-bg-color: #2d2d30;
+  --hover-bg-color: #2a2d2e;
+  --main-text-color: #e0e0e0;
+  --secondary-text-color: #a0a0a0;
+  --border-color: #454545;
+  --divider-color: #2d2d30;
+
+  --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.35), 0 2px 4px -2px rgba(0,0,0,0.35);
+  --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.45), 0 4px 6px -4px rgba(0,0,0,0.35);
+  --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.5), 0 8px 10px -6px rgba(0,0,0,0.4);
+
+  --scrollbar-thumb-color: rgba(255,255,255,0.2);
+  --scrollbar-thumb-hover-color: rgba(255,255,255,0.3);
 }
 
 // 重置默认样式
@@ -49,15 +108,40 @@
   box-sizing: border-box;
 }
 
+// 键盘焦点可见性: 仅键盘导航时显示焦点环
+:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+// 跳到正文链接: 视觉隐藏 获得焦点时显现
+.skip-link {
+  position: fixed;
+  top: -100px;
+  left: 16px;
+  z-index: 9999;
+  padding: 8px 16px;
+  background-color: var(--card-bg-color);
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: top var(--transition-fast);
+
+  &:focus {
+    top: 16px;
+  }
+}
+
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Segoe UI', sans-serif;
-  font-size: 14px;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
   line-height: 1.7;
   color: var(--main-text-color);
   background-color: var(--main-bg-color);
-  transition: background-color, color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #app {
@@ -76,26 +160,13 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.15);
+  background: var(--scrollbar-thumb-color);
   border-radius: 3px;
   transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0,0,0,0.3);
-}
-
-body[theme=dark] {
-  color: var(--dark-text-color);
-  background-color: var(--main-dark-bg-color);
-  
-  ::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.2);
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255,255,255,0.3);
-  }
+  background: var(--scrollbar-thumb-hover-color);
 }
 
 // 简洁风格的通用组件样式
@@ -106,6 +177,24 @@ body[theme=dark] {
 .el-main {
   padding: 0;
   background-color: transparent;
+}
+
+// EP的el-main/el-aside默认overflow:auto会成为sticky元素的"最近滚动容器" 而实际滚动在window上
+// 导致侧栏/TOC的position:sticky永远不触发 改为visible让粘性相对窗口滚动生效
+// (用两级选择器保证特异性高于EP组件样式 不受样式注入顺序影响)
+.main-layout > .el-main,
+.mobile-layout > .el-main,
+.doc-layout > .el-main {
+  overflow: visible;
+}
+
+// EP的el-header默认padding 0 20px会让顶栏两端露出20px页面灰底
+.main-layout > .el-header {
+  padding: 0;
+}
+
+.doc-layout .doc-aside {
+  overflow: visible;
 }
 
 .el-header {
@@ -175,43 +264,7 @@ body[theme=dark] {
   }
 }
 
-// 暗色主题下的 el-dialog
-body[theme=dark] {
-  .el-dialog {
-    background-color: var(--second-dark-bg-color);
-    border-color: var(--default-dark-border-color);
-
-    .el-dialog__header {
-      border-bottom-color: var(--default-dark-border-color);
-    }
-
-    .el-dialog__title {
-      color: var(--dark-text-color);
-    }
-
-    .el-dialog__headerbtn {
-      &:hover {
-        background-color: var(--dark-hover-bg-color);
-
-        .el-dialog__close {
-          color: var(--dark-text-color);
-        }
-      }
-
-      .el-dialog__close {
-        color: var(--dark-secondary-text-color);
-      }
-    }
-
-    .el-dialog__body {
-      color: var(--dark-text-color);
-    }
-
-    .el-dialog__footer {
-      border-top-color: var(--default-dark-border-color);
-    }
-  }
-}
+// 暗色下 el-dialog 跟随令牌自动适配 无需覆写
 
 // 简化标签样式
 .markdown-section .doc-tag {
@@ -253,4 +306,59 @@ body[theme=dark] {
 .page-transition-enter-from,
 .page-transition-leave-to {
   opacity: 0;
+}
+
+// 打印/导出PDF: 隐藏全部固定定位的导航与浮层 正文铺满页面
+@media print {
+  .doc-aside,
+  .tab-container,
+  .doc-contents-and-panel,
+  .toc-toggle-btn,
+  .tool-box,
+  .header-toggle-button,
+  .el-header,
+  .el-backtop,
+  #buildTime {
+    display: none !important;
+  }
+
+  .el-main,
+  .el-main.main {
+    padding: 0 !important;
+  }
+
+  .markdown-section {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  // 代码块完整打印不截断
+  pre, pre code {
+    white-space: pre-wrap !important;
+    word-break: break-word;
+    overflow: visible !important;
+  }
+
+  // 外链打印出真实地址
+  .markdown-section a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 12px;
+    color: #666;
+  }
+}
+
+// 尊重系统"减弱动态效果"偏好: 全局动画/过渡/平滑滚动降级
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

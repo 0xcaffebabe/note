@@ -11,20 +11,18 @@
       />
       <template #dropdown>
         <el-dropdown-menu class="dropdown-menu">
-          <el-dropdown-item 
-            v-for="action in actionList" 
-            :key="action.name" 
+          <!-- 点击直接绑定在菜单项上: 消除按钮嵌套带来的键盘焦点割裂与点击死区 -->
+          <el-dropdown-item
+            v-for="action in actionList"
+            :key="action.name"
             :divided="action.divided || false"
             class="dropdown-item"
+            @click="action.local ? localActionDispatch(action.action) : $emit(action.action)"
           >
-            <el-button
-              class="action-btn"
-              @click="action.local ? localActionDispatch(action.action) : $emit(action.action)"
-              :type="action.type"
-              size="default"
-              >{{action.name}} 
+            <span class="action-row">
+              <span class="action-name">{{action.name}}</span>
               <span class="hotkey" v-if="action.hotkey">{{action.hotkey}}</span>
-            </el-button>
+            </span>
           </el-dropdown-item>
         </el-dropdown-menu>
       </template>
@@ -60,6 +58,7 @@ import {Tools} from '@element-plus/icons-vue'
 import Category from "@/dto/Category";
 import CategoryService from "@/service/CategoryService";
 import DocUtils from "@/util/DocUtils";
+import ConfigService from "@/service/ConfigService";
 
 function random(min: number, max: number) {
   min = Math.ceil(min);
@@ -118,7 +117,7 @@ export default defineComponent({
   data(){
     return {
       showDrawer: false,
-      fontSize: 16,
+      fontSize: (ConfigService.get('fontSize') as number) || 16,
       parentShowHeader: true,
       flatCategoryList: [] as Category[],
       actionList: [
@@ -181,8 +180,11 @@ export default defineComponent({
       }
     },
     handleFontSizeChange(val: number) {
-      const dom: HTMLElement = document.querySelector('.main.markdown-section')!;
-      dom.style.fontSize = val + 'px';
+      const dom: HTMLElement | null = document.querySelector('.main.markdown-section');
+      if (dom) {
+        dom.style.fontSize = val + 'px';
+      }
+      ConfigService.set('fontSize', val);
     }
   },
   setup() {
@@ -204,12 +206,13 @@ export default defineComponent({
 .tool-box {
   transition: all 0.3s ease;
   position: fixed;
-  right: 360px;
-  z-index: 1000;
+  // TOC列宽300 + 20留白
+  right: 320px;
+  z-index: var(--z-overlay);
   padding: 4px;
 }
 
-@media screen and (max-width: 1366px) {
+@media screen and (max-width: 1280px) {
   .tool-box {
     right: 74px;
   }
@@ -219,7 +222,7 @@ export default defineComponent({
   width: 36px;
   height: 36px;
   padding: 8px;
-  border: none;
+  border: 1px solid var(--border-color);
   box-shadow: var(--shadow-md);
   background-color: var(--card-bg-color);
   transition: all 0.25s ease;
@@ -239,45 +242,30 @@ export default defineComponent({
 }
 
 .dropdown-item {
-  padding: 0;
-  margin: 2px 0;
-  
+  margin: 2px var(--spacing-xs);
+  border-radius: var(--radius-md);
+
   &:first-child {
     margin-top: 0;
   }
-  
+
   &:last-child {
     margin-bottom: 0;
   }
 }
 
-.action-btn {
-  width: 100%;
-  justify-content: space-between;
-  border-radius: var(--radius-md);
-  margin: 0 var(--spacing-xs);
-  padding: 8px 12px;
-  border: 1px solid transparent;
-  transition: all 0.2s ease;
+.action-row {
   display: flex;
   align-items: center;
-  
-  &:not(.is-disabled):hover {
-    background-color: var(--hover-bg-color);
-    border-color: var(--border-color);
-  }
-  
-  &.is-disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
-  body[theme=dark] & {
-    &:not(.is-disabled):hover {
-      background-color: var(--dark-hover-bg-color);
-      border-color: var(--default-dark-border-color);
-    }
-  }
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  width: 100%;
+  min-width: 150px;
+  padding: 2px 0;
+}
+
+.action-name {
+  color: var(--main-text-color);
 }
 
 .hotkey {
@@ -319,42 +307,5 @@ export default defineComponent({
   text-align: left;
   color: var(--primary-color);
   font-weight: 500;
-}
-
-body[theme=dark] {
-  .dropdown-menu {
-    background-color: var(--dark-card-bg-color);
-    border: 1px solid var(--default-dark-border-color);
-  }
-  
-  .dropdown-item {
-    .el-dropdown-menu__item:focus, 
-    .el-dropdown-menu__item:not(.is-disabled):hover {
-      background-color: var(--dark-hover-bg-color);
-    }
-  }
-  
-  .hotkey {
-    background-color: var(--dark-hover-bg-color);
-    color: var(--dark-secondary-text-color);
-    border: 1px solid var(--default-dark-border-color);
-  }
-  
-  .setting-label {
-    color: var(--dark-secondary-text-color);
-  }
-  
-  .setting-value {
-    color: var(--primary-color);
-  }
-  
-  .tool-button {
-    background-color: var(--dark-card-bg-color);
-    border: 1px solid var(--default-dark-border-color);
-    
-    &:hover {
-      background-color: var(--dark-hover-bg-color);
-    }
-  }
 }
 </style>

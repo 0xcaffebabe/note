@@ -7,12 +7,26 @@ import { runInIdleBatches } from '@/util/IdleTaskUtils'
  * 在内容渲染完成后利用空闲帧分片执行
  */
 
+// 常见语言别名归一: 避免别名未命中而错误回退clike
+const LANG_ALIAS: Record<string, string> = {
+  sh: 'bash', shell: 'bash', zsh: 'bash', 'shell-session': 'bash',
+  yml: 'yaml',
+  dockerfile: 'docker',
+  js: 'javascript', mjs: 'javascript', cjs: 'javascript', node: 'javascript',
+  ts: 'typescript',
+  html: 'markup', xml: 'markup', svg: 'markup', vue: 'markup',
+  py: 'python',
+  golang: 'go',
+  conf: 'nginx',
+}
+
 function highlightCode(rootEl: HTMLElement): () => void {
   const codeList = Array.from(rootEl.querySelectorAll('pre code[class*="language-"]')) as HTMLElement[]
   return runInIdleBatches(codeList, el => {
     let lang = Array.from(el.classList)
       .find(c => c.startsWith('language-'))
       ?.substring('language-'.length) || 'clike'
+    lang = LANG_ALIAS[lang] || lang
     if (!prism.languages[lang]) {
       lang = 'clike'
     }

@@ -164,11 +164,4 @@ export default defineComponent({
   text-overflow: ellipsis;
   overflow: hidden;
 }
-
-body[theme=dark] {
-  .container {
-    background-color:var(--second-dark-bg-color);
-    color: var(--main-dark-text-color);
-  }
-}
 </style>

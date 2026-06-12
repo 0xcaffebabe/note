@@ -114,17 +114,18 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .container {
-  margin-top: 10%;
-  min-height: 1200px;
+  margin-top: 48px;
+  min-height: 70vh;
 }
 .search-box-zone {
-  max-width: 50%;
+  max-width: 560px;
   margin: 0 auto;
+  padding: 0 var(--spacing-lg);
 }
 .tag-zone {
   transition: all 0.2s ease;
-  max-width: 60%;
-  margin: 5% auto;
+  max-width: 760px;
+  margin: 40px auto;
   text-align: center;
   .el-tag {
     transition: all 0.2s ease;
@@ -133,10 +134,10 @@ export default defineComponent({
   }
 }
 .el-input :deep(input) {
-  border-radius: 50px;
-  font-size: 32px;
-  line-height: 48px;
-  padding: 30px 60px !important;
+  border-radius: 24px;
+  font-size: var(--font-size-lg);
+  line-height: 24px;
+  padding: 12px 24px !important;
 }
 .el-input__icon {
   vertical-align: middle;

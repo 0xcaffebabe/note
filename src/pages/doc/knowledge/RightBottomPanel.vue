@@ -176,7 +176,7 @@ export default defineComponent({
     .el-carousel__indicator {
       // 指示器项的样式
       button {
-        background-color: #d8dce5; // 默认指示器颜色
+        background-color: var(--border-color); // 默认指示器颜色
       }
 
       &.is-active {
@@ -198,8 +198,8 @@ export default defineComponent({
     padding: 8px 12px;
     font-size: 14px;
     font-weight: bold;
-    background-color: rgba(245, 245, 245, 0.9);
-    border-bottom: 1px solid #d8dce5;
+    background-color: var(--card-bg-color);
+    border-bottom: 1px solid var(--border-color);
     flex-shrink: 0; // 防止标签栏被压缩
   }
 
@@ -213,8 +213,8 @@ export default defineComponent({
   position: relative;
   height: 100%;
   width: 100%;
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid #ccc;
+  background-color: color-mix(in srgb, var(--card-bg-color) 80%, transparent);
+  border: 1px solid var(--border-color);
   border-top-left-radius: 8px;
   border-radius: 8px;
   overflow: hidden;
@@ -222,33 +222,6 @@ export default defineComponent({
   // 确保整个面板的高度被正确利用
   .carousel-container {
     height: 100%;
-  }
-}
-
-// 暗色主题样式
-body[theme=dark] .right-bottom-panel {
-  background-color: var(--main-dark-bg-color);
-  border-color: var(--second-dark-bg-color);
-
-  .carousel-container {
-    :deep(.el-carousel__indicators) {
-      .el-carousel__indicator {
-        button {
-          background-color: var(--default-dark-border-color); // 暗色主题下的指示器颜色
-        }
-
-        &.is-active {
-          button {
-            background-color: var(--dark-primary-color); // 暗色主题下的激活指示器颜色
-          }
-        }
-      }
-    }
-
-    .carousel-label {
-      background-color: var(--second-dark-bg-color);
-      border-bottom-color: var(--default-dark-border-color);
-    }
   }
 }
 
@@ -272,7 +245,7 @@ body[theme=dark] .right-bottom-panel {
     align-items: center;
     gap: 5px;
     padding: 5px;
-    background: rgba(255, 255, 255, 0.8);
+    background: color-mix(in srgb, var(--card-bg-color) 80%, transparent);
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
@@ -296,11 +269,6 @@ body[theme=dark] .right-bottom-panel {
   }
 }
 
-// 暗色主题下的控制面板样式
-body[theme=dark] .right-bottom-panel .chart-container .control-panel {
-  background: rgba(40, 40, 40, 0.8);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
 </style>
 
 <!-- 全屏对话框使用 append-to-body，scoped 样式不生效，需独立 style 块 -->

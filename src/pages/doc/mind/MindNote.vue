@@ -82,8 +82,8 @@ export default defineComponent({
     width: 400px;
     height: 200px;
     z-index: 999;
-    background-color: rgba(255,255,255,.8);
-    border: 1px solid #ccc;
+    background-color: color-mix(in srgb, var(--card-bg-color) 80%, transparent);
+    border: 1px solid var(--border-color);
 }
 .full-screen {
   height: 90%!important;
@@ -93,12 +93,6 @@ export default defineComponent({
     .mind-note {
       width: 300px;
       height: 160px;
-    }
-  }
-  body[theme=dark] {
-    .mind-note {
-      background-color:var(--main-dark-bg-color);
-      border-color: var(--second-dark-bg-color);
     }
   }
 </style>

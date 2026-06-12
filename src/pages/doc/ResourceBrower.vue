@@ -60,10 +60,4 @@ iframe {
     height:100%;
   }
 }
-
-body[theme=dark] {
-  iframe {
-    // filter: invert(180%);
-  }
-}
 </style>

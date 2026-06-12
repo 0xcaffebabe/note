@@ -17,13 +17,13 @@
 </template>
 
 <script lang="ts">
-import Category from "@/dto/Category";
+import Content from "@/dto/Content";
 import { defineComponent, PropType  } from "vue";
 
 export default defineComponent({
   props: {
     contentsList: {
-      type: Array as PropType<Category[]>,
+      type: Array as PropType<Content[]>,
       required: true,
     }
   },
@@ -75,11 +75,5 @@ export default defineComponent({
   transition: all 0.2s ease-in;
   opacity: 0;
   transform: translateX(-10px);
-}
-
-body[theme="dark"] {
-  .toc-link {
-    color: var(--dark-secondary-text-color);
-  }
 }
 </style>

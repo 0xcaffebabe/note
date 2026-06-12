@@ -7,13 +7,12 @@ import EventBus from "@/components/EventBus";
 import ImageViewerVue from "@/components/ImageViewer.vue";
 import MermaidUtils from "@/util/MermaidUtils";
 import MobileDocPage from "./mobile/MobileDocPage.vue";
-import SelectionPopover from "./tool/SelectionPopover.vue";
 import InstantPreviewer from './tool/InstantPreviewer.vue'
 import MermaidShower from './mermaid-shower/MermaidShower.vue';
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 import DocPostRender from '@/render/DocPostRender'
-import TouchUtils from "@/util/TouchUtils";
+import { slugify } from "@/util/Slugger";
 
 class DocPageEventManager {
 
@@ -67,7 +66,6 @@ class DocPageEventManager {
         if (href) {
           if (e.altKey) {
             (this.getRef('instantPreviewer') as InstanceType<typeof InstantPreviewer>).preview(href);
-            console.log(href)
           }else {
             this.docPageInstance.$router.push(href);
           }
@@ -80,7 +78,11 @@ class DocPageEventManager {
     // 外部链接
     for(let i = 0;i < outterLinkList.length;i++){
       const a = outterLinkList[i];
-      a.onclick = (e: Event) => {
+      a.onclick = (e: MouseEvent) => {
+        // 修饰键/中键点击交还浏览器默认行为(新标签打开)
+        if (e.ctrlKey || e.metaKey || e.shiftKey) {
+          return
+        }
         const href = a.getAttribute("href");
         this.openOutterLink(href!)
         e.preventDefault();
@@ -118,22 +120,49 @@ class DocPageEventManager {
 
   /**
    *
-   * 管理文档主体heading点击行为
+   * 管理标题锚点交互: 仅点击hover显现的锚点图标时复制链接 标题本体不再劫持点击
    * @param {HTMLElement} docEl
    * @memberof DocPageEventManager
    */
   public registerHeadingClick(docEl: HTMLElement) {
-    const document = docEl;
-    const headingList: NodeListOf<HTMLElement> = document.querySelectorAll(
-      'h1,h2,h3,h4,h5,h6'
-    );
-    for (let i = 0; i < headingList.length; i++) {
-      const heading = headingList[i];
-      heading.onclick = async (e) => {
-        const id = heading.innerText;
-        const url = "/" + DocUtils.docId2Url(this.docPageInstance.doc) + "#" + id;
+    const anchorList: NodeListOf<HTMLElement> = docEl.querySelectorAll('.heading-anchor');
+    for (let i = 0; i < anchorList.length; i++) {
+      const anchor = anchorList[i];
+      anchor.onclick = async (e: MouseEvent) => {
+        // 修饰键/中键交还浏览器默认行为(href是真实可回跳地址)
+        if (e.ctrlKey || e.metaKey || e.shiftKey) {
+          return
+        }
+        e.preventDefault();
+        const heading = anchor.closest('h1,h2,h3,h4,h5,h6') as HTMLElement | null;
+        const url = location.origin
+          + DocUtils.docId2HtmlPath(this.docPageInstance.doc)
+          + "?headingId=" + encodeURIComponent(heading?.id || '');
         await navigator.clipboard.writeText(url);
-        ElMessage.success('复制成功: ' + url);
+        ElMessage.success('已复制本节链接');
+      }
+    }
+  }
+
+  /**
+   *
+   * 代码块一键复制(按钮由DocRender输出)
+   * @param {HTMLElement} docEl
+   * @memberof DocPageEventManager
+   */
+  public registerCodeCopy(docEl: HTMLElement) {
+    const btnList: NodeListOf<HTMLElement> = docEl.querySelectorAll('.code-block .code-copy');
+    for (let i = 0; i < btnList.length; i++) {
+      const btn = btnList[i];
+      btn.onclick = async () => {
+        const code = btn.closest('.code-block')?.querySelector('pre code');
+        await navigator.clipboard.writeText(code?.textContent || '');
+        btn.textContent = '已复制';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = '复制';
+          btn.classList.remove('copied');
+        }, 1500);
       }
     }
   }
@@ -219,32 +248,6 @@ class DocPageEventManager {
 
   /**
    *
-   * 监听文本选中
-   * @param {HTMLElement} docEl
-   * @memberof DocPageEventManager
-   */
-  public registerTextSelected(docEl: HTMLElement) {
-    docEl.addEventListener('mouseup', (e: MouseEvent) => {
-      const selection = document.getSelection()?.toString()
-      if (selection) {
-        this.getRef('selectionPopover') && (this.getRef('selectionPopover') as InstanceType<typeof SelectionPopover>).show(selection, e.clientX- 50, e.clientY + 20)
-      }else {
-        this.getRef('selectionPopover') && (this.getRef('selectionPopover') as InstanceType<typeof SelectionPopover>).hide()
-      }
-    })
-    docEl.addEventListener('touchend', (e: TouchEvent) => {
-      const selection = document.getSelection()?.toString()
-      if (selection) {
-        this.getRef('selectionPopover') && (this.getRef('selectionPopover') as InstanceType<typeof SelectionPopover>).show(selection, e.changedTouches[0].clientX - 50, e.changedTouches[0].clientY+ 20)
-      }else {
-        this.getRef('selectionPopover') && (this.getRef('selectionPopover') as InstanceType<typeof SelectionPopover>).hide()
-      }
-    })
-  }
-
-
-  /**
-   *
    * 注册mermaid全屏按钮点击
    * @param {HTMLElement} docEl
    * @memberof DocPageEventManager
@@ -281,11 +284,19 @@ class DocPageEventManager {
    * @memberof DocPageEventManager
    */
   public syncHeading(headingId?: string) {
-    if (headingId) {
-      const elm: HTMLElement = document.querySelector('#' + headingId)!;
-      if (elm) {
-        window.scrollTo(0, elm.offsetTop - 80)
-      }
+    if (!headingId) {
+      return
+    }
+    // 1) 直接命中 2) slug化后命中(兼容搜索索引/旧链接里的标题原文) 3) 按标题文本匹配
+    let elm = document.getElementById(headingId)
+      || document.getElementById(slugify(headingId));
+    if (!elm) {
+      const headingList = document.querySelectorAll('.markdown-section h1,h2,h3,h4,h5,h6');
+      elm = (Array.from(headingList) as HTMLElement[])
+        .find(h => h.textContent?.trim().toLowerCase().startsWith(headingId.trim().toLowerCase())) || null;
+    }
+    if (elm) {
+      window.scrollTo(0, elm.offsetTop - 80)
     }
   }
 }

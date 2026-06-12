@@ -22,6 +22,7 @@ import { defineComponent, } from 'vue'
 import MobileHeader from './components/header/mobile/MobileHeader.vue'
 import Search from "@/components/search/Search.vue";
 import CategorySearch from './components/search/CategorySearch.vue';
+import EventBus from '@/components/EventBus';
 
 export default defineComponent({
   components: {
@@ -35,8 +36,12 @@ export default defineComponent({
       (this.$refs.categorySearch as InstanceType<typeof CategorySearch>).show()
     },
   },
+  created() {
+    // 文档页底部操作栏的搜索入口
+    EventBus.on('show-mobile-search', () => this.showSearch())
+  },
   setup() {
-    
+
   },
 })
 </script>
@@ -77,16 +82,6 @@ export default defineComponent({
 .page-leave-to {
   opacity: 0;
   transform: translateX(-10px);
-}
-
-body[theme=dark] {
-  .mobile-main {
-    background-color: var(--dark-card-bg-color);
-  }
-  .mobile-header {
-    background-color: var(--dark-card-bg-color);
-    border-bottom: 1px solid var(--default-dark-border-color);
-  }
 }
 </style>
 

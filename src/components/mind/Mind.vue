@@ -187,37 +187,9 @@ export default defineComponent({
 }
 
 :deep(.jsmind-inner) {
-  
+
   &::-webkit-scrollbar {
     display: none;
-  }
-}
-
-// 深色模式适配
-body[theme="dark"] {
-  .mind-container {
-    background-color: var(--dark-card-bg-color);
-  }
-  
-  .control-group {
-    background: var(--dark-card-bg-color);
-    border: 1px solid var(--default-dark-border-color);
-    
-    :deep(.el-button) {
-      border: 1px solid var(--default-dark-border-color);
-      background-color: var(--dark-card-bg-color);
-      color: var(--dark-text-color);
-      
-      &:hover {
-        background-color: var(--dark-hover-bg-color);
-        border-color: var(--primary-color);
-        color: var(--primary-color);
-      }
-    }
-  }
-  
-  :deep(.jsmind-inner) {
-    background-color: var(--dark-card-bg-color) !important;
   }
 }
 </style>
@@ -268,14 +240,14 @@ jmnodes.theme-clean jmnode.root {
 
 /* 根节点悬停样式 */
 jmnodes.theme-clean jmnode.root:hover {
-  background-color: #337ecc;
-  border-color: #337ecc;
+  background-color: color-mix(in srgb, var(--primary-color) 80%, black);
+  border-color: color-mix(in srgb, var(--primary-color) 80%, black);
 }
 
 /* 根节点选中样式 */
 jmnodes.theme-clean jmnode.root.selected {
-  background-color: #337ecc;
-  border-color: #2a6cb4;
+  background-color: color-mix(in srgb, var(--primary-color) 80%, black);
+  border-color: color-mix(in srgb, var(--primary-color) 65%, black);
   color: white;
 }
 
@@ -302,55 +274,4 @@ jmnodeconns.theme-clean jmconn {
   stroke: var(--border-color);
   stroke-width: 2;
 }
-
-body[theme="dark"] {
-  /* 节点样式 */
-  jmnodes.theme-clean jmnode {
-    background-color: var(--dark-card-bg-color);
-    border: 1px solid var(--default-dark-border-color);
-    color: var(--dark-text-color);
-  }
-  
-  /* 悬停节点样式 */
-  jmnodes.theme-clean jmnode:hover {
-    background-color: var(--dark-hover-bg-color);
-    border-color: var(--primary-color);
-  }
-  
-  /* 选中节点样式 */
-  jmnodes.theme-clean jmnode.selected {
-    background-color: rgba(64, 158, 255, 0.2);
-    border-color: var(--primary-color) !important;
-    color: var(--primary-color);
-  }
-  
-  /* 根节点样式 */
-  jmnodes.theme-clean jmnode.root {
-    background-color: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-  }
-  
-  /* 根节点悬停样式 */
-  jmnodes.theme-clean jmnode.root:hover {
-    background-color: #337ecc;
-  }
-  
-  /* 展开/关闭节点的控制点样式 */
-  jmnodes.theme-clean jmexpander {
-    background-color: var(--dark-card-bg-color);
-    border: 1px solid var(--default-dark-border-color);
-    color: var(--dark-text-color);
-    
-    &:hover {
-      background-color: var(--dark-hover-bg-color);
-      border-color: var(--primary-color);
-    }
-  }
-  
-  /* 连接线样式 */
-  jmnodeconns.theme-clean jmconn {
-    stroke: var(--default-dark-border-color);
-  }
-}
-</style>e
+</style>

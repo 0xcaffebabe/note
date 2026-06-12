@@ -4,7 +4,7 @@
     class="tab-container" 
     v-bind="$attrs"
     ref="tabContainer" 
-    :style="{top: parentShowHeader? 66 + 'px': 6 + 'px', position: fixed? 'fixed': 'absolute'}"
+    :style="{top: parentShowHeader? 60 + 'px': 0, position: fixed? 'sticky': 'static'}"
   >
     <el-button
       class="nav-tab-item"
@@ -141,14 +141,15 @@ export default defineComponent({
 <style lang="less" scoped>
 .tab-container {
   transition: all 0.3s ease;
-  // max-width: 60%;
   height: 40px;
   white-space: nowrap;
   overflow-x: auto;
   overflow-y: hidden;
-  z-index: 999;
+  z-index: var(--z-float);
   padding: 4px 0;
-  
+  // sticky吸附时正文从下方滚过 需要不透明背景
+  background-color: var(--card-bg-color);
+
   :deep(.el-scrollbar__bar.is-vertical) {
     display: none;
   }
@@ -192,6 +193,7 @@ export default defineComponent({
   padding: 0 12px;
   background-color: var(--hover-bg-color);
   color: var(--secondary-text-color);
+  border-color: var(--border-color);
   font-size: 13px;
   transition: all 0.2s ease;
   cursor: pointer;
@@ -276,35 +278,6 @@ export default defineComponent({
   &:hover {
     background-color: var(--hover-bg-color);
     color: var(--main-text-color);
-  }
-}
-
-body[theme="dark"] {
-  
-  .nav-tab-item {
-    background-color: var(--dark-hover-bg-color);
-    color: var(--dark-secondary-text-color);
-    border-color: var(--default-dark-border-color);
-    
-    &:hover {
-      color: var(--dark-text-color);
-      background-color: var(--dark-card-bg-color);
-      border-color: var(--default-dark-border-color);
-    }
-    
-    &.active {
-      color: var(--primary-color);
-      background-color: var(--dark-card-bg-color);
-      border-color: var(--default-dark-border-color);
-      border-bottom: 1px solid var(--dark-card-bg-color) !important;
-    }
-  }
-  
-  .close-btn {
-    &:hover {
-      background-color: var(--dark-hover-bg-color);
-      color: var(--dark-text-color);
-    }
   }
 }
 </style>

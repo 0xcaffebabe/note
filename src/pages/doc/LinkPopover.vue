@@ -63,7 +63,8 @@ export default defineComponent({
       let currentX = x;
       let currentY = y;
       bar.onmousedown = (e: MouseEvent) => {
-        if (e.button == 1) {
+        // 左键拖拽(0) 符合常规拖拽习惯
+        if (e.button == 0) {
           currentX = e.clientX, currentY = e.clientY;
           inDrag = true;
           e.preventDefault()
@@ -96,6 +97,12 @@ export default defineComponent({
       }
       this.hide0()
     },
+    handleKeydown(e: KeyboardEvent) {
+      // Esc 关闭预览(忽略pin锁定)
+      if (e.key == 'Escape' && this.visible) {
+        this.hide0()
+      }
+    },
     hide0() {
       this.visible = false;
       (this.$refs.categoryItemContent as any).destroy();
@@ -103,9 +110,11 @@ export default defineComponent({
   },
   mounted() {
     document.addEventListener('scroll', this.hide)
+    document.addEventListener('keydown', this.handleKeydown)
   },
   unmounted() {
     document.removeEventListener('scroll', this.hide)
+    document.removeEventListener('keydown', this.handleKeydown)
   }
 });
 </script>
@@ -113,13 +122,13 @@ export default defineComponent({
 <style lang="less" scoped>
 .popover {
   // transition: all 0.2s;
-  background-color: #fff;
+  background-color: var(--elevated-bg-color);
   width: 400px;
   position: fixed;
   top: 80px;
   left: 400px;
   padding: 10px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
   z-index: 9999;
 }
 .preview-markdown {
@@ -159,16 +168,10 @@ export default defineComponent({
   cursor: move;
 }
 
+// 暗色专属: 暗色下降低按钮不透明度以减弱视觉强度 opacity非颜色属性 无法用语义令牌表达
 body[theme=dark] {
-  #markdownLinkPopover {
-    background-color: var(--second-dark-bg-color);
-  }
   .el-button {
     opacity: 0.75;
-  }
-  .popover {
-    background-color: var(--second-dark-bg-color);
-    box-shadow: 2px 2px 13px var(--main-dark-bg-color);
   }
 }
 </style>

@@ -155,32 +155,11 @@ export default defineComponent({
   }
 }
 
+// 暗色专属: 亮色侧 close-btn 为 border: none 仅靠阴影区分轮廓, 暗色下阴影不可见, 需保留边框, 无法用单一令牌表达
 body[theme=dark] {
-  .mobile-category-drawer {
-    .el-drawer__body {
-      background-color: var(--dark-card-bg-color);
-    }
-  }
-  
-  .mobile-category-wrapper {
-    background-color: var(--dark-card-bg-color);
-  }
-  
   .drawer-header {
-    border-bottom: 1px solid var(--default-dark-border-color);
-    background-color: var(--dark-card-bg-color);
-    
     .close-btn {
-      background-color: var(--dark-card-bg-color);
-      border: 1px solid var(--default-dark-border-color);
-      
-      &:hover {
-        background-color: var(--dark-hover-bg-color);
-      }
-    }
-    
-    .drawer-title {
-      color: var(--dark-text-color);
+      border: 1px solid var(--border-color);
     }
   }
 }

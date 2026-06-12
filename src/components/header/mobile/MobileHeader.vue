@@ -8,16 +8,13 @@
           </el-link>
         </div>
         <theme-switcher />
-        <el-button size="default" text @click="$emit('showSearch')">
+        <el-button class="header-btn" text @click="$emit('showSearch')" aria-label="全文搜索">
           <el-icon><Search /></el-icon>
         </el-button>
-        <el-button size="default" text @click="$emit('showCategorySearch')">
+        <el-button class="header-btn" text @click="$emit('showCategorySearch')" aria-label="目录搜索">
           <el-icon><Folder /></el-icon>
         </el-button>
-        <el-button size="default" text @click="refresh">
-          <el-icon><Refresh /></el-icon>
-        </el-button>
-        <el-button size="default" text @click="$store.commit('setShowCategory', true)">
+        <el-button class="header-btn" text @click="$store.commit('setShowCategory', true)" aria-label="展开目录">
           <el-icon><Expand /></el-icon>
         </el-button>
       </div>
@@ -31,7 +28,7 @@ import ThemeSwitcher from '../ThemeSwitcher.vue';
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { Expand, Search, Folder, Refresh } from '@element-plus/icons-vue';
+import { Expand, Search, Folder } from '@element-plus/icons-vue';
 import config from "@/config";
 
 export default defineComponent({
@@ -41,11 +38,6 @@ export default defineComponent({
       return config.siteName;
     },
   },
-  methods: {
-    refresh() {
-      location.reload()
-    }
-  }
 })
 </script>
 
@@ -53,7 +45,7 @@ export default defineComponent({
 .header {
   height: 40px;
   padding: 0;
-  background-color:#f2f2f2;
+  background-color: var(--main-bg-color);
 }
 .header-wrapper {
   padding: 4px;
@@ -61,6 +53,7 @@ export default defineComponent({
 .container {
   display: flex;
   justify-content: space-between;
+  align-items: center;
    .logo {
     display: flex;
     align-items: center;
@@ -72,9 +65,15 @@ export default defineComponent({
     }
   }
 }
-body[theme=dark] {
-  .header {
-    background-color:var(--second-dark-bg-color);
+
+// 触控目标不小于44x44
+.header-btn {
+  min-width: 44px;
+  min-height: 40px;
+  margin: 0;
+
+  .el-icon {
+    font-size: 18px;
   }
 }
 </style>

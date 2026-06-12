@@ -103,12 +103,6 @@ export default defineComponent({
 
 <style lang="less" scoped>
   .link {
-    color: #409EFF;
-  }
-
-  body[theme=dark] {
-    .value {
-      color: var(--main-dark-text-color);
-    }
+    color: var(--primary-color);
   }
 </style>

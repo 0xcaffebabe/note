@@ -4,7 +4,13 @@ import DocService from '@/service/DocService'
 import DocUtils from '@/util/DocUtils'
 import { SysUtils } from '@/util/SysUtils'
 
-const lastRead = DocService.getLastReadRecord() || 'README'
+// 每次导航时求值: 新访客(无阅读记录)落到首页 老用户续读上次文档
+function lastReadRedirect(prefix: string = '') {
+  return () => {
+    const lastRead = DocService.getLastReadRecord()
+    return lastRead ? prefix + DocUtils.docId2HtmlPath(lastRead) : prefix + '/home.html'
+  }
+}
 
 function tablet2Mobile(to: RouteLocationNormalized, from: RouteLocationNormalized, next: Function) {
   if (SysUtils.isMobile()) {
@@ -25,7 +31,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/",
     component: () => import("@/App.vue"),
-    redirect: () => DocUtils.docId2HtmlPath(lastRead),
+    redirect: lastReadRedirect(),
     beforeEnter: tablet2Mobile,
     children: [
       // 应用页面同样以.html为规范地址 旧的无后缀路径重定向保持兼容
@@ -51,7 +57,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/m',
     component: () => import("@/MobileApp.vue"),
-    redirect: () => '/m' + DocUtils.docId2HtmlPath(lastRead),
+    redirect: lastReadRedirect('/m'),
     children: [
       { path: "/m/home", redirect: to => ({ path: "/m/home.html", query: to.query }) },
       { path: "/m/home.html", component: () => import("@/pages/home/mobile/MobileHomePage.vue"), beforeEnter: mobile2Tablet },
@@ -67,6 +73,11 @@ const routes: RouteRecordRaw[] = [
         beforeEnter: mobile2Tablet
       },
     ]
+  },
+  // 兜底404: 未匹配任何路由的路径不再渲染空白
+  {
+    path: "/:pathMatch(.*)*",
+    component: () => import("@/pages/NotFound.vue")
   }
 ]
 export default function () {

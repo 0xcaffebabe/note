@@ -64,20 +64,4 @@ export default defineComponent({
   vertical-align: middle;
   margin-left: 8px;
 }
-
-body[theme="dark"] {
-  .el-menu-item:hover {
-    background-color: var(--main-dark-bg-color);
-  }
-}
-</style>
-
-<style lang="less">
-body[theme="dark"] {
-  .el-popover {
-    background-color: var(--second-dark-bg-color);
-    border: 1px solid var(--default-dark-border-color) !important;
-    color: var(--main-dark-text-color);
-  }
-}
 </style>

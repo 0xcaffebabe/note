@@ -1,11 +1,11 @@
 <template>
-  <div class="doc-contents-and-panel">
+  <div class="doc-contents-and-panel" :class="{collapsed: !showContentsList}">
     <!-- 目录区域和右下方面板的容器 -->
     <div
       class="contents-panel-container"
       :style="{
-        'top': parentShowHeader ? '66px': '6px',
-        'height': parentShowHeader ? 'calc(100vh - 66px)': '100vh',
+        'top': parentShowHeader ? '60px': '0',
+        'height': parentShowHeader ? 'calc(100vh - 60px)': '100vh',
         'display': showContentsList ? 'flex' : 'none',
         'flex-direction': 'column'
       }"
@@ -22,10 +22,16 @@
     </div>
 
     <!-- 目录切换按钮 -->
-    <div class="toc-toggle-btn" @click="toggleContentsList">
+    <button
+      type="button"
+      class="toc-toggle-btn"
+      @click="toggleContentsList"
+      aria-label="切换文档目录面板"
+      :aria-expanded="showContentsList"
+    >
       <el-icon v-if="showContentsList"><FolderOpened /></el-icon>
       <el-icon v-else><Folder /></el-icon>
-    </div>
+    </button>
   </div>
 </template>
 
@@ -92,11 +98,22 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
+// TOC列: 占据文档流宽度 内部容器粘性定位 不再fixed悬浮在正文之上
+.doc-contents-and-panel {
+  width: 300px;
+  flex-shrink: 0;
+  // 与正文区同色 避免列内留白处露出页面底色形成灰带
+  background-color: var(--card-bg-color);
+
+  &.collapsed {
+    width: 0;
+  }
+}
+
 .contents-panel-container {
   transition: all 0.2s;
-  position: fixed;
-  right: 8px;
-  width: 290px; /* 设置容器宽度 */
+  position: sticky;
+  width: 290px;
   overflow: hidden; /* 防止内容溢出 */
   display: flex;
   flex-direction: column;
@@ -104,48 +121,29 @@ export default defineComponent({
 
 .toc-wrapper-flex {
   flex: 1; /* 占据可用的剩余空间 */
-  overflow-y: auto; /* 允许垂直滚动 */
+  // 滚动统一交给内部ContentsList的.toc容器(滚动联动逻辑以它为基准) 避免双滚动条
+  overflow: hidden;
   min-height: 0; /* 允许flex子元素收缩到内容以下 */
-
-  // 隐藏滚动条（可选）
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 10px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-  }
 }
 
 .toc-toggle-btn {
-  display: none; /* 默认隐藏按钮 */
+  display: none; /* 默认隐藏按钮 仅小屏显示 */
   position: fixed;
   right: 20px;
-  top: 400px;
-  transform: translateY(-50%);
+  bottom: 96px;
   width: 40px;
   height: 40px;
+  border: none;
   background-color: var(--primary-color);
   border-radius: 50%;
-  display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 999;
+  z-index: var(--z-float);
   transition: all 0.3s ease;
   color: white;
   font-size: 18px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .right-bottom-panel-container {
@@ -174,48 +172,29 @@ export default defineComponent({
   }
 }
 
-/* 为小屏幕调整 */
+/* 为小屏幕调整: 断点统一为1280 */
 @media screen and (max-width: 1366px) {
   .right-bottom-panel-container {
     height: 160px;
   }
-
-  .contents-panel-container {
-    width: 260px;
-  }
 }
 
-@media screen and (max-width: 1370px) {
-  .contents-panel-container {
-    right: 2px;
+@media screen and (max-width: 1280px) {
+  .doc-contents-and-panel {
+    width: 0;
   }
-}
-
-@media screen and (max-width: 1180px) {
   .contents-panel-container {
-    display: none;
+    /* 小屏时面板以浮层形式展开(由切换按钮控制) */
+    position: fixed;
+    right: 8px;
+    width: 290px;
+    background-color: var(--card-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
   }
   .toc-toggle-btn {
     display: flex; /* 在小屏幕上显示按钮 */
-  }
-}
-
-body[theme=dark] .toc-toggle-btn {
-  background-color: var(--dark-primary-color);
-}
-
-// 暗黑模式滚动条样式
-body[theme=dark] .toc-wrapper-flex {
-  &::-webkit-scrollbar-track {
-    background: #3a3a3c;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #5a5a5c;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: #6a6a6c;
   }
 }
 </style>

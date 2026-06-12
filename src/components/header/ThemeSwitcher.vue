@@ -5,8 +5,6 @@
     :active-icon="Moon"
     :inactive-icon="Sunny"
     @click="toggleDarkMode"
-    active-color="#000"
-    inactive-color="#409EFF"
   >
   </el-switch>
 </template>
@@ -54,4 +52,8 @@ export default defineComponent({
 
 
 <style lang="less" scoped>
+.el-switch {
+  --el-switch-on-color: #2c2c2c;
+  --el-switch-off-color: var(--primary-color);
+}
 </style>

@@ -368,7 +368,7 @@ export default defineComponent({
         display: flex;
         align-items: center;
         font-size: 0.85em;
-        color: #666;
+        color: var(--secondary-text-color);
 
         .gap-index-value {
           font-size: 1.8em;
@@ -414,7 +414,7 @@ export default defineComponent({
         font-style: italic;
         padding: 4px 6px;
         background-color: #f0f5ff;
-        border-left: 2px solid #409EFF;
+        border-left: 2px solid var(--primary-color);
         text-align: left;
         margin-top: 4px;
         display: none; /* 默认隐藏解释文本，节省空间 */

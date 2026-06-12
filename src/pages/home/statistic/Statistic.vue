@@ -179,14 +179,11 @@ export default defineComponent({
   vertical-align: middle;
 }
 
+// 暗色专属: 亮色下 el-descriptions 保持 EP 默认白底(--el-fill-color-blank: #fff), 暗色下需与页面底色融合(EP 暗色默认 #141414 与页面 --main-bg-color 不一致); 无单一语义令牌可同时表达两侧, 故保留
 body[theme=dark] {
-  .statistic-wrapper {
-    background-color:var(--main-dark-bg-color);
-    color: var(--main-dark-text-color);
-  }
   :deep(.el-descriptions__body) {
-    background-color:var(--main-dark-bg-color);
-    color: var(--main-dark-text-color);
+    background-color: var(--main-bg-color);
+    color: var(--main-text-color);
   }
 }
 </style>

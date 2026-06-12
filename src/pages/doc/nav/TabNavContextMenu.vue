@@ -148,15 +148,6 @@ export default defineComponent({
     color: var(--main-text-color);
     background-color: var(--hover-bg-color);
   }
-  
-  body[theme=dark] & {
-    color: var(--dark-secondary-text-color);
-    
-    &:hover {
-      color: var(--dark-text-color);
-      background-color: var(--dark-hover-bg-color);
-    }
-  }
 }
 
 .menu-items {
@@ -182,13 +173,6 @@ export default defineComponent({
     opacity: 0.5;
     cursor: not-allowed;
   }
-  
-  body[theme=dark] & {
-    &:not(.is-disabled):hover {
-      background-color: var(--dark-hover-bg-color);
-      border-color: var(--default-dark-border-color);
-    }
-  }
 }
 
 // 动画
@@ -201,12 +185,5 @@ export default defineComponent({
 .fade-leave-to {
   opacity: 0;
   transform: scale(0.95);
-}
-
-body[theme=dark] {
-  .context-menu {
-    background-color: var(--dark-card-bg-color);
-    border: 1px solid var(--default-dark-border-color);
-  }
 }
 </style>

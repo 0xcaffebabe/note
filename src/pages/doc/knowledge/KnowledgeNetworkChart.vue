@@ -308,7 +308,7 @@ export default defineComponent({
           show: this.showTooltip,
           backgroundColor: this.isDark ? 'var(--main-dark-bg-color)' :'#fff',
           textStyle: {
-            color: this.isDark ? 'var(--main-dark-text-color)' :'',
+            color: this.isDark ? 'var(--dark-text-color)' :'',
           },
           formatter(params: any, ticket: string, callback: (ticket: string, html: string) => string | HTMLElement | HTMLElement[]): string {
             const name: string = (params.data as any).name;

@@ -2,6 +2,14 @@
 import {type KatexOptions} from 'katex'
 import { MarkedExtension, TokenizerAndRendererExtension } from 'marked'
 
+function escapeAttr(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
 export default function (options: KatexOptions = {}): MarkedExtension {
     return {
         extensions: [
@@ -29,7 +37,7 @@ function inlineKatex(options: KatexOptions): TokenizerAndRendererExtension {
             }
         },
         renderer(token) {
-            return `<span class="inline_tex tex" raw="${token.text}"></span>`
+            return `<span class="inline_tex tex" raw="${escapeAttr(token.text)}"></span>`
         }
     }
 }
@@ -44,7 +52,6 @@ function blockKatex(options: KatexOptions): TokenizerAndRendererExtension {
         tokenizer(src: string, _tokens) {
             let match = src.match(/^\$\$+([^$]+?)\$\$/)
             if (match) {
-                console.log(match[0])
                 return {
                     type: 'blockKatex',
                     raw: match[0],
@@ -61,8 +68,7 @@ function blockKatex(options: KatexOptions): TokenizerAndRendererExtension {
             }
         },
         renderer(token) {
-            console.log(token.text)
-            return `<div class="line_tex tex" raw="${token.text}"></div>`
+            return `<div class="line_tex tex" raw="${escapeAttr(token.text)}"></div>`
         }
     }
 }

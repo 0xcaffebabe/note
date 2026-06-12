@@ -1,91 +1,65 @@
 <template>
-  <div class="optimized-header">
-    <div class="header-wrapper">
-      <div class="container">
-        <div class="logo">
-          <a href="#" @click.prevent="$router.push('/home')">
-            {{ siteName }}
-          </a>
-        </div>
-        <div class="content">
-          <div class="header-actions">
-            <!-- 正常/暗色模式切换按钮 -->
-            <theme-switcher class="action-item" />
-            <!-- 全屏/缓存清空 -->
-            <el-divider direction="vertical" class="divider" />
-            <el-button-group class="action-group">
-              <el-button 
-                size="small" 
-                @click="handleToggleFullScreen" 
-                title="进入/退出全屏模式"
-                class="action-btn"
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-left">
+        <a href="/home.html" class="site-logo" @click.prevent="$router.push('/home.html')">
+          {{ siteName }}
+        </a>
+        <nav class="site-nav" aria-label="站内导航">
+          <a
+            v-for="nav in navList"
+            :key="nav.path"
+            :href="nav.path"
+            class="nav-item"
+            :class="{active: isActive(nav.match)}"
+            @click.prevent="$router.push(nav.path)"
+          >{{ nav.name }}</a>
+        </nav>
+      </div>
+      <div class="header-right">
+        <!-- 搜索入口: 伪输入框 + 快捷键提示 -->
+        <button type="button" class="search-box" @click="$emit('search')" aria-label="搜索 (Ctrl+K)">
+          <el-icon><Search /></el-icon>
+          <span class="search-text">搜索</span>
+          <span class="search-kbd"><kbd>{{ metaKeyLabel }}</kbd><kbd>K</kbd></span>
+        </button>
+        <theme-switcher class="action-item" />
+        <el-dropdown trigger="click">
+          <button type="button" class="more-btn" aria-label="更多工具">
+            <el-icon><MoreFilled /></el-icon>
+          </button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click="handleToggleFullScreen">
+                <el-icon><Monitor /></el-icon>全屏
+              </el-dropdown-item>
+              <el-dropdown-item @click="refresh">
+                <el-icon><Refresh /></el-icon>刷新
+              </el-dropdown-item>
+              <el-dropdown-item @click="enterZenMode">
+                <el-icon><Aim /></el-icon>专注模式
+              </el-dropdown-item>
+              <el-dropdown-item @click="confirmClearCache">
+                <el-icon><Brush /></el-icon>清空缓存
+              </el-dropdown-item>
+              <el-dropdown-item
+                v-for="(link, index) in linkList"
+                :key="link.url"
+                :divided="index == 0"
+                @click="openLink(link.url)"
               >
-                <el-icon><monitor /></el-icon>
-              </el-button>
-              <el-button 
-                size="small" 
-                @click="refresh"
-                class="action-btn"
-              >
-                <el-icon><Refresh /></el-icon>
-              </el-button>
-              <el-popconfirm title="确认清空缓存?" @confirm="clearCache">
-                <template #reference>
-                  <el-button 
-                    size="small" 
-                    title="清空缓存"
-                    class="action-btn"
-                  >
-                    <el-icon><brush /></el-icon>
-                  </el-button>
-                </template>
-              </el-popconfirm>
-              <el-button 
-                size="small" 
-                @click="enterZenMode" 
-                title="进入专注模式"
-                class="action-btn"
-              >
-                <el-icon><aim /></el-icon>
-              </el-button>
-            </el-button-group>
-            <el-divider direction="vertical" class="divider" />
-            <!-- 搜索 -->
-            <el-button-group class="action-group">
-              <el-button
-                class="search-btn"
-                @click="$emit('search')"
-                size="small"
-                round
-              >全文搜索</el-button>
-              <el-button
-                class="search-btn"
-                @click="$emit('category-search')"
-                size="small"
-                round
-              >目录搜索</el-button>
-            </el-button-group>
-            <el-divider direction="vertical" class="divider" />
-            <div class="header-links">
-              <el-link 
-                :href="link.url" 
-                v-for="link in linkList" 
-                :key="link.url" 
-                target="_blank"
-                class="header-link"
-              >
-                {{link.title}}
-              </el-link>
-            </div>
-          </div>
-        </div>
+                <el-icon><Link /></el-icon>{{ link.title }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
     </div>
-  </div>
+  </header>
 </template>
 
 <script setup lang="ts">
-import {Sunny, Moon, Monitor, Brush, Aim, Refresh } from '@element-plus/icons-vue';
+import { Monitor, Brush, Aim, Refresh, Search, MoreFilled, Link } from '@element-plus/icons-vue';
 import EventBus from "@/components/EventBus";
 import ThemeSwitcher from "./ThemeSwitcher.vue";
 </script>
@@ -94,32 +68,39 @@ import ThemeSwitcher from "./ThemeSwitcher.vue";
 import { defineComponent } from "vue";
 import config from "@/config";
 import CacheService from "@/service/CacheService";
-import { ElMessage  } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 
 export default defineComponent({
+  emits: ['search'],
   data() {
     return {
-      name: "my-book" as string,
       fullscreen: false,
+      navList: [
+        { name: '首页', path: '/home.html', match: '/home' },
+        { name: '标签', path: '/tag.html', match: '/tag' },
+        { name: '聚类', path: '/cluster', match: '/cluster' },
+      ],
     };
   },
   methods: {
-    handleNavMenuClick(menu: any) {
-      if (menu.url) {
-        window.open(menu.url);
-      } else {
-        this.$router.push(menu.router);
-      }
+    isActive(prefix: string): boolean {
+      return this.$route.path.startsWith(prefix);
     },
-    clearCache(){
-      CacheService.getInstance().clear();
-      ElMessage.success('清除缓存完成');
+    confirmClearCache() {
+      ElMessageBox.confirm('确认清空本地缓存?', '清空缓存', {
+        confirmButtonText: '清空',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }).then(() => {
+        CacheService.getInstance().clear();
+        ElMessage.success('清除缓存完成');
+      }).catch(() => { /* 取消 */ });
     },
-    handleToggleFullScreen(){
+    handleToggleFullScreen() {
       this.fullscreen = !document.fullscreenElement;
       if (this.fullscreen) {
         document.body.requestFullscreen();
-      }else {
+      } else {
         document.exitFullscreen();
       }
     },
@@ -128,7 +109,10 @@ export default defineComponent({
     },
     refresh() {
       location.reload()
-    }
+    },
+    openLink(url: string) {
+      window.open(url, '_blank', 'noopener')
+    },
   },
   computed: {
     siteName() {
@@ -136,6 +120,9 @@ export default defineComponent({
     },
     linkList() {
       return config.linkList;
+    },
+    metaKeyLabel(): string {
+      return /mac/i.test(navigator.userAgent) ? '⌘' : 'Ctrl';
     },
   },
   created() {
@@ -146,260 +133,154 @@ export default defineComponent({
 });
 </script>
 
-
 <style lang="less" scoped>
-.optimized-header {
-  border-bottom: 1px solid var(--el-border-color);
-  padding: 0;
+.site-header {
   height: 60px;
-  background-color: var(--el-bg-color);
-  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 4px 6px -1px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  backdrop-filter: blur(8px); // 添加背景模糊效果
+  background-color: var(--card-bg-color);
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
 }
 
-.header-wrapper {
-  padding: 0 24px;
+.header-inner {
   height: 100%;
-}
-
-.container {
-  height: 100%;
+  padding: 0 var(--spacing-lg);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  
-  .logo {
-    display: flex;
-    align-items: center;
-    a {
-      text-decoration: none;
-      font-size: 1.4rem;
-      font-weight: 600;
-      color: var(--el-text-color-primary);
-      position: relative;
-      transition: all 0.3s ease;
-      padding: 4px 8px;
-      border-radius: 6px;
-      
-      &:hover {
-        color: var(--el-color-primary);
-        background-color: var(--el-fill-color-light);
-        transform: translateY(-1px);
-      }
-    }
+  gap: var(--spacing-md);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  min-width: 0;
+}
+
+.site-logo {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--main-text-color);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: var(--radius-md);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+
+  &:hover {
+    color: var(--primary-color);
+    background-color: var(--hover-bg-color);
   }
-  
-  .content {
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.nav-item {
+  padding: 6px 12px;
+  font-size: var(--font-size-base);
+  color: var(--secondary-text-color);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+
+  &:hover {
+    color: var(--main-text-color);
+    background-color: var(--hover-bg-color);
+  }
+
+  &.active {
+    color: var(--primary-color);
+    font-weight: 500;
+  }
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  height: 36px;
+  padding: 0 var(--spacing-sm) 0 var(--spacing-md);
+  min-width: 180px;
+  background-color: var(--main-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  color: var(--secondary-text-color);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 15%, transparent);
+  }
+
+  .search-text {
+    flex: 1;
+    text-align: left;
+  }
+
+  .search-kbd {
     display: flex;
-    align-items: center;
-    height: 100%;
-    
-    .header-actions {
-      display: flex;
-      align-items: center;
-      height: 100%;
-      
-      .divider {
-        margin: 0 8px;
-        height: 24px;
-      }
-      
-      .action-group {
-        display: flex;
-        align-items: center;
-        position: relative;
-      }
-      
-      .action-btn {
-        margin: 0 1px;
-        min-width: 32px;
-        height: 32px;
-        transition: all 0.25s ease;
-        border: none;
-        background-color: transparent;
-        
-        &:first-child {
-          margin-left: 0;
-          border-radius: 6px 0 0 6px;
-        }
-        
-        &:last-child {
-          margin-right: 0;
-          border-radius: 0 6px 6px 0;
-        }
-        
-        &:not(:first-child):not(:last-child) {
-          border-radius: 0;
-        }
-        
-        &:hover {
-          background-color: var(--el-fill-color-light);
-          transform: translateY(-1px);
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        &:active {
-          transform: translateY(0);
-        }
-      }
-      
-      .search-btn {
-        margin: 0 2px;
-        height: 32px;
-        transition: all 0.25s ease;
-        border: 1px solid var(--el-border-color);
-        border-radius: 20px;
-        
-        &:first-child {
-          margin-left: 0;
-        }
-        
-        &:last-child {
-          margin-right: 0;
-        }
-        
-        &:hover {
-          border-color: var(--el-color-primary);
-          color: var(--el-color-primary);
-          transform: translateY(-1px);
-          box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
-        }
-      }
-      
-      .header-links {
-        display: flex;
-        align-items: center;
-        margin-left: 12px;
-        
-        .header-link {
-          margin: 0 8px;
-          font-size: 14px;
-          color: var(--el-text-color-secondary);
-          transition: all 0.25s ease;
-          padding: 4px 6px;
-          border-radius: 4px;
-          text-decoration: none;
-          
-          &:hover {
-            color: var(--el-color-primary);
-            background-color: var(--el-fill-color-light);
-            transform: translateY(-1px);
-            text-decoration: none;
-          }
-        }
-      }
+    gap: 2px;
+
+    kbd {
+      padding: 1px 5px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--secondary-text-color);
+      border: 1px solid var(--border-color);
+      border-bottom-width: 2px;
+      border-radius: var(--radius-sm);
+      background-color: var(--card-bg-color);
     }
   }
 }
 
-// 深色主题适配
-body[theme=dark] {
-  .optimized-header {
-    background-color: var(--second-dark-bg-color);
-    border-bottom: 1px solid var(--default-dark-border-color);
-    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.4), 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-  }
-  
-  .container {
-    .logo a {
-      color: var(--main-dark-text-color);
-      transition: all 0.3s ease;
-      
-      &:hover {
-        color: #409eff; // Element Plus primary color in dark mode
-        background-color: rgba(255, 255, 255, 0.05);
-      }
-    }
-    
-    .header-actions {
-      .action-btn {
-        &:hover {
-          background-color: rgba(255, 255, 255, 0.1);
-        }
-      }
-      
-      .search-btn {
-        border: 1px solid var(--default-dark-border-color);
-        background-color: rgba(255, 255, 255, 0.03);
-        color: var(--main-dark-text-color);
-        
-        &:hover {
-          border-color: #409eff;
-          color: #409eff;
-          background-color: rgba(64, 158, 255, 0.1);
-        }
-      }
-    }
-    
-    .header-links {
-      .header-link {
-        color: var(--second-dark-text-color);
-        
-        &:hover {
-          color: #409eff; // Element Plus primary color in dark mode
-          background-color: rgba(255, 255, 255, 0.1);
-        }
-      }
-    }
+.more-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--secondary-text-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+
+  &:hover {
+    color: var(--main-text-color);
+    background-color: var(--hover-bg-color);
   }
 }
 
-// 响应式设计
 @media (max-width: 768px) {
-  .optimized-header {
-    height: 50px;
+  .header-inner {
+    padding: 0 var(--spacing-md);
   }
-  
-  .header-wrapper {
-    padding: 0 16px;
-  }
-  
-  .container {
-    .logo {
-      a {
-        font-size: 1.2rem;
-        padding: 2px 6px;
-      }
-    }
-    
-    .content {
-      .header-actions {
-        .action-btn, .search-btn {
-          min-width: 28px;
-          height: 28px;
-          margin: 0 1px;
-          padding: 0 8px;
-        }
-        
-        .search-btn {
-          span {
-            display: none; // 在小屏幕上隐藏按钮文字
-          }
-          
-          :deep(i) {
-            margin-right: 0;
-          }
-        }
-        
-        .header-link {
-          font-size: 13px;
-          margin: 0 4px;
-          padding: 2px 4px;
-        }
-      }
-    }
-  }
-}
 
-@media (max-width: 480px) {
-  .container {
-    .content {
-      .header-actions {
-        .header-link {
-          display: none; // 在极小屏幕上隐藏链接
-        }
-      }
+  .site-nav {
+    display: none;
+  }
+
+  .search-box {
+    min-width: 0;
+
+    .search-text,
+    .search-kbd {
+      display: none;
     }
   }
 }

@@ -3,9 +3,13 @@
     <el-aside width="280px" :lock-scroll="false" class="doc-aside">
       <div
         class="category-wrapper"
-        :style="{ height: parentShowHeader ? 'calc(100vh - 60px)' : '100vh' }"
+        :style="{
+          height: parentShowHeader ? 'calc(100vh - 60px)' : '100vh',
+          top: parentShowHeader ? '60px' : '0',
+        }"
       >
-        <div class="category-header">
+        <!-- 顶栏显示时不重复展示品牌区 避免双logo堆叠 -->
+        <div class="category-header" v-if="!parentShowHeader">
           <router-link to="/home" class="sidebar-logo">
             <div class="logo-icon">
               <el-icon><Reading /></el-icon>
@@ -102,19 +106,20 @@ export default defineComponent({
   background-color: transparent;
   border: none;
   box-shadow: none;
+  // 撑满整列高度: sticky的category-wrapper需要在父容器内有可滑动行程才能生效
+  height: 100%;
 }
 
+// 粘性侧栏: 跟随文档流占位 不再用fixed+魔法坐标拼接
 .category-wrapper {
   transition: all 0.3s ease;
-  position: fixed;
-  top: 0;
-  left: 0;
+  position: sticky;
   overflow: hidden;
   width: 280px;
   background-color: var(--card-bg-color);
   border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
   box-shadow: var(--shadow-lg);
-  z-index: 9;
+  z-index: var(--z-aside);
   display: flex;
   flex-direction: column;
 }
@@ -134,7 +139,7 @@ export default defineComponent({
     width: 32px;
     height: 32px;
     border-radius: var(--radius-md);
-    background: linear-gradient(135deg, #409eff 0%, #6979f8 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, #6979f8 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -206,27 +211,14 @@ export default defineComponent({
   }
 }
 
+// 暗色专属: 暗色下卡片与悬浮按钮依赖1px描边区分层级 亮色侧无边框(分别为默认无边框/border:none) 并入单轨会给亮色新增边框 故保留
 body[theme=dark] {
   .category-wrapper {
-    background-color: var(--dark-card-bg-color);
-    border: 1px solid var(--default-dark-border-color);
-  }
-
-  .category-header {
-    border-bottom: 1px solid var(--default-dark-border-color);
-  }
-
-  .sidebar-logo .logo-text {
-    color: var(--dark-text-color);
+    border: 1px solid var(--border-color);
   }
 
   .aside-toggle-btn {
-    background-color: var(--dark-card-bg-color);
-    border: 1px solid var(--default-dark-border-color);
-    
-    &:hover {
-      background-color: var(--dark-hover-bg-color);
-    }
+    border: 1px solid var(--border-color);
   }
 }
 </style>

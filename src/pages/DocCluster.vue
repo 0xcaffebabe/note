@@ -1,5 +1,5 @@
 <template>
-  <div id="docCluster" style="height: 1080px; width: 100%"></div>
+  <div id="docCluster" style="height: calc(100vh - 80px); min-height: 480px; width: 100%"></div>
 </template>
 
 <script lang="ts">

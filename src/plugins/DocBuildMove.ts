@@ -38,9 +38,9 @@ function escapeHtmlText(text: string): string {
 /**
  * 以构建产物index.html为模板 生成文档对应的静态html
  * 该html是完整的SPA入口(含构建后的js/css标签) 直接访问/xx/xx.html即进入对应文档页
- * 同时携带文档标题、描述与隐藏的正文内容 供爬虫与无js环境读取
+ * 正文以可见的.static-content直出(即时首屏 兼顾爬虫) Vue挂载完成后由main.ts移除
  */
-function generalHtmlContent(template: string, info: DocFileInfo) {
+function generalHtmlContent(template: string, info: DocFileInfo, preloadTags: string = '', jsonPath: string = '') {
   const renderer = new marked.Renderer()
   renderer.text = (text) => text.text
   let html = marked(info.content, {
@@ -53,10 +53,22 @@ function generalHtmlContent(template: string, info: DocFileInfo) {
   text = text.replace(/\n/ig, '')
   const description = escapeHtmlText(text.substring(0, Math.min(100, text.length)))
   // 替换值用函数形式: 字符串形式会解释$$/$&等替换模式 文档内容含'$$'(KaTeX)时会被吞掉
+  const siteName = escapeHtmlText(template.match(/<title>([^<]*)<\/title>/)?.[1] || '')
+  const title = escapeHtmlText(info.name)
+  // og/twitter卡片: 让文档链接在微信/Slack/Twitter等处分享时带标题与摘要预览
+  const socialMeta = [
+    `<meta property="og:title" content="${title}">`,
+    `<meta property="og:description" content="${description}...">`,
+    `<meta property="og:type" content="article">`,
+    `<meta property="og:site_name" content="${siteName}">`,
+    `<meta name="twitter:card" content="summary">`,
+  ].join('\n  ')
+  // 文档数据json预取: 与js chunk并行下载 缩短可交互时间
+  const jsonPreload = jsonPath ? `<link rel="preload" as="fetch" href="${jsonPath}">` : ''
   return template
-    .replace(/<title>[^<]*<\/title>/, () => `<title>${escapeHtmlText(info.name)}</title>`)
-    .replace('</head>', () => `<meta name="description" content="${description}...">\n  </head>`)
-    .replace('</body>', () => `<div class='content' style="display: none">${html}</div></body>`)
+    .replace(/<title>[^<]*<\/title>/, () => `<title>${title}</title>`)
+    .replace('</head>', () => `<meta name="description" content="${description}...">\n  ${socialMeta}\n  ${preloadTags}\n  ${jsonPreload}\n  </head>`)
+    .replace('</body>', () => `<div class='content static-content'>${html}</div></body>`)
 }
 
 export default function DocBuildMove(){
@@ -133,11 +145,26 @@ export default function DocBuildMove(){
         return fs.promises.writeFile(`${config.build.outDir}/${file}`, html)
           .then(() => console.log(`doc-build-move ${file} 生成完成`))
       }))
+      // 文档页直达加载链是 entry→App→DocPage 的串行瀑布 为确定会用到的chunk注入预加载提示
+      let preloadTags = ''
+      try {
+        const resourceDir = `${config.build.outDir}/resource`
+        const resourceFiles = fs.readdirSync(resourceDir)
+        const preloadJs = resourceFiles.filter(f => /^(App|DocPage)-.+\.js$/.test(f))
+        const preloadCss = resourceFiles.filter(f => /^(App|DocPage)-.+\.css$/.test(f))
+        preloadTags = [
+          ...preloadJs.map(f => `<link rel="modulepreload" href="/resource/${f}">`),
+          ...preloadCss.map(f => `<link rel="preload" as="style" href="/resource/${f}">`),
+        ].join('\n  ')
+      } catch (e) {
+        console.warn('doc-build-move 预加载标签生成失败 跳过', e)
+      }
       const infos = await Promise.all(pendingInfos)
       await Promise.all(infos.map(({filename, info}) => {
         const htmlFileFullName = `${config.build.outDir}/${filename.replace('.md', '')}.html`
         ensureDirectoryExistence(htmlFileFullName)
-        const html = generalHtmlContent(template, info)
+        const jsonPath = '/' + encodeURI(`${filename}.json`)
+        const html = generalHtmlContent(template, info, preloadTags, jsonPath)
         return fs.promises.writeFile(htmlFileFullName, html).then(() => console.log("doc-build-move " + htmlFileFullName + " 生成完成"))
       }))
     }

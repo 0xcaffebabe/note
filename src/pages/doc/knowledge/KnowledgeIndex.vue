@@ -461,7 +461,7 @@ export default defineComponent({
   justify-content: center;
   cursor: ns-resize; /* 南北调整光标，显示上下双箭头 */
   z-index: 10;
-  background: var(--bg-color-2);
+  background: var(--hover-bg-color);
 
   .divider-line {
     position: absolute;
@@ -479,9 +479,9 @@ export default defineComponent({
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg-color-2);
+    background: var(--hover-bg-color);
     z-index: 11;
-    color: var(--text-color-3);
+    color: var(--secondary-text-color);
     border-radius: 12px;
     box-shadow: 0 0 2px rgba(0,0,0,0.1);
     transition: all 0.2s ease;
@@ -554,7 +554,7 @@ export default defineComponent({
     }
 
     :deep(pre) {
-      background: var(--bg-color-2);
+      background: var(--hover-bg-color);
       padding: 10px;
       border-radius: 4px;
       overflow: auto;
@@ -562,7 +562,7 @@ export default defineComponent({
 
     :deep(code) {
       font-family: monospace;
-      background: var(--bg-color-2);
+      background: var(--hover-bg-color);
       padding: 2px 4px;
       border-radius: 3px;
     }

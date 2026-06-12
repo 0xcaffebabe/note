@@ -5,6 +5,7 @@
         v-model="kw"
         placeholder="搜索"
         :fetch-suggestions="getSearchSuggestion"
+        :trigger-on-focus="false"
         @keydown.enter="handleSearch"
         popper-class="popper-list"
         @select="handleSearchSelect"
@@ -56,7 +57,7 @@
           <h3 v-html="p.id"></h3>
           <p v-html="p.txt"></p>
           <p v-if="p.missingKeywords">
-          <span class="font-size:12px;color:#666">缺少关键词:</span>
+          <span class="missing-kw-label">缺少关键词:</span>
           <el-tag v-for="mkw in p.missingKeywords" :key="mkw" size="small" type="danger"><del>{{mkw}}</del></el-tag>
           </p>
         </div>
@@ -64,7 +65,7 @@
     </div>
     <el-empty
       v-show="showEmpty"
-      :description="kw ? `按下回车以搜索 ${kw}` : '搜索结果将在这里展示'"
+      :description="emptyDescription"
       v-if="resultList.length == 0"
     />
   </el-drawer>
@@ -77,8 +78,6 @@ import SearchResultItem from "@/dto/search/SearchResultItem";
 import docService from "@/service/DocService";
 import SearchSuggestion from "@/dto/search/SearchSuggestion";
 
-let searchTimer: NodeJS.Timeout;
-
 export default defineComponent({
   setup() {},
   data() {
@@ -87,6 +86,8 @@ export default defineComponent({
       showDrawer: false as boolean,
       showEmpty: true as boolean,
       showLoading: false as boolean,
+      // 是否已执行过一次搜索(用于空态文案)
+      searched: false as boolean,
       resultList: [] as SearchResultItem[],
       // 搜索耗时
       searchTook: 0,
@@ -98,6 +99,12 @@ export default defineComponent({
   computed: {
     outerKw() {
       return this.$store.state.currentSearchKw;
+    },
+    emptyDescription(): string {
+      if (this.searched && this.kw) {
+        return `未找到与「${this.kw}」相关的内容，试试调整关键词或目录搜索(Ctrl+Q)`;
+      }
+      return this.kw ? `按下回车以搜索 ${this.kw}` : '搜索结果将在这里展示';
     },
     loadingColor() {
       if (this.$store.state.isDarkMode) {
@@ -124,25 +131,23 @@ export default defineComponent({
     hide() {
       this.showDrawer = false;
     },
-    handleSearch() {
-      // 搜索框失焦
+    async handleSearch() {
+      // 收起联想列表
       (this.$refs.input as any).close();
 
       this.showEmpty = false;
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(async () => {
-        // 动画开始
-        this.showLoading = true;
-        // 拉取数据
-        const searchResult = await searchService.search(this.kw, this.searchEngine);
-        this.resultList = searchResult.list
-        this.searchTook = searchResult.took
-        this.showEmpty = true;
-        this.showLoading = false;
-        // 动画结束
-        // 重置结果详情滚动条到最顶端
-        document.querySelector(".search .el-drawer__body")?.scrollTo(0, 0);
-      }, 500);
+      this.showLoading = true;
+      // 立即拉取数据(回车是显式动作 无需防抖)
+      const searchResult = await searchService.search(this.kw, this.searchEngine);
+      this.resultList = searchResult.list
+      this.searchTook = searchResult.took
+      this.searched = true;
+      this.showEmpty = true;
+      this.showLoading = false;
+      // 重置结果详情滚动条到最顶端
+      document.querySelector(".search .el-drawer__body")?.scrollTo(0, 0);
+      // 焦点回到输入框 便于连续调整关键词
+      (this.$refs.input as any).focus();
     },
     handleDocClick(doc: string, headingId?: string) {
       if (!doc.startsWith("./") && !doc.startsWith("/")) {
@@ -190,7 +195,7 @@ export default defineComponent({
 .search-result {
   width: 100%;
   :deep(mark) {
-    color: #409eff;
+    color: var(--primary-color);
     background-color: transparent;
   }
 }
@@ -204,14 +209,14 @@ export default defineComponent({
   margin: 0;
   cursor: pointer;
   padding: 8px 24px;
-  border-bottom: 1px solid rgba(211, 220, 228, 1);
+  border-bottom: 1px solid var(--border-color);
 }
 .result-item:hover {
   transition: all 0.3s;
-  background-color: #e9edf2;
+  background-color: var(--hover-bg-color);
 }
 .top-heading {
-  border-left: 4px solid #409eff;
+  border-left: 4px solid var(--primary-color);
   h1 {
     margin-bottom: 0!important;
   }
@@ -220,17 +225,12 @@ export default defineComponent({
   display: inline-block;
   padding: 4px 0;
 }
-.search-took {
-  color: #bbb;
-  padding-right: 10px;
+.missing-kw-label {
+  font-size: 12px;
+  color: var(--secondary-text-color);
 }
-
-body[theme=dark] {
-  .result-item {
-    border-bottom: 1px solid var(--default-dark-border-color);
-  }
-  .result-item:hover {
-    background-color: var(--main-dark-bg-color);
-  }
+.search-took {
+  color: var(--secondary-text-color);
+  padding-right: 10px;
 }
 </style>

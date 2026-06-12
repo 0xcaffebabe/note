@@ -1,38 +1,46 @@
 <template>
-  <el-container>
+  <el-container class="doc-layout">
     <doc-side-category :doc="doc" :showAside="showAside" @toggle-aside="showAside = !showAside" ref="docSideCategory" />
     <el-main class="main">
       <keep-alive>
-        <doc-tab-nav @dbclick="handleTabNavDbclick" :style="{'width': isDrawerShow ? '920px': 'calc(100% - 800px)'}"/>
+        <doc-tab-nav @dbclick="handleTabNavDbclick" />
       </keep-alive>
-      <el-skeleton :rows="25" animated :loading="loading" :throttle="50" style="max-width: 80%;margin-top:20px;position:fixed">
+      <!-- 加载失败兜底: 提供重试入口 不再停留在骨架屏 -->
+      <el-result v-if="loadError" icon="error" title="文档加载失败" sub-title="网络异常或文档不存在" class="doc-error">
+        <template #extra>
+          <el-button type="primary" @click="showDoc(doc)">重试</el-button>
+          <el-button @click="$router.push('/home.html')">返回首页</el-button>
+        </template>
+      </el-result>
+      <el-skeleton v-else :rows="25" animated :loading="loading" :throttle="50" class="doc-skeleton">
         <template #default>
           <div class="main-content">
             <doc-breadcrumb-nav />
             <doc-metadata-info :file="file" @link-click="link => eventManager?.openOutterLink(link)"/>
             <!-- doc主体开始 -->
-            <div class="main markdown-section" ref="markdownSection" :class="{'center': showAside}" v-html="contentHtml" :style="{'width': isDrawerShow ? '920px': '74%'}"></div>
+            <div class="main markdown-section" ref="markdownSection" v-html="contentHtml"></div>
             <!-- doc主体结束 -->
+            <!-- 上一篇/下一篇 -->
+            <doc-prev-next :doc="doc" />
             <!-- 提交历史开始 -->
-            <div style="text-align: center">
-              <el-divider style="width:72%" />
+            <div>
+              <el-divider />
               <div class="footer-wrapper">
                 <history-list :file="file" :doc="doc" />
               </div>
             </div>
             <!-- 提交历史结束 -->
-            <!-- 目录和面板整合组件 -->
-            <doc-contents-and-panel
-              :doc="doc"
-              :parentShowHeader="parentShowHeader"
-              @item-click="handleTocItemClick"
-              @toggle-contents="showContentsList = $event"
-            />
-
           </div>
         </template>
       </el-skeleton>
     </el-main>
+    <!-- 右侧TOC与知识面板列 -->
+    <doc-contents-and-panel
+      :doc="doc"
+      :parentShowHeader="parentShowHeader"
+      @item-click="handleTocItemClick"
+      @toggle-contents="showContentsList = $event"
+    />
   </el-container>
   <!-- 工具栏开始 -->
   <tool-box
@@ -49,20 +57,15 @@
   />
   <!-- 工具栏结束 -->
   <link-popover ref="linkPopover"/>
-  <el-backtop :bottom="220" :right="26" />
-  <mind-graph ref="mindGraph" @close="showAside = true;isDrawerShow = false" />
-  <link-list :html="contentHtml" ref="linkList"/>
-  <knowledge-reviewer ref="knowledgeReviewer" :doc="doc"/>
+  <el-backtop :bottom="32" :right="28" />
+  <!-- 隐藏面板按需挂载: 首次打开时才下载与渲染对应chunk -->
+  <mind-graph v-if="panels.mindGraph" ref="mindGraph" @close="showAside = true;isDrawerShow = false" />
+  <link-list v-if="panels.linkList" :html="contentHtml" ref="linkList"/>
+  <knowledge-reviewer v-if="panels.knowledgeReviewer" ref="knowledgeReviewer" :doc="doc"/>
   <mermaid-shower ref="mermaidShower"/>
-  <keep-alive>
-    <knowledge-network ref="knowledgeNetwork" :doc="doc" @close="showAside = true;isDrawerShow = false"/>
-  </keep-alive>
-  <keep-alive>
-    <knowledge-index ref="knowledgeIndex" :doc="doc" @close="showAside = true;isDrawerShow = false" @navigate="handleNavigate"/>
-  </keep-alive>
-  <keep-alive>
-    <LLM :doc="doc" ref="llm" @close="showAside = true;isDrawerShow = false"/>
-  </keep-alive>
+  <knowledge-network v-if="panels.knowledgeNetwork" ref="knowledgeNetwork" :doc="doc" @close="showAside = true;isDrawerShow = false"/>
+  <knowledge-index v-if="panels.knowledgeIndex" ref="knowledgeIndex" :doc="doc" @close="showAside = true;isDrawerShow = false" @navigate="handleNavigate"/>
+  <LLM v-if="panels.llm" :doc="doc" ref="llm" @close="showAside = true;isDrawerShow = false"/>
   <image-viewer ref="imageViewer" />
   <instant-previewer ref="instantPreviewer"/>
   <resource-brower ref="resourceBrower" />
@@ -72,20 +75,11 @@
 
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
+import { defineComponent, defineAsyncComponent, reactive, ref } from "vue";
 import Content from "@/dto/Content";
 import docService from "@/service/DocService";
-import ContentsList from "./contents/ContentsList.vue";
 import HistoryList from "./commit/HistoryList.vue";
-import MindGraph from './mind/MindGraph.vue'
-import MindNote from './mind/MindNote.vue'
-import LinkList from './LinkList.vue';
 import ToolBox from './ToolBox.vue';
-import KnowledgeNetwork from "./knowledge/KnowledgeNetwork.vue";
-import KnowledgeNetworkContent from "./knowledge/KnowledgeNetworkContent.vue";
-import KnowledgeNetworkChart from "./knowledge/KnowledgeNetworkChart.vue";
-import KnowledgeIndex from "./knowledge/KnowledgeIndex.vue";
-import RightBottomPanel from "./knowledge/RightBottomPanel.vue";
 import LinkPopover from "./LinkPopover.vue";
 import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
@@ -98,38 +92,41 @@ import CategoryService from "@/service/CategoryService";
 import DocSideCategory from './aside/DocSideCategory.vue';
 import DocBreadcrumbNav from "./nav/DocBreadcrumbNav.vue";
 import DocTabNav from "./nav/DocTabNav.vue";
+import DocPrevNext from "./nav/DocPrevNext.vue";
 import DocPageEventMnager from './DocPageEventManager';
 import ResourceBrower from "./ResourceBrower.vue";
 import ImageViewer from "@/components/ImageViewer.vue";
-import KnowledgeReviewer from "./knowledge/KnowledgeReviewer.vue";
 import DocMetadataInfo from './metadata/DocMetadataInfo.vue'
 import InstantPreviewer from './tool/InstantPreviewer.vue'
 import { SysUtils } from "@/util/SysUtils";
+import ConfigService from "@/service/ConfigService";
 import config from '@/config';
 import api from "@/api";
 import MermaidShower from './mermaid-shower/MermaidShower.vue';
-import LLM from './knowledge/LLM.vue';
 import DocContentsAndPanel from './contents/DocContentsAndPanel.vue';
-import {Folder, FolderOpened, Management } from '@element-plus/icons-vue';
+
+// 重量级隐藏面板(echarts/jsmind/LLM)按需异步加载: 首次打开时才挂载与下载对应chunk
+const MindGraph = defineAsyncComponent(() => import('./mind/MindGraph.vue'))
+const LinkList = defineAsyncComponent(() => import('./LinkList.vue'))
+const KnowledgeNetwork = defineAsyncComponent(() => import('./knowledge/KnowledgeNetwork.vue'))
+const KnowledgeIndex = defineAsyncComponent(() => import('./knowledge/KnowledgeIndex.vue'))
+const KnowledgeReviewer = defineAsyncComponent(() => import('./knowledge/KnowledgeReviewer.vue'))
+const LLM = defineAsyncComponent(() => import('./knowledge/LLM.vue'))
 
 export default defineComponent({
   inject: ['showHeader'],
   components: {
-    ContentsList,
     HistoryList,
     MindGraph,
-    MindNote,
     ToolBox,
     LinkPopover,
     DocSideCategory,
     LinkList,
     KnowledgeNetwork,
-    KnowledgeNetworkContent,
-    KnowledgeNetworkChart,
     KnowledgeIndex,
-    RightBottomPanel,
     DocBreadcrumbNav,
     DocTabNav,
+    DocPrevNext,
     ResourceBrower,
     ImageViewer,
     KnowledgeReviewer,
@@ -138,9 +135,6 @@ export default defineComponent({
     MermaidShower,
     LLM,
     DocContentsAndPanel,
-    Folder,
-    FolderOpened,
-    Management
 },
   watch: {
     showHeader: {
@@ -151,37 +145,45 @@ export default defineComponent({
     }
   },
   setup(){
-    const mindGraph = ref<InstanceType<typeof MindGraph>>()
-    const knowledgeNetwork = ref<InstanceType<typeof KnowledgeNetwork>>()
-    const knowledgeIndex = ref<InstanceType<typeof KnowledgeIndex>>()
-    const linkList = ref<InstanceType<typeof LinkList>>()
-    const knowledgeReviewer = ref<InstanceType<typeof KnowledgeReviewer>>()
-    const llm = ref<InstanceType<typeof LLM>>()
-    const showMindGraph = () => {
-      mindGraph.value?.show()
+    // 面板挂载开关: 首次打开时才渲染(联动defineAsyncComponent实现chunk按需下载)
+    const panels = reactive({
+      mindGraph: false,
+      knowledgeNetwork: false,
+      knowledgeIndex: false,
+      linkList: false,
+      knowledgeReviewer: false,
+      llm: false,
+    })
+    const mindGraph = ref<any>()
+    const knowledgeNetwork = ref<any>()
+    const knowledgeIndex = ref<any>()
+    const linkList = ref<any>()
+    const knowledgeReviewer = ref<any>()
+    const llm = ref<any>()
+    const refMap: Record<keyof typeof panels, typeof mindGraph> = {
+      mindGraph, knowledgeNetwork, knowledgeIndex, linkList, knowledgeReviewer, llm,
     }
-    const showKnowledgeNetwork = () => {
-      knowledgeNetwork.value?.show()
-    }
-    const showKnowledgeIndex = () => {
-      knowledgeIndex.value?.show()
-    }
-    const showLinkList = () => {
-      linkList.value?.show()
-    }
-    const showKnowledgeReviewer = () => {
-      knowledgeReviewer.value?.show();
-    }
-    const showLLM = () => {
-      llm.value?.show();
+    const openPanel = async (name: keyof typeof panels) => {
+      const firstOpen = !panels[name]
+      panels[name] = true
+      // 异步组件首次挂载需等chunk下载完成 ref就绪后才能调用show(最多等5秒)
+      for (let i = 0; i < 100 && !refMap[name].value; i++) {
+        await new Promise(resolve => setTimeout(resolve, 50))
+      }
+      refMap[name].value?.show()
+      // 知识网络首次挂载后需要初始化当前文档的数据
+      if (name == 'knowledgeNetwork' && firstOpen) {
+        refMap[name].value?.init?.()
+      }
     }
     return {
-      mindGraph, showMindGraph,
-      knowledgeNetwork, showKnowledgeNetwork,
-      knowledgeIndex, showKnowledgeIndex,
-      linkList, showLinkList,
-      knowledgeReviewer, showKnowledgeReviewer,
-      llm, showLLM
+      panels,
+      mindGraph, showMindGraph: () => openPanel('mindGraph'),
+      knowledgeNetwork, showKnowledgeNetwork: () => openPanel('knowledgeNetwork'),
+      knowledgeIndex, showKnowledgeIndex: () => openPanel('knowledgeIndex'),
+      linkList, showLinkList: () => openPanel('linkList'),
+      knowledgeReviewer, showKnowledgeReviewer: () => openPanel('knowledgeReviewer'),
+      llm, showLLM: () => openPanel('llm'),
     }
   },
   data() {
@@ -191,6 +193,7 @@ export default defineComponent({
       doc: "" as string,
       kw: "" as string,
       loading: true as boolean,
+      loadError: false as boolean,
       showAside: true as boolean,
       isDrawerShow: false as boolean,
       parentShowHeader: true as boolean,
@@ -244,6 +247,10 @@ export default defineComponent({
       for(let elm of elmList) {
         if (elm.id.replace(/<mark>/gi, '').replace(/<\/mark>/gi, '') == id) {
           window.scrollTo(0, elm.offsetTop - 80)
+          // 用 replaceState 将 headingId 同步进当前URL(保留其他query) 让刷新/分享能回到当前小节 不触发router导航
+          const url = new URL(window.location.href);
+          url.searchParams.set('headingId', id);
+          window.history.replaceState(window.history.state, '', url.toString());
           break
         }
       }
@@ -258,44 +265,63 @@ export default defineComponent({
       window.open(`vscode://file/${config.localUrl}/${docService.docId2Url(this.doc)}/`, '_blank')
     },
     async showDoc(doc: string, headingId?: string, kw?: string) {
-      // 将滚动条设置为上一次的状态
-      window.scrollTo(0, docService.getDocReadRecord(doc))
+      // 将滚动条设置为上一次的状态(瞬时跳转 避免全局smooth造成长距离滚动动画)
+      window.scrollTo({top: docService.getDocReadRecord(doc), behavior: 'instant' as ScrollBehavior})
       this.loading = true;
+      this.loadError = false;
       this.doc = doc;
       this.kw = kw || "";
       try {
         this.file = await DocService.getDocFileInfo(doc);
+        SysUtils.setDocTitle(this.file.name)
+        this.generateTOC();
+        this.$nextTick(() => this.postRender(headingId, kw));
       } catch (err: any) {
+        // 加载失败(文档不存在/网络异常/响应非JSON)切换到错误态
+        this.loadError = true;
         ElMessage.error(err.message)
+      } finally {
+        this.loading = false;
       }
-      SysUtils.setDocTitle(this.file.name)
-      this.generateTOC();
-      this.$nextTick(() => {
-        const docEl = this.$refs.markdownSection as HTMLElement;
-        if (!kw) {
-          this.eventManager!.renderMermaid();
+    },
+    // 内容上屏后的渲染后处理: el-skeleton的throttle会延迟内容挂载 ref未就绪时短暂重试
+    postRender(headingId?: string, kw?: string, attempt: number = 0) {
+      const docEl = this.$refs.markdownSection as HTMLElement | undefined;
+      if (!docEl) {
+        if (attempt < 20) {
+          setTimeout(() => this.postRender(headingId, kw, attempt + 1), 50);
         }
-        // 同步滚动markdown-section到headingId区域
-        this.eventManager!.syncHeading(headingId);
-        // 同步滚动左侧目录 让当前激活目录位于可视区域
-        this.syncCategoryListScrollBar();
-        // 更新知识网络
-        (this.$refs.knowledgeNetwork as InstanceType<typeof KnowledgeNetwork>).init();
-        // 渲染数学公式
-        this.eventManager!.renderLatex(docEl);
-        // 代码块高亮
-        this.eventManager!.renderCodeHighlight(docEl);
-        this.registerNecessaryEvent(docEl)
-      });
-      this.loading = false;
+        return;
+      }
+      // 恢复阅读字号偏好
+      const fontSize = ConfigService.get('fontSize')
+      if (fontSize) {
+        docEl.style.fontSize = fontSize + 'px'
+      }
+      if (!kw) {
+        this.eventManager!.renderMermaid();
+      }
+      // 同步滚动markdown-section到headingId区域
+      this.eventManager!.syncHeading(headingId);
+      // 同步滚动左侧目录 让当前激活目录位于可视区域
+      this.syncCategoryListScrollBar();
+      // 更新知识网络(面板按需挂载 未打开过时跳过)
+      (this.$refs.knowledgeNetwork as any)?.init?.();
+      // 渲染数学公式
+      this.eventManager!.renderLatex(docEl);
+      // 代码块高亮
+      this.eventManager!.renderCodeHighlight(docEl);
+      this.registerNecessaryEvent(docEl)
+      // 正文就绪后再拉取非关键的质量数据(dev端生成昂贵 不能抢占文档请求)
+      setTimeout(() => DocService.ensureQualityLoaded(), 3000)
     },
     registerNecessaryEvent(docEl: HTMLElement) {
       // 注册一些针对markdown-section的必要的事件
       this.eventManager!.registerLinkRouter(docEl);
       this.eventManager!.registerImageClick(docEl);
       this.eventManager!.registerHeadingClick(docEl);
+      this.eventManager!.registerCodeCopy(docEl);
       this.eventManager!.registerDocTagSupClick(docEl);
-      this.eventManager!.registerTextSelected(docEl);
       this.eventManager!.registerMermaidFullScreenClick(docEl);
     },
     generateTOC() {
@@ -358,15 +384,6 @@ export default defineComponent({
           this.$router.push("/doc/" + DocUtils.docUrl2Id(randomCategory.link));
         }
     },
-    handleResize() {
-      // 当窗口大小改变时，根据宽度决定是否显示ContentsList
-      // 现在由 DocContentsAndPanel 组件管理，但保持父组件状态同步
-      if (window.innerWidth <= 1180) {
-        this.showContentsList = false; // 小屏幕默认隐藏
-      } else {
-        this.showContentsList = true; // 大屏幕默认显示
-      }
-    }
   },
   beforeRouteUpdate(to, from) {
     const doc = DocUtils.routeDocId(to);
@@ -381,43 +398,52 @@ export default defineComponent({
     this.eventManager!.registerScrollListener();
     this.eventManager!.listenEventBus();
     this.showDoc(DocUtils.routeDocId(this.$route), this.$route.query.headingId?.toString(), this.$route.query.kw?.toString());
-    
-    // 监听窗口大小变化
-    window.addEventListener('resize', this.handleResize);
   },
   unmounted(){
     // 一些清理操作
     this.eventManager!.cancelPendingRender();
     this.eventManager!.removeAllScrollListener();
-    
-    // 移除窗口大小监听器
-    window.removeEventListener('resize', this.handleResize);
   }
 });
 </script>
 
 <style lang="less" scoped>
-.el-container {
+// 三栏布局: 侧栏(280) + 正文(自适应 内部限宽居中) + TOC列(300/0)
+// 各栏为真实文档流元素 不再依赖fixed定位与魔法数字拼接
+.doc-layout {
   display: flex;
-  justify-content: space-between;
+  align-items: stretch;
 }
+
 .main {
+  flex: 1;
+  min-width: 0;
   background-color: var(--card-bg-color);
-  padding-left: 4em;
-  padding-bottom: 40px;
+  padding: 0 var(--spacing-xl) 40px;
   min-height: 100vh;
 }
+
+// 仅loading态生效(el-skeleton类只在加载中存在 避免class透传影响内容根节点)
+.el-skeleton.doc-skeleton {
+  max-width: 820px;
+  margin: 76px auto 0;
+}
+
+.doc-error {
+  margin-top: 10vh;
+}
+
+.main-content {
+  max-width: 860px;
+  margin: 0 auto;
+  padding-top: var(--spacing-md);
+}
+
 .footer-wrapper {
   display: flex;
   justify-content: space-between;
 }
-.center {
-  transition: var(--transition-smooth);
-  padding-left: 1rem;
-}
-.main-content {
-  padding-top: 56px;
-}
+
 .markdown-section {
   :deep(mark) {
     color: white;
@@ -426,43 +452,12 @@ export default defineComponent({
     padding: 0 2px;
   }
 }
-@media screen and (max-width: 1366px) {
-  .center {
-    padding-left: 0rem;
-  }
-}
-@media screen and (max-width: 1370px) {
-  .markdown-section {
-    width: 60%!important;
-    margin-right: 40px;
-  }
-}
-@media screen and (max-width: 1180px) {
-  .center {
-    padding-left: 0rem;
-  }
-  .markdown-section {
-    width: calc(100% - 40px)!important;
-    margin-right: 40px;
-  }
-}
 
 .el-backtop {
   transition: all .1s;
 }
 
-body[theme=dark] {
-  background-color:var(--main-dark-bg-color);
-  color: var(--main-dark-text-color);
-  .main {
-    background-color:var(--main-dark-bg-color);
-    color: var(--main-dark-text-color);
-  }
-  .el-backtop {
-    background-color: var(--second-dark-bg-color);
-  }
-  .el-backtop:hover {
-    background-color: #666;
-  }
+.el-backtop:hover {
+  background-color: var(--hover-bg-color);
 }
 </style>

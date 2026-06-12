@@ -1,4 +1,4 @@
-export type EventType = 'enter-zen-mode'
+export type EventType = 'enter-zen-mode' | 'show-mobile-search'
 class EventBus {
   private static instance: EventBus
   private events: Map<EventType, Function[]>

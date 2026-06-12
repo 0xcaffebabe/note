@@ -76,21 +76,47 @@ function initWithNormal() {
   }
 }
 
+function renderNode(mermaid: Mermaid, v: Element) {
+  const raw = v.textContent!
+  mermaid.render(v.id + '-svg', raw)
+    .then(data => {
+      v.innerHTML = data.svg
+      v.classList.add('mermaid-rendered')
+    })
+    .catch(err => {
+      // 语法错误兜底: 渲染失败时回退展示原始代码并给出提示 不残留mermaid错误SVG
+      document.getElementById('d' + v.id + '-svg')?.remove()
+      v.classList.add('mermaid-render-error')
+      const msg = document.createElement('div')
+      msg.className = 'mermaid-error-msg'
+      msg.textContent = 'Mermaid 图表渲染失败: ' + ((err as Error)?.message || String(err))
+      const pre = document.createElement('pre')
+      pre.textContent = raw
+      v.replaceChildren(msg, pre)
+    })
+}
+
 async function initAllNode() {
-  const nodeList = document.querySelectorAll('[id^=mermaid-]')
+  const nodeList = document.querySelectorAll('[id^=mermaid-]:not(.mermaid-rendered):not(.mermaid-render-error)')
   if (nodeList.length === 0) {
     return
   }
   const mermaid = await load()
   applyCurrentTheme(mermaid)
-  nodeList.forEach(
-    v => {
-      mermaid.render(v.id + '-svg', v.textContent!)
-        .then(data => {
-          v.innerHTML = data.svg
-        })
+  // 仅渲染进入视口的图表 多图长文不再一次性渲染
+  if (typeof IntersectionObserver === 'undefined') {
+    nodeList.forEach(v => renderNode(mermaid, v))
+    return
+  }
+  const io = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        io.unobserve(entry.target)
+        renderNode(mermaid, entry.target)
       }
-    )
+    }
+  }, {rootMargin: '300px'})
+  nodeList.forEach(v => io.observe(v))
 }
 
 export default {

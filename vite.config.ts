@@ -59,7 +59,8 @@ export default defineConfig({
     stripVirtualConfigDeps,
     ...plugins,
     VitePWA({
-      registerType: 'autoUpdate', 
+      // prompt模式: 配合main.ts的onNeedRefresh提示用户刷新 避免静默接管导致页面无预警重载
+      registerType: 'prompt',
       includeAssets: ['favicon.ico'],
       workbox: {
         // 只预缓存应用入口，避免首次访问就在后台下载全站约10MB资源
@@ -106,6 +107,8 @@ export default defineConfig({
         name: '知识体系',
         short_name: 'PKS',
         description: '知识体系',
+        display: 'standalone',
+        background_color: '#F1F5F9',
         theme_color: '#ffffff',
         icons: [
           {
@@ -143,10 +146,12 @@ export default defineConfig({
     },
     {
       ...VitePluginPrismjs({
+        // 笔记高频语言补全: bash/yaml/docker/nginx/http/properties
+        // markup已含html/xml/svg; line-numbers插件只对highlightElement生效 运行时走字符串API 引入无效 故移除
         "languages": ["javascript", "css", "markup", "java", "sql",
           'c', 'go', 'python', 'ts', 'ruby', 'io', 'scala', 'groovy',
-          'kotlin', 'ini', 'json', 'graphql', 'haskell', 'clojure', 'rust'],
-        "plugins": ["line-numbers"]
+          'kotlin', 'ini', 'json', 'graphql', 'haskell', 'clojure', 'rust',
+          'bash', 'yaml', 'docker', 'nginx', 'http', 'properties'],
       }),
     },
     AutoImport({

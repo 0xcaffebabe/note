@@ -101,6 +101,28 @@ async function main() {
     console.log('[8] 无service worker(dev) SKIP')
   }
 
+  // 9. 无后缀文档路径 应自动补回.html并渲染文档(CDN对.html做308去后缀的场景)
+  await page.goto(base + encodeURI('/运维/Docker'), { waitUntil: 'domcontentloaded' })
+  await waitFor("location.pathname.endsWith('.html')")
+  const url9 = decodeURI(page.url())
+  console.log('[9] 无后缀路径 /运维/Docker')
+  console.log('    url =', url9, url9.endsWith('/运维/Docker.html') ? 'PASS' : 'FAIL')
+
+  // 10. Latin-1双重编码乱码路径自愈: CDN 308的Location头未按RFC-3986编码中文路径
+  //     浏览器将原始UTF-8字节按Latin-1误读后重编码 形如/%C3%A8%C2%BF...且丢失.html
+  const mojibakePath = encodeURI(Buffer.from('/运维/Docker', 'utf8').toString('latin1'))
+  await page.goto(base + mojibakePath, { waitUntil: 'domcontentloaded' })
+  await waitFor("decodeURI(location.pathname).endsWith('/Docker.html')")
+  const url10 = decodeURI(page.url())
+  console.log('[10] 乱码路径 ' + mojibakePath)
+  console.log('    url =', url10, url10.endsWith('/运维/Docker.html') ? 'PASS' : 'FAIL')
+
+  // 11. 真正不存在的路径 自愈不应误伤 仍展示404页
+  await page.goto(base + '/this-doc-does-not-exist', { waitUntil: 'domcontentloaded' })
+  await waitFor("document.querySelector('.not-found')")
+  const has404 = await page.evaluate(() => !!document.querySelector('.not-found'))
+  console.log('[11] 不存在路径 /this-doc-does-not-exist 展示404 =', has404, has404 ? 'PASS' : 'FAIL')
+
   await browser.close()
 }
 

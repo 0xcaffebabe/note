@@ -6,31 +6,41 @@
     ref="tabContainer" 
     :style="{top: parentShowHeader? 60 + 'px': 0, position: fixed? 'sticky': 'static'}"
   >
-    <el-button
-      class="nav-tab-item"
-      size="default"
-      v-for="cate in cateList"
-      :key="cate"
-      :url="cate"
-      @contextmenu="handleContextMenuEvent(cate, $event)"
-      :class="{
-        'active': docUrl2Id(currentCate.link) == docUrl2Id(cate)
-      }"
-      @click="$router.push('/doc/' + docUrl2Id(cate))"
-      @dblclick="$emit('dbclick')"
-    >
-      <div class="tab-content">
-        <span class="tab-name">{{ cateName(cate) }}</span>
-        <span class="tab-category">{{findRootCategoryFirstLetter(cate)}}</span>
-        <el-icon 
-          v-if="cateList.length > 1" 
-          class="close-btn" 
-          @click.prevent.stop="close(cate)"
+    <!-- 标签与关闭键为两个平级真按钮(button不可嵌套button) 关闭键因此键盘可达 -->
+    <transition-group tag="div" name="tab" class="tab-list">
+      <div
+        class="nav-tab-item"
+        v-for="cate in cateList"
+        :key="cate"
+        :url="cate"
+        :class="{
+          'active': docUrl2Id(currentCate.link) == docUrl2Id(cate)
+        }"
+        @contextmenu="handleContextMenuEvent(cate, $event)"
+        @dblclick="$emit('dbclick')"
+      >
+        <button
+          type="button"
+          class="tab-main"
+          :title="cateName(cate)"
+          :aria-current="docUrl2Id(currentCate.link) == docUrl2Id(cate) ? 'page' : undefined"
+          @click="$router.push('/doc/' + docUrl2Id(cate))"
         >
-          <close-bold />
-        </el-icon>
+          <span class="tab-category" aria-hidden="true">{{findRootCategoryFirstLetter(cate)}}</span>
+          <span class="tab-name">{{ cateName(cate) }}</span>
+        </button>
+        <button
+          type="button"
+          v-if="cateList.length > 1"
+          class="close-btn"
+          :aria-label="'关闭 ' + cateName(cate)"
+          @click.prevent.stop="close(cate)"
+          @dblclick.stop
+        >
+          <el-icon><close-bold /></el-icon>
+        </button>
       </div>
-    </el-button>
+    </transition-group>
   </el-scrollbar>
   <tab-nav-context-menu ref="contextMenu" @toggle-fixed="fixed = !fixed" :fixed="fixed"/>
 </template>
@@ -73,11 +83,12 @@ export default defineComponent({
         if (!activeTab) {
           return
         }
-        activeTab.scrollIntoView()
+        // nearest: 只做必要的横向滚动 避免裸scrollIntoView把整页垂直滚到标签栏
+        activeTab.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
       })
-      
+
     }
-    
+
   },
   mounted() {
     const dom  = document.querySelector('.tab-container-wrapper') as HTMLElement
@@ -140,40 +151,24 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .tab-container {
-  transition: all 0.3s ease;
+  transition: top var(--transition-normal);
   height: 40px;
   white-space: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
   z-index: var(--z-float);
   padding: 4px 0;
   // sticky吸附时正文从下方滚过 需要不透明背景
   background-color: var(--card-bg-color);
+  border-bottom: 1px solid var(--divider-color);
 
   :deep(.el-scrollbar__bar.is-vertical) {
     display: none;
   }
-  
+
   :deep(.el-scrollbar__wrap) {
     display: flex;
     align-items: center;
-  }
-  
-  &::-webkit-scrollbar {
-    height: 4px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: rgba(0,0,0,0.1);
-    border-radius: 2px;
-  }
-  
-  &::-webkit-scrollbar-thumb:hover {
-    background: rgba(0,0,0,0.2);
+    // 两端渐隐: 提示横向还有更多标签(滚动条仅hover才现身)
+    mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
   }
 }
 
@@ -183,49 +178,47 @@ export default defineComponent({
   }
 }
 
+.tab-list {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 var(--spacing-sm);
+}
+
+// 胶囊式标签: 未激活透明 悬浮浅底 激活主色淡底 不再依赖同色底边hack
 .nav-tab-item {
   display: inline-flex;
   align-items: center;
-  height: 32px;
+  height: 30px;
   min-width: 120px;
   max-width: 200px;
-  margin: 0 4px;
-  padding: 0 12px;
-  background-color: var(--hover-bg-color);
+  padding: 0 4px 0 6px;
+  border-radius: var(--radius-md);
+  background-color: transparent;
   color: var(--secondary-text-color);
-  border-color: var(--border-color);
-  font-size: 13px;
-  transition: all 0.2s ease;
+  font-size: var(--font-size-sm);
+  transition: background-color var(--transition-fast), color var(--transition-fast);
   cursor: pointer;
   position: relative;
   flex-shrink: 0;
-  
-  &:first-child {
-    margin-left: 8px;
-  }
-  
-  &:last-child {
-    margin-right: 8px;
-  }
-  
+
   &:hover {
     color: var(--main-text-color);
-    background-color: var(--card-bg-color);
-    border-color: var(--border-color);
-    
-    .close-btn {
-      opacity: 1;
-      visibility: visible;
-    }
+    background-color: var(--hover-bg-color);
   }
-  
+
+  // 悬浮或键盘焦点进入时显现关闭键
+  &:hover .close-btn,
+  &:focus-within .close-btn {
+    opacity: 1;
+    visibility: visible;
+  }
+
   &.active {
     color: var(--primary-color);
-    background-color: var(--card-bg-color);
-    border-color: var(--border-color);
-    border-bottom: 1px solid var(--card-bg-color) !important;
+    background-color: var(--primary-light-color);
     font-weight: 500;
-    
+
     .tab-category {
       background-color: var(--primary-color);
       color: white;
@@ -233,11 +226,22 @@ export default defineComponent({
   }
 }
 
-.tab-content {
-  display: flex;
+// 标签主体与关闭键是两个平级按钮 重置原生外观 由外层胶囊承担视觉
+.tab-main {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
   align-items: center;
-  width: 100%;
-  overflow: hidden;
+  gap: 6px;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
 }
 
 .tab-name {
@@ -245,9 +249,9 @@ export default defineComponent({
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin-right: 6px;
 }
 
+// 根分类首字徽章 前置作"favicon"
 .tab-category {
   display: inline-flex;
   align-items: center;
@@ -257,27 +261,53 @@ export default defineComponent({
   border-radius: 50%;
   background-color: var(--primary-light-color);
   color: var(--primary-color);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   flex-shrink: 0;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
 .close-btn {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
   border-radius: 50%;
-  margin-left: 6px;
+  margin-left: 2px;
+  font-size: var(--font-size-xs);
   opacity: 0;
   visibility: hidden;
-  transition: all 0.2s ease;
-  color: var(--secondary-text-color);
-  
+  transition: opacity var(--transition-fast), background-color var(--transition-fast);
+  color: inherit;
+  cursor: pointer;
+
   &:hover {
-    background-color: var(--hover-bg-color);
-    color: var(--main-text-color);
+    background-color: color-mix(in srgb, var(--main-text-color) 12%, transparent);
   }
+}
+
+// 标签开/关动画: 新标签淡入上浮 关闭后兄弟标签平滑补位(FLIP move)
+.tab-enter-from {
+  opacity: 0;
+  transform: translateY(4px) scale(0.96);
+}
+
+.tab-leave-to {
+  opacity: 0;
+  transform: scale(0.92);
+}
+
+.tab-enter-active,
+.tab-leave-active {
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.tab-move {
+  transition: transform var(--transition-normal);
 }
 </style>

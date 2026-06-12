@@ -204,7 +204,7 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .tool-box {
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   position: fixed;
   // TOC列宽300 + 20留白
   right: 320px;
@@ -225,7 +225,7 @@ export default defineComponent({
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-md);
   background-color: var(--card-bg-color);
-  transition: all 0.25s ease;
+  transition: all var(--transition-normal);
   
   &:hover {
     box-shadow: var(--shadow-lg);

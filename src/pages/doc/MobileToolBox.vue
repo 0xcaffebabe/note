@@ -131,7 +131,7 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .tool-box {
-  transition: all 0.2s;
+  transition: var(--transition-smooth);
   position: fixed;
   // 避让底部操作栏 并适配安全区
   bottom: calc(72px + env(safe-area-inset-bottom));

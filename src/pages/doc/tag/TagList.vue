@@ -106,6 +106,6 @@ export default defineComponent({
 </style>
 <style lang="less">
 .tag-popover {
-  z-index: 10000!important;
+  z-index: var(--z-popup) !important;
 }
 </style>

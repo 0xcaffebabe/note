@@ -340,15 +340,15 @@ export default defineComponent({
   .knowledge-gap-index-container {
     padding: 8px;
     margin-bottom: 8px;
-    background-color: #f8f9fa;
-    border-radius: 6px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    background-color: var(--main-bg-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
 
     .gap-index-card {
       display: flex;
       flex-direction: column;
-      background: white;
-      border-radius: 6px;
+      background: var(--card-bg-color);
+      border-radius: var(--radius-md);
       padding: 10px;
 
       .index-header {
@@ -359,7 +359,7 @@ export default defineComponent({
 
         h3 {
           margin: 0;
-          color: #333;
+          color: var(--main-text-color);
           font-size: 1.1em;
         }
       }
@@ -378,19 +378,19 @@ export default defineComponent({
           transition: all 0.3s ease;
 
           &.low-gap {
-            color: #67C23A; // 绿色 - 低断层
+            color: var(--success-color); // 绿色 - 低断层
           }
 
           &.medium-gap {
-            color: #E6A23C; // 黄色 - 中等断层
+            color: var(--warning-color); // 黄色 - 中等断层
           }
 
           &.high-gap {
-            color: #E74C3C; // 橙红色 - 高断层
+            color: #E74C3C; // 橙红色 - 高断层(warning与danger之间的阶梯色 无对应令牌)
           }
 
           &.critical-gap {
-            color: #F56C6C; // 红色 - 严重断层
+            color: var(--danger-color); // 红色 - 严重断层
             animation: pulse 1.5s infinite;
           }
         }
@@ -403,17 +403,17 @@ export default defineComponent({
 
           span {
             font-size: 1em;
-            color: #555;
+            color: var(--secondary-text-color);
           }
         }
       }
 
       .gap-index-interpretation {
         font-size: 0.75em;
-        color: #444;
+        color: var(--secondary-text-color);
         font-style: italic;
         padding: 4px 6px;
-        background-color: #f0f5ff;
+        background-color: var(--primary-light-color);
         border-left: 2px solid var(--primary-color);
         text-align: left;
         margin-top: 4px;

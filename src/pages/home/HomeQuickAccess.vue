@@ -223,7 +223,7 @@ export default defineComponent({
   color: var(--secondary-text-color);
   font-size: var(--font-size-xs);
   background-color: var(--hover-bg-color);
-  border-radius: 10px;
+  border-radius: 999px; // 胶囊形
   padding: 1px 8px;
 }
 

@@ -186,16 +186,16 @@ export default defineComponent({
   overflow-y:scroll;
   a {
     text-decoration: none;
-    color: #74818d;
+    color: var(--secondary-text-color);
     font-weight: 400;
-    font-size: 14px;
+    font-size: var(--font-size-base);
   }
   a:hover {
-    color: #3E90E8 !important;
+    color: var(--primary-color) !important;
   }
   :deep(.el-timeline-item:hover .el-timeline-item__node) {
-    background-color: #3E90E8 !important;
-    border-color: #3E90E8 !important;
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
   }
   .timestamp {
     margin: 0;

@@ -111,7 +111,8 @@ export default defineComponent({
   position: absolute;
   top: 20px;
   right: 20px;
-  z-index: 9999;
+  // 仅需浮在面板内的图表画布之上
+  z-index: var(--z-float);
   
   & > div {
     margin-bottom: 10px;
@@ -122,6 +123,6 @@ export default defineComponent({
   position: absolute;
   top: -2px;
   right: -2px;
-  z-index: 9999;
+  z-index: var(--z-float);
 }
 </style>

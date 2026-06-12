@@ -137,6 +137,17 @@ const routes: RouteRecordRaw[] = [
 export default function () {
   return createRouter({
     history: createWebHistory(),
-    routes
+    routes,
+    // 文档页有自己的滚动恢复(阅读进度/headingId定位在异步渲染后执行) 路由层只兜底通用情形:
+    // 后退/前进还原浏览器记忆位置 换页回顶 同路径仅query/hash变化(目录锚点跳转)不干预
+    scrollBehavior(to, from, savedPosition) {
+      if (savedPosition) {
+        return savedPosition
+      }
+      if (to.path == from.path) {
+        return
+      }
+      return { top: 0, behavior: 'instant' as ScrollBehavior }
+    }
   })
 }

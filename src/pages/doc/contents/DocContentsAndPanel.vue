@@ -149,7 +149,7 @@ export default defineComponent({
 .right-bottom-panel-container {
   flex: 0 0 auto; /* 固定高度，不伸缩 */
   height: 250px; /* 固定高度 */
-  z-index: 999;
+  z-index: var(--z-float);
   overflow: hidden; /* 防止内容溢出 */
 
   :deep(.right-bottom-panel) {

@@ -315,12 +315,12 @@ export default defineComponent({
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(0,0,0,0.1);
+    background: var(--scrollbar-thumb-color);
     border-radius: 2px;
   }
 
   &::-webkit-scrollbar-thumb:hover {
-    background: rgba(0,0,0,0.2);
+    background: var(--scrollbar-thumb-hover-color);
   }
 
   &:hover {

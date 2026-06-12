@@ -95,6 +95,7 @@ export default defineComponent({
   position:absolute;
   top: -2px;
   right: -2px;
-  z-index: 9999;
+  // 仅需浮在面板内的画布之上
+  z-index: var(--z-float);
 }
 </style>

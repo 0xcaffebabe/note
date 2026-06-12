@@ -447,14 +447,14 @@ export default defineComponent({
 .markdown-section {
   :deep(mark) {
     color: white;
-    background-color: #E6A23C;
-    border-radius: 3px;
+    background-color: var(--warning-color);
+    border-radius: var(--radius-sm);
     padding: 0 2px;
   }
 }
 
 .el-backtop {
-  transition: all .1s;
+  transition: var(--transition-smooth);
 }
 
 .el-backtop:hover {

@@ -160,7 +160,7 @@ export default defineComponent({
   position: absolute;
   top: var(--spacing-sm);
   left: var(--spacing-sm);
-  z-index: 999;
+  z-index: var(--z-float);
   background: var(--card-bg-color);
   padding: var(--spacing-xs);
   border-radius: var(--radius-lg);

@@ -61,10 +61,10 @@ export default defineComponent({
     font-size: 14px;
   }
   a:hover {
-    color: #3E90E8 !important;
+    color: var(--primary-color) !important;
   }
   .all {
-    color: #3E90E8 !important;
+    color: var(--primary-color) !important;
   }
 }
   :deep(.el-timeline-item__timestamp) {

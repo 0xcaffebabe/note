@@ -127,7 +127,6 @@
   margin: 32px 0;
   border: none;
   background-color: var(--divider-color);
-  border-radius: 1px;
 }
 
 /* Blockquotes
@@ -185,10 +184,10 @@
 }
 
 .markdown-section .callout-note { --callout-color: var(--primary-color); }
-.markdown-section .callout-tip { --callout-color: #10b981; }
-.markdown-section .callout-important { --callout-color: #8b5cf6; }
-.markdown-section .callout-warning { --callout-color: #f59e0b; }
-.markdown-section .callout-danger { --callout-color: #ef4444; }
+.markdown-section .callout-tip { --callout-color: var(--success-color); }
+.markdown-section .callout-important { --callout-color: #8b5cf6; } // 紫色为callout专属强调色 无对应语义令牌
+.markdown-section .callout-warning { --callout-color: var(--warning-color); }
+.markdown-section .callout-danger { --callout-color: var(--danger-color); }
 
 /* Table
 -------------------- */
@@ -223,7 +222,7 @@
 }
 
 .markdown-section table th {
-  background-color: #EDF2F7;
+  background-color: var(--table-header-bg);
   font-weight: 600;
   font-size: 0.75rem;
   text-transform: uppercase;
@@ -240,7 +239,8 @@
 }
 
 .markdown-section table tr:hover {
-  background-color: color-mix(in srgb, var(--primary-color) 4%, transparent);
+  background-color: var(--table-row-hover-bg);
+  transition: background-color var(--transition-fast);
 }
 
 /* Code Block
@@ -251,7 +251,7 @@
   margin: 0 2px;
   border-radius: var(--radius-sm);
   background-color: var(--hover-bg-color);
-  color: #d6336c;
+  color: var(--inline-code-color);
   font-family: var(--font-mono);
   font-size: 0.9em;
   border: 1px solid var(--border-color);
@@ -319,8 +319,8 @@
     }
 
     &.copied {
-      color: #10b981;
-      border-color: #10b981;
+      color: var(--success-color);
+      border-color: var(--success-color);
       opacity: 1;
     }
   }
@@ -471,23 +471,17 @@
 .img-wrapper {
   text-align: center;
   margin: var(--spacing-md) 0;
-  
+  cursor: pointer;
+  transition: transform var(--transition-normal), opacity var(--transition-normal);
+
   & > img {
     max-width: 100%;
     height: auto;
   }
 
-  cursor: pointer;                                                                      
-  transition: all 0.3s ease;                                                            
-                                                                                        
-  & > img {                                                                             
-    max-width: 100%;                                                                    
-    height: auto;                                                                       
-  }                                                                                     
-                                                                                        
-  &:hover {                                                                             
-    transform: scale(1.02);                                                             
-    opacity: 0.9;                                                                       
+  &:hover {
+    transform: scale(1.02);
+    opacity: 0.9;
   }
 }
 
@@ -550,7 +544,7 @@ div[id^=mermaid-] {
 }
 
 .mermaid-wrapper .mermaid-error-msg {
-  color: #ef4444;
+  color: var(--danger-color);
   font-size: var(--font-size-sm);
   margin-bottom: var(--spacing-sm);
 }
@@ -587,6 +581,7 @@ div[id^=mermaid-] {
 }
 
 // 暗色专属: 以下规则在暗色下与亮色侧取值/语义不同, 无法用同一语义令牌声明表达, 按原视觉保留
+// (行内代码/表头/行悬浮已迁移为 --inline-code-color/--table-header-bg/--table-row-hover-bg 令牌换值)
 body[theme=dark] {
   .markdown-section {
     // 暗色专属: 亮色侧段落为主文本色, 暗色侧原设计降为次级文本色以降低亮度刺激
@@ -597,23 +592,6 @@ body[theme=dark] {
     // 暗色专属: 暗色下引用块渐变浓度为主色8%(亮色侧为7%), 数值不同无法共用同一声明
     blockquote {
       background: linear-gradient(135deg, color-mix(in srgb, var(--primary-color) 8%, transparent) 0%, transparent 100%);
-    }
-
-    // 暗色专属: 行内代码强调色, 暗色用 #ff6b6b(亮色为 #d6336c), 无对应语义令牌
-    code {
-      color: #ff6b6b;
-    }
-
-    table {
-      // 暗色专属: 表头底色为白色4%叠加(亮色侧为 #EDF2F7), 裸rgba无对应语义令牌
-      th {
-        background-color: rgba(255, 255, 255, 0.04);
-      }
-
-      // 暗色专属: 行悬浮为白色5%叠加(亮色侧为主色4%), 裸rgba无对应语义令牌
-      tr:hover {
-        background-color: rgba(255, 255, 255, 0.05);
-      }
     }
 
     // 暗色专属: 暗色下分隔线原值为边框色#454545以保证可见度, 与暗色 --divider-color(#2d2d30) 不一致

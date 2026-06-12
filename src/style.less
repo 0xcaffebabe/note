@@ -10,6 +10,11 @@
   --primary-color: var(--el-color-primary, #409eff);
   --primary-light-color: var(--el-color-primary-light-9, #ecf5ff);
 
+  // 色彩 —— 状态语义色(成功/警告/危险): callout/复制反馈/错误提示/高亮标记等共用
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+
   // 色彩 —— 表面与文本
   --main-bg-color: #F1F5F9;
   --card-bg-color: #ffffff;
@@ -19,6 +24,11 @@
   --secondary-text-color: #64748b;
   --border-color: #e2e8f0;
   --divider-color: #f1f5f9;
+
+  // 色彩 —— markdown正文专用: 亮/暗取值体系不同(暗色用白色叠加) 用令牌换值替代覆写块
+  --inline-code-color: #d6336c;
+  --table-header-bg: #EDF2F7;
+  --table-row-hover-bg: color-mix(in srgb, var(--primary-color) 4%, transparent);
 
   // 间距系统
   --spacing-xs: 4px;
@@ -55,11 +65,12 @@
   --transition-normal: 0.25s ease;
   --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
-  // 层级体系
+  // 层级体系: popup需压过Element Plus弹层(EP popper从2000起自增)
   --z-aside: 10;
   --z-float: 100;
   --z-header: 200;
   --z-overlay: 1000;
+  --z-popup: 3000;
 
   // 阴影系统
   --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
@@ -95,6 +106,10 @@ html.dark {
   --border-color: #454545;
   --divider-color: #2d2d30;
 
+  --inline-code-color: #ff6b6b;
+  --table-header-bg: rgba(255, 255, 255, 0.04);
+  --table-row-hover-bg: rgba(255, 255, 255, 0.05);
+
   --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.35), 0 2px 4px -2px rgba(0,0,0,0.35);
   --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.45), 0 4px 6px -4px rgba(0,0,0,0.35);
   --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.5), 0 8px 10px -6px rgba(0,0,0,0.4);
@@ -114,12 +129,18 @@ html.dark {
   outline-offset: 2px;
 }
 
+// 选中文本: 主色淡底替代浏览器默认蓝 暗色下同令牌自动适配
+::selection {
+  background-color: color-mix(in srgb, var(--primary-color) 25%, transparent);
+  color: inherit;
+}
+
 // 跳到正文链接: 视觉隐藏 获得焦点时显现
 .skip-link {
   position: fixed;
   top: -100px;
   left: 16px;
-  z-index: 9999;
+  z-index: var(--z-popup);
   padding: 8px 16px;
   background-color: var(--card-bg-color);
   color: var(--primary-color);
@@ -142,6 +163,8 @@ body {
   color: var(--main-text-color);
   background-color: var(--main-bg-color);
   transition: background-color 0.3s ease, color 0.3s ease;
+  // 移动端点按不再闪灰色高亮块 交互反馈由各组件的:active/:hover态承担
+  -webkit-tap-highlight-color: transparent;
 }
 
 #app {

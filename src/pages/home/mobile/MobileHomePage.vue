@@ -9,11 +9,15 @@
 import { defineComponent } from 'vue'
 import Banner from '../Banner.vue'
 import Statistic from '../statistic/Statistic.vue'
+import { SysUtils } from '@/util/SysUtils'
 
 export default defineComponent({
   components: { Banner, Statistic },
   setup() {
-    
+
+  },
+  mounted() {
+    SysUtils.setDocTitle('首页')
   },
 })
 </script>

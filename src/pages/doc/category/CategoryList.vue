@@ -10,10 +10,10 @@
       <el-menu
         :unique-opened="false"
         :default-active="doc"
-        :router="true"
         :background-color="isDark ? 'var(--second-dark-bg-color)' : ''"
         :text-color="isDark ? 'var(--main-dark-text-color)' : ''"
         @open="handleOpen"
+        @select="handleSelect"
       >
         <CategoryTree :menuList="cateList" @contextmenu="handleContextMenu"/>
       </el-menu>
@@ -66,6 +66,11 @@ export default defineComponent({
         this.loaded = true
         this.$emit('firstLoad')
       }
+    },
+    // menu index是文档id 由路由统一重定向到.html规范地址
+    // 不用el-menu的router模式: history路由下相对路径push会按当前.html路径错误解析
+    handleSelect(index: string) {
+      this.$router.push("/doc/" + index);
     },
     handleContextMenu(e: MouseEvent,link: string) {
       (this.$refs.linkPopover as any).show(link, e.clientX, e.clientY)

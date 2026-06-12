@@ -57,6 +57,58 @@ function docId2Url(id: string): string {
   return id.split('-').join('/').replace(/@@/g, '-') + '.md'
 }
 
+/**
+ * 将x-x形式的文档id转为/xx/xx.html形式的页面路径
+ *
+ * @param {string} id
+ * @return {*}  {string}
+ */
+function docId2HtmlPath(id: string): string {
+  if (!id) {
+    return ""
+  }
+  return '/' + docId2Url(id).replace(/\.md$/, '.html')
+}
+
+/**
+ * 将/xx/xx.html形式的页面路径转为x-x形式的文档id
+ * 转义规则与docUrl2Id一致: 路径中的'-'转义为'@@' 层级以'-'连接
+ *
+ * @param {string} url
+ * @return {*}  {string}
+ */
+function htmlUrl2Id(url: string): string {
+  if (!url) {
+    return ""
+  }
+  try {
+    url = decodeURI(url)
+  } catch {
+    // 已解码的路径中含有'%'时decodeURI会抛错 按原样处理
+  }
+  url = url.split('#')[0].split('?')[0]
+  if (url.startsWith('/')) {
+    url = url.substring(1)
+  }
+  return url.replace(/\.html$/i, '').replace(/-/g, '@@').split('/').join('-')
+}
+
+/**
+ * 从路由中解析文档id 兼容旧/doc/:doc参数与新:docPath(.html路径)参数
+ *
+ * @param {{params: Record<string, any>}} route
+ * @return {*}  {string}
+ */
+function routeDocId(route: { params: Record<string, any> }): string {
+  if (route.params.doc) {
+    return route.params.doc.toString()
+  }
+  if (route.params.docPath) {
+    return htmlUrl2Id(route.params.docPath.toString())
+  }
+  return ""
+}
+
 export default {
-  docId2Url, docUrl2Id, resloveDocUrl
+  docId2Url, docUrl2Id, resloveDocUrl, docId2HtmlPath, htmlUrl2Id, routeDocId
 }

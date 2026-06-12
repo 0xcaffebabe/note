@@ -2,7 +2,7 @@
   <el-drawer v-model="showDrawer" size="20%" title="链接列表" modal-penetrable resizable :modal="false">
     <ul>
       <li v-for="item in linkList" :key="item.link" :title="item.link">
-        <el-link type="primary" :disabled="!effecientMap[item.link]" @click.prevent="$router.push(item.link.replace('/#', ''));showDrawer = false">
+        <el-link type="primary" :disabled="!effecientMap[item.link]" @click.prevent="$router.push(item.link);showDrawer = false">
           {{item.text}}
         </el-link>
       </li>
@@ -12,6 +12,7 @@
 
 <script lang="ts">
 import DocService from '@/service/DocService';
+import DocUtils from '@/util/DocUtils';
 import { defineComponent } from 'vue'
 
 export default defineComponent({
@@ -36,10 +37,10 @@ export default defineComponent({
     show() {
       this.showDrawer = true;
       this.linkList = DocService.resolveLinkList(this.html)
-                                .filter(v => v.link.startsWith('/#/doc'));
+                                .filter(v => /\.html(\?|$)/.test(v.link));
       this.linkList.forEach(async v => {
         try {
-          await DocService.getDocFileInfo(v.link.replace('/#/doc/', ''));
+          await DocService.getDocFileInfo(DocUtils.htmlUrl2Id(v.link));
           this.effecientMap[v.link] = true;
         }catch(e: any) {
           this.effecientMap[v.link] = false;

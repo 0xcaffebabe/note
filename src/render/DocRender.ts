@@ -53,7 +53,7 @@ function buildDocLink(id: string, headingId: string): string {
   if (!id) {
     return ""
   }
-  let url = "/#/doc/" + id;
+  let url = DocUtils.docId2HtmlPath(id);
   if (headingId) {
     url += "?headingId=" + headingId
   }

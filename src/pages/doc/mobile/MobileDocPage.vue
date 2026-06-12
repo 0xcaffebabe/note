@@ -25,6 +25,7 @@
 import { defineComponent, ref } from 'vue'
 import DocFileInfo from '@/dto/DocFileInfo'
 import DocService from '@/service/DocService'
+import DocUtils from '@/util/DocUtils'
 import './mobile-markdown-v1.less'
 import '../code-hl-vsc.less'
 import MobileDocSideCategory from './aside/MobileDocSideCategory.vue'
@@ -115,7 +116,7 @@ export default defineComponent({
     }
   },
   beforeRouteUpdate(to, from) {
-    this.doc = to.params.doc.toString()
+    this.doc = DocUtils.routeDocId(to)
     const headingId = to.query.headingId?.toString()
     const kw = this.$route.query.kw?.toString()
     this.init(this.doc, headingId, kw)
@@ -136,7 +137,7 @@ export default defineComponent({
     })
   },
   async created() {
-    this.doc = this.$route.params.doc.toString()
+    this.doc = DocUtils.routeDocId(this.$route)
     const headingId = this.$route.query.headingId?.toString()
     const kw = this.$route.query.kw?.toString()
     this.init(this.doc, headingId, kw)

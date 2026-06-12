@@ -27,45 +27,43 @@ function getSummaryHtml() {
 
 const dom = new JSDOM()
 
-function generalHtmlContent(summaryHtml: string, info: DocFileInfo) {
+function escapeHtmlText(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+/**
+ * 以构建产物index.html为模板 生成文档对应的静态html
+ * 该html是完整的SPA入口(含构建后的js/css标签) 直接访问/xx/xx.html即进入对应文档页
+ * 同时携带文档标题、描述与隐藏的正文内容 供爬虫与无js环境读取
+ */
+function generalHtmlContent(template: string, info: DocFileInfo) {
   const renderer = new marked.Renderer()
   renderer.text = (text) => text.text
   let html = marked(info.content, {
     renderer: renderer
   }) as string
   html = html.replaceAll(/\.md/gi, '.html')
-  html = html.replaceAll(/\n/gi, '')
+  // 保留换行: 压成单行会破坏<pre><code>代码块格式 也让view-source不可读
   dom.window.document.body.innerHTML = `<!DOCTYPE html><body>${html}</body></html>`
   let text = dom.window.document.body.textContent || ''
   text = text.replace(/\n/ig, '')
-  return `
-  <!DOCTYPE html>
-  <html lang="zh">
-    <head>
-      <meta charset="UTF-8">
-      <title>${info.name}</title>
-      <meta name="description" content="${text.substring(0, Math.min(100, text.length))}...">
-    </head>
-    <script>
-      if (!/bot|googlebot|crawler|spider|robot|crawling/i.test(navigator.userAgent)) {
-        window.location = '/#/doc/${info.id}'
-      }
-    </script>
-    <body>
-      <div class='content'>
-      ${html}
-      </div>
-      <div class='menu'>
-        ${summaryHtml}
-      </div>
-    </body>
-  </html>
-  `
+  const description = escapeHtmlText(text.substring(0, Math.min(100, text.length)))
+  // 替换值用函数形式: 字符串形式会解释$$/$&等替换模式 文档内容含'$$'(KaTeX)时会被吞掉
+  return template
+    .replace(/<title>[^<]*<\/title>/, () => `<title>${escapeHtmlText(info.name)}</title>`)
+    .replace('</head>', () => `<meta name="description" content="${description}...">\n  </head>`)
+    .replace('</body>', () => `<div class='content' style="display: none">${html}</div></body>`)
 }
 
 export default function DocBuildMove(){
   let config : ResolvedConfig;
   const summaryHtml = getSummaryHtml().replace(/\n/ig, '')
+  // buildStart收集到的文档信息 closeBundle生成html时复用 避免二次解析
+  let pendingInfos: Promise<{filename: string, info: DocFileInfo}>[] = []
   return {
     name: "doc-build-move",
     async configResolved(rconfig: ResolvedConfig) {
@@ -91,9 +89,10 @@ export default function DocBuildMove(){
           fs.promises.readFile(sourceFile)
             .then(data => fs.promises.writeFile(targetFilename, data))
         }
-        // 生成md文件对应的json,html
+        // 生成md文件对应的json html在closeBundle生成(需要以构建产物index.html为模板)
+        pendingInfos = []
         for (let item of BaseService.listAllMdFile()) {
-          DocService.getFileInfo(item)
+          pendingInfos.push(DocService.getFileInfo(item)
             .then(info => {
               let filename = item
               if (filename.startsWith('doc/')) {
@@ -105,16 +104,42 @@ export default function DocBuildMove(){
               const jsonFileFullName = `${config.build.outDir}/${filename}.json`
               ensureDirectoryExistence(jsonFileFullName)
               fs.promises.writeFile(jsonFileFullName, JSON.stringify(info)).then(() => console.log("doc-build-move " + jsonFileFullName + " 生成完成"))
-              
-
-              const htmlFileFullName = `${config.build.outDir}/${filename.replace('.md', '')}.html`
-
-              const html = generalHtmlContent(summaryHtml, info)
-              fs.promises.writeFile(htmlFileFullName, html).then(() => console.log("doc-build-move " + htmlFileFullName + " 生成完成"))
-              
-            })
+              return {filename, info}
+            }))
         }
       }
+    },
+    async closeBundle() {
+      if (config.command != 'build') {
+        return
+      }
+      const templateFile = `${config.build.outDir}/index.html`
+      if (!fs.existsSync(templateFile)) {
+        console.warn("doc-build-move 未找到构建产物index.html 跳过文档html生成")
+        return
+      }
+      const template = fs.readFileSync(templateFile).toString()
+      // history路由fallback: GitHub Pages对不存在的路径(/m/**等)返回404.html
+      await fs.promises.writeFile(`${config.build.outDir}/404.html`, template)
+      console.log("doc-build-move 404.html 生成完成")
+      // 应用页面静态入口: /home.html /tag.html (替换值用函数形式 避免$模式解释)
+      const siteName = template.match(/<title>([^<]*)<\/title>/)?.[1] || ''
+      const appPages = [
+        { file: 'home.html', title: '首页' },
+        { file: 'tag.html', title: '标签' },
+      ]
+      await Promise.all(appPages.map(({file, title}) => {
+        const html = template.replace(/<title>[^<]*<\/title>/, () => `<title>${title} - ${siteName}</title>`)
+        return fs.promises.writeFile(`${config.build.outDir}/${file}`, html)
+          .then(() => console.log(`doc-build-move ${file} 生成完成`))
+      }))
+      const infos = await Promise.all(pendingInfos)
+      await Promise.all(infos.map(({filename, info}) => {
+        const htmlFileFullName = `${config.build.outDir}/${filename.replace('.md', '')}.html`
+        ensureDirectoryExistence(htmlFileFullName)
+        const html = generalHtmlContent(template, info)
+        return fs.promises.writeFile(htmlFileFullName, html).then(() => console.log("doc-build-move " + htmlFileFullName + " 生成完成"))
+      }))
     }
   }
 }

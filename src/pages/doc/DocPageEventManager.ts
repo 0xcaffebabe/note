@@ -59,10 +59,14 @@ class DocPageEventManager {
     for (let i = 0; i < docLinkList.length; i++) {
       const a = docLinkList[i];
       a.onclick = (e: MouseEvent) => {
+        // 修饰键点击交还浏览器默认行为(.html地址是真实入口 可新标签/新窗口打开)
+        if (e.ctrlKey || e.metaKey || e.shiftKey) {
+          return
+        }
         const href = a.getAttribute("href");
-        if (href?.startsWith("doc") || href?.startsWith("/doc")) {
+        if (href) {
           if (e.altKey) {
-            (this.getRef('instantPreviewer') as InstanceType<typeof InstantPreviewer>).preview('/#' + href);
+            (this.getRef('instantPreviewer') as InstanceType<typeof InstantPreviewer>).preview(href);
             console.log(href)
           }else {
             this.docPageInstance.$router.push(href);

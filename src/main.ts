@@ -10,6 +10,11 @@ import { registerSW } from 'virtual:pwa-register';
 
 registerSW({ immediate: true });
 
+// 兼容旧的hash路由链接(/#/doc/xxx): 路由启动前改写为history模式地址
+if (location.hash.startsWith('#/')) {
+  history.replaceState(history.state, '', location.hash.substring(1))
+}
+
 const app = createApp(App)
 
 // 全局变量

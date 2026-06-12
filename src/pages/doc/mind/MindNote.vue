@@ -51,7 +51,7 @@ export default defineComponent({
   },
   methods: {
     async refresh(docId?: string) {
-      const doc = docId || this.$route.params.doc.toString();
+      const doc = docId || DocUtils.routeDocId(this.$route);
       this.mindData = await DocService.generateMindData(doc);
       for(let i = 0; i < 3; i++) {
         this.$nextTick(() => {

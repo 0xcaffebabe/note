@@ -369,7 +369,7 @@ export default defineComponent({
     }
   },
   beforeRouteUpdate(to, from) {
-    const doc = to.params.doc.toString();
+    const doc = DocUtils.routeDocId(to);
     this.showDoc(doc, to.query.headingId?.toString(), to.query.kw?.toString());
     (this.$refs.docSideCategory as any).updateCurrentCategory(doc);
   },
@@ -380,7 +380,7 @@ export default defineComponent({
     this.eventManager = new DocPageEventMnager(this);
     this.eventManager!.registerScrollListener();
     this.eventManager!.listenEventBus();
-    this.showDoc(this.$route.params.doc.toString(), this.$route.query.headingId?.toString(), this.$route.query.kw?.toString());
+    this.showDoc(DocUtils.routeDocId(this.$route), this.$route.query.headingId?.toString(), this.$route.query.kw?.toString());
     
     // 监听窗口大小变化
     window.addEventListener('resize', this.handleResize);

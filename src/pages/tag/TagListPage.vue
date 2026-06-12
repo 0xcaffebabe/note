@@ -38,6 +38,7 @@ import { defineComponent, ref } from "vue";
 import DocUtils from "@/util/DocUtils";
 import TagUtils from './TagUtils';
 import TouchUtils from "@/util/TouchUtils";
+import { SysUtils } from "@/util/SysUtils";
 
 interface TagItem {
   tag: string
@@ -102,6 +103,7 @@ export default defineComponent({
     })
   },
   mounted(){
+    SysUtils.setDocTitle('标签')
     // 通过url传参 确认哪些标签
     if (this.$route.query.tag) {
       this.checkedMap[this.$route.query.tag.toString()] = true

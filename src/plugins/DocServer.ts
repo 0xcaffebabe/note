@@ -111,6 +111,23 @@ export default function DocServer(){
           next()
         }
       })
+
+      // history路由dev支持: /xx/xx.html文档路径与无扩展名应用路由(/home /tag /m/**)回退到SPA入口
+      // (构建产物中.html路径存在真实文件 无扩展名路径由404.html/平台rewrite兜底 dev下统一交给index.html)
+      // 注意: 不能依赖vite内置fallback 例如fs.strict为false时/home会被解析到系统目录/home
+      server.middlewares.use((req, res, next) => {
+        const pathname = url.parse(req.originalUrl || '').pathname || ''
+        const accept = req.headers.accept || ''
+        if (req.method == 'GET' && accept.includes('text/html') && !pathname.startsWith('/@')) {
+          const lastSegment = pathname.substring(pathname.lastIndexOf('/') + 1)
+          const isDocHtml = pathname.endsWith('.html') && pathname != '/index.html'
+          const isAppRoute = !lastSegment.includes('.') && pathname != '/'
+          if (isDocHtml || isAppRoute) {
+            req.url = '/index.html'
+          }
+        }
+        next()
+      })
     }
   }
 }

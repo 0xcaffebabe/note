@@ -65,7 +65,21 @@ export default defineConfig({
         // 只预缓存应用入口，避免首次访问就在后台下载全站约10MB资源
         // （含mermaid/echarts/cytoscape等懒加载chunk和300+个文档JSON）
         globPatterns: ['**/index.html'],
+        // .html是真实静态入口 导航不走app shell 保证直接访问/查看源码拿到带正文的静态文件
+        // 无扩展名路径(/ /cluster 及旧链接)仍由app shell接管
+        navigateFallbackDenylist: [/\.html(\?|$)/],
         runtimeCaching: [
+          {
+            // 文档页导航网络优先 离线时回退到已访问过的缓存副本
+            urlPattern: /\.html(\?|$)/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'doc-pages',
+              networkTimeoutSeconds: 3,
+              expiration: { maxEntries: 100 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
           {
             // 带内容哈希的静态资源不会变更，缓存优先
             urlPattern: /\/resource\/.*\.(?:js|css)$/,

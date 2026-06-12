@@ -23,6 +23,7 @@
 import { defineComponent } from "vue";
 import {MindUtils} from './MindUtils';
 import DocService from "@/service/DocService";
+import DocUtils from "@/util/DocUtils";
 import Mind from '@/components/mind/Mind.vue';
 import MindNode from "@/dto/mind/MindNode";
 import { CloseBold } from "@element-plus/icons-vue";
@@ -67,7 +68,7 @@ export default defineComponent({
       this.showDrawer = false;
     },
     async showMind() {
-      const doc = this.$route.params.doc.toString();
+      const doc = DocUtils.routeDocId(this.$route);
       const toc = await DocService.getContentByDocId(doc);
       const minds = MindUtils.mindConvert(toc);
       this.mindData = minds[0];

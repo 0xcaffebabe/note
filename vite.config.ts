@@ -55,6 +55,13 @@ export default defineConfig({
     host: '0.0.0.0',
     hmr: { clientPort: process.env.CODESPACES ? 443 : undefined }
   },
+  // E2E(Playwright)与既有 HtmlEntryE2E 默认 baseUrl 都指向 4391
+  // vite preview 默认端口是 4173 这里显式对齐 strictPort 让端口被占用时直接报错而非静默改端口
+  preview: {
+    port: 4391,
+    strictPort: true,
+    host: '0.0.0.0'
+  },
   plugins: [
     stripVirtualConfigDeps,
     ...plugins,

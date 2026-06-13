@@ -1,5 +1,6 @@
 import CommitInfo from "./CommitInfo"
 import { DocMetadata, EMPTY_DOC_METADATA } from "./doc/DocMetadata"
+import { RelatedLink } from "./RelatedLink"
 
 export default class DocFileInfo {
   // 文档名称
@@ -14,4 +15,6 @@ export default class DocFileInfo {
   metadata: string = ''
   formattedMetadata: DocMetadata = EMPTY_DOC_METADATA
   createTime: string = ''
+  // "关联内容"章节抽取出的关联链接(在 DocService.getDocFileInfo 取文档时填充, 同时从 content 剥离该章节)
+  relatedLinks?: RelatedLink[]
 }

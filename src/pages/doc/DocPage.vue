@@ -57,6 +57,8 @@
   <!-- 工具栏结束 -->
   <link-popover ref="linkPopover"/>
   <el-backtop :bottom="32" :right="28" />
+  <!-- 关联内容: 右侧悬浮标签 悬停展开 (无关联文档时整体不渲染) -->
+  <related-content :links="relatedLinks" />
   <!-- 隐藏面板按需挂载: 首次打开时才下载与渲染对应chunk -->
   <mind-graph v-if="panels.mindGraph" ref="mindGraph" @close="showAside = true;isDrawerShow = false" />
   <link-list v-if="panels.linkList" :html="contentHtml" ref="linkList"/>
@@ -79,6 +81,8 @@ import docService from "@/service/DocService";
 import HistoryList from "./commit/HistoryList.vue";
 import ToolBox from './ToolBox.vue';
 import LinkPopover from "./LinkPopover.vue";
+import RelatedContent from "./RelatedContent.vue";
+import { RelatedLink } from "@/dto/RelatedLink";
 import DocFileInfo from "@/dto/DocFileInfo";
 import DocService from "@/service/DocService";
 import 'element-plus/es/components/message/style/css'
@@ -131,6 +135,7 @@ export default defineComponent({
     MermaidShower,
     LLM,
     DocContentsAndPanel,
+    RelatedContent,
 },
   watch: {
     showHeader: {
@@ -197,6 +202,10 @@ export default defineComponent({
   computed: {
     contentHtml(): string {
       return DocService.renderMd(this.file);
+    },
+    relatedLinks(): RelatedLink[] {
+      // 关联链接已在接口取文档时抽取并从正文剥离(DocService.getDocFileInfo)
+      return this.file.relatedLinks || [];
     }
   },
   methods: {

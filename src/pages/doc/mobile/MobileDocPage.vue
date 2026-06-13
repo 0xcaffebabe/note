@@ -35,6 +35,8 @@
   </nav>
   <mobile-toc ref="mobileToc" :contents-list="contentsList" @item-click="handleTocItemClick" />
   <link-popover ref="linkPopover"/>
+  <!-- 关联内容: 右侧悬浮标签 点按展开(触屏) -->
+  <related-content :links="file.relatedLinks || []" />
   <mind-graph v-if="panels.mindGraph" ref="mindGraph" />
   <image-viewer ref="imageViewer" />
   <knowledge-reviewer v-if="panels.knowledgeReviewer" ref="knowledgeReviewer" :doc="doc" />
@@ -69,6 +71,7 @@ import { SysUtils } from '@/util/SysUtils';
 import ConfigService from '@/service/ConfigService';
 import DocPrevNext from '../nav/DocPrevNext.vue';
 import MobileToc from './MobileToc.vue';
+import RelatedContent from '../RelatedContent.vue';
 import EventBus from '@/components/EventBus';
 import { Memo, Tickets, Search, Top } from '@element-plus/icons-vue';
 
@@ -92,6 +95,7 @@ export default defineComponent({
     LLM,
     DocPrevNext,
     MobileToc,
+    RelatedContent,
     Memo, Tickets, Search, Top,
 },
   setup() {

@@ -64,6 +64,7 @@ export default defineComponent({
           return;
         }
         try {
+          // "关联内容"章节的排除已下沉到 DocService.getContentByDocId 源头
           this.contentList = await DocService.getContentByDocId(this.doc);
         } catch (e: any) {
           ElMessage.error(e.message);

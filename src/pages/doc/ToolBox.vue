@@ -20,8 +20,13 @@
             @click="action.local ? localActionDispatch(action.action) : $emit(action.action)"
           >
             <span class="action-row">
+              <el-icon class="action-icon" :class="'tone-' + action.type">
+                <component :is="action.icon" />
+              </el-icon>
               <span class="action-name">{{action.name}}</span>
-              <span class="hotkey" v-if="action.hotkey">{{action.hotkey}}</span>
+              <span class="action-keys" v-if="action.hotkey">
+                <kbd v-for="(k, i) in action.hotkey.split('+').map(s => s.trim())" :key="i">{{ k }}</kbd>
+              </span>
             </span>
           </el-dropdown-item>
         </el-dropdown-menu>
@@ -53,8 +58,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import {Tools} from '@element-plus/icons-vue'
+import { defineComponent, markRaw } from "vue";
+import {
+  Tools, Share, Connection, DataAnalysis, MagicStick,
+  Position, CopyDocument, EditPen, Link, Refresh, Setting
+} from '@element-plus/icons-vue'
 import Category from "@/dto/Category";
 import CategoryService from "@/service/CategoryService";
 import DocUtils from "@/util/DocUtils";
@@ -83,6 +91,7 @@ interface Action {
   name: string
   type: string
   action: ActionType
+  icon?: any
   hotkey?: string
   divided?: boolean
   local?: boolean
@@ -119,16 +128,16 @@ export default defineComponent({
       parentShowHeader: true,
       flatCategoryList: [] as Category[],
       actionList: [
-        {name: '思维导图', type: 'success', action: 'showMindGraph', hotkey: 'alt + l'},
-        {name: '知识网络', type: 'warning', action: 'showKnowledgeNetwork', hotkey: 'alt + k'},
-        {name: '知识回顾', type: 'primary', action: 'showKnowledgeReviewer', hotkey: 'alt + r'},
-        {name: '知识助手', type: 'warning', action: 'showLlm', hotkey: 'alt + i'},
-        {name: '路径复制', type: 'success', action: 'copyDocPath', hotkey: 'alt + c', divided: true},
-        {name: '知识复制', type: 'warning', action: 'copyDocContent', hotkey: 'alt + x'},
-        {name: '在VSC打开', type: 'danger', action: 'openInEditor', hotkey: 'alt + v'},
-        {name: '链接列表', type: 'primary', action: 'showLinkList',},
-        {name: '随机复习', type: 'primary', action: 'randomReview' as LocalActionType, local: true, hotkey: 'alt + n'},
-        {name: '更多设置', type: 'info', action: 'showMoreSetting' as LocalActionType, local: true, divided: true},
+        {name: '思维导图', type: 'success', action: 'showMindGraph', icon: markRaw(Share), hotkey: 'alt + l'},
+        {name: '知识网络', type: 'warning', action: 'showKnowledgeNetwork', icon: markRaw(Connection), hotkey: 'alt + k'},
+        {name: '知识回顾', type: 'primary', action: 'showKnowledgeReviewer', icon: markRaw(DataAnalysis), hotkey: 'alt + r'},
+        {name: '知识助手', type: 'warning', action: 'showLlm', icon: markRaw(MagicStick), hotkey: 'alt + i'},
+        {name: '路径复制', type: 'success', action: 'copyDocPath', icon: markRaw(Position), hotkey: 'alt + c', divided: true},
+        {name: '知识复制', type: 'warning', action: 'copyDocContent', icon: markRaw(CopyDocument), hotkey: 'alt + x'},
+        {name: '在VSC打开', type: 'danger', action: 'openInEditor', icon: markRaw(EditPen), hotkey: 'alt + v'},
+        {name: '链接列表', type: 'primary', action: 'showLinkList', icon: markRaw(Link)},
+        {name: '随机复习', type: 'primary', action: 'randomReview' as LocalActionType, icon: markRaw(Refresh), local: true, hotkey: 'alt + n'},
+        {name: '更多设置', type: 'info', action: 'showMoreSetting' as LocalActionType, icon: markRaw(Setting), local: true, divided: true},
       ] as Action[]
     }
   },
@@ -227,7 +236,9 @@ export default defineComponent({
   &:hover {
     box-shadow: var(--shadow-lg);
     transform: translateY(-2px);
-    background-color: var(--hover-bg-color);
+    background-color: var(--card-bg-color);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
   }
 }
 
@@ -240,7 +251,9 @@ export default defineComponent({
 
 .dropdown-item {
   margin: 2px var(--spacing-xs);
+  padding: 6px 10px;
   border-radius: var(--radius-md);
+  transition: background-color var(--transition-fast);
 
   &:first-child {
     margin-top: 0;
@@ -254,24 +267,50 @@ export default defineComponent({
 .action-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
   width: 100%;
-  min-width: 150px;
-  padding: 2px 0;
+  min-width: 172px;
+}
+
+// 图标按 type 着语义色 让一长串菜单项一眼可分组
+.action-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+
+  &.tone-success { color: var(--success-color); }
+  &.tone-warning { color: var(--warning-color); }
+  &.tone-primary { color: var(--primary-color); }
+  &.tone-danger  { color: var(--danger-color); }
+  &.tone-info    { color: var(--secondary-text-color); }
 }
 
 .action-name {
+  flex: 1;
   color: var(--main-text-color);
+  font-size: var(--font-size-base);
 }
 
-.hotkey {
-  font-size: 12px;
-  background-color: var(--hover-bg-color);
-  color: var(--secondary-text-color);
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-color);
+// 快捷键拆成键帽 与命令面板(CommandPalette)风格统一
+.action-keys {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+
+  kbd {
+    display: inline-block;
+    min-width: 18px;
+    padding: 1px 5px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.4;
+    text-align: center;
+    text-transform: uppercase;
+    color: var(--secondary-text-color);
+    background-color: var(--hover-bg-color);
+    border: 1px solid var(--border-color);
+    border-bottom-width: 2px;
+    border-radius: var(--radius-sm);
+  }
 }
 
 .more-setting-container {

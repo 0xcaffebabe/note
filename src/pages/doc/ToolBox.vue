@@ -70,7 +70,6 @@ type ActionType =
     'showReadingHistory' |
     'showMindGraph' |
     'showKnowledgeNetwork' |
-    'showKnowledgeIndex' |
     'copyDocPath' |
     'copyDocContent' |
     'showLinkList' |
@@ -103,7 +102,6 @@ export default defineComponent({
     'showReadingHistory',
     'showMindGraph',
     'showKnowledgeNetwork',
-    'showKnowledgeIndex',
     'copyDocPath',
     'copyDocContent',
     'showLinkList',
@@ -123,7 +121,6 @@ export default defineComponent({
       actionList: [
         {name: '思维导图', type: 'success', action: 'showMindGraph', hotkey: 'alt + l'},
         {name: '知识网络', type: 'warning', action: 'showKnowledgeNetwork', hotkey: 'alt + k'},
-        {name: '知识索引', type: 'primary', action: 'showKnowledgeIndex', hotkey: 'alt + j'},
         {name: '知识回顾', type: 'primary', action: 'showKnowledgeReviewer', hotkey: 'alt + r'},
         {name: '知识助手', type: 'warning', action: 'showLlm', hotkey: 'alt + i'},
         {name: '路径复制', type: 'success', action: 'copyDocPath', hotkey: 'alt + c', divided: true},

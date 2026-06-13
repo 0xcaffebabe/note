@@ -46,7 +46,6 @@
   <tool-box
     @showMindGraph="showMindGraph();showAside = false;isDrawerShow = true"
     @showKnowledgeNetwork="showKnowledgeNetwork();showAside = false;isDrawerShow = true"
-    @showKnowledgeIndex="showKnowledgeIndex();showAside = false;isDrawerShow = true"
     @copyDocPath="handleCopyDocPath"
     @copyDocContent="handleCopyDocContent"
     @showLinkList="showLinkList"
@@ -64,7 +63,6 @@
   <knowledge-reviewer v-if="panels.knowledgeReviewer" ref="knowledgeReviewer" :doc="doc"/>
   <mermaid-shower ref="mermaidShower"/>
   <knowledge-network v-if="panels.knowledgeNetwork" ref="knowledgeNetwork" :doc="doc" @close="showAside = true;isDrawerShow = false"/>
-  <knowledge-index v-if="panels.knowledgeIndex" ref="knowledgeIndex" :doc="doc" @close="showAside = true;isDrawerShow = false" @navigate="handleNavigate"/>
   <LLM v-if="panels.llm" :doc="doc" ref="llm" @close="showAside = true;isDrawerShow = false"/>
   <image-viewer ref="imageViewer" />
   <instant-previewer ref="instantPreviewer"/>
@@ -109,7 +107,6 @@ import DocContentsAndPanel from './contents/DocContentsAndPanel.vue';
 const MindGraph = defineAsyncComponent(() => import('./mind/MindGraph.vue'))
 const LinkList = defineAsyncComponent(() => import('./LinkList.vue'))
 const KnowledgeNetwork = defineAsyncComponent(() => import('./knowledge/KnowledgeNetwork.vue'))
-const KnowledgeIndex = defineAsyncComponent(() => import('./knowledge/KnowledgeIndex.vue'))
 const KnowledgeReviewer = defineAsyncComponent(() => import('./knowledge/KnowledgeReviewer.vue'))
 const LLM = defineAsyncComponent(() => import('./knowledge/LLM.vue'))
 
@@ -123,7 +120,6 @@ export default defineComponent({
     DocSideCategory,
     LinkList,
     KnowledgeNetwork,
-    KnowledgeIndex,
     DocBreadcrumbNav,
     DocTabNav,
     DocPrevNext,
@@ -149,19 +145,17 @@ export default defineComponent({
     const panels = reactive({
       mindGraph: false,
       knowledgeNetwork: false,
-      knowledgeIndex: false,
       linkList: false,
       knowledgeReviewer: false,
       llm: false,
     })
     const mindGraph = ref<any>()
     const knowledgeNetwork = ref<any>()
-    const knowledgeIndex = ref<any>()
     const linkList = ref<any>()
     const knowledgeReviewer = ref<any>()
     const llm = ref<any>()
     const refMap: Record<keyof typeof panels, typeof mindGraph> = {
-      mindGraph, knowledgeNetwork, knowledgeIndex, linkList, knowledgeReviewer, llm,
+      mindGraph, knowledgeNetwork, linkList, knowledgeReviewer, llm,
     }
     const openPanel = async (name: keyof typeof panels) => {
       const firstOpen = !panels[name]
@@ -180,7 +174,6 @@ export default defineComponent({
       panels,
       mindGraph, showMindGraph: () => openPanel('mindGraph'),
       knowledgeNetwork, showKnowledgeNetwork: () => openPanel('knowledgeNetwork'),
-      knowledgeIndex, showKnowledgeIndex: () => openPanel('knowledgeIndex'),
       linkList, showLinkList: () => openPanel('linkList'),
       knowledgeReviewer, showKnowledgeReviewer: () => openPanel('knowledgeReviewer'),
       llm, showLLM: () => openPanel('llm'),

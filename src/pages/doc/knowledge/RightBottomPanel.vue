@@ -52,17 +52,10 @@
         <el-segmented v-model="dialogTab" :options="dialogTabOptions" />
       </template>
       <div class="expand-content">
-        <knowledge-network-chart
+        <!-- 展开后使用完整知识网络(含工具栏: 度数/布局/显隐式/仅看相关) -->
+        <knowledge-network-content
           v-if="dialogTab === 'graph'"
           :doc="doc"
-          mode="force"
-          :onlySelfRelated="true"
-          :isPotential="false"
-          :showLegend="true"
-          :showTooltip="true"
-          :showChartText="true"
-          :zoom="0.8"
-          :degree="degree"
         />
         <mind v-else id="expandedMind" :mind-data="mindData" />
       </div>
@@ -76,6 +69,7 @@ import { ElCarousel, ElCarouselItem, ElInputNumber, ElButton, ElButtonGroup, ElI
 import { ZoomIn, ZoomOut, FullScreen } from '@element-plus/icons-vue';
 import Mind from "@/components/mind/Mind.vue";
 import KnowledgeNetworkChart from "./KnowledgeNetworkChart.vue";
+import KnowledgeNetworkContent from "./KnowledgeNetworkContent.vue";
 import DocService from "@/service/DocService";
 import MindNode from "@/dto/mind/MindNode";
 
@@ -88,6 +82,7 @@ export default defineComponent({
     ElCarouselItem,
     Mind,
     KnowledgeNetworkChart,
+    KnowledgeNetworkContent,
     ElInputNumber,
     ElButton,
     ElButtonGroup,

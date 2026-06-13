@@ -7,3 +7,6 @@ dist-ssr
 *.pyc
 /book
 back_origin_snapshot
+# test artifacts
+playwright-report
+test-results

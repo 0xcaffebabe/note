@@ -1,0 +1,86 @@
+name: e2e
+
+# 特性分支 / PR 的测试门禁(master 由 build_book.yml 负责构建+测试+部署)
+# 取代原 test_build_book.yml(仅构建): 这里构建 + 跑 vitest + Playwright E2E
+on:
+  push:
+    branches: [ '**', '!master', '!gh-pages' ]
+  pull_request:
+  schedule:
+    # 夜间额外跑 @prod(SW/离线) 与 @network(真实 Algolia/ES) 这一层(默认分支 master)
+    - cron: '0 18 * * *'
+
+# 同一分支新推送时取消在跑的旧 run 省 PR 分钟数
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    # 纯逻辑/组件层: 快、无浏览器、无密钥 几秒出结果
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: npm
+      - run: npm ci
+      - name: vitest (unit + component)
+        run: npm test
+
+  e2e:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false              # 一个分片失败不掩盖其他分片
+      matrix:
+        shard: [1, 2, 3]            # 对一个 preview 服务并行三个浏览器分片 套件变大再加
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: '0'          # 必须: GitService 对每个 .md 跑 git log 生成 *.md.json/统计 浅克隆会得到 1999 兜底日期
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: npm
+      - run: npm ci
+
+      - name: Resolve Playwright version
+        id: pw
+        run: echo "v=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-${{ steps.pw.outputs.v }}
+      - name: Install Chromium (+ OS deps)
+        run: npx playwright install --with-deps chromium
+
+      - name: Build (prod, deterministic)
+        # NOTE_BUILD_COMMIT_TOTAL_TREND=1 跳过 CommitTotalTrendGenerator 对 gh-pages 的 3 次重试拉取(最大网络抖动源)
+        env:
+          NOTE_BUILD_COMMIT_TOTAL_TREND: '1'
+        run: npm run build
+
+      - name: E2E (shard ${{ matrix.shard }}/3)
+        # PR/push: 只跑确定性、无密钥的门禁层(排除 @prod/@network)
+        # schedule(夜间): 跑全量含 @prod/@network
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            npx playwright test --shard=${{ matrix.shard }}/3
+          else
+            npx playwright test --shard=${{ matrix.shard }}/3 --grep-invert "@prod|@network"
+          fi
+
+      - name: Upload report + traces (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-shard-${{ matrix.shard }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

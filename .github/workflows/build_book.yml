@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         node-version: [24.x]
-    
+
     steps:
     - uses: actions/checkout@v6
       with:
@@ -21,15 +21,40 @@ jobs:
       uses: actions/setup-node@v6
       with:
         node-version: ${{ matrix.node-version }}
+        cache: npm
 
     - name: 安装依赖
       run: |
-        npm install
+        npm ci
+
+    - name: 单元/组件测试
+      run: npm test
+
+    - name: 安装 Playwright Chromium
+      run: npx playwright install --with-deps chromium
+
     - name: 书籍打包
+      # 不设 NOTE_BUILD_COMMIT_TOTAL_TREND: master 部署需要真实的提交趋势数据
       run: |
         npm run build
+
+    - name: E2E 门禁(对将要部署的产物本体跑 排除 @prod/@network)
+      # webServer 起的 vite preview 服务的就是上一步构建出的 dist/ 即「测的就是要部署的」
+      run: npm run test:e2e:pr
+
+    - name: 上传 E2E 失败产物
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-report
+        path: |
+          playwright-report/
+          test-results/
+        retention-days: 7
+
     -
         name: 部署到 GitHub Pages
+        # 前面任一步(测试/构建/E2E)失败则不部署 —— 杜绝「坏构建直接上线」
         if: success()
         uses: crazy-max/ghaction-github-pages@v5
         with:

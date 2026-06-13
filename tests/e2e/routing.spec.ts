@@ -1,0 +1,101 @@
+import { test, expect, goto, pathnameOf, waitForPath, waitForHtmlChange, seedLastRead, DOC, DOC_ID, DOC_NO_SUFFIX } from './fixtures'
+
+// P0 关键路径冒烟: .html 静态化路由 + 自愈 + 404 + 桌面分流
+// 全部确定性、无密钥、可在 fork PR 上跑 —— 这是真正卡合并的门禁
+test.describe('routing (P0)', () => {
+  test('直接访问 .html 入口渲染文档且 URL 不变', async ({ page }) => {
+    await goto(page, DOC)
+    await page.waitForSelector('.markdown-section h2')
+    expect(pathnameOf(page)).toBe(DOC)
+    // 不耦合具体文档内容: 只断言渲染出非空标题 且 document.title 是「文档名 - 站名」形态
+    const h2 = ((await page.locator('.markdown-section h2').first().textContent()) ?? '').trim()
+    expect(h2.length).toBeGreaterThan(0)
+    const title = await page.title()
+    expect(title).toContain('知识体系') // SysUtils.setDocTitle: `${docTitle} - 知识体系`
+    expect(title.length).toBeGreaterThan('知识体系'.length + 2)
+  })
+
+  // 正文渲染出指向其他文档的 .html 内链(站内跳转的前提)
+  // 注: SPA 路由跳转本身由 P0-5 侧边栏菜单覆盖;正文里被 DocRender 标 origin-link 的链接走 router.push
+  // 未被识别为站内文档的 .html 链接按「真实静态入口」处理(可能新标签打开) 故此处只断言内链已渲染
+  test('正文渲染出指向其他文档的 .html 内链', async ({ page }) => {
+    await goto(page, DOC)
+    await page.waitForSelector('.markdown-section h2') // 等 SPA 把正文渲染进来 内链才存在
+    await expect
+      .poll(() => page.locator('.markdown-section a[href*=".html"]').count(), { timeout: 20_000 })
+      .toBeGreaterThan(0)
+  })
+
+  test('旧 hash 链接 /#/doc/:id 改写为 .html', async ({ page }) => {
+    await page.goto('/#/doc/' + encodeURIComponent(DOC_ID), { waitUntil: 'domcontentloaded' })
+    await waitForPath(page, DOC)
+    expect(pathnameOf(page)).toBe(DOC)
+  })
+
+  test('旧 /doc/:doc 地址重定向到 .html', async ({ page }) => {
+    await goto(page, '/doc/' + DOC_ID)
+    await waitForPath(page, DOC)
+    expect(pathnameOf(page)).toBe(DOC)
+  })
+
+  test('侧边栏菜单点击跳转到 .html(以信号同步 不用 sleep)', async ({ page }) => {
+    await goto(page, DOC)
+    const item = page.locator('.el-menu .el-menu-item').first()
+    await item.waitFor({ state: 'visible', timeout: 20_000 })
+    const before = pathnameOf(page)
+    await Promise.all([waitForHtmlChange(page, before), item.click()])
+    expect(pathnameOf(page)).toMatch(/\.html$/)
+  })
+
+  test('根路径 / 续读上次阅读文档', async ({ page }) => {
+    await seedLastRead(page, DOC_ID)
+    await goto(page, '/')
+    await waitForPath(page, DOC)
+    expect(pathnameOf(page)).toBe(DOC)
+  })
+
+  test('根路径 / 新访客落到首页', async ({ page }) => {
+    await page.addInitScript(() => localStorage.removeItem('doc-service:last-read'))
+    await goto(page, '/')
+    await waitForPath(page, '/home.html')
+    expect(pathnameOf(page)).toBe('/home.html')
+  })
+
+  test('/home.html 应用入口标题正确', async ({ page }) => {
+    await goto(page, '/home.html')
+    await page.waitForFunction(() => document.title.includes('首页'), undefined, { timeout: 20_000 })
+    expect(pathnameOf(page)).toBe('/home.html')
+  })
+
+  test('/home 无后缀重定向到 /home.html', async ({ page }) => {
+    await goto(page, '/home')
+    await waitForPath(page, '/home.html')
+    expect(pathnameOf(page)).toBe('/home.html')
+  })
+
+  test('/tag?tag=Java 重定向且保留 query', async ({ page }) => {
+    await goto(page, '/tag?tag=Java')
+    await waitForPath(page, '/tag.html')
+    expect(page.url()).toMatch(/\/tag\.html\?tag=Java$/)
+  })
+
+  test('无后缀文档路径自动补回 .html(CDN 308 去后缀场景)', async ({ page }) => {
+    await goto(page, DOC_NO_SUFFIX)
+    await waitForPath(page, DOC)
+    expect(pathnameOf(page)).toBe(DOC)
+  })
+
+  test('真正不存在的路径展示 404 不被自愈误伤', async ({ page }) => {
+    await goto(page, '/this-doc-does-not-exist')
+    await page.waitForSelector('.not-found')
+    expect(pathnameOf(page)).not.toMatch(/\.html$/)
+  })
+
+  test('桌面视口不触发 /m/ 分流', async ({ page }) => {
+    await goto(page, DOC)
+    await page.waitForSelector('.main-layout')
+    expect(pathnameOf(page)).toBe(DOC)
+    expect(pathnameOf(page)).not.toMatch(/^\/m\//)
+    await expect(page.locator('.mobile-bottom-bar')).toHaveCount(0)
+  })
+})

@@ -47,7 +47,6 @@ type ActionType =
     'showBookMarkAdder' |
     'showBookMarkList' |
     'copyDocPath' |
-    'showLinkList' |
     'goToDoc' |
     'goToPpt' |
     'showKwFinder' |
@@ -81,7 +80,6 @@ export default defineComponent({
     'showBookMarkAdder',
     'showBookMarkList',
     'copyDocPath',
-    'showLinkList',
     'goToDoc',
     'goToPpt',
     'showKnowledgeReviewer',

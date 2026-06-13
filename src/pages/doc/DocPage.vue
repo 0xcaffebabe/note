@@ -48,7 +48,6 @@
     @showKnowledgeNetwork="showKnowledgeNetwork();showAside = false;isDrawerShow = true"
     @copyDocPath="handleCopyDocPath"
     @copyDocContent="handleCopyDocContent"
-    @showLinkList="showLinkList"
     @showKnowledgeReviewer="showKnowledgeReviewer"
     @show-llm="showLLM();showAside = false;isDrawerShow = true"
     @open-in-editor="openInEditor"
@@ -61,7 +60,6 @@
   <related-content :related="relatedLinks" :doc-links="docLinks" />
   <!-- 隐藏面板按需挂载: 首次打开时才下载与渲染对应chunk -->
   <mind-graph v-if="panels.mindGraph" ref="mindGraph" @close="showAside = true;isDrawerShow = false" />
-  <link-list v-if="panels.linkList" :html="contentHtml" ref="linkList"/>
   <knowledge-reviewer v-if="panels.knowledgeReviewer" ref="knowledgeReviewer" :doc="doc"/>
   <mermaid-shower ref="mermaidShower"/>
   <knowledge-network v-if="panels.knowledgeNetwork" ref="knowledgeNetwork" :doc="doc" @close="showAside = true;isDrawerShow = false"/>
@@ -109,7 +107,6 @@ import DocContentsAndPanel from './contents/DocContentsAndPanel.vue';
 
 // 重量级隐藏面板(echarts/jsmind/LLM)按需异步加载: 首次打开时才挂载与下载对应chunk
 const MindGraph = defineAsyncComponent(() => import('./mind/MindGraph.vue'))
-const LinkList = defineAsyncComponent(() => import('./LinkList.vue'))
 const KnowledgeNetwork = defineAsyncComponent(() => import('./knowledge/KnowledgeNetwork.vue'))
 const KnowledgeReviewer = defineAsyncComponent(() => import('./knowledge/KnowledgeReviewer.vue'))
 const LLM = defineAsyncComponent(() => import('./knowledge/LLM.vue'))
@@ -122,7 +119,6 @@ export default defineComponent({
     ToolBox,
     LinkPopover,
     DocSideCategory,
-    LinkList,
     KnowledgeNetwork,
     DocBreadcrumbNav,
     DocTabNav,
@@ -150,17 +146,15 @@ export default defineComponent({
     const panels = reactive({
       mindGraph: false,
       knowledgeNetwork: false,
-      linkList: false,
       knowledgeReviewer: false,
       llm: false,
     })
     const mindGraph = ref<any>()
     const knowledgeNetwork = ref<any>()
-    const linkList = ref<any>()
     const knowledgeReviewer = ref<any>()
     const llm = ref<any>()
     const refMap: Record<keyof typeof panels, typeof mindGraph> = {
-      mindGraph, knowledgeNetwork, linkList, knowledgeReviewer, llm,
+      mindGraph, knowledgeNetwork, knowledgeReviewer, llm,
     }
     const openPanel = async (name: keyof typeof panels) => {
       const firstOpen = !panels[name]
@@ -179,7 +173,6 @@ export default defineComponent({
       panels,
       mindGraph, showMindGraph: () => openPanel('mindGraph'),
       knowledgeNetwork, showKnowledgeNetwork: () => openPanel('knowledgeNetwork'),
-      linkList, showLinkList: () => openPanel('linkList'),
       knowledgeReviewer, showKnowledgeReviewer: () => openPanel('knowledgeReviewer'),
       llm, showLLM: () => openPanel('llm'),
     }

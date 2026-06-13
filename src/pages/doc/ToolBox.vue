@@ -61,7 +61,7 @@
 import { defineComponent, markRaw } from "vue";
 import {
   Tools, Share, Connection, DataAnalysis, MagicStick,
-  Position, CopyDocument, EditPen, Link, Refresh, Setting
+  Position, CopyDocument, EditPen, Refresh, Setting
 } from '@element-plus/icons-vue'
 import Category from "@/dto/Category";
 import CategoryService from "@/service/CategoryService";
@@ -80,7 +80,6 @@ type ActionType =
     'showKnowledgeNetwork' |
     'copyDocPath' |
     'copyDocContent' |
-    'showLinkList' |
     'openInEditor' |
     'showLlm' |
     'handleRandomReview'
@@ -113,7 +112,6 @@ export default defineComponent({
     'showKnowledgeNetwork',
     'copyDocPath',
     'copyDocContent',
-    'showLinkList',
     'goToDoc',
     'goToPpt',
     'showKnowledgeReviewer',
@@ -135,7 +133,6 @@ export default defineComponent({
         {name: '路径复制', type: 'success', action: 'copyDocPath', icon: markRaw(Position), hotkey: 'alt + c', divided: true},
         {name: '知识复制', type: 'warning', action: 'copyDocContent', icon: markRaw(CopyDocument), hotkey: 'alt + x'},
         {name: '在VSC打开', type: 'danger', action: 'openInEditor', icon: markRaw(EditPen), hotkey: 'alt + v'},
-        {name: '链接列表', type: 'primary', action: 'showLinkList', icon: markRaw(Link)},
         {name: '随机复习', type: 'primary', action: 'randomReview' as LocalActionType, icon: markRaw(Refresh), local: true, hotkey: 'alt + n'},
         {name: '更多设置', type: 'info', action: 'showMoreSetting' as LocalActionType, icon: markRaw(Setting), local: true, divided: true},
       ] as Action[]

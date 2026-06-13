@@ -13,6 +13,7 @@ import {
   TooltipComponent,
   TooltipComponentOption,
   LegendComponent,
+  GraphicComponent,
 } from "echarts/components";
 import { GraphChart, GraphSeriesOption } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
@@ -29,6 +30,7 @@ echarts.use([
   GraphChart,
   CanvasRenderer,
   LegendComponent,
+  GraphicComponent,
 ]);
 
 type EChartsOption = echarts.ComposeOption<
@@ -92,7 +94,7 @@ export default defineComponent({
       this.init();
     },
     mode() {
-      this.init(false);
+      this.init();
     },
     onlySelfRelated() {
       this.init();
@@ -105,6 +107,10 @@ export default defineComponent({
     },
     zoom(newVal) {
       this.updateChartZoom(newVal);
+    },
+    // 主题切换时重读CSS令牌重渲染(画布内颜色是初始化时解析的快照)
+    isDark() {
+      this.init();
     }
   },
   computed: {
@@ -135,6 +141,10 @@ export default defineComponent({
     generateRandomId(): string {
       return 'knowledgeNetwork' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     },
+    // 解析CSS语义令牌的当前值(canvas绘制无法直接用var() 需取快照 主题切换由isDark watcher重渲染)
+    css(name: string): string {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    },
     setupResizeObserver() {
       const chartDom = document.querySelector('.knowledge-network-chart') || document.getElementById(this.id);
       if (chartDom) {
@@ -157,13 +167,25 @@ export default defineComponent({
         timeout = setTimeout(() => func.apply(this, args), wait);
       };
     },
-    async init(potentialProcess: boolean = true) {
-      const stream = (await KnowledgeNetworkService.getDocStream(this.doc)).flatMap(v => v)
-      // 若是潜在知识网络 默认设置为圆圈展示模式
-      if (this.isPotential && potentialProcess) {
-        // Note: 由于mode是通过props传入的，不能在这里直接修改
-        // this.mode = 'circular';
+    async init() {
+      // 图表实例先就绪 数据加载期间展示loading而非白屏
+      if (this.chart) {
+        this.chart.dispose();
       }
+      const chartDom = document.getElementById(this.id);
+      if (!chartDom) {
+        return;
+      }
+      this.chart = echarts.init(chartDom);
+      this.chart.showLoading({
+        text: '正在加载知识网络…',
+        color: this.css('--primary-color') || '#409eff',
+        textColor: this.css('--secondary-text-color'),
+        maskColor: 'transparent',
+        fontSize: 13,
+      });
+
+      const stream = (await KnowledgeNetworkService.getDocStream(this.doc)).flatMap(v => v)
       let knowledgeNetwork: KnowledgeNode[] = this.isPotential ? await api.getPotentialKnowledgeNetwork() : await api.getKnowledgeNetwork();
       if (this.onlySelfRelated) {
         // 非隐式知识网络才能进行度数过滤
@@ -177,15 +199,7 @@ export default defineComponent({
       // 创建节点和边的数据
       const nodes = KnowledgeNetworkDataProcessor.createNodes(knowledgeNetwork, this.doc, stream);
       this.nodes = nodes; // 存储nodes以便在autoFitChart方法中使用
-      const nodeMap = KnowledgeNetworkDataProcessor.buildNodeMap(nodes);
       const links = KnowledgeNetworkDataProcessor.createLinks(knowledgeNetwork);
-      // 图表创建、参数设置
-      // if (!this.chart) {
-      if (this.chart) {
-        this.chart.dispose();
-      }
-        const chartDom = document.getElementById(this.id)!;
-        this.chart = echarts.init(chartDom);
         // 点击事件
         this.chart.on("click", (e) => {
           if (e.componentType !== 'legend') {
@@ -222,17 +236,28 @@ export default defineComponent({
         }
       });
 
-      // 定义特殊类别（当前节点和上下游节点）
-      // 取当前节点的实际颜色
-      const currentNodeData = nodes.find((n: any) => n.name === this.doc);
-      const currentNodeColor = currentNodeData?.itemStyle?.color || '#000000';
+      // 当前节点: 主色实心 + 白描边 + 主色发光光环, 像"你在这里"的定位标记, 亮暗都醒目
+      const legendTextColor = this.css('--secondary-text-color');
+      const primary = this.css('--primary-color') || '#409eff';
+      const currentNodeData = nodes.find((n: any) => n.name === this.doc) as any;
+      if (currentNodeData) {
+        currentNodeData.itemStyle = {
+          ...currentNodeData.itemStyle,
+          color: primary,
+          borderColor: '#fff',
+          borderWidth: 2,
+          shadowBlur: 18,
+          shadowColor: primary,
+        };
+        currentNodeData.symbolSize = 32;
+      }
+      const currentNodeColor = primary;
 
       const specialCategories = [
         {
           name: "当前",
           itemStyle: {
             color: currentNodeColor,
-            opacity: this.isDark ? 0.9 : 1
           },
         },
       ];
@@ -243,9 +268,8 @@ export default defineComponent({
         { name: "当前", icon: "roundRect",
         itemStyle: {
           color: currentNodeColor,
-          opacity: this.isDark ? 0.9 : 1
         },
-         textStyle: { color: this.isDark ? '#eee' : '#555' }},
+         textStyle: { color: legendTextColor }},
       ];
 
       docCategories.forEach(category => {
@@ -258,7 +282,6 @@ export default defineComponent({
               name: category,
               itemStyle: {
                 color: color,
-                opacity: this.isDark ? 0.9 : 1,
               },
             });
             legendData.push({
@@ -266,9 +289,8 @@ export default defineComponent({
               icon: "roundRect",
               itemStyle: {
                 color: color,
-                opacity: this.isDark ? 0.9 : 1,
               },
-              textStyle: { color: this.isDark ? '#eee' : '#555' }
+              textStyle: { color: legendTextColor }
             });
           }
         }
@@ -296,20 +318,44 @@ export default defineComponent({
       // 按分类预设初始位置，让同类节点从聚类中心出发
       this.assignClusterPositions(nodes, categoryList, chartDomForPos);
 
+      // 空态: 没有任何关联时给出提示而非一片空白
+      const isEmpty = links.length === 0 && nodes.length <= 1;
+
       const option: EChartsOption = {
         title: {
           text: "知识网络",
           show: this.showChartText,
           top: 'bottom',
-          left: 'right'
+          left: 'right',
+          textStyle: {
+            color: this.css('--secondary-text-color'),
+            fontSize: 14,
+          }
         },
         darkMode: this.isDark,
+        graphic: isEmpty ? [{
+          type: 'text',
+          left: 'center',
+          top: 'middle',
+          silent: true,
+          style: {
+            text: '当前文档暂无知识关联\n试试切换到「隐式」网络或取消「仅看相关」',
+            fill: this.css('--secondary-text-color'),
+            font: '14px sans-serif',
+            align: 'center' as const,
+            lineHeight: 24,
+          }
+        }] : [],
+        // tooltip是HTML浮层 可直接用CSS变量 主题切换自动适配
         tooltip: {
           show: this.showTooltip,
-          backgroundColor: this.isDark ? 'var(--main-dark-bg-color)' :'#fff',
+          confine: true,
+          backgroundColor: 'var(--elevated-bg-color)',
+          borderColor: 'var(--border-color)',
           textStyle: {
-            color: this.isDark ? 'var(--dark-text-color)' :'',
+            color: 'var(--main-text-color)',
           },
+          extraCssText: 'box-shadow: var(--shadow-lg); border-radius: 8px; max-width: 380px;',
           formatter(params: any, ticket: string, callback: (ticket: string, html: string) => string | HTMLElement | HTMLElement[]): string {
             const name: string = (params.data as any).name;
             // 如果不存在name 则就是边的tooltip
@@ -334,20 +380,17 @@ export default defineComponent({
         // 数据更新动画的时长
         animationDurationUpdate: 1500,
         animationEasingUpdate: "quinticInOut",
-        label: {
-          normal: {
-            show: true,
-            textStyle: {
-              fontSize: 12,
-            },
-          },
-        },
         legend: {
-          x: "center",
+          left: "center",
+          // 分类多时图例可分页滚动 不再挤压图表
+          type: "scroll",
           show: this.showLegend,
           data: legendData,
           textStyle: {
-            color: this.isDark ? '#eee' : '#555'
+            color: legendTextColor
+          },
+          pageTextStyle: {
+            color: legendTextColor
           }
         },
         series: [
@@ -355,44 +398,39 @@ export default defineComponent({
             type: "graph",
             layout: this.mode,
             symbolSize: 45,
-            focusNodeAdjacency: true,
             roam: true,
             roamTrigger: 'global',
             draggable: true,
             categories: categoryList,
             zoom: this.graphZoom,
-            // 节点的文字样式
+            // 节点标签: 始终显示, 同背景色光晕描边让文字"浮"在杂乱连线之上仍清晰
             label: {
               show: true,
-              position: "top",
-              fontSize: 14,
-              color: this.isDark ? "#eee":"#555",
-              textBorderWidth: 1,
+              position: "bottom",
+              distance: 5,
+              fontSize: 12,
+              fontWeight: 500,
+              color: this.css('--main-text-color'),
+              textBorderColor: this.css('--card-bg-color'),
+              textBorderWidth: 3,
               // 将文档id进行处理 提取为文档最后一个名称
               formatter(params): string {
                 const name: string = (params.data as any).name;
                 const arr = name.split("-");
-                return [`{title|${arr[arr.length - 1]}}`,
-                        // `{category|『${name.replaceAll(/-/g, '/')}』}`
-                ].join("\n");
+                return arr[arr.length - 1];
               },
-              rich: {
-                title: {
-                  align: "center",
-                  fontSize: "15px",
-                  color: this.isDark ? '#eee' :'#4C4C49',
-                },
-                category: {
-                  align: "center",
-                  color: '#46adff',
-                  textBorderColor: this.isDark ? "":"#fff",
-                }
-              }
+            },
+            // 标签重叠时自动隐藏被压住的, 放大(roam)后空间变大会重新显示更多
+            // 既保证"尽量都显示"又不糊成一团; emphasis.label强制显示被隐藏的悬浮标签
+            labelLayout: {
+              hideOverlap: true,
             },
             force: {
-              repulsion: [nodeMap.size * 1, nodeMap.size * 100],
-              gravity: nodeMap.size / 1000,
-              edgeLength: 200,
+              // 舒展铺开 + 封顶: 原repulsion上限随节点数无界放大(n*100)数百节点会爆开 这里给斥力上限封顶
+              // gravity保持很低让节点充分散开 edgeLength回到宽松值
+              repulsion: Math.max(400, Math.min(1600, nodes.length * 35)),
+              gravity: 0.05,
+              edgeLength: [120, 220],
             },
             edgeSymbolSize: 6,
             edgeSymbol: ['', ''], // 移除箭头符号，实现无向图效果
@@ -404,22 +442,28 @@ export default defineComponent({
             data: nodes,
             links,
             lineStyle: {
-              opacity: 0.4,
+              // 次级文本色比原#aaa更深 降低不透明度补偿 避免密集网络糊成一团
+              opacity: 0.22,
               curveness: 0,
               width: 1,
-              color: this.isDark ? "#666" : "#aaa",
+              color: this.css('--secondary-text-color'),
             },
             emphasis: {
               focus: "adjacency",
+              label: {
+                show: true,
+              },
               lineStyle: {
-                opacity: 0.6,
+                opacity: 0.8,
                 width: 2,
+                color: this.css('--primary-color') || '#409eff',
               },
             },
           },
         ],
       };
 
+      this.chart.hideLoading();
       this.chart.setOption(option);
       
       // 通过 graphRoam 事件的 params.zoom（缩放倍率）累积跟踪当前缩放级别
@@ -562,7 +606,6 @@ export default defineComponent({
           }
         });
 
-        console.log('nodeDataIndexes', nodeDataIndexes)
         // 高亮节点和边
         this.chart.dispatchAction({ type: 'highlight', seriesIndex:0, 
           batch:[

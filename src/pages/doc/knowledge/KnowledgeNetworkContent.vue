@@ -39,7 +39,8 @@ export default defineComponent({
       mode: 'force' as "force" | "circular" | "none",
       onlySelfRelated: true,
       isPotential: false,
-      degree: 3,
+      // 默认2跳: 1跳太稀 3跳数百节点首屏过密
+      degree: 2,
     };
   },
   mounted() {

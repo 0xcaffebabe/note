@@ -1,32 +1,50 @@
 <template>
-  <!-- 右侧悬浮标签: 悬停展开关联内容面板 (面板是标签的DOM后代 移到面板上不会触发mouseleave 形成悬停桥) -->
+  <!-- 右侧悬浮标签: 悬停展开"相关链接"面板 上下两组 关联内容(跳转) / 其他链接(滚到正文位置) -->
   <div
     class="related-floating"
-    v-if="links.length"
+    v-if="total"
     @mouseenter="reveal"
     @mouseleave="scheduleHide"
   >
     <transition name="rf">
-      <div class="rf-panel" v-show="open" role="region" aria-label="关联内容">
+      <div class="rf-panel" v-show="open" role="region" aria-label="相关链接">
         <div class="rf-panel-head">
           <el-icon class="rf-head-icon"><Connection /></el-icon>
-          <span class="rf-head-title">关联内容</span>
-          <span class="rf-head-count">{{ links.length }}</span>
+          <span class="rf-head-title">相关链接</span>
+          <span class="rf-head-count">{{ total }}</span>
         </div>
-        <div class="rf-list">
-          <a
-            v-for="(link, index) in links"
-            :key="link.href + '-' + index"
-            class="rf-item"
-            :href="link.href"
-            @click.prevent="go(link.href)"
-          >
-            <div class="rf-item-head">
-              <span class="rf-name">{{ docName(link.path) }}</span>
-              <span class="rf-breadcrumb" v-if="breadcrumb(link.path)">{{ breadcrumb(link.path) }}</span>
-            </div>
-            <p class="rf-desc" v-if="link.desc">{{ link.desc }}</p>
-          </a>
+        <div class="rf-body">
+          <template v-if="related.length">
+            <div class="rf-group">关联内容 <span class="rf-group-num">{{ related.length }}</span></div>
+            <a
+              v-for="(link, i) in related"
+              :key="'r-' + link.href + i"
+              class="rf-item"
+              :href="link.href"
+              @click.prevent="go(link.href)"
+            >
+              <div class="rf-item-head">
+                <span class="rf-name">{{ docName(link.path) }}</span>
+                <span class="rf-breadcrumb" v-if="breadcrumb(link.path)">{{ breadcrumb(link.path) }}</span>
+              </div>
+              <p class="rf-desc" v-if="link.desc">{{ link.desc }}</p>
+            </a>
+          </template>
+          <template v-if="docLinks.length">
+            <div class="rf-group">其他链接 <span class="rf-group-num">{{ docLinks.length }}</span></div>
+            <a
+              v-for="(link, i) in docLinks"
+              :key="'d-' + link.href + i"
+              class="rf-item"
+              :href="link.href"
+              @click.prevent="locate(link.href)"
+            >
+              <div class="rf-item-head">
+                <span class="rf-name">{{ docName(link.path) }}</span>
+                <span class="rf-breadcrumb" v-if="breadcrumb(link.path)">{{ breadcrumb(link.path) }}</span>
+              </div>
+            </a>
+          </template>
         </div>
       </div>
     </transition>
@@ -35,11 +53,11 @@
       class="rf-tab"
       :class="{ active: open }"
       :aria-expanded="open"
-      aria-label="关联内容"
+      aria-label="相关链接"
       @click="toggle"
     >
       <el-icon class="rf-tab-icon"><Connection /></el-icon>
-      <span class="rf-tab-count">{{ links.length }}</span>
+      <span class="rf-tab-count">{{ total }}</span>
     </button>
   </div>
 </template>
@@ -48,11 +66,18 @@
 import { defineComponent, PropType } from 'vue'
 import { Connection } from '@element-plus/icons-vue'
 import { RelatedLink } from '@/dto/RelatedLink'
+import DocUtils from '@/util/DocUtils'
 
 export default defineComponent({
   components: { Connection },
   props: {
-    links: {
+    // 关联内容章节(带关联理由, 点击跳转到目标文档)
+    related: {
+      type: Array as PropType<RelatedLink[]>,
+      default: () => [],
+    },
+    // 正文里指向其他文档的链接(点击滚动到正文中该链接的位置)
+    docLinks: {
       type: Array as PropType<RelatedLink[]>,
       default: () => [],
     },
@@ -62,6 +87,11 @@ export default defineComponent({
       open: false,
       leaveTimer: 0 as ReturnType<typeof setTimeout> | 0,
     }
+  },
+  computed: {
+    total(): number {
+      return this.related.length + this.docLinks.length
+    },
   },
   methods: {
     reveal() {
@@ -91,12 +121,46 @@ export default defineComponent({
       parts.pop()
       return parts.join(' / ')
     },
+    // 关联内容: 跳转到目标文档
     go(href: string) {
-      // 清理待执行的关闭计时器: 否则跳转后(组件复用)它会在新文档上误触发关闭
+      // 保持面板打开: 跳转后组件复用 清掉待执行的关闭计时器避免被误关
       clearTimeout(this.leaveTimer)
-      this.open = false
       const prefix = this.$route.path.startsWith('/m/') ? '/m' : ''
       this.$router.push(prefix + href)
+    },
+    // 其他链接: 滚动到正文中该链接首次出现的位置 并短暂高亮
+    locate(href: string) {
+      let docId = ''
+      try {
+        docId = DocUtils.htmlUrl2Id(href.split(/[?#]/)[0])
+      } catch {
+        return
+      }
+      const section = document.querySelector('.main.markdown-section') || document.querySelector('.markdown-section')
+      if (!section) {
+        return
+      }
+      const anchors = Array.from(section.querySelectorAll('a[href]')) as HTMLElement[]
+      const target = anchors.find(a => {
+        try {
+          return DocUtils.htmlUrl2Id((a.getAttribute('href') || '').split(/[?#]/)[0]) === docId
+        } catch {
+          return false
+        }
+      })
+      if (!target) {
+        return
+      }
+      // 保持面板打开 取消可能待执行的关闭计时器
+      clearTimeout(this.leaveTimer)
+      // 固定顶栏留 88px 余量(与标题 scroll-margin-top 一致)
+      const top = window.scrollY + target.getBoundingClientRect().top - 88
+      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
+      // 短暂高亮被定位的链接
+      const orig = target.style.backgroundColor
+      target.style.transition = 'background-color 0.3s ease'
+      target.style.backgroundColor = 'var(--primary-light-color)'
+      setTimeout(() => { target.style.backgroundColor = orig }, 1600)
     },
   },
   mounted() {
@@ -208,10 +272,7 @@ export default defineComponent({
   border-radius: 999px;
 }
 
-.rf-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.rf-body {
   overflow-y: auto;
   padding: var(--spacing-sm);
 
@@ -230,9 +291,31 @@ export default defineComponent({
   }
 }
 
+// 分组标题: 关联内容 / 其他链接
+.rf-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--spacing-sm) var(--spacing-sm) 4px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--secondary-text-color);
+
+  &:first-child {
+    padding-top: 2px;
+  }
+}
+
+.rf-group-num {
+  font-weight: 500;
+  opacity: 0.8;
+}
+
 .rf-item {
   display: block;
   padding: var(--spacing-sm) var(--spacing-md);
+  margin-bottom: 2px;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   text-decoration: none;

@@ -35,8 +35,8 @@
   </nav>
   <mobile-toc ref="mobileToc" :contents-list="contentsList" @item-click="handleTocItemClick" />
   <link-popover ref="linkPopover"/>
-  <!-- 关联内容: 右侧悬浮标签 点按展开(触屏) -->
-  <related-content :links="file.relatedLinks || []" />
+  <!-- 相关链接: 右侧悬浮标签 点按展开(关联内容 + 文内其他文档链接) -->
+  <related-content :related="file.relatedLinks || []" :doc-links="docLinks" />
   <mind-graph v-if="panels.mindGraph" ref="mindGraph" />
   <image-viewer ref="imageViewer" />
   <knowledge-reviewer v-if="panels.knowledgeReviewer" ref="knowledgeReviewer" :doc="doc" />
@@ -55,6 +55,7 @@
 import { defineComponent, defineAsyncComponent, reactive, ref } from 'vue'
 import DocFileInfo from '@/dto/DocFileInfo'
 import Content from '@/dto/Content'
+import { RelatedLink } from '@/dto/RelatedLink'
 import DocService from '@/service/DocService'
 import DocUtils from '@/util/DocUtils'
 import '../markdown-v1.less'
@@ -132,6 +133,10 @@ export default defineComponent({
   computed: {
     contentHtml(): string {
       return DocService.renderMd(this.file);
+    },
+    // 正文里指向其他文档的链接(排除已在关联内容中的)
+    docLinks(): RelatedLink[] {
+      return DocService.resolveDocLinks(this.contentHtml, this.doc, (this.file.relatedLinks || []).map(l => l.href));
     },
   },
   data() {

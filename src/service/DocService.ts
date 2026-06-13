@@ -17,6 +17,7 @@ import DocRender from '../render/DocRender'
 import { KnowledgeNode } from '@/dto/KnowledgeNode'
 import TagService from '../service/TagService'
 import KnowledgeNetworkService from '../service/KnowledgeNetworkService'
+import { RelatedLink } from '@/dto/RelatedLink'
 
 const cache = Cache()
 // 以下方法的参数包含整篇文档内容/HTML 用自定义键避免每次缓存查找都序列化大参数
@@ -466,6 +467,36 @@ class DocService implements Cacheable{
       result.push({text: i.innerText, link: i.getAttribute('href') || ''})
     }
     return result;
+  }
+
+  // 解析正文里指向"其他文档"的站内链接(供关联面板"其他链接"分组)
+  // 只取.html站内文档 排除外链/锚点/当前文档自身/已在关联内容中的 并按文档去重
+  public resolveDocLinks(docHtml: string, currentDocId: string, excludeHrefs: string[] = []): RelatedLink[] {
+    const exclude = new Set(excludeHrefs)
+    const seen = new Set<string>()
+    const result: RelatedLink[] = []
+    for (const { link } of this.resolveLinkList(docHtml)) {
+      if (!/\.html(\?|#|$)/.test(link)) {
+        continue // 非站内文档页(外链/mailto等)跳过
+      }
+      const cleanLink = link.split(/[?#]/)[0]
+      let docId: string
+      try {
+        docId = DocUtils.htmlUrl2Id(cleanLink)
+      } catch {
+        continue
+      }
+      if (!docId || docId === currentDocId) {
+        continue // 自链/标题锚点跳过
+      }
+      const href = DocUtils.docId2HtmlPath(docId)
+      if (exclude.has(href) || seen.has(docId)) {
+        continue // 已在关联内容 或 重复
+      }
+      seen.add(docId)
+      result.push({ href, path: DocUtils.docId2Url(docId), desc: '' })
+    }
+    return result
   }
 
 

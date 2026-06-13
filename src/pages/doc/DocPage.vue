@@ -57,8 +57,8 @@
   <!-- 工具栏结束 -->
   <link-popover ref="linkPopover"/>
   <el-backtop :bottom="32" :right="28" />
-  <!-- 关联内容: 右侧悬浮标签 悬停展开 (无关联文档时整体不渲染) -->
-  <related-content :links="relatedLinks" />
+  <!-- 相关链接: 右侧悬浮标签 悬停展开(关联内容 + 文内其他文档链接) -->
+  <related-content :related="relatedLinks" :doc-links="docLinks" />
   <!-- 隐藏面板按需挂载: 首次打开时才下载与渲染对应chunk -->
   <mind-graph v-if="panels.mindGraph" ref="mindGraph" @close="showAside = true;isDrawerShow = false" />
   <link-list v-if="panels.linkList" :html="contentHtml" ref="linkList"/>
@@ -206,6 +206,10 @@ export default defineComponent({
     relatedLinks(): RelatedLink[] {
       // 关联链接已在接口取文档时抽取并从正文剥离(DocService.getDocFileInfo)
       return this.file.relatedLinks || [];
+    },
+    // 正文里指向其他文档的链接(排除已在关联内容中的)
+    docLinks(): RelatedLink[] {
+      return DocService.resolveDocLinks(this.contentHtml, this.doc, this.relatedLinks.map(l => l.href));
     }
   },
   methods: {

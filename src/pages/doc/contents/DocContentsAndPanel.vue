@@ -161,15 +161,6 @@ export default defineComponent({
     height: 100%;
     width: 100%;
   }
-
-  :deep(.mind-note) {
-    height: 100%;
-    width: 100%;
-    position: static;
-    border: none;
-    box-shadow: none;
-    border-radius: 0;
-  }
 }
 
 /* 为小屏幕调整: 断点统一为1280 */

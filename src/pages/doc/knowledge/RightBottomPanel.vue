@@ -28,7 +28,8 @@
       </el-carousel-item>
       <el-carousel-item>
         <div class="carousel-item-content">
-          <mind id="panelMind" class="carousel-content" :mind-data="mindData" />
+          <!-- 迷你面板空间有限 不显示画布工具栏 -->
+          <mind id="panelMind" class="carousel-content" :mind-data="mindData" :toolbar="false" />
         </div>
       </el-carousel-item>
     </el-carousel>

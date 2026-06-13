@@ -14,12 +14,12 @@ export namespace MindUtils {
     });
   }
 
-  export function mindConvert(toc: Content[]): MindNode[] {
+  export function mindConvert(toc: Content[], rootTopic: string = "目录"): MindNode[] {
     const minds = _mindConvert(toc);
     if (minds.length > 1) {
       return [{
         id: "root",
-        topic: "root",
+        topic: rootTopic,
         expanded: true,
         children: minds,
         direction: "left",

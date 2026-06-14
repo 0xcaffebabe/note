@@ -73,9 +73,14 @@ export default defineComponent({
     }
   },
   methods: {
+    handleResize() {
+      this.chart?.resize();
+    },
     async init() {
       const data = cloneDeep(await api.getCommitTotalTrend()) as [string, number, number, number][];
-      const myChart = echarts.init(this.$refs.chartContainer as HTMLElement);
+      // 复用实例: isDark/type 切换会重入 init, 先 dispose 避免同 dom 多实例泄漏
+      this.chart?.dispose();
+      const myChart = (this.chart = echarts.init(this.$refs.chartContainer as HTMLElement));
 
       if (this.type === 'relative') {
         for(let i = data.length - 1; i > 0; i--) {
@@ -161,6 +166,12 @@ export default defineComponent({
   },
   async mounted() {
     this.init()
+    window.addEventListener("resize", this.handleResize);
+  },
+  unmounted() {
+    window.removeEventListener("resize", this.handleResize);
+    this.chart?.dispose();
+    this.chart = null;
   },
 });
 </script>

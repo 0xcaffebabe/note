@@ -60,6 +60,9 @@ export default defineComponent({
     }
   },
   methods: {
+    handleResize() {
+      this.chart?.resize();
+    },
     updateChart(){
       const option: EChartsOption = {
       tooltip: {
@@ -129,6 +132,12 @@ export default defineComponent({
       this.chart = echarts.init(chartDom);
     }
     this.updateChart()
+    window.addEventListener("resize", this.handleResize);
+  },
+  unmounted() {
+    window.removeEventListener("resize", this.handleResize);
+    this.chart?.dispose();
+    this.chart = null;
   },
 });
 </script>

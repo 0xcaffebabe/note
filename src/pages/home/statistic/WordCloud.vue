@@ -60,9 +60,14 @@ export default defineComponent({
       lastMouseY: 0,
       animationId: null as number | null,
       tooltip: null as HTMLDivElement | null,
-      boundDrag: null as ((e: MouseEvent) => void) | null,
+      boundDrag: null as ((e: PointerEvent) => void) | null,
       boundEndDrag: null as (() => void) | null,
-      boundMouseDown: null as ((e: MouseEvent) => void) | null,
+      boundMouseDown: null as ((e: PointerEvent) => void) | null,
+      // canvas 悬停/点击监听(tooltip)的可移除引用: 重入 init 时先解绑 避免累积
+      boundCanvasMove: null as ((e: PointerEvent) => void) | null,
+      boundCanvasClick: null as ((e: PointerEvent) => void) | null,
+      resizeObserver: null as ResizeObserver | null,
+      resizeTimer: undefined as ReturnType<typeof setTimeout> | undefined,
     };
   },
   computed: {
@@ -111,11 +116,12 @@ export default defineComponent({
       const tooltip = this.tooltip;
       const canvas = this.canvas;
 
-      this.boundMouseDown = (e: MouseEvent) => {
+      // 指针事件统一鼠标/触屏: 移动端可拖拽旋转 3D 词云
+      this.boundMouseDown = (e: PointerEvent) => {
         this.startDrag(e);
       };
 
-      this.boundDrag = (e: MouseEvent) => {
+      this.boundDrag = (e: PointerEvent) => {
         if (this.isDragging) {
           this.drag(e);
         } else {
@@ -127,21 +133,23 @@ export default defineComponent({
         this.endDrag();
       };
 
-      canvas.addEventListener("mousedown", this.boundMouseDown);
-      document.addEventListener("mousemove", this.boundDrag);
-      document.addEventListener("mouseup", this.boundEndDrag);
+      canvas.addEventListener("pointerdown", this.boundMouseDown);
+      document.addEventListener("pointermove", this.boundDrag);
+      document.addEventListener("pointerup", this.boundEndDrag);
+      document.addEventListener("pointercancel", this.boundEndDrag);
     },
 
     // 移除 3D 事件
     remove3DEvents() {
       if (this.canvas && this.boundMouseDown) {
-        this.canvas.removeEventListener("mousedown", this.boundMouseDown);
+        this.canvas.removeEventListener("pointerdown", this.boundMouseDown);
       }
       if (this.boundDrag) {
-        document.removeEventListener("mousemove", this.boundDrag);
+        document.removeEventListener("pointermove", this.boundDrag);
       }
       if (this.boundEndDrag) {
-        document.removeEventListener("mouseup", this.boundEndDrag);
+        document.removeEventListener("pointerup", this.boundEndDrag);
+        document.removeEventListener("pointercancel", this.boundEndDrag);
       }
     },
 
@@ -436,7 +444,7 @@ export default defineComponent({
 
       const dpr = window.devicePixelRatio || 1;
 
-      this.canvas.addEventListener("mousemove", (e) => {
+      this.boundCanvasMove = (e: PointerEvent) => {
         if (this.is3D && this.isDragging) {
           return;
         }
@@ -480,9 +488,9 @@ export default defineComponent({
           tooltip.style.display = "none";
           this.canvas!.style.cursor = "default";
         }
-      });
+      };
 
-      this.canvas.addEventListener("click", (e) => {
+      this.boundCanvasClick = (e: PointerEvent) => {
         if (this.is3D) {
           this.handle3DClick(e, dpr);
           return;
@@ -509,7 +517,26 @@ export default defineComponent({
             break;
           }
         }
-      });
+      };
+
+      // 指针事件: 2D 触屏点按/悬停也能命中 tooltip
+      this.canvas.addEventListener("pointermove", this.boundCanvasMove);
+      this.canvas.addEventListener("click", this.boundCanvasClick as EventListener);
+    },
+
+    // 解绑全部交互监听 + 移除 tooltip(isDark 切换 / 容器 resize 重入 init 前调用, 防累积泄漏)
+    teardownInteractions() {
+      this.remove3DEvents();
+      if (this.canvas && this.boundCanvasMove) {
+        this.canvas.removeEventListener("pointermove", this.boundCanvasMove);
+      }
+      if (this.canvas && this.boundCanvasClick) {
+        this.canvas.removeEventListener("click", this.boundCanvasClick as EventListener);
+      }
+      if (this.tooltip) {
+        this.tooltip.remove();
+        this.tooltip = null;
+      }
     },
 
     handle3DMouseMove(e: MouseEvent, tooltip: HTMLDivElement, dpr: number) {
@@ -576,8 +603,10 @@ export default defineComponent({
     },
 
     async init() {
+      // 幂等重入(isDark 切换 / 容器 resize): 先解绑上一轮交互, 避免监听与 tooltip 累积
+      this.teardownInteractions();
       const list = await api.getWordCloud();
-      
+
       this.words = list.map((v: [string, number]) => ({
         name: v[0],
         value: v[1],
@@ -605,10 +634,10 @@ export default defineComponent({
       const dpr = window.devicePixelRatio || 1;
       const rect = container.getBoundingClientRect();
       
+      // 显示尺寸交给 CSS(width:100% / height:500px), 这里只按容器实际尺寸设置画布分辨率
+      // 不再写死内联 px 宽高: 容器变窄时画布随 CSS 收缩而非横向溢出
       this.canvas.width = rect.width * dpr;
       this.canvas.height = rect.height * dpr;
-      this.canvas.style.width = `${rect.width}px`;
-      this.canvas.style.height = `${rect.height}px`;
 
       this.ctx = this.canvas.getContext("2d")!;
       // 不设置 scale，直接使用设备像素，这样所有坐标都是实际像素
@@ -657,18 +686,26 @@ export default defineComponent({
   },
   async mounted() {
     this.init();
+    // 容器尺寸变化(视口缩放/旋转/断点切换 :column)时去抖重排, 保持画布响应式
+    const wrapper = (this.$refs.canvasRef as HTMLCanvasElement | undefined)?.parentElement;
+    if (wrapper && typeof ResizeObserver !== "undefined") {
+      this.resizeObserver = new ResizeObserver(() => {
+        clearTimeout(this.resizeTimer);
+        this.resizeTimer = setTimeout(() => this.init(), 200);
+      });
+      this.resizeObserver.observe(wrapper);
+    }
   },
   beforeUnmount() {
-    // 清理 tooltip
-    if (this.tooltip) {
-      this.tooltip.remove();
-    }
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
+    clearTimeout(this.resizeTimer);
     // 清理动画
     if (this.animationId) {
       cancelAnimationFrame(this.animationId);
     }
-    // 清理 3D 事件监听器
-    this.remove3DEvents();
+    // 解绑全部交互监听 + 移除 tooltip
+    this.teardownInteractions();
   },
 });
 </script>
@@ -709,9 +746,13 @@ export default defineComponent({
 }
 
 #wordcloud {
-  width: 1000px;
+  // 响应式: 宽度跟随容器(上限 1000), 不再固定 1000px 造成移动端横向溢出
+  width: 100%;
+  max-width: 1000px;
   height: 500px;
   margin: 0 auto;
   display: block;
+  // 触屏拖拽旋转 3D 词云时禁用浏览器默认手势(滚动/缩放) 否则拖不动
+  touch-action: none;
 }
 </style>

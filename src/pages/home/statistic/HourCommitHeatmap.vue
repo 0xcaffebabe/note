@@ -18,6 +18,11 @@ type EChartsOption = echarts.ComposeOption<
 
 export default defineComponent({
   setup() {},
+  data() {
+    return {
+      chart: null as echarts.ECharts | null,
+    };
+  },
   computed: {
     isDark() {
       return this.$store.state.isDarkMode;
@@ -29,6 +34,9 @@ export default defineComponent({
     },
   },
   methods: {
+    handleResize() {
+      this.chart?.resize();
+    },
     async init() {
       const raw = new Map<string, number>(await api.getHourCommitHeatmap());
       let data = [];
@@ -37,7 +45,9 @@ export default defineComponent({
         data.push([i, raw.get(i.toString()) || 0]);
       }
       var chartDom = this.$refs.main as HTMLElement;
-      var myChart = echarts.init(chartDom);
+      // 复用实例: isDark 切换会重入 init, 先 dispose 避免同 dom 多实例泄漏
+      this.chart?.dispose();
+      var myChart = (this.chart = echarts.init(chartDom));
       const option: EChartsOption = {
         title: {
           text: "各时段提交统计(GMT+8)",
@@ -77,6 +87,12 @@ export default defineComponent({
   },
   mounted() {
     this.init()
+    window.addEventListener("resize", this.handleResize);
+  },
+  unmounted() {
+    window.removeEventListener("resize", this.handleResize);
+    this.chart?.dispose();
+    this.chart = null;
   },
 });
 </script>

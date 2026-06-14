@@ -44,6 +44,11 @@ const generatePieces = HeatMapUtils.generatePieces
 
 export default defineComponent({
   setup() {},
+  data() {
+    return {
+      chart: null as echarts.ECharts | null,
+    };
+  },
   computed: {
     isDark() {
       return this.$store.state.isDarkMode;
@@ -55,10 +60,15 @@ export default defineComponent({
     },
   },
   methods: {
+    handleResize() {
+      this.chart?.resize();
+    },
     async init() {
       const heatmapData = fillTimeRange(await api.getCommitHeatmap());
       const chartDom = document.getElementById("heatmap")!;
-      const myChart = echarts.init(chartDom);
+      // 复用实例: isDark 切换会重入 init, 先 dispose 避免同 dom 多实例泄漏
+      this.chart?.dispose();
+      const myChart = (this.chart = echarts.init(chartDom));
       let option: EChartsOption;
       const maxValue = heatmapData
         .map((v) => v[1])
@@ -132,6 +142,12 @@ export default defineComponent({
   },
   mounted() {
     this.init();
+    window.addEventListener("resize", this.handleResize);
+  },
+  unmounted() {
+    window.removeEventListener("resize", this.handleResize);
+    this.chart?.dispose();
+    this.chart = null;
   },
 });
 </script>

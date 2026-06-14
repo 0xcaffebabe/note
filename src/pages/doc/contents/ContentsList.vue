@@ -1,5 +1,5 @@
 <template>
-  <div class="toc-container">
+  <div class="toc-container" :class="'mode-' + mode">
     <!-- 阅读进度指示 -->
     <div class="toc-progress" v-if="withEvent">
       <div class="toc-progress-bar" :style="{ width: readingProgress + '%' }"></div>
@@ -15,7 +15,7 @@
 
 <script lang="ts">
 import Content from "@/dto/Content";
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 import ContentsTree from "./ContentsTree.vue";
 import DocService from "@/service/DocService";
 import { ElMessage } from "element-plus";
@@ -36,6 +36,11 @@ export default defineComponent({
     withEvent: {
       type: Boolean,
       default: true,
+    },
+    // 呈现形态: column=桌面粘性列(自带卡片描边) / drawer=移动底部抽屉内(去描边铺满)
+    mode: {
+      type: String as PropType<'column' | 'drawer'>,
+      default: 'column',
     },
   },
   emits: ["item-click"],
@@ -259,16 +264,12 @@ export default defineComponent({
   box-shadow: var(--shadow-md);
   overflow: hidden;
   transition: all 0.3s ease;
-}
 
-@media (max-width: 1180px) {
-  .toc-container {
-    // position: fixed;
-    // right: 10px;
-    // top: 50%;
-    // transform: translateY(-50%);
-    // height: calc(100vh - 200px);
-    // z-index: 998;
+  // 抽屉形态(移动端底部章节抽屉): 去掉卡片描边与圆角 直接铺满抽屉体
+  &.mode-drawer {
+    box-shadow: none;
+    border-radius: 0;
+    background-color: transparent;
   }
 }
 

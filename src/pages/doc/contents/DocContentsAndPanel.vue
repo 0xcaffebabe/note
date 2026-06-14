@@ -40,6 +40,7 @@ import { defineComponent } from "vue";
 import ContentsList from "./ContentsList.vue";
 import RightBottomPanel from "../knowledge/RightBottomPanel.vue";
 import { Folder, FolderOpened } from '@element-plus/icons-vue';
+import { isFull } from "@/composables/useBreakpoint";
 
 export default defineComponent({
   name: "DocContentsAndPanel",
@@ -62,8 +63,21 @@ export default defineComponent({
   emits: ["item-click", "toggle-contents"],
   data() {
     return {
-      showContentsList: window.innerWidth > 1180, // 根据屏幕宽度初始化显示状态
+      // 默认显示状态跟随响应式断点(full≥1280 显示, 否则收起为浮层)
+      // 单一真源 isFull: 与 CSS 的 @bp-desktop 同值, 消除旧 JS(1180)/CSS(1280) 不一致死区
+      showContentsList: isFull.value,
     };
+  },
+  watch: {
+    // 断点跨越时同步默认显隐(同一档位内的用户手动 toggle 不被覆盖)
+    isFull(val: boolean) {
+      this.showContentsList = val;
+    },
+  },
+  computed: {
+    isFull() {
+      return isFull.value;
+    },
   },
   methods: {
     handleTocItemClick(id: string) {
@@ -77,22 +91,6 @@ export default defineComponent({
     setShowContentsList(show: boolean) {
       this.showContentsList = show;
     },
-    handleResize() {
-      // 当窗口大小改变时，根据宽度决定是否显示ContentsList
-      if (window.innerWidth <= 1180) {
-        this.showContentsList = false; // 小屏幕默认隐藏
-      } else {
-        this.showContentsList = true; // 大屏幕默认显示
-      }
-    }
-  },
-  mounted() {
-    // 监听窗口大小变化
-    window.addEventListener('resize', this.handleResize);
-  },
-  beforeUnmount() {
-    // 移除窗口大小监听器
-    window.removeEventListener('resize', this.handleResize);
   }
 });
 </script>
@@ -170,7 +168,8 @@ export default defineComponent({
   }
 }
 
-@media screen and (max-width: 1280px) {
+// 列收起断点与 JS 的 isFull(DESKTOP_MIN=1280) 同源, 消除旧 1180/1280 死区
+@media screen and (max-width: @bp-desktop) {
   .doc-contents-and-panel {
     width: 0;
   }

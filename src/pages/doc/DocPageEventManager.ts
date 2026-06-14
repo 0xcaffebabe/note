@@ -6,7 +6,6 @@ import ResourceBrower from "./ResourceBrower.vue";
 import EventBus from "@/components/EventBus";
 import ImageViewerVue from "@/components/ImageViewer.vue";
 import MermaidUtils from "@/util/MermaidUtils";
-import MobileDocPage from "./mobile/MobileDocPage.vue";
 import InstantPreviewer from './tool/InstantPreviewer.vue'
 import MermaidShower from './mermaid-shower/MermaidShower.vue';
 import { ElMessage } from 'element-plus'
@@ -16,14 +15,14 @@ import { slugify } from "@/util/Slugger";
 
 class DocPageEventManager {
 
-  private docPageInstance: InstanceType<typeof DocPage | typeof MobileDocPage>
+  private docPageInstance: InstanceType<typeof DocPage>
   private isMobile: boolean;
   private cancelLatexTask: (() => void) | null = null;
   private cancelHighlightTask: (() => void) | null = null;
   private scrollHandler: ((e: Event) => void) | null = null;
   private scrollTimer: ReturnType<typeof setTimeout> | undefined;
 
-  constructor(docPageInstance: InstanceType<typeof DocPage | typeof MobileDocPage>, isMobile: boolean = false) {
+  constructor(docPageInstance: InstanceType<typeof DocPage>, isMobile: boolean = false) {
     this.docPageInstance = docPageInstance;
     this.isMobile = isMobile
   }

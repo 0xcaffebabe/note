@@ -122,8 +122,9 @@ const routes: RouteRecordRaw[] = [
       { path: "/m/tag", redirect: to => ({ path: "/m/tag.html", query: to.query }) },
       { path: "/m/tag.html", component: () => import("@/pages/tag/TagListPage.vue"), beforeEnter: mobile2Tablet },
       {
+        // 已折叠为单一响应式 DocPage(取代 MobileDocPage); /m 子树将在路由合流阶段(P5)整体删除
         path: "/m/:docPath(.*\\.html)",
-        component: () => import("@/pages/doc/mobile/MobileDocPage.vue"),
+        component: () => import("@/pages/doc/DocPage.vue"),
         beforeEnter: mobile2Tablet
       },
     ]

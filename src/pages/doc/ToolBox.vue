@@ -1,9 +1,9 @@
 <template>
-  <div class="tool-box" :style="{'top': parentShowHeader? '66px': '6px'}">
-    <el-dropdown trigger="click" placement="bottom-end">
-      <el-button 
-        type="default" 
-        size="small" 
+  <div class="tool-box" :class="{ 'is-mobile': isMobile }" :style="deskStyle">
+    <el-dropdown trigger="click" :placement="isMobile ? 'top-end' : 'bottom-end'">
+      <el-button
+        :type="isMobile ? 'primary' : 'default'"
+        size="small"
         class="tool-button"
         :icon="Tools"
         circle
@@ -13,7 +13,7 @@
         <el-dropdown-menu class="dropdown-menu">
           <!-- 点击直接绑定在菜单项上: 消除按钮嵌套带来的键盘焦点割裂与点击死区 -->
           <el-dropdown-item
-            v-for="action in actionList"
+            v-for="action in visibleActions"
             :key="action.name"
             :divided="action.divided || false"
             class="dropdown-item"
@@ -24,7 +24,8 @@
                 <component :is="action.icon" />
               </el-icon>
               <span class="action-name">{{action.name}}</span>
-              <span class="action-keys" v-if="action.hotkey">
+              <!-- 快捷键提示仅在有物理键盘(非触屏)时展示 -->
+              <span class="action-keys" v-if="action.hotkey && !isTouch">
                 <kbd v-for="(k, i) in action.hotkey.split('+').map(s => s.trim())" :key="i">{{ k }}</kbd>
               </span>
             </span>
@@ -43,11 +44,11 @@
     <div class="more-setting-container">
       <div class="setting-item">
         <span class="setting-label">字体大小</span>
-        <el-slider 
-          v-model="fontSize" 
-          :min="14" 
-          :max="24" 
-          :step="1" 
+        <el-slider
+          v-model="fontSize"
+          :min="fontMin"
+          :max="fontMax"
+          :step="1"
           @input="handleFontSizeChange"
           class="setting-slider"
         />
@@ -65,19 +66,13 @@ import {
 } from '@element-plus/icons-vue'
 import Category from "@/dto/Category";
 import CategoryService from "@/service/CategoryService";
-import DocUtils from "@/util/DocUtils";
 import ConfigService from "@/service/ConfigService";
-
-function random(min: number, max: number) {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+import { isMobile, isTouch, isFull } from "@/composables/useBreakpoint";
 
 type ActionType =
-    'showReadingHistory' |
     'showMindGraph' |
     'showKnowledgeNetwork' |
+    'showKnowledgeReviewer' |
     'copyDocPath' |
     'copyDocContent' |
     'openInEditor' |
@@ -94,6 +89,8 @@ interface Action {
   hotkey?: string
   divided?: boolean
   local?: boolean
+  // 仅 full 档(宽桌面)展示: 如"在VSC打开"对移动端无意义
+  fullOnly?: boolean
 }
 
 export default defineComponent({
@@ -107,14 +104,11 @@ export default defineComponent({
     }
   },
   emits: [
-    'showReadingHistory',
     'showMindGraph',
     'showKnowledgeNetwork',
+    'showKnowledgeReviewer',
     'copyDocPath',
     'copyDocContent',
-    'goToDoc',
-    'goToPpt',
-    'showKnowledgeReviewer',
     'openInEditor',
     'showLlm',
     'handleRandomReview'
@@ -132,11 +126,34 @@ export default defineComponent({
         {name: '知识助手', type: 'warning', action: 'showLlm', icon: markRaw(MagicStick), hotkey: 'alt + i'},
         {name: '路径复制', type: 'success', action: 'copyDocPath', icon: markRaw(Position), hotkey: 'alt + c', divided: true},
         {name: '知识复制', type: 'warning', action: 'copyDocContent', icon: markRaw(CopyDocument), hotkey: 'alt + x'},
-        {name: '在VSC打开', type: 'danger', action: 'openInEditor', icon: markRaw(EditPen), hotkey: 'alt + v'},
+        {name: '在VSC打开', type: 'danger', action: 'openInEditor', icon: markRaw(EditPen), hotkey: 'alt + v', fullOnly: true},
         {name: '随机复习', type: 'primary', action: 'randomReview' as LocalActionType, icon: markRaw(Refresh), local: true, hotkey: 'alt + n'},
         {name: '更多设置', type: 'info', action: 'showMoreSetting' as LocalActionType, icon: markRaw(Setting), local: true, divided: true},
       ] as Action[]
     }
+  },
+  computed: {
+    isMobile(): boolean {
+      return isMobile.value;
+    },
+    isTouch(): boolean {
+      return isTouch.value;
+    },
+    // VSC 等 full-only 动作仅在宽桌面档展示
+    visibleActions(): Action[] {
+      return this.actionList.filter(a => !a.fullOnly || isFull.value);
+    },
+    // 移动端字号上限更高(单栏阅读) 桌面端区间更克制
+    fontMin(): number {
+      return this.isMobile ? 16 : 14;
+    },
+    fontMax(): number {
+      return this.isMobile ? 48 : 24;
+    },
+    // 桌面端按顶栏显隐微调纵向锚点; 移动端用 CSS 固定 FAB 定位
+    deskStyle(): Record<string, string> {
+      return this.isMobile ? {} : { top: this.parentShowHeader ? '66px' : '6px' };
+    },
   },
   methods: {
     localActionDispatch(action: string){
@@ -156,7 +173,7 @@ export default defineComponent({
       this.$emit('handleRandomReview');
     },
     handleKeyDown(e: KeyboardEvent){
-      const actions = this.actionList.filter(v => v.hotkey)
+      const actions = this.visibleActions.filter(v => v.hotkey)
       for(let action of actions) {
         const mainKey = action.hotkey!.split('+')[0].trim();
         const subKey = action.hotkey!.split('+')[1].trim();
@@ -196,8 +213,11 @@ export default defineComponent({
     }
   },
   async created(){
-    document.addEventListener('keydown', this.handleKeyDown);
-    this.flatCategoryList = await CategoryService.getFlatCategoryList();;
+    // 快捷键层仅在有物理键盘(非触屏)时挂载, 避免触屏设备空挂监听
+    if (!isTouch.value) {
+      document.addEventListener('keydown', this.handleKeyDown);
+    }
+    this.flatCategoryList = await CategoryService.getFlatCategoryList();
   },
   unmounted(){
     document.removeEventListener('keydown', this.handleKeyDown);
@@ -215,8 +235,22 @@ export default defineComponent({
   padding: 4px;
 }
 
-@media screen and (max-width: 1280px) {
-  .tool-box {
+// 移动端: 右下角悬浮 FAB, 避让底部操作栏并适配安全区
+.tool-box.is-mobile {
+  top: auto;
+  right: 16px;
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  padding: 0;
+
+  .tool-button {
+    width: 44px;
+    height: 44px;
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+@media screen and (max-width: @bp-desktop) {
+  .tool-box:not(.is-mobile) {
     right: 74px;
   }
 }
@@ -229,7 +263,7 @@ export default defineComponent({
   box-shadow: var(--shadow-md);
   background-color: var(--card-bg-color);
   transition: all var(--transition-normal);
-  
+
   &:hover {
     box-shadow: var(--shadow-lg);
     transform: translateY(-2px);
@@ -237,6 +271,11 @@ export default defineComponent({
     border-color: var(--primary-color);
     color: var(--primary-color);
   }
+}
+
+// 移动 FAB 为 primary 实色按钮, 不复用桌面描边样式
+.tool-box.is-mobile .tool-button {
+  border: none;
 }
 
 .dropdown-menu {
@@ -318,7 +357,7 @@ export default defineComponent({
   display: flex;
   align-items: center;
   margin-bottom: var(--spacing-lg);
-  
+
   &:last-child {
     margin-bottom: 0;
   }

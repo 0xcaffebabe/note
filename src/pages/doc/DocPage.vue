@@ -1,8 +1,8 @@
 <template>
-  <el-container class="doc-layout">
+  <el-container class="doc-layout" :class="{ 'is-mobile': isMobile }">
     <doc-side-category :doc="doc" :showAside="showAside" @toggle-aside="showAside = !showAside" ref="docSideCategory" />
-    <el-main class="main">
-      <keep-alive>
+    <el-main class="main" ref="mainEl">
+      <keep-alive v-if="!isMobile">
         <doc-tab-nav @dbclick="handleTabNavDbclick" />
       </keep-alive>
       <!-- 加载失败兜底: 提供重试入口 不再停留在骨架屏 -->
@@ -34,15 +34,38 @@
         </template>
       </el-skeleton>
     </el-main>
-    <!-- 右侧TOC与知识面板列 -->
+    <!-- 右侧TOC与知识面板列: 仅桌面/平板(移动端用底部章节抽屉) -->
     <doc-contents-and-panel
+      v-if="!isMobile"
       :doc="doc"
       :parentShowHeader="parentShowHeader"
       @item-click="handleTocItemClick"
-      @toggle-contents="showContentsList = $event"
     />
   </el-container>
-  <!-- 工具栏开始 -->
+
+  <!-- 移动端底部操作栏: 高频入口拇指可达 -->
+  <template v-if="isMobile">
+    <nav class="mobile-bottom-bar">
+      <button type="button" @click="openCategory" aria-label="打开站点目录">
+        <el-icon><Memo /></el-icon><span>目录</span>
+      </button>
+      <button type="button" @click="openToc" aria-label="打开本页章节">
+        <el-icon><Tickets /></el-icon><span>章节</span>
+      </button>
+      <button type="button" @click="openSearch" aria-label="打开搜索">
+        <el-icon><Search /></el-icon><span>搜索</span>
+      </button>
+      <button type="button" @click="scrollToTop" aria-label="回到顶部">
+        <el-icon><Top /></el-icon><span>回顶</span>
+      </button>
+    </nav>
+    <!-- 本页章节抽屉: 复用桌面 ContentsList(自带活动标题追踪 + 阅读进度) -->
+    <el-drawer v-model="showMobileToc" direction="btt" size="60%" title="本页章节" :lock-scroll="false" class="mobile-toc-drawer">
+      <contents-list :doc="doc" mode="drawer" @item-click="handleMobileTocItemClick" />
+    </el-drawer>
+  </template>
+
+  <!-- 工具栏(响应式: 桌面右上锚定 / 移动右下FAB) -->
   <tool-box
     @showMindGraph="showMindGraph();showAside = false;isDrawerShow = true"
     @showKnowledgeNetwork="showKnowledgeNetwork();showAside = false;isDrawerShow = true"
@@ -54,9 +77,8 @@
     @handleRandomReview="handleRandomReview"
   />
   <!-- 工具栏结束 -->
-  <link-popover ref="linkPopover"/>
-  <el-backtop :bottom="32" :right="28" />
-  <!-- 相关链接: 右侧悬浮标签 悬停展开(关联内容 + 文内其他文档链接) -->
+  <el-backtop v-if="!isMobile" :bottom="32" :right="28" />
+  <!-- 相关链接: 右侧悬浮标签 展开(关联内容 + 文内其他文档链接) -->
   <related-content :related="relatedLinks" :doc-links="docLinks" />
   <!-- 隐藏面板按需挂载: 首次打开时才下载与渲染对应chunk -->
   <mind-graph v-if="panels.mindGraph" ref="mindGraph" @close="showAside = true;isDrawerShow = false" />
@@ -67,8 +89,6 @@
   <image-viewer ref="imageViewer" />
   <instant-previewer ref="instantPreviewer"/>
   <resource-brower ref="resourceBrower" />
-
-  
 </template>
 
 
@@ -78,7 +98,6 @@ import Content from "@/dto/Content";
 import docService from "@/service/DocService";
 import HistoryList from "./commit/HistoryList.vue";
 import ToolBox from './ToolBox.vue';
-import LinkPopover from "./LinkPopover.vue";
 import RelatedContent from "./RelatedContent.vue";
 import { RelatedLink } from "@/dto/RelatedLink";
 import DocFileInfo from "@/dto/DocFileInfo";
@@ -104,6 +123,11 @@ import config from '@/config';
 import api from "@/api";
 import MermaidShower from './mermaid-shower/MermaidShower.vue';
 import DocContentsAndPanel from './contents/DocContentsAndPanel.vue';
+import ContentsList from './contents/ContentsList.vue';
+import TouchUtils from '@/util/TouchUtils';
+import EventBus from '@/components/EventBus';
+import { isMobile, isTouch } from '@/composables/useBreakpoint';
+import { Memo, Tickets, Search, Top } from '@element-plus/icons-vue';
 
 // 重量级隐藏面板(echarts/jsmind/LLM)按需异步加载: 首次打开时才挂载与下载对应chunk
 const MindGraph = defineAsyncComponent(() => import('./mind/MindGraph.vue'))
@@ -117,7 +141,6 @@ export default defineComponent({
     HistoryList,
     MindGraph,
     ToolBox,
-    LinkPopover,
     DocSideCategory,
     KnowledgeNetwork,
     DocBreadcrumbNav,
@@ -131,7 +154,9 @@ export default defineComponent({
     MermaidShower,
     LLM,
     DocContentsAndPanel,
+    ContentsList,
     RelatedContent,
+    Memo, Tickets, Search, Top,
 },
   watch: {
     showHeader: {
@@ -188,11 +213,15 @@ export default defineComponent({
       showAside: true as boolean,
       isDrawerShow: false as boolean,
       parentShowHeader: true as boolean,
-      showContentsList: window.innerWidth > 1180, // 根据屏幕宽度初始化显示状态
+      // 移动端本页章节抽屉显隐
+      showMobileToc: false as boolean,
       eventManager: null as DocPageEventMnager | null
     };
   },
   computed: {
+    isMobile(): boolean {
+      return isMobile.value;
+    },
     contentHtml(): string {
       return DocService.renderMd(this.file);
     },
@@ -253,6 +282,25 @@ export default defineComponent({
           break
         }
       }
+    },
+    // 移动端章节点击: 复用桌面定位逻辑 并收起抽屉
+    handleMobileTocItemClick(id: string) {
+      this.handleTocItemClick(id);
+      this.showMobileToc = false;
+    },
+    // 移动端底部操作栏入口
+    openCategory() {
+      this.$store.commit('setShowCategory', true);
+    },
+    openToc() {
+      this.showMobileToc = true;
+    },
+    openSearch() {
+      // 统一搜索入口: 交由 App 的 CommandPalette 接管
+      EventBus.emit('show-mobile-search', null);
+    },
+    scrollToTop() {
+      window.scrollTo({top: 0, behavior: 'smooth'});
     },
     handleTabNavDbclick() {
       this.syncCategoryListScrollBar();
@@ -326,10 +374,7 @@ export default defineComponent({
     generateTOC() {
       this.contentsList = docService.getContent(this.contentHtml);
     },
-    toggleContentsList() {
-      this.showContentsList = !this.showContentsList;
-    },
-    async randomizedReview() { 
+    async randomizedReview() {
       // 如果没有关联文档，使用原来的随机策略
       const flatCategoryList = await CategoryService.getFlatCategoryList();
       const randomCategory = flatCategoryList[Math.floor(Math.random() * flatCategoryList.length)];
@@ -391,6 +436,32 @@ export default defineComponent({
   },
   beforeRouteLeave() {
     SysUtils.resetDocTitle()
+  },
+  mounted() {
+    // 触屏设备启用手势: 左滑开站点目录 / 屏幕左缘右滑返回
+    if (isTouch.value) {
+      const mainEl = (this.$refs.mainEl as any)?.$el as HTMLElement | undefined;
+      if (mainEl) {
+        TouchUtils.onSwipe(mainEl, (direction, delta, start) => {
+          // 忽略发生在横向滚动容器内的滑动 避免滚动代码块/表格被误判为手势
+          const target = start.target as HTMLElement | null;
+          if (target?.closest?.('pre, .table-wrapper, .mermaid-wrapper')) {
+            return;
+          }
+          // 横向位移须显著大于纵向 才视为横滑手势
+          if (delta[0] < 150 || delta[0] < delta[1] * 2) {
+            return;
+          }
+          if (direction[0] == 'left') {
+            this.$store.commit('setShowCategory', true);
+          }
+          // 返回手势限定从屏幕左缘起始 防误触
+          if (direction[0] == 'right' && start.x < window.innerWidth * 0.15) {
+            history.back();
+          }
+        });
+      }
+    }
   },
   async created() {
     this.eventManager = new DocPageEventMnager(this);
@@ -458,5 +529,58 @@ export default defineComponent({
 
 .el-backtop:hover {
   background-color: var(--hover-bg-color);
+}
+
+// ===== 移动端适配 =====
+.doc-layout.is-mobile {
+  .main {
+    // 收窄内边距 并给底部操作栏留出空间
+    padding: 0 var(--spacing-sm) calc(64px + env(safe-area-inset-bottom));
+  }
+
+  // 小屏标题缩放(共享桌面 markdown-v1.less 仅做小屏微调)
+  :deep(.markdown-section) {
+    h1 { font-size: 1.7em; }
+    h2 { font-size: 1.4em; }
+    h3 { font-size: 1.2em; }
+  }
+}
+
+// 底部操作栏: 高频入口拇指可达
+.mobile-bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-float);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  height: 52px;
+  padding-bottom: env(safe-area-inset-bottom);
+  background-color: var(--card-bg-color);
+  border-top: 1px solid var(--border-color);
+
+  button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 44px;
+    border: none;
+    background: transparent;
+    color: var(--secondary-text-color);
+    font-size: 11px;
+    cursor: pointer;
+
+    .el-icon {
+      font-size: 18px;
+    }
+
+    &:active {
+      color: var(--primary-color);
+      background-color: var(--hover-bg-color);
+    }
+  }
 }
 </style>

@@ -1,9 +1,12 @@
 <template>
   <banner />
   <home-quick-access />
-  <keep-alive>
-    <statistic />
-  </keep-alive>
+  <!-- 移动端统计图表暂可能超出视口宽: 以横向滚动兜底(P6 图表响应式后移除该包裹) -->
+  <div :class="{ 'statistic-scroll': $isMobile() }">
+    <keep-alive>
+      <statistic />
+    </keep-alive>
+  </div>
 </template>
 
 <script lang="ts">
@@ -29,3 +32,10 @@ export default defineComponent({
   },
 })
 </script>
+
+<style lang="less" scoped>
+.statistic-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+</style>

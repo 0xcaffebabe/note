@@ -114,13 +114,16 @@ const routes: RouteRecordRaw[] = [
     redirect: lastReadRedirect('/m'),
     children: [
       { path: "/m/home", redirect: to => ({ path: "/m/home.html", query: to.query }) },
-      { path: "/m/home.html", component: () => import("@/pages/home/mobile/MobileHomePage.vue"), beforeEnter: mobile2Tablet },
+      // 已折叠为单一响应式 HomePage(取代 MobileHomePage); /m 子树将在 P5 整体删除
+      { path: "/m/home.html", component: () => import("@/pages/home/HomePage.vue"), beforeEnter: mobile2Tablet },
       {
         path: "/m/doc/:doc",
         redirect: to => ({ path: '/m' + DocUtils.docId2HtmlPath(to.params.doc.toString()), query: to.query })
       },
       { path: "/m/tag", redirect: to => ({ path: "/m/tag.html", query: to.query }) },
       { path: "/m/tag.html", component: () => import("@/pages/tag/TagListPage.vue"), beforeEnter: mobile2Tablet },
+      // 移动端聚类可达: / 父守卫会把 /cluster 改写为 /m/cluster, 需在 /m 树补此路由(P5 随 /m 删除)
+      { path: "/m/cluster", component: () => import("@/pages/DocCluster.vue"), beforeEnter: mobile2Tablet },
       {
         // 已折叠为单一响应式 DocPage(取代 MobileDocPage); /m 子树将在路由合流阶段(P5)整体删除
         path: "/m/:docPath(.*\\.html)",

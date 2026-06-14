@@ -4,13 +4,12 @@ import DocService from '@/service/DocService'
 import CategoryService from '@/service/CategoryService'
 import DocUtils from '@/util/DocUtils'
 import UrlUtils from '@/util/UrlUtils'
-import { SysUtils } from '@/util/SysUtils'
 
 // 每次导航时求值: 新访客(无阅读记录)落到首页 老用户续读上次文档
-function lastReadRedirect(prefix: string = '') {
+function lastReadRedirect() {
   return () => {
     const lastRead = DocService.getLastReadRecord()
-    return lastRead ? prefix + DocUtils.docId2HtmlPath(lastRead) : prefix + '/home.html'
+    return lastRead ? DocUtils.docId2HtmlPath(lastRead) : '/home.html'
   }
 }
 
@@ -43,8 +42,7 @@ async function recoverDocPath(to: RouteLocationNormalized) {
   }
   const repaired = UrlUtils.repairLatin1Mojibake(path)
   path = repaired || path
-  const mobilePrefix = path.startsWith('/m/') ? '/m' : ''
-  let docPath = path.substring(mobilePrefix.length)
+  let docPath = path
   if (!/\.html$/i.test(docPath)) {
     docPath = docPath.replace(/\/+$/, '') + '.html'
   }
@@ -62,30 +60,15 @@ async function recoverDocPath(to: RouteLocationNormalized) {
   const fixValue = (v: any) => typeof v == 'string' ? (UrlUtils.repairLatin1Mojibake(v) || v) : v
   const query = Object.fromEntries(Object.entries(to.query)
     .map(([k, v]) => [k, Array.isArray(v) ? v.map(fixValue) : fixValue(v)]))
-  return { path: mobilePrefix + docPath, query, hash: to.hash, replace: true }
-}
-
-function tablet2Mobile(to: RouteLocationNormalized, from: RouteLocationNormalized, next: Function) {
-  if (SysUtils.isMobile()) {
-    next("/m" + to.fullPath)
-  }else {
-    next()
-  }
-}
-function mobile2Tablet(to: RouteLocationNormalized, from: RouteLocationNormalized, next: Function) {
-  if (!SysUtils.isMobile()) {
-    next(to.fullPath.replace("/m", ''))
-  }else {
-    next()
-  }
+  return { path: docPath, query, hash: to.hash, replace: true }
 }
 
 const routes: RouteRecordRaw[] = [
   {
+    // 单一响应式路由树(移动端/桌面端共用): 由 App.vue 外壳 + 响应式断点驱动布局, 不再有 /m 分流
     path: "/",
     component: () => import("@/App.vue"),
     redirect: lastReadRedirect(),
-    beforeEnter: tablet2Mobile,
     children: [
       // 应用页面同样以.html为规范地址 旧的无后缀路径重定向保持兼容
       { path: "/home", redirect: to => ({ path: "/home.html", query: to.query }) },
@@ -103,32 +86,6 @@ const routes: RouteRecordRaw[] = [
       {
         path: "/:docPath(.*\\.html)",
         component: () => import("@/pages/doc/DocPage.vue"),
-        beforeEnter: tablet2Mobile
-      },
-    ]
-  },
-  {
-    path: '/m',
-    // 共用同一响应式外壳(取代已退役的 MobileApp.vue); /m 子树将在路由合流阶段整体删除
-    component: () => import("@/App.vue"),
-    redirect: lastReadRedirect('/m'),
-    children: [
-      { path: "/m/home", redirect: to => ({ path: "/m/home.html", query: to.query }) },
-      // 已折叠为单一响应式 HomePage(取代 MobileHomePage); /m 子树将在 P5 整体删除
-      { path: "/m/home.html", component: () => import("@/pages/home/HomePage.vue"), beforeEnter: mobile2Tablet },
-      {
-        path: "/m/doc/:doc",
-        redirect: to => ({ path: '/m' + DocUtils.docId2HtmlPath(to.params.doc.toString()), query: to.query })
-      },
-      { path: "/m/tag", redirect: to => ({ path: "/m/tag.html", query: to.query }) },
-      { path: "/m/tag.html", component: () => import("@/pages/tag/TagListPage.vue"), beforeEnter: mobile2Tablet },
-      // 移动端聚类可达: / 父守卫会把 /cluster 改写为 /m/cluster, 需在 /m 树补此路由(P5 随 /m 删除)
-      { path: "/m/cluster", component: () => import("@/pages/DocCluster.vue"), beforeEnter: mobile2Tablet },
-      {
-        // 已折叠为单一响应式 DocPage(取代 MobileDocPage); /m 子树将在路由合流阶段(P5)整体删除
-        path: "/m/:docPath(.*\\.html)",
-        component: () => import("@/pages/doc/DocPage.vue"),
-        beforeEnter: mobile2Tablet
       },
     ]
   },
@@ -140,7 +97,7 @@ const routes: RouteRecordRaw[] = [
   }
 ]
 export default function () {
-  return createRouter({
+  const router = createRouter({
     history: createWebHistory(),
     routes,
     // 文档页有自己的滚动恢复(阅读进度/headingId定位在异步渲染后执行) 路由层只兜底通用情形:
@@ -155,4 +112,22 @@ export default function () {
       return { top: 0, behavior: 'instant' as ScrollBehavior }
     }
   })
+  // 历史移动端 /m 前缀地址合流到单一路由树: 在匹配前去前缀, 规避 /:docPath(.*\.html)
+  // 贪婪匹配吃掉 /m/ 段导致重定向落空; 去后缀的 /m/x 落到 /x 再由 catch-all 自愈补回 .html
+  // to.path 为百分号编码: 先 decodeURI 再去前缀, 交回 router 单次编码, 避免双重编码
+  router.beforeEach(to => {
+    if (to.path === '/m' || to.path === '/m/') {
+      return { path: '/', query: to.query, hash: to.hash, replace: true }
+    }
+    if (to.path.startsWith('/m/')) {
+      let decoded: string
+      try {
+        decoded = decodeURI(to.path)
+      } catch {
+        decoded = to.path
+      }
+      return { path: decoded.slice(2), query: to.query, hash: to.hash, replace: true }
+    }
+  })
+  return router
 }

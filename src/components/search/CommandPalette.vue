@@ -283,9 +283,8 @@ export default defineComponent({
           chidren: [],
         } as unknown as Category)
       }
-      const prefix = this.$route.path.startsWith('/m/') ? '/m' : ''
       this.$router.push({
-        path: prefix + DocUtils.docId2HtmlPath(item.docId),
+        path: DocUtils.docId2HtmlPath(item.docId),
         query: item.headingId || item.kw
           ? {headingId: item.headingId, kw: item.kw}
           : undefined,

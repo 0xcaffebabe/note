@@ -1,5 +1,8 @@
 import { test, expect, goto, pathnameOf, waitForPath, waitForHtmlChange, seedLastRead, DOC, DOC_ID, DOC_NO_SUFFIX } from './fixtures'
 
+// 旧移动端 /m 无后缀地址(CDN 308 去 .html 后 SPA 实际收到的形态)
+const M_DOC_NO_SUFFIX = '/m' + DOC_NO_SUFFIX
+
 // P0 关键路径冒烟: .html 静态化路由 + 自愈 + 404 + 桌面分流
 // 全部确定性、无密钥、可在 fork PR 上跑 —— 这是真正卡合并的门禁
 test.describe('routing (P0)', () => {
@@ -91,11 +94,23 @@ test.describe('routing (P0)', () => {
     expect(pathnameOf(page)).not.toMatch(/\.html$/)
   })
 
-  test('桌面视口不触发 /m/ 分流', async ({ page }) => {
+  test('桌面视口渲染桌面布局(单一路由树 无 /m 分流)', async ({ page }) => {
     await goto(page, DOC)
     await page.waitForSelector('.main-layout')
     expect(pathnameOf(page)).toBe(DOC)
     expect(pathnameOf(page)).not.toMatch(/^\/m\//)
     await expect(page.locator('.mobile-bottom-bar')).toHaveCount(0)
+  })
+
+  test('历史 /m 前缀地址兼容重定向到无前缀(P5 合流)', async ({ page }) => {
+    // /m/<doc>(无后缀, CDN 去 .html) -> /<doc> -> catch-all 自愈补回 .html
+    await goto(page, M_DOC_NO_SUFFIX)
+    await waitForPath(page, DOC)
+    expect(pathnameOf(page)).toBe(DOC)
+    expect(pathnameOf(page)).not.toMatch(/^\/m\//)
+    // /m/home -> /home -> /home.html
+    await goto(page, '/m/home')
+    await waitForPath(page, '/home.html')
+    expect(pathnameOf(page)).toBe('/home.html')
   })
 })

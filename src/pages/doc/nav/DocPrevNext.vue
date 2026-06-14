@@ -45,8 +45,7 @@ export default defineComponent({
   },
   methods: {
     docLink(category: Category): string {
-      const path = DocUtils.docId2HtmlPath(DocUtils.docUrl2Id(category.link))
-      return this.$route.path.startsWith('/m/') ? '/m' + path : path
+      return DocUtils.docId2HtmlPath(DocUtils.docUrl2Id(category.link))
     },
   },
   async created() {

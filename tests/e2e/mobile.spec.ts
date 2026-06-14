@@ -1,21 +1,21 @@
-import { test, expect, goto, pathnameOf, waitForPath, DOC } from './fixtures'
+import { test, expect, goto, pathnameOf, DOC } from './fixtures'
 
-// 移动端分流(P0/P1): 本文件只在 playwright.config 的 mobile-chromium 工程(Pixel 5)运行
-// 该设备 UA + 视口≤820 触发 SysUtils.isMobile() => tablet2Mobile 守卫把 / 路由重定向到 /m/*
-// 每个 test 自带全新 context 故 isMobile() 的 UA 缓存不会跨用例污染
-test.describe('mobile split (mobile project)', () => {
-  test('移动端访问 /home.html 重定向到 /m/ 并渲染移动布局', async ({ page }) => {
+// 移动端布局(P5 路由合流后): 同一无前缀 URL 在小视口(Pixel 5, ≤820)渲染移动布局
+// 不再有 /m 分流/重定向 —— 桌面与移动共用单一路由树, 由响应式断点驱动外壳与组件形态
+// 本文件只在 playwright.config 的 mobile-chromium 工程运行; 每个 test 自带全新 context
+test.describe('mobile layout (mobile project)', () => {
+  test('移动端首页同 URL 渲染移动外壳(无 /m 重定向)', async ({ page }) => {
     await goto(page, '/home.html')
-    await waitForPath(page, '/m/home.html')
-    expect(pathnameOf(page)).toBe('/m/home.html')
-    // P2 起桌面/移动共用响应式外壳 App.vue: 窄屏标记为 .main-layout.is-mobile(原 .mobile-layout 随 MobileApp 退役)
     await page.waitForSelector('.main-layout.is-mobile')
+    // URL 保持无前缀: 不再跳 /m/
+    expect(pathnameOf(page)).toBe('/home.html')
+    expect(pathnameOf(page)).not.toMatch(/^\/m\//)
   })
 
-  test('移动端文档页渲染底部导航栏', async ({ page }) => {
+  test('移动端文档页同 URL 渲染底部操作栏', async ({ page }) => {
     await goto(page, DOC)
-    await waitForPath(page, '/m' + DOC)
-    expect(pathnameOf(page)).toBe('/m' + DOC)
     await page.waitForSelector('.mobile-bottom-bar')
+    expect(pathnameOf(page)).toBe(DOC)
+    expect(pathnameOf(page)).not.toMatch(/^\/m\//)
   })
 })

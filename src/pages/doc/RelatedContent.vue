@@ -125,8 +125,7 @@ export default defineComponent({
     go(href: string) {
       // 保持面板打开: 跳转后组件复用 清掉待执行的关闭计时器避免被误关
       clearTimeout(this.leaveTimer)
-      const prefix = this.$route.path.startsWith('/m/') ? '/m' : ''
-      this.$router.push(prefix + href)
+      this.$router.push(href)
     },
     // 其他链接: 滚动到正文中该链接首次出现的位置 并短暂高亮
     locate(href: string) {

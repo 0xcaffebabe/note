@@ -47,7 +47,7 @@ export default defineConfig({
       testIgnore: /mobile\.spec\.ts/,
     },
     {
-      // 触发 SysUtils.isMobile()(UA + 视口≤820)从而走 /m/ 分流与 tablet2Mobile 守卫
+      // 小视口(Pixel 5, ≤820)触发响应式 isMobile → 同一无前缀 URL 渲染移动布局(P5 合流后无 /m 分流)
       name: 'mobile-chromium',
       use: { ...devices['Pixel 5'] },
       testMatch: /mobile\.spec\.ts/,

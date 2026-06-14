@@ -33,13 +33,18 @@ export namespace PinyinUtils {
    */
   function flatPinyinResult(list: string[][], splitor: string = '-') {
     const result: string[] = []
+    // 注意: 不能在进入 travel(此时当前段拼音尚未拼进 path)时就 push, 否则会丢掉每个变体
+    // 最后一个字的拼音(如 你好->NI 丢 HAO, 单字->空串, 致全拼/首字母搜索末字失配)。
+    // 改为在把当前段拼进 subPath 后、确认为末段时再 push 完整路径。
     function travel(index: number, path: string) {
       if (index >= list.length) return
-      if (index == list.length - 1) result.push(path.substring(0, path.length - 1))
-
       for(const i of list[index]) {
         const subPath = path + i + splitor
-        travel(index + 1, subPath)
+        if (index == list.length - 1) {
+          result.push(subPath.substring(0, subPath.length - 1))
+        } else {
+          travel(index + 1, subPath)
+        }
       }
     }
     travel(0, "")

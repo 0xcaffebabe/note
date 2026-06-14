@@ -164,7 +164,14 @@ export default defineComponent({
         this.parentShowHeader = val;
       },
       immediate: true,
-    }
+    },
+    // 跨断点离开移动端时复位移动抽屉状态, 防止再回到移动端时(章节/目录)抽屉自动重开
+    isMobile(val: boolean) {
+      if (!val) {
+        this.showMobileToc = false;
+        this.$store.commit('setShowCategory', false);
+      }
+    },
   },
   setup(){
     // 面板挂载开关: 首次打开时才渲染(联动defineAsyncComponent实现chunk按需下载)
@@ -430,6 +437,9 @@ export default defineComponent({
     },
   },
   beforeRouteUpdate(to, from) {
+    // 切换文档时收起移动端抽屉(从目录抽屉选文档/章节跳转后), 避免新文档加载在抽屉之下
+    this.showMobileToc = false;
+    this.$store.commit('setShowCategory', false);
     const doc = DocUtils.routeDocId(to);
     this.showDoc(doc, to.query.headingId?.toString(), to.query.kw?.toString());
     (this.$refs.docSideCategory as any).updateCurrentCategory(doc);

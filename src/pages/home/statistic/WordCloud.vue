@@ -675,13 +675,21 @@ export default defineComponent({
       // 创建 tooltip
       this.createTooltip();
 
-      // 默认初始化 3D 布局并渲染
-      this.init3DLayout();
-      this.render3D();
-      if (this.canvas) {
-        this.canvas.style.cursor = "grab";
+      // 尊重当前 2D/3D 选择: init() 会因 ResizeObserver 重排 / 暗色切换而重入,
+      // 不能无条件回退到 3D(否则用户选的 2D 会被静默改回 3D 而按钮仍高亮 2D)
+      if (this.is3D) {
+        this.init3DLayout();
+        this.render3D();
+        if (this.canvas) {
+          this.canvas.style.cursor = "grab";
+        }
+        this.setup3DEvents();
+      } else {
+        // 2D 已在上方放置循环绘制完成; 2D 无需拖拽事件, 仅恢复默认光标
+        if (this.canvas) {
+          this.canvas.style.cursor = "default";
+        }
       }
-      this.setup3DEvents();
     },
   },
   async mounted() {

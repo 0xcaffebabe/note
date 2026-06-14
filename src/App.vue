@@ -19,7 +19,7 @@
     </div>
     <el-main id="main-content" tabindex="-1">
       <router-view v-slot="{ Component }">
-        <transition name="page" mode="out-in">
+        <transition name="page">
           <component :is="Component" />
         </transition>
       </router-view>
@@ -175,6 +175,8 @@ export default defineComponent({
 .el-main {
   padding: 0;
   transition: all 0.3s ease;
+  // 为页面过渡的离场页(绝对定位)提供定位上下文
+  position: relative;
 }
 
 .header-toggle-button {
@@ -199,7 +201,9 @@ export default defineComponent({
   }
 }
 
-// 统一页面切换过渡: 桌面/移动同一动效语言(纯淡入淡出, 避免位移抖动)
+// 统一页面切换过渡: 桌面/移动同一动效语言(纯淡入淡出)
+// 不用 mode=out-in: 它会与懒加载的异步路由组件死锁, 导致首次跨路由跳转渲染空白(router-view 只剩注释节点)。
+// 改为同时进出的交叉淡入; 离场页绝对定位脱离文档流, 入场页就位, 避免两页堆叠抖动。
 .page-enter-active,
 .page-leave-active {
   transition: opacity var(--transition-page);
@@ -208,6 +212,13 @@ export default defineComponent({
 .page-enter-from,
 .page-leave-to {
   opacity: 0;
+}
+
+.page-leave-active {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
 }
 
 // 暗色专属: 暗色下阴影对比弱, 需补充边框勾勒按钮轮廓; 亮色侧为 border: none, 无法用同一令牌表达

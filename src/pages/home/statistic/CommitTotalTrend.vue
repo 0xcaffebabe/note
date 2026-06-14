@@ -77,7 +77,15 @@ export default defineComponent({
       this.chart?.resize();
     },
     async init() {
-      const data = cloneDeep(await api.getCommitTotalTrend()) as [string, number, number, number][];
+      // 数据文件缺失(如构建跳过生成 / 离线)时 fetch 落到 SPA index.html 会令 r.json() 抛错;
+      // 加 try/catch 优雅降级, 避免首页出现未捕获的 promise rejection
+      let data: [string, number, number, number][];
+      try {
+        data = cloneDeep(await api.getCommitTotalTrend()) as [string, number, number, number][];
+      } catch (e) {
+        console.warn('提交趋势数据加载失败, 跳过该图表', e);
+        return;
+      }
       // 复用实例: isDark/type 切换会重入 init, 先 dispose 避免同 dom 多实例泄漏
       this.chart?.dispose();
       const myChart = (this.chart = echarts.init(this.$refs.chartContainer as HTMLElement));

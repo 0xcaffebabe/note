@@ -2,7 +2,7 @@
   <div class="tool-box" :class="{ 'is-mobile': isMobile }" :style="deskStyle">
     <el-dropdown trigger="click" :placement="isMobile ? 'top-end' : 'bottom-end'">
       <el-button
-        :type="isMobile ? 'primary' : 'default'"
+        type="default"
         size="small"
         class="tool-button"
         :icon="Tools"
@@ -255,6 +255,9 @@ export default defineComponent({
   }
 }
 
+// 工具栏按钮: 桌面与移动端统一为同一描边 + 卡片底样式(深色图标落浅色卡片底, 静置即可见);
+// 移动端仅尺寸/定位不同(见 .tool-box.is-mobile). 早前移动端曾用 type=primary 蓝底,
+// 但通用底色规则特异度更高盖住蓝底, 致白色图标"隐形"唤起后才显形, 故回归桌面端一致样式。
 .tool-button {
   width: 36px;
   height: 36px;
@@ -271,11 +274,6 @@ export default defineComponent({
     border-color: var(--primary-color);
     color: var(--primary-color);
   }
-}
-
-// 移动 FAB 为 primary 实色按钮, 不复用桌面描边样式
-.tool-box.is-mobile .tool-button {
-  border: none;
 }
 
 .dropdown-menu {

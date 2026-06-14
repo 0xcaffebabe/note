@@ -136,6 +136,26 @@ test.describe('mobile home & charts (Pixel 5)', () => {
 test.describe('mobile regression guards (fixed defects)', () => {
   // 修复前: 从目录抽屉选文档后抽屉不自动关闭, 新文档加载在抽屉之下。
   // 修复后: beforeRouteUpdate 提交 setShowCategory(false), 选文档后抽屉关闭。
+  // 修复前: 移动端用 type=primary(白图标), 但通用 .tool-button 卡片底色以更高特异度盖住蓝底,
+  // 白图标落浅底"隐形", 唤起获得 :focus 蓝底后才显形。修复后: 与桌面端一致的描边+卡片底+深色图标。
+  test('FAB 图标静置即可见(底色与图标色不同, 非两浅色相融)', async ({ page }) => {
+    await goto(page, DOC)
+    const btn = page.locator('.tool-box.is-mobile .tool-button')
+    await btn.waitFor({ state: 'visible' })
+    const colors = await page.evaluate(() => {
+      const b = document.querySelector('.tool-box.is-mobile .tool-button') as HTMLElement
+      const svg = b.querySelector('svg') as SVGElement | null
+      return {
+        hasIcon: !!svg,
+        bg: getComputedStyle(b).backgroundColor,
+        icon: svg ? getComputedStyle(svg).color : '',
+      }
+    })
+    expect(colors.hasIcon).toBe(true)
+    expect(colors.bg).not.toBe('rgba(0, 0, 0, 0)') // 底色不透明
+    expect(colors.bg).not.toBe(colors.icon) // 底色 != 图标色 -> 有对比, 不会隐形
+  })
+
   test('从目录抽屉选文档后抽屉应自动关闭', async ({ page }) => {
     await goto(page, DOC)
     await page.waitForSelector('.mobile-bottom-bar')

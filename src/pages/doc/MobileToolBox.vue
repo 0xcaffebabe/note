@@ -44,12 +44,10 @@ import ConfigService from '@/service/ConfigService'
 type ActionType =
     'showMindGraph' |
     'showKnowledgeNetwork' |
-    'showBookMarkAdder' |
-    'showBookMarkList' |
+    'showKnowledgeReviewer' |
     'copyDocPath' |
-    'goToDoc' |
-    'goToPpt' |
-    'showKwFinder' |
+    'copyDocContent' |
+    'handleRandomReview' |
     'showLlm' |
     'showMoreSetting'
 
@@ -74,17 +72,12 @@ export default defineComponent({
     }
   },
   emits: [
-    'showReadingHistory',
     'showMindGraph',
     'showKnowledgeNetwork',
-    'showBookMarkAdder',
-    'showBookMarkList',
-    'copyDocPath',
-    'goToDoc',
-    'goToPpt',
     'showKnowledgeReviewer',
-    'showKnowledgeRedundancy',
-    'showKwFinder',
+    'copyDocPath',
+    'copyDocContent',
+    'handleRandomReview',
     'showLlm'
   ],
   data(){
@@ -96,7 +89,11 @@ export default defineComponent({
         {name: '思维导图', type: 'success', action: 'showMindGraph'},
         {name: '知识网络', type: 'warning', action: 'showKnowledgeNetwork'},
         {name: '知识回顾', type: 'primary', action: 'showKnowledgeReviewer'},
-        {name: '知识助手', type: 'warning', action: 'showLlm', divided: true},
+        {name: '知识助手', type: 'warning', action: 'showLlm'},
+        // 与桌面端工具栏对齐: 路径复制 / 知识复制 / 随机复习
+        {name: '路径复制', type: 'success', action: 'copyDocPath', divided: true},
+        {name: '知识复制', type: 'warning', action: 'copyDocContent'},
+        {name: '随机复习', type: 'primary', action: 'handleRandomReview'},
         {name: '更多设置', type: 'info', action: 'showMoreSetting', local: true, divided: true},
       ] as Action[]
     }

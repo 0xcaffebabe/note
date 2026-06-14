@@ -64,8 +64,9 @@ class DocPageEventManager {
         }
         const href = a.getAttribute("href");
         if (href) {
-          if (e.altKey) {
-            (this.getRef('instantPreviewer') as InstanceType<typeof InstantPreviewer>).preview(href);
+          const previewer = this.getRef('instantPreviewer') as InstanceType<typeof InstantPreviewer> | undefined
+          if (e.altKey && previewer) {
+            previewer.preview(href);
           }else {
             this.docPageInstance.$router.push(href);
           }
@@ -92,7 +93,13 @@ class DocPageEventManager {
   }
 
   public openOutterLink(link: string) {
-    (this.getRef('resourceBrower') as InstanceType<typeof ResourceBrower>).show(link);
+    const brower = this.getRef('resourceBrower') as InstanceType<typeof ResourceBrower> | undefined
+    // 未挂载资源浏览器(兜底)时退回新标签打开 不再静默崩溃
+    if (brower) {
+      brower.show(link);
+    } else {
+      window.open(link, '_blank', 'noopener')
+    }
   }
 
 

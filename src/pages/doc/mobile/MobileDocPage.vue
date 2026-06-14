@@ -2,7 +2,8 @@
   <el-container>
     <mobile-doc-side-category :doc="doc" ref="docSideCategory" />
     <el-main ref="mainEl" class="mobile-doc-main">
-      <doc-metadata-info :file="file"/>
+      <doc-breadcrumb-nav />
+      <doc-metadata-info :file="file" @link-click="link => eventManager?.openOutterLink(link)"/>
       <!-- 加载失败兜底: 提供重试入口 不再停留在骨架屏 -->
       <el-result v-if="loadError" icon="error" title="文档加载失败" sub-title="网络异常或文档不存在">
         <template #extra>
@@ -16,6 +17,11 @@
         </template>
       </el-skeleton>
       <doc-prev-next v-if="!loading && !loadError" :doc="doc" />
+      <!-- 提交历史(与桌面端对齐) -->
+      <div v-if="!loading && !loadError">
+        <el-divider />
+        <history-list :file="file" :doc="doc" />
+      </div>
     </el-main>
   </el-container>
   <!-- 底部操作栏: 高频入口拇指可达 -->
@@ -47,8 +53,14 @@
     @showKnowledgeReviewer="showKnowledgeReviewer"
     @showKnowledgeNetwork="showKnowledgeNetwork"
     @showLlm="showLLM"
+    @copyDocPath="handleCopyDocPath"
+    @copyDocContent="handleCopyDocContent"
+    @handleRandomReview="handleRandomReview"
   />
   <LLM v-if="panels.llm" :doc="doc" ref="llm"/>
+  <!-- 外链归档浏览器 + 即时预览(修复移动端外链/预览静默失效: 事件管理器依赖这两个 ref) -->
+  <resource-brower ref="resourceBrower" />
+  <instant-previewer ref="instantPreviewer" />
 </template>
 
 <script lang="ts">
@@ -71,9 +83,17 @@ import MermaidShower from '../mermaid-shower/MermaidShower.vue';
 import { SysUtils } from '@/util/SysUtils';
 import ConfigService from '@/service/ConfigService';
 import DocPrevNext from '../nav/DocPrevNext.vue';
+import DocBreadcrumbNav from '../nav/DocBreadcrumbNav.vue';
+import HistoryList from '../commit/HistoryList.vue';
+import ResourceBrower from '../ResourceBrower.vue';
+import InstantPreviewer from '../tool/InstantPreviewer.vue';
 import MobileToc from './MobileToc.vue';
 import RelatedContent from '../RelatedContent.vue';
 import EventBus from '@/components/EventBus';
+import CategoryService from '@/service/CategoryService';
+import api from '@/api';
+import { ElMessage } from 'element-plus';
+import 'element-plus/es/components/message/style/css';
 import { Memo, Tickets, Search, Top } from '@element-plus/icons-vue';
 
 // 重量级隐藏面板(echarts/jsmind/LLM)按需异步加载: 首次打开时才挂载与下载对应chunk
@@ -95,6 +115,10 @@ export default defineComponent({
     MermaidShower,
     LLM,
     DocPrevNext,
+    DocBreadcrumbNav,
+    HistoryList,
+    ResourceBrower,
+    InstantPreviewer,
     MobileToc,
     RelatedContent,
     Memo, Tickets, Search, Top,
@@ -198,7 +222,70 @@ export default defineComponent({
       this.eventManager!.registerLinkRouter(docEl);
       this.eventManager!.registerHeadingClick(docEl);
       this.eventManager!.registerCodeCopy(docEl);
+      this.eventManager!.registerDocTagSupClick(docEl);
       this.eventManager!.registerMermaidFullScreenClick(docEl);
+    },
+    async handleCopyDocPath() {
+      const url = "/" + DocUtils.docId2Url(this.doc);
+      await navigator.clipboard.writeText(url);
+      ElMessage.success('复制成功: ' + url);
+    },
+    async handleCopyDocContent() {
+      try {
+        const fileInfo = await DocService.getDocFileInfo(this.doc);
+        if (fileInfo && fileInfo.content) {
+          await navigator.clipboard.writeText(fileInfo.content);
+          ElMessage.success('知识复制成功！');
+        } else {
+          ElMessage.error('未能获取文档内容');
+        }
+      } catch (error) {
+        try {
+          const markdownSection = document.querySelector('.markdown-section');
+          if (markdownSection) {
+            await navigator.clipboard.writeText(markdownSection.textContent || '');
+            ElMessage.success('知识复制成功（复制了渲染后的内容）！');
+          } else {
+            ElMessage.error('未能获取文档内容');
+          }
+        } catch (fallbackError) {
+          ElMessage.error('知识复制失败');
+        }
+      }
+    },
+    async randomizedReview() {
+      const flatCategoryList = await CategoryService.getFlatCategoryList();
+      const randomCategory = flatCategoryList[Math.floor(Math.random() * flatCategoryList.length)];
+      this.$router.push("/doc/" + DocUtils.docUrl2Id(randomCategory.link));
+    },
+    async handleRandomReview() {
+      try {
+        const network = await api.getKnowledgeNetwork();
+        let relatedDocs: string[] = [];
+        const currentNode = network.find(node => node.id === this.doc);
+        if (currentNode && currentNode.links) {
+          relatedDocs.push(...currentNode.links.map(link => link.id));
+        }
+        const inboundLinks = network.filter(node =>
+          node.links && node.links.some(link => link.id === this.doc)
+        );
+        relatedDocs.push(...inboundLinks.map(node => node.id));
+        relatedDocs = [...new Set(relatedDocs)];
+        if (relatedDocs.length > 0) {
+          const selectedDoc = relatedDocs[Math.floor(Math.random() * relatedDocs.length)];
+          try {
+            await DocService.getDocFileInfo(selectedDoc)
+          } catch (error) {
+            await this.randomizedReview();
+            return;
+          }
+          this.$router.push("/doc/" + selectedDoc);
+        } else {
+          await this.randomizedReview();
+        }
+      } catch (error) {
+        await this.randomizedReview();
+      }
     },
     openCategory() {
       (this.$refs.docSideCategory as InstanceType<typeof MobileDocSideCategory>).showCategory = true

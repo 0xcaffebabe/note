@@ -82,8 +82,9 @@ export default defineComponent({
     // 最近更新文档
     try {
       const commitDocList = await api.getDescCommitDocList()
+      // 数据源按提交时间升序(最旧在前/最新在后) 取末尾 RECENT_COUNT 条并反转 使最新更新排在最前
       // 数据源中的key本身就是docId(层级以'-'连接) 不要再当URL转换
-      this.recentList = commitDocList.slice(0, RECENT_COUNT).map(([docId, commit]) => {
+      this.recentList = commitDocList.slice(-RECENT_COUNT).reverse().map(([docId, commit]) => {
         // 经docId2Url还原真实路径再取末段 正确处理'@@'转义
         const segments = DocUtils.docId2Url(docId).replace(/\.md$/, '').split('/')
         return {

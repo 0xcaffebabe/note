@@ -5,7 +5,7 @@ import 'element-plus/theme-chalk/dark/css-vars.css'
 import './style.less'
 import NProgress from '@/util/NProgress'
 import createStore from '@/store'
-import { SysUtils } from './util/SysUtils'
+import { isMobile } from '@/composables/useBreakpoint'
 import { registerSW } from 'virtual:pwa-register';
 import { h } from 'vue'
 import { ElNotification } from 'element-plus'
@@ -52,8 +52,9 @@ if (location.hash.startsWith('#/')) {
 
 const app = createApp(App)
 
-// 全局变量
-app.config.globalProperties.$isMobile = SysUtils.isMobile
+// 全局变量: $isMobile() 读取响应式断点 .value，模板内调用即被 render 追踪，
+// 视口跨断点时自动重渲染(取代旧的非响应式 SysUtils.isMobile)
+app.config.globalProperties.$isMobile = () => isMobile.value
 
 app.use(createStore())
 const router = createRouter()

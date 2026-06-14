@@ -1,0 +1,4 @@
+// 响应式断点(CSS 侧)。必须与 src/const/breakpoints.ts 同值，
+// 由 tests/unit/breakpoint.test.ts 守护。经 vite less.additionalData 全局注入。
+@bp-mobile: 820px;   // <=此值: compact 单栏 / >此值: 进入双栏~三栏
+@bp-desktop: 1280px; // >=此值: 完整三栏

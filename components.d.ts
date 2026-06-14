@@ -11,12 +11,10 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    CategorySearch: typeof import('./src/components/search/CategorySearch.vue')['default']
     CommandPalette: typeof import('./src/components/search/CommandPalette.vue')['default']
     ElAffix: typeof import('element-plus/es')['ElAffix']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElAside: typeof import('element-plus/es')['ElAside']
-    ElAutocomplete: typeof import('element-plus/es')['ElAutocomplete']
     ElBacktop: typeof import('element-plus/es')['ElBacktop']
     ElBadge: typeof import('element-plus/es')['ElBadge']
     ElBreadcrumb: typeof import('element-plus/es')['ElBreadcrumb']
@@ -67,10 +65,8 @@ declare module 'vue' {
     Header: typeof import('./src/components/header/Header.vue')['default']
     ImageViewer: typeof import('./src/components/ImageViewer.vue')['default']
     Mind: typeof import('./src/components/mind/Mind.vue')['default']
-    MobileHeader: typeof import('./src/components/header/mobile/MobileHeader.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    Search: typeof import('./src/components/search/Search.vue')['default']
     ThemeSwitcher: typeof import('./src/components/header/ThemeSwitcher.vue')['default']
   }
   export interface GlobalDirectives {

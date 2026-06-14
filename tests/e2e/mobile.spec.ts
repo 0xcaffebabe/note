@@ -8,7 +8,8 @@ test.describe('mobile split (mobile project)', () => {
     await goto(page, '/home.html')
     await waitForPath(page, '/m/home.html')
     expect(pathnameOf(page)).toBe('/m/home.html')
-    await page.waitForSelector('.mobile-layout')
+    // P2 起桌面/移动共用响应式外壳 App.vue: 窄屏标记为 .main-layout.is-mobile(原 .mobile-layout 随 MobileApp 退役)
+    await page.waitForSelector('.main-layout.is-mobile')
   })
 
   test('移动端文档页渲染底部导航栏', async ({ page }) => {

@@ -36,6 +36,15 @@
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+
+  // 布局 / 响应式: 内容区横向内边距随视口流式收放(桌面32 → 移动8 一条连续曲线)
+  // 取代桌面 .main 的 0 32px 与移动 .mobile-main 的 8px 两个孤立取值
+  --content-pad: clamp(var(--spacing-sm), 4vw, var(--spacing-xl));
+  // 正文阅读列宽(与设备断点解耦: 这是阅读测量, 不是 isMobile 阈值)
+  --reading-measure: 820px;
+  --content-max: 860px;
 
   // 圆角系统
   --radius-sm: 4px;
@@ -54,6 +63,7 @@
   --font-size-3xl: 28px;
   --leading-tight: 1.4;
   --leading-normal: 1.6;
+  --leading-base: 1.7;      // 正文默认行高(原 body 硬编码值, 令牌化)
   --leading-relaxed: 1.8;
 
   // 字体栈
@@ -64,6 +74,8 @@
   --transition-fast: 0.15s ease;
   --transition-normal: 0.25s ease;
   --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  // 路由切换过渡: 桌面/移动统一同一动效语言(取代 App 的 translateY 与 MobileApp 的 translateX 分裂)
+  --transition-page: 0.25s ease;
 
   // 层级体系: popup需压过Element Plus弹层(EP popper从2000起自增)
   --z-aside: 10;
@@ -80,17 +92,6 @@
   // 滚动条
   --scrollbar-thumb-color: rgba(0,0,0,0.15);
   --scrollbar-thumb-hover-color: rgba(0,0,0,0.3);
-
-  // ----------------------------------------------------------
-  // [废弃 仅兼容] 旧暗色平行变量: 迁移期间保留 引用清零后删除
-  --main-dark-bg-color: #1e1e1e;
-  --second-dark-bg-color: #252526;
-  --third-dark-bg-color: #2d2d30;
-  --default-dark-border-color: #454545;
-  --dark-text-color: #e0e0e0;
-  --dark-secondary-text-color: #a0a0a0;
-  --dark-hover-bg-color: #2a2d2e;
-  --dark-card-bg-color: #252526;
 }
 
 // 暗色模式: 同名令牌换值(html.dark与Element Plus暗色变量同一作用域)
@@ -159,7 +160,7 @@ body {
   padding: 0;
   font-family: var(--font-sans);
   font-size: var(--font-size-base);
-  line-height: 1.7;
+  line-height: var(--leading-base);
   color: var(--main-text-color);
   background-color: var(--main-bg-color);
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -206,7 +207,6 @@ body {
 // 导致侧栏/TOC的position:sticky永远不触发 改为visible让粘性相对窗口滚动生效
 // (用两级选择器保证特异性高于EP组件样式 不受样式注入顺序影响)
 .main-layout > .el-main,
-.mobile-layout > .el-main,
 .doc-layout > .el-main {
   overflow: visible;
 }
@@ -214,6 +214,16 @@ body {
 // EP的el-header默认padding 0 20px会让顶栏两端露出20px页面灰底
 .main-layout > .el-header {
   padding: 0;
+}
+
+// 窄屏外壳(App.vue 响应式): 紧凑顶栏 + 主区贴近内容(白底 + 小内边距)
+// 迁自已退役的 MobileApp.vue; 两级选择器保证特异性高于 EP 容器默认样式
+.main-layout.is-mobile > .el-header {
+  height: 48px;
+}
+.main-layout.is-mobile > .el-main {
+  padding: var(--spacing-sm);
+  background-color: var(--card-bg-color);
 }
 
 .doc-layout .doc-aside {
@@ -369,6 +379,15 @@ body {
     content: " (" attr(href) ")";
     font-size: 12px;
     color: #666;
+  }
+}
+
+// 窄屏构建时间角标缩小内收(迁自已退役的 MobileApp.vue; 使用全局注入的 @bp-mobile 断点变量)
+@media (max-width: @bp-mobile) {
+  #buildTime {
+    font-size: 10px !important;
+    bottom: 4px !important;
+    right: 4px !important;
   }
 }
 

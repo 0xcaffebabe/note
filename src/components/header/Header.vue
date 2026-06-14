@@ -1,11 +1,12 @@
 <template>
-  <header class="site-header">
+  <header class="site-header" :class="{ compact: $isMobile() }">
     <div class="header-inner">
       <div class="header-left">
         <a href="/home.html" class="site-logo" @click.prevent="$router.push('/home.html')">
           {{ siteName }}
         </a>
-        <nav class="site-nav" aria-label="站内导航">
+        <!-- 宽屏: 顶栏内联导航 -->
+        <nav v-if="!$isMobile()" class="site-nav" aria-label="站内导航">
           <a
             v-for="nav in navList"
             :key="nav.path"
@@ -17,12 +18,24 @@
         </nav>
       </div>
       <div class="header-right">
-        <!-- 搜索入口: 伪输入框 + 快捷键提示 -->
-        <button type="button" class="search-box" @click="$emit('search')" aria-label="搜索 (Ctrl+K)">
+        <!-- 宽屏: 伪输入框 + 快捷键提示 -->
+        <button v-if="!$isMobile()" type="button" class="search-box" @click="$emit('search')" aria-label="搜索 (Ctrl+K)">
           <el-icon><Search /></el-icon>
           <span class="search-text">搜索</span>
           <span class="search-kbd"><kbd>{{ metaKeyLabel }}</kbd><kbd>K</kbd></span>
         </button>
+        <!-- 窄屏: 图标入口(全文搜索 / 目录搜索 / 展开目录) -->
+        <template v-else>
+          <button type="button" class="icon-btn" @click="$emit('search')" aria-label="全文搜索">
+            <el-icon><Search /></el-icon>
+          </button>
+          <button type="button" class="icon-btn" @click="$emit('category-search')" aria-label="目录搜索">
+            <el-icon><Folder /></el-icon>
+          </button>
+          <button type="button" class="icon-btn" @click="$store.commit('setShowCategory', true)" aria-label="展开目录">
+            <el-icon><Expand /></el-icon>
+          </button>
+        </template>
         <theme-switcher class="action-item" />
         <el-dropdown trigger="click">
           <button type="button" class="more-btn" aria-label="更多工具">
@@ -30,7 +43,17 @@
           </button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item @click="handleToggleFullScreen">
+              <!-- 窄屏: 导航并入菜单(宽屏已在顶栏内联) -->
+              <template v-if="$isMobile()">
+                <el-dropdown-item
+                  v-for="nav in navList"
+                  :key="'nav-' + nav.path"
+                  @click="$router.push(nav.path)"
+                >
+                  <el-icon><Document /></el-icon>{{ nav.name }}
+                </el-dropdown-item>
+              </template>
+              <el-dropdown-item :divided="$isMobile()" @click="handleToggleFullScreen">
                 <el-icon><Monitor /></el-icon>全屏
               </el-dropdown-item>
               <el-dropdown-item @click="refresh">
@@ -59,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { Monitor, Brush, Aim, Refresh, Search, MoreFilled, Link } from '@element-plus/icons-vue';
+import { Monitor, Brush, Aim, Refresh, Search, MoreFilled, Link, Folder, Expand, Document } from '@element-plus/icons-vue';
 import EventBus from "@/components/EventBus";
 import ThemeSwitcher from "./ThemeSwitcher.vue";
 </script>
@@ -71,7 +94,8 @@ import CacheService from "@/service/CacheService";
 import { ElMessage, ElMessageBox } from 'element-plus';
 
 export default defineComponent({
-  emits: ['search'],
+  // 窄屏搜索/目录搜索图标复用同一契约: search=全文, category-search=目录
+  emits: ['search', 'category-search'],
   data() {
     return {
       fullscreen: false,
@@ -139,6 +163,16 @@ export default defineComponent({
   background-color: var(--card-bg-color);
   border-bottom: 1px solid var(--border-color);
   transition: background-color var(--transition-normal), border-color var(--transition-normal);
+
+  // 窄屏紧凑顶栏
+  &.compact {
+    height: 48px;
+
+    .header-inner {
+      padding: 0 var(--spacing-md);
+      gap: var(--spacing-sm);
+    }
+  }
 }
 
 .header-inner {
@@ -204,6 +238,32 @@ export default defineComponent({
   gap: var(--spacing-sm);
 }
 
+// 窄屏图标按钮: 触控目标 >= 40x40
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border: none;
+  background: transparent;
+  color: var(--secondary-text-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+
+  &:hover,
+  &:active {
+    color: var(--main-text-color);
+    background-color: var(--hover-bg-color);
+  }
+
+  .el-icon {
+    font-size: 18px;
+  }
+}
+
 .search-box {
   display: flex;
   align-items: center;
@@ -263,25 +323,6 @@ export default defineComponent({
   &:hover {
     color: var(--main-text-color);
     background-color: var(--hover-bg-color);
-  }
-}
-
-@media (max-width: 768px) {
-  .header-inner {
-    padding: 0 var(--spacing-md);
-  }
-
-  .site-nav {
-    display: none;
-  }
-
-  .search-box {
-    min-width: 0;
-
-    .search-text,
-    .search-kbd {
-      display: none;
-    }
   }
 }
 </style>

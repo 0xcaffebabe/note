@@ -1,15 +1,16 @@
 <template>
   <a class="skip-link" href="#main-content">跳到正文</a>
-  <el-container class="main-layout">
+  <el-container class="main-layout" :class="{ 'is-mobile': $isMobile() }">
     <el-header v-show="showHeader">
       <el-affix :offset="0">
-        <Header @search="showSearch" />
+        <Header @search="showSearch" @category-search="showCategorySearch" />
       </el-affix>
     </el-header>
-    <div class="header-toggle-button" :style="{'margin-top': showHeader ? '60px' : '10px'}">
-      <el-button 
-        @click="showHeader = !showHeader" 
-        size="small" 
+    <!-- 收起顶栏按钮: 仅宽屏(窄屏顶栏常驻, 由禅模式统一收起) -->
+    <div v-if="!$isMobile()" class="header-toggle-button" :style="{'margin-top': showHeader ? '60px' : '10px'}">
+      <el-button
+        @click="showHeader = !showHeader"
+        size="small"
         type="default"
         :icon="showHeader ? ArrowUpBold : ArrowDownBold"
         circle
@@ -17,7 +18,11 @@
       />
     </div>
     <el-main id="main-content" tabindex="-1">
-      <router-view />
+      <router-view v-slot="{ Component }">
+        <transition name="page" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </el-main>
   </el-container>
   <command-palette ref="commandPalette" />
@@ -43,6 +48,7 @@ export default defineComponent({
   },
   setup() {
     const commandPalette = ref<InstanceType<typeof CommandPalette>>()
+    // 统一搜索入口: 全文 / 目录 都走 CommandPalette(取代移动端 Search 抽屉 + CategorySearch 弹窗)
     const showSearch = () => {
       commandPalette.value?.show()
     }
@@ -70,7 +76,7 @@ export default defineComponent({
       CacheService.getInstance().clear();
       ElMessage.success('清除缓存完成');
     },
-  }, 
+  },
   data() {
     return {
       // 顶栏默认常驻显示(承载全局导航与搜索入口) 禅模式或用户手动收起后保持偏好
@@ -147,6 +153,10 @@ export default defineComponent({
     EventBus.on('enter-zen-mode', () => {
       this.showHeader = false
     })
+    // 文档页底部操作栏的搜索入口(移动端从 MobileApp 迁入: 统一走 CommandPalette)
+    EventBus.on('show-mobile-search', () => {
+      (this.$refs.commandPalette as any)?.show()
+    })
     // 设置showHeader初始值
     const showHeader = ConfigService.get('showHeader') as boolean
     if (typeof showHeader != 'undefined') {
@@ -172,7 +182,7 @@ export default defineComponent({
   right: 16px;
   z-index: 1000;
   transition: all 0.3s ease;
-  
+
   .el-button {
     padding: 8px;
     width: 32px;
@@ -181,7 +191,7 @@ export default defineComponent({
     box-shadow: var(--shadow-md);
     background-color: var(--card-bg-color);
     transition: all 0.2s ease;
-    
+
     &:hover {
       box-shadow: var(--shadow-lg);
       transform: translateY(-1px);
@@ -189,20 +199,15 @@ export default defineComponent({
   }
 }
 
-// 页面过渡动画
+// 统一页面切换过渡: 桌面/移动同一动效语言(纯淡入淡出, 避免位移抖动)
 .page-enter-active,
 .page-leave-active {
-  transition: all 0.25s ease;
+  transition: opacity var(--transition-page);
 }
 
-.page-enter-from {
-  opacity: 0;
-  transform: translateY(10px);
-}
-
+.page-enter-from,
 .page-leave-to {
   opacity: 0;
-  transform: translateY(-10px);
 }
 
 // 暗色专属: 暗色下阴影对比弱, 需补充边框勾勒按钮轮廓; 亮色侧为 border: none, 无法用同一令牌表达

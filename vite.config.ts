@@ -31,14 +31,14 @@ const plugins: Plugin[] = [];
 // 打包生产环境才引入的插件
 if (process.env.NODE_ENV === "production") {
   // 打包依赖展示
-  plugins.push(
-    visualizer({
-      open: true,
-      gzipSize: true,
-      brotliSize: true,
-      filename: "dist/stats.html"
-    }) as Plugin
-  );
+  // plugins.push(
+  //   visualizer({
+  //     open: true,
+  //     gzipSize: true,
+  //     brotliSize: true,
+  //     filename: "dist/stats.html"
+  //   }) as Plugin
+  // );
 }
 
 // https://vitejs.dev/config/
@@ -46,6 +46,20 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "src")
+    },
+  },
+  css: {
+    preprocessorOptions: {
+      less: {
+        // 让每个 .less / SFC <style lang="less"> 都能直接用 @bp-mobile/@bp-desktop
+        // 断点变量(与 src/const/breakpoints.ts 同源)而无需逐文件 @import。
+        // paths 让 @import "breakpoints.less" 从 src 解析; 跳过文件自身避免自导入。
+        paths: [path.resolve(import.meta.dirname, "src")],
+        additionalData: (source: string, filename: string) =>
+          filename.replace(/\\/g, "/").endsWith("src/breakpoints.less")
+            ? source
+            : `@import "breakpoints.less";\n${source}`,
+      },
     },
   },
   server: {

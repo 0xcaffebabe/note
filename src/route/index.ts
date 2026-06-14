@@ -109,7 +109,8 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/m',
-    component: () => import("@/MobileApp.vue"),
+    // 共用同一响应式外壳(取代已退役的 MobileApp.vue); /m 子树将在路由合流阶段整体删除
+    component: () => import("@/App.vue"),
     redirect: lastReadRedirect('/m'),
     children: [
       { path: "/m/home", redirect: to => ({ path: "/m/home.html", query: to.query }) },

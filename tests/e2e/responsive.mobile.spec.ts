@@ -95,18 +95,18 @@ test.describe('mobile DocPage (Pixel 5)', () => {
 })
 
 test.describe('mobile home & charts (Pixel 5)', () => {
-  test('移动首页: is-mobile 外壳 + 统计 :column=1', async ({ page }) => {
+  test('移动首页: is-mobile 外壳 + 统计卡片网格', async ({ page }) => {
     await goto(page, '/home.html')
     await page.waitForSelector('.main-layout.is-mobile')
-    await page.waitForSelector('.mobile-statistic-wrapper')
-    expect(await page.locator('.statistic-wrapper').count()).toBe(0)
-    const labelsPerRow = await page.$$eval('.el-descriptions__body tr', rows => rows.map(r => r.querySelectorAll('.el-descriptions__label').length))
-    expect(Math.max(...labelsPerRow)).toBe(1)
+    await page.waitForSelector('.stat-section')
+    // 旧 el-descriptions 表格式外壳已弃用, 改为指标卡网格(CSS 自适应, 不再 :column 切换)
+    expect(await page.locator('.statistic-wrapper, .mobile-statistic-wrapper').count()).toBe(0)
+    expect(await page.locator('.stat-section .stat-card').count()).toBeGreaterThan(0)
   })
 
   test('移动首页无横向溢出, 图表均在视口内', async ({ page }) => {
     await goto(page, '/home.html')
-    await page.waitForSelector('.mobile-statistic-wrapper')
+    await page.waitForSelector('.stat-section')
     await expect.poll(
       () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth),
       { timeout: 20000 }
@@ -129,7 +129,7 @@ test.describe('mobile home & charts (Pixel 5)', () => {
     await item.click()
     await page.waitForFunction(() => location.pathname.endsWith('/cluster'), undefined, { timeout: 20000 })
     expect(pathnameOf(page)).toBe('/cluster')
-    await page.waitForSelector('#docCluster canvas', { timeout: 20000 })
+    await page.waitForSelector('.cluster-host canvas', { timeout: 20000 })
   })
 })
 

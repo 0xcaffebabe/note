@@ -39,8 +39,8 @@ test.describe('routing collapse & /m compat (desktop)', () => {
     // 精确路径等待(/m/cluster 以 /cluster 结尾, endsWith 会提前命中)
     await page.waitForFunction(() => decodeURI(location.pathname) === '/cluster', undefined, { timeout: 20000 })
     expect(pathnameOf(page)).toBe('/cluster')
-    await page.waitForSelector('#docCluster canvas', { timeout: 20000 })
-    expect(await page.locator('#docCluster canvas').count()).toBeGreaterThan(0)
+    await page.waitForSelector('.cluster-host canvas', { timeout: 20000 })
+    expect(await page.locator('.cluster-host canvas').count()).toBeGreaterThan(0)
   })
 
   test('无后缀+尾斜杠路径自愈补回 .html', async ({ page }) => {
@@ -64,7 +64,7 @@ test.describe('routing collapse & /m compat (desktop)', () => {
     await page.locator('.site-nav .nav-item', { hasText: '聚类' }).click()
     await waitForPath(page, '/cluster')
     expect(pathnameOf(page)).toBe('/cluster')
-    await page.waitForSelector('#docCluster canvas', { timeout: 20000 })
+    await page.waitForSelector('.cluster-host canvas', { timeout: 20000 })
   })
 })
 
@@ -178,39 +178,41 @@ test.describe('folded hazards & silent-break fixes (desktop)', () => {
 
 // ── 首页 + 响应式图表 ───────────────────────────────────────────────────
 test.describe('home & responsive charts (desktop)', () => {
-  test('首页渲染 banner + 快速入口 + 统计(桌面 wrapper)', async ({ page }) => {
+  test('首页渲染 banner + 快速入口 + 统计(卡片化)', async ({ page }) => {
     await goto(page, '/home.html')
-    await page.waitForSelector('.statistic-wrapper')
+    await page.waitForSelector('.stat-section')
     await page.waitForSelector('.quick-access')
-    expect(await page.locator('.statistic-wrapper').count()).toBe(1)
-    expect(await page.locator('.mobile-statistic-wrapper').count()).toBe(0)
+    expect(await page.locator('.stat-section').count()).toBe(1)
+    // 旧 el-descriptions 表格式外壳已弃用, 改为指标卡网格
+    expect(await page.locator('.statistic-wrapper, .mobile-statistic-wrapper').count()).toBe(0)
+    expect(await page.locator('.stat-section .stat-card').count()).toBeGreaterThan(0)
     expect(await page.locator('.main-layout.is-mobile').count()).toBe(0)
     await expect(page.locator('.hero .hero-title')).toBeVisible()
   })
 
-  test('echarts 图表均挂载 canvas(热力图/代码频率/时段柱状)', async ({ page }) => {
+  test('echarts 图表均挂载 canvas(代码构成/提交日历/各时段/趋势)', async ({ page }) => {
     await goto(page, '/home.html')
-    await page.waitForSelector('.statistic-wrapper')
-    await expect.poll(() => page.locator('#heatmap canvas').count(), { timeout: 20000 }).toBeGreaterThan(0)
-    await expect.poll(() => page.locator('#codeFrequencyChart canvas').count(), { timeout: 20000 }).toBeGreaterThan(0)
-    await expect.poll(() => page.locator('.main canvas').count(), { timeout: 20000 }).toBeGreaterThan(0)
+    await page.waitForSelector('.stat-section')
+    // 4 张 echarts 图(代码构成/提交日历/各时段/趋势) + 词云, 各自在卡片内挂载 canvas
+    await expect.poll(() => page.locator('.stat-section .chart-card canvas').count(), { timeout: 20000 }).toBeGreaterThanOrEqual(4)
   })
 
-  test('词云绘制内容且 2D/3D 切换按钮工作', async ({ page }) => {
+  test('词云绘制内容且 2D/3D 切换工作', async ({ page }) => {
     await goto(page, '/home.html')
     await page.waitForSelector('#wordcloud')
-    await page.waitForSelector('.wordcloud-wrapper .mode-switch button')
-    await expect(page.locator('.wordcloud-wrapper .mode-switch button')).toHaveCount(2)
-    await expect(page.locator('.wordcloud-wrapper .mode-switch button:nth-child(2)')).toHaveClass(/active/)
-    await page.click('.wordcloud-wrapper .mode-switch button:nth-child(1)')
-    await expect(page.locator('.wordcloud-wrapper .mode-switch button:nth-child(1)')).toHaveClass(/active/)
+    await page.waitForSelector('.wordcloud-wrapper .mode-switch .el-radio-button')
+    await expect(page.locator('.wordcloud-wrapper .mode-switch .el-radio-button')).toHaveCount(2)
+    // 桌面默认 3D(第 2 个)
+    await expect(page.locator('.wordcloud-wrapper .mode-switch .el-radio-button:nth-child(2)')).toHaveClass(/is-active/)
+    await page.click('.wordcloud-wrapper .mode-switch .el-radio-button:nth-child(1)')
+    await expect(page.locator('.wordcloud-wrapper .mode-switch .el-radio-button:nth-child(1)')).toHaveClass(/is-active/)
   })
 
   test('首页加载无未捕获的图表数据解析异常(CommitTotalTrend try/catch)', async ({ page }) => {
     const pageErrors: string[] = []
     page.on('pageerror', e => pageErrors.push(String(e)))
     await goto(page, '/home.html')
-    await page.waitForSelector('.statistic-wrapper')
+    await page.waitForSelector('.stat-section')
     await page.waitForTimeout(4000)
     expect(pageErrors.filter(e => /is not valid JSON|Unexpected token/.test(e))).toHaveLength(0)
   })
@@ -271,19 +273,19 @@ test.describe('regression guards (fixed defects)', () => {
   test('词云选 2D 后, 容器 resize 触发重排不应回退 3D', async ({ page }) => {
     await goto(page, '/home.html')
     await page.waitForSelector('#wordcloud')
-    await page.waitForSelector('.wordcloud-wrapper .mode-switch button')
+    await page.waitForSelector('.wordcloud-wrapper .mode-switch .el-radio-button')
     await expect.poll(() => page.evaluate(() => {
       const c = document.getElementById('wordcloud') as HTMLCanvasElement | null
       return c && c.width ? 1 : 0
     }), { timeout: 20000 }).toBe(1)
-    await page.click('.wordcloud-wrapper .mode-switch button:nth-child(1)') // 选 2D
-    // 触发 ResizeObserver 重入 init()(仍在 full 档, 不切移动)
-    await page.setViewportSize({ width: 1320, height: 900 })
+    await page.click('.wordcloud-wrapper .mode-switch .el-radio-button:nth-child(1)') // 选 2D
+    // 触发 ResizeObserver 重入 init(): 须落到使卡片(--home-max 1080 限宽)实际变窄的宽度, 仍 >820 不切移动
+    await page.setViewportSize({ width: 1100, height: 900 })
     await expect.poll(() => page.evaluate(() => {
       const c = document.getElementById('wordcloud') as HTMLCanvasElement | null
       return c ? c.style.cursor : ''
     }), { timeout: 20000 }).toBe('default') // 2D => default 光标; 若回退 3D 则为 grab
-    await expect(page.locator('.wordcloud-wrapper .mode-switch button:nth-child(1)')).toHaveClass(/active/)
+    await expect(page.locator('.wordcloud-wrapper .mode-switch .el-radio-button:nth-child(1)')).toHaveClass(/is-active/)
   })
 
   // 修复前: showMobileToc / vuex showCategory 在离开移动断点时未复位, 回到移动端抽屉自动重开。

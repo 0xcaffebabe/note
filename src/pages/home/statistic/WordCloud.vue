@@ -119,6 +119,10 @@ export default defineComponent({
         }
         // 移除 3D 事件
         this.remove3DEvents();
+        // 2D 无拖拽, 立即恢复默认光标(不依赖后续 resize 重排再纠正)
+        if (this.canvas) {
+          this.canvas.style.cursor = "default";
+        }
       }
     },
 

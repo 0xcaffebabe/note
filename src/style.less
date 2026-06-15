@@ -45,6 +45,8 @@
   // 正文阅读列宽(与设备断点解耦: 这是阅读测量, 不是 isMobile 阈值)
   --reading-measure: 820px;
   --content-max: 860px;
+  // 首页落地页内容最大宽度: 三块(hero文本/快速入口/统计)统一对齐到同一中线
+  --home-max: 1080px;
 
   // 圆角系统
   --radius-sm: 4px;
@@ -298,6 +300,27 @@ body {
 }
 
 // 暗色下 el-dialog 跟随令牌自动适配 无需覆写
+
+// 首页 echarts 图表骨架(配合 eChartMixin): 统一容器/画布/空·错覆盖层
+// 画布高度由各图表自身 scoped 样式覆盖 .chart-box 给定
+.chart-host {
+  position: relative;
+  width: 100%;
+}
+.chart-host .chart-box {
+  width: 100%;
+  height: 360px;
+}
+.chart-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--secondary-text-color);
+  font-size: var(--font-size-sm);
+  pointer-events: none;
+}
 
 // 简化标签样式
 .markdown-section .doc-tag {

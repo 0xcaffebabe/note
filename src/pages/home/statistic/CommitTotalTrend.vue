@@ -1,10 +1,16 @@
 <template>
   <div>
-    <el-radio-group size="small" style="margin-bottom:8px;margin-left:60px" v-model="type">
-      <el-radio-button :label="'absolute'">绝对量</el-radio-button>
-      <el-radio-button :label="'relative'">相对量</el-radio-button>
+    <!-- 维度切换放在图表上方 -->
+    <el-radio-group class="trend-switch" size="small" v-model="type">
+      <el-radio-button value="absolute">绝对量</el-radio-button>
+      <el-radio-button value="relative">相对量</el-radio-button>
     </el-radio-group>
-    <div ref="chartContainer" class="chartContainer"></div>
+    <div class="chart-host">
+      <div ref="chartEl" class="chart-box" role="img" aria-label="提交趋势折线图"></div>
+      <div v-if="chartState === 'empty' || chartState === 'error'" class="chart-overlay" role="status">
+        {{ chartState === 'empty' ? '暂无数据' : '数据加载失败' }}
+      </div>
+    </div>
   </div>
 </template>
 
@@ -13,10 +19,6 @@ import { defineComponent } from "vue";
 import api from "@/api";
 import * as echarts from 'echarts/core';
 import {
-  TitleComponent,
-  TitleComponentOption,
-  ToolboxComponent,
-  ToolboxComponentOption,
   TooltipComponent,
   TooltipComponentOption,
   GridComponent,
@@ -28,11 +30,11 @@ import {
 import { LineChart, LineSeriesOption } from 'echarts/charts';
 import { UniversalTransition } from 'echarts/features';
 import { CanvasRenderer } from 'echarts/renderers';
-import {cloneDeep} from '@/util/DataUtils'
+import { cloneDeep } from '@/util/DataUtils'
+import eChartMixin from './eChartMixin'
+import { ChartTheme, tooltipStyle } from './chartTheme'
 
 echarts.use([
-  TitleComponent,
-  ToolboxComponent,
   TooltipComponent,
   GridComponent,
   LegendComponent,
@@ -43,8 +45,6 @@ echarts.use([
 ]);
 
 type EChartsOption = echarts.ComposeOption<
-  | TitleComponentOption
-  | ToolboxComponentOption
   | TooltipComponentOption
   | GridComponentOption
   | LegendComponentOption
@@ -52,56 +52,39 @@ type EChartsOption = echarts.ComposeOption<
 >;
 
 export default defineComponent({
-  setup() { },
-  computed: {
-    isDark(): boolean {
-      return this.$store.state.isDarkMode;
-    },
-  },
-  watch: {
-    isDark() {
-      this.init();
-    },
-    type() {
-      this.init()
-    }
-  },
+  // echarts 生命周期(init/resize/暗色重渲染/dispose)统一交给 mixin
+  mixins: [eChartMixin],
   data() {
     return {
       type: 'absolute' as 'absolute' | 'relative',
-      chart: null as echarts.ECharts | null
+    }
+  },
+  watch: {
+    // 维度切换重渲染; 暗色 watch 由 mixin 负责
+    type() {
+      this.renderChart()
     }
   },
   methods: {
-    handleResize() {
-      this.chart?.resize();
-    },
-    async init() {
-      // 数据文件缺失(如构建跳过生成 / 离线)时 fetch 落到 SPA index.html 会令 r.json() 抛错;
-      // 加 try/catch 优雅降级, 避免首页出现未捕获的 promise rejection
-      let data: [string, number, number, number][];
-      try {
-        data = cloneDeep(await api.getCommitTotalTrend()) as [string, number, number, number][];
-      } catch (e) {
-        console.warn('提交趋势数据加载失败, 跳过该图表', e);
-        return;
+    async buildOption(theme: ChartTheme): Promise<EChartsOption | null> {
+      // fetch 失败让其自然抛出, 由 mixin catch 成错误态
+      const data = cloneDeep(await api.getCommitTotalTrend()) as [string, number, number, number][];
+      if (!data?.length) {
+        return null;
       }
-      // 复用实例: isDark/type 切换会重入 init, 先 dispose 避免同 dom 多实例泄漏
-      this.chart?.dispose();
-      const myChart = (this.chart = echarts.init(this.$refs.chartContainer as HTMLElement));
 
+      // 相对量: 逐项与前一项求差(从尾向头, 避免覆盖待用的前值)
       if (this.type === 'relative') {
-        for(let i = data.length - 1; i > 0; i--) {
-          data[i][1] -= data[i-1][1]
-          data[i][2] -= data[i-1][2]
-          data[i][3] -= data[i-1][3]
+        for (let i = data.length - 1; i > 0; i--) {
+          data[i][1] -= data[i - 1][1]
+          data[i][2] -= data[i - 1][2]
+          data[i][3] -= data[i - 1][3]
         }
       }
 
       const absolutely = this.type === 'absolute'
 
       const option: EChartsOption = {
-        darkMode: this.isDark,
         dataZoom: [
           {
             start: 0,
@@ -112,23 +95,14 @@ export default defineComponent({
             end: 100
           }
         ],
-        title: {
-          text: "提交趋势",
-          textStyle: {
-            color: this.isDark ? "#bbb" : "",
-          },
-        },
         tooltip: {
           trigger: "axis",
-          backgroundColor: this.isDark ? "#666" : "#fff",
-          textStyle: {
-            color: this.isDark ? "#bbb" : "",
-          },
+          ...tooltipStyle(theme),
         },
         legend: {
           data: absolutely ? ["总字数", "总行数", "总提交"] : ["相对字数", "相对行数", "相对提交"],
           textStyle: {
-            color: this.isDark ? "#bbb" : "#666",
+            color: theme.subText,
           }
         },
         grid: {
@@ -137,19 +111,17 @@ export default defineComponent({
           bottom: "3%",
           containLabel: true,
         },
-        toolbox: {
-          feature: {
-            saveAsImage: { show: false },
-          },
-        },
         xAxis: {
           type: "category",
           boundaryGap: false,
           data: data.map(v => v[0]),
+          axisLabel: { color: theme.subText },
         },
         yAxis: {
           type: "value",
-          min: 'dataMin'
+          min: 'dataMin',
+          axisLabel: { color: theme.subText },
+          splitLine: { lineStyle: { color: theme.splitLine } },
         },
         series: [
           {
@@ -169,25 +141,18 @@ export default defineComponent({
           },
         ],
       };
-      myChart.setOption(option);
+      return option;
     }
-  },
-  async mounted() {
-    this.init()
-    window.addEventListener("resize", this.handleResize);
-  },
-  unmounted() {
-    window.removeEventListener("resize", this.handleResize);
-    this.chart?.dispose();
-    this.chart = null;
   },
 });
 </script>
 
 <style lang="less" scoped>
-.chartContainer {
-  height: 400px;
-  max-width: 90%;
-  margin: 0 auto;
+.trend-switch {
+  margin: 0 0 var(--spacing-sm);
+}
+// 宽度交父级 flex 控制, 仅在此覆写高度
+.chart-box {
+  height: 360px;
 }
 </style>

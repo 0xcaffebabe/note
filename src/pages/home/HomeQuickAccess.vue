@@ -1,31 +1,60 @@
 <template>
-  <div class="quick-access" v-if="recentList.length > 0 || categoryList.length > 0">
-    <div class="qa-card" v-if="recentList.length > 0">
-      <h3 class="qa-title">最近更新</h3>
-      <a
+  <div class="quick-access" v-if="recentList.length > 0 || categoryList.length > 0 || tagList.length > 0">
+    <div class="qa-card qa-card-recent" v-if="recentList.length > 0">
+      <h2 class="qa-title">最近更新</h2>
+      <!-- router-link 保留真实 href + 修饰键(Ctrl/中键新标签页) -->
+      <router-link
         v-for="item in recentList"
         :key="item.docId"
-        :href="item.href"
+        :to="item.href"
         class="qa-row"
-        @click.prevent="$router.push(item.href)"
       >
-        <span class="qa-name">{{ item.name }}</span>
-        <span class="qa-date">{{ item.dateLabel }}</span>
-      </a>
+        <span class="qa-row-main">
+          <!-- 面包屑在前: 同名文件(概述/index)靠所属分类区分 -->
+          <span v-if="item.breadcrumb" class="qa-crumb" :title="item.breadcrumb">{{ item.breadcrumb }}</span>
+          <span class="qa-name" :title="item.name">{{ item.name }}</span>
+        </span>
+        <!-- title 显示绝对日期 -->
+        <span class="qa-date" :title="item.fullDate">{{ item.dateLabel }}</span>
+      </router-link>
     </div>
-    <div class="qa-card" v-if="categoryList.length > 0">
-      <h3 class="qa-title">知识分类</h3>
+    <div class="qa-card qa-card-category" v-if="categoryList.length > 0">
+      <h2 class="qa-title">知识分类</h2>
       <div class="qa-grid">
-        <a
-          v-for="cat in categoryList"
+        <!-- href 非空 -> 真实链接(router-link); 为空 -> 非交互展示, 不渲染死链 -->
+        <router-link
+          v-for="cat in linkedCategories"
           :key="cat.name"
-          :href="cat.href"
+          :to="cat.href"
           class="qa-cat"
-          @click.prevent="cat.href && $router.push(cat.href)"
         >
-          <span class="qa-cat-name">{{ cat.name }}</span>
+          <span class="qa-cat-name" :title="cat.name">{{ cat.name }}</span>
           <span class="qa-cat-count">{{ cat.count }}</span>
-        </a>
+        </router-link>
+        <div
+          v-for="cat in staticCategories"
+          :key="cat.name"
+          class="qa-cat qa-cat-static"
+        >
+          <span class="qa-cat-name" :title="cat.name">{{ cat.name }}</span>
+          <span class="qa-cat-count">{{ cat.count }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="qa-card qa-card-tag" v-if="tagList.length > 0">
+      <h2 class="qa-title">热门标签</h2>
+      <div class="qa-tags">
+        <!-- /tag.html?tag=xx 落点: TagListPage 读 query.tag 预选该标签并列出关联文档 -->
+        <router-link
+          v-for="tag in tagList"
+          :key="tag.name"
+          :to="{ path: '/tag.html', query: { tag: tag.name } }"
+          class="qa-tag"
+          :title="`${tag.name}(${tag.count})`"
+        >
+          {{ tag.name }}
+          <span class="qa-tag-count">{{ tag.count }}</span>
+        </router-link>
       </div>
     </div>
   </div>
@@ -41,8 +70,10 @@ import DocUtils from '@/util/DocUtils'
 interface RecentItem {
   docId: string
   name: string
+  breadcrumb: string // 所属分类路径(去末段) 区分同名文件
   href: string
-  dateLabel: string
+  dateLabel: string // 相对时间
+  fullDate: string // 绝对日期(title/无障碍)
 }
 
 interface CategoryEntry {
@@ -51,7 +82,13 @@ interface CategoryEntry {
   href: string
 }
 
+interface TagEntry {
+  name: string
+  count: number
+}
+
 const RECENT_COUNT = 8
+const TAG_COUNT = 12
 
 function relativeDateLabel(date: string): string {
   const diffMs = Date.now() - new Date(date).getTime()
@@ -71,12 +108,32 @@ function relativeDateLabel(date: string): string {
   return `${Math.floor(days / 365)} 年前`
 }
 
+// 绝对日期(本地化短格式) 解析失败返回空串(不渲染 title)
+function absoluteDateLabel(date: string): string {
+  const d = new Date(date)
+  if (isNaN(d.getTime())) {
+    return ''
+  }
+  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
+}
+
 export default defineComponent({
   data() {
     return {
       recentList: [] as RecentItem[],
       categoryList: [] as CategoryEntry[],
+      tagList: [] as TagEntry[],
     }
+  },
+  computed: {
+    // 有可达文档的分类(router-link)
+    linkedCategories(): CategoryEntry[] {
+      return this.categoryList.filter(c => c.href)
+    },
+    // 无可达文档的分类(非交互展示 不渲染死链)
+    staticCategories(): CategoryEntry[] {
+      return this.categoryList.filter(c => !c.href)
+    },
   },
   async created() {
     // 最近更新文档
@@ -90,8 +147,11 @@ export default defineComponent({
         return {
           docId,
           name: segments[segments.length - 1],
+          // 中间各段(去末段)作面包屑 docId2Url不带前导'/' 故无空首段
+          breadcrumb: segments.slice(0, -1).join(' / '),
           href: DocUtils.docId2HtmlPath(docId),
           dateLabel: relativeDateLabel(commit.date),
+          fullDate: absoluteDateLabel(commit.date),
         }
       })
     } catch { /* 数据缺失时不展示该卡片 */ }
@@ -125,18 +185,31 @@ export default defineComponent({
           href: firstDoc(cat),
         }))
     } catch { /* 数据缺失时不展示该卡片 */ }
+    // 热门标签: 按关联文档数降序取前 TAG_COUNT
+    try {
+      const tagMapping = await api.getTagMapping()
+      this.tagList = tagMapping
+        .map(([name, docs]) => ({ name, count: docs.length }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, TAG_COUNT)
+    } catch { /* 数据缺失时不展示该卡片 */ }
   },
 })
 </script>
 
 <style lang="less" scoped>
 .quick-access {
+  // 最近更新 + 知识分类 一行(5/7), 热门标签单独跨整行
   display: grid;
   grid-template-columns: 5fr 7fr;
   gap: var(--spacing-lg);
-  max-width: 1080px;
-  margin: 0 auto var(--spacing-xl);
-  padding: 0 var(--spacing-lg);
+  max-width: var(--home-max);
+  margin: 0 auto; // 父级 gap 管纵向间距
+  padding: 0 var(--content-pad); // 与 Banner/Statistic 同一横向内边距令牌, 三块边缘对齐
+}
+
+.qa-card-tag {
+  grid-column: 1 / -1; // 跨满整行
 }
 
 .qa-card {
@@ -171,6 +244,21 @@ export default defineComponent({
       color: var(--primary-color);
     }
   }
+}
+
+.qa-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0; // 允许子项 ellipsis 生效
+}
+
+.qa-crumb {
+  color: var(--secondary-text-color);
+  font-size: var(--font-size-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .qa-name {
@@ -212,6 +300,17 @@ export default defineComponent({
   }
 }
 
+// 无可达文档的分类: 非交互展示 不抬升不变色不改鼠标态
+.qa-cat-static {
+  cursor: default;
+
+  &:hover {
+    border-color: var(--border-color);
+    transform: none;
+    box-shadow: none;
+  }
+}
+
 .qa-cat-name {
   color: var(--main-text-color);
   font-size: var(--font-size-base);
@@ -228,9 +327,43 @@ export default defineComponent({
   padding: 1px 8px;
 }
 
-@media (max-width: 860px) {
+.qa-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+// 复用 qa-cat-count 胶囊风格: hover 底色 + 圆角 + xs 字号
+.qa-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-md);
+  background-color: var(--hover-bg-color);
+  color: var(--main-text-color);
+  font-size: var(--font-size-xs);
+  border-radius: 999px; // 胶囊形
+  text-decoration: none;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+
+  &:hover {
+    background-color: var(--primary-color);
+    color: #fff;
+
+    .qa-tag-count {
+      color: #fff;
+    }
+  }
+}
+
+.qa-tag-count {
+  color: var(--secondary-text-color);
+  transition: color var(--transition-fast);
+}
+
+@media (max-width: @bp-mobile) {
   .quick-access {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; // 移动端单列
   }
 }
 </style>

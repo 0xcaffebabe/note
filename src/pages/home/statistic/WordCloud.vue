@@ -1,19 +1,19 @@
 <template>
   <div class="wordcloud-wrapper">
-    <canvas ref="canvasRef" id="wordcloud"></canvas>
-    <div class="mode-switch">
-      <button 
-        :class="{ active: !is3D }" 
-        @click="toggleMode(false)"
-      >
-        2D
-      </button>
-      <button 
-        :class="{ active: is3D }" 
-        @click="toggleMode(true)"
-      >
-        3D
-      </button>
+    <canvas ref="canvasRef" id="wordcloud" role="img" :aria-label="ariaLabel"></canvas>
+    <!-- 维度切换器: 与提交趋势图共用 el-radio-group 交互语言, 经 mode get/set 桥接到 toggleMode -->
+    <el-radio-group
+      class="mode-switch"
+      size="small"
+      aria-label="词云维度切换"
+      v-model="mode"
+    >
+      <el-radio-button value="2D">2D</el-radio-button>
+      <el-radio-button value="3D">3D</el-radio-button>
+    </el-radio-group>
+    <!-- 空/错态: 与其余 4 张图表卡统一的降级提示 -->
+    <div v-if="wcState === 'empty' || wcState === 'error'" class="chart-overlay" role="status">
+      {{ wcState === 'empty' ? '暂无数据' : '数据加载失败' }}
     </div>
   </div>
 </template>
@@ -53,6 +53,8 @@ export default defineComponent({
       placedWords: [] as WordItem[],
       wordsData2D: [] as WordItem[], // 保存 2D 布局数据
       is3D: true,
+      // 数据加载态: 空/错时显示统一降级覆盖层
+      wcState: 'ready' as 'ready' | 'empty' | 'error',
       rotationAngleX: 0, // 绕 X 轴旋转（垂直方向）
       rotationAngleY: 0, // 绕 Y 轴旋转（水平方向）
       isDragging: false,
@@ -63,9 +65,8 @@ export default defineComponent({
       boundDrag: null as ((e: PointerEvent) => void) | null,
       boundEndDrag: null as (() => void) | null,
       boundMouseDown: null as ((e: PointerEvent) => void) | null,
-      // canvas 悬停/点击监听(tooltip)的可移除引用: 重入 init 时先解绑 避免累积
+      // canvas 悬停监听(tooltip)的可移除引用: 重入 init 时先解绑 避免累积
       boundCanvasMove: null as ((e: PointerEvent) => void) | null,
-      boundCanvasClick: null as ((e: PointerEvent) => void) | null,
       resizeObserver: null as ResizeObserver | null,
       resizeTimer: undefined as ReturnType<typeof setTimeout> | undefined,
     };
@@ -73,6 +74,19 @@ export default defineComponent({
   computed: {
     isDark() {
       return this.$store.state.isDarkMode;
+    },
+    // el-radio-group 与内部布尔态 is3D 的桥接: 值用 '2D'/'3D' 字符串与切换器对齐
+    mode: {
+      get(): "2D" | "3D" {
+        return this.is3D ? "3D" : "2D";
+      },
+      set(v: "2D" | "3D") {
+        this.toggleMode(v === "3D");
+      },
+    },
+    // canvas 是纯图形, 给屏幕阅读器一个概要(避免发布空的可交互图形元素)
+    ariaLabel(): string {
+      return `词云，共 ${this.words.length} 个高频词`;
     },
   },
   watch: {
@@ -320,11 +334,84 @@ export default defineComponent({
       }
     },
 
-    getRandomColor(): string {
-      const r = Math.round(Math.random() * 160);
-      const g = Math.round(Math.random() * 160);
-      const b = Math.round(Math.random() * 160);
-      return `rgb(${r},${g},${b})`;
+    // 读品牌色 --primary-color 的色相: getComputedStyle 拿到的可能是 rgb()/十六进制,
+    // 统一转 HSL 取 H, 作为整张色板的基准色相(取不到时回退 EP 默认蓝 210)
+    getPrimaryHue(): number {
+      if (typeof getComputedStyle === "undefined") return 210;
+      const raw = getComputedStyle(document.documentElement)
+        .getPropertyValue("--primary-color")
+        .trim();
+      const rgb = this.parseColorToRgb(raw);
+      if (!rgb) return 210;
+      const [r, g, b] = rgb.map((c) => c / 255);
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const d = max - min;
+      if (d === 0) return 210;
+      let h = 0;
+      if (max === r) h = ((g - b) / d) % 6;
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h = Math.round(h * 60);
+      return h < 0 ? h + 360 : h;
+    },
+
+    // 解析 rgb()/rgba()/#rgb/#rrggbb 为 [r,g,b]; 解析不出返回 null
+    parseColorToRgb(s: string): [number, number, number] | null {
+      const m = s.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+      if (m) return [+m[1], +m[2], +m[3]];
+      const hex = s.replace("#", "");
+      if (/^[0-9a-f]{3}$/i.test(hex)) {
+        return [
+          parseInt(hex[0] + hex[0], 16),
+          parseInt(hex[1] + hex[1], 16),
+          parseInt(hex[2] + hex[2], 16),
+        ];
+      }
+      if (/^[0-9a-f]{6}$/i.test(hex)) {
+        return [
+          parseInt(hex.slice(0, 2), 16),
+          parseInt(hex.slice(2, 4), 16),
+          parseInt(hex.slice(4, 6), 16),
+        ];
+      }
+      return null;
+    },
+
+    // HSL -> rgb() 字符串: 3D 渲染靠 'rgb'->'rgba' 文本替换加透明度, 故颜色必须输出 rgb() 形态
+    hslToRgbString(h: number, s: number, l: number): string {
+      const sN = s / 100;
+      const lN = l / 100;
+      const c = (1 - Math.abs(2 * lN - 1)) * sN;
+      const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+      const m = lN - c / 2;
+      let r = 0,
+        g = 0,
+        b = 0;
+      if (h < 60) [r, g, b] = [c, x, 0];
+      else if (h < 120) [r, g, b] = [x, c, 0];
+      else if (h < 180) [r, g, b] = [0, c, x];
+      else if (h < 240) [r, g, b] = [0, x, c];
+      else if (h < 300) [r, g, b] = [x, 0, c];
+      else [r, g, b] = [c, 0, x];
+      const to255 = (v: number) => Math.round((v + m) * 255);
+      return `rgb(${to255(r)},${to255(g)},${to255(b)})`;
+    },
+
+    // 基于品牌色相的有序色板: 围绕基准色相小幅游走(±30°), 替代随机近黑色;
+    // 暗色模式抬高 lightness 保证最低可读亮度, 避免词融进深色背景看不见
+    getWordColor(index: number, total: number, baseHue: number): string {
+      const ratio = total > 1 ? index / (total - 1) : 0;
+      // 色相在基准附近循环偏移, 维持克制的同系配色
+      const hue = (baseHue + (index % 6) * 12 - 30 + 360) % 360;
+      if (this.isDark) {
+        // 暗色: 亮度区间 [62%, 80%], 饱和度略降, 越靠后(词频低)越亮以保持可读
+        const lightness = 62 + ratio * 18;
+        return this.hslToRgbString(hue, 62, lightness);
+      }
+      // 亮色: 亮度区间 [32%, 50%], 保证与浅底有足够对比
+      const lightness = 32 + ratio * 18;
+      return this.hslToRgbString(hue, 65, lightness);
     },
 
     getTextWidth(text: string, fontSize: number): number {
@@ -478,7 +565,7 @@ export default defineComponent({
             tooltip.style.backgroundColor = this.isDark ? "#666" : "#fff";
             tooltip.style.color = this.isDark ? "#bbb" : "#333";
             tooltip.textContent = `${word.name}: ${word.value}`;
-            this.canvas!.style.cursor = "pointer";
+            // 词不可点(命令面板不支持预填关键词), 故 hover 不切换 pointer 光标, 仅展示词频
             hovered = true;
             break;
           }
@@ -486,42 +573,11 @@ export default defineComponent({
 
         if (!hovered) {
           tooltip.style.display = "none";
-          this.canvas!.style.cursor = "default";
         }
       };
 
-      this.boundCanvasClick = (e: PointerEvent) => {
-        if (this.is3D) {
-          this.handle3DClick(e, dpr);
-          return;
-        }
-
-        const rect = this.canvas!.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-
-        for (const word of this.placedWords) {
-          // 转换为 CSS 像素坐标进行检测
-          const cssX = word.x! / dpr;
-          const cssY = word.y! / dpr;
-          const cssSize = word.size!;
-          const width = this.getTextWidth(word.name, cssSize) / dpr;
-          const height = cssSize;
-          const left = cssX - width / 2;
-          const right = cssX + width / 2;
-          const top = cssY - height / 2;
-          const bottom = cssY + height / 2;
-
-          if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom) {
-            // this.$store.commit("setSearchKw", word.name);
-            break;
-          }
-        }
-      };
-
-      // 指针事件: 2D 触屏点按/悬停也能命中 tooltip
+      // 指针事件: 2D 触屏点按/悬停也能命中 tooltip(仅展示词频, 不做跳转)
       this.canvas.addEventListener("pointermove", this.boundCanvasMove);
-      this.canvas.addEventListener("click", this.boundCanvasClick as EventListener);
     },
 
     // 解绑全部交互监听 + 移除 tooltip(isDark 切换 / 容器 resize 重入 init 前调用, 防累积泄漏)
@@ -529,9 +585,6 @@ export default defineComponent({
       this.remove3DEvents();
       if (this.canvas && this.boundCanvasMove) {
         this.canvas.removeEventListener("pointermove", this.boundCanvasMove);
-      }
-      if (this.canvas && this.boundCanvasClick) {
-        this.canvas.removeEventListener("click", this.boundCanvasClick as EventListener);
       }
       if (this.tooltip) {
         this.tooltip.remove();
@@ -565,7 +618,7 @@ export default defineComponent({
           tooltip.style.backgroundColor = this.isDark ? "#666" : "#fff";
           tooltip.style.color = this.isDark ? "#bbb" : "#333";
           tooltip.textContent = `${word.name}: ${word.value}`;
-          this.canvas!.style.cursor = "pointer";
+          // 词不可点, 不改 pointer 光标; 保留拖拽的 grab 语义
           hovered = true;
           break;
         }
@@ -573,39 +626,25 @@ export default defineComponent({
 
       if (!hovered) {
         tooltip.style.display = "none";
-        this.canvas!.style.cursor = "default";
-      }
-    },
-
-    handle3DClick(e: MouseEvent, dpr: number) {
-      const rect = this.canvas!.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-
-      for (const word of this.placedWords) {
-        if (!word.baseX || !word.baseY || !word.baseZ) continue;
-
-        const projected = this.project3D(word);
-        const projectedSize = word.projectedSize || word.size!;
-
-        const width = projectedSize * 1.5;
-        const height = projectedSize;
-        const left = projected.x - width / 2;
-        const right = projected.x + width / 2;
-        const top = projected.y - height / 2;
-        const bottom = projected.y + height / 2;
-
-        if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom && projected.scale > 0.3) {
-          // this.$store.commit("setSearchKw", word.name);
-          break;
-        }
       }
     },
 
     async init() {
       // 幂等重入(isDark 切换 / 容器 resize): 先解绑上一轮交互, 避免监听与 tooltip 累积
       this.teardownInteractions();
-      const list = await api.getWordCloud();
+      // 数据缺失(构建跳过生成/离线)时 r.json() 会抛错; 统一降级为空/错态, 避免未捕获 rejection 与空白画布
+      let list: [string, number][];
+      try {
+        list = await api.getWordCloud();
+      } catch {
+        this.wcState = 'error';
+        return;
+      }
+      if (!list.length) {
+        this.wcState = 'empty';
+        return;
+      }
+      this.wcState = 'ready';
 
       this.words = list.map((v: [string, number]) => ({
         name: v[0],
@@ -622,10 +661,13 @@ export default defineComponent({
       const minSize = 12;
       const maxSize = 48;
 
-      this.words.forEach((word) => {
+      // 取一次品牌色相, 整张词云共用一套有序色板(替代逐词随机色)
+      const baseHue = this.getPrimaryHue();
+      const total = this.words.length;
+      this.words.forEach((word, index) => {
         const ratio = (word.value - minValue) / (maxValue - minValue || 1);
         word.size = Math.round(minSize + ratio * (maxSize - minSize));
-        word.color = this.getRandomColor();
+        word.color = this.getWordColor(index, total, baseHue);
       });
 
       // 初始化 canvas
@@ -692,14 +734,22 @@ export default defineComponent({
       }
     },
   },
+  created() {
+    // 移动端默认 2D: 进首页即跑昂贵的球面投影+螺旋碰撞布局对低端机不友好;
+    // 桌面保留 3D。mounted 的初始化分支会读 is3D 走对应布局。
+    this.is3D = !this.$isMobile();
+  },
   async mounted() {
     this.init();
     // 容器尺寸变化(视口缩放/旋转/断点切换 :column)时去抖重排, 保持画布响应式
     const wrapper = (this.$refs.canvasRef as HTMLCanvasElement | undefined)?.parentElement;
     if (wrapper && typeof ResizeObserver !== "undefined") {
+      // init() 会全量重跑(含 3D 球面布局+螺旋碰撞), 开销大; 加大去抖间隔,
+      // 移动端(地址栏伸缩/旋转触发更频繁且机器更弱)用更长窗口避免高频重排
+      const delay = this.$isMobile() ? 350 : 250;
       this.resizeObserver = new ResizeObserver(() => {
         clearTimeout(this.resizeTimer);
-        this.resizeTimer = setTimeout(() => this.init(), 200);
+        this.resizeTimer = setTimeout(() => this.init(), delay);
       });
       this.resizeObserver.observe(wrapper);
     }
@@ -723,33 +773,12 @@ export default defineComponent({
   width: 100%;
   position: relative;
   
+  // 仅保留浮层定位; 按钮配色交给 el-radio-group(已随令牌自动适配暗色)
   .mode-switch {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: var(--spacing-sm);
+    right: var(--spacing-sm);
     z-index: 100;
-    display: flex;
-    gap: 8px;
-    
-    button {
-      padding: 6px 16px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      background: rgba(255, 255, 255, 0.9);
-      cursor: pointer;
-      font-size: 14px;
-      transition: all 0.3s;
-      
-      &:hover {
-        background: rgba(240, 240, 240, 0.95);
-      }
-      
-      &.active {
-        background: var(--primary-color);
-        color: white;
-        border-color: var(--primary-color);
-      }
-    }
   }
 }
 

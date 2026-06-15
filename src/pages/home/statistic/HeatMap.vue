@@ -1,5 +1,10 @@
 <template>
-  <div id="heatmap"></div>
+  <div class="chart-host">
+    <div ref="chartEl" class="chart-box" role="img" :aria-label="`提交日历热力图`"></div>
+    <div v-if="chartState === 'empty' || chartState === 'error'" class="chart-overlay" role="status">
+      {{ chartState === 'empty' ? '暂无数据' : '数据加载失败' }}
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -7,8 +12,6 @@ import { defineComponent } from "vue";
 
 import * as echarts from "echarts/core";
 import {
-  TitleComponent,
-  TitleComponentOption,
   CalendarComponent,
   CalendarComponentOption,
   TooltipComponent,
@@ -20,9 +23,11 @@ import { HeatmapChart, HeatmapSeriesOption } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
 import api from "@/api";
 import HeatMapUtils from "./HeatMapUtils";
+import eChartMixin from "./eChartMixin";
+import { ChartTheme, tooltipStyle } from "./chartTheme";
 
+// 标题交由父级 Statistic 卡片 h3 承担, 故移除 TitleComponent
 echarts.use([
-  TitleComponent,
   CalendarComponent,
   TooltipComponent,
   VisualMapComponent,
@@ -31,67 +36,38 @@ echarts.use([
 ]);
 
 type EChartsOption = echarts.ComposeOption<
-  | TitleComponentOption
   | CalendarComponentOption
   | TooltipComponentOption
   | VisualMapComponentOption
   | HeatmapSeriesOption
 >;
 
-const fillTimeRange = HeatMapUtils.fillTimeRange
+const fillTimeRange = HeatMapUtils.fillTimeRange;
 
-const generatePieces = HeatMapUtils.generatePieces
+const generatePieces = HeatMapUtils.generatePieces;
 
 export default defineComponent({
-  setup() {},
-  data() {
-    return {
-      chart: null as echarts.ECharts | null,
-    };
-  },
-  computed: {
-    isDark() {
-      return this.$store.state.isDarkMode;
-    },
-  },
-  watch: {
-    isDark() {
-      this.init();
-    },
-  },
+  mixins: [eChartMixin],
   methods: {
-    handleResize() {
-      this.chart?.resize();
-    },
-    async init() {
-      const heatmapData = fillTimeRange(await api.getCommitHeatmap());
-      const chartDom = document.getElementById("heatmap")!;
-      // 复用实例: isDark 切换会重入 init, 先 dispose 避免同 dom 多实例泄漏
-      this.chart?.dispose();
-      const myChart = (this.chart = echarts.init(chartDom));
-      let option: EChartsOption;
-      const maxValue = heatmapData
-        .map((v) => v[1])
-        .sort()
-        .reverse()[0];
+    async buildOption(theme: ChartTheme): Promise<EChartsOption | null> {
+      const raw = await api.getCommitHeatmap();
+      // 空仓库真实场景: 原始数据为空时直接空态, 否则 fillTimeRange/range 取值会 TypeError 崩页
+      if (!raw.length) {
+        return null;
+      }
+      const heatmapData = fillTimeRange(raw);
+      if (!heatmapData.length) {
+        return null;
+      }
+      // 数值取最大值 (原 sort().reverse()[0] 是字符串排序, 对数字不正确)
+      const maxValue = Math.max(...heatmapData.map((v) => v[1]));
       const range = [heatmapData[0][0], heatmapData[heatmapData.length - 1][0]];
-      option = {
-        title: {
-          top: 30,
-          left: "center",
-          text: "提交日历图",
-          textStyle: {
-            color: this.isDark ? "#bbb" : "#666",
-          },
-        },
+      const option: EChartsOption = {
         tooltip: {
+          ...tooltipStyle(theme),
           formatter(params: any) {
             const data: [string, number] = params.data;
             return `${data[0]} ${data[1]}次`;
-          },
-          backgroundColor: this.isDark ? "#666" : "#fff",
-          textStyle: {
-            color: this.isDark ? "#bbb" : "#666",
           },
         },
         visualMap: {
@@ -100,14 +76,14 @@ export default defineComponent({
           type: "piecewise",
           orient: "horizontal",
           left: "center",
-          top: 65,
+          top: 0,
           pieces: generatePieces(maxValue, this.isDark),
           textStyle: {
-            color: this.isDark ? "#bbb" : "#666",
+            color: theme.subText,
           },
         },
         calendar: {
-          top: 120,
+          top: 60,
           left: 30,
           right: 30,
           cellSize: ["auto", 20],
@@ -117,17 +93,18 @@ export default defineComponent({
           },
           yearLabel: {
             show: true,
+            color: theme.text,
           },
           dayLabel: {
             show: true,
             nameMap: "ZH",
             firstDay: 1,
-            color: this.isDark ? "#bbb" : "",
+            color: theme.subText,
           },
           monthLabel: {
             show: true,
             nameMap: "ZH",
-            color: this.isDark ? "#bbb" : "",
+            color: theme.subText,
           },
         },
         series: {
@@ -136,26 +113,15 @@ export default defineComponent({
           data: heatmapData,
         },
       };
-
-      option && myChart.setOption(option);
+      return option;
     },
-  },
-  mounted() {
-    this.init();
-    window.addEventListener("resize", this.handleResize);
-  },
-  unmounted() {
-    window.removeEventListener("resize", this.handleResize);
-    this.chart?.dispose();
-    this.chart = null;
   },
 });
 </script>
 
 <style lang="less" scoped>
-#heatmap {
-  height: 280px;
-  max-width: 1200px;
-  margin: 0 auto;
+// 顶部 visualMap 图例 + 日历主体, 整体约 300px
+.chart-box {
+  height: 300px;
 }
 </style>

@@ -1,5 +1,14 @@
 <template>
-  <div ref="main" class="main"></div>
+  <div class="chart-host">
+    <div ref="chartEl" class="chart-box" role="img" :aria-label="'各时段提交分布柱状图（GMT+8）'"></div>
+    <div
+      v-if="chartState === 'empty' || chartState === 'error'"
+      class="chart-overlay"
+      role="status"
+    >
+      {{ chartState === "empty" ? "暂无数据" : "数据加载失败" }}
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -9,6 +18,8 @@ import { GridComponent, GridComponentOption } from "echarts/components";
 import { BarChart, BarSeriesOption } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
 import api from "@/api";
+import eChartMixin from "./eChartMixin";
+import { ChartTheme, tooltipStyle } from "./chartTheme";
 
 echarts.use([GridComponent, BarChart, CanvasRenderer]);
 
@@ -17,90 +28,72 @@ type EChartsOption = echarts.ComposeOption<
 >;
 
 export default defineComponent({
-  setup() {},
-  data() {
-    return {
-      chart: null as echarts.ECharts | null,
-    };
-  },
-  computed: {
-    isDark() {
-      return this.$store.state.isDarkMode;
-    },
-  },
-  watch: {
-    isDark() {
-      this.init();
-    },
-  },
+  mixins: [eChartMixin],
   methods: {
-    handleResize() {
-      this.chart?.resize();
-    },
-    async init() {
-      const raw = new Map<string, number>(await api.getHourCommitHeatmap());
-      let data = [];
-      // 填充数据
+    // 标题/GMT+8 限定词交给父级 h3, 这里只产出图本体 option
+    async buildOption(theme: ChartTheme): Promise<EChartsOption | null> {
+      const rawArr = await api.getHourCommitHeatmap();
+      // 空数据(空仓库/数据缺失)走统一空态, 不画一排全 0 柱子
+      if (!rawArr.length) {
+        return null;
+      }
+      const raw = new Map<string, number>(rawArr);
+      // 填充 0..23 时, 缺失时段补 0 保证 24 根柱子完整
+      const data: [number, number][] = [];
       for (let i = 0; i < 24; i++) {
         data.push([i, raw.get(i.toString()) || 0]);
       }
-      var chartDom = this.$refs.main as HTMLElement;
-      // 复用实例: isDark 切换会重入 init, 先 dispose 避免同 dom 多实例泄漏
-      this.chart?.dispose();
-      var myChart = (this.chart = echarts.init(chartDom));
       const option: EChartsOption = {
-        title: {
-          text: "各时段提交统计(GMT+8)",
-          left: "center",
-          textStyle: {
-            color: this.isDark ? "#bbb" : "#666",
-          },
+        grid: {
+          left: "3%",
+          right: "4%",
+          bottom: "3%",
+          containLabel: true,
         },
         xAxis: {
           type: "category",
+          name: "时段",
           data: data.map((v) => v[0]),
+          axisLine: { lineStyle: { color: theme.axisLine } },
+          axisLabel: {
+            color: theme.subText,
+            formatter: (v: string) => `${v}时`,
+          },
+          nameTextStyle: { color: theme.subText },
         },
         yAxis: {
           type: "value",
+          name: "次数",
+          axisLine: { lineStyle: { color: theme.axisLine } },
+          axisLabel: { color: theme.subText },
+          splitLine: { lineStyle: { color: theme.splitLine } },
+          nameTextStyle: { color: theme.subText },
         },
         tooltip: {
-          formatter: "{c}",
-          backgroundColor: this.isDark ? "#666" : "#fff",
-          textStyle: {
-            color: this.isDark ? "#bbb" : "#666",
+          ...tooltipStyle(theme),
+          formatter: (params: any) => {
+            const p = Array.isArray(params) ? params[0] : params;
+            return `${p.name}时 · ${p.value}次`;
           },
         },
         series: [
           {
             data: data.map((v) => v[1]),
             type: "bar",
+            itemStyle: { color: theme.primary },
             showBackground: true,
-            backgroundStyle: {
-              color: "rgba(180, 180, 180, 0.2)",
-            },
+            backgroundStyle: { color: theme.track },
           },
         ],
       };
-
-      option && myChart.setOption(option);
+      return option;
     },
-  },
-  mounted() {
-    this.init()
-    window.addEventListener("resize", this.handleResize);
-  },
-  unmounted() {
-    window.removeEventListener("resize", this.handleResize);
-    this.chart?.dispose();
-    this.chart = null;
   },
 });
 </script>
 
 <style lang="less" scoped>
-.main {
-  height: 400px;
-  max-width: 1200px;
-  margin: 0 auto;
+.chart-box {
+  height: 320px;
 }
 </style>

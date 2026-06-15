@@ -1,30 +1,41 @@
 <template>
-  <div class="container" :class="{'mobile': $isMobile()}" ref="container">
-    <div class="search-box-zone">
-      <el-input placeholder="搜索标签" v-model="kw">
+  <div class="tag-page" ref="container">
+    <h1 class="page-title">标签</h1>
+    <div class="search-box">
+      <el-input v-model="kw" placeholder="搜索标签" size="large" clearable>
         <template #prefix>
-          <el-icon class="el-input__icon" :size="32"><search /></el-icon>
+          <el-icon><search /></el-icon>
         </template>
       </el-input>
     </div>
-    <div class="tag-zone">
-      <transition-group name="list" tag="p">
-        <el-tag
-          v-for="item in filtedTags"
-          :key="item.tag"
-          :type="item.type"
-          @click="handleTagClick(item.tag)"
-          :effect="checkedMap[item.tag] ? 'dark' : 'light'"
-          >{{ item.tag }}({{ item.count }})</el-tag
-        >
-      </transition-group>
+
+    <!-- 已选工具条: 有选中时才出现, 提供数量提示与一键清除 -->
+    <div class="tag-toolbar" v-if="selectedCount">
+      <span>已选 {{ selectedCount }} 个标签</span>
+      <button class="tag-clear" @click="clearSelection">清除</button>
     </div>
-    <!-- 数据展示区 -->
+
+    <transition-group name="list" tag="div" class="tag-zone">
+      <button
+        v-for="item in filtedTags"
+        :key="item.tag"
+        class="tag-chip"
+        :class="{ 'is-active': checkedMap[item.tag] }"
+        :style="chipStyle(item)"
+        :aria-pressed="!!checkedMap[item.tag]"
+        @click="handleTagClick(item.tag)"
+      >
+        {{ item.tag }}<span class="tag-chip-count">{{ item.count }}</span>
+      </button>
+    </transition-group>
+    <p v-if="!filtedTags.length" class="tag-empty">未找到匹配标签</p>
+
+    <!-- 数据展示区: 选中标签后展示并集文章, 否则给出引导 -->
     <div class="data-container">
-      <tag-chapter-zone :chapters="chapters"/>
+      <tag-chapter-zone v-if="chapters.length" :chapters="chapters" />
+      <p v-else class="data-hint">选择上方标签查看相关文章</p>
     </div>
   </div>
-  
 </template>
 
 <script setup lang="ts">
@@ -34,145 +45,225 @@ import TagChapterZone from './TagChapterZone.vue'
 
 <script lang="ts">
 import api from "@/api";
-import { defineComponent, ref } from "vue";
-import DocUtils from "@/util/DocUtils";
-import TagUtils from './TagUtils';
+import { defineComponent } from "vue";
 import TouchUtils from "@/util/TouchUtils";
 import { SysUtils } from "@/util/SysUtils";
 
 interface TagItem {
   tag: string
-  type: string
-  count: number,
+  count: number
   chapters: string[]
+  size: number   // 按文档数加权的字号
+  color: string  // 按文档数加权的品牌色(冷→灰 热→主色)
 }
+
+// 标签字号区间(px): 文档越多越大
+const MIN_SIZE = 13
+const MAX_SIZE = 26
 
 export default defineComponent({
   data() {
     return {
       tags: [] as TagItem[],
       // 记录标签是否被选中
-      checkedMap: {} as any,
+      checkedMap: {} as Record<string, boolean>,
       kw: "" as string,
     };
   },
   methods: {
-    docUrl2Id(url: string): string{
-      return DocUtils.docUrl2Id(url);
-    },
-    randomType(item: string) {
-      return TagUtils.calcTagType(item);
-    },
     handleTagClick(tag: string) {
-      if (this.checkedMap[tag]) {
-        this.checkedMap[tag] = !this.checkedMap[tag];
-      } else {
-        this.checkedMap[tag] = true;
-      }
+      this.checkedMap[tag] = !this.checkedMap[tag];
     },
-    
+    clearSelection() {
+      this.checkedMap = {};
+    },
+    // 未选中: 应用加权字号+品牌色; 选中: 仅保留字号, 配色交给 .is-active 类(主色实底)
+    chipStyle(item: TagItem) {
+      return this.checkedMap[item.tag]
+        ? { fontSize: item.size + 'px' }
+        : { fontSize: item.size + 'px', color: item.color };
+    },
   },
   computed: {
-    filtedTags(): TagItem[] {
-      return this.tags.filter((v) => v.tag.indexOf(this.kw) != -1);
+    selectedCount(): number {
+      return Object.values(this.checkedMap).filter(Boolean).length;
     },
-    chapters() {
-       const list: string[] = this.filtedTags
-            .filter((v) => this.checkedMap[v.tag])
-            .flatMap((v) => v.chapters)
+    filtedTags(): TagItem[] {
+      // 大小写不敏感: 搜 SQL/java/NoSQL 也能命中
+      const kw = this.kw.toLowerCase();
+      return this.tags.filter((v) => v.tag.toLowerCase().includes(kw));
+    },
+    chapters(): string[] {
+      // 并集: 选中任一标签的文章都列出, 去重
+      const list: string[] = this.tags
+        .filter((v) => this.checkedMap[v.tag])
+        .flatMap((v) => v.chapters)
       return Array.from(new Set(list))
     },
   },
   async created() {
-    let list = (await api.getTagMapping()).map((v) => {
-      return { tag: v[0], count: v[1].length, chapters: v[1] };
-    });
-    this.tags = list
-      .map((v) => {
-        return {
-          tag: v.tag,
-          type: this.randomType(v.tag),
-          count: v.count,
-          chapters: v.chapters,
-        };
+    // 数据缺失时优雅降级(留空标签云), 避免未捕获 rejection
+    try {
+      const list = (await api.getTagMapping()).map((v) => ({
+        tag: v[0],
+        count: v[1].length,
+        chapters: v[1],
+      }));
+      // 全量 min/max 用于加权(与搜索过滤解耦, 过滤时字号不抖动)
+      const counts = list.map((v) => v.count)
+      const max = Math.max(...counts, 1)
+      // 不给 min 播 0 种子: 否则等量数据集会 ratio 恒为 1 全部放大(语义反转)
+      const min = Math.min(...counts)
+      this.tags = list.map((v) => {
+        const ratio = (v.count - min) / (max - min || 1)
+        const size = Math.round(MIN_SIZE + ratio * (MAX_SIZE - MIN_SIZE))
+        // color-mix: 冷标签偏正文色(高对比), 热标签偏主色; 暗色下同令牌自动适配
+        const pct = Math.round(35 + ratio * 55)
+        const color = `color-mix(in srgb, var(--primary-color) ${pct}%, var(--main-text-color))`
+        return { tag: v.tag, count: v.count, chapters: v.chapters, size, color }
       });
+      // url query.tag 预选: 校验标签存在, 避免不存在/拼错时产生"幽灵选中态"
+      const pre = this.$route.query.tag?.toString()
+      if (pre && this.tags.some((t) => t.tag === pre)) {
+        this.checkedMap[pre] = true
+      }
+    } catch { /* 标签数据缺失时留空 */ }
+  },
+  mounted() {
+    SysUtils.setDocTitle('标签')
+    // 右滑返回手势($refs 在 mounted 阶段已就绪)
     TouchUtils.onSwipe(this.$refs.container as HTMLElement, (direction, delta) => {
       if (direction[0] == 'right' && delta[0] > 150) {
-            history.back()
-          }
+        history.back()
+      }
     })
-  },
-  mounted(){
-    SysUtils.setDocTitle('标签')
-    // 通过url传参 确认哪些标签
-    if (this.$route.query.tag) {
-      this.checkedMap[this.$route.query.tag.toString()] = true
-    }
   },
 });
 </script>
 
 <style lang="less" scoped>
-.container {
-  margin-top: 48px;
+.tag-page {
+  max-width: var(--home-max);
+  margin: 0 auto;
+  padding: var(--spacing-2xl) var(--content-pad) var(--spacing-3xl);
   min-height: 70vh;
 }
-.search-box-zone {
-  max-width: 560px;
-  margin: 0 auto;
-  padding: 0 var(--spacing-lg);
-}
-.tag-zone {
-  transition: all 0.2s ease;
-  max-width: 760px;
-  margin: 40px auto;
+
+.page-title {
   text-align: center;
-  .el-tag {
-    transition: all 0.2s ease;
-    margin: 4px;
-    cursor: pointer;
-  }
-}
-.el-input :deep(input) {
-  border-radius: 24px;
-  font-size: var(--font-size-lg);
-  line-height: 24px;
-  padding: 12px 24px !important;
-}
-.el-input__icon {
-  vertical-align: middle;
-  margin-left: 10px;
-  margin-top: 14px;
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--main-text-color);
+  margin: 0 0 var(--spacing-lg);
 }
 
-.list-item {
-  display: inline-block;
-  margin-right: 10px;
+.search-box {
+  max-width: 560px;
+  margin: 0 auto var(--spacing-xl);
+
+  // 圆角搜索框: 走令牌, 取代写死的 24px/12px 24px/icon margin hack
+  :deep(.el-input__wrapper) {
+    border-radius: var(--radius-xl);
+    padding: 4px var(--spacing-md);
+  }
 }
-// 动画
+
+.tag-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--secondary-text-color);
+}
+.tag-clear {
+  border: none;
+  background: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  padding: 2px var(--spacing-sm);
+  border-radius: var(--radius-md);
+  transition: background-color var(--transition-fast);
+
+  &:hover {
+    background-color: var(--hover-bg-color);
+  }
+}
+
+.tag-zone {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center; // 不同字号胶囊在行内居中对齐, 不被 stretch 拉成等高
+  gap: var(--spacing-sm);
+  max-width: 860px;
+  margin: 0 auto var(--spacing-2xl);
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: 999px; // 胶囊形
+  background-color: var(--card-bg-color);
+  line-height: 1.4;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast),
+    color var(--transition-fast), transform var(--transition-fast);
+
+  &:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+  }
+
+  &.is-active {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+  }
+}
+.tag-chip-count {
+  font-size: var(--font-size-xs);
+  opacity: 0.65;
+}
+
+.tag-empty,
+.data-hint {
+  text-align: center;
+  color: var(--secondary-text-color);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+// 数据卡: 与首页卡片语言一致
+.data-container {
+  max-width: 760px;
+  margin: 0 auto;
+  background-color: var(--card-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+// 标签进出场动画
 .list-enter-active,
 .list-leave-active {
   transition: all 0.2s ease;
 }
 .list-enter-from,
 .list-leave-to {
-  transition: all 0.2s ease;
   opacity: 0;
-  transform: translateY(30px);
+  transform: translateY(20px);
 }
-.data-container {
-  max-width:60%;
-  margin:0 auto;
-}
-.mobile {
-  .search-box-zone {
-    max-width: 88%;
-  }
-  .tag-zone {
-    max-width: 96%;
-  }
-  .data-container {
-    max-width: 88%;
+
+@media (max-width: @bp-mobile) {
+  .tag-page {
+    padding-top: var(--spacing-lg);
   }
 }
 </style>

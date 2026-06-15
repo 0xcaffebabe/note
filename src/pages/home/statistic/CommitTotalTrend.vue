@@ -31,8 +31,8 @@ import { LineChart, LineSeriesOption } from 'echarts/charts';
 import { UniversalTransition } from 'echarts/features';
 import { CanvasRenderer } from 'echarts/renderers';
 import { cloneDeep } from '@/util/DataUtils'
-import eChartMixin from './eChartMixin'
-import { ChartTheme, tooltipStyle } from './chartTheme'
+import eChartMixin from '@/util/echart/eChartMixin'
+import { ChartTheme, tooltipStyle } from '@/util/echart/chartTheme'
 
 echarts.use([
   TooltipComponent,

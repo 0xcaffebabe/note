@@ -18,8 +18,8 @@ import { GridComponent, GridComponentOption } from "echarts/components";
 import { BarChart, BarSeriesOption } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
 import api from "@/api";
-import eChartMixin from "./eChartMixin";
-import { ChartTheme, tooltipStyle } from "./chartTheme";
+import eChartMixin from "@/util/echart/eChartMixin";
+import { ChartTheme, tooltipStyle } from "@/util/echart/chartTheme";
 
 echarts.use([GridComponent, BarChart, CanvasRenderer]);
 

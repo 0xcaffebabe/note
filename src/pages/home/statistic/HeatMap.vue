@@ -23,8 +23,8 @@ import { HeatmapChart, HeatmapSeriesOption } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
 import api from "@/api";
 import HeatMapUtils from "./HeatMapUtils";
-import eChartMixin from "./eChartMixin";
-import { ChartTheme, tooltipStyle } from "./chartTheme";
+import eChartMixin from "@/util/echart/eChartMixin";
+import { ChartTheme, tooltipStyle } from "@/util/echart/chartTheme";
 
 // 标题交由父级 Statistic 卡片 h3 承担, 故移除 TitleComponent
 echarts.use([

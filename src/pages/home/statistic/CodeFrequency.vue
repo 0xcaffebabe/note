@@ -9,8 +9,8 @@
 
 <script lang="ts">
 import langColor from './langColor'
-import eChartMixin from './eChartMixin'
-import { ChartTheme, tooltipStyle } from './chartTheme'
+import eChartMixin from '@/util/echart/eChartMixin'
+import { ChartTheme, tooltipStyle } from '@/util/echart/chartTheme'
 
 import { defineComponent, PropType } from "vue";
 import * as echarts from "echarts/core";

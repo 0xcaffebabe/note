@@ -12,6 +12,7 @@ export default {
   tagMappingJson: '/tagMapping.json',
   wordcloudJson: '/wordcloud.json',
   docClusterJson: '/docCluster.json',
+  docClusterScatterJson: '/docClusterScatter.json',
   docTagPrediction: '/docTagPrediction.json',
   docQualityJson: '/docQuality.json',
   textSimilarJson: '/textSimilar.json',

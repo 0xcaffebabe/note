@@ -139,6 +139,8 @@ export default function DocBuildMove(){
       const appPages = [
         { file: 'home.html', title: '首页' },
         { file: 'tag.html', title: '标签' },
+        { file: 'catalog.html', title: '浏览总目录' },
+        { file: 'cluster.html', title: '知识聚类' },
       ]
       await Promise.all(appPages.map(({file, title}) => {
         const html = template.replace(/<title>[^<]*<\/title>/, () => `<title>${title} - ${siteName}</title>`)

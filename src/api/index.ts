@@ -11,6 +11,7 @@ import UrlConst from '@/const/UrlConst'
 import CommitInfo from '@/dto/CommitInfo'
 import Category from '@/dto/Category'
 import ClusterNode from '@/dto/ClusterNode'
+import ClusterScatter from '@/dto/ClusterScatterPoint'
 import DocQuality from '@/dto/doc/DocQuality'
 import KnowledgeRichnessNode from '@/dto/KnowledgeRichnessNode'
 // import DocService from '@/service/DocService'
@@ -81,6 +82,11 @@ class Api implements Cacheable{
   @cache
   public async getDocCluster(): Promise<ClusterNode[]> {
     return http(UrlUtils.concatUrl(baseUrl(), UrlConst.docClusterJson)).then(r => r.json())
+  }
+
+  @cache
+  public async getDocClusterScatter(): Promise<ClusterScatter> {
+    return http(UrlUtils.concatUrl(baseUrl(), UrlConst.docClusterScatterJson)).then(r => r.json())
   }
 
   @cache

@@ -102,7 +102,7 @@ export default defineComponent({
       navList: [
         { name: '首页', path: '/home.html', match: '/home' },
         { name: '标签', path: '/tag.html', match: '/tag' },
-        { name: '聚类', path: '/cluster', match: '/cluster' },
+        { name: '聚类', path: '/cluster.html', match: '/cluster' },
       ],
     };
   },

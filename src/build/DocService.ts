@@ -14,6 +14,7 @@ import Cacheable from "@/decorator/Cacheable";
 import ArrayUtils from "../util/ArrayUtils";
 import CommitInfo from "@/dto/CommitInfo";
 import ClusterNode from "@/dto/ClusterNode";
+import ClusterScatter from "@/dto/ClusterScatterPoint";
 import DocQuality from "../dto/doc/DocQuality";
 import Cache from "../decorator/Cache";
 import generateDocCluster from '../scripts/generateDocCluster'
@@ -189,6 +190,11 @@ class DocService extends BaseService implements Cacheable {
   @cache
   public async getDocCluster(): Promise<ClusterNode[]> {
     return generateDocCluster.main(true)
+  }
+
+  @cache
+  public async getDocClusterScatter(): Promise<ClusterScatter> {
+    return generateDocCluster.generateClusterScatter()
   }
 
   public async getDocTagPrediction() {

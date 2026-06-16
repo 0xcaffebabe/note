@@ -72,6 +72,12 @@ const apiMappings: DocApiItem[] = [
   },
   {
     type: 'build&runtime',
+    name: '文档聚类散点',
+    path: UrlConst.docClusterScatterJson,
+    method: async () => DocService.getDocClusterScatter()
+  },
+  {
+    type: 'build&runtime',
     name: '文档标签预测',
     path: UrlConst.docTagPrediction,
     method: async () => DocService.getDocTagPrediction()

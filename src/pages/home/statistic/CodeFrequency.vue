@@ -112,11 +112,18 @@ export default defineComponent({
               position: "center",
             },
             emphasis: {
+              // 悬浮: 中心显示语言名+占比, 字号收敛到与卡片标题相称; 扇区轻微外扩并加柔光
               label: {
                 show: true,
-                fontSize: 40,
+                fontSize: 22,
                 fontWeight: "bold",
                 color: theme.text,
+                formatter: "{b}\n{d}%",
+                lineHeight: 28,
+              },
+              itemStyle: {
+                shadowBlur: 12,
+                shadowColor: "rgba(0,0,0,0.12)",
               },
             },
             labelLine: {

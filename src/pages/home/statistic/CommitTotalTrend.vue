@@ -84,16 +84,43 @@ export default defineComponent({
 
       const absolutely = this.type === 'absolute'
 
+      // 三条线共用调色板: 字数/行数/提交 取前三色, 与全站图表同源
+      const seriesBase = {
+        type: "line" as const,
+        smooth: true,
+        showSymbol: false,        // 默认不显点, 悬浮聚焦时才出, 线条更干净
+        symbol: "circle",
+        symbolSize: 6,
+        lineStyle: { width: 2.5 },
+        emphasis: { focus: "series" as const },
+      };
+
       const option: EChartsOption = {
+        color: theme.palette,
         dataZoom: [
+          // 一个内置滚轮/拖拽缩放(无视觉占位) + 一个底部细滑块(随令牌配色)
+          { type: "inside", start: 0, end: 100 },
           {
+            type: "slider",
             start: 0,
-            end: 100
+            end: 100,
+            height: 16,
+            bottom: 6,
+            borderColor: "transparent",
+            backgroundColor: theme.track,
+            fillerColor: theme.track,
+            handleStyle: { color: theme.surface, borderColor: theme.axisLine },
+            moveHandleStyle: { color: theme.axisLine },
+            dataBackground: {
+              lineStyle: { color: theme.axisLine },
+              areaStyle: { color: theme.splitLine },
+            },
+            selectedDataBackground: {
+              lineStyle: { color: theme.primary },
+              areaStyle: { color: theme.track },
+            },
+            textStyle: { color: theme.subText },
           },
-          {
-            start: 0,
-            end: 100
-          }
         ],
         tooltip: {
           trigger: "axis",
@@ -101,6 +128,9 @@ export default defineComponent({
         },
         legend: {
           data: absolutely ? ["总字数", "总行数", "总提交"] : ["相对字数", "相对行数", "相对提交"],
+          icon: "roundRect",
+          itemWidth: 12,
+          itemHeight: 4,
           textStyle: {
             color: theme.subText,
           }
@@ -108,13 +138,16 @@ export default defineComponent({
         grid: {
           left: "3%",
           right: "4%",
-          bottom: "3%",
+          top: 48,
+          bottom: 42,         // 给底部细滑块留白
           containLabel: true,
         },
         xAxis: {
           type: "category",
           boundaryGap: false,
           data: data.map(v => v[0]),
+          axisLine: { lineStyle: { color: theme.axisLine } },
+          axisTick: { show: false },
           axisLabel: { color: theme.subText },
         },
         yAxis: {
@@ -125,18 +158,18 @@ export default defineComponent({
         },
         series: [
           {
+            ...seriesBase,
             name: absolutely ? "总字数" : '相对字数',
-            type: "line",
             data: data.map(v => v[1]),
           },
           {
+            ...seriesBase,
             name: absolutely ? "总行数" : '相对行数',
-            type: "line",
             data: data.map(v => v[2]),
           },
           {
+            ...seriesBase,
             name: absolutely ? "总提交" : '相对提交',
-            type: "line",
             data: data.map(v => v[3]),
           },
         ],

@@ -80,9 +80,13 @@ export default defineComponent({
           {
             data: data.map((v) => v[1]),
             type: "bar",
-            itemStyle: { color: theme.primary },
+            // 圆角柱顶呼应全站圆角卡片; 悬浮加柔光不改色相
+            itemStyle: { color: theme.primary, borderRadius: [4, 4, 0, 0] },
+            emphasis: {
+              itemStyle: { shadowBlur: 10, shadowColor: theme.track },
+            },
             showBackground: true,
-            backgroundStyle: { color: theme.track },
+            backgroundStyle: { color: theme.track, borderRadius: [4, 4, 0, 0] },
           },
         ],
       };

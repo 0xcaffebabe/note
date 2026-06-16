@@ -26,13 +26,14 @@ export default {
    * @return {*} 
    */
   generatePieces(maxValue: number, isDark: boolean = false) {
+    // 由空到密的品牌蓝单色梯度, 替换原 GitHub 绿, 与全站主色统一
     const colorBox = [
-      isDark ? "#323233" : "#fff",
-      isDark ? "#00452b" : "#98E9A8",
-      isDark ? "#006f37" : "#40C403",
-      isDark ? "#00a84b" : "#30A14E",
-      isDark ? "#007534" : "#216E39",
-      isDark ? "#00d65f" : "#1A572D",
+      isDark ? "#2a2d2e" : "#eef4fb",
+      isDark ? "#16324f" : "#cfe5ff",
+      isDark ? "#1d4f82" : "#93c0f7",
+      isDark ? "#2f74c0" : "#5b97ee",
+      isDark ? "#3f93e6" : "#2f74e0",
+      isDark ? "#6bb1f5" : "#1b5bc0",
     ]
     const pieces: any[] = [];
     const quotient = Math.ceil(maxValue / 2);

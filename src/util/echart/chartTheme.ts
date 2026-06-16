@@ -26,9 +26,12 @@ export interface ChartTheme {
   primary: string
   /** 柱状背景槽等弱填充 */
   track: string
+  /** 多系列调色板: 首位取品牌主色, 其余为与之协调的柔和色相, 统一各图配色避免 echarts 默认杂色 */
+  palette: string[]
 }
 
 export function buildChartTheme(): ChartTheme {
+  const primary = css('--primary-color', '#409eff')
   return {
     text: css('--main-text-color', '#1e293b'),
     subText: css('--secondary-text-color', '#64748b'),
@@ -37,8 +40,19 @@ export function buildChartTheme(): ChartTheme {
     surface: css('--card-bg-color', '#ffffff'),
     tooltipBg: css('--elevated-bg-color', '#ffffff'),
     tooltipBorder: css('--border-color', '#e2e8f0'),
-    primary: css('--primary-color', '#409eff'),
+    primary,
     track: css('--hover-bg-color', 'rgba(180,180,180,0.12)'),
+    // 首位 = 品牌蓝(随主题令牌走), 其余为中等饱和、明暗背景皆可读的协调色相
+    palette: [
+      primary,
+      '#2cc6a8',
+      '#9d7cf4',
+      '#f6a13c',
+      '#ee6c7d',
+      '#54c1e6',
+      '#7cc955',
+      '#e58fc0',
+    ],
   }
 }
 

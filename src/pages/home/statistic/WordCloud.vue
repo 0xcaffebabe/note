@@ -33,6 +33,8 @@ interface WordItem {
   baseY?: number; // 3D 基础位置 y（球面坐标）
   baseZ?: number; // 3D 基础位置 z（球面坐标）
   size?: number;
+  ratio?: number; // 归一化词频 [0,1]; 同时驱动字号/字重/颜色/透明度, 是整图层级的唯一信号源
+  weight?: number; // 字重档位(400/500/600/700) 由 ratio 映射
   color?: string;
   projectedSize?: number; // 投影后的大小
 }
@@ -49,6 +51,9 @@ export default defineComponent({
     return {
       canvas: null as HTMLCanvasElement | null,
       ctx: null as CanvasRenderingContext2D | null,
+      // PingFang 优先的跨平台字族: macOS/iOS 用更清秀的苹方替掉笨重的雅黑(Mac 上"丑"的主因),
+      // 雅黑退为 Windows 兜底, 拉丁词交给各系统原生 UI 字体
+      fontStack: '-apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif',
       words: [] as WordItem[],
       gridMask: null as GridMask | null,
       placedWords: [] as WordItem[],
@@ -210,7 +215,8 @@ export default defineComponent({
 
       const centerX = this.canvas.width / 2;
       const centerY = this.canvas.height / 2;
-      const radius = Math.min(centerX, centerY) * 0.7;
+      // 球半径收一档(0.7→0.6): 给透视放大后的前排词留出四周余量, 避免顶/底的大词投影出界被裁
+      const radius = Math.min(centerX, centerY) * 0.6;
 
       // 为每个词分配 3D 位置（球面分布）
       this.placedWords.forEach((word, index) => {
@@ -232,7 +238,8 @@ export default defineComponent({
 
       const centerX = this.canvas.width / 2;
       const centerY = this.canvas.height / 2;
-      const focalLength = Math.min(centerX, centerY) * 0.8;
+      // 焦距放大(0.8→1.0)压平透视: 前排词放大倍率从 ~8x 降到 ~2.5x, 头部大词不再撑爆画布
+      const focalLength = Math.min(centerX, centerY) * 1.0;
 
       // 绕 Y 轴旋转（水平方向）
       const cosY = Math.cos(this.rotationAngleY);
@@ -251,9 +258,11 @@ export default defineComponent({
       const finalY = rotY * cosX - rotZ * sinX;
       const finalZ = rotY * sinX + rotZ * cosX;
 
-      // 透视投影
+      // 透视投影; projX 再按画布宽高比做各向异性拉伸, 让球体铺满宽卡片而非缩在中央方形区
+      // (只拉伸最终屏幕 X, 不改 finalZ/scale, 故前后景深度雾与命中盒仍一致)
+      const stretchX = Math.min(centerX / centerY, 2.6);
       const scale = focalLength / (focalLength + finalZ);
-      const projX = centerX + rotX * scale;
+      const projX = centerX + rotX * scale * stretchX;
       const projY = centerY + finalY * scale;
 
       return { x: projX, y: projY, scale };
@@ -262,8 +271,10 @@ export default defineComponent({
     // 渲染 3D 词云
     render3D() {
       if (!this.ctx || !this.canvas) return;
+      // 收窄到非空局部: 下方 forEach 闭包内调用 this.buildFont() 会令 this.ctx 失窄, 用局部 ctx 规避
+      const ctx = this.ctx;
 
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
       // 先计算每个词旋转后的实际 Z 值，并保存投影信息
       const wordsWithDepth = this.placedWords
@@ -299,20 +310,18 @@ export default defineComponent({
       wordsWithDepth.sort((a, b) => b.finalZ - a.finalZ);
 
       wordsWithDepth.forEach(({ word, projected }) => {
-        // 只绘制正面的词
-        if (projected.scale > 0.3) {
-          const projectedSize = word.projectedSize!;
-
-          // 根据深度调整透明度和颜色
-          const alpha = Math.max(0.3, Math.min(1, projected.scale));
-          this.ctx.save();
-          this.ctx.font = `bold ${projectedSize}px "Microsoft YaHei", sans-serif`;
-          this.ctx.fillStyle = word.color!.replace('rgb', 'rgba').replace(')', `, ${alpha})`);
-          this.ctx.textAlign = "center";
-          this.ctx.textBaseline = "middle";
-          this.ctx.fillText(word.name, projected.x, projected.y);
-          this.ctx.restore();
-        }
+        const projectedSize = word.projectedSize!;
+        // 深度雾: 远端词平滑渐隐到 ~0.18 而非在 0.3 处硬切, 球体读起来像有体积的浮空物而非散点
+        const depthAlpha = Math.max(0.18, Math.min(1, (projected.scale - 0.3) / 0.7));
+        ctx.save();
+        ctx.font = this.buildFont(word.weight!, projectedSize);
+        ctx.fillStyle = word.color!;
+        // 深度透明度 × 词频透明度: 与 2D 用同一套层级意图; globalAlpha 取代旧的 rgb→rgba 字符串替换
+        ctx.globalAlpha = depthAlpha * (0.62 + (word.ratio ?? 0) * 0.38);
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(word.name, projected.x, projected.y);
+        ctx.restore();
       });
     },
 
@@ -411,26 +420,33 @@ export default defineComponent({
       return `rgb(${to255(r)},${to255(g)},${to255(b)})`;
     },
 
-    // 基于品牌色相的有序色板: 围绕基准色相小幅游走(±30°), 替代随机近黑色;
-    // 暗色模式抬高 lightness 保证最低可读亮度, 避免词融进深色背景看不见
-    getWordColor(index: number, total: number, baseHue: number): string {
-      const ratio = total > 1 ? index / (total - 1) : 0;
-      // 色相在基准附近循环偏移, 维持克制的同系配色
-      const hue = (baseHue + (index % 6) * 12 - 30 + 360) % 360;
-      if (this.isDark) {
-        // 暗色: 亮度区间 [62%, 80%], 饱和度略降, 越靠后(词频低)越亮以保持可读
-        const lightness = 62 + ratio * 18;
-        return this.hslToRgbString(hue, 62, lightness);
-      }
-      // 亮色: 亮度区间 [32%, 50%], 保证与浅底有足够对比
-      const lightness = 32 + ratio * 18;
-      return this.hslToRgbString(hue, 65, lightness);
+    // 统一字体串构造: 2D 绘制 / 3D 绘制 / 测宽 三处共用同一字重+字族, 杜绝漂移导致碰撞盒算错
+    buildFont(weight: number, sizePx: number): string {
+      return `${weight} ${sizePx}px ${this.fontStack}`;
     },
 
-    getTextWidth(text: string, fontSize: number): number {
+    // 颜色按「词频 ratio」走品牌蓝→蓝紫短色弧: 高频=饱和品牌蓝(前进), 低频=柔和长春花紫(后退)
+    // 与字号/字重/透明度同源于一个 ratio, 让整张图读成一条设计过的频率梯度, 而非随机散点配色
+    getWordColor(ratio: number, baseHue: number): string {
+      // 色相只在 baseHue(~210 蓝) → baseHue+38(~248 蓝紫) 间走, 永不滑向青绿
+      const hue = (baseHue + (1 - ratio) * 38 + 360) % 360;
+      if (this.isDark) {
+        // 暗色: 高频最亮; 低频地板抬到 ~62% L 保证仍可读(实测 ≈3.7:1 on #1e1e1e)
+        const sat = 78 - (1 - ratio) * 20;
+        const light = 70 - (1 - ratio) * 8;
+        return this.hslToRgbString(hue, sat, light);
+      }
+      // 亮色: 高频深而饱和(≈6.4:1), 低频淡而低饱和地后退(≈4.0:1)
+      const sat = 70 - (1 - ratio) * 26;
+      const light = 38 + (1 - ratio) * 24;
+      return this.hslToRgbString(hue, sat, light);
+    },
+
+    // 测宽必须与绘制用同一字重+字族, 否则 2D 碰撞盒尺寸与实际字形不符, 会重叠或留洞
+    getTextWidth(text: string, fontSize: number, weight: number = 400): number {
       if (!this.ctx) return 0;
       const dpr = window.devicePixelRatio || 1;
-      this.ctx.font = `bold ${fontSize * dpr}px "Microsoft YaHei", sans-serif`;
+      this.ctx.font = this.buildFont(weight, fontSize * dpr);
       return this.ctx.measureText(text).width;
     },
 
@@ -445,9 +461,9 @@ export default defineComponent({
       if (!this.gridMask || !this.ctx) return false;
 
       const dpr = window.devicePixelRatio || 1;
-      const width = this.getTextWidth(word.name, word.size!);
+      const width = this.getTextWidth(word.name, word.size!, word.weight);
       const height = word.size! * dpr; // 实际绘制的高度
-      const padding = 4 * dpr; // 词之间的间距
+      const padding = 6 * dpr; // 词之间的间距(放宽, 让更少更大的词更透气)
 
       // 转换为网格坐标
       const gridLeft = Math.max(0, this.toGridCoord(x - width / 2 - padding, true));
@@ -469,9 +485,9 @@ export default defineComponent({
       if (!this.gridMask || !this.ctx) return;
 
       const dpr = window.devicePixelRatio || 1;
-      const width = this.getTextWidth(word.name, word.size!);
+      const width = this.getTextWidth(word.name, word.size!, word.weight);
       const height = word.size! * dpr;
-      const padding = 4 * dpr;
+      const padding = 6 * dpr;
 
       // 转换为网格坐标
       const gridLeft = Math.max(0, this.toGridCoord(x - width / 2 - padding, true));
@@ -491,23 +507,36 @@ export default defineComponent({
 
       const centerX = this.canvas.width / 2;
       const centerY = this.canvas.height / 2;
-      const maxRadius = Math.min(centerX, centerY) * 0.85;
-      
-      // 从中心向外螺旋搜索
+      const dpr = window.devicePixelRatio || 1;
+      // 椭圆螺旋: 纵向放到近满高, 横向再按画布宽高比拉伸, 让词云铺满整张宽卡片而非挤在中央竖条
+      const stretchX = Math.min(centerX / centerY, 2.6);
+      const maxRadius = centerY * 0.92;
+
+      // 词的半包围盒: 拉伸后外圈词可能被推到画布外, 故逐点做越界判定, 贴边/出界一律跳过
+      const halfW = this.getTextWidth(word.name, word.size!, word.weight) / 2;
+      const halfH = (word.size! * dpr) / 2;
+      const margin = 4 * dpr;
+
+      // 从中心向外螺旋搜索; 起始半径按词号给一个偏移, 避免几个巨词都压在正中心同一点
       let angle = 0;
-      let radius = 0;
-      const spiralStep = 8;
-      const angleStep = 0.15;
+      let radius = word.size! * 0.6 * dpr;
+      const angleStep = 0.20;
 
       while (radius < maxRadius) {
-        const x = centerX + Math.cos(angle) * radius;
+        const x = centerX + Math.cos(angle) * radius * stretchX;
         const y = centerY + Math.sin(angle) * radius;
 
-        if (!this.checkCollision(word, x, y)) {
+        const inBounds =
+          x - halfW >= margin &&
+          x + halfW <= this.canvas.width - margin &&
+          y - halfH >= margin &&
+          y + halfH <= this.canvas.height - margin;
+
+        if (inBounds && !this.checkCollision(word, x, y)) {
           return { x, y };
         }
 
-        radius += spiralStep * 0.02;
+        radius += 0.5;
         angle += angleStep;
       }
 
@@ -519,8 +548,10 @@ export default defineComponent({
 
       const dpr = window.devicePixelRatio || 1;
       this.ctx.save();
-      this.ctx.font = `bold ${word.size! * dpr}px "Microsoft YaHei", sans-serif`;
+      this.ctx.font = this.buildFont(word.weight!, word.size! * dpr);
       this.ctx.fillStyle = word.color!;
+      // 词频透明度档: 长尾词(~0.62)轻轻后退, 头部词(1.0)立得住, 与字号/字重/颜色同向强化层级
+      this.ctx.globalAlpha = 0.62 + (word.ratio ?? 0) * 0.38;
       this.ctx.textAlign = "center";
       this.ctx.textBaseline = "middle";
       this.ctx.fillText(word.name, x, y);
@@ -564,7 +595,7 @@ export default defineComponent({
           const cssX = word.x! / dpr;
           const cssY = word.y! / dpr;
           const cssSize = word.size!;
-          const width = this.getTextWidth(word.name, cssSize) / dpr;
+          const width = this.getTextWidth(word.name, cssSize, word.weight) / dpr;
           const height = cssSize;
           const left = cssX - width / 2;
           const right = cssX + width / 2;
@@ -624,7 +655,7 @@ export default defineComponent({
         const top = projected.y - height / 2;
         const bottom = projected.y + height / 2;
 
-        if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom && projected.scale > 0.3) {
+        if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom && projected.scale > 0.2) {
           tooltip.style.display = "block";
           tooltip.style.left = `${e.clientX + 10}px`;
           tooltip.style.top = `${e.clientY + 10}px`;
@@ -667,20 +698,29 @@ export default defineComponent({
       // 按值排序，大的在前
       this.words.sort((a, b) => b.value - a.value);
 
+      // 词数上限: 长尾(70+)几乎全是最小号噪声词, 截断后留下的词更大更透气(宽档画布更宽可多放)
+      const MAX_WORDS = this.isWideTier ? 80 : 65;
+      this.words = this.words.slice(0, MAX_WORDS);
+
+      // max/min 取自截断后的数组, ratio 才在保留词上铺满 [0,1]
       const maxValue = this.words[0]?.value || 1;
       const minValue = this.words[this.words.length - 1]?.value || 1;
 
-      // 计算每个词的大小和颜色(大屏宽档放大最大词号, 利用更宽的画布)
-      const minSize = 12;
-      const maxSize = this.isWideTier ? 64 : 48;
+      // 字号: 抬高下限到 16(消灭糊作一团的 <16px 词) + pow(0.45) 缓和曲线把中段词顶起来
+      const minSize = 16;
+      const maxSize = this.isWideTier ? 58 : 52;
 
-      // 取一次品牌色相, 整张词云共用一套有序色板(替代逐词随机色)
+      // 取一次品牌色相, 整张词云共用一套「按词频」的蓝→蓝紫热力色板(替代旧的按序号循环)
       const baseHue = this.getPrimaryHue();
-      const total = this.words.length;
-      this.words.forEach((word, index) => {
+      this.words.forEach((word) => {
         const ratio = (word.value - minValue) / (maxValue - minValue || 1);
-        word.size = Math.round(minSize + ratio * (maxSize - minSize));
-        word.color = this.getWordColor(index, total, baseHue);
+        word.ratio = ratio;
+        // 缓和曲线: 长尾数据(中位远小于峰值)下用凹曲线把中段抬离下限, 而非线性压扁
+        const eased = Math.pow(ratio, 0.45);
+        word.size = Math.round(minSize + eased * (maxSize - minSize));
+        // 字重 4 档: 头部 700 厚重立得住, 长尾 400 轻盈后退 —— 一举化解「全 bold 糊成一团」
+        word.weight = ratio >= 0.66 ? 700 : ratio >= 0.40 ? 600 : ratio >= 0.18 ? 500 : 400;
+        word.color = this.getWordColor(ratio, baseHue);
       });
 
       // 初始化 canvas
@@ -798,15 +838,15 @@ export default defineComponent({
 // 大屏宽档: 放宽画布宽度上限, 配合 maxSize 放大让词云更舒展
 @media (min-width: @bp-wide) {
   #wordcloud {
-    max-width: 1320px;
+    max-width: 1480px;
   }
 }
 
 #wordcloud {
-  // 响应式: 宽度跟随容器(上限 1000), 不再固定 1000px 造成移动端横向溢出
+  // 响应式: 宽度跟随容器(上限放宽到 1280, 充分利用宽卡片), 不再固定造成移动端横向溢出
   width: 100%;
-  max-width: 1000px;
-  height: 500px;
+  max-width: 1280px;
+  height: 560px;
   margin: 0 auto;
   display: block;
   // 触屏拖拽旋转 3D 词云时禁用浏览器默认手势(滚动/缩放) 否则拖不动

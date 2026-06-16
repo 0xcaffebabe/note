@@ -81,6 +81,9 @@ const routes: RouteRecordRaw[] = [
       { path: "/index.html", redirect: "/" },
       { path: "/tag", redirect: to => ({ path: "/tag.html", query: to.query }) },
       { path: "/tag.html", component: () => import("@/pages/tag/TagListPage.vue") },
+      // 浏览总目录: 由 category.json 结构化驱动(取代旧的跳 /README.html); 须在贪婪的 /:docPath(.*\.html) 之前
+      { path: "/catalog", redirect: to => ({ path: "/catalog.html", query: to.query, hash: to.hash }) },
+      { path: "/catalog.html", component: () => import("@/pages/catalog/CatalogPage.vue") },
       { path: "/cluster", component: () => import("@/pages/DocCluster.vue") },
       // .html静态化入口 /运维/Docker.html -> 文档页
       {

@@ -9,7 +9,7 @@
         <el-button type="primary" round size="large" @click="handleContinueRead">
           {{ lastReadName ? `继续阅读 · ${lastReadName}` : '开始阅读' }}
         </el-button>
-        <el-button round size="large" @click="$router.push('/README.html')">浏览总目录</el-button>
+        <el-button round size="large" @click="$router.push('/catalog.html')">浏览总目录</el-button>
       </div>
       <!-- 伪搜索框: 视觉上像输入框 实际是按钮 点击/回车/空格唤起命令面板 -->
       <div

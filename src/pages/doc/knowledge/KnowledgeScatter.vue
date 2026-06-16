@@ -423,6 +423,7 @@ export default defineComponent({
   }
 
   // 在较大屏幕上水平排列断代指数信息
+  // 注: min-width 增强档(非移动裁切), 768 故意保留 —— 映射 @bp-mobile(820) 会回归 769-819 区间
   @media (min-width: 768px) {
     .gap-index-card {
       flex-direction: row;
@@ -466,8 +467,8 @@ export default defineComponent({
     }
   }
 
-  // 在更大屏幕上进一步优化
-  @media (min-width: 1200px) {
+  // 在更大屏幕上进一步优化(min-width 增强档): 1200 收敛到 @bp-desktop, 增强延后 80px 可接受
+  @media (min-width: @bp-desktop) {
     .gap-index-card {
       padding: 10px;
 

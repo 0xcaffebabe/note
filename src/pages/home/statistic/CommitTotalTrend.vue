@@ -151,8 +151,8 @@ export default defineComponent({
 .trend-switch {
   margin: 0 0 var(--spacing-sm);
 }
-// 宽度交父级 flex 控制, 仅在此覆写高度
+// 宽度交父级 flex 控制, 仅在此覆写高度(宽档随 --chart-h 长高)
 .chart-box {
-  height: 360px;
+  height: var(--chart-h);
 }
 </style>

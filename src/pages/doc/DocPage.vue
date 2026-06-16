@@ -41,6 +41,15 @@
       :parentShowHeader="parentShowHeader"
       @item-click="handleTocItemClick"
     />
+    <!-- 超宽档: 关联内容独立成右侧第4列(取代在右列内联堆叠在目录下方) -->
+    <aside class="doc-related-column" v-if="isUltra && hasRelatedLinks">
+      <div
+        class="doc-related-sticky"
+        :style="{ top: parentShowHeader ? '60px' : '0', maxHeight: parentShowHeader ? 'calc(100vh - 60px)' : '100vh' }"
+      >
+        <related-content inline :related="relatedLinks" :doc-links="docLinks" />
+      </div>
+    </aside>
   </el-container>
 
   <!-- 移动端底部操作栏: 高频入口拇指可达 -->
@@ -78,8 +87,8 @@
   />
   <!-- 工具栏结束 -->
   <el-backtop v-if="!isMobile" :bottom="32" :right="28" />
-  <!-- 相关链接: 右侧悬浮标签 展开(关联内容 + 文内其他文档链接) -->
-  <related-content :related="relatedLinks" :doc-links="docLinks" />
+  <!-- 相关链接: 超宽档独立成右侧第4列(见下方 aside); 其余尺寸(含 ≤1920)为右缘悬浮标签 -->
+  <related-content v-if="!isUltra" :related="relatedLinks" :doc-links="docLinks" />
   <!-- 隐藏面板按需挂载: 首次打开时才下载与渲染对应chunk -->
   <mind-graph v-if="panels.mindGraph" ref="mindGraph" @close="showAside = true;isDrawerShow = false" />
   <knowledge-reviewer v-if="panels.knowledgeReviewer" ref="knowledgeReviewer" :doc="doc"/>
@@ -126,7 +135,7 @@ import DocContentsAndPanel from './contents/DocContentsAndPanel.vue';
 import ContentsList from './contents/ContentsList.vue';
 import TouchUtils from '@/util/TouchUtils';
 import EventBus from '@/components/EventBus';
-import { isMobile, isTouch } from '@/composables/useBreakpoint';
+import { isMobile, isTouch, isUltra } from '@/composables/useBreakpoint';
 import { Memo, Tickets, Search, Top } from '@element-plus/icons-vue';
 
 // 重量级隐藏面板(echarts/jsmind/LLM)按需异步加载: 首次打开时才挂载与下载对应chunk
@@ -228,6 +237,12 @@ export default defineComponent({
   computed: {
     isMobile(): boolean {
       return isMobile.value;
+    },
+    isUltra(): boolean {
+      return isUltra.value;
+    },
+    hasRelatedLinks(): boolean {
+      return this.relatedLinks.length + this.docLinks.length > 0;
     },
     contentHtml(): string {
       return DocService.renderMd(this.file);
@@ -494,6 +509,26 @@ export default defineComponent({
   display: flex;
   align-items: stretch;
 }
+// 大屏宽档: 三栏整组限宽居中, 盈余分到两侧平衡留白(TOC 回到正文身边, 不再左对齐留大片死白)
+@media (min-width: @bp-wide) {
+  .doc-layout:not(.is-mobile) {
+    max-width: var(--doc-shell-max);
+    margin-inline: auto;
+  }
+}
+
+// 超宽档: 关联内容第4列(文档流内列, 内部 sticky 跟随滚动, 与正文同色卡片底)
+.doc-related-column {
+  flex: 0 0 var(--doc-related-w, 380px);
+  background-color: var(--card-bg-color);
+}
+.doc-related-sticky {
+  position: sticky;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-md);
+}
 
 .main {
   flex: 1;
@@ -505,7 +540,7 @@ export default defineComponent({
 
 // 仅loading态生效(el-skeleton类只在加载中存在 避免class透传影响内容根节点)
 .el-skeleton.doc-skeleton {
-  max-width: 820px;
+  max-width: var(--reading-measure);
   margin: 76px auto 0;
 }
 
@@ -514,7 +549,7 @@ export default defineComponent({
 }
 
 .main-content {
-  max-width: 860px;
+  max-width: var(--content-max);
   margin: 0 auto;
   padding-top: var(--spacing-md);
 }

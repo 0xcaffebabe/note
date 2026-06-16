@@ -1,6 +1,7 @@
 import { defineComponent, markRaw } from 'vue'
 import * as echarts from 'echarts/core'
 import { buildChartTheme, ChartTheme } from './chartTheme'
+import { isWide as isWideBp } from '@/composables/useBreakpoint'
 
 // 首页 echarts 图表通用生命周期 mixin: 消除 4 张图重复的 init/resize/暗色重渲染/dispose 样板
 //
@@ -31,10 +32,18 @@ export default defineComponent({
     isDark(): boolean {
       return this.$store.state.isDarkMode
     },
+    // 大屏宽档: 供子组件 buildOption 换 echarts 配置(如 HeatMap cellSize); 跨档自动重渲染(见 watch)
+    isWide(): boolean {
+      return isWideBp.value
+    },
   },
   watch: {
     isDark() {
       // 主题切换后令牌已换值, 复用实例重建 option(notMerge)即可, 无需 dispose
+      this.$nextTick(() => this.renderChart())
+    },
+    isWide() {
+      // 跨 @bp-wide 档: 重建 option 以应用宽档专属 echarts 配置(cellSize 等)
       this.$nextTick(() => this.renderChart())
     },
   },

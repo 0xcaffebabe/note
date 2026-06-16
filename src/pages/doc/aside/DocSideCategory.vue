@@ -179,6 +179,16 @@ export default defineComponent({
   flex-direction: column;
 }
 
+// 大屏宽档: 分类侧栏加宽(长中文路径不再截断); 直接覆写 width 盖过 EP 的 el-aside 变量(更高特异度)
+@media (min-width: @bp-wide) {
+  .doc-aside {
+    width: var(--doc-aside-w);
+  }
+  .category-wrapper {
+    width: var(--doc-aside-w);
+  }
+}
+
 .category-header {
   padding: var(--spacing-md) var(--spacing-lg);
   border-bottom: 1px solid var(--border-color);

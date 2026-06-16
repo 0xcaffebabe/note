@@ -108,6 +108,16 @@ export default defineComponent({
   }
 }
 
+// 大屏宽档: TOC 列加宽(深层标题不再截断); 仅 min-width, 不影响 <=@bp-desktop 的收起态
+@media (min-width: @bp-wide) {
+  .doc-contents-and-panel:not(.collapsed) {
+    width: var(--doc-toc-w);
+  }
+  .contents-panel-container {
+    width: calc(var(--doc-toc-w) - 10px);
+  }
+}
+
 .contents-panel-container {
   transition: all 0.2s;
   position: sticky;
@@ -161,8 +171,8 @@ export default defineComponent({
   }
 }
 
-/* 为小屏幕调整: 断点统一为1280 */
-@media screen and (max-width: 1366px) {
+/* 小屏知识面板压缩: 断点收敛到 @bp-desktop(1280), 消除原 1366 游离断点(避免污染 1367-1680 宽档) */
+@media screen and (max-width: @bp-desktop) {
   .right-bottom-panel-container {
     height: 160px;
   }

@@ -198,7 +198,7 @@ export default defineComponent({
   justify-content: center;
   align-items: center; // 不同字号胶囊在行内居中对齐, 不被 stretch 拉成等高
   gap: var(--spacing-sm);
-  max-width: 860px;
+  max-width: var(--content-max);
   margin: 0 auto var(--spacing-2xl);
 }
 
@@ -246,8 +246,23 @@ export default defineComponent({
   background-color: var(--card-bg-color);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
-  padding: var(--spacing-lg);
+  padding: var(--card-pad);
   box-shadow: var(--shadow-sm);
+}
+
+// 大屏宽档: 标签云/数据卡呼吸; 匹配文章列表分两栏(仅本页用, 不波及 TagList 悬浮层复用)
+@media (min-width: @bp-wide) {
+  .tag-zone {
+    max-width: 1100px;
+  }
+  .data-container {
+    max-width: 960px;
+  }
+  :deep(.chapter-list) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px var(--spacing-lg);
+  }
 }
 
 // 标签进出场动画

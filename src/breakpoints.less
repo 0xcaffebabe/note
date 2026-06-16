@@ -2,3 +2,5 @@
 // 由 tests/unit/breakpoint.test.ts 守护。经 vite less.additionalData 全局注入。
 @bp-mobile: 820px;   // <=此值: compact 单栏 / >此值: 进入双栏~三栏
 @bp-desktop: 1280px; // >=此值: 完整三栏
+@bp-wide: 1680px;    // >=此值: 大屏宽档(内容/壳居中加宽); 须与 breakpoints.ts 的 WIDE_MIN 同值
+@bp-ultra: 2040px;   // >=此值: 超宽档(文档关联内容独立成右侧第4列); 须与 breakpoints.ts 的 ULTRA_MIN 同值

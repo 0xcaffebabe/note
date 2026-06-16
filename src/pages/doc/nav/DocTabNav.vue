@@ -172,7 +172,8 @@ export default defineComponent({
   }
 }
 
-@media screen and (max-width: 1366px) {
+// 标签条在 <=@bp-desktop(1280) 收窄, 给顶栏其余元素留位; 原 1366 游离断点收敛(不污染宽档)
+@media screen and (max-width: @bp-desktop) {
   .tab-container {
     max-width: 44%;
   }

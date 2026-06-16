@@ -47,6 +47,14 @@
   --content-max: 860px;
   // 首页落地页内容最大宽度: 三块(hero文本/快速入口/统计)统一对齐到同一中线
   --home-max: 1080px;
+  // 文档三栏整组在大屏的居中外壳上限; @bp-wide 三栏(1680), @bp-ultra 四栏时另加宽(见下)
+  --doc-shell-max: 1680px;
+  // 超宽档第4列(关联内容)宽度
+  --doc-related-w: 380px;
+  // 首页图表区在大屏独享的更宽上限(比文字块 --home-max 更宽, 同轴居中); 图表卡默认高度
+  --home-max-wide: 1480px;
+  --chart-h: 360px;
+  --card-pad: var(--spacing-lg); // 卡片内边距(大屏宽档放大一档让加宽的卡片呼吸)
 
   // 圆角系统
   --radius-sm: 4px;
@@ -57,12 +65,14 @@
   // 字号阶梯与行高
   --font-size-xs: 12px;
   --font-size-sm: 13px;
-  --font-size-base: 14px;
-  --font-size-md: 15px;
+  // chrome/展示字号在大屏渐进放大: 下界钉死当前 px → <=1280 逐字节不变, 2560 达上界
+  // (阅读正文 --font-size-lg 保持静态, 不流体: 保护 em 相对标题级联与每行字数; 间距阶梯也不动)
+  --font-size-base: clamp(14px, calc(14px + (100vw - 1280px) * 2 / 1280), 16px);
+  --font-size-md: clamp(15px, calc(15px + (100vw - 1280px) * 2 / 1280), 17px);
   --font-size-lg: 16px;
   --font-size-xl: 18px;
-  --font-size-2xl: 22px;
-  --font-size-3xl: 28px;
+  --font-size-2xl: clamp(22px, calc(22px + (100vw - 1280px) * 4 / 1280), 26px);
+  --font-size-3xl: clamp(28px, calc(28px + (100vw - 1280px) * 6 / 1280), 34px);
   --leading-tight: 1.4;
   --leading-normal: 1.6;
   --leading-base: 1.7;      // 正文默认行高(原 body 硬编码值, 令牌化)
@@ -119,6 +129,34 @@ html.dark {
 
   --scrollbar-thumb-color: rgba(255,255,255,0.2);
   --scrollbar-thumb-hover-color: rgba(255,255,255,0.3);
+}
+
+// ============================================================
+// 大屏宽档(>= @bp-wide 1680): 只换"维度"令牌(宽度/间距/字号)
+// 维度令牌暗色自动继承, 禁止在此为它们加 html.dark 第二份(违反单轨)
+// 页/组件级的具体加宽就近写在各自的 @bp-wide 块; 这里只放全站级令牌换值
+// ============================================================
+@media (min-width: @bp-wide) {
+  :root {
+    --home-max: 1320px;       // 落地/工具页内容中线 1080 → 1320, 回收两侧死白
+    --reading-measure: 880px; // 文档阅读版心 820 → 880(正文字号保持静态, 仅放宽版心)
+    --content-max: 920px;     // 文档主区 860 → 920
+    --doc-aside-w: 320px;     // 分类侧栏 280 → 320(长中文路径不再截断)
+    --doc-toc-w: 340px;       // TOC 列 300 → 340(深层标题不再截断)
+    --chart-h: clamp(360px, 34vh, 480px); // 图表高度随视口高生长(floor=360 保证 <=当前不缩)
+    // 横向内边距头空间: 仅 @bp-wide 放开(基础 clamp(8,4vw,32) 的 4vw 在 800px 已达 32,
+    // 若抬基础上界会泄漏到 800-1280 保护带, 故只在此换值)
+    --content-pad: clamp(32px, 4vw, 48px);
+    --card-pad: var(--spacing-xl);
+  }
+}
+
+// 超宽档(>= @bp-ultra 2040): 文档关联内容独立成第4列 → 壳再加宽、TOC 收回(不再内联关联)
+@media (min-width: @bp-ultra) {
+  :root {
+    --doc-shell-max: 2080px;  // 容纳 侧栏380 + 正文 + TOC360 + 关联380
+    --doc-toc-w: 360px;       // 关联内容移出右列 → TOC 收回到大纲+图谱所需
+  }
 }
 
 // 重置默认样式
@@ -309,7 +347,7 @@ body {
 }
 .chart-host .chart-box {
   width: 100%;
-  height: 360px;
+  height: var(--chart-h);
 }
 .chart-overlay {
   position: absolute;

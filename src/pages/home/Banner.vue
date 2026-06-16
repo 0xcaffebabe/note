@@ -154,6 +154,16 @@ export default defineComponent({
   color: var(--main-text-color);
 }
 
+// 大屏宽档: 标题/搜索入口随宽屏放大(下界保持原值, <=1280 不变)
+@media (min-width: @bp-wide) {
+  .hero-title {
+    font-size: clamp(52px, 4vw, 64px);
+  }
+  .hero-search {
+    max-width: 560px;
+  }
+}
+
 .hero-subtitle {
   margin: var(--spacing-md) 0 var(--spacing-sm);
   font-size: var(--font-size-lg);

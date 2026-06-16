@@ -21,6 +21,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import api from "@/api";
+import { isWide as isWideBp } from "@/composables/useBreakpoint";
 
 interface WordItem {
   name: string;
@@ -88,9 +89,17 @@ export default defineComponent({
     ariaLabel(): string {
       return `词云，共 ${this.words.length} 个高频词`;
     },
+    // 大屏宽档: 最大词号随之放大(CSS 够不到的 canvas 字号常量), 跨档重排(见 watch)
+    isWideTier(): boolean {
+      return isWideBp.value;
+    },
   },
   watch: {
     isDark() {
+      this.init();
+    },
+    isWideTier() {
+      // 跨 @bp-wide 档: 与 isDark 同款幂等重入, init() 内 maxSize 改读宽档值
       this.init();
     },
   },
@@ -661,9 +670,9 @@ export default defineComponent({
       const maxValue = this.words[0]?.value || 1;
       const minValue = this.words[this.words.length - 1]?.value || 1;
 
-      // 计算每个词的大小和颜色
+      // 计算每个词的大小和颜色(大屏宽档放大最大词号, 利用更宽的画布)
       const minSize = 12;
-      const maxSize = 48;
+      const maxSize = this.isWideTier ? 64 : 48;
 
       // 取一次品牌色相, 整张词云共用一套有序色板(替代逐词随机色)
       const baseHue = this.getPrimaryHue();
@@ -783,6 +792,13 @@ export default defineComponent({
     top: var(--spacing-sm);
     right: var(--spacing-sm);
     z-index: 100;
+  }
+}
+
+// 大屏宽档: 放宽画布宽度上限, 配合 maxSize 放大让词云更舒展
+@media (min-width: @bp-wide) {
+  #wordcloud {
+    max-width: 1320px;
   }
 }
 

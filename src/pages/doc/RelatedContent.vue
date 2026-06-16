@@ -1,13 +1,13 @@
 <template>
   <!-- 右侧悬浮标签: 悬停展开"相关链接"面板 上下两组 关联内容(跳转) / 其他链接(滚到正文位置) -->
   <div
-    class="related-floating"
+    :class="inline ? 'related-inline' : 'related-floating'"
     v-if="total"
-    @mouseenter="reveal"
-    @mouseleave="scheduleHide"
+    @mouseenter="!inline && reveal()"
+    @mouseleave="!inline && scheduleHide()"
   >
     <transition name="rf">
-      <div class="rf-panel" v-show="open" role="region" aria-label="相关链接">
+      <div class="rf-panel" v-show="inline || open" role="region" aria-label="相关链接">
         <div class="rf-panel-head">
           <el-icon class="rf-head-icon"><Connection /></el-icon>
           <span class="rf-head-title">相关链接</span>
@@ -49,6 +49,7 @@
       </div>
     </transition>
     <button
+      v-if="!inline"
       type="button"
       class="rf-tab"
       :class="{ active: open }"
@@ -80,6 +81,11 @@ export default defineComponent({
     docLinks: {
       type: Array as PropType<RelatedLink[]>,
       default: () => [],
+    },
+    // 内联(常驻)模式: 大屏宽档嵌入右列, 面板常显不浮动(无悬浮标签/无 hover 桥)
+    inline: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {
@@ -181,6 +187,13 @@ export default defineComponent({
   z-index: var(--z-overlay);
 }
 
+// 大屏宽档: 居中壳后, 把右缘竖标签从视口边移到壳右缘(否则悬在右侧死白里, 与正文脱节)
+@media (min-width: @bp-wide) {
+  .related-floating {
+    right: calc((100vw - var(--doc-shell-max)) / 2);
+  }
+}
+
 // 边缘竖标签: 常驻可见 半藏在右边缘
 .rf-tab {
   position: relative;
@@ -238,6 +251,19 @@ export default defineComponent({
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
+}
+
+// 内联(常驻)模式: 面板静态嵌入右列, 常显、弱阴影、跟随列宽
+.related-inline {
+  width: 100%;
+}
+.related-inline .rf-panel {
+  position: static;
+  transform: none;
+  width: 100%;
+  max-height: 38vh;
+  box-shadow: none;
+  background-color: var(--card-bg-color);
 }
 
 .rf-panel-head {

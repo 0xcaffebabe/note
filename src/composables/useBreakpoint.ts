@@ -1,5 +1,5 @@
 import { ref, computed, readonly } from 'vue'
-import { MOBILE_MAX, DESKTOP_MIN, isMobileViewport } from '@/const/breakpoints'
+import { MOBILE_MAX, DESKTOP_MIN, WIDE_MIN, ULTRA_MIN, isMobileViewport } from '@/const/breakpoints'
 
 // 响应式断点单例：窗口缩放/旋转/触屏判定都会实时更新，驱动模板与布局重渲染。
 // 取代旧的 SysUtils.isMobile()(UA 永久缓存 + 一次性 matchMedia，非响应式)。
@@ -29,10 +29,14 @@ export const isTouch = computed(() => coarse.value)
 export const isCompact = computed(() => width.value < MOBILE_MAX)
 export const isMedium = computed(() => width.value >= MOBILE_MAX && width.value < DESKTOP_MIN)
 export const isFull = computed(() => width.value >= DESKTOP_MIN)
+/** 是否大屏宽档(>=WIDE_MIN): 仅供图表换 echarts 配置(cellSize/maxSize 等 CSS 够不到的项); 布局一律走 CSS */
+export const isWide = computed(() => width.value >= WIDE_MIN)
+/** 是否超宽档(>=ULTRA_MIN): 供"换 DOM"——文档关联内容从右列内联挪到独立第4列 */
+export const isUltra = computed(() => width.value >= ULTRA_MIN)
 /** 精确视口宽(只读) */
 export const viewportWidth = readonly(width)
 
 /** 组合式入口：在 setup() 中使用 */
 export function useBreakpoint() {
-  return { isMobile, isTouch, isCompact, isMedium, isFull, width: viewportWidth }
+  return { isMobile, isTouch, isCompact, isMedium, isFull, isWide, isUltra, width: viewportWidth }
 }

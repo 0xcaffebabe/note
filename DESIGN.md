@@ -42,12 +42,14 @@
 - 间距阶梯：`--spacing-xs 4` · `sm 8` · `md 16` · `lg 24` · `xl 32` · `2xl 48` · `3xl 64`。
 - `--content-pad`: `clamp(8px, 4vw, 32px)` —— 内容区横向内边距，随视口流式收放（**优先用它做横向 padding**）。
 - `--reading-measure: 820px`（正文阅读列宽）、`--content-max: 860px`（文档主区）、`--home-max: 1080px`（落地页/工具页内容中线）。
+- **大屏 wide 档（`@bp-wide` 换值）**：`--reading-measure→880` · `--content-max→920` · `--home-max→1320` · `--content-pad→clamp(32,4vw,48)` · `--card-pad: lg→xl`。大屏专用令牌：`--doc-shell-max: 1680`（文档三栏居中外壳上限；ultra 档 `@bp-ultra` 加宽到 2080 容纳第4列）、`--home-max-wide: 1480`（首页图表区独享更宽上限，负 margin 破出文字块、同轴居中，不用 transform 以免成 echarts 浮层包含块）、`--chart-h: 360→clamp(360,34vh,480)`（图表卡高度，floor=360 保证 ≤当前不缩）、`--doc-aside-w: 280→320` / `--doc-toc-w: 300→340`（侧栏/TOC 列宽；ultra 档 TOC→360 并多出 `--doc-related-w:380` 第4列）。
+- **大屏文档关联内容（只在超宽才常驻）**：`RelatedContent` 有 `inline` prop（静态常驻面板）。**仅 ultra 档 `≥2040`** 把 related 独立成**右侧第4列**（`<aside class="doc-related-column">` in DocPage，sticky；`--doc-related-w:380`，壳 `--doc-shell-max→2080`，TOC `--doc-toc-w→360`）。**`<2040`（含 ≤1920）一律为右缘悬浮标签**（collapsed，hover/tap 展开）——不在右列常驻（曾试过 inline 堆在 TOC 下方，遮挡/占位感强，已移除：关联链接被 DocService 从正文剥离，故悬浮标签是它在非超宽屏的唯一入口，不能整体删）。`ToolBox` 浮层按 `(100vw-壳)/2 + --doc-toc-w (+ --doc-related-w on ultra) + 20px` 随居中壳右移让过右列。
 
 ### 圆角
 `--radius-sm 4` · `md 6` · `lg 8` · `xl 16`。卡片用 `xl`；小控件用 `md`；纯胶囊用 `999px`。
 
 ### 字号 / 行高 / 字体
-- 字号：`--font-size-xs 12` · `sm 13` · `base 14` · `md 15` · `lg 16` · `xl 18` · `2xl 22` · `3xl 28`。
+- 字号：`--font-size-xs 12` · `sm 13` · `base 14` · `md 15` · `lg 16` · `xl 18` · `2xl 22` · `3xl 28`。**chrome/展示字号 `base/md/2xl/3xl` 在大屏经 `clamp()` 渐进放大（下界钉死当前 px、2560 达上界）；阅读正文 `lg` 与间距阶梯保持静态**（保护 em 相对标题级联与每行字数）。
 - 行高：`--leading-tight 1.4` · `normal 1.6` · `base 1.7` · `relaxed 1.8`。
 - 字体栈：`--font-sans` / `--font-mono`。
 
@@ -76,10 +78,13 @@
 
 ## 3. 响应式与断点
 
-- **单一真源**：`MOBILE_MAX = 820`、`DESKTOP_MIN = 1280`、`COARSE_MAX = 1024`（`src/const/breakpoints.ts`）；less 侧 `@bp-mobile: 820px` / `@bp-desktop: 1280px`（全局注入）。
+- **单一真源**：`MOBILE_MAX = 820`、`DESKTOP_MIN = 1280`、`WIDE_MIN = 1680`、`ULTRA_MIN = 2040`、`COARSE_MAX = 1024`（`src/const/breakpoints.ts`）；less 侧 `@bp-mobile/@bp-desktop/@bp-wide/@bp-ultra`（全局注入）。五档：compact `<820` / medium `[820,1280)` / full `[1280,1680)` / wide `[1680,2040)` / **ultra `≥2040`（超宽：文档关联内容独立成右侧第4列）**。新增/改断点须同步改这 3 个文件 + `tests/unit/breakpoint.test.ts`（含双向守护：.less 有档而 .ts 缺常量即失败）。
+- **大屏 wide 档是纯增量**：所有 `@media (min-width: @bp-wide)` 只换"维度"令牌（宽/字/距），**`≤1280` 必须逐字节不变**（clamp 下界钉死当前值；`max-width` 收缩规则**绝不改挂 `@bp-wide`**——会污染 1367–1680 含 1440 E2E，散落的 `1366` 应删或改挂 `@bp-desktop`）。布局一律走 CSS，**不为大屏新增 JS 布局信号**。
+- **`isWide`（`useBreakpoint`）只供图表换 echarts 配置**（CSS 够不到的 `cellSize`/`maxSize` 等，本节豁免）：`eChartMixin` 已暴露 `this.isWide` 并跨档自动重渲染；WordCloud/自定义画布同款 `watch isWide → 重渲染`。
+- **`isUltra`（`useBreakpoint`）是唯一的"大屏换 DOM"信号**：超宽档把文档关联内容从右列内联（`DocContentsAndPanel`）挪到独立第4列（`DocPage` 的 `<aside class="doc-related-column">`，CSS 无法跨 flex 容器搬 DOM，故用 JS 断点——属"换 DOM"允许项）。除此之外大屏布局一律 CSS。
 - **模板判断**：用全局 `$isMobile()`（响应式，跨断点自动重渲染）；脚本用 `useBreakpoint()`。
 - **优先 CSS 响应式**：能用 `@media (max-width: @bp-mobile)` 或 `grid auto-fill/auto-fit` 自适应的，**不要用 `$isMobile()` 切两套类**（旧的 `xxx`/`mobile-xxx` 双类是被淘汰的写法）。
-- 散落的 `860px` 等魔法断点一律收敛到 `@bp-mobile`。
+- 散落的 `860px` 等魔法断点一律收敛到 `@bp-mobile`；min-width 增强档按方向收敛（如 `1200→@bp-desktop`），勿盲目映射。
 
 ---
 

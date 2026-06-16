@@ -255,6 +255,21 @@ export default defineComponent({
   }
 }
 
+// 大屏宽档: 居中壳使盈余分到两侧, 浮动工具栏须随壳右缘内移(否则 2560 下被甩进右侧死白)
+// = 壳右外边距((100vw-壳)/2) + 原 320 偏移, 始终贴住 TOC/正文交界
+@media (min-width: @bp-wide) {
+  .tool-box:not(.is-mobile) {
+    right: calc((100vw - var(--doc-shell-max)) / 2 + var(--doc-toc-w) + 20px);
+  }
+}
+
+// 超宽档: 工具栏须再让过第4列(关联)宽度
+@media (min-width: @bp-ultra) {
+  .tool-box:not(.is-mobile) {
+    right: calc((100vw - var(--doc-shell-max)) / 2 + var(--doc-toc-w) + var(--doc-related-w) + 20px);
+  }
+}
+
 // 工具栏按钮: 桌面与移动端统一为同一描边 + 卡片底样式(深色图标落浅色卡片底, 静置即可见);
 // 移动端仅尺寸/定位不同(见 .tool-box.is-mobile). 早前移动端曾用 type=primary 蓝底,
 // 但通用底色规则特异度更高盖住蓝底, 致白色图标"隐形"唤起后才显形, 故回归桌面端一致样式。

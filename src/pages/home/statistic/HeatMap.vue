@@ -86,7 +86,7 @@ export default defineComponent({
           top: 60,
           left: 30,
           right: 30,
-          cellSize: ["auto", 20],
+          cellSize: ["auto", this.isWide ? 26 : 20],
           range,
           itemStyle: {
             borderWidth: 0.5,
@@ -122,6 +122,6 @@ export default defineComponent({
 <style lang="less" scoped>
 // 顶部 visualMap 图例 + 日历主体, 整体约 300px
 .chart-box {
-  height: 300px;
+  height: calc(var(--chart-h) - 60px);
 }
 </style>

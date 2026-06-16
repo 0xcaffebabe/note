@@ -58,7 +58,7 @@
         <!-- CodeFrequency 自行归一化, 父级只传原始数据并等数据到位再挂载, 避免空态闪烁 -->
         <code-frequency :code-frequency="info.codeFrequency" v-if="info.codeFrequency.length" />
       </div>
-      <div class="chart-card">
+      <div class="chart-card chart-card--wide">
         <h3 class="chart-title">提交日历</h3>
         <heat-map />
       </div>
@@ -66,11 +66,11 @@
         <h3 class="chart-title">各时段提交<small>GMT+8</small></h3>
         <hour-commit-heatmap />
       </div>
-      <div class="chart-card">
+      <div class="chart-card chart-card--wide">
         <h3 class="chart-title">提交趋势</h3>
         <commit-total-trend />
       </div>
-      <div class="chart-card">
+      <div class="chart-card chart-card--wide">
         <h3 class="chart-title">词云</h3>
         <word-cloud />
       </div>
@@ -164,6 +164,13 @@ export default defineComponent({
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-2xl);
 }
+// 大屏宽档: 抬高列下限, 卡片更宽不显细长
+@media (min-width: @bp-wide) {
+  .stat-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: var(--spacing-lg);
+  }
+}
 .stat-card {
   display: flex;
   flex-direction: column;
@@ -201,17 +208,33 @@ export default defineComponent({
   font-size: var(--font-size-lg);
 }
 
-// 图表卡: 竖直堆叠
+// 图表卡: 默认单列堆叠(grid 单列与 flex column 视觉一致); 宽档转两列
 .chart-grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: var(--spacing-lg);
+}
+// 大屏宽档: 紧凑图(代码构成/各时段)成对, 天然宽图(日历/趋势/词云)跨满两列;
+// dense 让紧凑图回填首行, 杜绝整行留白(半宽日历会比当前更窄, 故宽图坚持满宽)
+@media (min-width: @bp-wide) {
+  .chart-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-auto-flow: row dense;
+    // 图表区独享更宽上限: 在 --home-max(1320)容器内对称破出到 --home-max-wide, 仍居中同轴
+    // (负 margin 破出, 不用 transform 以免成为 echarts 浮层定位的包含块)
+    // @bp-wide 起视口恒 >=1680, 故 1480 永不溢出, 无需 min() 夹断(且 Less 会把裸 min() 误判为内置函数)
+    width: var(--home-max-wide);
+    margin-inline: calc((100% - var(--home-max-wide)) / 2);
+  }
+  .chart-card--wide {
+    grid-column: 1 / -1;
+  }
 }
 .chart-card {
   background: var(--card-bg-color);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
-  padding: var(--spacing-lg);
+  padding: var(--card-pad);
   box-shadow: var(--shadow-sm);
 }
 .chart-title {

@@ -184,6 +184,14 @@ export default defineComponent({
   gap: var(--spacing-md);
 }
 
+// 大屏宽档: 顶栏内容限宽居中(对齐文档壳 --doc-shell-max), 免 2560 下 logo 与搜索/操作相距过远
+@media (min-width: @bp-wide) {
+  .header-inner {
+    max-width: var(--doc-shell-max);
+    margin-inline: auto;
+  }
+}
+
 .header-left {
   display: flex;
   align-items: center;

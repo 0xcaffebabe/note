@@ -132,8 +132,8 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
-// 饼图高度: 比默认 360 的环形比例更舒展
+// 饼图高度: 比默认 360 的环形比例更舒展(宽档随 --chart-h 长高)
 .chart-box {
-  height: 360px;
+  height: var(--chart-h);
 }
 </style>

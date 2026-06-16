@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    :width="$isMobile() ? '92%' : '640px'"
+    :width="dialogWidth"
     top="10vh"
     class="command-palette"
     :show-close="false"
@@ -75,6 +75,7 @@ import Category from '@/dto/Category'
 import CategoryService from '@/service/CategoryService'
 import searchService from '@/service/SearchService'
 import DocUtils from '@/util/DocUtils'
+import { isWide as isWideBp } from '@/composables/useBreakpoint'
 
 type PaletteMode = 'category' | 'fulltext'
 
@@ -112,6 +113,11 @@ export default defineComponent({
     }
   },
   computed: {
+    // 命令面板宽度: 移动 92% / 大屏宽档 760 / 其余 640
+    dialogWidth(): string {
+      if (this.$isMobile()) return '92%'
+      return isWideBp.value ? '760px' : '640px'
+    },
     hintText(): string {
       if (this.mode == 'category' && !this.kw && this.items.length > 0) {
         return '最近访问'
@@ -411,6 +417,13 @@ export default defineComponent({
   max-height: 46vh;
   overflow-y: auto;
   padding: var(--spacing-sm);
+}
+
+// 大屏宽档: 列表更高, 一屏展示更多结果
+@media (min-width: @bp-wide) {
+  .palette-list {
+    max-height: 56vh;
+  }
 }
 
 .palette-item {

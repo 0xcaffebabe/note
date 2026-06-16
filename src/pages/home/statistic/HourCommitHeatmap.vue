@@ -94,6 +94,6 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .chart-box {
-  height: 320px;
+  height: calc(var(--chart-h) - 40px);
 }
 </style>

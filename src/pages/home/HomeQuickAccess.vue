@@ -216,7 +216,7 @@ export default defineComponent({
   background-color: var(--card-bg-color);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
-  padding: var(--spacing-lg);
+  padding: var(--card-pad);
   box-shadow: var(--shadow-sm);
 }
 
@@ -280,6 +280,12 @@ export default defineComponent({
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: var(--spacing-sm);
+}
+// 大屏宽档: 抬高列下限, 分类卡更宽不显细长
+@media (min-width: @bp-wide) {
+  .qa-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  }
 }
 
 .qa-cat {

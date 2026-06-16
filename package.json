@@ -19,7 +19,7 @@
     "echarts": "6.0.0",
     "echarts-gl": "^2.1.0",
     "element-plus": "2.13.2",
-    "js-yaml": "4.1.1",
+    "js-yaml": "4.2.0",
     "jsmind": "0.9.1",
     "katex": "0.16.33",
     "less": "4.5.1",

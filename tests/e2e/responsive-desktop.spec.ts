@@ -34,11 +34,11 @@ test.describe('routing collapse & /m compat (desktop)', () => {
     expect(pathnameOf(page)).toBe('/home.html')
   })
 
-  test('旧 /m/cluster 去前缀到 /cluster 并渲染聚类图', async ({ page }) => {
+  test('旧 /m/cluster 去前缀到 /cluster.html 并渲染聚类图', async ({ page }) => {
     await goto(page, '/m/cluster')
-    // 精确路径等待(/m/cluster 以 /cluster 结尾, endsWith 会提前命中)
-    await page.waitForFunction(() => decodeURI(location.pathname) === '/cluster', undefined, { timeout: 20000 })
-    expect(pathnameOf(page)).toBe('/cluster')
+    // /m/cluster 去前缀到 /cluster 再重定向到规范 /cluster.html
+    await waitForPath(page, '/cluster.html')
+    expect(pathnameOf(page)).toBe('/cluster.html')
     await page.waitForSelector('.cluster-host canvas', { timeout: 20000 })
     expect(await page.locator('.cluster-host canvas').count()).toBeGreaterThan(0)
   })
@@ -62,8 +62,8 @@ test.describe('routing collapse & /m compat (desktop)', () => {
     await goto(page, DOC)
     await page.waitForSelector('.markdown-section')
     await page.locator('.site-nav .nav-item', { hasText: '聚类' }).click()
-    await waitForPath(page, '/cluster')
-    expect(pathnameOf(page)).toBe('/cluster')
+    await waitForPath(page, '/cluster.html')
+    expect(pathnameOf(page)).toBe('/cluster.html')
     await page.waitForSelector('.cluster-host canvas', { timeout: 20000 })
   })
 })

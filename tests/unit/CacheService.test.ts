@@ -65,4 +65,12 @@ describe('CacheService LRU 淘汰', () => {
     expect(cache.get('s', 'k0')).toBe(999)
     expect(cache.has('s', 'k1')).toBe(false)
   })
+
+  it('has() 不刷新 LRU: 仅被 has 过的最旧条目照常被淘汰(与 get 的刷新行为相对)', () => {
+    for (let i = 0; i < MAX; i++) cache.set('s', 'k' + i, i) // 填满
+    cache.has('s', 'k0') // has 只读存在性 不应把 k0 提到最新
+    cache.set('s', 'kNew', -1) // 触发淘汰
+    expect(cache.has('s', 'k0')).toBe(false) // 未被刷新 仍作为最旧被淘汰(若 has 误刷新这里会是 true)
+    expect(cache.has('s', 'k1')).toBe(true) // 次旧仍在
+  })
 })

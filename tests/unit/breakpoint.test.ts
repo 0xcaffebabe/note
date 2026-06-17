@@ -23,16 +23,24 @@ describe('isMobileViewport (视口为主 + 触屏兜底)', () => {
 })
 
 describe('断点数值 JS 与 LESS 同源', () => {
-  it('src/breakpoints.less 与 src/const/breakpoints.ts 数值一致', () => {
-    const less = readFileSync(resolve(__dirname, '../../src/breakpoints.less'), 'utf-8')
-    const pick = (name: string) => {
-      const m = less.match(new RegExp(`@${name}:\\s*(\\d+)px`))
-      return m ? Number(m[1]) : NaN
+  // 读一次 .less + 单一 pick 助手(此前两个测试各自重复定义同一正则函数)
+  const less = readFileSync(resolve(__dirname, '../../src/breakpoints.less'), 'utf-8')
+  const pick = (name: string) => {
+    const m = less.match(new RegExp(`@${name}:\\s*(\\d+)px`))
+    return m ? Number(m[1]) : NaN
+  }
+  // .less 断点名 -> 对应 .ts 常量(双向守护用它作为"已注册"清单)
+  const KNOWN: Record<string, number> = {
+    'bp-mobile': MOBILE_MAX,
+    'bp-desktop': DESKTOP_MIN,
+    'bp-wide': WIDE_MIN,
+    'bp-ultra': ULTRA_MIN,
+  }
+
+  it('每个已知断点 .less 与 .ts 数值一致', () => {
+    for (const [name, val] of Object.entries(KNOWN)) {
+      expect(pick(name)).toBe(val)
     }
-    expect(pick('bp-mobile')).toBe(MOBILE_MAX)
-    expect(pick('bp-desktop')).toBe(DESKTOP_MIN)
-    expect(pick('bp-wide')).toBe(WIDE_MIN)
-    expect(pick('bp-ultra')).toBe(ULTRA_MIN)
   })
 
   it('档位严格递增(compact < full < wide < ultra)', () => {
@@ -41,19 +49,14 @@ describe('断点数值 JS 与 LESS 同源', () => {
     expect(WIDE_MIN).toBeLessThan(ULTRA_MIN)
   })
 
-  it('双向守护: .less 声明的断点必须在 .ts 有对应非空常量(新增档不会静默失守)', () => {
-    const less = readFileSync(resolve(__dirname, '../../src/breakpoints.less'), 'utf-8')
-    const pickLess = (name: string) => {
-      const m = less.match(new RegExp(`@${name}:\\s*(\\d+)px`))
-      return m ? Number(m[1]) : NaN
+  // 与上面的"数值一致"不再重复: 这里反向扫描 .less 里「所有」@bp-* 声明,
+  // 任一断点没在 KNOWN 注册(= .ts 无对应常量)即失败 —— 真正做到"新增档不会静默失守"。
+  it('双向守护: .less 里每个 @bp-* 都在 .ts 有对应常量', () => {
+    const declared = [...less.matchAll(/@(bp-[\w-]+):\s*\d+px/g)].map((m) => m[1])
+    expect(declared.length).toBeGreaterThan(0)
+    for (const name of declared) {
+      expect(Object.keys(KNOWN)).toContain(name) // .less 声明了却未在 .ts 注册 → 失败
     }
-    // .less 声明了 @bp-wide/@bp-ultra → 对应 .ts 常量必须存在且相等; 任一侧缺失即失败
-    expect(Number.isFinite(pickLess('bp-wide'))).toBe(true)
-    expect(WIDE_MIN).not.toBeUndefined()
-    expect(pickLess('bp-wide')).toBe(WIDE_MIN)
-    expect(Number.isFinite(pickLess('bp-ultra'))).toBe(true)
-    expect(ULTRA_MIN).not.toBeUndefined()
-    expect(pickLess('bp-ultra')).toBe(ULTRA_MIN)
   })
 })
 

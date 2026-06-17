@@ -54,7 +54,9 @@ describe('Slugger 同名去重', () => {
   })
 })
 
-// 特征(characterization)测试: 锁定当前真实行为, 其中含已知缺陷; 一旦修复源码这些断言会失败, 需有意更新
+// 特征(characterization)测试: 锁定当前真实行为, 其中含已知缺陷; 一旦修复源码这些断言会失败, 需有意更新。
+// 暂不修原因: slug 生成规则是 TOC/?headingId/MindGraph 的公共键, 改算法会让「已存在的全部锚点 id」漂移、
+// 击穿历史 #headingId 深链与 TOC 定位 —— 应作为一次专门的、连带锚点迁移的改动, 而非随手修。
 describe('Slugger 已知缺陷(锚点唯一性隐患)', () => {
   it('[BUG] 显式编号标题与自动序号冲突, 产出重复锚点', () => {
     // occur 只按 base 计数, 不检测候选 base-seq 是否已被占用 -> 锚点碰撞

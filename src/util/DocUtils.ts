@@ -17,11 +17,12 @@ function docUrl2Id(url :string): string {
     url = url.replace('/doc', '')
   }
   url = decodeURI(url).replace(/-/g, '@@')
-  if (url.startsWith('./') || url.startsWith('/') || url.startsWith('doc')) {
-    return url.split('/').splice(1).join('-').replace('.md', '').split('#')[0]
-  }else {
-    return url.split('/').join('-').replace('.md', '').split('#')[0]
-  }
+  const segs = url.split('/')
+  // 丢弃首段: 前导 './' 或 '/' 产生的空/点段, 或首段恰为 'doc'(按段精确匹配, 不会误伤 'docker' 等以 doc 开头的段)
+  const dropFirst = url.startsWith('./') || url.startsWith('/') || segs[0] === 'doc'
+  const id = (dropFirst ? segs.slice(1) : segs).join('-')
+  // 先切掉 #锚点 再剥结尾的 .md(锚定结尾 + 大小写不敏感, 与 htmlUrl2Id 对 .html 的处理对齐)
+  return id.split('#')[0].replace(/\.md$/i, '')
 }
 
 

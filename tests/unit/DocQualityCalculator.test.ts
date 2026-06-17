@@ -33,7 +33,9 @@ describe('内容分 contentQuality', () => {
     const q = DocQualityCalculator.calculateQuality(baseInput({ contentLength: 10000 }))
     expect(q.contentQuality).toBeCloseTo(10, 6) // min(10,10)=10, 非 >10000
   })
-  // [BUG] 源码先 min(..,10) 封顶再 *1.1, 封顶被击穿; 注释自称"有上限"却失效
+  // [BUG] 源码先 min(..,10) 封顶再 *1.1, 封顶被击穿; 注释自称"有上限"却失效。
+  // 暂不修原因: 同 [BUG] 链接权重二次施加 —— 评分公式驱动全站排序/聚类权重/徽章, 改算法会改动「整库已部署的质量分」,
+  // 应作为一次专门的评分口径调整(连带分数复核与产物重建), 而非随手修。
   it('[BUG] 超长(>10000)封顶后再 *1.1 击穿上限, 实得 11(>maxContentScore=10)', () => {
     const q = DocQualityCalculator.calculateQuality(baseInput({ contentLength: 20000 }))
     expect(q.contentQuality).toBeCloseTo(11, 6) // min(20,10)=10 -> *1.1 = 11
@@ -94,6 +96,11 @@ describe('PageRank 分(内部分项, 经综合分体现)', () => {
     expect(() =>
       DocQualityCalculator.calculateQuality(baseInput({ knowledgeNodes: [{ id: 'a' } as KnowledgeNode] })),
     ).toThrow(TypeError)
+  })
+  it('空知识图谱(knowledgeNodes=[])不崩溃且 pagerank 贡献为 0', () => {
+    // allNodes 为空时 calculatePageRankScore 的循环体不执行, 不会出现 1/0(initialRank/length), 直接返回 0
+    const q = DocQualityCalculator.calculateQuality(baseInput({ docId: 'x', knowledgeNodes: [] }))
+    expect(q.quality).toBeCloseTo(0, 6) // 各分项均清零, 综合分为 0
   })
 })
 

@@ -32,4 +32,20 @@ describe('cloneDeep 深拷贝', () => {
     expect('fn' in copy).toBe(false)
     expect(copy.keep).toBe(1)
   })
+  it('已知限制: 循环引用直接抛错(JSON.stringify 无法序列化, 调用方需自行规避)', () => {
+    const o: any = { a: 1 }
+    o.self = o
+    expect(() => cloneDeep(o)).toThrow()
+  })
+  it('已知限制: NaN / Infinity / -Infinity 退化为 null', () => {
+    const copy = cloneDeep({ n: NaN, p: Infinity, m: -Infinity })
+    expect(copy.n).toBeNull()
+    expect(copy.p).toBeNull()
+    expect(copy.m).toBeNull()
+  })
+  it('null 属性被保留(与 undefined 被丢弃形成对比)', () => {
+    const copy = cloneDeep({ a: null, b: undefined })
+    expect(copy.a).toBeNull()
+    expect('b' in copy).toBe(false)
+  })
 })

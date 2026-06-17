@@ -14,7 +14,6 @@ describe('UrlUtils.concatUrl', () => {
     expect(UrlUtils.concatUrl('a', '/b')).toBe('a/b')
   })
   it('多段连续拼接', () => {
-    // 对齐既有 src/test/UrlUtils.test.ts 的口径
     expect(UrlUtils.concatUrl('abcc/', '/fds', 'dsadas', 'dsadas')).toBe('abcc/fds/dsadas/dsadas')
   })
   it('单段或空入参', () => {

@@ -82,17 +82,20 @@ describe('DocUtils 边界与历史地址兼容', () => {
   })
 })
 
-// 特征测试: 锁定 docUrl2Id 当前真实行为, 含已知缺陷; 修复源码后这些断言会失败需有意更新
-describe('DocUtils.docUrl2Id 已知缺陷', () => {
-  it('[BUG] 首段以 "doc" 开头的相对路径被误判为 /doc 前缀, 首段被丢弃', () => {
-    // 源码 startsWith("doc") 本意匹配 doc 前缀, 实则命中任何以 doc 开头的首段
-    expect(DocUtils.docUrl2Id('docker/x.md')).toBe('x') // 期望应为 docker-x, "docker" 丢失
-    expect(DocUtils.docUrl2Id('doc/a/b.md')).toBe('a-b') // 真正的 doc 前缀(碰巧也走此分支)
+// 原为「已知缺陷」特征测试, 源码已修复(docUrl2Id 改为按段精确判 doc + 锚定/大小写不敏感剥 .md):
+// 这里改为锁定修复后的「正确行为」, 若回归会失败。
+describe('DocUtils.docUrl2Id 前缀与 .md 处理(修复后)', () => {
+  it('首段以 "doc" 开头但非 "doc" 段不被误丢(docker 保留)', () => {
+    expect(DocUtils.docUrl2Id('docker/x.md')).toBe('docker-x') // 修复前曾误成 'x'
+    expect(DocUtils.docUrl2Id('doc/a/b.md')).toBe('a-b') // 真正的 doc 前缀仍被剥离
   })
-  it('[BUG] .md 剥离区分大小写, .MD 不被去除', () => {
-    expect(DocUtils.docUrl2Id('/x/y.MD')).toBe('x-y.MD')
+  it('.md 剥离大小写不敏感(.MD 也去掉)', () => {
+    expect(DocUtils.docUrl2Id('/x/y.MD')).toBe('x-y') // 修复前曾保留为 'x-y.MD'
   })
-  it('[BUG] .md 剥离非锚定到结尾, 命中第一个 .md', () => {
-    expect(DocUtils.docUrl2Id('/x/a.md.note.md')).toBe('x-a.note.md')
+  it('.md 剥离锚定到结尾(只去结尾那个 .md)', () => {
+    expect(DocUtils.docUrl2Id('/x/a.md.note.md')).toBe('x-a.md.note') // 修复前曾误成 'x-a.note.md'
+  })
+  it('结尾 .md 在 #锚点之前时仍正确剥离(切锚点先于剥 .md)', () => {
+    expect(DocUtils.docUrl2Id('/x/y.md#sec')).toBe('x-y')
   })
 })

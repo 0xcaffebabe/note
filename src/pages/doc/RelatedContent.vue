@@ -43,6 +43,11 @@
                 <span class="rf-name">{{ docName(link.path) }}</span>
                 <span class="rf-breadcrumb" v-if="breadcrumb(link.path)">{{ breadcrumb(link.path) }}</span>
               </div>
+              <p class="rf-context" v-if="link.context">
+                <span class="rf-ctx-side">{{ link.context.before }}</span>
+                <span class="rf-ctx-hit">{{ link.context.text }}</span>
+                <span class="rf-ctx-side">{{ link.context.after }}</span>
+              </p>
             </a>
           </template>
         </div>
@@ -158,8 +163,9 @@ export default defineComponent({
       }
       // 保持面板打开 取消可能待执行的关闭计时器
       clearTimeout(this.leaveTimer)
-      // 固定顶栏留 88px 余量(与标题 scroll-margin-top 一致)
-      const top = window.scrollY + target.getBoundingClientRect().top - 88
+      // 让目标停在视口竖直中间, 一眼可见(而非贴着顶栏)
+      const rect = target.getBoundingClientRect()
+      const top = window.scrollY + rect.top - (window.innerHeight - rect.height) / 2
       window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
       // 短暂高亮被定位的链接
       const orig = target.style.backgroundColor
@@ -381,6 +387,22 @@ export default defineComponent({
   font-size: var(--font-size-sm);
   line-height: var(--leading-normal);
   color: var(--secondary-text-color);
+}
+
+// "其他链接"的上下文片段: 链接所在行前后截断的文字, 命中的锚文本高亮
+.rf-context {
+  margin: 4px 0 0;
+  font-size: var(--font-size-xs);
+  line-height: var(--leading-normal);
+  color: var(--secondary-text-color);
+}
+
+.rf-ctx-hit {
+  font-weight: 600;
+  color: var(--primary-color);
+  background-color: var(--primary-light-color);
+  border-radius: var(--radius-sm);
+  padding: 0 2px;
 }
 
 // 展开/收起动画: 自标签向左滑出

@@ -471,11 +471,14 @@ class DocService implements Cacheable{
 
   // 解析正文里指向"其他文档"的站内链接(供关联面板"其他链接"分组)
   // 只取.html站内文档 排除外链/锚点/当前文档自身/已在关联内容中的 并按文档去重
+  // 顺带截取链接所在行(段落/列表项等)前后的文字, 方便在面板里看链接的上下文
   public resolveDocLinks(docHtml: string, currentDocId: string, excludeHrefs: string[] = []): RelatedLink[] {
     const exclude = new Set(excludeHrefs)
     const seen = new Set<string>()
     const result: RelatedLink[] = []
-    for (const { link } of this.resolveLinkList(docHtml)) {
+    const document = new DOMParser().parseFromString(docHtml, 'text/html')
+    for (const anchor of Array.from(document.querySelectorAll('a'))) {
+      const link = anchor.getAttribute('href') || ''
       if (!/\.html(\?|#|$)/.test(link)) {
         continue // 非站内文档页(外链/mailto等)跳过
       }
@@ -494,9 +497,32 @@ class DocService implements Cacheable{
         continue // 已在关联内容 或 重复
       }
       seen.add(docId)
-      result.push({ href, path: DocUtils.docId2Url(docId), desc: '' })
+      result.push({ href, path: DocUtils.docId2Url(docId), desc: '', context: this.extractLinkContext(anchor) })
     }
     return result
+  }
+
+  // 取链接所在块(段落/列表项/表格单元/标题等)的纯文本, 以链接文本为中心截前后各 radius 字, 越界处补省略号
+  private extractLinkContext(anchor: Element, radius = 36): RelatedLink['context'] {
+    const block = anchor.closest('p, li, td, th, dd, blockquote, h1, h2, h3, h4, h5, h6') || anchor.parentElement
+    const full = (block?.textContent || '').replace(/\s+/g, ' ').trim()
+    const text = (anchor.textContent || '').replace(/\s+/g, ' ').trim()
+    if (!full || !text) {
+      return undefined
+    }
+    const idx = full.indexOf(text)
+    if (idx < 0) {
+      return undefined // 找不到锚文本(极少数嵌套情形) 不给上下文
+    }
+    let before = full.slice(Math.max(0, idx - radius), idx)
+    let after = full.slice(idx + text.length, idx + text.length + radius)
+    if (idx - radius > 0) {
+      before = '…' + before
+    }
+    if (idx + text.length + radius < full.length) {
+      after = after + '…'
+    }
+    return { before, text, after }
   }
 
 

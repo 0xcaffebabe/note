@@ -171,19 +171,9 @@ test.describe('url self-healing (P0)', () => {
     expect(pathnameOf(page)).toBe(DOC)
   })
 
-  test('乱码路径上的 query 值一并修复', async ({ page }) => {
-    const mojibakePath = Buffer.from(DOC_NO_SUFFIX, 'utf8').toString('latin1')
-    const mojibakeHeading = Buffer.from('依赖关系', 'utf8').toString('latin1')
-    await page.goto(encodeURI(mojibakePath) + '?headingId=' + encodeURIComponent(mojibakeHeading), {
-      waitUntil: 'domcontentloaded',
-    })
-    await waitForPath(page, DOC)
-    expect(pathnameOf(page)).toBe(DOC)
-    // query 里的乱码 headingId 应被还原成「依赖关系」
-    expect(decodeURIComponent(new URL(page.url()).searchParams.get('headingId') ?? '')).toBe('依赖关系')
-  })
-
-  test('乱码 path + query + hash 同时修复(此前各文件分散覆盖的合并用例)', async ({ page }) => {
+  // path + query(headingId) + hash 一次全测: 涵盖了「只修 query」的场景(故不再单列 query-only 用例)。
+  // 任一维度断言失败 Playwright 会精确指出是 headingId 还是 hash, 不损失定位性。
+  test('乱码 path + query + hash 同时修复', async ({ page }) => {
     const mojibakePath = Buffer.from(DOC_NO_SUFFIX, 'utf8').toString('latin1')
     const mojibakeHeading = Buffer.from('依赖关系', 'utf8').toString('latin1')
     await page.goto(encodeURI(mojibakePath) + '?headingId=' + encodeURIComponent(mojibakeHeading) + '#section-1', {
@@ -191,6 +181,7 @@ test.describe('url self-healing (P0)', () => {
     })
     await waitForPath(page, DOC)
     expect(pathnameOf(page)).toBe(DOC)
+    // query 里的乱码 headingId 应被还原成「依赖关系」
     expect(decodeURIComponent(new URL(page.url()).searchParams.get('headingId') ?? '')).toBe('依赖关系')
     expect(new URL(page.url()).hash).toBe('#section-1')
   })

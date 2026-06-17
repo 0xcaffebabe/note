@@ -7,6 +7,8 @@ const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${PORT}`
 
 export default defineConfig({
   testDir: './tests/e2e',
+  // 复用服务时先校验确实是生产 preview(而非被误复用的 dev server) 见 global-setup.ts
+  globalSetup: './tests/e2e/global-setup.ts',
   // 单个文件内串行、文件间并行
   fullyParallel: true,
   // CI 里出现 test.only 直接判失败 防止误提交只跑一条
@@ -15,7 +17,9 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? '50%' : undefined,
   timeout: 30_000,
-  expect: { timeout: 20_000 }, // 对齐既有 waitForFunction 的 20s 上限
+  // 默认断言收紧到 10s 让「真的坏了」的断言更快变红(原 20s 会把红路径拖慢一倍)。
+  // 真正慢的操作(SW 激活 / echarts 布局 / 力导)各自在调用处显式带 { timeout: 20000 }, 不受此默认影响。
+  expect: { timeout: 10_000 },
   reporter: [
     ['list'],
     ['html', { outputFolder: 'playwright-report', open: 'never' }],

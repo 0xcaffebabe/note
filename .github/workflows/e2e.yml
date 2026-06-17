@@ -32,16 +32,40 @@ jobs:
       - name: vitest (unit + component)
         run: npm test
 
-  e2e:
+  # 构建一次, 把产物 dist 共享给所有 E2E 分片 —— 避免每个分片各跑一遍最贵的 npm run build(逐 .md git log)
+  build:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false              # 一个分片失败不掩盖其他分片
-      matrix:
-        shard: [1, 2, 3]            # 对一个 preview 服务并行三个浏览器分片 套件变大再加
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: '0'          # 必须: GitService 对每个 .md 跑 git log 生成 *.md.json/统计 浅克隆会得到 1999 兜底日期
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: npm
+      - run: npm ci
+      - name: Build (prod, deterministic)
+        # NOTE_BUILD_COMMIT_TOTAL_TREND=1 跳过 CommitTotalTrendGenerator 对 gh-pages 的 3 次重试拉取(最大网络抖动源)
+        env:
+          NOTE_BUILD_COMMIT_TOTAL_TREND: '1'
+        run: npm run build
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 1
+          include-hidden-files: true   # 保留 .nojekyll 等点文件
+
+  e2e:
+    needs: build                       # 复用 build 产物 不在此重新构建
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false              # 一个分片失败不掩盖其他分片
+      matrix:
+        shard: [1, 2, 3]            # 各分片复用同一份已构建 dist 并行跑 1/3 用例(套件变大再加分片)
+    steps:
+      - uses: actions/checkout@v6   # 仅需测试代码与配置 不在此构建 故无需 fetch-depth:0
       - uses: actions/setup-node@v6
         with:
           node-version: 24.x
@@ -59,15 +83,16 @@ jobs:
       - name: Install Chromium (+ OS deps)
         run: npx playwright install --with-deps chromium
 
-      - name: Build (prod, deterministic)
-        # NOTE_BUILD_COMMIT_TOTAL_TREND=1 跳过 CommitTotalTrendGenerator 对 gh-pages 的 3 次重试拉取(最大网络抖动源)
-        env:
-          NOTE_BUILD_COMMIT_TOTAL_TREND: '1'
-        run: npm run build
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
 
       - name: E2E (shard ${{ matrix.shard }}/3)
+        # npm run serve(vite preview)直接服务已下载的 dist 不重新构建; fixtures 也从 dist/category.json 发现夹具
         # PR/push: 只跑确定性、无密钥的门禁层(排除 @prod/@network)
-        # schedule(夜间): 跑全量含 @prod/@network
+        # schedule(夜间): 跑全量含 @prod(SW/离线)/@network(真实 Algolia, 凭据是硬编码公开 search key, 无需密钥)
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
             npx playwright test --shard=${{ matrix.shard }}/3

@@ -1,64 +1,33 @@
-import { test, expect, goto, pathnameOf, waitForPath, DOC, DOC_NO_SUFFIX } from './fixtures'
+import { test, expect, goto, pathnameOf, waitForPath, collectPageProblems, BENIGN_CONSOLE, DOC, DOC_NO_SUFFIX } from './fixtures'
 
 // 响应式合流(P0–P6)桌面端验证: 单一无前缀路由树 + 响应式 DocPage/Home/Header/工具栏。
 // 运行于 desktop-chromium(1440x900, 细指针)。断点为视口驱动, 故可用 setViewportSize 验证跨断点切换。
 // 文件名不含 mobile.spec.ts => 仅在 desktop 工程运行。
 
-// ── 路由合流 & 旧 /m 兼容 ───────────────────────────────────────────────
-test.describe('routing collapse & /m compat (desktop)', () => {
-  test('旧 /m/<doc> 无后缀(CDN去后缀形态) 去前缀 + 自愈补 .html 并渲染正文', async ({ page }) => {
+// ── 路由完成后的桌面渲染 ─────────────────────────────────────────────────
+// URL 落点本身(去前缀/自愈/重定向/query+hash 保留)归 routing.spec.ts 这个唯一 owner;
+// 这里只断言「各路由跑通后, 桌面布局确实把正文/图渲染了出来」——render-after-route 是桌面专属角度。
+test.describe('route-completion rendering (desktop)', () => {
+  test('旧 /m/<doc> 去前缀+自愈后渲染正文(桌面)', async ({ page }) => {
     await goto(page, '/m' + DOC_NO_SUFFIX)
     await waitForPath(page, DOC)
-    expect(pathnameOf(page)).toBe(DOC)
-    expect(pathnameOf(page)).not.toMatch(/^\/m\//)
     await expect(page.locator('.markdown-section').first()).toBeVisible()
   })
 
-  test('旧 /m 去前缀重定向时保留 query 与 hash', async ({ page }) => {
-    await goto(page, '/m' + DOC + '?kw=k&headingId=h')
-    // 用精确路径等待: waitForPath 用 endsWith, 而 /m/<doc>.html 本身就以 <doc>.html 结尾, 会在去前缀完成前提前命中
-    await page.waitForFunction(d => decodeURI(location.pathname) === d, DOC, { timeout: 20000 })
-    expect(pathnameOf(page)).toBe(DOC)
-    const u = new URL(page.url())
-    expect(u.searchParams.get('kw')).toBe('k')
-    expect(u.searchParams.get('headingId')).toBe('h')
-  })
-
-  test('/m 与 /m/home 落到首页(新访客)', async ({ page }) => {
-    await page.addInitScript(() => localStorage.removeItem('doc-service:last-read'))
-    await goto(page, '/m')
-    await waitForPath(page, '/home.html')
-    expect(pathnameOf(page)).toBe('/home.html')
-    await goto(page, '/m/home')
-    await waitForPath(page, '/home.html')
-    expect(pathnameOf(page)).toBe('/home.html')
-  })
-
-  test('旧 /m/cluster 去前缀到 /cluster.html 并渲染聚类图', async ({ page }) => {
+  test('旧 /m/cluster 去前缀后渲染聚类图(桌面)', async ({ page }) => {
     await goto(page, '/m/cluster')
-    // /m/cluster 去前缀到 /cluster 再重定向到规范 /cluster.html
     await waitForPath(page, '/cluster.html')
-    expect(pathnameOf(page)).toBe('/cluster.html')
     await page.waitForSelector('.cluster-host canvas', { timeout: 20000 })
     expect(await page.locator('.cluster-host canvas').count()).toBeGreaterThan(0)
   })
 
-  test('无后缀+尾斜杠路径自愈补回 .html', async ({ page }) => {
+  test('无后缀+尾斜杠自愈后渲染正文(桌面)', async ({ page }) => {
     await goto(page, DOC_NO_SUFFIX + '/')
     await waitForPath(page, DOC)
-    expect(pathnameOf(page)).toBe(DOC)
     await expect(page.locator('.markdown-section').first()).toBeVisible()
   })
 
-  test('Latin-1 乱码路径自愈且保留 hash', async ({ page }) => {
-    const moji = Buffer.from(DOC_NO_SUFFIX, 'utf8').toString('latin1')
-    await page.goto(encodeURI(moji) + '#section-1', { waitUntil: 'domcontentloaded' })
-    await waitForPath(page, DOC)
-    expect(pathnameOf(page)).toBe(DOC)
-    expect(new URL(page.url()).hash).toBe('#section-1')
-  })
-
-  test('聚类从桌面顶栏导航可达', async ({ page }) => {
+  test('聚类从桌面顶栏导航可达并渲染', async ({ page }) => {
     await goto(page, DOC)
     await page.waitForSelector('.markdown-section')
     await page.locator('.site-nav .nav-item', { hasText: '聚类' }).click()
@@ -92,15 +61,23 @@ test.describe('desktop DocPage layout', () => {
     await expect(page.locator('.doc-aside')).toBeVisible()
   })
 
-  test('桌面工具栏下拉含全部 9 项(含在VSC打开)与键盘提示', async ({ page }) => {
+  // 不再逐字断言整份 9 项清单 + kbd==16(改词/调序/加一项即误挂、却无行为回归)。
+  // 改测承载性不变量: 必备项均在(顺序无关)、「在VSC打开」是桌面独有标记、桌面非触屏下确有键盘提示。
+  test('桌面工具栏下拉含必备项与桌面独有「在VSC打开」及键盘提示', async ({ page }) => {
     await goto(page, DOC)
     await page.waitForSelector('.markdown-section h2')
     await expect(page.locator('.tool-box.is-mobile')).toHaveCount(0)
     await page.locator('.tool-box .tool-button').click()
     await page.waitForSelector('.dropdown-menu .dropdown-item')
-    const names = await page.locator('.dropdown-menu .dropdown-item .action-name').allTextContents()
-    expect(names).toEqual(['思维导图', '知识网络', '知识回顾', '知识助手', '路径复制', '知识复制', '在VSC打开', '随机复习', '更多设置'])
-    expect(await page.locator('.dropdown-menu .action-keys kbd').count()).toBe(16)
+    // 必备功能项均存在(顺序无关)
+    const mustHave = ['思维导图', '知识网络', '知识回顾', '知识助手', '路径复制', '知识复制', '随机复习', '更多设置']
+    for (const name of mustHave) {
+      await expect(page.locator('.dropdown-menu .action-name', { hasText: name })).toHaveCount(1)
+    }
+    // 「在VSC打开」是桌面独有(ToolBox fullOnly: true), 移动端用例断言其缺席 —— 二者构成区分桌/移动的不变量
+    await expect(page.locator('.dropdown-menu .action-name', { hasText: '在VSC打开' })).toHaveCount(1)
+    // 桌面(非触屏)应渲染键盘提示: 不数死 16, 只要确有 kbd 即证明 v-if 接线生效
+    await expect.poll(() => page.locator('.dropdown-menu .action-keys kbd').count(), { timeout: 20_000 }).toBeGreaterThan(0)
   })
 
   test('正文中仅一个 LinkPopover(死实例已移除, 真实例在 CategoryList 内)', async ({ page }) => {
@@ -136,12 +113,14 @@ test.describe('folded hazards & silent-break fixes (desktop)', () => {
   // .markdown-section a[origin-link] 在多数文档中不存在; 站内链接路由 + 即时预览/外链归档
   // 的挂载已由审计在含 origin-link 的文档上实机验证。此处改测"加载不崩溃"作为稳健回归。
   test('文档页加载无控制台错误(事件注册 + 外链/预览组件挂载不崩溃)', async ({ page }) => {
-    const pageErrors: string[] = []
-    page.on('pageerror', e => pageErrors.push(String(e)))
+    // 同时捕获未捕获异常与 console.error(只听 pageerror 会漏掉被 catch 后 console.error 的失败)
+    const problems = collectPageProblems(page, BENIGN_CONSOLE)
     await goto(page, DOC)
     await page.waitForSelector('.main.markdown-section')
-    await page.waitForTimeout(2000)
-    expect(pageErrors).toEqual([])
+    await page.waitForSelector('.markdown-section h2') // 正文+标题已注入
+    // 真实信号: 懒加载 chunk / 数据拉取已静默, 取代盲等 2s; 限时并吞掉超时(SW 后台流量可能永不 idle, 不让它拖到 30s)
+    await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {})
+    expect(problems).toEqual([])
   })
 
   test('桌面仅一个 CategoryList(粘性列, 无移动抽屉)', async ({ page }) => {
@@ -172,7 +151,10 @@ test.describe('folded hazards & silent-break fixes (desktop)', () => {
     await expect(page.locator('.tool-box')).toHaveCount(1)
     await page.locator('.tool-box .tool-button').click()
     await page.waitForSelector('.dropdown-menu .dropdown-item')
-    expect(await page.locator('.dropdown-menu .dropdown-item .action-name').count()).toBe(9)
+    // 「不重复」= 每个必备项恰好出现 1 次(双实例会让同名项变 2 个); 不再硬编码总数 9
+    for (const name of ['思维导图', '知识网络', '在VSC打开', '更多设置']) {
+      await expect(page.locator('.dropdown-menu .action-name', { hasText: name })).toHaveCount(1)
+    }
   })
 })
 
@@ -209,12 +191,13 @@ test.describe('home & responsive charts (desktop)', () => {
   })
 
   test('首页加载无未捕获的图表数据解析异常(CommitTotalTrend try/catch)', async ({ page }) => {
-    const pageErrors: string[] = []
-    page.on('pageerror', e => pageErrors.push(String(e)))
+    // 这里只关心 JSON 解析类异常(图表数据), 故不套 BENIGN 过滤, 直接按 JSON 报错特征筛 pageerror+console.error
+    const problems = collectPageProblems(page)
     await goto(page, '/home.html')
     await page.waitForSelector('.stat-section')
-    await page.waitForTimeout(4000)
-    expect(pageErrors.filter(e => /is not valid JSON|Unexpected token/.test(e))).toHaveLength(0)
+    // 等图表数据(含 CommitTotalTrend)拉取静默, 取代盲等 4s; 限时并吞掉超时, 避免 SW 后台流量拖到 30s
+    await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {})
+    expect(problems.filter(e => /is not valid JSON|Unexpected token|JSON\.parse/.test(e))).toHaveLength(0)
   })
 })
 

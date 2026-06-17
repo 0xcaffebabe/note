@@ -3,6 +3,25 @@ import { test, expect, goto, pathnameOf, waitForHtmlChange, DOC } from './fixtur
 // 响应式合流(P3a/P3b/P4)移动端验证。文件名含 mobile.spec.ts => 仅在 mobile-chromium(Pixel 5, ≤820, 粗指针)运行。
 // 移动端 DocPage 折叠自原 MobileDocPage: 底部操作栏 / 章节抽屉 / 目录抽屉 / FAB 工具栏 / 统一搜索。
 
+// 移动端 URL 不变量(P5 合流: 移动端复用单一路由树, 不再有 /m 分流/重定向)。
+// 这是 mobile project 唯一断言 URL 落点的地方 —— routing.spec.ts 跑在 desktop project, 不覆盖「移动视口下 URL 是否被改写」。
+// (原 mobile.spec.ts 的两条 pathnameOf 断言并入此处; 否则若回归把移动端重定向到 /m, 纯渲染用例仍会绿、悄悄漏掉)
+test.describe('mobile URL invariants (Pixel 5, no /m split)', () => {
+  test('移动端首页同 URL 渲染移动外壳(无 /m 重定向)', async ({ page }) => {
+    await goto(page, '/home.html')
+    await page.waitForSelector('.main-layout.is-mobile')
+    expect(pathnameOf(page)).toBe('/home.html')
+    expect(pathnameOf(page)).not.toMatch(/^\/m\//)
+  })
+
+  test('移动端文档页同 URL 渲染底部操作栏(无 /m 重定向)', async ({ page }) => {
+    await goto(page, DOC)
+    await page.waitForSelector('.mobile-bottom-bar')
+    expect(pathnameOf(page)).toBe(DOC)
+    expect(pathnameOf(page)).not.toMatch(/^\/m\//)
+  })
+})
+
 test.describe('mobile DocPage (Pixel 5)', () => {
   test('底部操作栏 4 个入口(目录/章节/搜索/回顶), 无桌面 backtop', async ({ page }) => {
     await goto(page, DOC)
@@ -56,13 +75,20 @@ test.describe('mobile DocPage (Pixel 5)', () => {
     await expect(page.locator('.command-palette .palette-input')).toBeVisible()
   })
 
-  test('移动 FAB 工具栏: 8 项(不含 full 档的在VSC打开)', async ({ page }) => {
+  // 不硬编码 8 项: 改测不变量 —— 桌面独有的「在VSC打开」缺席(fullOnly 过滤)、核心功能项均在、触屏不显快捷键。
+  test('移动 FAB 工具栏: 含核心项、不含桌面独有「在VSC打开」、触屏无快捷键', async ({ page }) => {
     await goto(page, DOC)
     await page.waitForSelector('.tool-box.is-mobile .tool-button')
     await page.click('.tool-box.is-mobile .tool-button')
     await page.waitForSelector('.dropdown-menu .action-name')
+    // 桌面独有项缺席(移动端区分标记)
     await expect(page.locator('.dropdown-menu .action-name', { hasText: '在VSC打开' })).toHaveCount(0)
-    expect(await page.locator('.dropdown-menu .action-name').count()).toBe(8)
+    // 核心功能项移动端也都在(顺序无关)
+    for (const name of ['思维导图', '知识网络', '知识回顾', '知识助手', '路径复制', '知识复制', '随机复习', '更多设置']) {
+      await expect(page.locator('.dropdown-menu .action-name', { hasText: name })).toHaveCount(1)
+    }
+    // 触屏端(isTouch)不渲染键盘提示
+    await expect(page.locator('.dropdown-menu .action-keys kbd')).toHaveCount(0)
   })
 
   test('移动文档页: 正文 + 面包屑 + 更新历史, 无桌面标签页', async ({ page }) => {

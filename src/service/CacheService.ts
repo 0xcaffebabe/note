@@ -55,6 +55,15 @@ class CacheService {
   }
 
 
+  /**
+   *
+   * 清空缓存(测试用例间重置共享单例缓存以隔离)
+   * @memberof CacheService
+   */
+  public clear(){
+    this.cacheMap.clear();
+  }
+
   public has(id: string, cacheKey: string): boolean {
     const scopeCache = this.cacheMap.get(id)
     return !!scopeCache && scopeCache.has(cacheKey)

@@ -93,6 +93,46 @@ export function docWithInternalLink(): string | null {
   _docWithInternalLink = null
   return null
 }
+// 读取某篇文档构建产物的 .md.json 原始 markdown(content 字段) —— mermaid/数学公式/图片/关联内容
+// 这些富渲染是 DocRender 在客户端从 .md.json 生成的(预渲染 .html 里没有这些标记), 故按「源 markdown 特征」发现文档。
+const readDocMd = (d: { htmlPath: string }): string => {
+  const jsonPath = path.join(DIST_DIR, d.htmlPath.slice(1).replace(/\.html$/i, '.md.json'))
+  try {
+    return JSON.parse(fs.readFileSync(jsonPath, 'utf8'))?.content ?? ''
+  } catch {
+    return ''
+  }
+}
+
+// 通用「按 markdown 源特征挑一篇真实文档」发现器(带 null 记忆): 内容怎么重排都自适应, 找不到则 null 让用例 skip。
+function discoverDocBy(pattern: RegExp, cache: { v?: string | null }): string | null {
+  if (cache.v !== undefined) return cache.v
+  for (const d of existingDocs) {
+    if (pattern.test(readDocMd(d))) {
+      cache.v = d.htmlPath
+      return cache.v
+    }
+  }
+  cache.v = null
+  return null
+}
+
+// 含 ```mermaid 代码围栏的文档(客户端渲染成 .mermaid-wrapper + 内联 <svg>)。dist 中约 96 篇。
+const _mermaid: { v?: string | null } = {}
+export const docWithMermaid = (): string | null => discoverDocBy(/```mermaid/, _mermaid)
+
+// 含块级数学公式 $$...$$ 的文档(客户端 KaTeX 渲染成 .katex)。dist 中约 5 篇。
+const _math: { v?: string | null } = {}
+export const docWithMath = (): string | null => discoverDocBy(/\$\$/, _math)
+
+// 含 markdown 图片 ![...](...) 的文档(渲染成 .img-wrapper, 点击弹 ImageViewer)。dist 中约 38 篇。
+const _image: { v?: string | null } = {}
+export const docWithImage = (): string | null => discoverDocBy(/!\[[^\]]*\]\(/, _image)
+
+// 含「## 关联内容」段的文档(被抽进 RelatedContent 浮动面板)。dist 中约 292 篇。
+const _related: { v?: string | null } = {}
+export const docWithRelated = (): string | null => discoverDocBy(/##\s*关联内容/, _related)
+
 // 运行时发现的真实文档: 所有路由/恢复/渲染用例都基于它 不再依赖某篇固定文档存在
 export const DOC = fixtureDoc.htmlPath // 形如 /运维/Docker.html(具体随内容而定)
 export const DOC_ID = fixtureDoc.docId // 形如 运维-Docker

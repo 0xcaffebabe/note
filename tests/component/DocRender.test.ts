@@ -15,10 +15,10 @@ import DocRender from '@/render/DocRender'
  *   - blockquote: GFM admonition `> [!NOTE]` 等 7 种类型 → .callout-<cls> + CALLOUT_META 中文标题, 标记行被剥离,
  *             类型大小写不敏感; 未知 [!FOO] 或普通引用 → 原样 <blockquote>。
  *   - table:  外层包一层 .table-wrapper。
- *   - image:  本地路径经 baseUrl 与 localImageProxy 的双重前缀重写(jsdom 下空 localStorage → datasource.url='/')。
+ *   - image:  本地路径经 baseUrl 与 localImageProxy 的双重前缀重写(数据源功能已移除, baseUrl 恒为同源根 '/')。
  *
- * 环境: 放在 component(jsdom) 因为 render.link 用到了 DOMParser, 且 baseUrl 经 DatasourceService 读 localStorage。
- * 空 localStorage 下 datasource.url 恒为 '/', 故所有内链/本地图片输出是确定的。
+ * 环境: 放在 component(jsdom) 因为 render.link 用到了 DOMParser。
+ * baseUrl 恒为 '/', 故所有内链/本地图片输出是确定的。
  */
 
 // 多数断言基于解析后的 DOM(querySelector/getAttribute), 避免 marked 输出的换行/空白差异带来脆性。
@@ -32,7 +32,7 @@ function render(md: string, docId = 'java-foo'): string {
 }
 
 beforeEach(() => {
-  // 确保 datasource 回退到本地源(url='/'), 让 baseUrl()/localImageProxy 的输出确定
+  // baseUrl 恒为同源根 '/'(数据源功能已移除), 清 localStorage 仅为隔离, 不影响 baseUrl/localImageProxy 输出
   localStorage.clear()
 })
 

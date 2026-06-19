@@ -3,9 +3,9 @@ import type { KnowledgeNode } from '@/dto/KnowledgeNode'
 
 // 为什么放在 component(jsdom)且要 mock http:
 // 引入 KnowledgeNetworkDataProcessor 会沿 import 链触发 DocService → TagService/KnowledgeNetworkService
-// 的“模块加载即 getInstance()”自初始化, 这些 init 会 DatasourceService.getCurrentDatasource()(读 localStorage)
-// 并发起 http() 请求。node 环境下没有 localStorage 会直接抛 ReferenceError(已实测),
-// 故必须 jsdom; 同时在网络边界 mock 掉 @/util/http, 避免自初始化真去 fetch 并保证确定性。
+// 的“模块加载即 getInstance()”自初始化, 这些 init 会发起 http() 请求(同源根路径 '/')。
+// node 环境缺 localStorage 等浏览器全局, 故用 jsdom; 同时在网络边界 mock 掉 @/util/http,
+// 避免自初始化真去 fetch 并保证确定性。
 // 被测的 filterByDegree/createNodes/createLinks/getDocCategory 都是纯计算, 不碰这些服务的返回值。
 const { httpMock } = vi.hoisted(() => ({ httpMock: vi.fn() }))
 vi.mock('@/util/http', () => ({

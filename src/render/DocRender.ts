@@ -8,7 +8,6 @@ import KatexExtension from './KatexExtension'
 import Slugger from '@/util/Slugger'
 import { marked } from 'marked'
 import DocUtils from '@/util/DocUtils'
-import DatasourceService from '@/service/DatasourceService'
 
 // katex扩展只需注册一次 重复use会向marked全局实例累加扩展
 marked.use(KatexExtension({}))
@@ -38,9 +37,8 @@ function escapeAttr(text: string): string {
     .replace(/>/g, '&gt;')
 }
 
-const baseUrl = () => {
-  return DatasourceService.getCurrentDatasource().url
-}
+// 数据源切换功能已移除: 本地图片与资源一律走与本文档同源的根路径
+const baseUrl = () => '/'
 
 // GFM admonition标记 → callout样式与中文标签
 const CALLOUT_META: Record<string, {cls: string, label: string}> = {

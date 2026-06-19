@@ -5,7 +5,6 @@ import Cacheable from '@/decorator/Cacheable'
 import { StatisticInfo } from '@/dto/StatisticInfo'
 import DocUtils from '@/util/DocUtils'
 import {KnowledgeNode} from '@/dto/KnowledgeNode'
-import DatasourceService from '@/service/DatasourceService'
 import UrlUtils from '@/util/UrlUtils'
 import UrlConst from '@/const/UrlConst'
 import CommitInfo from '@/dto/CommitInfo'
@@ -16,9 +15,8 @@ import DocQuality from '@/dto/doc/DocQuality'
 import KnowledgeRichnessNode from '@/dto/KnowledgeRichnessNode'
 // import DocService from '@/service/DocService'
 
-const baseUrl = () => {
-  return DatasourceService.getCurrentDatasource().url
-}
+// 数据源切换功能已移除: 全站仅从与本文档同源的根路径取数
+const baseUrl = () => '/'
 
 const cache = Cache()
 

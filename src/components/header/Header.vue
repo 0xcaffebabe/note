@@ -56,14 +56,8 @@
               <el-dropdown-item :divided="$isMobile()" @click="handleToggleFullScreen">
                 <el-icon><Monitor /></el-icon>全屏
               </el-dropdown-item>
-              <el-dropdown-item @click="refresh">
-                <el-icon><Refresh /></el-icon>刷新
-              </el-dropdown-item>
               <el-dropdown-item @click="enterZenMode">
                 <el-icon><Aim /></el-icon>专注模式
-              </el-dropdown-item>
-              <el-dropdown-item @click="confirmClearCache">
-                <el-icon><Brush /></el-icon>清空缓存
               </el-dropdown-item>
               <el-dropdown-item
                 v-for="(link, index) in linkList"
@@ -82,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { Monitor, Brush, Aim, Refresh, Search, MoreFilled, Link, Folder, Expand, Document } from '@element-plus/icons-vue';
+import { Monitor, Aim, Search, MoreFilled, Link, Folder, Expand, Document } from '@element-plus/icons-vue';
 import EventBus from "@/components/EventBus";
 import ThemeSwitcher from "./ThemeSwitcher.vue";
 </script>
@@ -90,8 +84,6 @@ import ThemeSwitcher from "./ThemeSwitcher.vue";
 <script lang="ts">
 import { defineComponent } from "vue";
 import config from "@/config";
-import CacheService from "@/service/CacheService";
-import { ElMessage, ElMessageBox } from 'element-plus';
 
 export default defineComponent({
   // 窄屏搜索/目录搜索图标复用同一契约: search=全文, category-search=目录
@@ -110,16 +102,6 @@ export default defineComponent({
     isActive(prefix: string): boolean {
       return this.$route.path.startsWith(prefix);
     },
-    confirmClearCache() {
-      ElMessageBox.confirm('确认清空本地缓存?', '清空缓存', {
-        confirmButtonText: '清空',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }).then(() => {
-        CacheService.getInstance().clear();
-        ElMessage.success('清除缓存完成');
-      }).catch(() => { /* 取消 */ });
-    },
     handleToggleFullScreen() {
       this.fullscreen = !document.fullscreenElement;
       if (this.fullscreen) {
@@ -130,9 +112,6 @@ export default defineComponent({
     },
     enterZenMode() {
       EventBus.emit('enter-zen-mode', null)
-    },
-    refresh() {
-      location.reload()
     },
     openLink(url: string) {
       window.open(url, '_blank', 'noopener')

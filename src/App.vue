@@ -35,8 +35,6 @@ import CommandPalette from "@/components/search/CommandPalette.vue";
 import { ArrowUpBold, ArrowDownBold } from "@element-plus/icons-vue";
 import EventBus from "./components/EventBus";
 import ConfigService from "./service/ConfigService";
-import CacheService from "./service/CacheService";
-import { ElMessage } from "element-plus";
 
 const cateListKey='system::currentCategoryList';
 export default defineComponent({
@@ -70,12 +68,6 @@ export default defineComponent({
     return {
       showHeader: computed(() => this.showHeader)
     }
-  },
-  methods: {
-    clearCache(){
-      CacheService.getInstance().clear();
-      ElMessage.success('清除缓存完成');
-    },
   },
   data() {
     return {

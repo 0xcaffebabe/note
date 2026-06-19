@@ -55,15 +55,6 @@ class CacheService {
   }
 
 
-  /**
-   *
-   * 清空缓存
-   * @memberof CacheService
-   */
-  public clear(){
-    this.cacheMap.clear();
-  }
-
   public has(id: string, cacheKey: string): boolean {
     const scopeCache = this.cacheMap.get(id)
     return !!scopeCache && scopeCache.has(cacheKey)

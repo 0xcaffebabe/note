@@ -45,6 +45,41 @@ const updateSW = registerSW({
   },
 });
 
+// —— 发版后旧 chunk 失效自愈 ——
+// 旧版页面挂起期间发新版, 旧 hash chunk 在服务器被删, 此后任何动态 import
+// (路由懒加载 / 组件内 import / defineAsyncComponent)都会 404, 表现为"点击无反应"。
+// Vite 所有动态 import 都经 __vitePreload, 失败时派发 vite:preloadError, 这里统一兜底。
+const CHUNK_RELOAD_AT = 'chunkReloadAt'
+window.addEventListener('vite:preloadError', async (event) => {
+  event.preventDefault() // 接管恢复, 抑制未捕获 rejection 噪声
+
+  const last = Number(sessionStorage.getItem(CHUNK_RELOAD_AT) || 0)
+  // 10s 内已因同样原因刷过且仍失败 => 不是发版陈旧而是真断网/缺资源, 停手避免死循环
+  if (Date.now() - last < 10_000) {
+    ElNotification({
+      title: '部分内容加载失败',
+      message: '请检查网络后手动刷新重试',
+      type: 'warning',
+      position: 'bottom-right',
+      duration: 0,
+      offset: 70,
+    })
+    return
+  }
+  sessionStorage.setItem(CHUNK_RELOAD_AT, String(Date.now()))
+
+  // 关键: registerType 'prompt' 下旧 SW 仍从预缓存返回旧 index.html, 裸 reload 会拿到
+  // 旧 chunk 引用形成死循环; 故先激活等待中的新 SW(拿到新 index.html 与新 chunk 名)再刷新。
+  try {
+    const reg = await navigator.serviceWorker?.getRegistration()
+    await reg?.update() // 主动拉取最新 SW
+    await updateSW(true) // 有 waiting SW 则 skipWaiting + 整页刷新
+  } catch {
+    /* 落到下面兜底 */
+  }
+  setTimeout(() => location.reload(), 2000) // SW 未切换(无 waiting)时的兜底刷新
+})
+
 // 兼容旧的hash路由链接(/#/doc/xxx): 路由启动前改写为history模式地址
 if (location.hash.startsWith('#/')) {
   history.replaceState(history.state, '', location.hash.substring(1))

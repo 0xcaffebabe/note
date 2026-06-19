@@ -410,6 +410,10 @@ class DocService implements Cacheable{
       if (topLevel == -1) {
         topLevel = level
       }
+      // 遇到顶级(或更浅)标题即开启一棵新树, 清空祖先表避免后续更深标题误挂到上一棵树的陈旧节点
+      if (level <= topLevel) {
+        contentMap.length = 0
+      }
       const content = new Content();
       // 这里考虑到标题里面可能由html标签构成 排除掉sup标签与锚点图标 转为文本内容
       content.name = Array.from(head.childNodes)

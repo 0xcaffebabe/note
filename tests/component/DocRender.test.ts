@@ -74,12 +74,13 @@ describe('DocRender.render — link', () => {
     expect(a.getAttribute('href')).toBe('/java/集合.html')
   })
 
-  it('// 已知行为: 内链仅有 #锚点(无文档段)时 id 为空 → buildDocLink 返回空串, href 为空且无 ?headingId=', () => {
-    // resloveDocUrl('#frag') → {id:'', headingId:'frag'}; buildDocLink('', 'frag') 因 id 为空提前返回 ""
+  it('纯 #锚点: 回落到当前文档自身, href 为当前文档 .html?headingId=<anchor>', () => {
+    // resloveDocUrl('#frag') → {id:'', headingId:'frag'}; 空 id 回落到实例 docId='java-foo'
+    // → buildDocLink('java-foo','frag') = /java/foo.html?headingId=frag, 锚点在本文档内跳转而非丢失
     const a = parse(render('[x](#frag)')).querySelector('a')!
-    expect(a.getAttribute('href')).toBe('')
+    expect(a.getAttribute('href')).toBe('/java/foo.html?headingId=frag')
     expect(a.getAttribute('origin-link')).toBe('#frag')
-    expect(a.getAttribute('href')).not.toContain('headingId')
+    expect(a.getAttribute('href')).toContain('headingId=frag')
   })
 
   it('// 已知 BUG: 外链的 text 与 href 未做 HTML 转义(<、& 原样进入 a 标签, 仅靠 marked 解析阶段约束)', () => {

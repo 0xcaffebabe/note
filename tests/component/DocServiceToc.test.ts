@@ -156,20 +156,20 @@ describe('DocService.getContent 缺省/异常输入', () => {
   })
 })
 
-describe('DocService.getContent 已知 BUG: 新顶级标题不重置 contentMap 造成跨树误挂', () => {
-  it('已知 BUG: 第二个顶级 h1 后的更深 h3 被错误挂到第一个顶级树里的陈旧 h2 下(应挂到第二个 h1)', () => {
+describe('DocService.getContent 新顶级标题重置 contentMap: 后代不跨树误挂', () => {
+  it('第二个顶级 h1 后的更深 h3 挂到第二个 h1 下, 不污染第一棵树', () => {
     // 输入逻辑期望: D(h3) 出现在 C(第二个 h1) 之后, 理应是 C 的后代。
-    // 但 contentMap 以 level 为下标且从不在新顶级出现时清空, contentMap[2] 仍指向
-    // 第一个树里的 B(h2)。挂载循环从 level-1 向下找首个存在项, 命中陈旧的 B,
-    // 于是 D 被错误地挂进 A(第一个 h1) 的子树, 而第二个根 C 反而没有孩子。
+    // 每遇到顶级(或更浅)标题即清空祖先表 contentMap, 故 D 找祖先时只能命中新树的
+    // C, 而非第一棵树里的陈旧 B(h2)。第一棵树仅含 A>B, 第二棵树 C>D。
     const r = getContent('<h1 id="a">A</h1><h2 id="b">B</h2><h1 id="c">C</h1><h3 id="d">D</h3>')
     expect(r).toHaveLength(2)
     expect(r.map((c) => c.link)).toEqual(['a', 'c'])
-    // 当前真实(错误)行为: D 挂在第一棵树 A>B 之下
-    expect(r[0].chidren[0].link).toBe('b')
-    expect(r[0].chidren[0].chidren.map((c) => c.link)).toEqual(['d'])
-    // 第二个根 C 没有孩子(本应包含 D)
-    expect(r[1].chidren).toEqual([])
+    // 第一棵树只有 A>B, B 之下没有被错挂的 D
+    expect(r[0].chidren.map((c) => c.link)).toEqual(['b'])
+    expect(r[0].chidren[0].chidren).toEqual([])
+    // D 正确挂到第二个根 C 之下
+    expect(r[1].chidren.map((c) => c.link)).toEqual(['d'])
+    expect(r[1].chidren[0].level).toBe(3)
   })
 })
 

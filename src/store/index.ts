@@ -45,9 +45,12 @@ export default function create(){
         const cateList :string[]= state.currentCategoryList;
         const index = cateList.indexOf(link);
         if (index != -1) {
-          state.currentCategoryList = cateList.splice(index, 1);
+          const kept = [cateList[index]];
+          state.currentCategoryList = kept;
+          localStorage.setItem(cateListKey, JSON.stringify(kept));
+        } else {
+          localStorage.setItem(cateListKey, JSON.stringify(cateList));
         }
-        localStorage.setItem(cateListKey, JSON.stringify(cateList));
       },
       setSearchKw(state: any, kw: string) {
         state.currentSearchKw = kw

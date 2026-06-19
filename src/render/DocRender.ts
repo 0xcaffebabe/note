@@ -106,7 +106,13 @@ export default class DocRender {
       const href = token.href
       let text = token.text
       if (!href?.startsWith('http')) {
-        const { id, headingId } = DocUtils.resloveDocUrl(href!)
+        let { id } = DocUtils.resloveDocUrl(href!)
+        const { headingId } = DocUtils.resloveDocUrl(href!)
+        // 纯页内锚点 [x](#frag): resloveDocUrl 得到空 id 但有 headingId,
+        // 回落到当前文档自身 docId, 使链接在本文档内跳转而非丢失锚点
+        if (!id && headingId) {
+          id = this.docId
+        }
         // 当text为html的情况下 排除掉dom中sup节点 文本化
         text = Array.from(domParser().parseFromString(text!, 'text/html').body.childNodes)
           .filter(n => (n as HTMLElement).tagName != 'SUP')

@@ -61,7 +61,8 @@ class TagService implements Cacheable{
     if (!doc) {
       return []
     }
-    return this.docTagPredictions.filter(v => DocUtils.docUrl2Id(v[0]) == doc)[0][1]
+    const hit = this.docTagPredictions.filter(v => DocUtils.docUrl2Id(v[0]) == doc)
+    return hit.length ? hit[0][1] : []
   }
 
   @cache

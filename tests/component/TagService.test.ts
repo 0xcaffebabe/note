@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 // 因此必须在 import 之前用 vi.hoisted()+vi.mock('@/api') 把网络边界换成可控假数据,
 // 再 await 一个微任务等 init() 落地, 否则断言会读到尚未填充的空数组。
 // 本测覆盖: init 由 getTagMapping 构建 tagSumList; getTagSumList 返回深拷贝(防御性);
-// getListByTag 命中/缺失; getTagList; 以及 getPredictTag 无匹配时的已知崩溃 BUG。
+// getListByTag 命中/缺失; getTagList; 以及 getPredictTag 无匹配时安全返回空数组。
 
 // ES import 会被提升到模块顶部, 在 import 那一刻单例就 new + init() 了。
 // 所以假数据必须在 vi.hoisted() 里就备好(hoisted 早于 import 求值),
@@ -116,10 +116,9 @@ describe('TagService.getPredictTag', () => {
     expect(tagService.getPredictTag('前端-Vue')).toEqual(['Vue', '前端'])
   })
 
-  it('已知 BUG: 无匹配文档时 filter()[0] 为 undefined, 再取 [1] 抛 TypeError(源码无空值保护)', async () => {
+  it('无匹配文档: 返回空数组(filter 无命中时安全兜底, 与 string[] 返回类型一致)', async () => {
     await flush()
-    // 源码: this.docTagPredictions.filter(...)[0][1]
-    // 无匹配 -> filter 结果为 [] -> [0] 为 undefined -> undefined[1] 抛 TypeError
-    expect(() => tagService.getPredictTag('不存在-的文档')).toThrow(TypeError)
+    // 源码: 先 filter 收集命中, length 为 0 时返回 [], 不再对 undefined 取 [1] 抛 TypeError
+    expect(tagService.getPredictTag('不存在-的文档')).toEqual([])
   })
 })

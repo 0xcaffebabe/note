@@ -18,7 +18,7 @@
 
       <div class="review-body">
         <div class="review-scatter">
-          <knowledge-scatter ref="knowledgeScatter" :doc="doc" />
+          <knowledge-scatter ref="knowledgeScatter" :doc="doc" @focus-doc="onScatterFocus" />
         </div>
 
         <aside class="review-side">
@@ -53,7 +53,12 @@
                 placement="top"
                 :timestamp="formatRelative(item[1].date)"
               >
-                <div class="doc-item" :class="{ current: item[0] === doc }">
+                <div
+                  class="doc-item"
+                  :class="{ current: item[0] === doc, focused: item[0] === focusedId }"
+                  @mouseenter="onItemEnter(item[0])"
+                  @mouseleave="onItemLeave"
+                >
                   <a class="doc-name" href="#" @click.prevent="go(item[0])">{{ docName(item[0]) }}</a>
                   <span v-if="item[0] === doc" class="doc-current-tag">当前</span>
                   <span class="doc-quality" :title="quality(item[0])">⚽ {{ qualityScore(item[0]) }}</span>
@@ -111,6 +116,8 @@ export default defineComponent({
       repoUrl: config.repositoryUrl,
       rangeValue: [0, 20],
       docList: [] as [string, CommitInfo][],
+      focusedId: '' as string, // 散点悬停联动: 时间线里高亮/定位的文档id
+
       marks: {
         0: '现在',
         1: {
@@ -178,24 +185,22 @@ export default defineComponent({
       if (days < 365) return `${Math.floor(days / 30)} 个月前`;
       return `${Math.floor(days / 365)} 年前`;
     },
-    // 将滑动条的关键日期数字转为具体的天数
+    // 将滑动条刻度位置转为"距今天数"阈值: 现在/1天/1周/1月/6月/最远
+    // [上界(不含), 天数] —— val 落在前一个上界与该上界之间即取该天数; 越过末档为"最远"(不设下限)
     rangeMapping(val: number): number {
-      if (val == 0) {
-        return 0
+      const STOPS: [number, number][] = [
+        [1, 0],
+        [3, 1],
+        [6, 7],
+        [10, 30],
+        [20, 180]
+      ]
+      for (const [upper, days] of STOPS) {
+        if (val < upper) {
+          return days
+        }
       }
-      if (val >= 1 && val < 3)  {
-        return 1
-      }
-      if (val >=3 && val < 6) {
-        return 7
-      }
-      if (val >= 6 && val < 10) {
-        return 30
-      }
-      if (val >= 10 && val < 20) {
-        return 180
-      }
-      return 2147483647
+      return Infinity
     },
     quality(id: string): string{
       return DocService.calcQuanlityStr(id)
@@ -239,6 +244,23 @@ export default defineComponent({
       }
       // 排序后列表回顶 (原选择器.knowledge-review .el-drawer__body不存在 改用列表容器ref)
       (this.$refs.timelineEl as HTMLElement)?.scrollTo(0, 0);
+    },
+    // 散点 hover → 在时间线里定位并高亮该文档("图→线"联动)
+    onScatterFocus(id: string | null) {
+      this.focusedId = id || '';
+      if (id) {
+        this.$nextTick(() => {
+          const el = (this.$refs.timelineEl as HTMLElement)?.querySelector('.doc-item.focused');
+          el?.scrollIntoView({ block: 'nearest' });
+        });
+      }
+    },
+    // 时间线 hover → 高亮散点图上对应文档(离开时取消)("线→图"联动)
+    onItemEnter(id: string) {
+      (this.$refs.knowledgeScatter as any)?.highlightDoc(id);
+    },
+    onItemLeave() {
+      (this.$refs.knowledgeScatter as any)?.highlightDoc(null);
     }
   },
   async created() {
@@ -424,6 +446,17 @@ export default defineComponent({
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  // 负 margin 抵消内边距, hover/联动高亮不挤动列表布局
+  padding: 2px 4px;
+  margin: -2px -4px;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-fast);
+
+  // hover 自身, 或被散点图悬停联动选中(focused), 都高亮
+  &:hover,
+  &.focused {
+    background-color: var(--hover-bg-color);
+  }
 
   // 当前文档: 主色高亮 与散点图当前节点呼应
   &.current .doc-name {

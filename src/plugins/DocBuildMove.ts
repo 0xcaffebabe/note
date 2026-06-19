@@ -29,7 +29,8 @@ const dom = new JSDOM()
 
 export function escapeHtmlText(text: string): string {
   return text
-    .replace(/&/g, '&amp;')
+    // 用负向先行排除已有实体, 避免对已转义文本二次转义('&lt;'->'&amp;lt;'), 保证幂等
+    .replace(/&(?!(amp|lt|gt|quot|#\d+);)/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
@@ -53,7 +54,8 @@ export function generalHtmlContent(template: string, info: DocFileInfo, preloadT
   text = text.replace(/\n/ig, '')
   const description = escapeHtmlText(text.substring(0, Math.min(100, text.length)))
   // 替换值用函数形式: 字符串形式会解释$$/$&等替换模式 文档内容含'$$'(KaTeX)时会被吞掉
-  const siteName = escapeHtmlText(template.match(/<title>([^<]*)<\/title>/)?.[1] || '')
+  // 捕获组用 [\s\S]*? 非贪婪到 </title>: title 自身含 '<'(如 'A & B <X>')时不会被截断
+  const siteName = escapeHtmlText(template.match(/<title>([\s\S]*?)<\/title>/)?.[1] || '')
   const title = escapeHtmlText(info.name)
   // og/twitter卡片: 让文档链接在微信/Slack/Twitter等处分享时带标题与摘要预览
   const socialMeta = [

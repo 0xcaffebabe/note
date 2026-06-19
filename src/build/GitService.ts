@@ -150,21 +150,36 @@ export function parseGitShow(resp: string): Map<string, GitChangeItem[]> {
   let deletions: string[] = []
   for(let i = 0;i<splitArr.length;i++){
     const line = splitArr[i]
-    if (line.startsWith("diff --git") &&  isValidCommitSegementHeadWithIndex(i, splitArr)) {
+    if (line.startsWith("diff --git")) {
+      // 先收尾上一个文件块
       if (currentFile) {
         result.push({
           filename: currentFile, insertions, deletions
         })
       }
-      currentFile = line.split(" ")[2].replace("a/", "").replace(/"/g, '')
       insertions = []
       deletions = []
+      // 仅当窗口内存在有效 hunk 头才切换到本块文件; 否则(纯重命名/模式变更/二进制等)
+      // 重置 currentFile, 避免本块后续的 +/- 行被错误并入上一个文件
+      currentFile = isValidCommitSegementHeadWithIndex(i, splitArr)
+        ? line.split(" ")[2].replace("a/", "").replace(/"/g, '')
+        : ""
+      continue
     }
-    if (line.startsWith("-") && !isGitDiffFileDesc(line, currentFile)) {
-      deletions.push(line.replace("-", ""))
+    // 不在任何文件块内的行直接忽略
+    if (!currentFile) {
+      continue
     }
-    if (line.startsWith("+") && !isGitDiffFileDesc(line, currentFile)) {
-      insertions.push(line.replace("+", ""))
+    // '--- '/'+++ ' 是 diff 的文件描述头(无论是否含当前文件名), 不计入增删
+    if (line.startsWith("--- ") || line.startsWith("+++ ") || isGitDiffFileDesc(line, currentFile)) {
+      continue
+    }
+    if (line.startsWith("-")) {
+      // 仅剥离行首单个 '-' 标记, 保留正文中的其余 '-'
+      deletions.push(line.slice(1))
+    } else if (line.startsWith("+")) {
+      // 仅剥离行首单个 '+' 标记, 保留正文中的其余 '+'
+      insertions.push(line.slice(1))
     }
   }
   if (currentFile) {

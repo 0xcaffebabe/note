@@ -89,12 +89,10 @@ class WordCloudService extends BaseService{
   }
 
   static cleanText(text: string): string {
-    text = text.replace(/[’!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~]/g, '')
-    text = text.replace(/\n/g, '')
-    text = text.replace(/\t/g, '')
-    text = text.replace(/\s/g, '')
-    text = text.replace(/[\u0060|\u0021-\u002c|\u002e-\u002f|\u003a-\u003f|\u2200-\u22ff|\uFB00-\uFFFD|\u2E80-\u33FF]/g, '')
-    return text
+    // 只保留字母与数字(Unicode-aware: 覆盖 CJK + 拉丁字母 + 数字),
+    // 其余标点/符号/箭头/emoji/空白一律去除。\p{L}\p{N} 含增补平面字符,
+    // 故 emoji、弯引号、箭头、下划线等都会被正确清掉。
+    return text.replace(/[^\p{L}\p{N}]/gu, '')
   }
 }
 

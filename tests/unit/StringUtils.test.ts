@@ -14,12 +14,15 @@ describe('cleanText', () => {
   it('换行与制表符被清除', () => {
     expect(cleanText('a\nb\tc')).toBe('abc')
   })
-  // [BUG] 第一条正则因 '\\]' 后的 ']' 提前闭合字符类而几乎失效, 下列符号未被剔除。
-  // 上面的 '剔除标点' 样本恰好只用到被后续 unicode 区间正则覆盖的符号(,! 空格), 掩盖了该缺陷。
-  // 暂不修原因: cleanText 同时供 运行时字数显示 / 构建期统计 / 聚类 TF-IDF 使用, 改清洗口径会改动
-  // 已部署的统计与聚类产物(且需配合搜索索引重建), 应作为一次专门改动并重建产物, 而非随手修。
-  it('[BUG] 这些标点本应被剔除却被漏掉: - @ [ ] { } _ ~', () => {
-    expect(cleanText('a-b@c[d]e_f{g}h~i')).toBe('a-b@c[d]e_f{g}h~i')
+  // 旧实现的密集字符类有缺陷(漏放 - @ [ ] { } _ ~ 等), 已改为 /[^\p{L}\p{N}]/gu 白名单。
+  // 注: 这是一次有意的清洗口径变更, 会同步改动字数显示/构建统计/聚类 TF-IDF 产物(需重建)。
+  it('剔除所有非字母数字标点(含此前漏放的 - @ [ ] { } _ ~)', () => {
+    expect(cleanText('a-b@c[d]e_f{g}h~i')).toBe('abcdefghi')
+  })
+  it('剔除箭头/弯引号/补充平面 emoji 等符号, 保留两侧文字', () => {
+    expect(cleanText('a→b')).toBe('ab')
+    expect(cleanText('it’s')).toBe('its')
+    expect(cleanText('x😀y')).toBe('xy')
   })
 })
 

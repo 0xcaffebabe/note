@@ -179,23 +179,21 @@ describe('parseGitShow 解析 git show 原始 diff', () => {
     expect(parseGitShow(raw).size).toBe(0)
   })
 
-  // 已知 BUG: line.replace("-", "") / replace("+", "") 只替换第一个符号。
-  // 对正文里以 '--- ' / '+++ ' 开头但不含当前文件名的行(会被判为普通增删而非文件描述行),
-  // 只去掉一个符号, 残留 '-- ' / '++ ' 前缀。realistic 场景: diff 正文本身包含 markdown 分隔线 '---'
-  // 或代码里的 '+++'。不修复原因: 该结果仅用于构建期统计展示, 修改会改动既有产物口径。
-  it('[已知 BUG] 正文中 --- / +++ 开头且不匹配文件名的行只被去掉首个符号', () => {
+  // 以 '--- ' / '+++ ' 开头的行是 diff 的文件描述头格式(无论是否含当前文件名),
+  // 修复后一律不计入增删, 避免残留 '-- ' / '++ ' 前缀污染构建期统计。
+  it('正文中 --- / +++ 开头的行按文件描述头排除, 不计入增删', () => {
     const raw = block('bar.ts', '@@ -1 +1 @@', [
       '--- 文档分隔线',
       '+++ 加号注释',
     ]).join('\n')
     const item = parseGitShow(raw).get('bar.ts')![0]
-    expect(item.deletions).toEqual(['-- 文档分隔线'])
-    expect(item.insertions).toEqual(['++ 加号注释'])
+    expect(item.deletions).toEqual([])
+    expect(item.insertions).toEqual([])
   })
 
-  // 已知行为: 当一个 diff --git 块缺少有效 hunk 头(窗口内无 @@), currentFile 不切换,
-  // 该块后续的 +/- 行会被错误累加进上一个文件。这是 look-ahead 算法的固有副作用。
-  it('[已知 BUG] 无 hunk 头的块后续增删行泄漏并入上一个文件', () => {
+  // 当一个 diff --git 块缺少有效 hunk 头(窗口内无 @@), 修复后 currentFile 被重置,
+  // 该块后续的 +/- 行不再泄漏并入上一个文件(也不归属本块, 因本块未成为有效文件)。
+  it('无 hunk 头的块后续增删行不再泄漏并入上一个文件', () => {
     const raw = [
       ...block('first.ts', '@@ -1 +1 @@', ['-aa', '+bb']),
       'diff --git a/second.ts b/second.ts',
@@ -204,7 +202,7 @@ describe('parseGitShow 解析 git show 原始 diff', () => {
     ].join('\n')
     const map = parseGitShow(raw)
     expect([...map.keys()]).toEqual(['first.ts'])
-    // 'leaked plus' 本应归属 second.ts, 却被并入 first.ts 的新增
-    expect(map.get('first.ts')![0].insertions).toEqual(['bb', 'leaked plus'])
+    // 'leaked plus' 属于无效的 second.ts 块, 不再被并入 first.ts 的新增
+    expect(map.get('first.ts')![0].insertions).toEqual(['bb'])
   })
 })

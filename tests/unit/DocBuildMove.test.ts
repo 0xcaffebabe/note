@@ -80,10 +80,13 @@ describe('escapeHtmlText', () => {
     expect(escapeHtmlText("$$ $& $1 $` $'")).toBe("$$ $&amp; $1 $` $'")
   })
 
-  it('转义顺序: & 先于其它, 已有实体会被二次转义(& -> &amp;)', () => {
-    // 已知行为: 输入 '&lt;' 中的 & 先被转义, 得到 '&amp;lt;'(并非幂等)
-    expect(escapeHtmlText('&lt;')).toBe('&amp;lt;')
-    expect(escapeHtmlText('<b>&amp;</b>')).toBe('&lt;b&gt;&amp;amp;&lt;/b&gt;')
+  it('幂等: 已有实体不被二次转义(& 用负向先行守卫)', () => {
+    // '&lt;' 中的 & 属已有实体前缀, 不再被转义, 保持原样
+    expect(escapeHtmlText('&lt;')).toBe('&lt;')
+    // '<b>' 与 '</b>' 的尖括号正常转义, 而 '&amp;' 作为已有实体原样保留
+    expect(escapeHtmlText('<b>&amp;</b>')).toBe('&lt;b&gt;&amp;&lt;/b&gt;')
+    // 幂等性: 对已转义文本再转义一次结果不变
+    expect(escapeHtmlText(escapeHtmlText('a & b < c'))).toBe(escapeHtmlText('a & b < c'))
   })
 })
 
@@ -152,13 +155,12 @@ describe('generalHtmlContent', () => {
     expect(out).toContain('<meta property="og:title" content="A &amp; B &lt;C&gt; &quot;D&quot;">')
   })
 
-  it('模板 title 含 < 时 site_name 提取为空(正则 [^<]* 在 < 处截断)', () => {
-    // 已知 BUG: 模板 <title>A & B <X></title> 中, 捕获组 [^<]* 在 '<X>' 处停止,
-    // 整个 <title>...</title> 正则因此匹配失败, og:site_name 退化为空字符串。
+  it('模板 title 含 < 时 site_name 完整提取([\\s\\S]*? 非贪婪到 </title>)', () => {
+    // 捕获组改用 [\s\S]*? 后, 含 '<' 的标题不再被截断, 整段被提取并按 HTML 转义
     const template = '<head><title>A & B <X></title></head><body></body>'
     const info = makeInfo('N', 'c')
     const out = generalHtmlContent(template, info)
-    expect(out).toContain('<meta property="og:site_name" content="">')
+    expect(out).toContain('<meta property="og:site_name" content="A &amp; B &lt;X&gt;">')
   })
 
   it('幂等性: 相同输入多次调用产物一致(模块级 dom 复用不串扰)', () => {

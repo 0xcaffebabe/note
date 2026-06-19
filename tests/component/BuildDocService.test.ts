@@ -29,13 +29,13 @@ describe('DocService.resolveMetadata 抽取 front-matter 内层 yaml', () => {
     expect(meta).not.toContain('body text')
   })
 
-  it('已知 BUG: 贪婪 /---/g 会吃掉 yaml 值内部的 --- (x---y 变成 xy)（锁定现状，待修复后更新断言）', () => {
-    // 实现用 .replace(/---/g, '') 去围栏, 但它会连带删除值里出现的 ---,
-    // 导致 "title: x---y" 被错误压成 "title: xy"。这是数据丢失型 BUG。
+  it('yaml 值内部的 --- 应被保留(只剥离首尾围栏, 不贪婪吞值)', () => {
+    // 实现按行边界锚定剥离首尾围栏分隔符, 不会再删掉值里出现的 ---,
+    // 故 "title: x---y" 原样保留, 不会被压成 "title: xy"。
     const md = '---\ntitle: x---y\nfoo: bar\n---\nbody'
     const meta = docService.resolveMetadata(md)
-    expect(meta).toContain('title: xy') // 当前真实(错误)行为
-    expect(meta).not.toContain('x---y') // --- 被贪婪吞掉, 原值已不可复原
+    expect(meta).toContain('title: x---y') // 值内 --- 完整保留
+    expect(meta).not.toContain('title: xy') // 不再发生数据丢失
     expect(meta).toContain('foo: bar')
   })
 

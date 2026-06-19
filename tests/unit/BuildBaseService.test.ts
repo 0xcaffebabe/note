@@ -9,11 +9,10 @@ import BaseService from '@/build/BaseService'
 // 本套件用 fs.mkdtempSync 在系统临时目录里搭一棵真实目录树(含嵌套子目录、
 // 多种大小写后缀、以及名为 node_modules / QWEN 的忽略前缀目录), 守护:
 //   1) 递归能下钻到任意深度的嵌套文件;
-//   2) 后缀过滤对"全小写传参"会同时命中小写与全大写扩展名(其大小写策略的现状);
-//   3) ignorePrefixs 的剪枝行为(及其已知边界缺陷)。
-// 注意源码用 path.startsWith(prefix) 做剪枝, prefix 是裸相对名(如 'node_modules'),
-// 因此当传入的是「绝对路径」根时, 嵌套的同名忽略目录并不会被剪掉 —— 这是已知 BUG,
-// 下方以 characterization 测试锁定现状。
+//   2) 后缀过滤真正大小写不敏感(.md/.MD/.Md 与任意大小写 suffix 互相命中);
+//   3) ignorePrefixs 的剪枝行为按「路径段」生效。
+// 源码以「路径段」滑窗匹配做剪枝, 因此无论传入裸相对名(如 'node_modules')还是
+// 「绝对路径」根, 嵌套的同名忽略目录都会被正确剪掉。
 
 // 把绝对路径里的 root 段抹掉, 方便对结果做稳定断言(不依赖随机临时目录名)
 let root: string
@@ -81,42 +80,39 @@ describe('BaseService.listAllFile 递归收集文件', () => {
     expect(BaseService.listAllFile('doc/.agents')).toEqual([])
   })
 
-  it('已知 BUG: 以绝对路径为根时, 嵌套的忽略前缀目录不会被剪掉(其内文件照样被收入)（锁定现状, 待修复后更新断言）', () => {
-    // 剪枝用 path.startsWith('node_modules') 这类裸前缀比较, 但此处子目录的完整路径是
-    // <ROOT>/node_modules、<ROOT>/QWEN, 并不以裸前缀开头, 故剪枝失效, 忽略目录被穿透。
+  it('以绝对路径为根时, 嵌套的忽略前缀目录被按路径段剪掉(其内文件不进结果)', () => {
+    // 剪枝按「路径段」滑窗匹配: <ROOT>/node_modules、<ROOT>/QWEN 含命中段, 故被剪掉。
     const files = BaseService.listAllFile(root).map(rel)
-    expect(files).toContain('<ROOT>/node_modules/ignored.md') // 本应被忽略却仍出现
-    expect(files).toContain('<ROOT>/QWEN/ignored2.md')        // 同上
+    expect(files).not.toContain('<ROOT>/node_modules/ignored.md')
+    expect(files).not.toContain('<ROOT>/QWEN/ignored2.md')
   })
 })
 
 describe('BaseService.listFilesBySuffix 按后缀过滤', () => {
-  it('全小写传参命中小写与全大写扩展名, 但不命中混合大小写扩展名', () => {
+  it('全小写传参真正大小写不敏感: 命中小写/全大写/混合大小写扩展名', () => {
     const md = BaseService.listFilesBySuffix('md', root).map(rel)
     expect(md).toContain('<ROOT>/a.md')           // .md 小写命中
     expect(md).toContain('<ROOT>/b.MD')           // .MD 全大写也命中
+    expect(md).toContain('<ROOT>/c.Md')           // .Md 混合大小写同样命中
     expect(md).toContain('<ROOT>/sub/nested.md')  // 嵌套同样被过滤进来
     expect(md).toContain('<ROOT>/sub/deep/deep.md')
-    // 过滤策略为 endsWith('.md') || endsWith('.MD'), 所以混合大小写 .Md 漏网, 非 md 文件排除
-    expect(md).not.toContain('<ROOT>/c.Md')
+    // 大小写归一比对, 非 md 文件仍被排除
     expect(md).not.toContain('<ROOT>/d.txt')
     expect(md).not.toContain('<ROOT>/sub/note.txt')
   })
 
-  it('已知 BUG: 大小写并非真正不敏感 —— .Md 这类混合大小写扩展名永远匹配不到（锁定现状, 待修复后更新断言）', () => {
-    // 源码只比对「原样后缀」与「全大写后缀」两种, 缺少 toLowerCase 归一,
-    // 因此 .Md / .mD 等混合大小写一律漏掉。
+  it('大小写真正不敏感 —— .Md 这类混合大小写扩展名也能匹配到', () => {
+    // 源码对文件名与后缀均做 toLowerCase 归一, 因此 .Md / .mD 等混合大小写都能命中。
     const md = BaseService.listFilesBySuffix('md', root).map(rel)
-    expect(md.some((f) => f.endsWith('c.Md'))).toBe(false)
+    expect(md.some((f) => f.endsWith('c.Md'))).toBe(true)
   })
 
-  it('已知 BUG: 传入大写后缀 MD 时只命中 .MD, 反而漏掉小写 .md（锁定现状, 待修复后更新断言）', () => {
-    // 过滤条件 endsWith('.'+suffix) || endsWith('.'+suffix.toUpperCase()) 在 suffix='MD' 时
-    // 两个分支都等于 '.MD', 于是小写 .md 全部漏掉。
+  it('传入大写后缀 MD 也大小写不敏感: 同时命中 .MD 与小写 .md', () => {
+    // suffix 先 toLowerCase 归一为 'md', 故 'MD' 与 'md' 等价, 大小写扩展名全部命中。
     const md = BaseService.listFilesBySuffix('MD', root).map(rel)
     expect(md).toContain('<ROOT>/b.MD')
-    expect(md).not.toContain('<ROOT>/a.md')
-    expect(md).not.toContain('<ROOT>/sub/nested.md')
+    expect(md).toContain('<ROOT>/a.md')
+    expect(md).toContain('<ROOT>/sub/nested.md')
   })
 
   it('普通后缀(txt)只过滤出对应文件, 含嵌套', () => {

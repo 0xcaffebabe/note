@@ -11,12 +11,9 @@ export function cleanText(text: string | undefined | null): string {
   if (!text) {
     return ''
   }
-  text = text.replace(/[’!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~]/g, '')
-  text = text.replace(/\n/g, '')
-  text = text.replace(/\t/g, '')
-  text = text.replace(/\s/g, '')
-  text = text.replace(/[\u0060|\u0021-\u002c|\u002e-\u002f|\u003a-\u003f|\u2200-\u22ff|\uFB00-\uFFFD|\u2E80-\u33FF]/g, '')
-  return text
+  // 只保留字母与数字(含 CJK 等所有 Unicode 字母/数字), 其余标点/空白/箭头/符号/emoji 一律剔除。
+  // 取代原先密集且有缺陷的字符类(漏放 - @ [ ] _ { } ~ 及弯引号/箭头/补充平面 emoji)。
+  return text.replace(/[^\p{L}\p{N}]/gu, '')
 }
 
 export function octal2Chinese(str: string): string {
@@ -50,7 +47,7 @@ export function html2text(html: string): string {
  * @param {string} text
  * @param {string} left
  * @param {string} right
- * @return {*} 
+ * @return {*}
  */
 export function getMidString(text: string, left:string, right: string) {
   let result = "";

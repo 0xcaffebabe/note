@@ -15,6 +15,5 @@ export default {
   docClusterScatterJson: '/docClusterScatter.json',
   docTagPrediction: '/docTagPrediction.json',
   docQualityJson: '/docQuality.json',
-  textSimilarJson: '/textSimilar.json',
   knowledgeRichnessJson: '/knowledgeRichness.json',
 }

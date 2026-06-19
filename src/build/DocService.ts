@@ -82,7 +82,8 @@ class DocService extends BaseService implements Cacheable {
     const reg = new RegExp('^---[\\s\\S]+?^---', 'm');
     const result = content.match(reg);
     if (result != null && result.length != 0) {
-      return result[0].replace(/---/g, '').trim();  // 去除前后 '---' 和多余的空白
+      // 只剥离首尾围栏分隔符(锚定行边界), 避免贪婪 /---/g 误删 yaml 值内部的 ---
+      return result[0].replace(/^---\r?\n/, '').replace(/\r?\n?---$/, '').trim();
     }
     return '';
   }

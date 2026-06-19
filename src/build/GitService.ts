@@ -105,53 +105,7 @@ class GitService extends BaseService implements Cacheable{
       return new Map()
     }
     const resp = octal2Chinese(await git.show(hash))
-    let splitArr = resp.split("\n")
-    const result: GitChangeItem[] = []
-    let currentFile = ""
-    let insertions = []
-    let deletions = []
-    /* 
-    解析git show 原始结果，算法概要：
-    1. 扫描每一行，存为line
-    2. 如果发现line 以 'diff --git' 开头, 并且line往后数四行或者五行是一个有效的分割段(如 @@ -31,70 +31,155 @@), 则解析当前line 提取出文件名 作为currentFile
-    3. 如果发现line 以 '-' 开头, 并且不是如 +++ b/src/util/BatchPromiseHelper.ts 这种类型用来表示当前操作文件的行, 则根据是以 + 还是 - 开头决定将本行存为增加还是删除
-    4. 当每次的 currentFile 发生变化, 则记录为一项 changeItem
-    
-    */
-    for(let i = 0;i<splitArr.length;i++){
-      const line = splitArr[i]
-      if (line.startsWith("diff --git") &&  this.isValidCommitSegementHeadWithIndex(i, splitArr)) {
-        if (currentFile) {
-          result.push({
-            filename: currentFile, insertions, deletions
-          })
-        }
-        currentFile = line.split(" ")[2].replace("a/", "").replace(/"/g, '')
-        insertions = []
-        deletions = []
-      }
-      if (line.startsWith("-") && !this.isGitDiffFileDesc(line, currentFile)) {
-        deletions.push(line.replace("-", ""))
-      }
-      if (line.startsWith("+") && !this.isGitDiffFileDesc(line, currentFile)) {
-        insertions.push(line.replace("+", ""))
-      }
-    }
-    if (currentFile) {
-      result.push({
-        filename: currentFile, insertions, deletions
-      })
-    }
-    // 合并同一个文件的 changeItem
-    const map = new Map<string, GitChangeItem[]>()
-    for(let i of result) {
-      if (map.has(i.filename)) {
-        map.get(i.filename)?.push(i)
-      }else {
-        map.set(i.filename, [i])
-      }
-    }
-    return map
+    return parseGitShow(resp)
   }
 
   public async findFirstCommit(): Promise<CommitInfo> {
@@ -178,21 +132,72 @@ class GitService extends BaseService implements Cacheable{
     } as CommitInfo
   }
 
-  private isValidCommitSegementHead(line: string): boolean {
-    if (!line) {
-      return false
+}
+
+/**
+ * 解析 `git show <hash>` 的原始文本(已先经 octal2Chinese 解码), 提取每个文件的增删行。
+ * 纯字符串处理, 无副作用, 单测入口。算法概要：
+ * 1. 扫描每一行，存为 line
+ * 2. 如果发现 line 以 'diff --git' 开头, 并且 line 往后数四行或者五行是一个有效的分割段(如 @@ -31,70 +31,155 @@), 则解析当前 line 提取出文件名 作为 currentFile
+ * 3. 如果发现 line 以 '-'/'+' 开头, 并且不是如 +++ b/src/util/BatchPromiseHelper.ts 这种用来表示当前操作文件的行, 则根据是以 + 还是 - 开头决定将本行存为增加还是删除
+ * 4. 当每次的 currentFile 发生变化, 则记录为一项 changeItem; 最终合并同一文件名的多个 changeItem 到同一 Map 键下
+ */
+export function parseGitShow(resp: string): Map<string, GitChangeItem[]> {
+  let splitArr = resp.split("\n")
+  const result: GitChangeItem[] = []
+  let currentFile = ""
+  let insertions: string[] = []
+  let deletions: string[] = []
+  for(let i = 0;i<splitArr.length;i++){
+    const line = splitArr[i]
+    if (line.startsWith("diff --git") &&  isValidCommitSegementHeadWithIndex(i, splitArr)) {
+      if (currentFile) {
+        result.push({
+          filename: currentFile, insertions, deletions
+        })
+      }
+      currentFile = line.split(" ")[2].replace("a/", "").replace(/"/g, '')
+      insertions = []
+      deletions = []
     }
-    return line.startsWith("@@") && line.indexOf("@@", 3) != -1
+    if (line.startsWith("-") && !isGitDiffFileDesc(line, currentFile)) {
+      deletions.push(line.replace("-", ""))
+    }
+    if (line.startsWith("+") && !isGitDiffFileDesc(line, currentFile)) {
+      insertions.push(line.replace("+", ""))
+    }
   }
+  if (currentFile) {
+    result.push({
+      filename: currentFile, insertions, deletions
+    })
+  }
+  // 合并同一个文件的 changeItem
+  const map = new Map<string, GitChangeItem[]>()
+  for(let i of result) {
+    if (map.has(i.filename)) {
+      map.get(i.filename)?.push(i)
+    }else {
+      map.set(i.filename, [i])
+    }
+  }
+  return map
+}
 
-  private isValidCommitSegementHeadWithIndex(index: number, splitArr: string[]): boolean {
-    return (index + 4 < splitArr.length && this.isValidCommitSegementHead(splitArr[index + 4])) ||
-            (index + 5 < splitArr.length && this.isValidCommitSegementHead(splitArr[index + 5]))
+export function isValidCommitSegementHead(line: string): boolean {
+  if (!line) {
+    return false
   }
+  return line.startsWith("@@") && line.indexOf("@@", 3) != -1
+}
 
-  private isGitDiffFileDesc(line: string, currentFile: string): boolean {
-    return line.indexOf(currentFile) != -1 && (line.startsWith("+++ ") || line.startsWith("--- "))
-  }
+export function isValidCommitSegementHeadWithIndex(index: number, splitArr: string[]): boolean {
+  return (index + 4 < splitArr.length && isValidCommitSegementHead(splitArr[index + 4])) ||
+          (index + 5 < splitArr.length && isValidCommitSegementHead(splitArr[index + 5]))
+}
+
+export function isGitDiffFileDesc(line: string, currentFile: string): boolean {
+  return line.indexOf(currentFile) != -1 && (line.startsWith("+++ ") || line.startsWith("--- "))
 }
 
 export default new GitService()

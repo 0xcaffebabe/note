@@ -11,7 +11,7 @@ import MermaidShower from './mermaid-shower/MermaidShower.vue';
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 import DocPostRender from '@/render/DocPostRender'
-import { slugify } from "@/util/Slugger";
+import { resolveHeadingElement, openOutterLinkFallback } from "./DocPageHeadingResolver";
 
 class DocPageEventManager {
 
@@ -94,11 +94,7 @@ class DocPageEventManager {
   public openOutterLink(link: string) {
     const brower = this.getRef('resourceBrower') as InstanceType<typeof ResourceBrower> | undefined
     // 未挂载资源浏览器(兜底)时退回新标签打开 不再静默崩溃
-    if (brower) {
-      brower.show(link);
-    } else {
-      window.open(link, '_blank', 'noopener')
-    }
+    openOutterLinkFallback(brower, link)
   }
 
 
@@ -294,13 +290,7 @@ class DocPageEventManager {
       return
     }
     // 1) 直接命中 2) slug化后命中(兼容搜索索引/旧链接里的标题原文) 3) 按标题文本匹配
-    let elm = document.getElementById(headingId)
-      || document.getElementById(slugify(headingId));
-    if (!elm) {
-      const headingList = document.querySelectorAll('.markdown-section h1,h2,h3,h4,h5,h6');
-      elm = (Array.from(headingList) as HTMLElement[])
-        .find(h => h.textContent?.trim().toLowerCase().startsWith(headingId.trim().toLowerCase())) || null;
-    }
+    const elm = resolveHeadingElement(headingId)
     if (elm) {
       window.scrollTo(0, elm.offsetTop - 80)
     }

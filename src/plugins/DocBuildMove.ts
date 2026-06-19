@@ -27,7 +27,7 @@ function getSummaryHtml() {
 
 const dom = new JSDOM()
 
-function escapeHtmlText(text: string): string {
+export function escapeHtmlText(text: string): string {
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -40,7 +40,7 @@ function escapeHtmlText(text: string): string {
  * 该html是完整的SPA入口(含构建后的js/css标签) 直接访问/xx/xx.html即进入对应文档页
  * 正文以可见的.static-content直出(即时首屏 兼顾爬虫) Vue挂载完成后由main.ts移除
  */
-function generalHtmlContent(template: string, info: DocFileInfo, preloadTags: string = '', jsonPath: string = '') {
+export function generalHtmlContent(template: string, info: DocFileInfo, preloadTags: string = '', jsonPath: string = '') {
   const renderer = new marked.Renderer()
   renderer.text = (text) => text.text
   let html = marked(info.content, {

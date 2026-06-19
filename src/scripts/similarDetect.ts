@@ -3,12 +3,13 @@ import fs from 'fs'
 import DocService from '../build/DocService';
 import { marked } from 'marked';
 import { JSDOM } from 'jsdom';
+import { pathToFileURL } from 'url';
 import UrlConst from '../const/UrlConst';
 import { SimilarItem } from '../dto/doc/SimilarItem';
 
 var reg = new RegExp("[\\u4E00-\\u9FFF]+", "g");
 
-function similar(s: string, t: string, f: number = 3) {
+export function similar(s: string, t: string, f: number = 3) {
   if (!s || !t) {
       return 0
   }
@@ -46,7 +47,7 @@ function similar(s: string, t: string, f: number = 3) {
   return res.toFixed(f)
 }
 
-function cleanText(str: string): string {
+export function cleanText(str: string): string {
   return str.replace(/[’!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~]/g, '')
     .replace(/-/g, '')
     .replace(/#/g, '')
@@ -78,7 +79,7 @@ function stopFileCheck(filename: string) {
 
 
 
-function extractText(md: string): string {
+export function extractText(md: string): string {
   md = md.replace(/^---$.*^---$/ms, '') // 去除markdown里的元数据
   const html = marked(md)
   const dom =  new JSDOM(`<!DOCTYPE html><body>${html}</body></html>`)
@@ -126,4 +127,22 @@ async function  main() {
   }
   fs.writeFileSync("." + UrlConst.textSimilarJson, JSON.stringify(similarList))
 }
-main()
+
+// 仅在作为 CLI 入口被直接执行时运行 main(本身会做 fs 扫描 + writeFile)
+// 被 import(如单测)时不应触发任何文件写入
+function isCliEntry(): boolean {
+  const entry = process.argv[1]
+  if (!entry) {
+    return false
+  }
+  try {
+    // realpathSync 抹平 /tmp -> /private/tmp 之类的符号链接差异
+    return import.meta.url === pathToFileURL(fs.realpathSync(entry)).href
+  } catch {
+    return import.meta.url === pathToFileURL(entry).href
+  }
+}
+
+if (isCliEntry()) {
+  main()
+}

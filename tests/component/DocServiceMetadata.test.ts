@@ -104,10 +104,10 @@ describe('DocService.resolveMetadata 客户端解析与默认值填充', () => {
     expect(meta).toMatchObject({ tags: [], level: 3, name: '' })
   })
 
-  it('level: 0 这类 falsy 值会被默认值覆盖(0 -> 3)', () => {
-    // 已知行为: 源码用 !metadata[key] 判空, 故 level:0 被当作"未设置"覆盖为默认 3
+  it('level: 0 这类合法 falsy 值被原样保留(不被默认值覆盖)', () => {
+    // 判空用 == null(undefined/null)而非 !value, 故显式提供的 level:0 不会被当作"未设置"
     const meta = docService.resolveMetadata({ id: 'meta-zero', metadata: 'level: 0' } as any)
-    expect(meta.level).toBe(3)
+    expect(meta.level).toBe(0)
   })
 })
 

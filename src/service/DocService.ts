@@ -559,7 +559,8 @@ class DocService implements Cacheable{
     }
     if (metadata) {
       for(const key in EMPTY_DOC_METADATA) {
-        if (!(metadata as any)[key]) {
+        // 仅在字段真正缺失(undefined/null)时填默认值, 避免合法 falsy 值(如 level: 0)被误判为未设置而覆盖
+        if ((metadata as any)[key] === undefined || (metadata as any)[key] === null) {
           (metadata as any)[key] = (EMPTY_DOC_METADATA as any)[key]
         }
       }

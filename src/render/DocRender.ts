@@ -120,7 +120,7 @@ export default class DocRender {
           .join('');
         return `<a href='${buildDocLink(id, headingId!)}' origin-link='${href}'>${text}</a>`
       } else {
-        return `<a href='${href}' target="_blank" rel="noopener noreferrer">${text}</a>`
+        return `<a href='${escapeAttr(href)}' target="_blank" rel="noopener noreferrer">${escapeHtml(text!)}</a>`
       }
     }
     // 自定义代码块渲染

@@ -6,7 +6,7 @@ import TagUtils from '@/pages/tag/TagUtils'
 //   1) 确定性 —— 同一标签每次都映射到同一 type / 同一 color（UI 上同名标签颜色不能乱跳）。
 //   2) type 与 color 必须共享同一索引 —— 二者都用 hashCode(tag) % 5，否则同标签会出现“类型/颜色错位”。
 //   3) 空串与已知正向取值的基线（'' -> hash 0 -> idx 0 -> primary/#409EFF）。
-// 另对 hashCode 的「负哈希」缺陷做特征化锁定（见下方 已知 BUG），现状即真值，待修复后再更新断言。
+// 另对 hashCode 的「负哈希」做回归守护（见下方）：索引经 Math.abs 归一到 [0,5)，负哈希标签也应落表。
 
 const { calcTagType, calcTagColor } = TagUtils
 
@@ -89,25 +89,31 @@ describe('TagUtils 基线取值（正向哈希）', () => {
   })
 })
 
-describe('TagUtils 负哈希缺陷特征化（锁定现状）', () => {
-  // 已知 BUG: hashCode 返回 32 位有符号整数，可能为负；calcTagType/calcTagColor 直接用
-  // hashCode(tag) % 5 作索引，负哈希 -> 负余数（JS 的 % 保留被除数符号）-> 负下标 ->
-  // types[负下标]/colors[负下标] === undefined。即此类标签拿不到任何类型/颜色。
-  // 探针确认：'计算机网络' hash = -379484529 -> -379484529 % 5 = -4 -> types[-4] === undefined。
-  // 这里锁定 undefined 现状，待修复（如改用 ((h % 5) + 5) % 5 或 Math.abs）后再更新断言。
-  it("'计算机网络' 负哈希 -> 负索引 -> type 为 undefined", () => {
-    // @ts-expect-error 源签名声明 string 返回，但当前实现实际可能产出 undefined（即该 BUG）
-    expect(calcTagType('计算机网络')).toBeUndefined()
+describe('TagUtils 负哈希也能正常落表（回归）', () => {
+  // 修复前 BUG: hashCode 返回 32 位有符号整数，可能为负；旧实现直接用 hashCode(tag) % 5 作索引，
+  // 负哈希 -> 负余数（JS 的 % 保留被除数符号）-> 负下标 -> types/colors 取到 undefined。
+  // 修复：用 Math.abs(hashCode(tag) % 5) 保证索引落在 [0, 5)，负哈希标签也能拿到合法 type/color。
+  // 探针确认：'计算机网络' hash = -379484529 -> Math.abs(-4) = 4 -> types[4]='danger' / colors[4]='#F56C6C'。
+  it("'计算机网络' 负哈希 -> 索引归一到 4 -> danger / #F56C6C", () => {
+    expect(calcTagType('计算机网络')).toBe('danger')
+    expect(calcTagColor('计算机网络')).toBe('#F56C6C')
   })
 
-  it("'计算机网络' 负哈希 -> 负索引 -> color 为 undefined", () => {
-    // @ts-expect-error 同上：当前实现实际返回 undefined
-    expect(calcTagColor('计算机网络')).toBeUndefined()
+  it("'计算机网络' 的返回值是合法的表内成员（不再是 undefined）", () => {
+    expect(types).toContain(calcTagType('计算机网络'))
+    expect(colors).toContain(calcTagColor('计算机网络'))
   })
 
-  it('负哈希分支同样是确定性的（同标签每次都是同一个 undefined）', () => {
-    // 即便落入 BUG 分支，行为仍确定：避免误以为是随机偶发。
+  it('负哈希分支同样是确定性的（同标签每次都是同一个值）', () => {
+    // 同名标签的类型/颜色不能随机跳变。
     expect(calcTagType('计算机网络')).toBe(calcTagType('计算机网络'))
     expect(calcTagColor('计算机网络')).toBe(calcTagColor('计算机网络'))
+  })
+
+  it("负哈希标签的 type 与 color 仍共享同一索引", () => {
+    const ti = types.indexOf(calcTagType('计算机网络'))
+    const ci = colors.indexOf(calcTagColor('计算机网络'))
+    expect(ti).toBeGreaterThanOrEqual(0)
+    expect(ci).toBe(ti)
   })
 })

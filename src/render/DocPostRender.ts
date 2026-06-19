@@ -50,8 +50,9 @@ function renderLatex(rootEl: HTMLElement): () => void {
     cancelBatch = runInIdleBatches(texList, element => {
       try {
         katex.render(
-            // 如果在`%`字符前没有`\`字符，则在`%`前添加`\`后再渲染
-            element.getAttribute("raw")!.replace(/[^\\](%)/g, (match)=>{return match[0] + '\\' + '%'}),
+            // 给未转义的`%`(含字符串开头、连续`%%`)补`\`后再渲染; 已是`\%`的保持不变。
+            // 用`\\?%`+回调判断而非后顾断言, 兼容不支持 lookbehind 的旧浏览器(Safari<16.4)
+            element.getAttribute("raw")!.replace(/\\?%/g, m => m === '%' ? '\\%' : m),
             element,
             {
                 // 取消对中文内容渲染的警告

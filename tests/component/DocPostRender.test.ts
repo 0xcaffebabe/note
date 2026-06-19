@@ -265,13 +265,13 @@ describe('DocPostRender.renderLatex 公式渲染分支', () => {
     expect(renderMock.mock.calls[0][0]).toBe('a\\%b')
   })
 
-  it("已知边界: 行首/开头的 '%' 因正则需要前导字符而不会被转义", async () => {
-    // 已知 BUG: 正则 /[^\\](%)/g 要求 % 前必须有一个非反斜杠字符,
-    // 因此位于字符串最开头的 '%' 永远不会被补反斜杠(katex 会把它当注释起始)。
+  it("行首/开头的 '%' 同样被转义(负向后顾不依赖前导字符)", async () => {
+    // 正则 /(?<!\\)%/g 只要 % 前不是反斜杠就转义, 不再要求存在前导字符,
+    // 因此位于字符串最开头的 '%' 也会被补反斜杠(否则 katex 会把它当注释起始)。
     const root = makeTexRoot(['%start'])
     DocPostRender.renderLatex(root)
     await vi.runAllTimersAsync()
-    expect(renderMock.mock.calls[0][0]).toBe('%start') // 开头 % 未转义
+    expect(renderMock.mock.calls[0][0]).toBe('\\%start') // 开头 % 现已转义
   })
 
   it('渲染抛错时兜底为红字 span(throwOnError 触发的 catch 分支)', async () => {

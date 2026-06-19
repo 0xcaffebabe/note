@@ -83,12 +83,18 @@ describe('DocRender.render — link', () => {
     expect(a.getAttribute('href')).toContain('headingId=frag')
   })
 
-  it('// 已知 BUG: 外链的 text 与 href 未做 HTML 转义(<、& 原样进入 a 标签, 仅靠 marked 解析阶段约束)', () => {
-    // 自定义 render.link 的外链分支直接字符串拼接 token.text/token.href 而不转义
+  it('外链的 href 经 escapeAttr、text 经 escapeHtml 转义(&、< 不再原样进入 a 标签)', () => {
+    // 外链分支与 code/image 分支一致: href 走 escapeAttr, text 走 escapeHtml, 阻断 &/< 注入
     const html = render('[a&b<c](https://e.com/p?x=1&y=2)')
-    expect(html).toContain("href='https://e.com/p?x=1&y=2'")
-    // text 中的 < 原样输出(下游 DOM 解析会把 <c 当作未知标签起始)
-    expect(html).toContain('a&b<c')
+    // href 中的 & 被 escapeAttr 转为 &amp;
+    expect(html).toContain("href='https://e.com/p?x=1&amp;y=2'")
+    // text 中的 & 与 < 被 escapeHtml 转义, 不再原样输出
+    expect(html).toContain('a&amp;b&lt;c')
+    expect(html).not.toContain('a&b<c')
+    // 解析回 DOM: textContent 读回解码后的原文, href 读回解码后的原始地址
+    const a = parse(html).querySelector('a')!
+    expect(a.textContent).toBe('a&b<c')
+    expect(a.getAttribute('href')).toBe('https://e.com/p?x=1&y=2')
   })
 })
 

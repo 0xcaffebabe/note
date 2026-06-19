@@ -240,7 +240,7 @@ class CategoryService implements Cacheable {
   }
 
   private categoryNameIsMatch(index: CategoryMatchIndex, queryString: string): boolean {
-    return index.nameLower?.indexOf(queryString.toLowerCase()) != -1 || // 文档名包含完全匹配
+    return (index.nameLower?.indexOf(queryString.toLowerCase()) ?? -1) != -1 || // 文档名包含完全匹配
             PinyinUtils.indexFullContains(index.namePinyin, queryString) || // 文档名包含拼音完全匹配
             PinyinUtils.indexFirstLetterContains(index.namePinyin, queryString)  // 文档名包含拼音首字母匹配
   }

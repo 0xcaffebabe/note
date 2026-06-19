@@ -16,8 +16,9 @@ import CacheService from '@/service/CacheService'
  *  2) getMatchIndex 把结果写进 service 私有的 matchIndexCache(Map, key=name+'\n'+link),
  *     这块 CacheService.clear() 清不掉。因此匹配类用例必须用各自不同的 name/link 以绕开该缓存。
  *
- * 同时刻画一个真实缺陷: categoryNameIsMatch 用 index.nameLower?.indexOf(q) != -1,
+ * 同时回归一处已修缺陷: categoryNameIsMatch 原写 index.nameLower?.indexOf(q) != -1,
  * 当 name 为 undefined 时 nameLower 为 undefined, 'undefined != -1' 恒真 -> 任意查询误命中。
+ * 修复后用 (index.nameLower?.indexOf(q) ?? -1) != -1 守卫: name 缺失不再贡献匹配。
  */
 
 // 网络边界 mock: init() 并不在构造时触发(构造函数为空), 但被测方法直接调这两个 api, 必须可控。
@@ -277,12 +278,18 @@ describe('categoryIsMatch: 匹配索引(字面/全拼/首字母)', () => {
 })
 
 // ---------------------------------------------------------------------------
-describe('categoryIsMatch 已知缺陷', () => {
-  it('已知 BUG: name 为 undefined 时 nameLower 为 undefined, "undefined != -1" 恒真 -> 任意查询误命中', () => {
+describe('categoryIsMatch: name 缺失不应误命中', () => {
+  it('name 为 undefined 时 nameLower 为 undefined, 经 (?? -1) 守卫后无名节点不会误命中无关查询', () => {
     // 构造 name 为 undefined 的节点(非 new Category(), 后者 name 默认 ''):
     const broken = { name: undefined, link: 'orphan/no-name.md', chidren: [] } as unknown as Category
-    // 查询一个既不在 link 也无任何拼音含义的串, 正常应 false, 但因 name 缺失而被误判 true
-    expect(categoryService.categoryIsMatch(broken, 'totallyirrelevantxyz')).toBe(true)
+    // 查询一个既不在 link 也无任何拼音含义的串: name 缺失不应贡献匹配, link 也无命中 -> false
+    expect(categoryService.categoryIsMatch(broken, 'totallyirrelevantxyz')).toBe(false)
+  })
+
+  it('name 为 undefined 时仍能凭 link 命中(守卫只屏蔽 name 缺失, 不影响 link 匹配路径)', () => {
+    const broken = { name: undefined, link: 'orphan/no-name.md', chidren: [] } as unknown as Category
+    // 'orphan' 在 link 去分隔符后的字面里, link 匹配路径不受 name 守卫影响
+    expect(categoryService.categoryIsMatch(broken, 'orphan')).toBe(true)
   })
 
   it('对照: name 为空串("")时 nameLower 为 ""(非 undefined), 不会误命中', () => {

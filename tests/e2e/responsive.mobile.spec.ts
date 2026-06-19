@@ -34,6 +34,14 @@ test.describe('mobile DocPage (Pixel 5)', () => {
     await expect(page.locator('.el-backtop')).toHaveCount(0)
   })
 
+  test('文档页顶栏不重复底栏入口: 搜索/目录图标整组下沉底栏', async ({ page }) => {
+    await goto(page, DOC)
+    await page.waitForSelector('.mobile-bottom-bar')
+    // 文档页(route.meta.hasBottomBar)下, 顶栏窄屏图标入口(全文搜索/目录搜索/展开目录)整组隐藏
+    // —— 搜索与目录均走底栏的同一 CommandPalette/分类抽屉, 顶栏不再重复
+    await expect(page.locator('.site-header .icon-btn')).toHaveCount(0)
+  })
+
   test('章节按钮打开底部 TOC 抽屉(复用 contents-list mode=drawer)', async ({ page }) => {
     await goto(page, DOC)
     await page.waitForSelector('.mobile-bottom-bar')

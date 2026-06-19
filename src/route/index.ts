@@ -59,6 +59,8 @@ const routes: RouteRecordRaw[] = [
       {
         path: "/:docPath(.*\\.html)",
         component: () => import("@/pages/doc/DocPage.vue"),
+        // 文档页移动端有底部操作栏(目录/搜索), 顶栏据此隐藏重复入口
+        meta: { hasBottomBar: true },
       },
     ]
   },

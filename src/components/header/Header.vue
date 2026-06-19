@@ -24,8 +24,8 @@
           <span class="search-text">搜索</span>
           <span class="search-kbd"><kbd>{{ metaKeyLabel }}</kbd><kbd>K</kbd></span>
         </button>
-        <!-- 窄屏: 图标入口(全文搜索 / 目录搜索 / 展开目录) -->
-        <template v-else>
+        <!-- 窄屏: 搜索/目录图标入口; 文档页有底部操作栏(目录/搜索同走 CommandPalette, 模式可在面板内切换), 整组下沉底栏不再重复 -->
+        <template v-else-if="!hasBottomBar">
           <button type="button" class="icon-btn" @click="$emit('search')" aria-label="全文搜索">
             <el-icon><Search /></el-icon>
           </button>
@@ -147,6 +147,10 @@ export default defineComponent({
     },
     metaKeyLabel(): string {
       return /mac/i.test(navigator.userAgent) ? '⌘' : 'Ctrl';
+    },
+    // 当前路由是否带底部操作栏(文档页): 是则窄屏顶栏隐藏与底栏重复的全文搜索/展开目录入口
+    hasBottomBar(): boolean {
+      return Boolean(this.$route.meta.hasBottomBar);
     },
   },
   created() {

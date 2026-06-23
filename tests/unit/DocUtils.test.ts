@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import DocUtils from '@/util/DocUtils'
+import DocUtils from '@/core/util/DocUtils'
 
 // docId <-> .html 路径 的双向转换是整个 .html 静态化路由的命门 用例锁死往返一致性
 describe('DocUtils docId <-> path', () => {

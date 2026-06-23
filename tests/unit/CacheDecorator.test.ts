@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import Cache from '@/decorator/Cache'
-import CacheService from '@/service/CacheService'
+import Cache from '@/core/cache/Cache'
+import CacheService from '@/core/cache/CacheService'
 
 // 守护 @Cache 装饰器(src/decorator/Cache.ts)的两条缓存策略, 它是 DocService/SearchService
 // 各方法记忆化的核心。一旦命中/键/作用域逻辑出错, 会静默返回陈旧数据或反复重算大文档。
@@ -19,7 +19,7 @@ import CacheService from '@/service/CacheService'
 // 装饰器用法照搬 DocService/SearchService: 先 `const cache = Cache()`(工厂取一个具名装饰器),
 // 再在方法上 `@cache`; 带键的则 `const cacheByX = Cache(resolver)`。
 
-const cacheService = CacheService.getInstance()
+const cacheService = new CacheService()
 
 // 与各被测类配套的装饰器实例(工厂式, 与源码 DocService 写法一致)
 const cacheDefault = Cache()
@@ -31,7 +31,7 @@ describe('@Cache 默认路径(无 keyResolver): 只缓存 Promise', () => {
 
   // 每个用例用独立类/方法名 => 独立 scope, 避免跨例命中
   class AsyncSvc {
-    name() { return 'async-svc' }
+      cache = cacheService;    name() { return 'async-svc' }
     calls = 0
     @cacheDefault
     async fetch(x: number): Promise<number> {
@@ -66,7 +66,7 @@ describe('@Cache 默认路径(无 keyResolver): 只缓存 Promise', () => {
 
   it('多参数全部纳入键: 任一参数不同即视为不同键', async () => {
     class MultiArg {
-      name() { return 'multi-arg' }
+      cache = cacheService;      name() { return 'multi-arg' }
       calls = 0
       @cacheDefault
       async pair(a: number, b: number): Promise<number> {
@@ -90,7 +90,7 @@ describe('@Cache 默认路径(无 keyResolver): 只缓存 Promise', () => {
 
   it('拒绝(reject)的 Promise 不被缓存, 后续调用会重试', async () => {
     class Flaky {
-      name() { return 'flaky' }
+      cache = cacheService;      name() { return 'flaky' }
       calls = 0
       @cacheDefault
       async boom(x: number): Promise<number> {
@@ -123,7 +123,7 @@ describe('@Cache 默认路径: 同步结果不缓存(防冻结 init 前空数据
   beforeEach(() => cacheService.clear())
 
   class SyncSvc {
-    name() { return 'sync-svc' }
+      cache = cacheService;    name() { return 'sync-svc' }
     calls = 0
     @cacheDefault
     compute(x: number): number {
@@ -148,7 +148,7 @@ describe('@Cache 默认路径: 同步结果不缓存(防冻结 init 前空数据
 
   it('返回 undefined 的同步方法也不缓存(不会误把 undefined 冻结)', () => {
     class VoidSvc {
-      name() { return 'void-svc' }
+      cache = cacheService;      name() { return 'void-svc' }
       calls = 0
       @cacheDefault
       noop(x: number): void {
@@ -167,7 +167,7 @@ describe('@Cache keyResolver 路径: 同步结果也缓存', () => {
   beforeEach(() => cacheService.clear())
 
   class KeyedSync {
-    name() { return 'keyed-sync' }
+      cache = cacheService;    name() { return 'keyed-sync' }
     calls = 0
     @cacheByFirstArg
     transform(x: number): number {
@@ -200,7 +200,7 @@ describe('@Cache keyResolver 路径: 同步结果也缓存', () => {
 
   it('不同入参解析出同一键 => 共用同一条目, 第二次入参被忽略, 返回首次缓存值(对应按内容做键的大文档场景)', () => {
     class ConstKeyed {
-      name() { return 'const-keyed' }
+      cache = cacheService;      name() { return 'const-keyed' }
       calls = 0
       @cacheConstKey
       pick(x: number): number {
@@ -218,7 +218,7 @@ describe('@Cache keyResolver 路径: 同步结果也缓存', () => {
 
   it('keyResolver 路径下 Promise 仍走 .then 缓存 resolved 值', async () => {
     class KeyedAsync {
-      name() { return 'keyed-async' }
+      cache = cacheService;      name() { return 'keyed-async' }
       calls = 0
       @cacheByFirstArg
       async load(x: number): Promise<number> {
@@ -240,13 +240,13 @@ describe('@Cache 作用域隔离: name()+"-"+propertyKey', () => {
 
   it('两个不同类的同名方法各用独立 scope, 互不命中', async () => {
     class Alpha {
-      name() { return 'alpha' }
+      cache = cacheService;      name() { return 'alpha' }
       calls = 0
       @cacheDefault
       run(x: number): Promise<number> { this.calls++; return Promise.resolve(x) }
     }
     class Beta {
-      name() { return 'beta' }
+      cache = cacheService;      name() { return 'beta' }
       calls = 0
       @cacheDefault
       run(x: number): Promise<number> { this.calls++; return Promise.resolve(x * 10) }
@@ -263,7 +263,7 @@ describe('@Cache 作用域隔离: name()+"-"+propertyKey', () => {
 
   it('同一类的两个不同方法各用独立 scope', async () => {
     class TwoMethods {
-      name() { return 'two-methods' }
+      cache = cacheService;      name() { return 'two-methods' }
       aCalls = 0
       bCalls = 0
       @cacheDefault
@@ -282,8 +282,8 @@ describe('@Cache 作用域隔离: name()+"-"+propertyKey', () => {
 
   it('共享同一具名装饰器实例的两个类仍因 name() 不同而隔离', () => {
     // DocService 里多处复用同一个 const cacheByFileId; 隔离应来自 name(), 而非装饰器实例
-    class One { name() { return 'one' } c = 0; @cacheByFirstArg s(x: number) { this.c++; return x } }
-    class Two { name() { return 'two' } c = 0; @cacheByFirstArg s(x: number) { this.c++; return x * 2 } }
+    class One { cache = cacheService; name() { return 'one' } c = 0; @cacheByFirstArg s(x: number) { this.c++; return x } }
+    class Two { cache = cacheService; name() { return 'two' } c = 0; @cacheByFirstArg s(x: number) { this.c++; return x * 2 } }
     const o = new One()
     const w = new Two()
     expect(o.s(5)).toBe(5)
@@ -298,7 +298,7 @@ describe('@Cache this 绑定与实例间共享', () => {
 
   it('原方法以正确的 this 执行(可访问实例字段)', async () => {
     class WithState {
-      name() { return 'with-state' }
+      cache = cacheService;      name() { return 'with-state' }
       multiplier = 4
       @cacheDefault
       async scale(x: number): Promise<number> {
@@ -311,7 +311,7 @@ describe('@Cache this 绑定与实例间共享', () => {
 
   it('缓存按 scope+key 共享, 不区分实例: 不同实例相同入参也会命中(scope 只看 name())', async () => {
     class Shared {
-      name() { return 'shared' }
+      cache = cacheService;      name() { return 'shared' }
       calls = 0
       @cacheDefault
       get(x: number): Promise<number> { this.calls++; return Promise.resolve(x) }

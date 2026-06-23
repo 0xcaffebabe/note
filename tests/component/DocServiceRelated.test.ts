@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import CacheService from '@/service/CacheService'
+import { sharedCache } from '@/platform/web/app/sharedCache'
 
 // DocService 的"关联内容/站内链接"抽取是关联面板(RelatedContent/其他链接分组)的数据源:
 //  - extractRelatedContent: 取文档时把正文末尾的 `## 关联内容` 章节抽成 relatedLinks 并从 content 剥离,
@@ -8,7 +8,7 @@ import CacheService from '@/service/CacheService'
 //    去重错误或漏排自链会让面板自我引用或重复。
 //  - extractLinkContext: 截链接所在块前后各 36 字做上下文, 截断处补省略号; 越界/找不到锚文本时降级。
 // 这些方法 import 时会经由单例链(DocService->TagService/KnowledgeNetworkService->api)自初始化,
-// 故必须在 import 前用 vi.hoisted()+vi.mock('@/api') 把网络边界全部 mock 成可控空数据, 让各 init() 顺利完成。
+// 故必须在 import 前用 vi.hoisted()+vi.mock('@/platform/web/api') 把网络边界全部 mock 成可控空数据, 让各 init() 顺利完成。
 // extractRelatedContent / extractLinkContext 为私有方法, 经由对象上的方法引用直接调用以聚焦其分支。
 
 const { apiMock } = vi.hoisted(() => ({
@@ -23,10 +23,10 @@ const { apiMock } = vi.hoisted(() => ({
     getDocCluster: vi.fn().mockResolvedValue([]),
   },
 }))
-vi.mock('@/api', () => ({ default: apiMock }))
+vi.mock('@/platform/web/api', () => ({ default: apiMock }))
 
-import docService from '@/service/DocService'
-import DocFileInfo from '@/dto/DocFileInfo'
+import docService from '@/platform/web/service/DocService'
+import DocFileInfo from '@/core/domain/DocFileInfo'
 
 // 直接调用私有方法(用例聚焦其分支, 不绕 getDocFileInfo 的缓存)
 const extractRelatedContent = (file: any) =>
@@ -42,7 +42,7 @@ function mkFile(content: string, id = 'probe-doc'): any {
 }
 
 // 单例间共享缓存且方法被 @cache 记忆, 每例前清空避免跨例命中
-beforeEach(() => CacheService.getInstance().clear())
+beforeEach(() => sharedCache.clear())
 
 describe('DocService.extractRelatedContent 关联内容章节抽取与剥离', () => {
   it('抽取 ## 关联内容 各链接为 {href,path,desc} 并从正文剥离 + 去尾部空行', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import ArrayUtils from '@/util/ArrayUtils'
+import ArrayUtils from '@/core/util/ArrayUtils'
 
 describe('ArrayUtils.topN 取前 N 个', () => {
   it('截取前 N 个', () => {

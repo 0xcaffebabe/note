@@ -16,7 +16,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
  * jsdom(component)环境提供 document / window.open;后者被 vi.spyOn 桩住以断言参数。
  */
 
-import { resolveHeadingElement, openOutterLinkFallback } from '@/pages/doc/DocPageHeadingResolver'
+import { resolveHeadingElement, openOutterLinkFallback } from '@/platform/web/pages/doc/DocPageHeadingResolver'
 
 // 往真实 jsdom document 上插一段 html, 每个用例前清空
 function setBody(html: string) {

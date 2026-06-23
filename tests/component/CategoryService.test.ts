@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import Category from '@/dto/Category'
-import CacheService from '@/service/CacheService'
+import Category from '@/core/domain/Category'
+import { sharedCache } from '@/platform/web/app/sharedCache'
 
 /**
  * CategoryService 是侧边栏目录树 / 全站搜索匹配 / 上一篇下一篇线性导航的数据底座。
  *
  * 它依赖 api.getCategory()(返回 markdown 文本, 经 marked + DOMParser 解析成树) 与
- * api.getCompiledCategory()(返回已编译的 Category[] 树)。这里在网络边界 mock 掉 '@/api',
+ * api.getCompiledCategory()(返回已编译的 Category[] 树)。这里在网络边界 mock 掉 '@/platform/web/api',
  * 让被测的解析 / 遍历 / 拼音匹配真实执行, 而不触发任何真实 fetch / localStorage 数据源。
  *
  * 关键测试约束(若忽略会跨用例串味):
@@ -26,11 +26,11 @@ const { getCategory, getCompiledCategory } = vi.hoisted(() => ({
   getCategory: vi.fn(),
   getCompiledCategory: vi.fn(),
 }))
-vi.mock('@/api', () => ({
+vi.mock('@/platform/web/api', () => ({
   default: { getCategory, getCompiledCategory },
 }))
 
-import categoryService from '@/service/CategoryService'
+import categoryService from '@/platform/web/service/CategoryService'
 
 // 构造一棵 Category 树(深拷贝友好: 每次调用返回全新对象, 避免被 setParent 污染串味)
 function cat(name: string, link: string, children: Category[] = []): Category {
@@ -46,7 +46,7 @@ function summary(md: string) {
   return { content: md } as any
 }
 
-const cache = CacheService.getInstance()
+const cache = sharedCache
 
 beforeEach(() => {
   cache.clear()

@@ -8,7 +8,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
   缺节点未提前返回)都会让链路错乱或卡死，而这类逻辑没有别的入口可测。
 
   测试要点:
-  1) 在网络边界 mock '@/api' 的 getKnowledgeNetwork。该 singleton 在 import 时构造即 fire-and-forget
+  1) 在网络边界 mock '@/platform/web/api' 的 getKnowledgeNetwork。该 singleton 在 import 时构造即 fire-and-forget
      调用 init()->fetchAllLinks()->api.getKnowledgeNetwork()，所以必须在 vi.hoisted 块内就给好默认返回值，
      否则 init() 拿到 undefined 而 getAllLinks() 永远空(见下方说明)。
   2) getDocStream 自身不带 @cache，且每次都 await api.getKnowledgeNetwork()，因此可逐例 mockResolvedValue
@@ -18,7 +18,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
   断言形状/内容而非空白；层级输出均由真实运行探针确认。
 */
 
-import CacheService from '@/service/CacheService'
+import { sharedCache } from '@/platform/web/app/sharedCache'
 
 // 在 hoisted 块内即给默认值: import KnowledgeNetworkService 触发的 init() 此刻就能拿到数据,
 // 使 getAllLinks() 能拿到非空的初始链接快照。
@@ -30,9 +30,9 @@ const { getKnowledgeNetwork } = vi.hoisted(() => {
   ])
   return { getKnowledgeNetwork: fn }
 })
-vi.mock('@/api', () => ({ default: { getKnowledgeNetwork } }))
+vi.mock('@/platform/web/api', () => ({ default: { getKnowledgeNetwork } }))
 
-import svc from '@/service/KnowledgeNetworkService'
+import svc from '@/platform/web/service/KnowledgeNetworkService'
 
 // 构造网络节点的小工具: links 用 {id,name} 形态贴合 KnowledgeLinkNode
 function node(id: string, ...targets: string[]) {
@@ -40,7 +40,7 @@ function node(id: string, ...targets: string[]) {
 }
 
 describe('KnowledgeNetworkService.getDocStream 上下游分层', () => {
-  beforeEach(() => CacheService.getInstance().clear())
+  beforeEach(() => sharedCache.clear())
 
   it('线性链 A->B->C, 查询中段 B: 上游一层 下游一层', async () => {
     getKnowledgeNetwork.mockResolvedValue([node('A', 'B'), node('B', 'C'), node('C')])
@@ -89,7 +89,7 @@ describe('KnowledgeNetworkService.getDocStream 上下游分层', () => {
 })
 
 describe('KnowledgeNetworkService.getDocStream 边界与环', () => {
-  beforeEach(() => CacheService.getInstance().clear())
+  beforeEach(() => sharedCache.clear())
 
   it('孤立节点 X(无入无出): 仅返回自身一层 [[id]]', async () => {
     getKnowledgeNetwork.mockResolvedValue([node('X')])
@@ -144,7 +144,7 @@ describe('KnowledgeNetworkService.getDocStream 边界与环', () => {
 })
 
 describe('KnowledgeNetworkService.getAllLinks 深拷贝', () => {
-  beforeEach(() => CacheService.getInstance().clear())
+  beforeEach(() => sharedCache.clear())
 
   it('返回 import 时 init 注入的扁平化链接快照', () => {
     const links = svc.getAllLinks()

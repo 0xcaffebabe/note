@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import BatchPromiseHelper from '@/util/BatchPromiseHelper'
+import BatchPromiseHelper from '@/core/util/BatchPromiseHelper'
 
 describe('BatchPromiseHelper 批量归并', () => {
   it('new(...) + all() 按加入顺序解析结果', async () => {

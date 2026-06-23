@@ -1,7 +1,11 @@
+import type { Services } from '@/platform/web/app/container'
+
 export{} // 必须保留
 declare module '@vue/runtime-core' {
   interface ComponentCustomProperties {
     $isMobile: () => boolean
+    // 合成根服务容器: Options API 组件经 this.$services 取服务(由 main.ts 注入)
+    $services: Services
   }
 }
 

@@ -51,7 +51,7 @@ afterEach(() => {
 describe('runInIdleBatches 完整跑完', () => {
   it('deadline 充裕时一片内按原顺序处理每一项恰好一次', async () => {
     const q = setupQueue()
-    const { runInIdleBatches } = await import('@/util/IdleTaskUtils')
+    const { runInIdleBatches } = await import('@/platform/web/util/IdleTaskUtils')
 
     const processed: number[] = []
     runInIdleBatches([1, 2, 3, 4, 5], (x) => processed.push(x))
@@ -67,7 +67,7 @@ describe('runInIdleBatches 完整跑完', () => {
 
   it('每一项只被处理一次(handler 调用次数 == 列表长度)', async () => {
     const q = setupQueue()
-    const { runInIdleBatches } = await import('@/util/IdleTaskUtils')
+    const { runInIdleBatches } = await import('@/platform/web/util/IdleTaskUtils')
 
     const handler = vi.fn()
     const items = ['a', 'b', 'c']
@@ -82,7 +82,7 @@ describe('runInIdleBatches 完整跑完', () => {
 describe('runInIdleBatches 空列表', () => {
   it('不调用 handler 也不触发任何调度', async () => {
     const q = setupQueue()
-    const { runInIdleBatches } = await import('@/util/IdleTaskUtils')
+    const { runInIdleBatches } = await import('@/platform/web/util/IdleTaskUtils')
 
     const handler = vi.fn()
     const cancel = runInIdleBatches([], handler)
@@ -98,7 +98,7 @@ describe('runInIdleBatches 空列表', () => {
 describe('runInIdleBatches 中途取消', () => {
   it('取消后剩余项不再处理(已处理数 < 总数)', async () => {
     const q = setupQueue()
-    const { runInIdleBatches } = await import('@/util/IdleTaskUtils')
+    const { runInIdleBatches } = await import('@/platform/web/util/IdleTaskUtils')
 
     const processed: number[] = []
     const items = [10, 20, 30, 40, 50]
@@ -119,7 +119,7 @@ describe('runInIdleBatches 中途取消', () => {
 
   it('取消后即便回调被再次触发也不抛错、不继续推进', async () => {
     const q = setupQueue()
-    const { runInIdleBatches } = await import('@/util/IdleTaskUtils')
+    const { runInIdleBatches } = await import('@/platform/web/util/IdleTaskUtils')
 
     const handler = vi.fn()
     const cancel = runInIdleBatches([1, 2, 3], handler)
@@ -133,7 +133,7 @@ describe('runInIdleBatches 中途取消', () => {
 describe('runInIdleBatches deadline 让步与重排', () => {
   it('timeRemaining() <= 0 时处理完当前项即重排下一片(每片一项)', async () => {
     const q = setupQueue()
-    const { runInIdleBatches } = await import('@/util/IdleTaskUtils')
+    const { runInIdleBatches } = await import('@/platform/web/util/IdleTaskUtils')
 
     const processed: number[] = []
     const items = [1, 2, 3, 4]
@@ -152,7 +152,7 @@ describe('runInIdleBatches deadline 让步与重排', () => {
 
   it('timeRemaining() 恰为 0 视为已无空闲(<=0 边界让步)', async () => {
     const q = setupQueue()
-    const { runInIdleBatches } = await import('@/util/IdleTaskUtils')
+    const { runInIdleBatches } = await import('@/platform/web/util/IdleTaskUtils')
 
     const processed: number[] = []
     runInIdleBatches([1, 2], (x) => processed.push(x))
@@ -168,7 +168,7 @@ describe('runInIdleBatches deadline 让步与重排', () => {
 
   it('正 deadline 不让步: 同一片内连续处理多项', async () => {
     const q = setupQueue()
-    const { runInIdleBatches } = await import('@/util/IdleTaskUtils')
+    const { runInIdleBatches } = await import('@/platform/web/util/IdleTaskUtils')
 
     const processed: number[] = []
     runInIdleBatches([1, 2, 3], (x) => processed.push(x))
@@ -185,7 +185,7 @@ describe('runInIdleBatches 调度绑定(无 requestIdleCallback 时的 setTimeou
     try {
       // 造一个「有 window 但没有 requestIdleCallback」的环境 → 走 setTimeout 分支。
       vi.stubGlobal('window', {})
-      const { runInIdleBatches } = await import('@/util/IdleTaskUtils')
+      const { runInIdleBatches } = await import('@/platform/web/util/IdleTaskUtils')
 
       const processed: number[] = []
       runInIdleBatches([1, 2, 3], (x) => processed.push(x))

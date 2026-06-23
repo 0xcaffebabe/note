@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import Slugger, { slugify } from '@/util/Slugger'
+import Slugger, { slugify } from '@/core/util/Slugger'
 
 // 标题锚点是 TOC 跳转 / ?headingId 路由定位 / MindGraph 节点同步的公共键
 // slugify 的归一规则与 Slugger 的去重序号一旦漂移, 所有锚点链接会集体失配

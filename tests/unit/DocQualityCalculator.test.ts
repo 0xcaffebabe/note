@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import DocQualityCalculator, { QualityInputData } from '@/util/DocQualityCalculator'
-import CommitInfo from '@/dto/CommitInfo'
-import { KnowledgeNode } from '@/dto/KnowledgeNode'
+import DocQualityCalculator, { QualityInputData } from '@/core/util/DocQualityCalculator'
+import CommitInfo from '@/core/domain/CommitInfo'
+import { KnowledgeNode } from '@/core/domain/KnowledgeNode'
 
 // 文档质量分驱动首页排序/聚类权重; 计算公式是纯函数, 适合用确定输入锁定各分项与加权口径
 const daysAgo = (n: number) => new Date(Date.now() - n * 86400000).toISOString()

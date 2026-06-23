@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import DocRender from '@/render/DocRender'
+import DocRender from '@/core/render/DocRender'
+import { markedMarkdown } from '@/adapters/libs/MarkedMarkdownAdapter'
+import { browserDomParser } from '@/adapters/browser/BrowserDomParser'
 
 /*
  * DocRender 把 markdown 经 marked + 自定义 renderer 渲染为站内 HTML。
@@ -28,7 +30,7 @@ function parse(html: string): Document {
 
 // docId 固定为 'java-foo' → 锚链接 href 应为 /java/foo.html?headingId=<id>
 function render(md: string, docId = 'java-foo'): string {
-  return new DocRender(md, docId, [], []).render()
+  return new DocRender(markedMarkdown, browserDomParser).render(md, docId, [], [])
 }
 
 beforeEach(() => {

@@ -34,7 +34,7 @@ import 'prismjs/components/prism-python'
 import 'prismjs/components/prism-go'
 import 'prismjs/components/prism-nginx'
 
-import DocPostRender from '@/render/DocPostRender'
+import DocPostRender from '@/platform/web/render/DocPostRender'
 
 // 造一个含若干 <pre><code class="language-xxx"> 的根节点
 function makeCodeRoot(blocks: Array<{ lang?: string; text?: string; wrapPre?: boolean }>): HTMLElement {

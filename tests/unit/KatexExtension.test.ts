@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { marked } from 'marked'
-import KatexExtension from '@/render/KatexExtension'
+import KatexExtension from '@/adapters/libs/KatexExtension'
 import type { TokenizerAndRendererExtension } from 'marked'
 
 // KatexExtension 是 marked 的自定义分词/渲染扩展, 负责把 Markdown 里的数学公式

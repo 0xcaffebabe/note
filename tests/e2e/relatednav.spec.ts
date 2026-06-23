@@ -1,7 +1,7 @@
 import { test, expect, goto, pathnameOf, waitForHtmlChange, docWithRelated, DOC } from './fixtures'
 import fs from 'fs'
 import path from 'path'
-import DocUtils from '../../src/util/DocUtils'
+import DocUtils from '../../src/core/util/DocUtils'
 
 // 「其他链接」组(docLinks)只在「剥离关联内容后正文里仍有独立站内 .html 内链」时才出现, 较稀少。
 // docWithRelated() 只挑首篇含「## 关联内容」段的文档, 它未必留有 docLinks。

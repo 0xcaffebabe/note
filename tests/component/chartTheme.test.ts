@@ -13,7 +13,7 @@
  *       会得到与真实浏览器不符的假象。故只校验 fallback 表与 palette[0] 契约(见任务约束)。
  */
 import { describe, it, expect } from 'vitest'
-import { buildChartTheme, tooltipStyle, type ChartTheme } from '@/util/echart/chartTheme'
+import { buildChartTheme, tooltipStyle, type ChartTheme } from '@/platform/web/util/echart/chartTheme'
 
 // jsdom 下 :root 无任何自定义属性, 所以每个字段都走 css() 的 fallback 分支。
 // 下表即源码中各令牌对应的设计默认值, 必须与 chartTheme.ts 逐项一致。

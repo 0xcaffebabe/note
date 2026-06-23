@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import CacheService from '@/service/CacheService'
+import CacheService from '@/core/cache/CacheService'
 
 // 进程内分 scope 的 LRU 缓存(每 scope 上限 200, 超出淘汰最旧)。
 // 是 @Cache 装饰器/目录与文档加载的缓存底座; 淘汰序与刷新逻辑出错会静默命中失效或内存膨胀。
 const MAX = 200 // 与源 MAX_ENTRIES_PER_SCOPE 同步; 改源需同步此值
 
 describe('CacheService 基本读写', () => {
-  const cache = CacheService.getInstance()
+  const cache = new CacheService()
   beforeEach(() => cache.clear()) // 单例共享状态, 每例清空
 
   it('同 scope 内写后可读回', () => {
@@ -40,7 +40,7 @@ describe('CacheService 基本读写', () => {
 })
 
 describe('CacheService LRU 淘汰', () => {
-  const cache = CacheService.getInstance()
+  const cache = new CacheService()
   beforeEach(() => cache.clear())
 
   it('超过上限淘汰最旧条目', () => {

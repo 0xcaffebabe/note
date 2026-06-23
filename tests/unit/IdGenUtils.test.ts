@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import IdGenUtils from '@/util/IdGenUtils'
+import IdGenUtils from '@/core/util/IdGenUtils'
 
 // 短 id 用于 mermaid 容器、节点等 DOM 唯一标识; 长度/字符集/唯一性退化会导致选择器冲突
 describe('IdGenUtils.uuid', () => {

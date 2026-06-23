@@ -2,7 +2,7 @@ import { test as base, expect, Page } from '@playwright/test'
 import fs from 'fs'
 import path from 'path'
 // DocUtils 是无依赖的纯函数模块 在 Node(Playwright)侧直接相对引入即可 不依赖 @ 别名
-import DocUtils from '../../src/util/DocUtils'
+import DocUtils from '../../src/core/util/DocUtils'
 
 // 动态发现夹具文档: 不硬编码任何具体文档(内容更新后某篇可能被改名/删除)
 // 从构建产物 dist/category.json(路由 recoverDocPath 用的同一份目录)里挑一篇「确实存在 .html」的真实文档

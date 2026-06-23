@@ -14,8 +14,9 @@
  * 行为均通过 npx tsx 实测探针对齐, 非显然之处以「已知 BUG」注明当前真实行为。
  */
 import { describe, it, expect } from 'vitest'
-import { escapeHtmlText, generalHtmlContent } from '@/plugins/DocBuildMove'
-import DocFileInfo from '@/dto/DocFileInfo'
+import { escapeHtmlText } from '@/core/util/StringUtils'
+import { generalHtmlContent } from '@/platform/node/plugins/DocBuildMove'
+import DocFileInfo from '@/core/domain/DocFileInfo'
 
 // 构造最小可用的 DocFileInfo: 函数仅读取 name / content
 function makeInfo(name: string, content: string): DocFileInfo {

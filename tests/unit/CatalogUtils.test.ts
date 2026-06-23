@@ -15,7 +15,7 @@ import { describe, it, expect, vi } from 'vitest'
 
 // 在网络/重依赖边界 mock 掉 CategoryService 默认导出(单例实例)
 const { categoryIsMatch } = vi.hoisted(() => ({ categoryIsMatch: vi.fn() }))
-vi.mock('@/service/CategoryService', () => ({
+vi.mock('@/platform/web/service/CategoryService', () => ({
   default: { categoryIsMatch },
 }))
 
@@ -26,8 +26,8 @@ import {
   countDocs,
   safeMatch,
   highlightName,
-} from '@/util/CatalogUtils'
-import Category from '@/dto/Category'
+} from '@/platform/web/util/CatalogUtils'
+import Category from '@/core/domain/Category'
 
 // 构造测试用目录节点(注意字段是项目里故意/历史拼错的 chidren)
 function node(partial: Partial<Category>): Category {

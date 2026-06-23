@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { COLOR_PALETTE } from '@/pages/doc/knowledge/ColorGenerator'
+import { COLOR_PALETTE } from '@/core/util/ColorGenerator'
 
 // 守护知识图谱的“分类→颜色”取色盘。下游 categoryColorMapping / 初始化分类着色 都用
 // 下标取模该数组([idx % COLOR_PALETTE.length])来分配颜色: 一旦盘子被清空(length 0 → 除0/NaN下标)、

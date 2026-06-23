@@ -11,7 +11,7 @@ import { describe, it, expect, vi } from 'vitest'
 // 在网络/原生边界把它们 mock 掉, 让纯逻辑测试既快又不依赖原生 binding。
 vi.mock('nodejieba', () => ({ default: { cut: vi.fn(() => []) } }))
 
-import WordCloudService from '@/build/WordCloudService'
+import WordCloudService from '@/platform/node/build/WordCloudService'
 
 describe('WordCloudService.cleanText 基本清洗(保留 CJK + ascii 词)', () => {
   it('纯 CJK 文本原样保留', () => {

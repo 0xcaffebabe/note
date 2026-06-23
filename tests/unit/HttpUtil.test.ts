@@ -10,11 +10,11 @@ const { startSpy, doneSpy } = vi.hoisted(() => ({
   startSpy: vi.fn(),
   doneSpy: vi.fn(),
 }))
-vi.mock('@/util/NProgress', () => ({
+vi.mock('@/adapters/browser/NProgress', () => ({
   default: { start: startSpy, done: doneSpy },
 }))
 
-import { http } from '@/util/http'
+import { http } from '@/adapters/browser/http'
 
 describe('http() 请求封装的进度条编排', () => {
   beforeEach(() => {

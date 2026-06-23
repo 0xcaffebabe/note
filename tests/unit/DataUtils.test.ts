@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { cloneDeep } from '@/util/DataUtils'
+import { cloneDeep } from '@/core/util/DataUtils'
 
 // cloneDeep 用于隔离 echarts 等会就地修改入参的数据(见 CommitTotalTrend)
 // 它是 JSON 序列化实现, 这里既验证深拷贝隔离, 也锁定其已知限制以免误用

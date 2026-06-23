@@ -1,6 +1,6 @@
 // vuex.d.ts
 import { Store } from 'vuex'
-import Category from './dto/Category'
+import Category from '@/core/domain/Category'
 import { ComponentCustomProperties } from 'vue'
 
 declare module '@vue/runtime-core' {

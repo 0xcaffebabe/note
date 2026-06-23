@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import TagUtils from '@/pages/tag/TagUtils'
+import TagUtils from '@/core/util/TagUtils'
 
 // 标签的「类型」与「颜色」按 djb2 风格的 hashCode(tag) % 5 取索引，从两张等长表里取值。
 // 这套测试守护三件事：

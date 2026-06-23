@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import create from '@/store/index'
+import create from '@/platform/web/store/index'
 
 // store 用 localStorage 持久化最近访问的章节链接列表(key=system::currentCategoryList,
 // 值为 JSON 字符串数组 string[])。本测覆盖 removeFromCategoryListExcept 的关键不变式:

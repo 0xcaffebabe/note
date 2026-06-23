@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
-import BaseService from '@/build/BaseService'
+import BaseService from '@/platform/node/build/BaseService'
 
 // BaseService 是构建期扫描文件系统的底座: listAllFile 递归收集文件,
 // listFilesBySuffix 在其上按后缀过滤(文档生成器靠它找出全部 .md)。

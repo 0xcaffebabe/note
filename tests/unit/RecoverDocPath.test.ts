@@ -1,5 +1,5 @@
 /**
- * 兜底路由自愈纯逻辑 (@/route/recoverDocPath) 单测
+ * 兜底路由自愈纯逻辑 (@/core/routing/recoverDocPath) 单测
  *
  * 背景: CDN(Cloudflare Pages)对 /xxx.html 做 308 去后缀重定向, 且 Location 头未按 RFC-3986
  * 编码中文(原始 UTF-8 字节被浏览器按 Latin-1 误读), 刷新/直访文档页会落到乱码无后缀路径,
@@ -12,7 +12,7 @@
  * to 仅消费 path/query/hash 三个字段, 故以最小对象 + as any 模拟 RouteLocationNormalized。
  */
 import { describe, it, expect, vi } from 'vitest'
-import { recoverDocPath } from '@/route/recoverDocPath'
+import { recoverDocPath } from '@/core/routing/recoverDocPath'
 
 // 构造一个落到乱码路径的 to: 中文 UTF-8 字节被按 Latin-1 误读, 无 .html 后缀
 function mojibakePath(realPath: string): string {

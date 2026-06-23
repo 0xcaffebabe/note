@@ -9,7 +9,7 @@ import { describe, it, expect } from 'vitest'
 // 说明: DocService 是单例, 模块加载时即 new JSDOM(); md2*/stringify 复用静态 DOM。
 // 因依赖 DOMParser/document, 本套件放在 component(jsdom) 工程。所测方法均无 @cache、
 // 无网络/文件副作用(纯入参→出参), 故无需 mock 或清缓存; 仍对每个用例使用不同输入以防意外。
-import docService from '@/build/DocService'
+import docService from '@/platform/node/build/DocService'
 
 describe('DocService.resolveMetadata 抽取 front-matter 内层 yaml', () => {
   it('内容未以 --- 开头时返回空串(无元数据)', () => {

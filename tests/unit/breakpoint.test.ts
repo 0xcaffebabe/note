@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { MOBILE_MAX, DESKTOP_MIN, WIDE_MIN, ULTRA_MIN, COARSE_MAX, isMobileViewport } from '@/const/breakpoints'
+import { MOBILE_MAX, DESKTOP_MIN, WIDE_MIN, ULTRA_MIN, COARSE_MAX, isMobileViewport } from '@/core/config/breakpoints'
 
 describe('isMobileViewport (视口为主 + 触屏兜底)', () => {
   it('窄视口一律移动端(含边界)', () => {
@@ -62,7 +62,7 @@ describe('断点数值 JS 与 LESS 同源', () => {
 
 describe('useBreakpoint.isWide (供图表换 echarts 配置)', () => {
   it('isWide/isUltra 阈值绑定常量(node 默认 1440 视口 → false)', async () => {
-    const { isWide, isUltra } = await import('@/composables/useBreakpoint')
+    const { isWide, isUltra } = await import('@/platform/web/composables/useBreakpoint')
     expect(isWide.value).toBe(false) // 1440 < WIDE_MIN(1680)
     expect(isUltra.value).toBe(false) // 1440 < ULTRA_MIN(2040)
   })

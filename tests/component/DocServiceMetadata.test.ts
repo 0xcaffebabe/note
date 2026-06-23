@@ -14,7 +14,7 @@ import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
  * 为什么放在 component(jsdom): DocService 默认导出是单例, 导入即透传构造 TagService /
  * KnowledgeNetworkService, 二者构造函数会 fire-and-forget 调 api.getTagMapping /
  * getDocTagPrediction / getKnowledgeNetwork; 多个方法又用 DOMParser/localStorage。
- * 因此在导入前于网络边界 vi.mock('@/api') 提供可控假数据, 保证这些 init() 不报错。
+ * 因此在导入前于网络边界 vi.mock('@/platform/web/api') 提供可控假数据, 保证这些 init() 不报错。
  *
  * 质量数据(getDocQuality / calcQuanlityStr)由 ensureQualityLoaded() 懒加载, 且带
  * qualityRequested 一次性闸门: 整个进程内只会真正 init 一次。因此本文件在 beforeAll 里
@@ -35,11 +35,11 @@ const { apiMock } = vi.hoisted(() => ({
     getDocCluster: vi.fn().mockResolvedValue([{ name: 'root', children: [] }]),
   },
 }))
-vi.mock('@/api', () => ({ default: apiMock }))
+vi.mock('@/platform/web/api', () => ({ default: apiMock }))
 
-import docService from '@/service/DocService'
-import CacheService from '@/service/CacheService'
-import DocUtils from '@/util/DocUtils'
+import docService from '@/platform/web/service/DocService'
+import { sharedCache } from '@/platform/web/app/sharedCache'
+import DocUtils from '@/core/util/DocUtils'
 
 const flush = () => new Promise((r) => setTimeout(r, 0))
 
@@ -57,14 +57,13 @@ beforeAll(async () => {
 })
 
 // @cache 装饰的方法以 JSON.stringify(arguments) 或自定义键记忆, 单例共享缓存 -> 每例清空
-beforeEach(() => CacheService.getInstance().clear())
+beforeEach(() => sharedCache.clear())
 
 describe('DocService.resolveMetadata 客户端解析与默认值填充', () => {
   it('空 metadata 字符串 -> 返回完整默认值(EMPTY_DOC_METADATA 形状)', () => {
     const meta = docService.resolveMetadata({ id: 'meta-empty', metadata: '' } as any)
     expect(meta).toMatchObject({
       tags: [],
-      books: [],
       name: '',
       level: 3, // 默认知识层级为 3
       links: [],
@@ -82,7 +81,6 @@ describe('DocService.resolveMetadata 客户端解析与默认值填充', () => {
     expect(meta.level).toBe(5)
     // 未给的字段被补默认值
     expect(meta.tags).toEqual([])
-    expect(meta.books).toEqual([])
     expect(meta.links).toEqual([])
     expect(meta.standardName).toBe('')
     expect(meta.alias).toEqual([])

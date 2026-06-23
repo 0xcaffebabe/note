@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 // TagService 是 default-export 的单例: 构造函数在 import 时就 fire-and-forget 调用 init(),
 // init() 里 await api.getTagMapping() / api.getDocTagPrediction() 填充内部数据。
-// 因此必须在 import 之前用 vi.hoisted()+vi.mock('@/api') 把网络边界换成可控假数据,
+// 因此必须在 import 之前用 vi.hoisted()+vi.mock('@/platform/web/api') 把网络边界换成可控假数据,
 // 再 await 一个微任务等 init() 落地, 否则断言会读到尚未填充的空数组。
 // 本测覆盖: init 由 getTagMapping 构建 tagSumList; getTagSumList 返回深拷贝(防御性);
 // getListByTag 命中/缺失; getTagList; 以及 getPredictTag 无匹配时安全返回空数组。
@@ -29,15 +29,15 @@ const { getTagMapping, getDocTagPrediction } = vi.hoisted(() => {
   }
 })
 
-vi.mock('@/api', () => ({
+vi.mock('@/platform/web/api', () => ({
   default: {
     getTagMapping,
     getDocTagPrediction,
   },
 }))
 
-import tagService from '@/service/TagService'
-import CacheService from '@/service/CacheService'
+import tagService from '@/platform/web/service/TagService'
+import { sharedCache } from '@/platform/web/app/sharedCache'
 
 // init() 是异步的: 两次 await api.*(); 用足量微任务 flush 等其落地
 async function flush() {
@@ -48,7 +48,7 @@ async function flush() {
 
 beforeEach(() => {
   // 单例 + 共享缓存底座, 每例清空避免互相污染(@cache 仅缓存 Promise, 同步方法此处主要为防御)
-  CacheService.getInstance().clear()
+  sharedCache.clear()
 })
 
 describe('TagService.init / getTagSumList', () => {

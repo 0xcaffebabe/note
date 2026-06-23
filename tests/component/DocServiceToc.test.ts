@@ -13,7 +13,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
  * 测试环境说明：DocService 是模块加载即构造的单例，导入它会顺带 new 出
  * TagService / KnowledgeNetworkService，二者构造函数会 fire-and-forget 调
  * api.getTagMapping / getDocTagPrediction / getKnowledgeNetwork。故在导入前于
- * 网络边界 mock 掉 '@/api'，让 init 顺利完成。getContent 自身仅依赖 DOMParser，
+ * 网络边界 mock 掉 '@/platform/web/api'，让 init 顺利完成。getContent 自身仅依赖 DOMParser，
  * 无网络/文件副作用，本套件因此放在 component(jsdom) 工程。
  *
  * getContent 被 @cacheByHtml 修饰(以整段 html 字符串为缓存键)。每个用例已使用
@@ -21,7 +21,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
  */
 
 const { fakeEmpty } = vi.hoisted(() => ({ fakeEmpty: () => Promise.resolve([]) }))
-vi.mock('@/api', () => ({
+vi.mock('@/platform/web/api', () => ({
   default: {
     getTagMapping: fakeEmpty,
     getDocTagPrediction: fakeEmpty,
@@ -30,13 +30,13 @@ vi.mock('@/api', () => ({
   },
 }))
 
-import docService from '@/service/DocService'
-import CacheService from '@/service/CacheService'
-import type Content from '@/dto/Content'
+import docService from '@/platform/web/service/DocService'
+import { sharedCache } from '@/platform/web/app/sharedCache'
+import type Content from '@/core/domain/Content'
 
 const getContent = (html: string): Content[] => (docService as any).getContent(html)
 
-beforeEach(() => CacheService.getInstance().clear())
+beforeEach(() => sharedCache.clear())
 
 describe('DocService.getContent 目录树构建', () => {
   it('无任何标题时返回空数组', () => {
@@ -184,7 +184,7 @@ describe('DocService.getContent @cacheByHtml 缓存', () => {
   it('清空缓存后重新构建, 结构相同但为不同引用', () => {
     const html = '<h1 id="a">A</h1>'
     const first = getContent(html)
-    CacheService.getInstance().clear()
+    sharedCache.clear()
     const rebuilt = getContent(html)
     expect(rebuilt).not.toBe(first)
     expect(rebuilt.map((c) => c.link)).toEqual(first.map((c) => c.link))

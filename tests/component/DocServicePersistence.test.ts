@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
  * 这些方法是纯 jsdom localStorage 读写, 不依赖异步 init, 但 import DocService 会顺带构造
  * TagService / KnowledgeNetworkService, 它们的构造函数会 fire-and-forget 调 api.getTagMapping /
  * getDocTagPrediction / getKnowledgeNetwork —— 故必须在 import 前用 vi.hoisted + vi.mock 把
- * '@/api' 这层网络边界全部 stub 成可控空数据, 否则会真的发起 fetch 把测试拖崩。
+ * '@/platform/web/api' 这层网络边界全部 stub 成可控空数据, 否则会真的发起 fetch 把测试拖崩。
  *
  * 重点行为(均已用一次性探针在真实代码上验证, 而非凭直觉):
  *  - 存储键彼此不同且必须精确: last-read 是单冒号 'doc-service:last-read',
@@ -28,9 +28,9 @@ const { apiMock } = vi.hoisted(() => ({
     getDocQualityData: vi.fn().mockResolvedValue([]),
   },
 }))
-vi.mock('@/api', () => ({ default: apiMock }))
+vi.mock('@/platform/web/api', () => ({ default: apiMock }))
 
-import docService from '@/service/DocService'
+import docService from '@/platform/web/service/DocService'
 
 const KEY_LAST = 'doc-service:last-read'
 const KEY_HISTORY = 'doc-service::read-history-list'

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import UrlUtils from '@/util/UrlUtils'
+import UrlUtils from '@/core/util/UrlUtils'
 
 // 路由自愈链路的纯逻辑底座 必须随提交门禁运行(快、无网络、无密钥)
 describe('UrlUtils.concatUrl', () => {

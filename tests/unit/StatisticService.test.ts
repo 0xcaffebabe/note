@@ -4,8 +4,20 @@ import {
   countCodeFrequency,
   aggregateTrend,
   bucketCommitHours,
-} from '@/build/StatisticService'
-import type { CodeFrequencyItem } from '@/dto/StatisticInfo'
+  countCommitsByDay,
+  flattenChangeItems,
+  sumMarkdownDelta,
+  orderByLastCommit,
+  computeCommitStatistic,
+  computeWordStatistic,
+  countMarkdownFiles,
+  countImageFiles,
+  shouldRegenerateTrend,
+} from "@/core/statistic/StatTransforms"
+import type { CodeFrequencyItem } from '@/core/domain/StatisticInfo'
+import DocUtils from '@/core/util/DocUtils'
+import type GitChangeItem from '@/core/domain/git/GitChangeItem'
+import CommitInfo from '@/core/domain/CommitInfo'
 
 // 守护 StatisticService 中从私有方法里抽出的四个纯函数 —— 统计页(代码频率 / 提交趋势 / 小时热力图)的数据底座。
 // 这些核心原先深埋在 getCodeFrequency / generateCommitTotalTrend / generateCommitHourHeatmap 内部,
@@ -214,5 +226,156 @@ describe('bucketCommitHours 按 GMT+8 小时分桶', () => {
       '2024-01-01T18:00:00Z', // +8 -> 26%24 -> 2
     ])
     expect(out).toEqual([['2', 1], ['10', 1]])
+  })
+})
+
+describe('countCommitsByDay 逐日提交计数(不排序)', () => {
+  it('键为 toISOString 规整后的日期, 同日累加', () => {
+    expect(
+      countCommitsByDay(['2024-03-02T10:00:00Z', '2024-03-02T20:00:00Z']),
+    ).toEqual([['2024-03-02', 2]])
+  })
+
+  it('⚠️不排序: 保持 Map 插入序(= 输入首见序), 非按日期升序', () => {
+    // 输入日期降序; 若误加 sort 会变成 [['2024-03-01',1],['2024-03-05',1]]
+    expect(
+      countCommitsByDay(['2024-03-05T00:00:00Z', '2024-03-01T00:00:00Z']),
+    ).toEqual([['2024-03-05', 1], ['2024-03-01', 1]])
+  })
+
+  it('空输入返回空数组', () => {
+    expect(countCommitsByDay([])).toEqual([])
+  })
+})
+
+describe('flattenChangeItems 按 entries 顺序展平(保序)', () => {
+  const item = (filename: string): GitChangeItem => ({ filename, insertions: [], deletions: [] })
+
+  it('多 hash 的变更项按 Map 迭代序首尾相接', () => {
+    const a = item('a.md'), b = item('b.md'), c = item('c.md')
+    const map = new Map<string, GitChangeItem[]>([['h1', [a, b]], ['h2', [c]]])
+    expect(flattenChangeItems(map)).toEqual([a, b, c])
+  })
+
+  it('空 Map 返回空数组', () => {
+    expect(flattenChangeItems(new Map())).toEqual([])
+  })
+})
+
+describe('sumMarkdownDelta .md 净字数/行数(cleanText 注入)', () => {
+  const id = (s: string) => s // 注入恒等 cleanText, 锁定算术与 join 行为
+  const item = (filename: string, insertions: string[], deletions: string[]): GitChangeItem =>
+    ({ filename, insertions, deletions })
+
+  it('净字数 = cleanText(增.join()).len - cleanText(删.join()).len; 净行数 = 增行 - 删行', () => {
+    // insertions.join()='abc,de'(默认逗号连接, len 6); deletions.join()='x'(len 1) => 字 5; 行 2-1=1
+    expect(sumMarkdownDelta([item('a.md', ['abc', 'de'], ['x'])], id)).toEqual([5, 1])
+  })
+
+  it('非 .md 文件被过滤掉, 不计入', () => {
+    expect(sumMarkdownDelta([item('a.md', ['ab'], []), item('b.txt', ['zzzz'], [])], id)).toEqual([2, 1])
+  })
+
+  it('多项求和', () => {
+    // a: 字 2-0=2, 行 1-0=1; b: 字 3-1=2, 行 1-1=0 => [4, 1]
+    expect(
+      sumMarkdownDelta([item('a.md', ['ab'], []), item('b.md', ['cde'], ['x'])], id),
+    ).toEqual([4, 1])
+  })
+
+  it('⚠️ reduce 无初值: 空列表(或全非 md)抛错, 由调用方 .catch 兜底', () => {
+    expect(() => sumMarkdownDelta([], id)).toThrow()
+    expect(() => sumMarkdownDelta([item('x.txt', ['a'], [])], id)).toThrow()
+  })
+})
+
+describe('orderByLastCommit 按提交时间升序 + 忽略名 + 映射 docId', () => {
+  const mk = (date: string): CommitInfo => Object.assign(new CommitInfo(), { date })
+
+  it('升序排序, 过滤 ignoreDoc(按 docId), 元素映射为 [docId, commit]', () => {
+    const ca = mk('2024-02-01T00:00:00Z')
+    const cb = mk('2024-01-01T00:00:00Z')
+    const cr = mk('2024-03-01T00:00:00Z')
+    const pairs: [string, CommitInfo][] = [
+      ['doc/a.md', ca],
+      ['doc/b.md', cb],
+      ['doc/README.md', cr], // docUrl2Id -> 'README', 被忽略
+    ]
+    const out = orderByLastCommit(pairs, ['README', 'SUMMARY'])
+    expect(out).toEqual([
+      [DocUtils.docUrl2Id('doc/b.md'), cb], // b 最早
+      [DocUtils.docUrl2Id('doc/a.md'), ca],
+    ])
+    expect(out.map(v => v[0])).toEqual(['b', 'a'])
+  })
+
+  it('空输入返回空数组', () => {
+    expect(orderByLastCommit([], ['README'])).toEqual([])
+  })
+})
+
+describe('computeCommitStatistic 日均提交/净增行(now 注入)', () => {
+  const DAY = 3600 * 24 * 1000
+  const c = (date: string, insertions: number, deletions: number): CommitInfo =>
+    Object.assign(new CommitInfo(), { date, insertions, deletions })
+
+  it('commitPerDay=两位小数, linePerDay=ceil(净增和/天)', () => {
+    const minMs = Date.parse('2024-01-01T00:00:00Z')
+    const commits = [c('2024-01-01T00:00:00Z', 10, 2), c('2024-01-11T00:00:00Z', 5, 1)]
+    // pastDays = ceil((min+9天 - min)/天) = 9; commitPerDay=2/9=0.22; 净增和=8+4=12 -> ceil(12/9)=2
+    const out = computeCommitStatistic(commits, minMs + 9 * DAY)
+    expect(out).toEqual({ commitPerDay: 0.22, linePerDay: 2 })
+  })
+
+  it('filter(Boolean) 丢掉净增为 0 的提交再求和', () => {
+    const minMs = Date.parse('2024-01-01T00:00:00Z')
+    const commits = [c('2024-01-01T00:00:00Z', 3, 3), c('2024-01-02T00:00:00Z', 6, 1)]
+    // 第一条净增 0 被 filter(Boolean) 丢弃; 和=5; pastDays=ceil(1)=1 -> linePerDay=5
+    const out = computeCommitStatistic(commits, minMs + 1 * DAY)
+    expect(out.linePerDay).toBe(5)
+  })
+})
+
+describe('computeWordStatistic 总字数/日均字数(cleanText+now 注入)', () => {
+  const DAY = 3600 * 24 * 1000
+  const id = (s: string) => s
+  it('total=Σ cleanText(内容).len; wordPerDay=ceil(total/天)', () => {
+    const firstMs = Date.parse('2024-01-01T00:00:00Z')
+    // total=3+2=5; pastDays=ceil(5)=5 -> wordPerDay=ceil(5/5)=1
+    const out = computeWordStatistic(['abc', 'de'], '2024-01-01T00:00:00Z', firstMs + 5 * DAY, id)
+    expect(out).toEqual({ total: 5, wordPerDay: 1 })
+  })
+})
+
+describe('countMarkdownFiles / countImageFiles 文件资产计数', () => {
+  it('章节数 = .md / .MD 结尾(.markdown 不算)', () => {
+    expect(countMarkdownFiles(['a.md', 'b.MD', 'c.txt', 'd.markdown'])).toBe(2)
+  })
+  it('图片数 = 后缀(含大写)命中图片表', () => {
+    expect(countImageFiles(['x.png', 'y.JPG', 'z.txt', 'w.webp', 'a.JPEG'])).toBe(4)
+  })
+  it('空表 -> 0', () => {
+    expect(countMarkdownFiles([])).toBe(0)
+    expect(countImageFiles([])).toBe(0)
+  })
+})
+
+describe('shouldRegenerateTrend 远端趋势是否过期需本地重生成', () => {
+  const DAY = 3600 * 1000 * 24
+  const remote = (date: string): [string, number, number][] => [['2020-01-01T00:00:00Z', 0, 0], [date, 1, 2]]
+
+  it('空 -> true(需本地生成)', () => {
+    expect(shouldRegenerateTrend([], Date.parse('2024-01-01T00:00:00Z'))).toBe(true)
+  })
+  it('末项距今 < 7 天 -> false(用远端)', () => {
+    const last = Date.parse('2024-01-01T00:00:00Z')
+    expect(shouldRegenerateTrend(remote('2024-01-01T00:00:00Z'), last + 3 * DAY)).toBe(false)
+  })
+  it('末项距今 = 7 天 -> true(>= 边界)', () => {
+    const last = Date.parse('2024-01-01T00:00:00Z')
+    expect(shouldRegenerateTrend(remote('2024-01-01T00:00:00Z'), last + 7 * DAY)).toBe(true)
+  })
+  it('⚠️ 非法日期 -> NaN >= 7 为 false(沿用远端, 既有行为)', () => {
+    expect(shouldRegenerateTrend([['not-a-date', 1, 2]], Date.parse('2024-06-01T00:00:00Z'))).toBe(false)
   })
 })

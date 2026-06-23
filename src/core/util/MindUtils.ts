@@ -1,0 +1,31 @@
+import Content from "../domain/Content";
+import MindNode from "../domain/mind/MindNode";
+
+export namespace MindUtils {
+  function _mindConvert(toc: Content[]): MindNode[] {
+    let counter: number = 0;
+    return toc.map((i) => {
+      return {
+        id: i.link,
+        topic: i.name,
+        children: _mindConvert(i.chidren),
+        direction: counter++ % 2 == 0 ? "right" : "left",
+      } as MindNode;
+    });
+  }
+
+  export function mindConvert(toc: Content[], rootTopic: string = "目录"): MindNode[] {
+    const minds = _mindConvert(toc);
+    if (minds.length > 1) {
+      return [{
+        id: "root",
+        topic: rootTopic,
+        expanded: true,
+        children: minds,
+        direction: "left",
+      }];
+    } else {
+      return minds;
+    }
+  }
+}

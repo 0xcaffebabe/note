@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { MindUtils } from '@/pages/doc/mind/MindUtils'
-import type Content from '@/dto/Content'
+import { MindUtils } from '@/core/util/MindUtils'
+import type Content from '@/core/domain/Content'
 
 /**
  * 本套件守护 MindUtils.mindConvert —— 把目录树(Content[])转成思维导图节点(MindNode[])。

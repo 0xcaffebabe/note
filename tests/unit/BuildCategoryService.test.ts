@@ -15,9 +15,15 @@
  *  - 纯文本分组节点(无自身 [](link))其 link 回退为后代第一个 <a> 的 href
  */
 import { describe, it, expect } from 'vitest'
-import { parseSummary, categoryParse } from '@/build/CategoryService'
+import { parseSummary as parseSummaryCore, categoryParse as categoryParseCore } from '@/core/category/SummaryParse'
+import { nodeMarkdown } from '@/adapters/node/NodeMarkdownAdapter'
+import { nodeDomParser } from '@/adapters/node/NodeDomParser'
 import { marked } from 'marked'
-import Category from '@/dto/Category'
+import Category from '@/core/domain/Category'
+
+// 解析已下沉 core/category/SummaryParse(端口注入); 测试用 node 适配器装配, 调用点保持不变。
+const parseSummary = (md: string) => parseSummaryCore(md, nodeMarkdown, nodeDomParser)
+const categoryParse = (html: string) => categoryParseCore(html, nodeDomParser)
 
 describe('parseSummary: SUMMARY.md → 嵌套目录树', () => {
   const md = `* [运维](运维/README.md)

@@ -13,7 +13,7 @@
  * - MDS 距离恢复不在本测范围。
  */
 import { describe, it, expect } from 'vitest'
-import { sim, l2normalize, dot, sqDist, lcg, kmeans, isStopWord } from '@/scripts/clusterMath'
+import { sim, l2normalize, dot, sqDist, lcg, kmeans, isStopWord } from '@/core/algorithm/clusterMath'
 
 describe('sim 余弦相似度', () => {
   it('相同向量相似度为 1', () => {

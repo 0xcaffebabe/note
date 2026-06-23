@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { cleanText, html2text, getMidString, octal2Chinese } from '@/util/StringUtils'
+import { cleanText, html2text, getMidString, octal2Chinese } from '@/core/util/StringUtils'
 
 // 文本清洗用于搜索分词/相似度等环节; 锁定其对中文、标点、空白与空值的处理口径
 describe('cleanText', () => {

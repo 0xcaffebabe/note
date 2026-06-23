@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import HeatMapUtils from '@/pages/home/statistic/HeatMapUtils'
+import HeatMapUtils from '@/core/util/HeatMapUtils'
 
 // 热力图(贡献日历)的纯数据装配工具。两个职责:
 //   1) fillTimeRange: 把稀疏的「日期->次数」补齐成连续日序列, 缺失日补 0;

@@ -7,7 +7,7 @@ vi.mock('algoliasearch', () => ({
   default: vi.fn(() => ({ initIndex: () => ({ search: indexSearch }) })),
 }))
 
-import searchService from '@/service/SearchService'
+import searchService from '@/platform/web/service/SearchService'
 
 // algolia 返回的 hit 结构: _highlightResult.segments[].{id,txt}.value 内嵌 <mark> 高亮
 function hit(url: string, segments: Array<{ id: string; txt: string }>) {
@@ -28,7 +28,7 @@ describe('SearchService.search(algolia)', () => {
       processingTimeMS: 7,
       hits: [hit('/运维/Docker.html', [{ id: '安装 <mark>Docker</mark>', txt: '<mark>Docker</mark> 是容器引擎' }])],
     })
-    const r = await searchService.search('docker', 'algolia')
+    const r = await searchService.search('docker')
     expect(r.took).toBe(7)
     expect(r.list).toHaveLength(1)
     expect(r.list[0].url).toBe('/运维/Docker.html')
@@ -46,7 +46,7 @@ describe('SearchService.search(algolia)', () => {
         ]),
       ],
     })
-    const r = await searchService.search('docker nginx', 'algolia')
+    const r = await searchService.search('docker nginx')
     expect(r.list[0].hilighedSegement).toHaveLength(1) // 无高亮片段已过滤
     expect(r.list[0].hilighedSegement![0].missingKeywords).toEqual(['nginx']) // nginx 未出现
   })
@@ -56,7 +56,7 @@ describe('SearchService.search(algolia)', () => {
       processingTimeMS: 1,
       hits: [hit('/运维/Docker.html', [{ id: 'plain', txt: 'plain text' }])],
     })
-    const r = await searchService.search('zzz', 'algolia')
+    const r = await searchService.search('zzz')
     expect(r.list).toHaveLength(0)
   })
 
@@ -65,14 +65,14 @@ describe('SearchService.search(algolia)', () => {
       processingTimeMS: 1,
       hits: [hit('/运维/Kubernetes.html', [{ id: 'plain', txt: 'plain' }])],
     })
-    const r = await searchService.search('kubernetes', 'algolia')
+    const r = await searchService.search('kubernetes')
     expect(r.list).toHaveLength(1)
     expect(r.list[0].hilighedSegement).toHaveLength(0)
   })
 
   it('空响应返回空列表', async () => {
     indexSearch.mockResolvedValueOnce(undefined)
-    const r = await searchService.search('emptyresp', 'algolia')
+    const r = await searchService.search('emptyresp')
     expect(r).toEqual({ took: 0, list: [] })
   })
 })

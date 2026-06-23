@@ -4,7 +4,7 @@ import {
   isValidCommitSegementHead,
   isValidCommitSegementHeadWithIndex,
   isGitDiffFileDesc,
-} from '@/build/GitService'
+} from "@/core/vcs/GitDiffParse"
 
 /*
  * GitService 的 `git show` diff 解析纯函数测试。

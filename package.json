@@ -6,7 +6,7 @@
     "dev": "vite --configLoader runner",
     "build": "vite build --configLoader runner",
     "serve": "vite preview --configLoader runner",
-    "update-index": "npx tsx ./src/scripts/updateSearchIndex.ts",
+    "update-index": "npx tsx ./src/platform/node/scripts/updateSearchIndex.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",

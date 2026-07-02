@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/logo-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F1F5F9">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1e1e1e">
+    <title>性能工程</title>
+    <style>
+      #buildTime {
+        color: black;
+        font-weight: 600;
+        font-size: 12px;
+        opacity: 0.4;
+        pointer-events: none;
+      }
+      body[theme=dark] #buildTime {
+        color: white;
+      }
+
+      /* ---- 首屏启动骨架: 仅在JS执行前可见 Vue挂载后被替换 ---- */
+      .boot-skeleton {
+        min-height: 100vh;
+        background: #F1F5F9;
+      }
+      .bs-header {
+        height: 60px;
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .bs-body {
+        display: flex;
+        gap: 24px;
+        padding: 16px;
+      }
+      .bs-aside {
+        width: 280px;
+        height: 70vh;
+        flex-shrink: 0;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+      .bs-main {
+        flex: 1;
+        max-width: 820px;
+        padding-top: 24px;
+      }
+      .bs-line {
+        height: 14px;
+        border-radius: 4px;
+        background: rgba(100, 116, 139, 0.12);
+        margin-bottom: 14px;
+      }
+      .bs-line.w40 { width: 40%; height: 24px; margin-bottom: 24px; }
+      .bs-line.w90 { width: 90%; }
+      .bs-line.w75 { width: 75%; }
+      .bs-line.w60 { width: 60%; }
+      html.dark .boot-skeleton { background: #1e1e1e; }
+      html.dark .bs-header { background: #252526; border-bottom-color: #454545; }
+      html.dark .bs-aside { background: #252526; }
+      html.dark .bs-line { background: rgba(255, 255, 255, 0.08); }
+      @media (max-width: 960px) {
+        .bs-aside { display: none; }
+      }
+      /* 文档静态页自带可见正文 无需骨架 */
+      body:has(.static-content) .boot-skeleton { display: none; }
+
+      /* ---- 文档静态正文: JS执行前直接可读 Vue挂载后由main.ts移除 ---- */
+      .static-content {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 24px 20px 60px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+        font-size: 16px;
+        line-height: 1.8;
+        color: #1e293b;
+      }
+      .static-content pre {
+        overflow-x: auto;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 12px;
+        font-size: 14px;
+      }
+      .static-content img { max-width: 100%; height: auto; }
+      .static-content table { border-collapse: collapse; width: 100%; }
+      .static-content th, .static-content td { border: 1px solid #e2e8f0; padding: 8px 12px; }
+      .static-content a { color: #409eff; }
+      .static-content blockquote { border-left: 4px solid #409eff; margin: 16px 0; padding: 4px 16px; color: #64748b; }
+      html.dark .static-content { color: #e0e0e0; }
+      html.dark .static-content pre { background: #252526; border-color: #454545; }
+      html.dark .static-content th, html.dark .static-content td { border-color: #454545; }
+      html.dark .static-content blockquote { color: #a0a0a0; }
+    </style>
+    <script type="module" crossorigin src="/resource/index-BiYFFci2.js"></script>
+    <link rel="modulepreload" crossorigin href="/resource/chunk-QTnfLwEv.js">
+    <link rel="modulepreload" crossorigin href="/resource/LocalStorageAdapter-COFXn1dk.js">
+    <link rel="modulepreload" crossorigin href="/resource/DocUtils-D98sGPt4.js">
+    <link rel="modulepreload" crossorigin href="/resource/CategoryService-fColnITg.js">
+    <link rel="modulepreload" crossorigin href="/resource/css-C9zvLOX1.js">
+    <link rel="modulepreload" crossorigin href="/resource/_arrayPush-YobK-pR-.js">
+    <link rel="stylesheet" crossorigin href="/resource/css-BJMY-vHH.css">
+    <link rel="stylesheet" crossorigin href="/resource/index-CWmGsjTv.css">
+  <link rel="manifest" href="/manifest.webmanifest"><meta name="description" content="性能工程性能工程是贯穿软件系统全生命周期的持续性工程活动，通过性能建模、测试、监控等手段，系统性发现与消除性能瓶颈，确保系统在目标负载下满足响应速度与吞吐量要求。第一性原理原理内涵资源约束原理性能问题...">
+  <meta property="og:title" content="性能工程">
+  <meta property="og:description" content="性能工程性能工程是贯穿软件系统全生命周期的持续性工程活动，通过性能建模、测试、监控等手段，系统性发现与消除性能瓶颈，确保系统在目标负载下满足响应速度与吞吐量要求。第一性原理原理内涵资源约束原理性能问题...">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="知识体系">
+  <meta name="twitter:card" content="summary">
+  <link rel="modulepreload" href="/resource/App-8W3AZsGy.js">
+  <link rel="modulepreload" href="/resource/DocPage-B32BmHHe.js">
+  <link rel="preload" as="style" href="/resource/App-D5JijmP3.css">
+  <link rel="preload" as="style" href="/resource/DocPage-Dt17Z7JD.css">
+  <link rel="preload" as="fetch" href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%80%A7%E8%83%BD%E5%B7%A5%E7%A8%8B.md.json">
+  </head>
+  <body>
+    <script>
+      // 首屏主题预设: 在首帧渲染前同步应用主题 消除暗色用户的白屏闪烁
+      (function () {
+        try {
+          var stored = localStorage.getItem('system::theme')
+          var dark = stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          if (dark) {
+            document.documentElement.classList.add('dark')
+            document.body.setAttribute('theme', 'dark')
+            document.documentElement.style.backgroundColor = '#1e1e1e'
+          } else {
+            document.documentElement.style.backgroundColor = '#F1F5F9'
+          }
+        } catch (e) { /* localStorage 不可用时保持默认浅色 */ }
+      })()
+    </script>
+    <header id="staticHeader" style="display: none;">
+      <ul><li><p><a href="/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.html">💎算法与数据结构</a></p><ul><li><a href="/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%9F%BA%E6%9C%AC%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.html">🧠基本数据结构</a></li><li><a href="/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E7%AE%97%E6%B3%95%E7%AD%96%E7%95%A5.html">⚙️算法策略</a></li><li><a href="/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E6%8E%92%E5%BA%8F.html">🔄排序</a></li><li><a href="/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E6%9F%A5%E6%89%BE.html">🔍查找</a></li><li><a href="/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E6%A0%91.html">🌳树</a></li><li><a href="/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E6%95%A3%E5%88%97%E8%A1%A8.html">🔍散列表</a></li><li><a href="/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%9B%BE.html">🌐图</a></li><li><a href="/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%AD%97%E7%AC%A6%E4%B8%B2.html">📝字符串</a></li></ul></li><li><p>🧮数学</p><ul><li><a href="/%E6%95%B0%E5%AD%A6/%E6%A6%82%E7%8E%87%E8%AE%BA%E4%B8%8E%E6%95%B0%E7%90%86%E7%BB%9F%E8%AE%A1.html">📊概率论与数理统计</a></li><li><a href="/%E6%95%B0%E5%AD%A6/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0.html">🔢线性代数</a></li></ul></li><li><p><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F.html">💽操作系统</a></p><ul><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E8%BF%9B%E7%A8%8B%E4%B8%8E%E7%BA%BF%E7%A8%8B.html">⚙️进程与线程</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86.html">💾内存管理</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E6%96%87%E4%BB%B6%E7%AE%A1%E7%90%86.html">📂文件管理</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA.html">🔌输入/输出</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E6%AD%BB%E9%94%81.html">⚠️死锁</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E8%99%9A%E6%8B%9F%E5%8C%96.html">📦虚拟化</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E5%A4%9A%E5%A4%84%E7%90%86%E6%9C%BA%E7%B3%BB%E7%BB%9F.html">⚙️多处理机系统</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E5%AE%89%E5%85%A8.html">🔒安全</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1.html">🏗️操作系统设计</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/linux/Linux.html">🐧Linux</a><ul><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/linux/%E5%86%85%E6%A0%B8.html">⚙️内核</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E5%AE%B9%E5%99%A8%E5%8C%96.html">📦容器化</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/linux/eBPF.html">🔍eBPF</a></li></ul></li></ul></li><li><p>🏗️软件工程</p><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B.html">🏗️软件工程</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E7%90%86%E8%AE%BA/%E8%BD%AF%E4%BB%B6%E9%9C%80%E6%B1%82.html">📋软件需求</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E7%90%86%E8%AE%BA/%E7%BB%93%E6%9E%84%E5%8C%96%E5%88%86%E6%9E%90%E6%96%B9%E6%B3%95.html">🔍结构化分析方法</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E7%90%86%E8%AE%BA/%E7%BB%93%E6%9E%84%E5%8C%96%E8%AE%BE%E8%AE%A1%E6%96%B9%E6%B3%95.html">⚙️结构化设计方法</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E7%90%86%E8%AE%BA/UML.html">📊UML</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E7%90%86%E8%AE%BA/%E6%95%8F%E6%8D%B7%E8%BD%AF%E4%BB%B6%E5%BC%80%E5%8F%91.html">🏃敏捷软件开发</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E7%90%86%E8%AE%BA/%E9%A1%B9%E7%9B%AE%E7%AE%A1%E7%90%86.html">📊项目管理</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E7%90%86%E8%AE%BA/CMM.html">📊CMM</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1.html">⚙️软件设计</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F.html">🎯设计模式</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F.html">🆕创建型模式</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F.html">🏗️结构型模式</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E6%A8%A1%E5%BC%8F.html">⚙️行为模式</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E8%BD%AF%E4%BB%B6%E5%BC%80%E5%8F%91%E6%9C%AC%E8%B4%A8.html">💡软件开发本质</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E9%A2%86%E5%9F%9F%E9%A9%B1%E5%8A%A8%E8%AE%BE%E8%AE%A1.html">🗺️领域驱动设计</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F.html">🧹代码质量</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E9%98%B2%E9%94%99%E8%AE%BE%E8%AE%A1.html">🛡️防错设计</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E9%98%B2%E5%BE%A1%E5%BC%8F%E7%BC%96%E7%A8%8B.html">🛡️防御式编程</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E4%BB%A3%E7%A0%81%E9%87%8D%E6%9E%84.html">🔄代码重构</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E4%BB%A3%E7%A0%81%E5%AE%A1%E6%9F%A5.html">🔍代码审查</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E6%95%B4%E6%B4%81%E4%BB%A3%E7%A0%81.html">🧹整洁代码</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E7%BC%96%E7%A0%81%E8%A7%84%E8%8C%83.html">📝编码规范</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95.html">🧪软件测试</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95.html">🧪单元测试</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95.html">📈性能测试</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/%E5%85%A8%E9%93%BE%E8%B7%AF%E5%8E%8B%E6%B5%8B.html">📈全链路压测</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95.html">⚙️自动化测试</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/%E6%8E%A5%E5%8F%A3%E6%B5%8B%E8%AF%95.html">🔌接口测试</a></li></ul></li></ul></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%B4%A8%E9%87%8F%E5%B7%A5%E7%A8%8B.html">⚙️质量工程</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E7%A0%94%E5%8F%91%E6%95%88%E8%83%BD.html">⚡研发效能</a></li><li><a href="/%E8%BF%90%E7%BB%B4/%E8%BF%90%E7%BB%B4.html">🔋运维</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/DevOps.html">🔄DevOps</a><ul><li><a href="/%E8%BF%90%E7%BB%B4/%E6%8C%81%E7%BB%AD%E9%9B%86%E6%88%90.html">🔄持续集成</a></li><li><a href="/%E8%BF%90%E7%BB%B4/%E6%8C%81%E7%BB%AD%E4%BA%A4%E4%BB%98.html">🔄持续交付</a></li><li><a href="/%E8%BF%90%E7%BB%B4/%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83.html">🔄灰度发布</a></li></ul></li><li><a href="/%E8%BF%90%E7%BB%B4/Docker.html">📦Docker</a></li><li><a href="/%E8%BF%90%E7%BB%B4/K8s.html">📦K8s</a></li><li><a href="/%E8%BF%90%E7%BB%B4/SRE.html">📈SRE</a></li><li><a href="/%E8%BF%90%E7%BB%B4/AIOps.html">🤖AIOps</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E6%9E%B6%E6%9E%84.html">🏗️架构</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E6%9E%B6%E6%9E%84%E5%B8%88.html">👷架构师</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1.html">🏗️架构设计</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E5%8D%95%E5%85%83%E5%8C%96%E6%9E%B6%E6%9E%84.html">🏗️单元化架构</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E6%BC%94%E8%BF%9B%E5%BC%8F%E6%9E%B6%E6%9E%84.html">🔄演进式架构</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E8%AE%BE%E8%AE%A1%E6%A1%86%E6%9E%B6.html">⚙️设计框架</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E6%9E%B6%E6%9E%84%E6%80%9D%E7%BB%B4.html">🧠架构思维</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E6%9E%B6%E6%9E%84%E6%B2%BB%E7%90%86.html">⚖️架构治理</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E6%8A%80%E6%9C%AF%E5%80%BA%E5%8A%A1.html">技术债务</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E6%95%B0%E6%8D%AE%E7%B3%BB%E7%BB%9F.html">📊数据系统</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1.html">⚙️系统设计</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E6%8A%80%E6%9C%AF%E9%80%89%E5%9E%8B.html">🔍技术选型</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E4%B8%9A%E5%8A%A1%E5%BB%BA%E6%A8%A1.html">🗺️业务建模</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E4%BA%91%E5%8E%9F%E7%94%9F.html">☁️云原生</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E4%BA%91%E8%AE%A1%E7%AE%97.html">☁️云计算</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%88%86%E5%B8%83%E5%BC%8F/%E5%88%86%E5%B8%83%E5%BC%8F.html">🔗分布式</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%88%86%E5%B8%83%E5%BC%8F/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA.html">🔗分布式理论</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%88%86%E5%B8%83%E5%BC%8F/%E5%88%86%E5%B8%83%E5%BC%8F%E5%85%B1%E8%AF%86%E7%AE%97%E6%B3%95.html">🔗分布式共识算法</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%88%86%E5%B8%83%E5%BC%8F/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F.html">🔗分布式系统</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%88%86%E5%B8%83%E5%BC%8F/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE.html">🔗分布式数据</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%88%86%E5%B8%83%E5%BC%8F/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1.html">🔗分布式事务</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%88%86%E5%B8%83%E5%BC%8F/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4%E6%80%A7%E4%B8%8E%E5%8D%8F%E8%B0%83%E6%9C%BA%E5%88%B6.html">🔗分布式一致性与协调机制</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%88%86%E5%B8%83%E5%BC%8F/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4%E6%80%A7%E7%B3%BB%E7%BB%9F.html">🔗分布式一致性系统</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E6%89%A9%E5%B1%95%E6%80%A7.html">📏扩展性</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E4%BC%B8%E7%BC%A9%E6%80%A7.html">📏伸缩性</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%8F%AF%E7%94%A8%E6%80%A7.html">✅可用性</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E9%AB%98%E5%B9%B6%E5%8F%91.html">⚡高并发</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%80%A7%E8%83%BD%E5%B7%A5%E7%A8%8B.html">📈性能工程</a><ul><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E7%A8%8B%E5%BA%8F%E7%BB%93%E6%9E%84%E5%92%8C%E6%89%A7%E8%A1%8C/%E4%BC%98%E5%8C%96%E7%A8%8B%E5%BA%8F%E6%80%A7%E8%83%BD.html">⚙️优化程序性能</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/linux/Linux%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96.html">🐧Linux性能优化</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/%E8%87%AA%E5%8A%A8%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/%E8%B0%83%E4%BC%98.html">⚙️JVM性能优化</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B5%8F%E8%A7%88%E5%99%A8/%E5%89%8D%E7%AB%AF%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96.html">⚡前端性能优化</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BC%98%E5%8C%96.html">数据库优化</a><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/mysql/schema%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E4%BC%98%E5%8C%96.html">设计与数据类型优化</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/mysql/%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96.html">查询优化</a></li></ul></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%AE%B9%E9%87%8F%E4%BF%9D%E9%9A%9C.html">📊容量保障</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E6%95%85%E9%9A%9C%E7%AE%A1%E7%90%86.html">🚨故障管理</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E6%B7%B7%E6%B2%8C%E5%B7%A5%E7%A8%8B.html">🧪混沌工程</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6.html">🚦流量控制</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E7%BC%93%E5%AD%98.html">📦缓存</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7.html">可观测性</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E6%97%A5%E5%BF%97.html">📝日志</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E7%9B%91%E6%8E%A7%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1.html">📊监控系统设计</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%89%8D%E7%AB%AF%E7%9B%91%E6%8E%A7.html">🔍前端监控</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E7%BD%91%E5%85%B3.html">🚪网关</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%8D%B3%E6%97%B6%E6%B6%88%E6%81%AF%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1.html">💬即时消息系统设计</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%B9%BF%E5%91%8A%E5%B9%B3%E5%8F%B0.html">📢广告平台</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E9%87%91%E8%9E%8D%E7%B3%BB%E7%BB%9F.html">💰金融系统</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E4%B8%AD%E5%8F%B0.html">🏭中台</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E6%9E%B6%E6%9E%84%E9%87%8D%E6%9E%84.html">🔄架构重构</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/Web%E5%89%8D%E7%AB%AF/Web%E5%89%8D%E7%AB%AF.html">Web 前端</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/Web%E5%89%8D%E7%AB%AF/%E5%89%8D%E5%90%8E%E7%AB%AF%E5%88%86%E7%A6%BB.html">🔄前后端分离</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/Web%E5%89%8D%E7%AB%AF/%E5%89%8D%E7%AB%AF%E5%B7%A5%E7%A8%8B%E5%8C%96.html">⚙️前端工程化</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/Web%E5%89%8D%E7%AB%AF/%E5%8F%AF%E8%A7%86%E5%8C%96.html">🎨可视化</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/Web%E5%89%8D%E7%AB%AF/%E7%94%A8%E6%88%B7%E4%BD%93%E9%AA%8C%E8%AE%BE%E8%AE%A1.html">🎨用户体验设计</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84%E6%A8%A1%E5%BC%8F/%E6%9E%B6%E6%9E%84%E6%A8%A1%E5%BC%8F.html">架构模式</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84%E6%A8%A1%E5%BC%8F/%E5%88%86%E5%B1%82%E6%9E%B6%E6%9E%84.html">🏗️分层架构</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84%E6%A8%A1%E5%BC%8F/%E8%A1%A8%E7%8E%B0%E5%B1%82.html">表现层</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84%E6%A8%A1%E5%BC%8F/%E5%93%8D%E5%BA%94%E5%BC%8F%E6%9E%B6%E6%9E%84.html">⚡响应式架构</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84%E6%A8%A1%E5%BC%8F/%E5%AF%B9%E8%B1%A1%E5%85%B3%E7%B3%BB%E6%A8%A1%E5%BC%8F.html">🔗对象关系模式</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84%E6%A8%A1%E5%BC%8F/%E5%9F%BA%E6%9C%AC%E6%A8%A1%E5%BC%8F.html">⚙️基本模式</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84%E6%A8%A1%E5%BC%8F/Web%E6%A1%86%E6%9E%B6.html">Web框架</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%BE%AE%E6%9C%8D%E5%8A%A1/%E5%BE%AE%E6%9C%8D%E5%8A%A1.html">微服务</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%BE%AE%E6%9C%8D%E5%8A%A1/%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86/%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86.html">服务治理</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%BE%AE%E6%9C%8D%E5%8A%A1/%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86/%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0.html">🔭服务发现</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%BE%AE%E6%9C%8D%E5%8A%A1/%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83.html">🔧配置中心</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%BE%AE%E6%9C%8D%E5%8A%A1/%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86/%E6%9C%8D%E5%8A%A1%E5%AE%B9%E9%94%99.html">🛡️服务容错</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%BE%AE%E6%9C%8D%E5%8A%A1/%E6%9C%8D%E5%8A%A1%E5%BB%BA%E6%A8%A1.html">服务建模</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%BE%AE%E6%9C%8D%E5%8A%A1/%E9%9B%86%E6%88%90.html">🔗集成</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%BE%AE%E6%9C%8D%E5%8A%A1/ServiceMesh/ServiceMesh.html">ServiceMesh</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/Serverless.html">Serverless</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9C%8D%E5%8A%A1%E8%AE%A1%E7%AE%97.html">☁️服务计算</a></li></ul></li></ul></li><li><p>🔐安全工程</p><ul><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E5%AE%89%E5%85%A8%E6%80%A7.html">🔒安全性</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%AE%89%E5%85%A8%E7%94%9F%E4%BA%A7.html">🔒安全生产</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%89%E5%85%A8.html">🔒大模型安全</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E4%BE%9B%E5%BA%94%E9%93%BE%E5%AE%89%E5%85%A8.html">供应链安全</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8.html">🔐网络安全</a><ul><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E5%AE%89%E5%85%A8.html">🔐网络协议安全</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E9%9A%94%E7%A6%BB%E6%8A%80%E6%9C%AF.html">🔒网络安全隔离技术</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E6%8A%80%E6%9C%AF.html">🔒网络安全技术</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E8%AE%A4%E8%AF%81%E4%B8%8E%E6%8E%88%E6%9D%83.html">🔑认证与授权</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95.html">🔍渗透测试</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/Web%E5%AE%89%E5%85%A8.html">🔒Web安全</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E4%B8%9A%E5%8A%A1%E5%AE%89%E5%85%A8.html">🔒业务安全</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E5%AE%89%E5%85%A8%E6%9E%B6%E6%9E%84.html">🔒安全架构</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E5%AF%86%E7%A0%81%E5%AD%A6/%E5%AF%86%E7%A0%81%E5%AD%A6.html">🔑密码学</a></li></ul></li></ul></li><li><p><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F.html">💻计算机系统</a></p><ul><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E7%A8%8B%E5%BA%8F%E7%BB%93%E6%9E%84%E5%92%8C%E6%89%A7%E8%A1%8C/%E6%95%B0%E6%8D%AE%E7%9A%84%E8%A1%A8%E7%A4%BA.html">🔢数据的表示</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E7%A8%8B%E5%BA%8F%E7%BB%93%E6%9E%84%E5%92%8C%E6%89%A7%E8%A1%8C/%E8%BF%90%E7%AE%97%E6%96%B9%E6%B3%95%E4%B8%8E%E8%BF%90%E7%AE%97%E5%99%A8.html">⚙️运算方法与运算器</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E7%A8%8B%E5%BA%8F%E7%BB%93%E6%9E%84%E5%92%8C%E6%89%A7%E8%A1%8C/%E6%B1%87%E7%BC%96.html">📝汇编</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E7%A8%8B%E5%BA%8F%E7%BB%93%E6%9E%84%E5%92%8C%E6%89%A7%E8%A1%8C/%E6%8C%87%E4%BB%A4%E7%B3%BB%E7%BB%9F.html">⚙️指令系统</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E7%A8%8B%E5%BA%8F%E7%BB%93%E6%9E%84%E5%92%8C%E6%89%A7%E8%A1%8C/%E5%A4%84%E7%90%86%E5%99%A8%E4%BD%93%E7%B3%BB%E6%9E%B6%E6%9E%84.html">⚙️处理器体系架构</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E7%A8%8B%E5%BA%8F%E7%BB%93%E6%9E%84%E5%92%8C%E6%89%A7%E8%A1%8C/%E5%AD%98%E5%82%A8%E5%99%A8%E5%B1%82%E6%AC%A1%E7%BB%93%E6%9E%84.html">💾存储器层次结构</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E7%A8%8B%E5%BA%8F%E7%BB%93%E6%9E%84%E5%92%8C%E6%89%A7%E8%A1%8C/%E6%80%BB%E7%BA%BF.html">🔗总线</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E5%9C%A8%E7%B3%BB%E7%BB%9F%E4%B8%8A%E8%BF%90%E8%A1%8C%E7%A8%8B%E5%BA%8F/%E9%93%BE%E6%8E%A5.html">🔗链接</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E5%9C%A8%E7%B3%BB%E7%BB%9F%E4%B8%8A%E8%BF%90%E8%A1%8C%E7%A8%8B%E5%BA%8F/%E5%BC%82%E5%B8%B8%E6%8E%A7%E5%88%B6%E6%B5%81.html">⚡异常控制流</a></li></ul></li><li><p><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E4%B8%8E%E5%9B%A0%E7%89%B9%E7%BD%91.html">☁️计算机网络</a></p><ul><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E6%8E%92%E6%9F%A5.html">🔍网络排查</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E5%BA%94%E7%94%A8%E5%B1%82.html">📡应用层</a><ul><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/rpc.html">🔗RPC</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/http/HTTP.html">🌐HTTP</a><ul><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/http/Cookie&Session.html">🍪状态管理设计哲学</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/http/%E7%88%AC%E8%99%AB/%E7%88%AC%E8%99%AB.html">🕷️爬虫</a><ul><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/http/%E7%88%AC%E8%99%AB/%E5%8F%8D%E7%88%AC%E8%99%AB.html">🔒反爬虫</a></li></ul></li></ul></li></ul></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E8%BF%90%E8%BE%93%E5%B1%82.html">📦运输层</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%B1%82.html">🌐网络层</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E9%93%BE%E8%B7%AF%E5%B1%82.html">🔗链路层</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E6%97%A0%E7%BA%BF%E7%BD%91%E7%BB%9C.html">📶无线网络</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E5%A4%9A%E5%AA%92%E4%BD%93%E7%BD%91%E7%BB%9C.html">📺多媒体网络</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%89%A9%E8%81%94%E7%BD%91.html">📱物联网</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B.html">网络编程</a><ul><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/IO%E6%A8%A1%E5%9E%8B.html">IO模型</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/MQTT.html">📡MQTT</a></li></ul></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/Linux%E8%99%9A%E6%8B%9F%E5%8C%96.html">🌐Linux 网络虚拟化</a></li></ul></li><li><p><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80.html">👨‍💻编程语言</a></p><ul><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F/%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F.html">🔄编程范式</a><ul><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1.html">🔄面向对象</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F/%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BC%96%E7%A8%8B.html">🔄函数式编程</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F/%E5%93%8D%E5%BA%94%E5%BC%8F%E7%BC%96%E7%A8%8B.html">⚡响应式编程</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F/%E9%80%BB%E8%BE%91%E7%BC%96%E7%A8%8B.html">🔍逻辑编程</a></li></ul></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%9E%8B.html">🔄并发模型</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B.html">并发编程</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E8%AF%AD%E6%B3%95%E7%B3%96.html">🍬语法糖</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/C.html">📝C语言</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80.html">☕Java</a><ul><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/Java%E8%B0%9C%E9%A2%98.html">🤔Java谜题</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/%E9%9B%86%E5%90%88/%E9%9B%86%E5%90%88.html">📦集合</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/%E5%BC%82%E5%B8%B8.html">⚠️异常</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/IO.html">📁IO</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/%E6%B3%9B%E5%9E%8B.html">🔄泛型</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/%E6%B3%A8%E8%A7%A3.html">🏷️注解</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/%E5%8F%8D%E5%B0%84.html">🔍反射</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JAVA%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/JAVA%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B.html">⚡Java 并发编程</a><ul><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JAVA%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/%E7%BA%BF%E7%A8%8B.html">🔄线程</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JAVA%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/%E5%B9%B6%E5%8F%91%E5%B7%A5%E5%85%B7%E7%B1%BB.html">⚙️并发工具类</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JAVA%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/%E5%B9%B6%E5%8F%91%E9%9B%86%E5%90%88.html">📦并发集合</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JAVA%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/%E7%BA%BF%E7%A8%8B%E6%B1%A0.html">⚙️线程池</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JAVA%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/Disruptor.html">⚡Disruptor</a></li></ul></li><li>🌐网络编程<ul><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/NIO.html">⚡NIO</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/Servlet.html">🌐Servlet</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E6%A1%86%E6%9E%B6/netty/netty.html">🔗Netty</a></li></ul></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/Lambda%E8%A1%A8%E8%BE%BE%E5%BC%8F.html">🔄Lambda 表达式</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/Stream%E6%B5%81.html">🔄Stream 流</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/JAVA%E8%BF%90%E8%A1%8C%E7%AE%A1%E7%90%86.html">⚙️Java 运行管理</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/JVM.html">⚙️JVM</a><ul><li><strong>⚙️自动内存管理</strong><ul><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/%E8%87%AA%E5%8A%A8%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84.html">💾内存结构</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/%E8%87%AA%E5%8A%A8%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6.html">♻️垃圾回收</a></li></ul></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/%E5%AD%97%E8%8A%82%E7%A0%81.html">⚙️字节码</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/%E5%AD%97%E8%8A%82%E7%A0%81%E6%89%A7%E8%A1%8C%E5%BC%95%E6%93%8E.html">⚙️字节码执行引擎</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6.html">🔄类加载机制</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/%E5%89%8D%E7%AB%AF%E7%BC%96%E8%AF%91%E4%B8%8E%E4%BC%98%E5%8C%96.html">⚙️前端编译与优化</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/%E5%90%8E%E7%AB%AF%E7%BC%96%E8%AF%91%E4%B8%8E%E4%BC%98%E5%8C%96.html">⚙️后端编译与优化</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/JAVA%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B.html">🔗Java 内存模型</a></li></ul></li><li>-框架-</li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E6%A1%86%E6%9E%B6/ORM.html">ORM</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E6%A1%86%E6%9E%B6/%E4%BE%9D%E8%B5%96%E6%B3%A8%E5%85%A5.html">依赖注入</a></li></ul></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JavaScript/JavaScript.html">🌐JavaScript</a><ul><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JavaScript/Node/NodeJs.html">🌐NodeJS</a></li><li>第三方库/框架</li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JavaScript/Vue.html">💚Vue</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JavaScript/React.html">⚛️React</a></li></ul></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/python.html">🐍Python</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/typescript.html">📝TypeScript</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/Rust.html">🦀Rust</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/C++.html">📝C++</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/WebAssembly.html">🌐WebAssembly</a></li></ul></li><li><p><a href="/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86.html">⚙️编译原理</a></p></li><li><p>🔨DSL</p><ul><li><a href="/DSL/SQL.html">📊SQL</a></li></ul></li><li><p>📊数据管理</p><ul><li>📊数据科学<ul><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0.html">🧠机器学习</a><ul><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E7%9B%91%E7%9D%A3%E5%AD%A6%E4%B9%A0.html">🧠监督学习</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E9%9D%9E%E7%9B%91%E7%9D%A3%E5%AD%A6%E4%B9%A0.html">🧠非监督学习</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0.html">🧠深度学习</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B.html">⚙️特征工程</a></li></ul></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F.html">🎯推荐系统</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90.html">📊数据分析</a></li></ul></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E5%BB%BA%E6%A8%A1.html">⚙️数据建模</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E6%B2%BB%E7%90%86.html">⚙️数据治理</a><ul><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E5%85%83%E6%95%B0%E6%8D%AE%E7%AE%A1%E7%90%86.html">元数据管理</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E8%B4%A8%E9%87%8F.html">数据质量</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E8%A1%80%E7%BC%98.html">数据血缘</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E5%88%86%E5%B1%82.html">数据分层</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E5%90%88%E8%A7%84%E4%B8%8E%E5%AE%89%E5%85%A8.html">合规与安全</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E8%BF%90%E7%BB%B4.html">数据运维</a></li></ul></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E5%B7%A5%E7%A8%8B.html">⚙️数据工程</a><ul><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E6%9E%B6%E6%9E%84.html">🏗️数据架构</a><ul><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E7%BD%91%E6%A0%BC.html">🏗️数据网格</a></li></ul></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E5%A4%A7%E6%95%B0%E6%8D%AE.html">📊大数据</a><ul><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/Hadoop.html">📊Hadoop</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%A3%80%E7%B4%A2%E6%8A%80%E6%9C%AF.html">🔍检索技术</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E9%9B%86%E6%88%90.html">🔗数据集成</a><ul><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E5%9F%8B%E7%82%B9%E8%AE%BE%E8%AE%A1.html">⚙️埋点设计</a></li></ul></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8.html">💾数据存储</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86.html">⚙️数据处理</a><ul><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%B5%81%E5%A4%84%E7%90%86.html">⚙️流处理</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6%E7%B3%BB%E7%BB%9F.html">⚙️任务调度系统</a></li></ul></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E4%B8%AD%E5%8F%B0.html">🏭数据中台</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93.html">🗄️数据仓库</a></li></ul></li></ul></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E5%BA%94%E7%94%A8.html">📊数据应用</a></li></ul></li><li><p>🍚中间件</p><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%95%B0%E6%8D%AE%E5%BA%93.html">💾数据库</a><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F/%E6%95%B0%E6%8D%AE%E5%BA%93%E8%AE%BE%E8%AE%A1.html">⚙️数据库设计</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E7%B4%A2%E5%BC%95.html">🔍索引</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F/%E4%BA%8B%E5%8A%A1%E7%AE%A1%E7%90%86/%E4%BA%8B%E5%8A%A1.html">🔄事务</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93.html">🔗分布式数据库</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E4%B8%AD%E9%97%B4%E4%BB%B6.html">分库分表中间件</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B.html">数据类型</a></li><li>-关系数据库-</li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/mysql/mysql.html">MySQL</a><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/mysql/%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E.html">⚙️存储引擎</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/mysql/%E5%A4%8D%E5%88%B6.html">🔄复制</a></li></ul></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/PostgreSQL.html">PostgreSQL</a></li><li>-缓存-</li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/Redis.html"> Redis</a><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.html">⚙️数据结构</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/%E6%8C%81%E4%B9%85%E5%8C%96.html">💾持久化</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/%E5%AE%A2%E6%88%B7%E7%AB%AF.html">⚙️客户端</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/%E5%A4%8D%E5%88%B6.html">🔄复制</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/%E5%93%A8%E5%85%B5.html">🛡️哨兵</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/%E9%9B%86%E7%BE%A4.html">🔗集群</a></li></ul></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%96%87%E6%A1%A3%E6%95%B0%E6%8D%AE%E5%BA%93.html">文档数据库</a><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/ElasticSearch.html">🔍ElasticSearch</a></li></ul></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%9B%BE%E6%95%B0%E6%8D%AE%E5%BA%93.html">图数据库</a></li></ul></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97.html">🔄消息队列</a><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka.html">Kafka</a><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/%E6%B6%88%E8%B4%B9%E8%80%85.html">👤消费者</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/%E7%94%9F%E4%BA%A7%E8%80%85.html">👤生产者</a></li></ul></li></ul></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/web%E4%B8%AD%E9%97%B4%E4%BB%B6/web%E4%B8%AD%E9%97%B4%E4%BB%B6.html">🌐web容器/服务器</a><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/web%E4%B8%AD%E9%97%B4%E4%BB%B6/Tomcat.html">😺Tomcat</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/web%E4%B8%AD%E9%97%B4%E4%BB%B6/Nginx.html">Nginx</a></li></ul></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B5%8F%E8%A7%88%E5%99%A8/%E6%B5%8F%E8%A7%88%E5%99%A8.html">🌐浏览器</a><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B5%8F%E8%A7%88%E5%99%A8/V8.html">V8引擎</a></li></ul></li></ul></li><li><p><a href="/%E4%BA%A7%E5%93%81/%E4%BA%A7%E5%93%81.html">🖼️产品</a></p><ul><li><a href="/%E4%BA%A7%E5%93%81/%E4%BA%A7%E5%93%81%E6%88%98%E7%95%A5.html">📊产品战略</a></li><li><a href="/%E4%BA%A7%E5%93%81/%E4%BA%A7%E5%93%81%E5%88%9B%E6%96%B0.html">💡产品创新</a></li><li><a href="/%E4%BA%A7%E5%93%81/2B%E4%BA%A7%E5%93%81.html">🏢2B产品</a></li><li><a href="/%E4%BA%A7%E5%93%81/%E5%A2%9E%E9%95%BF.html">📈增长</a></li></ul></li><li><p><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF.html">💪个人成长</a></p><ul><li><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/%E6%80%9D%E7%BB%B4.html">🧠思维</a></li><li><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/%E5%AD%A6%E4%B9%A0%E6%96%B9%E6%B3%95%E8%AE%BA.html">📚学习方法论</a></li><li><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/OKR.html">🎯OKR</a></li><li><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/%E8%81%8C%E5%9C%BA/%E8%81%8C%E5%9C%BA.html">💼职场</a><ul><li><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/%E8%81%8C%E5%9C%BA/%E6%8A%80%E6%9C%AF%E7%AE%A1%E7%90%86.html">👨‍💼技术管理</a></li><li><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/%E8%81%8C%E5%9C%BA/%E9%9D%A2%E8%AF%95.html">面试</a></li><li><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/%E8%81%8C%E5%9C%BA/%E6%8B%9B%E8%81%98.html">招聘</a></li><li><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/%E8%81%8C%E5%9C%BA/%E8%81%8C%E4%B8%9A%E7%B4%A0%E5%85%BB.html">素养</a></li></ul></li><li><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/%E5%A4%8D%E7%9B%98.html">🔄复盘</a></li></ul></li></ul>
+    </header>
+    <div id="app">
+      <div class="boot-skeleton">
+        <div class="bs-header"></div>
+        <div class="bs-body">
+          <div class="bs-aside"></div>
+          <div class="bs-main">
+            <div class="bs-line w40"></div>
+            <div class="bs-line w90"></div>
+            <div class="bs-line w75"></div>
+            <div class="bs-line w90"></div>
+            <div class="bs-line w60"></div>
+            <div class="bs-line w75"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="position: fixed; bottom: 10px; right: 10px" id="buildTime"></div>
+  <div class='content static-content'><h1>性能工程</h1>
+<blockquote>
+<p>性能工程是贯穿软件系统全生命周期的持续性工程活动，通过性能建模、测试、监控等手段，系统性发现与消除性能瓶颈，确保系统在目标负载下满足响应速度与吞吐量要求。</p>
+</blockquote>
+<h2>第一性原理</h2>
+<table>
+<thead>
+<tr>
+<th>原理</th>
+<th>内涵</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>资源约束原理</strong></td>
+<td>性能问题的本质是资源供需矛盾——CPU、内存、I/O、网络等资源在单位时间内提供的供给，永远小于或勉强等于需求</td>
+</tr>
+<tr>
+<td><strong>响应时间约束</strong></td>
+<td>用户对延迟的容忍存在生理上限</td>
+</tr>
+<tr>
+<td><strong>木桶原理</strong></td>
+<td>系统整体性能由最薄弱环节决定，先找短板，再优化</td>
+</tr>
+<tr>
+<td><strong>拐点原理</strong></td>
+<td>性能与负载的关系是非线性的——在临界点之前性能稳定增长，临界点之后急剧劣化</td>
+</tr>
+</tbody></table>
+<h3>第一性推导</h3>
+<ol>
+<li>**性能是被设计出来的，不是被测试出来的** — 设计阶段就决定了是否能避免性能问题，而非上线后救火</li>
+<li>**性能优化有明确的边界：瓶颈在哪里，优化就在哪里** — 测不准瓶颈，优化就是盲目的</li>
+<li>**性能指标必须可度量，否则不可优化** — RT、吞吐量、资源利用率必须转化为可量化的目标</li>
+<li>**性能是持续治理，不是一次性项目** — 业务演进、架构变化，性能问题会不断涌现</li>
+</ol>
+<h3>性能的本质</h3>
+<p>性能不是单一指标，而是<strong>系统在资源约束下处理请求的能力表现</strong>，本质由以下不变量决定：</p>
+<ul>
+<li>**工作负载模型（Workload）**：请求到达方式、强度、分布</li>
+<li>**执行结构（Execution Structure）**：串行 / 并行 / 协调方式</li>
+<li>**资源约束（Resources）**：CPU、内存、IO、网络、锁</li>
+<li>**调度与协调成本（Coordination Cost）**</li>
+</ul>
+<p>性能问题永远是<strong>结构性问题</strong>，而非参数问题。</p>
+<h3>性能优化的基本原则</h3>
+<ul>
+<li>优先优化**最大瓶颈**（Amdahl 定律）</li>
+<li>必须先**定位根因**，再谈优化</li>
+<li>所有优化都存在 **权衡**（性能 / 成本 / 复杂度 / 稳定性）</li>
+<li>**过早优化是万恶之源**，但**没有性能建模的设计是失职的**</li>
+</ul>
+<h3>性能工程闭环</h3>
+<pre><code>需求定义 → 建模分析 → 设计验证 → 测试度量 → 监控优化
+    ↑                                          ↓
+    └──────────────────────────────────────────┘
+                    持续迭代
+</code></pre>
+<h2>性能工程方法论</h2>
+<h3>核心方法论框架</h3>
+<p>性能工程有三套互补的方法论，分别对应规划、定位、容量三个核心问题：</p>
+<table>
+<thead>
+<tr>
+<th>方法论</th>
+<th>回答的问题</th>
+<th>核心洞察</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>SEI六区域</strong></td>
+<td>如何规划一次完整的性能测试？</td>
+<td>测试计划必须覆盖目标、用户、用例、环境、场景六个维度，缺一则失真</td>
+</tr>
+<tr>
+<td><strong>RBI瓶颈识别</strong></td>
+<td>如何快速定位性能瓶颈？</td>
+<td>80%的瓶颈源于吞吐量受限，而非并发；瓶颈定位应从资源层入手，先排除硬件/网络问题，再深入代码层排查。</td>
+</tr>
+<tr>
+<td><strong>性能下降曲线</strong></td>
+<td>如何确定系统的容量边界？</td>
+<td>性能随负载非线性变化，存在拐点；容量规划的本质是找到这个拐点并预留安全边界</td>
+</tr>
+</tbody></table>
+<p><strong>三者的关系</strong>：SEI告诉"测什么"，RBI告诉"问题在哪"，性能曲线告诉"能承受多少"。三者顺序执行，构成完整的测试规划→执行→验收闭环。</p>
+<h3>两条关键原则</h3>
+<p><strong>原则一：性能问题本质上是资源供需匹配问题。</strong> 无论系统多复杂，性能瓶颈的本质只有两种：供给不足（资源耗尽）或调度低效（资源未能充分利用）。
+USE方法（利用率/饱和度/错误）正是这套原则的操作化表达：先看资源是否被充分使用（利用率），再看是否有任务在排队等待（饱和度），最后检查错误是否放大问题（错误）。
+这套框架适用于CPU、内存、网络、磁盘、线程池、连接池一切资源。</p>
+<p><strong>原则二：性能测试的核心是建模，而非测速。</strong> 性能测试的本质不是用工具向系统施压，而是建立真实负载与系统响应的映射模型。测速只告诉"系统在X压力下挂了"，建模告诉"系统为什么在X压力下挂，以及如何预测Y压力下的表现"。</p>
+<h3>业务模型设计</h3>
+<p>核心目标：<strong>以真实业务比例、调用链、负载特征为依据还原生产行为。</strong></p>
+<h4>构建步骤</h4>
+<pre><code class="language-mermaid">stateDiagram-v2
+  统计生产业务量 --&gt; 统计业务场景峰值TPS
+  统计业务场景峰值TPS --&gt; 得到各接口请求比例
+  得到各接口请求比例 --&gt; 梳理业务流程
+  梳理业务流程 --&gt; 在测试中实现业务比例
+</code></pre>
+<h4>建模原则</h4>
+<ol>
+<li>**以日志数据为依据**，从真实生产访问日志中抽取；</li>
+<li>**以业务流程为驱动**，保持链路依赖一致；</li>
+<li>**考虑时间分布特性**（如高峰/低谷周期性特征）；</li>
+<li>**模拟外部系统依赖**，保持响应行为一致。</li>
+</ol>
+<h3>瓶颈定位的模式</h3>
+<p>RBI方法的核心是：<strong>性能瓶颈定位应从确定问题的性质开始，而不是从检查代码开始。</strong></p>
+<pre><code>第一步：确定是&quot;并发限制&quot;还是&quot;吞吐量限制&quot;
+    ↓
+第二步：根据性质选择分析路径
+    ↓
+第三步：自上而下逐层检查（网络→硬件→数据库→应用→代码）
+</code></pre>
+<p>大量性能问题的根源在架构层（网络带宽、负载均衡、数据库连接池），而非代码层。先确定性质，可以节省大量无效排查。</p>
+<h4>根因分析</h4>
+<blockquote>
+<p><strong>不定位根因的优化是盲目的</strong>。消除表象而不解决根本原因，问题必然反复。</p>
+</blockquote>
+<h5>本质</h5>
+<p>根因分析是<strong>系统化追溯问题本质原因</strong>的方法论：</p>
+<ul>
+<li>**治标先治本**：解决根本原因而非现象</li>
+<li>**多因一果**：性能问题通常由多因素叠加</li>
+<li>**聚焦可控**：找自身可改变的因素，非外部不可控条件</li>
+</ul>
+<h5>两种分析路径</h5>
+<table>
+<thead>
+<tr>
+<th>路径</th>
+<th>起点</th>
+<th>目标</th>
+<th>时机</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>自顶向下</strong></td>
+<td>用户体验/业务指标</td>
+<td>定位已发生的显性问题</td>
+<td>问题已影响用户</td>
+</tr>
+<tr>
+<td><strong>自底向上</strong></td>
+<td>系统资源指标</td>
+<td>发现潜在风险</td>
+<td>问题尚未发生</td>
+</tr>
+</tbody></table>
+<p><strong>实践</strong>：先自顶向下解决显性，再自底向上深挖隐患。</p>
+<h5>核心方法：USE</h5>
+<p>快速定位资源瓶颈的检查框架——对每个资源检查三维度：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>含义</th>
+<th>性能信号</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>利用率（U）</strong></td>
+<td>资源忙碌比例</td>
+<td>>80% 持续可能是瓶颈</td>
+</tr>
+<tr>
+<td><strong>饱和度（S）</strong></td>
+<td>等待队列长度</td>
+<td>非零 = 已过拐点</td>
+</tr>
+<tr>
+<td><strong>错误（E）</strong></td>
+<td>故障事件</td>
+<td>直接反映失效</td>
+</tr>
+</tbody></table>
+<p><strong>原则</strong>：利用率高且饱和度高 → 找到瓶颈点。</p>
+<h5>追问技术：5Why</h5>
+<p>穿透表象的连续追问法，聚焦"为什么发生"而非"谁的责任"。</p>
+<p><strong>要点</strong>：追因不追责、朝可控方向追、停于可行动层。</p>
+<p><strong>局限</strong>：适合单线因果，不适合多因素复杂问题。</p>
+<h5>结构化工具：鱼骨图</h5>
+<p>展开可能因素的图形化工具（6M：人、机、料、法、环、测）。<strong>使用</strong>：鱼骨图展开因素 → 5Why深挖关键因。
+本质是一种结构化思维工具，迫使思考者从多个角度审视问题</p>
+<h5>拐点法</h5>
+<p>资源利用率趋近100%时，延迟呈非线性爆炸。利用这一特性识别瓶颈：逐步加压绘制RT/TPS曲线，曲线拐点处即为饱和临界点。<strong>原则</strong>：拐点之前无需干预。</p>
+<h5>常见误区</h5>
+<table>
+<thead>
+<tr>
+<th>误区</th>
+<th>正确做法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>把现象当根因</td>
+<td>追问到具体机制</td>
+</tr>
+<tr>
+<td>从不可控因素入手</td>
+<td>聚焦自身可改变因素</td>
+</tr>
+<tr>
+<td>单次追问就停止</td>
+<td>连续追问直到行动层</td>
+</tr>
+<tr>
+<td>验证前就行动</td>
+<td>数据验证后再优化</td>
+</tr>
+</tbody></table>
+<h3>容量管理的模式</h3>
+<p>性能下降曲线揭示了一个非线性规律：系统性能并非随负载线性下降，而是在某个临界点突然恶化。这决定了容量管理的核心模式：</p>
+<p><strong>容量规划不是线性外推，而是拐点管理。</strong></p>
+<p>实践中：扩容决策应以拐点为参照，安全边际 = 拐点容量 × 安全系数，监控的核心目标是提前发现是否逼近拐点，而非等待系统报警。</p>
+<p>完整的容量治理闭环见 <a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%AE%B9%E9%87%8F%E4%BF%9D%E9%9A%9C.html">容量保障</a>。</p>
+<h3>边界条件与反模式</h3>
+<h4>权衡原则</h4>
+<ul>
+<li>**性能 vs 复杂度**：引入优化前评估维护成本</li>
+<li>**性能 vs 可用性**：过度优化可能导致系统脆弱</li>
+<li>**局部 vs 全局**：优化局部可能损害全局性能</li>
+</ul>
+<h4>判断框架</h4>
+<p>进行优化前，先回答：</p>
+<ol>
+<li>**瓶颈是否已验证？** 未定位根因的优化是盲目的</li>
+<li>**收益层级是否正确？** 架构层 > 应用层 > 配置层</li>
+<li>**收益是否大于成本？** 优化复杂度不应超过问题本身</li>
+<li>**是否在拐点之前？** 无问题状态下谨慎干预，拐点前的主动压测是规划行为，非问题驱动的优化是浪费</li>
+</ol>
+<h4>认知偏差</h4>
+<p><strong>把平均值当正常</strong>：性能数据分布高度不对称，大量请求在10ms完成，少量请求耗时500ms+。平均值掩盖长尾，P99才是用户真实感知的"最坏情况"。</p>
+<p><strong>把相关性当因果性</strong>：两指标同时变化不代表因果。A指标和B指标同时上升，可能源于第三方因素如业务流量增加。定位瓶颈必须找到因果链，而非共变关系。</p>
+<p><strong>未定位根因就修改</strong>：凭直觉猜测修改，容易引入新问题，问题依旧。</p>
+<h4>测试实践</h4>
+<p><strong>测试环境与生产脱节</strong>：测试环境的硬件、数据量级、网络拓扑与生产差异显著，导致测试结果无法预测生产表现。</p>
+<p><strong>把测试当优化</strong>：测试只能发现问题，不能解决问题。只测不优化是最常见的资源浪费。</p>
+<h4>分析方法</h4>
+<p><strong>跳过瓶颈定位直接优化</strong>：发现性能问题后直接从代码层寻找方案，忽略架构层问题。大量时间浪费在次要路径。</p>
+<p><strong>忽略系统性视角</strong>：只关注单组件指标，忽略组件间依赖和级联效应。数据库CPU低不代表无瓶颈，可能是连接池耗尽的外化。</p>
+<p><strong>优化错误层级</strong>：在低收益层级反复优化，投入产出比极低。</p>
+<p><strong>忽视数据规模</strong>：小数据假设适用于大数据，线性算法在规模下失效。</p>
+<h4>设计决策</h4>
+<p><strong>无性能建模的设计</strong>：设计阶段不考虑性能约束，这将导致系统天然存在瓶颈。</p>
+<p><strong>过早优化</strong>：缺乏数据支撑下优化非热点代码。优化有成本，未在瓶颈路径上的优化是浪费。</p>
+<p><strong>过度工程</strong>：引入与性能收益不匹配的复杂性。如为日活1000系统设计微服务架构。</p>
+<p><strong>为性能牺牲质量</strong>：牺牲可读性/可维护性追求性能，实际会积累技术债务。</p>
+<h4>核心偏差分类</h4>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>本质</th>
+<th>后果</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>认知偏差</strong></td>
+<td>对数据含义的误解</td>
+<td>用错误指标指导决策</td>
+</tr>
+<tr>
+<td><strong>实践偏差</strong></td>
+<td>测试过程不规范</td>
+<td>结果无法反映真实状况</td>
+</tr>
+<tr>
+<td><strong>方法偏差</strong></td>
+<td>分析路径错误</td>
+<td>治标不治本</td>
+</tr>
+</tbody></table>
+<p><strong>防范原则</strong>：质疑假设、验证前提、追踪因果。</p>
+<h3>方法论选择决策树</h3>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐方法论</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>性能测试规划阶段</td>
+<td>SEI六区域</td>
+</tr>
+<tr>
+<td>性能问题定位阶段</td>
+<td>RBI + USE</td>
+</tr>
+<tr>
+<td>容量规划决策阶段</td>
+<td>性能下降曲线</td>
+</tr>
+<tr>
+<td>服务监控阶段</td>
+<td>RED + USE</td>
+</tr>
+</tbody></table>
+<h2>性能分析理论与数理基础</h2>
+<p>性能分析理论与数理基础为性能优化提供量化分析框架，将经验判断转化为可预测、可推导的系统性方法</p>
+<h3>经典法则</h3>
+<table>
+<thead>
+<tr>
+<th>定律</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>二八定律</strong></td>
+<td>80% 的性能问题来源于 20% 的热点代码或场景</td>
+</tr>
+<tr>
+<td><strong>阿姆达尔定律</strong></td>
+<td>优先优化耗时最长的部分，整体性能提升最明显</td>
+</tr>
+<tr>
+<td><strong>Little定律</strong></td>
+<td>L = λ × W，用于分析系统中平均请求数、到达速率和响应时间之间的关系</td>
+</tr>
+</tbody></table>
+<h3>点估计指标</h3>
+<ul>
+<li>**平均值（Mean）**：易受极值影响；</li>
+<li>**中位数（Median）**：对非对称分布稳定；</li>
+<li>**四分位数/百分位数**：描述数据分布形态；</li>
+<li>**方差/标准差**：描述波动性。</li>
+</ul>
+<h3>常见分布模型</h3>
+<table>
+<thead>
+<tr>
+<th>分布类型</th>
+<th>应用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>泊松分布</strong></td>
+<td>单位时间内随机事件的发生次数</td>
+</tr>
+<tr>
+<td><strong>二项分布</strong></td>
+<td>成功/失败试验的统计</td>
+</tr>
+<tr>
+<td><strong>正态分布</strong></td>
+<td>大多数性能采样数据的自然形态</td>
+</tr>
+</tbody></table>
+<h3>排队论模型</h3>
+<pre><code class="language-mermaid">stateDiagram-v2
+  state 随机服务系统 {
+    队列 --&gt; 服务机构: 服务规则
+  }
+  顾客 --&gt; 队列: 到达请求(输入)
+  服务机构 --&gt; [*]: 响应完成(输出)
+</code></pre>
+<p>应用场景：分析线程池、连接池、消息队列的等待与吞吐极限。</p>
+<h2>性能指标体系</h2>
+<p>性能指标反映了系统在不同负载下的可用性、可伸缩性和资源利用效率。常见核心指标如下：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>含义</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>RT（Response Time）响应时间</td>
+<td>请求发出到收到响应的耗时</td>
+<td>反映用户体验的直接指标</td>
+</tr>
+<tr>
+<td>TPS / QPS（Throughput）吞吐量</td>
+<td>单位时间内系统处理的请求数</td>
+<td>衡量系统整体处理能力</td>
+</tr>
+<tr>
+<td>并发用户数</td>
+<td>系统可同时处理的用户请求数</td>
+<td>衡量系统的并发承载能力</td>
+</tr>
+<tr>
+<td>成功率 / 错误率</td>
+<td>成功响应与错误响应的比例</td>
+<td>用于衡量稳定性</td>
+</tr>
+<tr>
+<td>资源利用率</td>
+<td>CPU、内存、I/O、网络等资源使用效率</td>
+<td>衡量系统负载均衡性</td>
+</tr>
+<tr>
+<td>扩展性（Scalability）</td>
+<td>随资源增加性能提升的能力</td>
+<td>衡量架构弹性</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>RT 与吞吐量</strong>成反比关系：当响应时间下降时，系统吞吐量通常会上升。</p>
+</blockquote>
+<h3>微基准 vs 宏基准</h3>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>微基准</th>
+<th>宏基准</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>关注点</td>
+<td>实现效率</td>
+<td>系统能力</td>
+</tr>
+<tr>
+<td>风险</td>
+<td>JIT / 抖动</td>
+<td>场景失真</td>
+</tr>
+<tr>
+<td>价值</td>
+<td>局部优化</td>
+<td>架构决策</td>
+</tr>
+</tbody></table>
+<h3>基准性能指标</h3>
+<p>在稳定、无干扰的环境下测得的单业务性能基线，基准性能指标为性能变化提供可度量的参照，使优化效果可对比、异常可检测、容量可推演：</p>
+<table>
+<thead>
+<tr>
+<th>业务名称</th>
+<th>TPS</th>
+<th>TPS方差</th>
+<th>响应时间</th>
+<th>响应时间方差</th>
+<th>P90</th>
+<th>P95</th>
+<th>P99</th>
+<th>成功率</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>业务1</td>
+<td>500</td>
+<td>5%</td>
+<td>100ms</td>
+<td>5%</td>
+<td>150ms</td>
+<td>300ms</td>
+<td>500ms</td>
+<td>100%</td>
+</tr>
+</tbody></table>
+<p>说明：</p>
+<ul>
+<li>**方差**描述系统抖动性，反映性能稳定度；</li>
+<li>**百分位指标**（P90/P95/P99）能更好地刻画长尾响应情况；</li>
+<li>**平均值不可靠**，应结合分布统计分析。</li>
+</ul>
+<h3>容量场景指标</h3>
+<p>用于模拟整体业务混合场景，强调比例关系，用以在真实业务混合比例下的最大承载能力，是容量规划的核心依据：</p>
+<table>
+<thead>
+<tr>
+<th>业务名称</th>
+<th>比例</th>
+<th>TPS</th>
+<th>TPS方差</th>
+<th>响应时间</th>
+<th>响应时间方差</th>
+<th>P90</th>
+<th>P95</th>
+<th>P99</th>
+<th>成功率</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>业务1</td>
+<td>50%</td>
+<td>500</td>
+<td>5%</td>
+<td>100ms</td>
+<td>5%</td>
+<td>150ms</td>
+<td>300ms</td>
+<td>500ms</td>
+<td>100%</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>容量测试的核心目标：<strong>找出系统在稳定状态下可支撑的最大负载点</strong>。</p>
+</blockquote>
+<h3>稳定性与异常场景指标</h3>
+<ul>
+<li>**稳定性场景**：长时间运行，验证系统在持续负载下的资源消耗与内存泄漏情况；</li>
+<li>**异常场景**：模拟网络波动、节点宕机、磁盘满等异常条件下的恢复能力。</li>
+</ul>
+<h2>测试数据准备</h2>
+<p>测试数据是性能测试的"输入"，输入不真实，输出就失真</p>
+<h3>系统铺底数据</h3>
+<ul>
+<li>数量级与生产一致；</li>
+<li>结构与数据分布符合实际；</li>
+<li>确保测试前系统处于"正常运行状态"。</li>
+</ul>
+<h3>参数化数据</h3>
+<ul>
+<li>足够数量以避免重复；</li>
+<li>模拟真实业务分布；</li>
+<li>覆盖典型请求参数组合；</li>
+<li>与监控系统打通以追踪请求链路。</li>
+</ul>
+<h2>性能数据分析与可视化</h2>
+<h3>分析目标</h3>
+<ul>
+<li>**判断性能是否正常**</li>
+<li>**预测趋势与拐点**</li>
+<li>**定位瓶颈并验证假设**</li>
+</ul>
+<h3>常用分析方法</h3>
+<ul>
+<li>线性回归（预测性能趋势）</li>
+<li>聚类分析（识别异常模式）</li>
+<li>决策树（推断影响因子）</li>
+<li>时间序列分析（波动与周期性）</li>
+</ul>
+<blockquote>
+<p><strong>注意事项</strong></p>
+<ol>
+<li>数据分析只能证明相关性，不能直接证明因果性。</li>
+<li>性能数据解读必须结合业务上下文。</li>
+<li>保证数据采集质量，避免"垃圾进垃圾出"。</li>
+<li>理解各性能指标的逻辑关系（如 TPS、RT、并发数、CPU 使用率）。</li>
+</ol>
+</blockquote>
+<h3>可视化展示</h3>
+<p>见：<a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/Web%E5%89%8D%E7%AB%AF/%E5%8F%AF%E8%A7%86%E5%8C%96.html#%E5%8F%AF%E8%A7%86%E5%8C%96">性能数据可视化</a>
+应按层次展示：</p>
+<ul>
+<li>**系统层视图**：CPU、内存、I/O、网络；</li>
+<li>**服务层视图**：接口响应、QPS、错误率；</li>
+<li>**业务层视图**：交易量、延迟分布；</li>
+<li>**链路追踪视图**：请求路径与时间分布。</li>
+</ul>
+<h2>工程模式</h2>
+<blockquote>
+<p>性能模式不是技巧，而是<strong>可复用的结构性决策</strong>。</p>
+</blockquote>
+<h3>并行计算模式</h3>
+<blockquote>
+<p>并行不是"多线程"，而是<strong>如何拆解问题与最小化协调成本</strong>。</p>
+</blockquote>
+<h4>并行拆解的四种基本方式</h4>
+<table>
+<thead>
+<tr>
+<th>拆解维度</th>
+<th>本质问题</th>
+<th>典型模式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>任务</td>
+<td>逻辑是否独立</td>
+<td>任务线性分解</td>
+</tr>
+<tr>
+<td>任务</td>
+<td>是否可递归</td>
+<td>分治 / 任务队列</td>
+</tr>
+<tr>
+<td>数据</td>
+<td>相同逻辑不同数据</td>
+<td>数据几何分解</td>
+</tr>
+<tr>
+<td>数据</td>
+<td>递归结构</td>
+<td>递归数据并行</td>
+</tr>
+</tbody></table>
+<h4>数据流与异步交互架构</h4>
+<ul>
+<li>**数据流架构**：确定性流水线，追求吞吐</li>
+<li>**异步消息架构**：解耦 + 弹性 + 扩展性</li>
+</ul>
+<p>核心挑战不在计算，而在：<strong>调度</strong>、<strong>背压</strong>、<strong>状态一致性</strong></p>
+<h3>性能优化设计模式</h3>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>优化对象</th>
+<th>核心收益</th>
+<th>主要代价</th>
+<th>收益层级</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>快速通道</td>
+<td>延迟</td>
+<td>热路径加速</td>
+<td>代码分裂</td>
+<td>架构层</td>
+</tr>
+<tr>
+<td>并行分解</td>
+<td>吞吐</td>
+<td>横向扩展</td>
+<td>协调成本</td>
+<td>架构层</td>
+</tr>
+<tr>
+<td>批处理</td>
+<td>吞吐</td>
+<td>减少固定开销</td>
+<td>可靠性风险</td>
+<td>架构层</td>
+</tr>
+<tr>
+<td>弹性时间</td>
+<td>拥塞</td>
+<td>平滑负载</td>
+<td>响应不确定</td>
+<td>架构层</td>
+</tr>
+<tr>
+<td>预计算</td>
+<td>CPU</td>
+<td>空间换时间</td>
+<td>灵活性下降</td>
+<td>应用层</td>
+</tr>
+<tr>
+<td>搬移计算</td>
+<td>延迟</td>
+<td>缩短关键路径</td>
+<td>架构复杂</td>
+<td>应用层</td>
+</tr>
+<tr>
+<td>丢弃</td>
+<td>稳定性</td>
+<td>保住系统</td>
+<td>功能损失</td>
+<td>应用层</td>
+</tr>
+</tbody></table>
+<h2>性能工程的持续演进</h2>
+<p>性能工程贯穿软件全生命周期，而非仅存在于测试阶段。与一次性测试不同，性能工程是<strong>主动、持续</strong>的治理行为——从架构设计、代码实现、部署运维，每个阶段都有其独特的性能机制与责任。</p>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>性能工程活动</th>
+<th>机制原理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>需求阶段</strong></td>
+<td>定义性能目标与SLA</td>
+<td>SLA是性能约束的合同化表达，将业务期望转化为技术边界；未定义的约束等于无约束</td>
+</tr>
+<tr>
+<td><strong>设计阶段</strong></td>
+<td>架构容量规划、性能建模</td>
+<td>架构决策决定性能上限，设计阶段的优化收益远大于测试阶段；"性能是被设计出来的"</td>
+</tr>
+<tr>
+<td><strong>开发阶段</strong></td>
+<td>代码级性能审查、单元压测</td>
+<td>缺陷注入越早，修复成本越低；开发阶段捕获1个瓶颈等于测试阶段捕获10个</td>
+</tr>
+<tr>
+<td><strong>测试阶段</strong></td>
+<td>场景构建、全链路压测</td>
+<td>全链路压测是唯一能还原真实生产负载与调用链的验证手段；局部压测无法发现系统性瓶颈</td>
+</tr>
+<tr>
+<td><strong>运维阶段</strong></td>
+<td>性能监控、容量管理、预测性伸缩</td>
+<td>持续治理：性能退化是事故，而非正常现象；监控比救火更重要</td>
+</tr>
+</tbody></table>
+<p>性能问题的修复成本随阶段指数增长——设计阶段的一个架构决策，可能避免测试阶段大量的重构工作。</p>
+<blockquote>
+<p>性能工程的最终目标是：<strong>让性能问题提前暴露、可度量、可追踪、可优化。</strong></p>
+</blockquote>
+<h2>性能工程的治理与组织视角</h2>
+<p>性能治理的本质是<strong>通过量化框架平衡创新速度与系统可靠性</strong>，回答三个核心问题：谁负责、边界在哪、如何衡量。</p>
+<h3>服务级别体系</h3>
+<table>
+<thead>
+<tr>
+<th>层次</th>
+<th>定义</th>
+<th>本质</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>SLI</strong></td>
+<td>实际测量的定量指标</td>
+<td>决策依据</td>
+</tr>
+<tr>
+<td><strong>SLO</strong></td>
+<td>内部追求的目标值</td>
+<td>内聚力指标</td>
+</tr>
+<tr>
+<td><strong>SLA</strong></td>
+<td>与用户的合同化承诺</td>
+<td>不可逾越的底线</td>
+</tr>
+</tbody></table>
+<p><strong>关键区分</strong>：SLO与SLA的本质区别在于是否有明确后果——无后果约束即为SLO。</p>
+<h3>错误预算</h3>
+<p>错误预算是SRE治理的核心机制，将SLO目标转化为可量化的风险配额。</p>
+<p><strong>公式</strong>：错误预算 = 100% - SLO目标</p>
+<p><strong>决策机制</strong>：预算充裕时加快发布，预算耗尽时暂停发布优先修复。</p>
+<p><strong>核心价值</strong>：对齐产品开发与SRE的激励，使团队自我管理风险。</p>
+<h3>性能所有权</h3>
+<table>
+<thead>
+<tr>
+<th>角色</th>
+<th>职责</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>产品负责人</td>
+<td>业务KPI映射为SLO</td>
+</tr>
+<tr>
+<td>架构师</td>
+<td>架构层性能边界决策</td>
+</tr>
+<tr>
+<td>开发工程师</td>
+<td>实现阶段性能可控</td>
+</tr>
+<tr>
+<td>SRE/运维</td>
+<td>运行时性能治理</td>
+</tr>
+</tbody></table>
+<h3>风险容忍度</h3>
+<p>评估维度：可用性目标、失败类型、成本收益、竞品参照。</p>
+<p><strong>成本原则</strong>：可靠性提升的成本非线性增长——超过临界点后，继续提升可靠性反而有害。</p>
+<h3>性能文化</h3>
+<ul>
+<li>**数据驱动**：决策基于指标而非直觉</li>
+<li>**Hope is not a strategy**：主动管理，而非救火</li>
+<li>**共同所有权**：错误预算使团队共同承担可靠性责任</li>
+</ul>
+<p>成熟团队的标志：<strong>没人”手动救火”，但系统始终在拐点之前</strong>。</p>
+<h2>关联内容（自动生成）</h2>
+<ul>
+<li>[/软件工程/软件设计/代码质量/软件测试/性能测试.html](/软件工程/软件设计/代码质量/软件测试/性能测试.html) 性能测试是性能工程的重要手段，用于验证系统在压力下的表现和性能边界</li>
+<li>[/软件工程/软件设计/代码质量/软件测试/全链路压测.html](/软件工程/软件设计/代码质量/软件测试/全链路压测.html) 全链路压测是性能工程在系统极限验证层面的核心方法</li>
+<li>[/软件工程/容量保障.html](/软件工程/容量保障.html) 容量保障与性能工程密切相关，涉及系统性能的测量、分析和优化</li>
+<li>[/软件工程/架构/系统设计/可观测性.html](/软件工程/架构/系统设计/可观测性.html) 可观测性体系与性能工程密切相关，通过监控、日志、追踪实现性能全面观测</li>
+<li>[/软件工程/架构/系统设计/高并发.html](/软件工程/架构/系统设计/高并发.html) 高并发系统设计与性能工程紧密相关</li>
+<li>[/软件工程/架构/系统设计/流量控制.html](/软件工程/架构/系统设计/流量控制.html) 流量控制与性能工程相关，流量控制策略影响系统性能</li>
+<li>[/软件工程/架构/系统设计/缓存.html](/软件工程/架构/系统设计/缓存.html) 缓存是性能优化的重要手段，性能工程验证缓存策略有效性</li>
+<li>[/软件工程/架构/系统设计/伸缩性.html](/软件工程/架构/系统设计/伸缩性.html) 性能与伸缩性密切相关，性能指标是衡量系统伸缩能力的重要标准</li>
+<li>[/软件工程/架构/系统设计/分布式/分布式系统.html](/软件工程/架构/系统设计/分布式/分布式系统.html) 分布式系统中的性能工程面临更多挑战</li>
+<li>[/中间件/数据库/数据库优化.html](/中间件/数据库/数据库优化.html) 数据库性能优化是性能工程的重要组成部分</li>
+<li>[/运维/SRE.html](/运维/SRE.html) SRE 的 SLI/SLO/错误预算体系是性能目标的量化框架</li>
+</ul>
+</div></body>
+  <script>
+    const buildTime = '2026-07-02T08:05:53.794Z'
+    if (buildTime) {
+      document.getElementById("buildTime").innerHTML = `${new Date(buildTime).toLocaleString()}`
+    }
+  </script>
+</html>

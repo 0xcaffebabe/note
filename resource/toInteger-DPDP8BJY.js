@@ -1,0 +1,1 @@
+import{n as e}from"./now-CPmrZzSW.js";var t=1/0,n=17976931348623157e292;function r(r){return r?(r=e(r),r===t||r===-t?(r<0?-1:1)*n:r===r?r:0):r===0?r:0}function i(e){var t=r(e),n=t%1;return t===t?n?t-n:t:0}export{r as n,i as t};

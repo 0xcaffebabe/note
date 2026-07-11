@@ -12,7 +12,7 @@
     >
       <!-- 右下角整合面板（思维笔记和知识网络） -->
       <div class="right-bottom-panel-container">
-        <right-bottom-panel :doc="doc" />
+        <knowledge-view-panel :doc="doc" />
       </div>
 
       <!-- 目录区域 -->
@@ -38,7 +38,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import ContentsList from "./ContentsList.vue";
-import RightBottomPanel from "../knowledge/RightBottomPanel.vue";
+import KnowledgeViewPanel from "../knowledge/KnowledgeViewPanel.vue";
 import { Folder, FolderOpened } from '@element-plus/icons-vue';
 import { isFull } from "@/platform/web/composables/useBreakpoint";
 
@@ -46,7 +46,7 @@ export default defineComponent({
   name: "DocContentsAndPanel",
   components: {
     ContentsList,
-    RightBottomPanel,
+    KnowledgeViewPanel,
     Folder,
     FolderOpened
   },

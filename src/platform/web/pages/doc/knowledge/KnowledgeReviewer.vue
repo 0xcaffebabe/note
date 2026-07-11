@@ -243,7 +243,7 @@ export default defineComponent({
       if (id) {
         this.$nextTick(() => {
           const el = (this.$refs.timelineEl as HTMLElement)?.querySelector('.doc-item.focused');
-          el?.scrollIntoView({ block: 'nearest' });
+          el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
         });
       }
     },
@@ -442,18 +442,37 @@ export default defineComponent({
   padding: 2px 4px;
   margin: -2px -4px;
   border-radius: var(--radius-sm);
-  transition: background-color var(--transition-fast);
+  transition: background-color 0.25s ease, transform 0.2s ease, box-shadow 0.25s ease;
 
-  // hover 自身, 或被散点图悬停联动选中(focused), 都高亮
-  &:hover,
-  &.focused {
+  // hover 自身: 淡化高亮
+  &:hover {
     background-color: var(--hover-bg-color);
+  }
+
+  // 散点图悬停联动选中: 强化高亮 + 外发光 + 轻微放大
+  &.focused {
+    background-color: var(--primary-light-color);
+    transform: translateX(2px) scale(1.02);
+    box-shadow: 0 0 0 2px var(--primary-color), 0 2px 8px rgba(var(--primary-color-rgb, 64, 158, 255), 0.25);
+    animation: focusedPulse 0.6s ease-out;
   }
 
   // 当前文档: 主色高亮 与散点图当前节点呼应
   &.current .doc-name {
     color: var(--primary-color);
     font-weight: 600;
+  }
+}
+
+@keyframes focusedPulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--primary-color), 0 2px 8px rgba(var(--primary-color-rgb, 64, 158, 255), 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb, 64, 158, 255), 0.4), 0 2px 12px rgba(var(--primary-color-rgb, 64, 158, 255), 0.35);
+  }
+  100% {
+    box-shadow: 0 0 0 2px var(--primary-color), 0 2px 8px rgba(var(--primary-color-rgb, 64, 158, 255), 0.25);
   }
 }
 

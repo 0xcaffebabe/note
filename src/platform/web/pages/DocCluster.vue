@@ -84,7 +84,7 @@ export default defineComponent({
     return {
       // url ?kw= 预填高亮词; 也由搜索框驱动
       kw: (this.$route?.query?.kw?.toString() ?? "") as string,
-      dim3: false, // 2D / 3D 视图切换
+      dim3: true, // 2D / 3D 视图切换
       webglOk: webglSupported(), // 无 WebGL 时禁用 3D, 避免 echarts-gl 抛原始报错
       scatterData: null as ClusterScatter | null, // 缓存散点数据, 供 kw 高亮的轻量重绘复用
       kwTimer: undefined as ReturnType<typeof setTimeout> | undefined,
@@ -277,7 +277,7 @@ export default defineComponent({
               rotateSensitivity: 1.5,
               zoomSensitivity: 2,
               distance: 170,
-              minDistance: 2, // 放开近裁剪, 允许大幅放大(默认最小 40 太远)
+              minDistance: 1, // 允许非常近距离观察点云细节
               maxDistance: 600,
             },
             light: {

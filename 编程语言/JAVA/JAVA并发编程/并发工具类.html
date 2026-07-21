@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/logo-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F1F5F9">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1e1e1e">
+    <title>并发工具类</title>
+    <style>
+      #buildTime {
+        color: black;
+        font-weight: 600;
+        font-size: 12px;
+        opacity: 0.4;
+        pointer-events: none;
+      }
+      body[theme=dark] #buildTime {
+        color: white;
+      }
+
+      /* ---- 首屏启动骨架: 仅在JS执行前可见 Vue挂载后被替换 ---- */
+      .boot-skeleton {
+        min-height: 100vh;
+        background: #F1F5F9;
+      }
+      .bs-header {
+        height: 60px;
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .bs-body {
+        display: flex;
+        gap: 24px;
+        padding: 16px;
+      }
+      .bs-aside {
+        width: 280px;
+        height: 70vh;
+        flex-shrink: 0;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+      .bs-main {
+        flex: 1;
+        max-width: 820px;
+        padding-top: 24px;
+      }
+      .bs-line {
+        height: 14px;
+        border-radius: 4px;
+        background: rgba(100, 116, 139, 0.12);
+        margin-bottom: 14px;
+      }
+      .bs-line.w40 { width: 40%; height: 24px; margin-bottom: 24px; }
+      .bs-line.w90 { width: 90%; }
+      .bs-line.w75 { width: 75%; }
+      .bs-line.w60 { width: 60%; }
+      html.dark .boot-skeleton { background: #1e1e1e; }
+      html.dark .bs-header { background: #252526; border-bottom-color: #454545; }
+      html.dark .bs-aside { background: #252526; }
+      html.dark .bs-line { background: rgba(255, 255, 255, 0.08); }
+      @media (max-width: 960px) {
+        .bs-aside { display: none; }
+      }
+      /* 文档静态页自带可见正文 无需骨架 */
+      body:has(.static-content) .boot-skeleton { display: none; }
+
+      /* ---- 文档静态正文: JS执行前直接可读 Vue挂载后由main.ts移除 ---- */
+      .static-content {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 24px 20px 60px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+        font-size: 16px;
+        line-height: 1.8;
+        color: #1e293b;
+      }
+      .static-content pre {
+        overflow-x: auto;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 12px;
+        font-size: 14px;
+      }
+      .static-content img { max-width: 100%; height: auto; }
+      .static-content table { border-collapse: collapse; width: 100%; }
+      .static-content th, .static-content td { border: 1px solid #e2e8f0; padding: 8px 12px; }
+      .static-content a { color: #409eff; }
+      .static-content blockquote { border-left: 4px solid #409eff; margin: 16px 0; padding: 4px 16px; color: #64748b; }
+      html.dark .static-content { color: #e0e0e0; }
+      html.dark .static-content pre { background: #252526; border-color: #454545; }
+      html.dark .static-content th, html.dark .static-content td { border-color: #454545; }
+      html.dark .static-content blockquote { color: #a0a0a0; }
+    </style>
+    <script type="module" crossorigin src="/resource/index-oK-Eh7VH.js"></script>
+    <link rel="modulepreload" crossorigin href="/resource/chunk-QTnfLwEv.js">
+    <link rel="modulepreload" crossorigin href="/resource/LocalStorageAdapter-COFXn1dk.js">
+    <link rel="modulepreload" crossorigin href="/resource/DocUtils-D98sGPt4.js">
+    <link rel="modulepreload" crossorigin href="/resource/CategoryService-fColnITg.js">
+    <link rel="modulepreload" crossorigin href="/resource/css-B7oqn9nR.js">
+    <link rel="modulepreload" crossorigin href="/resource/_arrayPush-YobK-pR-.js">
+    <link rel="stylesheet" crossorigin href="/resource/css-BJMY-vHH.css">
+    <link rel="stylesheet" crossorigin href="/resource/index-CWmGsjTv.css">
+  <link rel="manifest" href="/manifest.webmanifest"><meta name="description" content="JUC并发的问题空间（Why 并发工具存在）所有 Java 并发工具，本质上都在解决有限计算资源在多执行主体之间的分配与协调问题。竞态源于三条件并存——状态被共享、状态可变、访问无序并发。消解任一条即...">
+  <meta property="og:title" content="并发工具类">
+  <meta property="og:description" content="JUC并发的问题空间（Why 并发工具存在）所有 Java 并发工具，本质上都在解决有限计算资源在多执行主体之间的分配与协调问题。竞态源于三条件并存——状态被共享、状态可变、访问无序并发。消解任一条即...">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="知识体系">
+  <meta name="twitter:card" content="summary">
+  <link rel="modulepreload" href="/resource/App-BGT_lAdb.js">
+  <link rel="modulepreload" href="/resource/DocPage-Bho9QhLv.js">
+  <link rel="preload" as="style" href="/resource/App-D5JijmP3.css">
+  <link rel="preload" as="style" href="/resource/DocPage-BKo4FdQ0.css">
+  <link rel="preload" as="fetch" href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JAVA%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/%E5%B9%B6%E5%8F%91%E5%B7%A5%E5%85%B7%E7%B1%BB.md.json">
+  </head>
+  <body>
+    <script>
+      // 首屏主题预设: 在首帧渲染前同步应用主题 消除暗色用户的白屏闪烁
+      (function () {
+        try {
+          var stored = localStorage.getItem('system::theme')
+          var dark = stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          if (dark) {
+            document.documentElement.classList.add('dark')
+            document.body.setAttribute('theme', 'dark')
+            document.documentElement.style.backgroundColor = '#1e1e1e'
+          } else {
+            document.documentElement.style.backgroundColor = '#F1F5F9'
+          }
+        } catch (e) { /* localStorage 不可用时保持默认浅色 */ }
+      })()
+    </script>
+    <header id="staticHeader" style="display: none;">
+      <ul><li><p><a href="/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.html">💎算法与数据结构</a></p><ul><li><a href="/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%9F%BA%E6%9C%AC%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.html">🧠基本数据结构</a></li><li><a href="/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E7%AE%97%E6%B3%95%E7%AD%96%E7%95%A5.html">⚙️算法策略</a></li><li><a href="/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E6%8E%92%E5%BA%8F.html">🔄排序</a></li><li><a href="/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E6%9F%A5%E6%89%BE.html">🔍查找</a></li><li><a href="/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E6%A0%91.html">🌳树</a></li><li><a href="/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E6%95%A3%E5%88%97%E8%A1%A8.html">🔍散列表</a></li><li><a href="/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%9B%BE.html">🌐图</a></li><li><a href="/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%AD%97%E7%AC%A6%E4%B8%B2.html">📝字符串</a></li></ul></li><li><p>🧮数学</p><ul><li><a href="/%E6%95%B0%E5%AD%A6/%E6%A6%82%E7%8E%87%E8%AE%BA%E4%B8%8E%E6%95%B0%E7%90%86%E7%BB%9F%E8%AE%A1.html">📊概率论与数理统计</a></li><li><a href="/%E6%95%B0%E5%AD%A6/%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0.html">🔢线性代数</a></li></ul></li><li><p><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F.html">💽操作系统</a></p><ul><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E8%BF%9B%E7%A8%8B%E4%B8%8E%E7%BA%BF%E7%A8%8B.html">⚙️进程与线程</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86.html">💾内存管理</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E6%96%87%E4%BB%B6%E7%AE%A1%E7%90%86.html">📂文件管理</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA.html">🔌输入/输出</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E6%AD%BB%E9%94%81.html">⚠️死锁</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E8%99%9A%E6%8B%9F%E5%8C%96.html">📦虚拟化</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E5%A4%9A%E5%A4%84%E7%90%86%E6%9C%BA%E7%B3%BB%E7%BB%9F.html">⚙️多处理机系统</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E5%AE%89%E5%85%A8.html">🔒安全</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1.html">🏗️操作系统设计</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/linux/Linux.html">🐧Linux</a><ul><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/linux/%E5%86%85%E6%A0%B8.html">⚙️内核</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E5%AE%B9%E5%99%A8%E5%8C%96.html">📦容器化</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/linux/eBPF.html">🔍eBPF</a></li></ul></li></ul></li><li><p>🏗️软件工程</p><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B.html">🏗️软件工程</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E7%90%86%E8%AE%BA/%E8%BD%AF%E4%BB%B6%E9%9C%80%E6%B1%82.html">📋软件需求</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E7%90%86%E8%AE%BA/%E7%BB%93%E6%9E%84%E5%8C%96%E5%88%86%E6%9E%90%E6%96%B9%E6%B3%95.html">🔍结构化分析方法</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E7%90%86%E8%AE%BA/%E7%BB%93%E6%9E%84%E5%8C%96%E8%AE%BE%E8%AE%A1%E6%96%B9%E6%B3%95.html">⚙️结构化设计方法</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E7%90%86%E8%AE%BA/UML.html">📊UML</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E7%90%86%E8%AE%BA/%E6%95%8F%E6%8D%B7%E8%BD%AF%E4%BB%B6%E5%BC%80%E5%8F%91.html">🏃敏捷软件开发</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E7%90%86%E8%AE%BA/%E9%A1%B9%E7%9B%AE%E7%AE%A1%E7%90%86.html">📊项目管理</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E7%90%86%E8%AE%BA/CMM.html">📊CMM</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1.html">⚙️软件设计</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F.html">🎯设计模式</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F.html">🆕创建型模式</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F.html">🏗️结构型模式</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E6%A8%A1%E5%BC%8F.html">⚙️行为模式</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E8%BD%AF%E4%BB%B6%E5%BC%80%E5%8F%91%E6%9C%AC%E8%B4%A8.html">💡软件开发本质</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E9%A2%86%E5%9F%9F%E9%A9%B1%E5%8A%A8%E8%AE%BE%E8%AE%A1.html">🗺️领域驱动设计</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F.html">🧹代码质量</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E9%98%B2%E9%94%99%E8%AE%BE%E8%AE%A1.html">🛡️防错设计</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E9%98%B2%E5%BE%A1%E5%BC%8F%E7%BC%96%E7%A8%8B.html">🛡️防御式编程</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E4%BB%A3%E7%A0%81%E9%87%8D%E6%9E%84.html">🔄代码重构</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E4%BB%A3%E7%A0%81%E5%AE%A1%E6%9F%A5.html">🔍代码审查</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E6%95%B4%E6%B4%81%E4%BB%A3%E7%A0%81.html">🧹整洁代码</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E7%BC%96%E7%A0%81%E8%A7%84%E8%8C%83.html">📝编码规范</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95.html">🧪软件测试</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95.html">🧪单元测试</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95.html">📈性能测试</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/%E5%85%A8%E9%93%BE%E8%B7%AF%E5%8E%8B%E6%B5%8B.html">📈全链路压测</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95.html">⚙️自动化测试</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/%E6%8E%A5%E5%8F%A3%E6%B5%8B%E8%AF%95.html">🔌接口测试</a></li></ul></li></ul></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E8%B4%A8%E9%87%8F%E5%B7%A5%E7%A8%8B.html">⚙️质量工程</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E7%A0%94%E5%8F%91%E6%95%88%E8%83%BD.html">⚡研发效能</a></li><li><a href="/%E8%BF%90%E7%BB%B4/%E8%BF%90%E7%BB%B4.html">🔋运维</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/DevOps.html">🔄DevOps</a><ul><li><a href="/%E8%BF%90%E7%BB%B4/%E6%8C%81%E7%BB%AD%E9%9B%86%E6%88%90.html">🔄持续集成</a></li><li><a href="/%E8%BF%90%E7%BB%B4/%E6%8C%81%E7%BB%AD%E4%BA%A4%E4%BB%98.html">🔄持续交付</a></li><li><a href="/%E8%BF%90%E7%BB%B4/%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83.html">🔄灰度发布</a></li></ul></li><li><a href="/%E8%BF%90%E7%BB%B4/Docker.html">📦Docker</a></li><li><a href="/%E8%BF%90%E7%BB%B4/K8s.html">📦K8s</a></li><li><a href="/%E8%BF%90%E7%BB%B4/SRE.html">📈SRE</a></li><li><a href="/%E8%BF%90%E7%BB%B4/AIOps.html">🤖AIOps</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E6%9E%B6%E6%9E%84.html">🏗️架构</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E6%9E%B6%E6%9E%84%E5%B8%88.html">👷架构师</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1.html">🏗️架构设计</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E5%8D%95%E5%85%83%E5%8C%96%E6%9E%B6%E6%9E%84.html">🏗️单元化架构</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E6%BC%94%E8%BF%9B%E5%BC%8F%E6%9E%B6%E6%9E%84.html">🔄演进式架构</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E8%AE%BE%E8%AE%A1%E6%A1%86%E6%9E%B6.html">⚙️设计框架</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E6%9E%B6%E6%9E%84%E6%80%9D%E7%BB%B4.html">🧠架构思维</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E6%9E%B6%E6%9E%84%E6%B2%BB%E7%90%86.html">⚖️架构治理</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E6%8A%80%E6%9C%AF%E5%80%BA%E5%8A%A1.html">技术债务</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E6%95%B0%E6%8D%AE%E7%B3%BB%E7%BB%9F.html">📊数据系统</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1.html">⚙️系统设计</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E6%8A%80%E6%9C%AF%E9%80%89%E5%9E%8B.html">🔍技术选型</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E4%B8%9A%E5%8A%A1%E5%BB%BA%E6%A8%A1.html">🗺️业务建模</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E4%BA%91%E5%8E%9F%E7%94%9F.html">☁️云原生</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E4%BA%91%E8%AE%A1%E7%AE%97.html">☁️云计算</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%88%86%E5%B8%83%E5%BC%8F/%E5%88%86%E5%B8%83%E5%BC%8F.html">🔗分布式</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%88%86%E5%B8%83%E5%BC%8F/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA.html">🔗分布式理论</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%88%86%E5%B8%83%E5%BC%8F/%E5%88%86%E5%B8%83%E5%BC%8F%E5%85%B1%E8%AF%86%E7%AE%97%E6%B3%95.html">🔗分布式共识算法</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%88%86%E5%B8%83%E5%BC%8F/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F.html">🔗分布式系统</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%88%86%E5%B8%83%E5%BC%8F/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE.html">🔗分布式数据</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%88%86%E5%B8%83%E5%BC%8F/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1.html">🔗分布式事务</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%88%86%E5%B8%83%E5%BC%8F/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4%E6%80%A7%E4%B8%8E%E5%8D%8F%E8%B0%83%E6%9C%BA%E5%88%B6.html">🔗分布式一致性与协调机制</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%88%86%E5%B8%83%E5%BC%8F/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4%E6%80%A7%E7%B3%BB%E7%BB%9F.html">🔗分布式一致性系统</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E6%89%A9%E5%B1%95%E6%80%A7.html">📏扩展性</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E4%BC%B8%E7%BC%A9%E6%80%A7.html">📏伸缩性</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%8F%AF%E7%94%A8%E6%80%A7.html">✅可用性</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E9%AB%98%E5%B9%B6%E5%8F%91.html">⚡高并发</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%80%A7%E8%83%BD%E5%B7%A5%E7%A8%8B.html">📈性能工程</a><ul><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E7%A8%8B%E5%BA%8F%E7%BB%93%E6%9E%84%E5%92%8C%E6%89%A7%E8%A1%8C/%E4%BC%98%E5%8C%96%E7%A8%8B%E5%BA%8F%E6%80%A7%E8%83%BD.html">⚙️优化程序性能</a></li><li><a href="/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/linux/Linux%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96.html">🐧Linux性能优化</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/%E8%87%AA%E5%8A%A8%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/%E8%B0%83%E4%BC%98.html">⚙️JVM性能优化</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B5%8F%E8%A7%88%E5%99%A8/%E5%89%8D%E7%AB%AF%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96.html">⚡前端性能优化</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BC%98%E5%8C%96.html">数据库优化</a><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/mysql/schema%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E4%BC%98%E5%8C%96.html">设计与数据类型优化</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/mysql/%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96.html">查询优化</a></li></ul></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%AE%B9%E9%87%8F%E4%BF%9D%E9%9A%9C.html">📊容量保障</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E6%95%85%E9%9A%9C%E7%AE%A1%E7%90%86.html">🚨故障管理</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E6%B7%B7%E6%B2%8C%E5%B7%A5%E7%A8%8B.html">🧪混沌工程</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6.html">🚦流量控制</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E7%BC%93%E5%AD%98.html">📦缓存</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7.html">可观测性</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E6%97%A5%E5%BF%97.html">📝日志</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E7%9B%91%E6%8E%A7%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1.html">📊监控系统设计</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%89%8D%E7%AB%AF%E7%9B%91%E6%8E%A7.html">🔍前端监控</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E7%BD%91%E5%85%B3.html">🚪网关</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%8D%B3%E6%97%B6%E6%B6%88%E6%81%AF%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1.html">💬即时消息系统设计</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E5%B9%BF%E5%91%8A%E5%B9%B3%E5%8F%B0.html">📢广告平台</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/%E9%87%91%E8%9E%8D%E7%B3%BB%E7%BB%9F.html">💰金融系统</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E4%B8%AD%E5%8F%B0.html">🏭中台</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/%E6%9E%B6%E6%9E%84%E9%87%8D%E6%9E%84.html">🔄架构重构</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/Web%E5%89%8D%E7%AB%AF/Web%E5%89%8D%E7%AB%AF.html">Web 前端</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/Web%E5%89%8D%E7%AB%AF/%E5%89%8D%E5%90%8E%E7%AB%AF%E5%88%86%E7%A6%BB.html">🔄前后端分离</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/Web%E5%89%8D%E7%AB%AF/%E5%89%8D%E7%AB%AF%E5%B7%A5%E7%A8%8B%E5%8C%96.html">⚙️前端工程化</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/Web%E5%89%8D%E7%AB%AF/%E5%8F%AF%E8%A7%86%E5%8C%96.html">🎨可视化</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/Web%E5%89%8D%E7%AB%AF/%E7%94%A8%E6%88%B7%E4%BD%93%E9%AA%8C%E8%AE%BE%E8%AE%A1.html">🎨用户体验设计</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84%E6%A8%A1%E5%BC%8F/%E6%9E%B6%E6%9E%84%E6%A8%A1%E5%BC%8F.html">架构模式</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84%E6%A8%A1%E5%BC%8F/%E5%88%86%E5%B1%82%E6%9E%B6%E6%9E%84.html">🏗️分层架构</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84%E6%A8%A1%E5%BC%8F/%E8%A1%A8%E7%8E%B0%E5%B1%82.html">表现层</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84%E6%A8%A1%E5%BC%8F/%E5%93%8D%E5%BA%94%E5%BC%8F%E6%9E%B6%E6%9E%84.html">⚡响应式架构</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84%E6%A8%A1%E5%BC%8F/%E5%AF%B9%E8%B1%A1%E5%85%B3%E7%B3%BB%E6%A8%A1%E5%BC%8F.html">🔗对象关系模式</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84%E6%A8%A1%E5%BC%8F/%E5%9F%BA%E6%9C%AC%E6%A8%A1%E5%BC%8F.html">⚙️基本模式</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84%E6%A8%A1%E5%BC%8F/Web%E6%A1%86%E6%9E%B6.html">Web框架</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%BE%AE%E6%9C%8D%E5%8A%A1/%E5%BE%AE%E6%9C%8D%E5%8A%A1.html">微服务</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%BE%AE%E6%9C%8D%E5%8A%A1/%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86/%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86.html">服务治理</a><ul><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%BE%AE%E6%9C%8D%E5%8A%A1/%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86/%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0.html">🔭服务发现</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%BE%AE%E6%9C%8D%E5%8A%A1/%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83.html">🔧配置中心</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%BE%AE%E6%9C%8D%E5%8A%A1/%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86/%E6%9C%8D%E5%8A%A1%E5%AE%B9%E9%94%99.html">🛡️服务容错</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%BE%AE%E6%9C%8D%E5%8A%A1/%E6%9C%8D%E5%8A%A1%E5%BB%BA%E6%A8%A1.html">服务建模</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%BE%AE%E6%9C%8D%E5%8A%A1/%E9%9B%86%E6%88%90.html">🔗集成</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%BE%AE%E6%9C%8D%E5%8A%A1/ServiceMesh/ServiceMesh.html">ServiceMesh</a></li></ul></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9E%B6%E6%9E%84/Serverless.html">Serverless</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E6%9C%8D%E5%8A%A1%E8%AE%A1%E7%AE%97.html">☁️服务计算</a></li></ul></li></ul></li><li><p>🔐安全工程</p><ul><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E5%AE%89%E5%85%A8%E6%80%A7.html">🔒安全性</a></li><li><a href="/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/%E5%AE%89%E5%85%A8%E7%94%9F%E4%BA%A7.html">🔒安全生产</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%89%E5%85%A8.html">🔒大模型安全</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E4%BE%9B%E5%BA%94%E9%93%BE%E5%AE%89%E5%85%A8.html">供应链安全</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8.html">🔐网络安全</a><ul><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E5%AE%89%E5%85%A8.html">🔐网络协议安全</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E9%9A%94%E7%A6%BB%E6%8A%80%E6%9C%AF.html">🔒网络安全隔离技术</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E6%8A%80%E6%9C%AF.html">🔒网络安全技术</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E8%AE%A4%E8%AF%81%E4%B8%8E%E6%8E%88%E6%9D%83.html">🔑认证与授权</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95.html">🔍渗透测试</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/Web%E5%AE%89%E5%85%A8.html">🔒Web安全</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E4%B8%9A%E5%8A%A1%E5%AE%89%E5%85%A8.html">🔒业务安全</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E5%AE%89%E5%85%A8%E6%9E%B6%E6%9E%84.html">🔒安全架构</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E5%AF%86%E7%A0%81%E5%AD%A6/%E5%AF%86%E7%A0%81%E5%AD%A6.html">🔑密码学</a></li></ul></li></ul></li><li><p><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F.html">💻计算机系统</a></p><ul><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E7%A8%8B%E5%BA%8F%E7%BB%93%E6%9E%84%E5%92%8C%E6%89%A7%E8%A1%8C/%E6%95%B0%E6%8D%AE%E7%9A%84%E8%A1%A8%E7%A4%BA.html">🔢数据的表示</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E7%A8%8B%E5%BA%8F%E7%BB%93%E6%9E%84%E5%92%8C%E6%89%A7%E8%A1%8C/%E8%BF%90%E7%AE%97%E6%96%B9%E6%B3%95%E4%B8%8E%E8%BF%90%E7%AE%97%E5%99%A8.html">⚙️运算方法与运算器</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E7%A8%8B%E5%BA%8F%E7%BB%93%E6%9E%84%E5%92%8C%E6%89%A7%E8%A1%8C/%E6%B1%87%E7%BC%96.html">📝汇编</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E7%A8%8B%E5%BA%8F%E7%BB%93%E6%9E%84%E5%92%8C%E6%89%A7%E8%A1%8C/%E6%8C%87%E4%BB%A4%E7%B3%BB%E7%BB%9F.html">⚙️指令系统</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E7%A8%8B%E5%BA%8F%E7%BB%93%E6%9E%84%E5%92%8C%E6%89%A7%E8%A1%8C/%E5%A4%84%E7%90%86%E5%99%A8%E4%BD%93%E7%B3%BB%E6%9E%B6%E6%9E%84.html">⚙️处理器体系架构</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E7%A8%8B%E5%BA%8F%E7%BB%93%E6%9E%84%E5%92%8C%E6%89%A7%E8%A1%8C/%E5%AD%98%E5%82%A8%E5%99%A8%E5%B1%82%E6%AC%A1%E7%BB%93%E6%9E%84.html">💾存储器层次结构</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E7%A8%8B%E5%BA%8F%E7%BB%93%E6%9E%84%E5%92%8C%E6%89%A7%E8%A1%8C/%E6%80%BB%E7%BA%BF.html">🔗总线</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E5%9C%A8%E7%B3%BB%E7%BB%9F%E4%B8%8A%E8%BF%90%E8%A1%8C%E7%A8%8B%E5%BA%8F/%E9%93%BE%E6%8E%A5.html">🔗链接</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E5%9C%A8%E7%B3%BB%E7%BB%9F%E4%B8%8A%E8%BF%90%E8%A1%8C%E7%A8%8B%E5%BA%8F/%E5%BC%82%E5%B8%B8%E6%8E%A7%E5%88%B6%E6%B5%81.html">⚡异常控制流</a></li></ul></li><li><p><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E4%B8%8E%E5%9B%A0%E7%89%B9%E7%BD%91.html">☁️计算机网络</a></p><ul><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E6%8E%92%E6%9F%A5.html">🔍网络排查</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E5%BA%94%E7%94%A8%E5%B1%82.html">📡应用层</a><ul><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/rpc.html">🔗RPC</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/http/HTTP.html">🌐HTTP</a><ul><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/http/Cookie&Session.html">🍪状态管理设计哲学</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/http/%E7%88%AC%E8%99%AB/%E7%88%AC%E8%99%AB.html">🕷️爬虫</a><ul><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/http/%E7%88%AC%E8%99%AB/%E5%8F%8D%E7%88%AC%E8%99%AB.html">🔒反爬虫</a></li></ul></li></ul></li></ul></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E8%BF%90%E8%BE%93%E5%B1%82.html">📦运输层</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E5%B1%82.html">🌐网络层</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E9%93%BE%E8%B7%AF%E5%B1%82.html">🔗链路层</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E6%97%A0%E7%BA%BF%E7%BD%91%E7%BB%9C.html">📶无线网络</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E5%A4%9A%E5%AA%92%E4%BD%93%E7%BD%91%E7%BB%9C.html">📺多媒体网络</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%89%A9%E8%81%94%E7%BD%91.html">📱物联网</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B.html">网络编程</a><ul><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/IO%E6%A8%A1%E5%9E%8B.html">IO模型</a></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/MQTT.html">📡MQTT</a></li></ul></li><li><a href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/Linux%E8%99%9A%E6%8B%9F%E5%8C%96.html">🌐Linux 网络虚拟化</a></li></ul></li><li><p><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80.html">👨‍💻编程语言</a></p><ul><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F/%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F.html">🔄编程范式</a><ul><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1.html">🔄面向对象</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F/%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BC%96%E7%A8%8B.html">🔄函数式编程</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F/%E5%93%8D%E5%BA%94%E5%BC%8F%E7%BC%96%E7%A8%8B.html">⚡响应式编程</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F/%E9%80%BB%E8%BE%91%E7%BC%96%E7%A8%8B.html">🔍逻辑编程</a></li></ul></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%9E%8B.html">🔄并发模型</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B.html">并发编程</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E8%AF%AD%E6%B3%95%E7%B3%96.html">🍬语法糖</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/C.html">📝C语言</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80.html">☕Java</a><ul><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/Java%E8%B0%9C%E9%A2%98.html">🤔Java谜题</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/%E9%9B%86%E5%90%88/%E9%9B%86%E5%90%88.html">📦集合</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/%E5%BC%82%E5%B8%B8.html">⚠️异常</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/IO.html">📁IO</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/%E6%B3%9B%E5%9E%8B.html">🔄泛型</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/%E6%B3%A8%E8%A7%A3.html">🏷️注解</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/%E5%8F%8D%E5%B0%84.html">🔍反射</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JAVA%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/JAVA%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B.html">⚡Java 并发编程</a><ul><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JAVA%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/%E7%BA%BF%E7%A8%8B.html">🔄线程</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JAVA%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/%E5%B9%B6%E5%8F%91%E5%B7%A5%E5%85%B7%E7%B1%BB.html">⚙️并发工具类</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JAVA%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/%E5%B9%B6%E5%8F%91%E9%9B%86%E5%90%88.html">📦并发集合</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JAVA%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/%E7%BA%BF%E7%A8%8B%E6%B1%A0.html">⚙️线程池</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JAVA%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/Disruptor.html">⚡Disruptor</a></li></ul></li><li>🌐网络编程<ul><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/NIO.html">⚡NIO</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/Servlet.html">🌐Servlet</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E6%A1%86%E6%9E%B6/netty/netty.html">🔗Netty</a></li></ul></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/Lambda%E8%A1%A8%E8%BE%BE%E5%BC%8F.html">🔄Lambda 表达式</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/Stream%E6%B5%81.html">🔄Stream 流</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E9%AB%98%E7%BA%A7/JAVA%E8%BF%90%E8%A1%8C%E7%AE%A1%E7%90%86.html">⚙️Java 运行管理</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/JVM.html">⚙️JVM</a><ul><li><strong>⚙️自动内存管理</strong><ul><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/%E8%87%AA%E5%8A%A8%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84.html">💾内存结构</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/%E8%87%AA%E5%8A%A8%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6.html">♻️垃圾回收</a></li></ul></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/%E5%AD%97%E8%8A%82%E7%A0%81.html">⚙️字节码</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/%E5%AD%97%E8%8A%82%E7%A0%81%E6%89%A7%E8%A1%8C%E5%BC%95%E6%93%8E.html">⚙️字节码执行引擎</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6.html">🔄类加载机制</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/%E5%89%8D%E7%AB%AF%E7%BC%96%E8%AF%91%E4%B8%8E%E4%BC%98%E5%8C%96.html">⚙️前端编译与优化</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/%E5%90%8E%E7%AB%AF%E7%BC%96%E8%AF%91%E4%B8%8E%E4%BC%98%E5%8C%96.html">⚙️后端编译与优化</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/JAVA%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B.html">🔗Java 内存模型</a></li></ul></li><li>-框架-</li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E6%A1%86%E6%9E%B6/ORM.html">ORM</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/%E6%A1%86%E6%9E%B6/%E4%BE%9D%E8%B5%96%E6%B3%A8%E5%85%A5.html">依赖注入</a></li></ul></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JavaScript/JavaScript.html">🌐JavaScript</a><ul><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JavaScript/Node/NodeJs.html">🌐NodeJS</a></li><li>第三方库/框架</li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JavaScript/Vue.html">💚Vue</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JavaScript/React.html">⚛️React</a></li></ul></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/python.html">🐍Python</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/typescript.html">📝TypeScript</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/Rust.html">🦀Rust</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/C++.html">📝C++</a></li><li><a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/WebAssembly.html">🌐WebAssembly</a></li></ul></li><li><p><a href="/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86.html">⚙️编译原理</a></p></li><li><p>🔨DSL</p><ul><li><a href="/DSL/SQL.html">📊SQL</a></li></ul></li><li><p>📊数据管理</p><ul><li>📊数据科学<ul><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0.html">🧠机器学习</a><ul><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E7%9B%91%E7%9D%A3%E5%AD%A6%E4%B9%A0.html">🧠监督学习</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E9%9D%9E%E7%9B%91%E7%9D%A3%E5%AD%A6%E4%B9%A0.html">🧠非监督学习</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0.html">🧠深度学习</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B.html">⚙️特征工程</a></li></ul></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F.html">🎯推荐系统</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90.html">📊数据分析</a></li></ul></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E5%BB%BA%E6%A8%A1.html">⚙️数据建模</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E6%B2%BB%E7%90%86.html">⚙️数据治理</a><ul><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E5%85%83%E6%95%B0%E6%8D%AE%E7%AE%A1%E7%90%86.html">元数据管理</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E8%B4%A8%E9%87%8F.html">数据质量</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E8%A1%80%E7%BC%98.html">数据血缘</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E5%88%86%E5%B1%82.html">数据分层</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E5%90%88%E8%A7%84%E4%B8%8E%E5%AE%89%E5%85%A8.html">合规与安全</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E8%BF%90%E7%BB%B4.html">数据运维</a></li></ul></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E5%B7%A5%E7%A8%8B.html">⚙️数据工程</a><ul><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E6%9E%B6%E6%9E%84.html">🏗️数据架构</a><ul><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E7%BD%91%E6%A0%BC.html">🏗️数据网格</a></li></ul></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E5%A4%A7%E6%95%B0%E6%8D%AE.html">📊大数据</a><ul><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/Hadoop.html">📊Hadoop</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%A3%80%E7%B4%A2%E6%8A%80%E6%9C%AF.html">🔍检索技术</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E9%9B%86%E6%88%90.html">🔗数据集成</a><ul><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E5%9F%8B%E7%82%B9%E8%AE%BE%E8%AE%A1.html">⚙️埋点设计</a></li></ul></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8.html">💾数据存储</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86.html">⚙️数据处理</a><ul><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%B5%81%E5%A4%84%E7%90%86.html">⚙️流处理</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6%E7%B3%BB%E7%BB%9F.html">⚙️任务调度系统</a></li></ul></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E4%B8%AD%E5%8F%B0.html">🏭数据中台</a></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93.html">🗄️数据仓库</a></li></ul></li></ul></li><li><a href="/%E6%95%B0%E6%8D%AE%E6%8A%80%E6%9C%AF/%E6%95%B0%E6%8D%AE%E5%BA%94%E7%94%A8.html">📊数据应用</a></li></ul></li><li><p>🍚中间件</p><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%95%B0%E6%8D%AE%E5%BA%93.html">💾数据库</a><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F/%E6%95%B0%E6%8D%AE%E5%BA%93%E8%AE%BE%E8%AE%A1.html">⚙️数据库设计</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E7%B4%A2%E5%BC%95.html">🔍索引</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F/%E4%BA%8B%E5%8A%A1%E7%AE%A1%E7%90%86/%E4%BA%8B%E5%8A%A1.html">🔄事务</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93.html">🔗分布式数据库</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E4%B8%AD%E9%97%B4%E4%BB%B6.html">分库分表中间件</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B.html">数据类型</a></li><li>-关系数据库-</li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/mysql/mysql.html">MySQL</a><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/mysql/%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E.html">⚙️存储引擎</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/mysql/%E5%A4%8D%E5%88%B6.html">🔄复制</a></li></ul></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/PostgreSQL.html">PostgreSQL</a></li><li>-缓存-</li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/Redis.html"> Redis</a><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.html">⚙️数据结构</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/%E6%8C%81%E4%B9%85%E5%8C%96.html">💾持久化</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/%E5%AE%A2%E6%88%B7%E7%AB%AF.html">⚙️客户端</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/%E5%A4%8D%E5%88%B6.html">🔄复制</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/%E5%93%A8%E5%85%B5.html">🛡️哨兵</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/%E9%9B%86%E7%BE%A4.html">🔗集群</a></li></ul></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%96%87%E6%A1%A3%E6%95%B0%E6%8D%AE%E5%BA%93.html">文档数据库</a><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/ElasticSearch.html">🔍ElasticSearch</a></li></ul></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%9B%BE%E6%95%B0%E6%8D%AE%E5%BA%93.html">图数据库</a></li></ul></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97.html">🔄消息队列</a><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka.html">Kafka</a><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/%E6%B6%88%E8%B4%B9%E8%80%85.html">👤消费者</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/%E7%94%9F%E4%BA%A7%E8%80%85.html">👤生产者</a></li></ul></li></ul></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/web%E4%B8%AD%E9%97%B4%E4%BB%B6/web%E4%B8%AD%E9%97%B4%E4%BB%B6.html">🌐web容器/服务器</a><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/web%E4%B8%AD%E9%97%B4%E4%BB%B6/Tomcat.html">😺Tomcat</a></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/web%E4%B8%AD%E9%97%B4%E4%BB%B6/Nginx.html">Nginx</a></li></ul></li><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B5%8F%E8%A7%88%E5%99%A8/%E6%B5%8F%E8%A7%88%E5%99%A8.html">🌐浏览器</a><ul><li><a href="/%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B5%8F%E8%A7%88%E5%99%A8/V8.html">V8引擎</a></li></ul></li></ul></li><li><p><a href="/%E4%BA%A7%E5%93%81/%E4%BA%A7%E5%93%81.html">🖼️产品</a></p><ul><li><a href="/%E4%BA%A7%E5%93%81/%E4%BA%A7%E5%93%81%E6%88%98%E7%95%A5.html">📊产品战略</a></li><li><a href="/%E4%BA%A7%E5%93%81/%E4%BA%A7%E5%93%81%E5%88%9B%E6%96%B0.html">💡产品创新</a></li><li><a href="/%E4%BA%A7%E5%93%81/2B%E4%BA%A7%E5%93%81.html">🏢2B产品</a></li><li><a href="/%E4%BA%A7%E5%93%81/%E5%A2%9E%E9%95%BF.html">📈增长</a></li></ul></li><li><p><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF.html">💪个人成长</a></p><ul><li><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/%E6%80%9D%E7%BB%B4.html">🧠思维</a></li><li><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/%E5%AD%A6%E4%B9%A0%E6%96%B9%E6%B3%95%E8%AE%BA.html">📚学习方法论</a></li><li><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/OKR.html">🎯OKR</a></li><li><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/%E8%81%8C%E5%9C%BA/%E8%81%8C%E5%9C%BA.html">💼职场</a><ul><li><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/%E8%81%8C%E5%9C%BA/%E6%8A%80%E6%9C%AF%E7%AE%A1%E7%90%86.html">👨‍💼技术管理</a></li><li><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/%E8%81%8C%E5%9C%BA/%E9%9D%A2%E8%AF%95.html">面试</a></li><li><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/%E8%81%8C%E5%9C%BA/%E6%8B%9B%E8%81%98.html">招聘</a></li><li><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/%E8%81%8C%E5%9C%BA/%E8%81%8C%E4%B8%9A%E7%B4%A0%E5%85%BB.html">素养</a></li></ul></li><li><a href="/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/%E5%A4%8D%E7%9B%98.html">🔄复盘</a></li></ul></li></ul>
+    </header>
+    <div id="app">
+      <div class="boot-skeleton">
+        <div class="bs-header"></div>
+        <div class="bs-body">
+          <div class="bs-aside"></div>
+          <div class="bs-main">
+            <div class="bs-line w40"></div>
+            <div class="bs-line w90"></div>
+            <div class="bs-line w75"></div>
+            <div class="bs-line w90"></div>
+            <div class="bs-line w60"></div>
+            <div class="bs-line w75"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="position: fixed; bottom: 10px; right: 10px" id="buildTime"></div>
+  <div class='content static-content'><h1>JUC</h1>
+<h2>并发的问题空间（Why 并发工具存在）</h2>
+<p>所有 Java 并发工具，本质上都在解决<strong>有限计算资源在多执行主体之间的分配与协调问题</strong>。</p>
+<p>竞态源于三条件并存——状态被<strong>共享</strong>、状态<strong>可变</strong>、访问<strong>无序并发</strong>。消解任一条即安全：<strong>不共享</strong>、<strong>不可变</strong>、或给并发访问强加秩序（<strong>协调</strong>）。</p>
+<p>该问题空间按来源分为三层，层次越靠上越接近并发的本体：</p>
+<table>
+<thead>
+<tr>
+<th>层次</th>
+<th>问题域</th>
+<th>核心命题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>本体问题（任何并发模型固有）</td>
+<td>竞争安全</td>
+<td>共享状态的变更必须<strong>不可分割地完成</strong>；本质冲突：写-写、读-写</td>
+</tr>
+<tr>
+<td>本体问题（任何并发模型固有）</td>
+<td>协作同步</td>
+<td>多个线程需要<strong>在时间或阶段上达成一致</strong>——不是竞争，而是协作</td>
+</tr>
+<tr>
+<td>基底问题（共享内存模型引入）</td>
+<td>可见性与有序性</td>
+<td>一个线程的修改，<strong>何时、以何种顺序</strong>被其他线程观察到；源于 JMM，消息传递模型中由通信本身承载</td>
+</tr>
+<tr>
+<td>工程派生（资源有限性）</td>
+<td>准入控制</td>
+<td>控制<strong>同时访问者数量</strong>；互斥（N=1）与限流（N>1）是同一问题的两个参数点</td>
+</tr>
+<tr>
+<td>工程派生（线程模型 + 隐式参数）</td>
+<td>上下文隔离与传播</td>
+<td>并发执行下，如何<strong>安全地保存、传递线程上下文</strong></td>
+</tr>
+<tr>
+<td>工程派生（任务生命周期）</td>
+<td>取消与关闭</td>
+<td>执行中的任务如何<strong>可被安全地停止</strong>，而非强制终结</td>
+</tr>
+</tbody></table>
+<h2>JUC 同步工具的构建分层（How JUC 求解问题空间）</h2>
+<p>本文档讨论的同步工具，均可映射回上述问题域之一或其组合；其构建呈四层结构：</p>
+<pre><code class="language-text">并发问题空间（三层六域，见上节）
+   ↓
+并发抽象模型 ─┬─ 准入控制器：互斥锁（N=1）、信号量（N&gt;1）
+              ├─ 协作同步器：门闩、栅栏、会合点
+              └─ 上下文容器：ThreadLocal 系（落地为线程内私有 Map，不经由以下两层）
+   ↓（准入与协作两支）
+构建路径 ─┬─ 直接扩展 AQS：ReentrantLock / Semaphore / CountDownLatch
+          ├─ 组合 AQS 产物：CyclicBarrier（Lock + Condition + 分代）、ArrayBlockingQueue
+          └─ 绕开框架：StampedLock / Phaser / Exchanger
+   ↓
+公共原语层：CAS + LockSupport.park/unpark
+</code></pre>
+<p>两个横切域内嵌于所有工具：</p>
+<ul>
+<li>**可见性与有序性**：happens-before 保证内建于每个工具的获取/释放语义</li>
+<li>**取消与关闭**：中断契约贯穿 acquire 变体族</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>稳定性</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>问题空间</td>
+<td>极稳定</td>
+<td>并发的本体与基底问题，跨语言不变</td>
+</tr>
+<tr>
+<td>抽象模型</td>
+<td>稳定</td>
+<td>准入 / 协作 / 上下文是跨平台通用抽象</td>
+</tr>
+<tr>
+<td>构建路径</td>
+<td>最易变</td>
+<td>JDK 内部实现：AQS 随版本多次调整（Unsafe→VarHandle、节点结构重写），工具仍在增补（StampedLock 为 JDK 8 新增）</td>
+</tr>
+<tr>
+<td>公共原语</td>
+<td>极稳定</td>
+<td>直接映射硬件原子指令与 OS 调度原语，数十年不变</td>
+</tr>
+</tbody></table>
+<h2>AQS：Java 并发的“内核抽象”</h2>
+<p>问题驱动：每个阻塞型同步器都需要同一套基础设施——原子状态、等待队列、阻塞/唤醒，而无锁等待队列的实现难度远高于工具自身的语义。AQS 把这套共性下沉为统一框架，JUC 主要同步工具因此共享同一个“内核”。</p>
+<p>问题域覆盖：state 的原子变更求解<strong>竞争安全</strong>；准入判定与排队求解<strong>准入控制</strong>；共享模式与条件队列承载<strong>协作同步</strong>；中断契约横切<strong>取消与关闭</strong>——三域一横切，对应构建分层图的"直接扩展"路径。</p>
+<h3>AQS 的设计哲学</h3>
+<p>AQS（AbstractQueuedSynchronizer）并不是“锁”，而是：</p>
+<blockquote>
+<p><strong>同步器不变部分的统一框架</strong>：状态托管、排队、阻塞/唤醒由框架固化，准入语义由子类填入</p>
+</blockquote>
+<p>两条原则构成其哲学：</p>
+<ol>
+<li>**不变 / 可变分离**：任何阻塞型同步器 = 概念稳定的骨架（状态、队列、阻塞/唤醒）+ 随工具而异的语义（谁能通过）。AQS 以模板方法切分二者——子类只实现 tryAcquire / tryRelease（及 Shared 变体）的准入判定，调度、排队、阻塞统一托管。</li>
+<li>**成本只向竞争者收取**：无竞争走快路径，一次 CAS 即过；排队设施懒初始化，不竞争则不存在。慢路径的全部复杂度，只由竞争失败者承担（机制落地见自举约束）。</li>
+</ol>
+<h3>AQS 的核心模型：一份状态、两类队列、两种模式</h3>
+<pre><code class="language-text">state（volatile int）→ 资源状态机：准入判定的依据，语义由子类定义
+同步队列（CLH 变体） → 安置竞争失败线程：排队、阻塞（park）、按序唤醒（unpark）
+条件队列             → 安置协作型等待：await 入队，signal 转移至同步队列重新竞争
+</code></pre>
+<p>同一骨架按唤醒分发分两种模式，排队与阻塞完全复用：</p>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>准入判定</th>
+<th>唤醒分发</th>
+<th>典型工具</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>独占</td>
+<td>成 / 败</td>
+<td>单点唤醒</td>
+<td>ReentrantLock、写锁</td>
+</tr>
+<tr>
+<td>共享</td>
+<td>返回剩余量</td>
+<td>按余量传播唤醒</td>
+<td>读锁、Semaphore、CountDownLatch</td>
+</tr>
+</tbody></table>
+<p>state 只是一个数字，语义由子类解释（重入计数 / 许可数 / 倒数计数）——这是众多工具能共享同一框架的直接原因。</p>
+<h3>AQS 的机制设计：三个必答问题与一条自举约束</h3>
+<h4>同步器的三个必答问题</h4>
+<p>剥离 Java 语境，任何阻塞型同步设施（OS 等待队列、Linux futex、分布式锁）都必须回答三个问题：</p>
+<table>
+<thead>
+<tr>
+<th>必答问题</th>
+<th>设计空间</th>
+<th>AQS 的取舍</th>
+<th>取舍理由</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>谁能通过（准入判定）</td>
+<td>状态如何表达、如何原子变更</td>
+<td>volatile state + CAS，判定规则下放子类</td>
+<td>框架不预设资源语义，换取通用性</td>
+</tr>
+<tr>
+<td>没通过的怎么办（等待安置）</td>
+<td>自旋（耗 CPU、零唤醒延迟）↔ 阻塞（让出 CPU、有唤醒延迟）</td>
+<td>短暂自旋后 park 的混合策略</td>
+<td>临界区时长未知，取两端折中</td>
+</tr>
+<tr>
+<td>等待者何时再试（唤醒分发）</td>
+<td>广播惊群 ↔ 精准定点</td>
+<td>FIFO 队列 + 前驱唤醒后继</td>
+<td>惊群浪费调度；排队天然回答"下一个是谁"</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>这组取舍与 Linux futex 同构：<strong>快路径用原子指令，慢路径才进等待队列</strong>。AQS 可视为该通用同步架构在用户态、库层面的实例化。</p>
+</blockquote>
+<h4>一条自举约束，统摄所有实现细节</h4>
+<p>AQS 面临一个根本约束：<strong>锁的实现内部不能再用锁</strong>（否则无限递归），等待队列本身必须是无锁结构（CAS + volatile）：</p>
+<ul>
+<li>入队两步无法原子 → 只有 prev 链始终可靠 → 唤醒时从 tail 回溯</li>
+<li>等待者 park 后失去行动能力 → 唤醒责任倒置给前驱（SIGNAL 是写在前驱上的"唤醒契约"：契约不成立就不睡）</li>
+<li>队列懒初始化，无竞争时不存在 → 快路径只有一次 CAS——哲学原则二的机制落地</li>
+<li>park 的唤醒来源二义（unpark / 中断）→ 中断契约"不响应但不吞掉"：只记录，获取成功后补偿标志</li>
+</ul>
+<h3>AQS 的能力边界：acquire/release 范式</h3>
+<p>AQS 的抽象范式是 <strong>acquire/release</strong>——一切能表达为"获取 / 释放某种数量的资源"的同步语义。工具与该范式的匹配度，决定了它的构建层次：</p>
+<table>
+<thead>
+<tr>
+<th>构建层次</th>
+<th>方式</th>
+<th>代表</th>
+<th>因果</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>直接扩展</td>
+<td>内部 Sync 类继承 AQS</td>
+<td>ReentrantLock、ReadWriteLock、Semaphore、CountDownLatch</td>
+<td>语义可归约为 acquire/release</td>
+</tr>
+<tr>
+<td>组合复用</td>
+<td>用 AQS 的产物拼装</td>
+<td>CyclicBarrier（= Lock + Condition + 分代）、ArrayBlockingQueue</td>
+<td>需要的是"锁内协作"，不必发明新同步器</td>
+</tr>
+<tr>
+<td>绕开框架</td>
+<td>直接基于 CAS + park</td>
+<td>StampedLock（乐观读验证）、Phaser（动态阶段推进）、Exchanger（成对会合）</td>
+<td>语义无法映射到 acquire/release 排队范式</td>
+</tr>
+</tbody></table>
+<h3>统一规约：API 各异，契约同一</h3>
+<p><strong>归约一：所有同步器都是 acquire/release 双操作的具名化。</strong> JUC 刻意不定义统一接口，名字服务于领域语义，契约完全同源：</p>
+<table>
+<thead>
+<tr>
+<th>工具</th>
+<th>acquire 形态</th>
+<th>release 形态</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Lock</td>
+<td>lock()</td>
+<td>unlock()</td>
+</tr>
+<tr>
+<td>Semaphore</td>
+<td>acquire()</td>
+<td>release()</td>
+</tr>
+<tr>
+<td>CountDownLatch</td>
+<td>await()</td>
+<td>countDown()</td>
+</tr>
+<tr>
+<td>FutureTask</td>
+<td>get()</td>
+<td>任务完成</td>
+</tr>
+</tbody></table>
+<p><strong>归约二：每个阻塞型 acquire 都遵循同一组变体契约</strong>——本质是把失败处理的预算交给调用方：</p>
+<table>
+<thead>
+<tr>
+<th>变体</th>
+<th>语义</th>
+<th>调用方的预算</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>acquire（阻塞）</td>
+<td>等到为止</td>
+<td>无预算约束</td>
+</tr>
+<tr>
+<td>tryAcquire</td>
+<td>立即返回成败</td>
+<td>快速失败 / 降级路径</td>
+</tr>
+<tr>
+<td>tryAcquire(timeout)</td>
+<td>有界等待</td>
+<td>明确的延迟预算</td>
+</tr>
+<tr>
+<td>acquireInterruptibly</td>
+<td>等待中可被取消</td>
+<td>外部取消权</td>
+</tr>
+</tbody></table>
+<p>工具 API 中超出该契约的方法，才是它真正的增量语义（如 StampedLock 的 validate、Phaser 的 register）</p>
+<h2>互斥锁：ReentrantLock 与 synchronized</h2>
+<p>问题域定位：互斥锁是<strong>竞争安全的排他解</strong>，同时是<strong>准入控制的 N=1 特例</strong>。Java 提供同一抽象的两个实现：JVM 内建的 synchronized 与 JDK 库层的 ReentrantLock。</p>
+<h3>抽象模型：一个骨架，两个基底</h3>
+<p>互斥锁的抽象骨架与实现基底无关：<strong>持有者 + 重入计数 + 等待队列</strong>。两个实现是该骨架在不同层的实例：</p>
+<table>
+<thead>
+<tr>
+<th>骨架要素</th>
+<th>synchronized（ObjectMonitor，JVM/C++）</th>
+<th>ReentrantLock（AQS，JDK/Java）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>持有者 + 重入计数</td>
+<td>owner + recursions</td>
+<td>exclusiveOwnerThread + state</td>
+</tr>
+<tr>
+<td>同步队列</td>
+<td>EntryList</td>
+<td>CLH 队列</td>
+</tr>
+<tr>
+<td>条件队列</td>
+<td>WaitSet（单个）</td>
+<td>ConditionObject（可多个）</td>
+</tr>
+</tbody></table>
+<p>骨架之外，设计通则同样跨基底成立：</p>
+<ul>
+<li>**可重入同源**：线程身份绑定 + 计数状态——同一线程再次进入只递增计数，消除“自己等自己”的死锁</li>
+<li>**成本只向竞争者收取同源**：synchronized 无竞争时仅一次 mark word CAS（轻量级锁），出现竞争才膨胀为 ObjectMonitor——与 AQS 的“快路径 CAS + 队列懒初始化”是同一原则在两个基底的实例</li>
+</ul>
+<blockquote>
+<p>同一骨架与同一组通则在 JVM 层与 JDK 层各实现一次：骨架与通则属于概念稳定层，基底只是工程选址——再次印证构建分层的 U 形结论。</p>
+</blockquote>
+<p>演进注脚：偏向锁曾为“单线程反复加锁”场景连 CAS 也省去，JDK 15 起废弃——多核竞争成为常态后，偏向撤销的成本反超收益。<strong>优化的生命周期取决于其环境假设的存续</strong>。</p>
+<h3>根本分歧：语言结构 vs 库对象</h3>
+<p>两个实现的全部 API 差异，都是一个根本选择的投影——<strong>锁是语法块，还是普通对象</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>synchronized（语言结构）</th>
+<th>ReentrantLock（库对象）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>锁释放</td>
+<td>块退出自动释放（含异常路径）</td>
+<td>手动，依赖 try/finally 纪律</td>
+</tr>
+<tr>
+<td>acquire 变体</td>
+<td>仅无限阻塞一种形态</td>
+<td>完整四变体（阻塞 / try / 限时 / 可中断）</td>
+</tr>
+<tr>
+<td>条件等待集</td>
+<td>单等待集（wait/notify）</td>
+<td>多 Condition</td>
+</tr>
+<tr>
+<td>公平性</td>
+<td>不可配置（非公平）</td>
+<td>可配置</td>
+</tr>
+<tr>
+<td>可优化性</td>
+<td>锁边界对编译器可见：锁消除、锁粗化</td>
+<td>JIT 视角是普通方法调用，无语义级优化</td>
+</tr>
+</tbody></table>
+<p>因果链：语法块 → 锁边界对编译器与 JVM 可见 → 释放可自动、优化可施加，但表达力被语法封顶（无法跨作用域、无法定制策略）；普通对象 → 表达力完整（变体、多条件队列、跨方法持锁、策略可配），但正确性退回为调用方纪律。</p>
+<p>这组"安全换表达力"的交换在工程中反复出现：GC vs 手动内存管理、声明式事务 vs 编程式事务——语言/框架接管得越多，越安全也越不自由。</p>
+<h3>公平性：ReentrantLock 独有的增量</h3>
+<p>synchronized 无公平选项（固定非公平），公平策略是 ReentrantLock 在骨架之上唯一的语义增量；机制上只是准入判定时是否检查队列前驱，一行判断分出两种价值取向：</p>
+<table>
+<thead>
+<tr>
+<th>策略</th>
+<th>价值取向</th>
+<th>代价</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>公平锁</td>
+<td>顺序正义</td>
+<td>吞吐下降</td>
+</tr>
+<tr>
+<td>非公平锁</td>
+<td>系统效率</td>
+<td>局部饥饿</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>公平性不是技术问题，而是系统价值判断。</p>
+</blockquote>
+<p>非公平锁吞吐更高的机制因果：锁释放瞬间，新到线程可直接 CAS 抢锁，省去"唤醒队首 → 调度延迟 → 锁空闲窗口"的代价。公平性买的是顺序，付出的是上下文切换；故 ReentrantLock 默认非公平，公平模式只用于顺序敏感场景（如连接池分配）。</p>
+<h3>选型判据</h3>
+<blockquote>
+<p>能用 synchronized，就不要用 Lock。</p>
+</blockquote>
+<p>优先 synchronized 的理由源于"锁是语法块"一侧的收益：自动释放消灭一类泄漏错误、JVM 可持续优化、不依赖手动纪律。升级到 Lock 的触发条件：需要 acquire 变体（试、限时、可中断）、多条件等待集、公平性，或非块结构持锁（跨方法 / 跨作用域）——任一命中即为"不能用 synchronized"。</p>
+<h2>读写分离：ReentrantReadWriteLock 与 StampedLock</h2>
+<p>问题域定位：仍属竞争安全 + 准入控制，但准入规则从<strong>计数</strong>细化为<strong>按操作类型的兼容性矩阵</strong>。问题空间已指明本质冲突只有写-写、读-写——读-读本无冲突，互斥锁的 N=1 准入把它也串行化了；读写分离即把准入规则对齐到真实冲突结构：</p>
+<table>
+<thead>
+<tr>
+<th>兼容性</th>
+<th>读</th>
+<th>写</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>读</strong></td>
+<td>共享</td>
+<td>互斥</td>
+</tr>
+<tr>
+<td><strong>写</strong></td>
+<td>互斥</td>
+<td>互斥</td>
+</tr>
+</tbody></table>
+<h3>ReentrantReadWriteLock：悲观范式</h3>
+<ul>
+<li>求解方式：进入临界区**前**声明意图，读 / 写两副 acquire 语义共享一个 state（高低位分段：读计数 / 写重入计数）</li>
+<li>范式固有的新问题——**调度政策**：读者按批通过与写者及时进入不可兼得，朴素读优先实现会写饥饿</li>
+<li>RRWL 的取舍：默认非公平 + 新到读者让位于队首等待的写者，以部分读吞吐换写者不被饿死</li>
+</ul>
+<h3>StampedLock：乐观范式</h3>
+<ul>
+<li>核心思想：**先假设没有写冲突**。乐观读不持有任何东西，三步法：取 stamp（版本号）→ 拷贝状态到局部变量 → validate 校验；失败升级为悲观读锁</li>
+<li>调度问题被范式消解：读者不持锁即不阻塞写者，"读者批次 vs 写者及时性"的取舍整个消失</li>
+<li>增量的代价（风险集中在增量上）：<ul>
+<li>绕开 AQS 的连带：stamp 票据替代持有者语义，**不可重入、无 Condition**</li>
+<li>乐观的连带：validate 之前读到的可能是**不一致中间态**，必须先拷贝局部、校验通过后才可信任——“忘 validate”是该工具的头号事故源</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>这是从“锁竞争”向“冲突检测”的范式迁移，与数据库乐观并发控制（version 字段提交校验）、CAS 重试同构：<strong>版本号 + 事后校验</strong>替代<strong>进入时排他</strong>。</p>
+</blockquote>
+<h3>选型判据</h3>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>选择</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>需要重入或条件等待</td>
+<td>ReentrantReadWriteLock</td>
+<td>StampedLock 缺这两项语义</td>
+</tr>
+<tr>
+<td>读临界区短、状态可拷贝为局部变量</td>
+<td>StampedLock 乐观读</td>
+<td>读零持有，写不被阻塞</td>
+</tr>
+<tr>
+<td>写占比高</td>
+<td>退回互斥锁</td>
+<td>兼容性矩阵的收益与读占比成正比，写多时分离开销倒挂</td>
+</tr>
+</tbody></table>
+<h2>协作而非竞争：CountDownLatch、CyclicBarrier 与 Phaser</h2>
+<p>问题域定位：本章工具求解<strong>协作同步</strong>域——多个线程在时间或阶段上达成一致。它们与准入域工具共享 acquire/release 契约，分野在 state 的语义：<strong>不再表示资源量，而表示进度</strong>——await 不消耗配额，条件满足时全体放行（共享模式的"按余量传播"在此退化为广播）。等待的是事件，不是资源。</p>
+<h3>CountDownLatch：一次性门闩</h3>
+<ul>
+<li>模型：**事件完成计数**。state 初始为 N，countDown 递减，归零放行全部 await 者</li>
+<li>结构特征：**等待者与计数者分离**——countDown 的线程不等待，await 的线程不计数，单向不对称</li>
+<li>不可重置的因果：state 单调递减至终态，acquire/release 范式中没有"重置"语义</li>
+<li>构建上是 AQS 共享模式的纯契约实例，增量语义≈0——简单性即其价值</li>
+</ul>
+<h3>CyclicBarrier：可循环栅栏</h3>
+<ul>
+<li>模型：**参与者互等的会合点**。每个线程既是计数者也是等待者，到齐才走，对称结构；适用于迭代式并行计算</li>
+<li>可复用的因果：组合构建（Lock + Condition + **分代**）——每次放行开启新代，"代"是可重置的载体</li>
+<li>增量语义：barrierAction（最后到达者执行汇总动作）、broken 状态机</li>
+</ul>
+<h3>失败语义：协作与竞争的深层差异</h3>
+<p>竞争域的失败是<strong>隔离的</strong>——一个线程获取锁失败不影响他人；协作域的失败是<strong>连带的</strong>——互等结构中个体缺席必然波及集体。两个工具代表两种处理策略：</p>
+<table>
+<thead>
+<tr>
+<th>策略</th>
+<th>工具</th>
+<th>行为</th>
+<th>工程含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>不检测，责任交使用方</td>
+<td>CountDownLatch</td>
+<td>计数缺位则等待者悬挂</td>
+<td>必须 finally 中 countDown，或 await 带超时兜底</td>
+</tr>
+<tr>
+<td>检测并传播</td>
+<td>CyclicBarrier</td>
+<td>一人中断/超时即 broken，全组抛 BrokenBarrierException</td>
+<td>框架接管失败一致性，使用方处理集体重试</td>
+</tr>
+</tbody></table>
+<h3>两者的本质区别</h3>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>CountDownLatch</th>
+<th>CyclicBarrier</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>对称性</td>
+<td>等待者与计数者分离</td>
+<td>参与者互等</td>
+</tr>
+<tr>
+<td>可复用</td>
+<td>否（state 单调至终态）</td>
+<td>是（分代重置）</td>
+</tr>
+<tr>
+<td>失败语义</td>
+<td>无内建检测</td>
+<td>broken 传播全组</td>
+</tr>
+<tr>
+<td>构建路径</td>
+<td>直接扩展 AQS（共享模式）</td>
+<td>组合复用（Lock + Condition + 分代）</td>
+</tr>
+</tbody></table>
+<h3>演进：Phaser 解除两个硬限制</h3>
+<table>
+<thead>
+<tr>
+<th>硬限制</th>
+<th>受限工具</th>
+<th>Phaser 的解除方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一次性</td>
+<td>CountDownLatch</td>
+<td>多阶段推进：phase 递增，天然循环</td>
+</tr>
+<tr>
+<td>参与方固定</td>
+<td>CyclicBarrier</td>
+<td>register / arriveAndDeregister 动态注册</td>
+</tr>
+</tbody></table>
+<p>代价：语义无法映射到 acquire/release 排队范式，只能绕开 AQS 自建（见能力边界）——灵活性的获得以失去框架托管为交换。</p>
+<p>选型判据：<strong>等待者是否参与计数</strong>——外部观察者等内部事件完成 → CountDownLatch；对等参与者互等 → CyclicBarrier；多轮迭代 → CyclicBarrier；参与方动态增减 → Phaser。协作三件套的第三件"会合点"（Exchanger，成对数据交换）见后文。</p>
+<h2>准入控制的一般形式：Semaphore</h2>
+<p>问题域定位：互斥锁是准入控制的 N=1 特例，<strong>Semaphore 是其一般形式</strong>——以 N 份许可控制同时访问者数量。构建上经 AQS 共享模式直接扩展：state 即许可数，acquire 减、release 加，按余量传播唤醒。</p>
+<h3>抽象模型：配额，而非锁</h3>
+<p>锁与信号量的机制分界在<strong>所有权</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>锁</th>
+<th>Semaphore</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>持有者</td>
+<td>有（owner 记录）</td>
+<td>无（只有计数）</td>
+</tr>
+<tr>
+<td>重入</td>
+<td>可定义（身份绑定计数）</td>
+<td>无此概念</td>
+</tr>
+<tr>
+<td>释放者约束</td>
+<td>仅持有者可释放</td>
+<td>任意线程可释放，甚至先释放后获取</td>
+</tr>
+</tbody></table>
+<p>边界警告：问题层面"互斥 = 准入 N=1"，但工具层面 <strong>Semaphore(1) ≠ 互斥锁</strong>——差异即所有权。无所有权是双刃：跨线程释放成为可能（A 线程获取、B 线程归还，异步与管道场景的刚需），误释放也无任何防护。问题层等价、工具层不等价，再次印证"问题 ≠ 解法"。</p>
+<p>增量语义（超出 acquire/release 契约的部分）：批量许可 acquire(n) / release(n)、跨线程释放、许可数动态调整（reducePermits）。公平性选项与互斥锁同框架，但价值取向不同——限流场景下公平性防的是<strong>饥饿</strong>而非顺序。</p>
+<h3>工程意义：失效模式的转换</h3>
+<ul>
+<li>原理：把**无界并发收敛为有界并发**。过载时系统的失效模式从"全体崩溃"变为"部分等待或快速失败"（acquire 排队 / tryAcquire 降级，对应变体契约的预算选择）——本质是**用延迟换可用性**</li>
+<li>跨尺度同源：Semaphore 是进程内的限流原语，与分布式限流是同一问题在不同尺度的解——许可即令牌，Semaphore 即无补充速率的退化令牌桶，见[流量控制](/软件工程/架构/系统设计/流量控制.html)</li>
+</ul>
+<p>失败模式：忘记 release 导致<strong>许可泄漏</strong>，比锁泄漏更隐蔽——锁泄漏立即死锁，是响亮失败；许可泄漏是池子慢性萎缩，无声衰减。无所有权使框架无法代为检查，release 必须落在 finally。</p>
+<h2>会合点：Exchanger</h2>
+<p>问题域定位：协作同步域的第三件工具——<strong>两方对齐 + 双向数据交换</strong>，会合与通信合一，即 <strong>rendezvous 语义</strong>。</p>
+<p>与栅栏的区分：CyclicBarrier 是 N 方对齐、不带数据；Exchanger 是 2 方会合、各自携带数据并交换。协作章的对称性框架延续：双方互为计数者与等待者。</p>
+<ul>
+<li>构建路径：成对会合无法映射 acquire/release 排队范式，绕开 AQS、直接基于 CAS + park（见能力边界）——先到者占槽等待，后到者 CAS 配对并互换数据</li>
+<li>失败语义：对方缺席则永等——协作连带性在二元场景的极端形式，工程上必须用 exchange(timeout) 兜底</li>
+<li>典型场景：流水线两侧交换满 / 空缓冲区——**双缓冲免拷贝**，数据所有权在会合点易手</li>
+</ul>
+<blockquote>
+<p>横向同构：Go 无缓冲 channel 的收发、Ada 的 rendezvous——"会合即通信"是跨语言的稳定模式；Exchanger 是 Java 中最接近同步 channel 的原语。</p>
+</blockquote>
+<h2>公共原语：LockSupport 与 park/unpark</h2>
+<p>问题域定位：构建分层的最底层。一切阻塞型工具最终落到两个原语——<strong>CAS</strong>（原子状态变更，由硬件原子指令支撑，见<a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JVM/JAVA%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B.html">JAVA内存模型</a>）与 <strong>park/unpark</strong>（线程阻塞 / 唤醒，本章）。</p>
+<h3>许可模型：丢失唤醒的消解</h3>
+<p>park/unpark 围绕<strong>二值许可</strong>（0/1，不累积）工作：unpark 发放许可，park 消耗许可，<strong>有许可则立即返回</strong>。因此 unpark 可先于 park 到达而不丢失——"检查条件 → 阻塞"之间被唤醒的竞态窗口被许可吸收。这是它取代 wait/notify 成为底层原语的根本原因。</p>
+<h3>对 wait/notify 的三重解放</h3>
+<table>
+<thead>
+<tr>
+<th>约束</th>
+<th>wait/notify</th>
+<th>park/unpark</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>锁依赖</td>
+<td>必须先持有监视器锁</td>
+<td>无需任何锁</td>
+</tr>
+<tr>
+<td>时序依赖</td>
+<td>notify 早于 wait 即丢失</td>
+<td>unpark 先行被许可记住</td>
+</tr>
+<tr>
+<td>唤醒目标</td>
+<td>无法指定线程</td>
+<td>精准定点：unpark(thread)</td>
+</tr>
+</tbody></table>
+<h3>park 的返回契约</h3>
+<p>park 返回有三种原因：unpark、中断、虚假返回——且 park 不报告原因，调用方必须<strong>循环重检条件</strong>。AQS 自举约束中的中断契约（"不响应但不吞掉"）正是建立在这一契约之上。</p>
+<h3>OS 映射</h3>
+<p>每个线程挂一个 Parker（互斥量 + 条件变量，Linux 上经 futex）——U 形表"公共原语直接映射 OS 调度原语"的具体落点：park/unpark 是 OS 阻塞原语的 JVM 封装，CAS 是硬件 cmpxchg 的封装。上层全部工具的阻塞语义到此为止，再往下即内核调度。</p>
+<h2>上下文隔离与传播：ThreadLocal 及其演进</h2>
+<p>问题域定位：到此，文档第一次<strong>踏出"协调"主线</strong>。前面每件工具都承认共享、管理争用；ThreadLocal 走另一条根本路径——<strong>不共享</strong>：以"每线程一份副本"取消共享这个前提，争用从源头不存在。这正是它在构建分层图中唯一"不经由 CAS+park 原语层"的原因——无争用可仲裁，便不需要原子原语。本质是<strong>以空间换免同步</strong>。</p>
+<h3>抽象模型：每线程副本</h3>
+<p>ThreadLocal 解决<strong>隐式参数传递</strong>——无需在调用链层层透传的上下文（事务、用户身份、traceId），挂在"当前线程"这个隐式坐标上。</p>
+<p>关键设计：<strong>ThreadLocalMap 是 Thread 的字段</strong>（threadLocals），不是 ThreadLocal 的字段，以 ThreadLocal 实例为 key、值为 value。一个推论值千金——线程访问的永远是自己 Thread 上的 map，<strong>天然零竞争</strong>，免同步由此而来。</p>
+<h3>机制：一个设计选择，三个后果</h3>
+<p>map-on-Thread 这一选择同时派生隔离收益与两个风险，三者同源：</p>
+<table>
+<thead>
+<tr>
+<th>后果</th>
+<th>机制</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>线程隔离（收益）</td>
+<td>每线程读写各自 Thread.threadLocals，无共享、无锁</td>
+</tr>
+<tr>
+<td>脏数据（风险）</td>
+<td>map 随线程而非任务存活 → 线程池复用线程时残留不清，下个任务读到上个任务的值</td>
+</tr>
+<tr>
+<td>内存泄漏（风险）</td>
+<td>Entry 的 key 弱引用 ThreadLocal、value 强引用；ThreadLocal 被回收后 key=null，value 仍被池线程经 Entry 强引用 → 陈旧 Entry 无法释放</td>
+</tr>
+</tbody></table>
+<p>两个风险的根都是"map 绑在长生命周期的线程上"。对策同源：<strong>用完即 remove()</strong>——线程池场景必须在 finally 中清理（set/get 仅机会性清理部分 null-key 槽，不可依赖）。</p>
+<h3>演进：传递边界依次扩张</h3>
+<p>ThreadLocal 的副本严格绑定单线程，跨线程即断。两次演进都在扩张"传递边界"，各自付出代价：</p>
+<table>
+<thead>
+<tr>
+<th>工具</th>
+<th>扩张的边界</th>
+<th>机制</th>
+<th>局限/代价</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ThreadLocal</td>
+<td>单线程内</td>
+<td>map 挂当前线程</td>
+<td>跨线程断裂</td>
+</tr>
+<tr>
+<td>InheritableThreadLocal</td>
+<td>父→子线程</td>
+<td>子线程<strong>构造时</strong> childValue() 从父拷贝</td>
+<td>池线程预创建复用，捕获不到"提交时"上下文，失效</td>
+</tr>
+<tr>
+<td>TransmittableThreadLocal</td>
+<td>跨线程池</td>
+<td>提交时捕获快照，执行前 replay、执行后 restore</td>
+<td>需装饰 Runnable/Callable 或线程池</td>
+</tr>
+</tbody></table>
+<p>TTL 的要害是<strong>时机分离</strong>：捕获在<strong>任务提交时</strong>（父线程上下文尚在），应用在<strong>任务执行前</strong>（已是池线程）。InheritableThreadLocal 把捕获绑死在线程创建时，而池线程创建早于任务提交，故必然漏掉提交时刻的上下文——这才是它在线程池失效的精确原因，而非笼统的"无法适配"。</p>
+<h3>适用边界：隐式传递是双刃</h3>
+<p>隐式传递省去层层透参，代价是<strong>数据流不可见</strong>：依赖被隐藏（损可测试性）、来源不显（损可读性）、跨层耦合。故 ThreadLocal 是"必要的恶"——框架内部用（事务管理、MDC 日志、SecurityContext），业务代码慎用，能显式传参则优先显式。</p>
+<blockquote>
+<p>横向同构：ThreadLocal 是"每线程的隐式环境变量"，与 Go <code>context.Context</code>、Kotlin <code>CoroutineContext</code> 同解一题，分歧在隐式（绑线程）vs 显式（随调用传递）。时间维度的趋势——虚拟线程下"每线程一副本"成本随线程数爆炸，JDK 以 <strong>ScopedValue</strong>（不可变、作用域绑定）替代之：隐式上下文正从<strong>线程绑定</strong>走向<strong>作用域绑定</strong>。</p>
+</blockquote>
+<blockquote>
+<p>与结构化并发成对：结构化并发（<code>StructuredTaskScope</code>，见 <a href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/JAVA/JAVA%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/JAVA%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B.html">/编程语言/JAVA/JAVA并发编程/JAVA并发编程.html</a>）用作用域约束<strong>任务生命周期</strong>，<code>ScopedValue</code> 用同一作用域约束<strong>上下文传递</strong>——二者同构、同源。</p>
+</blockquote>
+<h2>选型方法：从问题域到工具</h2>
+<p>工具会朽，方法不朽。下面先给不随 JDK 变的决策路径，再给随之派生的工具表。</p>
+<h3>决策路径</h3>
+<ol>
+<li>**定位问题域**：先判属六域中哪一类，并分清走的是"协调共享"主线，还是"不共享"支线（仅 ThreadLocal 系）</li>
+<li>**域内默认最简**：每个域有一个最简实现作默认（synchronized / Semaphore / RRWL / CountDownLatch / ThreadLocal）</li>
+<li>**仅在出现明确增量需求时升级**：没有增量需求就停在默认——"能用 synchronized 就不用 Lock"是这条规则的特例</li>
+<li>**横切域不单独选**：可见性、取消不挑工具，由所选工具自带（见表下注）</li>
+</ol>
+<h3>判据表</h3>
+<table>
+<thead>
+<tr>
+<th>问题域</th>
+<th>默认（最简）</th>
+<th>出现以下增量需求时</th>
+<th>升级 / 选用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>竞争安全 · 临界区互斥（准入 N=1）</td>
+<td>synchronized</td>
+<td>试锁 / 限时 / 可中断、多条件队列、公平、跨方法持锁</td>
+<td>ReentrantLock</td>
+</tr>
+<tr>
+<td>竞争安全 · 单变量原子</td>
+<td>AtomicXxx（CAS）</td>
+<td>多变量需一致</td>
+<td>退回锁</td>
+</tr>
+<tr>
+<td>竞争安全 · 读多写少</td>
+<td>ReentrantReadWriteLock</td>
+<td>读极短且状态可拷贝 → 乐观读；需重入 / Condition → 留 RRWL；写占比高 → 退回互斥</td>
+<td>StampedLock</td>
+</tr>
+<tr>
+<td>准入控制 N>1（配额 / 限流）</td>
+<td>Semaphore</td>
+<td>进程外限流</td>
+<td>令牌桶（见流量控制）</td>
+</tr>
+<tr>
+<td>协作同步</td>
+<td>CountDownLatch（等事件完成）</td>
+<td>需复用 / 对等互等 → 栅栏；动态参与方 / 多阶段 → Phaser；成对换数据 → Exchanger</td>
+<td>CyclicBarrier / Phaser / Exchanger</td>
+</tr>
+<tr>
+<td>上下文隔离与传播（不共享支线）</td>
+<td>ThreadLocal</td>
+<td>父→子线程 → Inheritable；跨线程池 → 快照回放</td>
+<td>InheritableThreadLocal / TTL</td>
+</tr>
+</tbody></table>
+<p>判据是"等待者是否参与计数""读临界区是否够短可乐观""上下文要跨多远"——是可执行的条件，不是"安全""高效"这类形容词。</p>
+<p>表下注（横切两域，不单独选工具）：</p>
+<ul>
+<li>**可见性与有序性**：所选工具的获取 / 释放自带 happens-before；仅需"写后即对他人可见"时用 volatile</li>
+<li>**取消与关闭**：选 acquire 的可中断变体（lockInterruptibly、可中断 await），中断契约贯穿整个变体族</li>
+</ul>
+<h2>关联内容（自动生成）</h2>
+<ul>
+<li>[/编程语言/JAVA/JAVA并发编程/线程.html](/编程语言/JAVA/JAVA并发编程/线程.html) 详细介绍了线程模型，这是所有并发工具协调的基础</li>
+<li>[/编程语言/JAVA/JAVA并发编程/线程池.html](/编程语言/JAVA/JAVA并发编程/线程池.html) 讨论了线程池，其中大量使用了诸如CountDownLatch和Semaphore等并发工具</li>
+<li>[/编程语言/JAVA/JAVA并发编程/并发集合.html](/编程语言/JAVA/JAVA并发编程/并发集合.html) 涵盖并发集合，这些集合通常与并发工具类协同工作</li>
+<li>[/编程语言/JAVA/JAVA并发编程/JAVA并发编程.html](/编程语言/JAVA/JAVA并发编程/JAVA并发编程.html) 提供Java并发编程的整体框架，展示了并发工具在整个并发编程体系中的位置</li>
+<li>[/编程语言/JAVA/JVM/JAVA内存模型.html](/编程语言/JAVA/JVM/JAVA内存模型.html) “可见性与有序性”问题域的根——本文中 happens-before 作为每个工具的内建保证，其规则由 JMM 定义</li>
+<li>[/编程语言/并发模型.html](/编程语言/并发模型.html) 本文只覆盖“协调共享”一条路径，不共享/不可变两条策略与共享内存、消息传递（CSP/Actor）模型由此承载</li>
+<li>[/操作系统/进程与线程.html](/操作系统/进程与线程.html) 公共原语层 park/unpark 直接映射 OS 调度原语（futex、Parker=互斥量+条件变量），是线程阻塞/唤醒的底层落点</li>
+<li>[/软件工程/架构/系统设计/流量控制.html](/软件工程/架构/系统设计/流量控制.html) Semaphore 是进程内限流原语，与令牌桶等分布式限流同解一题、只是尺度不同</li>
+<li>[/中间件/数据库/数据库系统/事务管理/事务.html](/中间件/数据库/数据库系统/事务管理/事务.html) StampedLock 的乐观读（版本号+事后校验）与数据库 MVCC／乐观并发控制同构</li>
+</ul>
+</div></body>
+  <script>
+    const buildTime = '2026-07-21T07:42:04.990Z'
+    if (buildTime) {
+      document.getElementById("buildTime").innerHTML = `${new Date(buildTime).toLocaleString()}`
+    }
+  </script>
+</html>

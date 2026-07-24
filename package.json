@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "2.3.2",
-    "algoliasearch": "4.26.0",
+    "algoliasearch": "5.56.0",
     "echarts": "6.0.0",
     "echarts-gl": "^2.1.0",
     "element-plus": "2.13.2",

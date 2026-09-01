@@ -1,0 +1,1 @@
+import{f as e}from"./_arrayPush-YobK-pR-.js";import{o as t}from"./hasIn-JL5ws278.js";function n(e,n,r){n==`__proto__`&&t?t(e,n,{configurable:!0,enumerable:!0,value:r,writable:!0}):e[n]=r}var r=Object.prototype.hasOwnProperty;function i(t,i,a){var o=t[i];(!(r.call(t,i)&&e(o,a))||a===void 0&&!(i in t))&&n(t,i,a)}export{n,i as t};

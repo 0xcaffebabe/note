@@ -1,0 +1,1 @@
+var e=new class{events=new Map;emit(e,t){let n=this.events.get(e);n&&n.forEach(e=>e(t))}on(e,t){this.events.set(e,this.events.get(e)||[]),this.events.get(e).push(t)}off(e,t){let n=this.events.get(e);if(n){for(let e=0;e<n.length;e++)if(n[e]===t){n.splice(e,1);break}}}};export{e as t};

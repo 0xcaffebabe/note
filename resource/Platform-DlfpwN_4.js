@@ -1,0 +1,1 @@
+function e(){return/mac/i.test(navigator.platform||navigator.userAgent)}export{e as t};

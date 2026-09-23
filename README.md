@@ -4,13 +4,13 @@
 
 在线阅读:
 
-<https://note.ismy.wang>(github pages, cf加速)
+<https://note.ismy.wang>
 
-<https://b.ismy.wang>(国内服务器)
+<https://b.ismy.wang>
 
-<https://notec.ismy.wang>(cloudflare pages)
+<https://notec.ismy.wang>
 
-<https://notev.ismy.wang>(vercel app, 比github pages快)
+<https://notev.ismy.wang>
 
 --------------------------------------------------------------------------------
 

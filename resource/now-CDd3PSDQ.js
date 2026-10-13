@@ -1,0 +1,1 @@
+import{w as e}from"./_arrayPush-YobK-pR-.js";var t=function(){return e.Date.now()};export{t};

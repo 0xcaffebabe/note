@@ -2,10 +2,10 @@
 tags: ['网络', '协议设计', 'web架构']
 books: [
   {name: '计算机网络:自顶向下方法'}
-  ]
+]
 links: [
   'https://icyfenix.cn/architect-perspective/general-architecture/diversion-system/cdn.html'
-  ]
+]
 ---
 # HTTP 协议（升维重构版）
 

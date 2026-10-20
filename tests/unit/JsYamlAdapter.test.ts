@@ -26,6 +26,47 @@ describe('JsYamlAdapter', () => {
     expect(yaml.load('undefined')).toBe('undefined')
   })
 
+  it.each(['\n', '\r\n'])('兼容旧元数据中未缩进的流式数组结束符 (%j)', (newline) => {
+    const content = [
+      "tags: ['数据库']",
+      'books: [',
+      "  {name: '数据库系统概念', chapters: ['第十八章']}",
+      ']',
+      'links: [',
+      "  'https://example.com/[reference]#section'",
+      ']',
+    ].join(newline)
+    expect(yaml.load(content)).toEqual({
+      tags: ['数据库'],
+      books: [{ name: '数据库系统概念', chapters: ['第十八章'] }],
+      links: ['https://example.com/[reference]#section'],
+    })
+  })
+
+  it('兼容流式集合内部的 tab 缩进', () => {
+    expect(yaml.load("books: [\n\t{name: '深入分析Java Web技术内幕'}\n]")).toEqual({
+      books: [{ name: '深入分析Java Web技术内幕' }],
+    })
+  })
+
+  it('兼容嵌套映射下的流式集合缩进', () => {
+    expect(yaml.load('metadata:\n  books: [\n  {name: test}\n  ]')).toEqual({
+      metadata: { books: [{ name: 'test' }] },
+    })
+  })
+
+  it('保留合法多行文本和 tab，仅兼容发生缩进错误的行', () => {
+    const content = 'description: |\n  [示例]\n  \t原样保留\nbooks: [\n  {name: "a ] # b"}\n]'
+    expect(yaml.load(content)).toEqual({
+      description: '[示例]\n\t原样保留\n',
+      books: [{ name: 'a ] # b' }],
+    })
+  })
+
+  it('文档分隔符不能被缩进兼容逻辑隐藏', () => {
+    expect(() => yaml.load('books: [\n---\nname: second')).toThrow(YAMLException)
+  })
+
   it('无效 YAML 仍然抛出解析错误', () => {
     expect(() => yaml.load('tags: [unclosed')).toThrow(YAMLException)
   })

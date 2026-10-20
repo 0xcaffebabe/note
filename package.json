@@ -44,7 +44,7 @@
     "nodejieba": "3.5.8",
     "puppeteer": "25.14.0",
     "rollup-plugin-visualizer": "7.1.1",
-    "simple-git": "3.36.0",
+    "simple-git": "4.0.1",
     "tsx": "4.23.15",
     "typescript": "6.0.3",
     "unplugin-auto-import": "21.1.0",

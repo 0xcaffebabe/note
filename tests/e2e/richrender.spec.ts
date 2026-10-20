@@ -1,4 +1,4 @@
-import { test, expect, goto, docWithMermaid, docWithMath } from './fixtures'
+import { test, expect, goto, docWithMermaid, docWithMath, DOC, pathnameOf } from './fixtures'
 
 // 客户端富渲染管线(Mermaid / KaTeX)。
 // 这两类标记在「预渲染 .html」里并不存在——它们由 DocRender(marked 自定义渲染)在客户端从 .md.json
@@ -11,6 +11,43 @@ import { test, expect, goto, docWithMermaid, docWithMath } from './fixtures'
 //             渲染异常时占位元素里会塞 <span style='color:red'>错误信息</span>
 // 故按「源 markdown 特征」发现文档(docWithMermaid/docWithMath), 都为空时 skip。
 test.describe('client rich rendering (P1)', () => {
+  test('右键预览渲染 Mermaid，重复打开不影响正文图表', async ({ page }) => {
+    // 在文档数据边界提供固定图表，走真实 Markdown、右键预览与 Mermaid 渲染管线。
+    const jsonPath = DOC.replace(/\.html$/, '.md.json')
+    await page.route(url => decodeURI(url.pathname) === jsonPath, async route => {
+      const response = await route.fetch()
+      const file = await response.json()
+      file.content = '## Mermaid 预览回归\n\n```mermaid\ngraph TD\n  A[Preview start] --> B[Preview end]\n```'
+      await route.fulfill({ response, json: file })
+    })
+    await goto(page, DOC)
+    const mainSource = page.locator('.main-content .mermaid-source').first()
+    await mainSource.scrollIntoViewIfNeeded()
+    await expect(mainSource).toHaveClass(/mermaid-rendered/, { timeout: 20_000 })
+    const mainSvg = mainSource.locator('svg')
+    const mainSvgId = await mainSvg.getAttribute('id')
+    const beforePath = pathnameOf(page)
+    const menuItem = page.locator('.el-menu .el-menu-item.is-active').first()
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+      await menuItem.click({ button: 'right' })
+      const preview = page.getByRole('dialog', { name: '文档预览' })
+      await expect(preview).toBeVisible()
+      const source = preview.locator('.mermaid-source')
+      await source.scrollIntoViewIfNeeded()
+      await expect(source).toHaveClass(/mermaid-rendered/, { timeout: 20_000 })
+      const svg = source.locator('svg')
+      await expect(svg).toBeVisible()
+      await expect(svg).toContainText('Preview start')
+      expect(await svg.getAttribute('id')).not.toBe(mainSvgId)
+      await expect(mainSvg).toHaveAttribute('id', mainSvgId!)
+      await expect(page.locator('.mermaid-error-msg')).toHaveCount(0)
+      expect(pathnameOf(page)).toBe(beforePath)
+      await preview.getByRole('button', { name: '关闭预览' }).click()
+      await expect(preview).toBeHidden()
+    }
+  })
+
   test('Mermaid 围栏在客户端渲染为内联 SVG', async ({ page }) => {
     const d = docWithMermaid()
     test.skip(!d, '构建产物中未发现含 ```mermaid 围栏的文档')

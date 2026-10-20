@@ -45,6 +45,7 @@ import DocFileInfo from "@/core/domain/DocFileInfo";
 import DocUtils from "@/core/util/DocUtils";
 import { clampToBounds } from "@/core/util/GeometryUtils";
 import DocPostRender from "@/platform/web/render/DocPostRender";
+import MermaidUtils from "@/platform/web/util/MermaidUtils";
 
 export default defineComponent({
   components: {
@@ -105,8 +106,10 @@ export default defineComponent({
         this.loading = false;
       }
       this.$nextTick(() => {
+        const previewSection = this.$refs.previewSection as HTMLElement;
         // 预览内容的代码块高亮
-        DocPostRender.highlightCode(this.$refs.previewSection as HTMLElement);
+        DocPostRender.highlightCode(previewSection);
+        MermaidUtils.initAllNode(previewSection);
         // 内容撑开高度后再夹一次
         this.clampToViewport();
       });

@@ -4,7 +4,7 @@ import { describe, it, expect, vi } from 'vitest'
 // 高亮过滤 / kwContains / appendMissingKw / 记录过滤 逻辑(这些是私有函数 只能经 public search 覆盖)
 const { indexSearch } = vi.hoisted(() => ({ indexSearch: vi.fn() }))
 vi.mock('algoliasearch', () => ({
-  default: vi.fn(() => ({ initIndex: () => ({ search: indexSearch }) })),
+  algoliasearch: vi.fn(() => ({ searchSingleIndex: indexSearch })),
 }))
 
 import searchService from '@/platform/web/service/SearchService'
@@ -29,6 +29,10 @@ describe('SearchService.search(algolia)', () => {
       hits: [hit('/运维/Docker.html', [{ id: '安装 <mark>Docker</mark>', txt: '<mark>Docker</mark> 是容器引擎' }])],
     })
     const r = await searchService.search('docker')
+    expect(indexSearch).toHaveBeenLastCalledWith({
+      indexName: 'note',
+      searchParams: { query: 'docker', hitsPerPage: 200, highlightPreTag: '<mark>', highlightPostTag: '</mark>' },
+    })
     expect(r.took).toBe(7)
     expect(r.list).toHaveLength(1)
     expect(r.list[0].url).toBe('/运维/Docker.html')
@@ -81,6 +85,10 @@ describe('SearchService.getQuerySuggestions', () => {
   it('透传 algolia 的 query suggestions', async () => {
     indexSearch.mockResolvedValueOnce({ hits: [{ query: 'docker' }, { query: 'nginx' }] })
     const r = await searchService.getQuerySuggestions('sugkw')
+    expect(indexSearch).toHaveBeenLastCalledWith({
+      indexName: 'note_query_suggestions',
+      searchParams: { query: 'sugkw', hitsPerPage: 100 },
+    })
     expect(r.map((s) => s.query)).toEqual(['docker', 'nginx'])
   })
 })

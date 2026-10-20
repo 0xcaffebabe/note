@@ -1,6 +1,6 @@
 // VersionControlPort 的 node 实现: 包裹 simple-git。构建期唯一接触 simple-git 的位置。
 import type { VersionControlPort, VcsLogResult } from '../../core/ports/VersionControlPort'
-import simpleGit, { type SimpleGit } from 'simple-git'
+import { simpleGit, type SimpleGit } from 'simple-git'
 
 export class SimpleGitVcs implements VersionControlPort {
   private readonly git: SimpleGit = simpleGit()

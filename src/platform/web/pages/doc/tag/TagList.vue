@@ -1,5 +1,5 @@
 <template>
-  <div style="max-width: 70%;">
+  <div class="doc-tags">
     <el-popover
     popper-class="tag-popover"
     :width="400"
@@ -95,10 +95,24 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
+.doc-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  // 与正文版心及其内边距一致，宽度随阅读区域和视口变化。
+  max-width: var(--reading-measure);
+  margin: 0 auto 4px;
+  padding-inline: var(--spacing-xl);
+}
+
+@media (max-width: @bp-mobile) {
+  .doc-tags {
+    padding-inline: var(--spacing-sm);
+  }
+}
+
 .el-tag {
   cursor: pointer;
-  margin-left: 4px;
-  margin-bottom: 4px;
 }
 
 </style>

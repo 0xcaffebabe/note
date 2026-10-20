@@ -1,4 +1,7 @@
 import { describe, it, expect } from 'vitest'
+import { readFileSync, readdirSync } from 'node:fs'
+import { join, resolve } from 'node:path'
+import { jsYaml } from '@/adapters/libs/JsYamlAdapter'
 
 // 守护 build 期 DocService 的几个纯/确定性方法, 它们是搜索索引与元数据流水线的根基:
 //  - resolveMetadata: 从 markdown 抽取 front-matter 内层 yaml(供 js-yaml 解析 tag/质量分等)
@@ -12,6 +15,17 @@ import { describe, it, expect } from 'vitest'
 import docService from '@/platform/node/build/DocService'
 
 describe('DocService.resolveMetadata 抽取 front-matter 内层 yaml', () => {
+  it('知识库全部文档的 frontmatter 都能通过当前 YAML 适配器解析', () => {
+    const files = readdirSync(resolve('doc'), { recursive: true, withFileTypes: true })
+      .filter(entry => entry.isFile() && entry.name.endsWith('.md'))
+      .map(entry => join(entry.parentPath, entry.name))
+    expect(files.length).toBeGreaterThan(0)
+    for (const filename of files) {
+      const metadata = docService.resolveMetadata(readFileSync(filename, 'utf8'))
+      expect(() => jsYaml.load(metadata), filename).not.toThrow()
+    }
+  })
+
   it('内容未以 --- 开头时返回空串(无元数据)', () => {
     // trim 后不以 --- 开头 -> 直接短路返回 ''
     expect(docService.resolveMetadata('hello world no dashes')).toBe('')

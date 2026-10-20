@@ -36,7 +36,7 @@
     "@playwright/test": "1.64.1",
     "@types/jsdom": "28.0.3",
     "@types/katex": "0.16.8",
-    "@types/node": "24.10.13",
+    "@types/node": "26.6.5",
     "@types/prismjs": "1.26.6",
     "@vitejs/plugin-vue": "6.0.7",
     "@vue/test-utils": "2.4.11",

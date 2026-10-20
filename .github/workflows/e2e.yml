@@ -59,8 +59,7 @@ jobs:
 
   e2e:
     needs: build                       # 复用 build 产物 不在此重新构建
-    # Playwright 1.60 尚不支持 ubuntu-latest 已迁移到的 Ubuntu 26.04。
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false              # 一个分片失败不掩盖其他分片
       matrix:

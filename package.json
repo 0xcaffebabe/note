@@ -33,7 +33,7 @@
     "vuex": "4.1.0"
   },
   "devDependencies": {
-    "@playwright/test": "1.60.0",
+    "@playwright/test": "1.64.1",
     "@types/jsdom": "28.0.3",
     "@types/katex": "0.16.8",
     "@types/node": "24.10.13",

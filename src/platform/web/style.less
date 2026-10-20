@@ -50,7 +50,7 @@
   // 文档三栏整组在大屏的居中外壳上限; @bp-wide 三栏(1680), @bp-ultra 四栏时另加宽(见下)
   --doc-shell-max: 1680px;
   // 超宽档第4列(关联内容)宽度
-  --doc-related-w: 380px;
+  --doc-related-w: 280px;
   // 首页图表区在大屏独享的更宽上限(比文字块 --home-max 更宽, 同轴居中); 图表卡默认高度
   --home-max-wide: 1480px;
   --chart-h: 360px;
@@ -151,11 +151,13 @@ html.dark {
   }
 }
 
-// 超宽档(>= @bp-ultra 2040): 文档关联内容独立成第4列 → 壳再加宽、TOC 收回(不再内联关联)
+// 超宽档(>= @bp-ultra 2040): 关联内容使用紧凑第4列, 释放的宽度优先分给正文
 @media (min-width: @bp-ultra) {
   :root {
-    --doc-shell-max: 2080px;  // 容纳 侧栏380 + 正文 + TOC360 + 关联380
+    --doc-shell-max: 2080px;  // 容纳 侧栏320 + 正文1120 + TOC360 + 关联280
     --doc-toc-w: 360px;       // 关联内容移出右列 → TOC 收回到大纲+图谱所需
+    --reading-measure: 1080px;
+    --content-max: 1120px;    // 避免正文仍受 wide 档 920px 上限限制
   }
 }
 

@@ -513,7 +513,8 @@ export default defineComponent({
 
 // 超宽档: 关联内容第4列(文档流内列, 内部 sticky 跟随滚动, 与正文同色卡片底)
 .doc-related-column {
-  flex: 0 0 var(--doc-related-w, 380px);
+  flex: 0 0 var(--doc-related-w);
+  min-width: 0;
   background-color: var(--card-bg-color);
 }
 .doc-related-sticky {

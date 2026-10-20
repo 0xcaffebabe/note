@@ -4,7 +4,7 @@
     class="tab-container" 
     v-bind="$attrs"
     ref="tabContainer" 
-    :style="{top: parentShowHeader? 60 + 'px': 0, position: fixed? 'sticky': 'static'}"
+    :style="{ position: fixed ? 'sticky' : 'static' }"
   >
     <!-- 标签与关闭键为两个平级真按钮(button不可嵌套button) 关闭键因此键盘可达 -->
     <transition-group tag="div" name="tab" class="tab-list">
@@ -58,25 +58,17 @@ import TabNavContextMenu from "./TabNavContextMenu.vue";
 import { ElScrollbar } from 'element-plus';
 
 export default defineComponent({
-  inject: ['showHeader'],
   emits: ['dbclick'],
   components: {
     TabNavContextMenu
   },
   data(){
     return {
-      parentShowHeader: true,
       fixed: true,
       allCateList: [] as Category[]
     }
   },
   watch: {
-    showHeader: {
-      handler(val){
-        this.parentShowHeader = val;
-      },
-      immediate: true,
-    },
     currentCate() {
       this.$nextTick(() => {
         const activeTab = document.querySelector(`.tab-container-wrapper [url="${this.currentCate.link}"]`) as HTMLElement
@@ -136,7 +128,7 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .tab-container {
-  transition: top var(--transition-normal);
+  top: 0;
   height: 40px;
   white-space: nowrap;
   z-index: var(--z-float);

@@ -53,7 +53,7 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .el-switch {
-  --el-switch-on-color: #2c2c2c;
+  --el-switch-on-color: var(--secondary-text-color);
   --el-switch-off-color: var(--primary-color);
 }
 </style>

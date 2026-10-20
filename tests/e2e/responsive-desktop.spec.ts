@@ -1,6 +1,6 @@
 import { test, expect, goto, pathnameOf, waitForPath, collectPageProblems, BENIGN_CONSOLE, DOC, DOC_NO_SUFFIX } from './fixtures'
 
-// 响应式合流(P0–P6)桌面端验证: 单一无前缀路由树 + 响应式 DocPage/Home/Header/工具栏。
+// 响应式桌面端验证: 单一无前缀路由树 + 响应式 DocPage/Home/浮动导航/工具栏。
 // 运行于 desktop-chromium(1440x900, 细指针)。断点为视口驱动, 故可用 setViewportSize 验证跨断点切换。
 // 文件名不含 mobile.spec.ts => 仅在 desktop 工程运行。
 
@@ -27,7 +27,7 @@ test.describe('route-completion rendering (desktop)', () => {
     await expect(page.locator('.markdown-section').first()).toBeVisible()
   })
 
-  test('聚类从桌面顶栏导航可达并渲染', async ({ page }) => {
+  test('聚类从桌面浮动导航可达并渲染', async ({ page }) => {
     await goto(page, DOC)
     await page.waitForSelector('.markdown-section')
     await page.locator('.site-nav .nav-item', { hasText: '聚类' }).click()
@@ -221,18 +221,71 @@ test.describe('responsive breakpoint switching (resize)', () => {
     expect(pathnameOf(page)).toBe(DOC)
   })
 
-  test('Header 内联导航(>820) ↔ 图标按钮(≤820) 随宽度切换', async ({ page }) => {
+  test('浮动导航在首页跨断点保留入口，不占据顶部空间', async ({ page }) => {
     await goto(page, '/home.html')
-    await page.waitForSelector('.main-layout')
-    await expect(page.locator('.site-nav')).toHaveCount(1)
-    await expect(page.locator('.icon-btn')).toHaveCount(0)
+    await expect(page.locator('.site-dock')).toBeVisible()
+    await expect(page.locator('.site-header, .el-header, .header-toggle-button')).toHaveCount(0)
+    expect((await page.locator('#main-content').boundingBox())!.y).toBe(0)
+    await expect(page.locator('.site-nav .nav-item')).toHaveCount(3)
+    await expect(page.locator('.search-box')).toBeVisible()
     await page.setViewportSize({ width: 800, height: 900 })
     await page.waitForSelector('.main-layout.is-mobile')
-    await expect(page.locator('.site-nav')).toHaveCount(0)
-    await expect(page.locator('.icon-btn')).toHaveCount(3)
+    await expect(page.locator('.site-dock')).toBeVisible()
+    await expect(page.locator('.search-box')).toBeVisible()
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.waitForFunction(() => !document.querySelector('.main-layout')?.classList.contains('is-mobile'))
-    await expect(page.locator('.site-nav')).toHaveCount(1)
+    await expect(page.locator('.site-nav .nav-item')).toHaveCount(3)
+  })
+
+  test('导航面板支持键盘开关，真实链接导航后关闭', async ({ page }) => {
+    await goto(page, '/home.html')
+    const launcher = page.getByRole('button', { name: '站点导航与工具', exact: true })
+    const panel = page.locator('.site-navigation-panel')
+    await launcher.focus()
+    await page.keyboard.press('Enter')
+    await expect(panel).toBeVisible()
+    await expect(panel.locator('.panel-nav a').first()).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(panel).toBeHidden()
+    await expect(launcher).toBeFocused()
+    await launcher.click()
+    const link = panel.locator('.panel-nav').getByRole('link', { name: '标签', exact: true })
+    await expect(link).toHaveAttribute('href', '/tag.html')
+    await link.click()
+    await waitForPath(page, '/tag.html')
+    await expect(panel).toBeHidden()
+  })
+
+  test('文档标签页滚动后贴顶，不保留旧顶栏的 60px 偏移', async ({ page }) => {
+    await goto(page, DOC)
+    const tabs = page.locator('.tab-container')
+    await expect(tabs).toBeVisible()
+    await page.evaluate(() => window.scrollTo(0, 400))
+    await expect.poll(async () => (await tabs.boundingBox())!.y).toBe(0)
+    await expect(page.locator('.category-header')).toBeVisible()
+  })
+
+  test('导航面板保留两种搜索模式、外链和可恢复的专注入口', async ({ page }) => {
+    await goto(page, DOC)
+    const launcher = page.getByRole('button', { name: '站点导航与工具', exact: true })
+    const panel = page.locator('.site-navigation-panel')
+    await launcher.click()
+    await expect(panel.locator('.panel-links a').first()).toHaveAttribute('target', '_blank')
+    await panel.getByRole('button', { name: /全文搜索/ }).click()
+    await expect(page.locator('.palette-mode.active')).toHaveText('全文')
+    await page.keyboard.press('Escape')
+    await launcher.click()
+    await panel.getByRole('button', { name: /目录搜索/ }).click()
+    await expect(page.locator('.palette-mode.active')).toHaveText('目录')
+    await page.keyboard.press('Escape')
+    await launcher.click()
+    await panel.getByRole('button', { name: '专注模式', exact: true }).click()
+    await expect(page.locator('.site-dock')).toHaveClass(/is-focused/)
+    await expect(page.locator('.doc-aside')).toBeHidden()
+    await expect(launcher).toBeVisible()
+    await launcher.click()
+    await panel.getByRole('button', { name: '展开导航', exact: true }).click()
+    await expect(page.locator('.site-nav')).toBeVisible()
   })
 
   test('中档(821–1279): 非移动但 TOC 列收起为浮层(消除旧死区)', async ({ page }) => {

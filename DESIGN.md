@@ -99,6 +99,14 @@
 
 ## 5. 卡片与组件模式
 
+### 全站导航（无顶部栏）
+
+- 全站使用 `SiteNavigation` 底部居中的浮动导航，桌面和非文档移动页直接提供首页、标签、聚类、搜索入口；菜单承载站点品牌、目录搜索、主题、全屏、专注模式和外链。
+- 移动文档页保留目录/章节/搜索/回顶底栏，站点导航收为底栏上方左侧的小按钮，右侧保留文档工具，避免重复常驻搜索入口。
+- 导航使用真实路由链接、`aria-current` 和可见焦点，菜单支持 Escape 关闭并返回触发按钮。主题沿用语义令牌，按钮触控尺寸使用 `--site-control-size`。
+- 页面顶部不预留 Header 空间，文档侧栏、标签页和章节目录从 `top: 0` 开始粘附；底部通过 `--site-dock-clearance` 预留末尾内容避让空间。旧 `showHeader` 偏好不再影响布局。
+- 专注模式收起导航和文档侧栏，并在浏览器支持时进入全屏；导航菜单仍可达，可展开导航，侧栏通过原有开关恢复。
+
 ### 卡片（基线）
 ```less
 background-color: var(--card-bg-color);
@@ -193,7 +201,7 @@ export default defineComponent({
 - ❌ 散落断点魔法值（860 等）→ 用 `@bp-mobile`(820)。
 - ❌ `@click.prevent + $router.push` 当链接（用 `router-link`）。
 - ❌ `z-index: 9999`（用 `--z-*`，弹层 `--z-popup`）。
-- ❌ 覆盖 EP 组件默认样式用单类名（注入顺序晚，要用 `.main-layout > .el-header` 两级选择器提特异性）。
+- ❌ 覆盖 EP 组件默认样式用单类名（注入顺序晚，要用 `.main-layout > .el-main` 两级选择器提特异性）。
 - ❌ `el-radio-button :label="值"`（已废弃，用 `value="值"`）。
 
 ---

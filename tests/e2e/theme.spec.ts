@@ -10,11 +10,11 @@ import { test, expect, goto, DOC } from './fixtures'
 // - 暗色: document.body.setAttribute('theme','dark') 且 documentElement.classList.add('dark')
 // - 亮色: body[theme=light] 且移除 html.dark
 // - 切换开关本身是 Element Plus 的 .el-switch(根节点挂 @click=toggleDarkMode)
-// - ThemeSwitcher 仅在桌面头部直接渲染(class action-item), 本套件跑 desktop-chromium(1440x900) 故可见
+// - ThemeSwitcher 位于全站导航面板(class action-item)，打开面板后可操作
 
 const THEME_KEY = 'system::theme'
 
-// 头部主题开关。Header 桌面态直接渲染 <theme-switcher class="action-item">,
+// 全站导航面板渲染 <theme-switcher class="action-item">,
 // 其内是 el-switch; 点 .el-switch 根即触发 toggleDarkMode(@click 挂在根 el-switch 上)。
 const SWITCH = '.action-item.el-switch'
 
@@ -26,7 +26,7 @@ const readTheme = (page: import('@playwright/test').Page) =>
   }))
 
 test.describe('暗色模式切换与持久化', () => {
-  // 用真实文档页(而非首页)做载体: 头部在任意路由都在; 同时顺带保证 el-switch 在正文页也可用
+  // 用真实文档页做载体，保证全站导航面板中的主题开关在正文页也可用
   const PAGE = DOC
 
   test.beforeEach(async ({ page }) => {
@@ -35,9 +35,10 @@ test.describe('暗色模式切换与持久化', () => {
     await goto(page, PAGE)
     await page.evaluate((k) => localStorage.removeItem(k), THEME_KEY)
     await page.reload({ waitUntil: 'domcontentloaded' })
+    await page.getByRole('button', { name: '站点导航与工具', exact: true }).click()
   })
 
-  test('开关与头部就位: 初始无手动主题键(跟随系统), 开关可见', async ({ page }) => {
+  test('导航面板中的主题开关: 初始无手动主题键(跟随系统), 开关可见', async ({ page }) => {
     const sw = page.locator(SWITCH)
     await expect(sw).toBeVisible({ timeout: 20_000 })
 
@@ -84,6 +85,7 @@ test.describe('暗色模式切换与持久化', () => {
 
     // 重载: Main.vue created() 读 localStorage 'dark' -> enterDarkMode(persist=false)
     await page.reload({ waitUntil: 'domcontentloaded' })
+    await page.getByRole('button', { name: '站点导航与工具', exact: true }).click()
 
     await expect(page.locator('body[theme="dark"]')).toHaveCount(1)
     await expect(page.locator('html.dark')).toHaveCount(1)

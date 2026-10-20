@@ -8,7 +8,7 @@ test.describe('search (P1, stubbed)', () => {
     await goto(page, '/home.html')
 
     // Ctrl+K 的快捷键监听在 App.vue mounted 后才挂上(domcontentloaded 早于水合)
-    // 等头部搜索入口出现 == 应用已挂载 再按键 否则按早了无人响应
+    // 等浮动导航搜索入口出现 == 应用已挂载 再按键 否则按早了无人响应
     await page.locator('.search-box').waitFor({ state: 'visible', timeout: 20_000 })
     await page.keyboard.press('Control+k')
     const input = page.locator('.palette-input')

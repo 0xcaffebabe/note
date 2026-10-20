@@ -38,15 +38,11 @@
     <doc-contents-and-panel
       v-if="!isMobile"
       :doc="doc"
-      :parentShowHeader="parentShowHeader"
       @item-click="handleTocItemClick"
     />
     <!-- 超宽档: 关联内容独立成右侧第4列(取代在右列内联堆叠在目录下方) -->
     <aside class="doc-related-column" v-if="isUltra && hasRelatedLinks">
-      <div
-        class="doc-related-sticky"
-        :style="{ top: parentShowHeader ? '60px' : '0', maxHeight: parentShowHeader ? 'calc(100vh - 60px)' : '100vh' }"
-      >
+      <div class="doc-related-sticky">
         <related-content inline :related="relatedLinks" :doc-links="docLinks" />
       </div>
     </aside>
@@ -140,7 +136,6 @@ const KnowledgeReviewer = defineAsyncComponent(() => import('./knowledge/Knowled
 const LLM = defineAsyncComponent(() => import('./knowledge/LLM.vue'))
 
 export default defineComponent({
-  inject: ['showHeader'],
   components: {
     HistoryList,
     MindGraph,
@@ -162,12 +157,6 @@ export default defineComponent({
     Memo, Tickets, Search, Top,
 },
   watch: {
-    showHeader: {
-      handler(val){
-        this.parentShowHeader = val;
-      },
-      immediate: true,
-    },
     // 跨断点离开移动端时复位移动抽屉状态, 防止再回到移动端时(章节/目录)抽屉自动重开
     isMobile(val: boolean) {
       if (!val) {
@@ -222,7 +211,6 @@ export default defineComponent({
       loadError: false as boolean,
       showAside: true as boolean,
       isDrawerShow: false as boolean,
-      parentShowHeader: true as boolean,
       // 移动端本页章节抽屉显隐
       showMobileToc: false as boolean,
       eventManager: null as DocPageEventMnager | null
@@ -519,6 +507,8 @@ export default defineComponent({
 }
 .doc-related-sticky {
   position: sticky;
+  top: 0;
+  max-height: 100vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;

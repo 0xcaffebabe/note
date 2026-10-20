@@ -34,12 +34,19 @@ test.describe('mobile DocPage (Pixel 5)', () => {
     await expect(page.locator('.el-backtop')).toHaveCount(0)
   })
 
-  test('文档页顶栏不重复底栏入口: 搜索/目录图标整组下沉底栏', async ({ page }) => {
+  test('文档页全站导航独立于底栏，保留正文空间且不重复搜索', async ({ page }) => {
     await goto(page, DOC)
     await page.waitForSelector('.mobile-bottom-bar')
-    // 文档页(route.meta.hasBottomBar)下, 顶栏窄屏图标入口(全文搜索/目录搜索/展开目录)整组隐藏
-    // —— 搜索与目录均走底栏的同一 CommandPalette/分类抽屉, 顶栏不再重复
-    await expect(page.locator('.site-header .icon-btn')).toHaveCount(0)
+    const dock = page.locator('.site-dock.document-mobile')
+    await expect(dock).toBeVisible()
+    await expect(dock.locator('.search-box')).toBeHidden()
+    await expect(page.locator('.site-header, .el-header, .header-toggle-button')).toHaveCount(0)
+    const dockBox = (await dock.boundingBox())!
+    const bottomBar = (await page.locator('.mobile-bottom-bar').boundingBox())!
+    expect(dockBox.y + dockBox.height).toBeLessThanOrEqual(bottomBar.y)
+    expect(dockBox.width).toBeLessThan(page.viewportSize()!.width / 2)
+    const tools = (await page.locator('.tool-box.is-mobile').boundingBox())!
+    expect(dockBox.x + dockBox.width).toBeLessThan(tools.x)
   })
 
   test('章节按钮打开底部 TOC 抽屉(复用 contents-list mode=drawer)', async ({ page }) => {
@@ -129,6 +136,35 @@ test.describe('mobile DocPage (Pixel 5)', () => {
 })
 
 test.describe('mobile home & charts (Pixel 5)', () => {
+  test('320px 导航不横溢，横屏时面板可滚动访问底部链接', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 })
+    await goto(page, '/tag.html')
+    const dock = page.locator('.site-dock')
+    await expect(dock).toBeVisible()
+    const dockBox = (await dock.boundingBox())!
+    expect(dockBox.x).toBeGreaterThanOrEqual(0)
+    expect(dockBox.x + dockBox.width).toBeLessThanOrEqual(320)
+    for (const action of await dock.locator('.dock-action').all()) {
+      await expect(action).toBeVisible()
+      const box = (await action.boundingBox())!
+      expect(box.x).toBeGreaterThanOrEqual(dockBox.x)
+      expect(box.x + box.width).toBeLessThanOrEqual(dockBox.x + dockBox.width)
+    }
+
+    await page.setViewportSize({ width: 640, height: 320 })
+    await page.getByRole('button', { name: '站点导航与工具', exact: true }).click()
+    const panel = page.locator('.site-navigation-panel')
+    await expect(panel.locator('.panel-nav a').first()).toBeFocused()
+    const panelBox = (await panel.boundingBox())!
+    expect(panelBox.y).toBeGreaterThanOrEqual(0)
+    expect(panelBox.y + panelBox.height).toBeLessThanOrEqual(320)
+    expect(await panel.evaluate(el => el.scrollHeight > el.clientHeight)).toBe(true)
+    const lastLink = panel.locator('.panel-links a').last()
+    await lastLink.scrollIntoViewIfNeeded()
+    await expect(lastLink).toBeInViewport()
+    expect(await panel.evaluate(el => el.scrollTop)).toBeGreaterThan(0)
+  })
+
   test('移动首页: is-mobile 外壳 + 统计卡片网格', async ({ page }) => {
     await goto(page, '/home.html')
     await page.waitForSelector('.main-layout.is-mobile')
@@ -154,15 +190,17 @@ test.describe('mobile home & charts (Pixel 5)', () => {
     expect(cols.trim().split(/\s+/).length).toBe(1)
   })
 
-  test('聚类从移动顶栏溢出菜单可达', async ({ page }) => {
+  test('聚类从移动全站导航面板可达，跳转后面板关闭', async ({ page }) => {
     await goto(page, DOC)
     await page.waitForSelector('.mobile-bottom-bar')
     await page.locator('.more-btn').click()
-    const item = page.locator('.el-dropdown-menu__item', { hasText: '聚类' })
+    const panel = page.locator('.site-navigation-panel')
+    const item = panel.locator('.panel-nav').getByRole('link', { name: '聚类', exact: true })
     await item.waitFor({ state: 'visible', timeout: 20000 })
     await item.click()
     await page.waitForFunction(() => location.pathname.endsWith('/cluster.html'), undefined, { timeout: 20000 })
     expect(pathnameOf(page)).toBe('/cluster.html')
+    await expect(panel).toBeHidden()
     await page.waitForSelector('.cluster-host canvas', { timeout: 20000 })
   })
 })

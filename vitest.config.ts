@@ -23,6 +23,9 @@ export default defineConfig({
         test: {
           name: 'component',
           environment: 'jsdom',
+          // Node 26 的原生 localStorage 在未传 --localstorage-file 时为 undefined,
+          // 会遮蔽 jsdom 的浏览器存储; 组件测试应使用各自 jsdom 环境的 Web Storage。
+          execArgv: ['--no-experimental-webstorage'],
           include: ['tests/component/**/*.test.ts'],
         },
       },

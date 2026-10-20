@@ -6,7 +6,8 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # 此作业运行 Playwright 1.60，需要使用它支持的 Ubuntu 版本。
+    runs-on: ubuntu-24.04
 
     strategy:
       matrix:

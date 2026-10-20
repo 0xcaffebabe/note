@@ -262,6 +262,13 @@ export default defineComponent({
 // 内联(常驻)模式: 面板静态嵌入右列, 常显、弱阴影、跟随列宽
 .related-inline {
   width: 100%;
+  overflow-wrap: anywhere;
+}
+// 紧凑列内将分类路径放到下一行, 给链接标题和路径各自保留完整行宽
+.related-inline .rf-item-head {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-xs);
 }
 .related-inline .rf-panel {
   position: static;

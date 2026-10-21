@@ -160,6 +160,9 @@ export default defineComponent({
     Memo, Tickets, Search, Top,
 },
   watch: {
+    '$route.fullPath'() {
+      this.recordSuccessfulRead();
+    },
     // 跨断点离开移动端时复位移动抽屉状态, 防止再回到移动端时(章节/目录)抽屉自动重开
     isMobile(val: boolean) {
       if (!val) {
@@ -209,6 +212,7 @@ export default defineComponent({
       file: new DocFileInfo() as DocFileInfo,
       contentsList: [] as Content[],
       doc: "" as string,
+      loadedDoc: "" as string,
       kw: "" as string,
       loading: true as boolean,
       loadError: false as boolean,
@@ -242,6 +246,14 @@ export default defineComponent({
     }
   },
   methods: {
+    recordSuccessfulRead() {
+      if (!this.loadedDoc || this.loadedDoc !== DocUtils.routeDocId(this.$route)) return;
+      try {
+        this.$services.docService.setLastReadRecord(this.loadedDoc);
+      } catch {
+        // 阅读记录损坏时仍正常显示正文。
+      }
+    },
     docUrl2Id(url: string) {
       return this.$services.docService.docUrl2Id(url);
     },
@@ -323,10 +335,15 @@ export default defineComponent({
       window.scrollTo({top: this.$services.docService.getDocReadRecord(doc), behavior: 'instant' as ScrollBehavior})
       this.loading = true;
       this.loadError = false;
+      this.loadedDoc = '';
       this.doc = doc;
       this.kw = kw || "";
       try {
         this.file = await this.$services.docService.getDocFileInfo(doc);
+        if (this.doc === doc) {
+          this.loadedDoc = doc;
+          this.recordSuccessfulRead();
+        }
         SysUtils.setDocTitle(this.file.name)
         this.generateTOC();
         this.$nextTick(() => this.postRender(headingId, kw));

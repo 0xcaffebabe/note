@@ -1,4 +1,4 @@
-import { test, expect, goto, pathnameOf, waitForHtmlChange, openNavigationTools, DOC } from './fixtures'
+import { test, expect, goto, pathnameOf, waitForPath, waitForHtmlChange, openNavigationTools, DOC, DOC_ID } from './fixtures'
 
 // 响应式合流(P3a/P3b/P4)移动端验证。文件名含 mobile.spec.ts => 仅在 mobile-chromium(Pixel 5, ≤820, 粗指针)运行。
 // 移动端 DocPage 折叠自原 MobileDocPage: 底部操作栏 / 章节抽屉 / 目录抽屉 / FAB 工具栏 / 统一搜索。
@@ -151,6 +151,34 @@ test.describe('mobile DocPage (Pixel 5)', () => {
 })
 
 test.describe('mobile home & charts (Pixel 5)', () => {
+  test('320px 手机从标签页触摸返回最近文档，横向栏仍为六个可触控入口', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 })
+    await goto(page, DOC)
+    await expect(page.locator('.main-content .markdown-section')).toBeVisible()
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('doc-service:last-read'))).toBe(DOC_ID)
+    await page.locator('.navigation-launcher').tap()
+    await page.locator('.dock-shortcuts .site-nav').getByRole('link', { name: '标签', exact: true }).tap()
+    await waitForPath(page, '/tag.html')
+    await page.locator('.navigation-launcher').tap()
+    const dock = page.locator('.site-dock')
+    await expect(dock.locator('.dock-action:visible')).toHaveCount(6)
+    const dockBox = (await dock.boundingBox())!
+    expect(dockBox.x).toBeGreaterThanOrEqual(0)
+    expect(dockBox.x + dockBox.width).toBeLessThanOrEqual(320)
+    for (const action of await dock.locator('.dock-action:visible').all()) {
+      const box = (await action.boundingBox())!
+      expect(box.width).toBeGreaterThanOrEqual(44)
+      expect(box.height).toBeGreaterThanOrEqual(44)
+    }
+    await dock.locator('.more-btn').tap()
+    const navigation = page.getByRole('dialog', { name: '站点导航与工具', exact: true })
+    await navigation.getByRole('link', { name: '返回最近文档', exact: true }).tap()
+    await waitForPath(page, DOC)
+    await expect(page.locator('.main-content .markdown-section')).toBeVisible()
+    await expect(page.locator('.mobile-bottom-bar')).toBeVisible()
+    await expect(page.locator('.dock-shortcuts')).toBeHidden()
+  })
+
   test('320px 横向导航可点开且不横溢，横屏工具面板可滚动到底部链接', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 })
     await goto(page, '/tag.html')

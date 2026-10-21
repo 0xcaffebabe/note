@@ -19,6 +19,14 @@
             </template>
             <section id="site-navigation-panel" ref="panel" class="site-navigation-panel" :class="{ 'with-bottom-bar': withBottomBar }" aria-label="站点导航与工具" @keydown.esc.stop.prevent="closeMenu">
               <p class="panel-title">{{ siteName }}</p>
+              <router-link v-if="canReturnToRecentDoc" :to="recentDocPath" class="recent-document" aria-label="返回最近文档" :title="recentDocName" @click="collapse">
+                <el-icon><Reading /></el-icon>
+                <span><span class="recent-document-label">最近文档</span><span class="recent-document-name">{{ recentDocName }}</span></span>
+              </router-link>
+              <button v-else type="button" class="recent-document" aria-label="返回最近文档" :title="recentDocName || '暂无阅读记录'" disabled>
+                <el-icon><Reading /></el-icon>
+                <span><span class="recent-document-label">最近文档</span><span class="recent-document-name">{{ recentDoc ? '当前正在阅读' : '暂无阅读记录' }}</span></span>
+              </button>
               <div class="panel-actions">
                 <div class="theme-row"><span>深色模式</span><theme-switcher class="action-item" aria-label="深色模式" /></div>
                 <button type="button" @click="toggleFullScreen"><el-icon><FullScreen /></el-icon>{{ fullscreen ? '退出全屏' : '全屏' }}</button>
@@ -40,10 +48,12 @@
 </template>
 
 <script setup lang="ts">
-import { markRaw, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { Aim, ArrowRightBold, CollectionTag, FullScreen, HomeFilled, Menu, MoreFilled, Search, Share, TopRight } from '@element-plus/icons-vue';
+import { Aim, ArrowRightBold, CollectionTag, FullScreen, HomeFilled, Menu, MoreFilled, Reading, Search, Share, TopRight } from '@element-plus/icons-vue';
 import config from '@/core/config/config';
+import DocUtils from '@/core/util/DocUtils';
+import { useServices } from '@/platform/web/app/useServices';
 import { isMac } from '@/adapters/browser/Platform';
 import { exitFullScreen, isFullScreen, requestFullScreen } from '@/adapters/browser/WindowAdapter';
 import EventBus from '@/platform/web/components/EventBus';
@@ -51,6 +61,11 @@ import ThemeSwitcher from '../header/ThemeSwitcher.vue';
 
 defineProps<{ embedded?: boolean; withBottomBar?: boolean }>();
 const route = useRoute();
+const { docService } = useServices();
+const recentDoc = ref(docService.getLastReadRecord());
+const recentDocPath = computed(() => DocUtils.docId2HtmlPath(recentDoc.value));
+const recentDocName = computed(() => DocUtils.docId2DisplayName(recentDoc.value));
+const canReturnToRecentDoc = computed(() => !!recentDoc.value && recentDoc.value !== DocUtils.routeDocId(route));
 const expanded = ref(false);
 const menuOpen = ref(false);
 const fullscreen = ref(false);
@@ -117,7 +132,7 @@ function handleOutside(event: PointerEvent) {
 }
 
 function focusMenu() {
-  if (menuOpen.value) panel.value?.querySelector<HTMLElement>('[role="switch"], button, a')?.focus();
+  if (menuOpen.value) panel.value?.querySelector<HTMLElement>('[role="switch"]:not(:disabled), button:not(:disabled), a[href]')?.focus();
 }
 
 async function closeMenu() {
@@ -164,6 +179,7 @@ function syncFullScreen() {
 watch(() => route.fullPath, collapse);
 watch(menuOpen, (visible) => {
   if (visible) {
+    recentDoc.value = docService.getLastReadRecord();
     returnFocusAfterMenu = false;
     cancelCollapse();
     expanded.value = true;
@@ -292,6 +308,36 @@ kbd {
   margin: 0 0 var(--spacing-md);
   font-size: var(--font-size-lg);
   font-weight: 600;
+}
+
+.recent-document {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  min-height: var(--site-control-size);
+  padding: var(--spacing-sm);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--main-text-color);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+
+  > span { min-width: 0; }
+  .el-icon { flex-shrink: 0; }
+  &:not(:disabled):hover { background: var(--hover-bg-color); }
+  &:disabled { color: var(--secondary-text-color); }
+}
+
+.recent-document-label, .recent-document-name { display: block; }
+.recent-document-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--secondary-text-color);
+  font-size: var(--font-size-sm);
 }
 
 .panel-links {

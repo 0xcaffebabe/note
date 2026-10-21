@@ -1,19 +1,46 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 
-const { render } = vi.hoisted(() => ({
+const { render, initialize, isDarkMode } = vi.hoisted(() => ({
   render: vi.fn(async (id: string, _source: string) => ({ svg: `<svg id="${id}"></svg>` })),
+  initialize: vi.fn(),
+  isDarkMode: vi.fn(() => false),
 }))
-vi.mock('mermaid', () => ({ default: { initialize: vi.fn(), render } }))
-vi.mock('@/platform/web/util/SysUtils', () => ({ SysUtils: { isDarkMode: () => false } }))
+vi.mock('mermaid', () => ({ default: { initialize, render } }))
+vi.mock('@/platform/web/util/SysUtils', () => ({ SysUtils: { isDarkMode } }))
 
 import MermaidUtils from '@/platform/web/util/MermaidUtils'
 
 beforeEach(() => {
   render.mockClear()
+  initialize.mockClear()
+  isDarkMode.mockReturnValue(false)
   vi.stubGlobal('IntersectionObserver', undefined)
   document.body.innerHTML = ''
 })
 afterEach(() => vi.unstubAllGlobals())
+
+describe('Mermaid built-in themes', () => {
+  it('uses the default theme for light documents without custom styling', async () => {
+    document.body.innerHTML = '<div class="mermaid-source">graph TD; A-->B;</div>'
+    await MermaidUtils.initAllNode()
+    expect(initialize).toHaveBeenLastCalledWith({ theme: 'default', startOnLoad: false })
+  })
+
+  it('uses the built-in dark theme when rendering in dark mode', async () => {
+    isDarkMode.mockReturnValue(true)
+    document.body.innerHTML = '<div class="mermaid-source">graph TD; A-->B;</div>'
+    await MermaidUtils.initAllNode()
+    expect(initialize).toHaveBeenLastCalledWith({ theme: 'dark', startOnLoad: false })
+  })
+
+  it('restores the default theme after switching from dark to light', async () => {
+    await MermaidUtils.load()
+    MermaidUtils.initWithDark()
+    expect(initialize).toHaveBeenLastCalledWith({ theme: 'dark', startOnLoad: false })
+    MermaidUtils.initWithNormal()
+    expect(initialize).toHaveBeenLastCalledWith({ theme: 'default', startOnLoad: false })
+  })
+})
 
 describe('Mermaid rendering containers', () => {
   it('renders only the requested preview and leaves the main document untouched', async () => {

@@ -69,6 +69,8 @@
 
 ## 2. 暗色模式
 
+- **Mermaid**：亮色使用 Mermaid 内置 `default` 主题，暗色使用内置 `dark` 主题；正文、文档预览与全屏查看器共用初始化入口，不覆盖 `themeVariables`、`themeCSS` 或图表内部颜色与字体。
+
 - **CSS 侧**：真源是 `html.dark`（与 Element Plus 暗色变量同作用域），同名令牌换值。组件不写第二份暗色样式。
 - **JS 侧**：读 `this.$store.state.isDarkMode`。切换走 `SysUtils.enterDarkMode/enterLightMode`（同时置 store + `html.dark` + `body[theme=dark]` 兼容标记）。
 - **canvas/echarts** 无法用 `var()`：用 `getComputedStyle` 读令牌快照（见第 6 节 `chartTheme`），并 `watch isDark → 重渲染`。

@@ -1,4 +1,4 @@
-import { test, expect, goto, DOC } from './fixtures'
+import { test, expect, goto, DOC, docWithRelated } from './fixtures'
 
 // 大屏宽档(>= @bp-wide 1680)验证: 回收死白 / 内容居中加宽 / 图表 2-up / 浮层随居中壳重锚。
 // 运行于 desktop-chromium 工程(文件名不含 mobile.spec.ts); 各用例自行 setViewportSize 到 1920/2560。
@@ -135,20 +135,41 @@ test.describe('P-ultra related as 4th column (ultra)', () => {
     expect(w).toBeGreaterThan(1900)      // 比 wide 档 1840 更宽
   })
 
-  test('2560: 有关联内容的文档把关联渲染成正文右侧的第4列(在 TOC 列右侧)', async ({ page }) => {
+  test('超宽屏关联列紧邻知识图谱和 TOC, 收窄后恢复悬浮入口', async ({ page }) => {
+    const doc = docWithRelated()
+    expect(doc, '需要含关联内容的文档验证相邻面板间距').toBeTruthy()
     await page.setViewportSize(ULTRA)
-    // 用首个含关联面板的文档(否则跳过断言, 仅保证不报错)
-    await goto(page, DOC)
-    await page.waitForSelector('.doc-layout .main.markdown-section')
-    const col = page.locator('.doc-related-column')
-    if (await col.count() > 0) {
-      const pos = await page.evaluate(() => {
-        const rel = document.querySelector('.doc-related-column') as HTMLElement
-        const toc = document.querySelector('.doc-contents-and-panel') as HTMLElement
-        return { relLeft: rel.getBoundingClientRect().left, tocRight: toc.getBoundingClientRect().right }
+    await goto(page, doc!)
+    await expect(page.getByRole('region', { name: '相关链接' })).toBeVisible()
+
+    for (const width of [2040, ULTRA.width]) {
+      await page.setViewportSize({ ...ULTRA, width })
+      await expect.poll(() => page.evaluate(() => {
+        const panel = document.querySelector('.contents-panel-container')!
+        const related = document.querySelector('.doc-related-column .rf-panel')!
+        return related.getBoundingClientRect().left - panel.getBoundingClientRect().right
+      })).toBeLessThanOrEqual(25) // spacing-sm(8) + 关联列 padding spacing-md(16), 容许 1px 舍入
+      const bounds = await page.evaluate(() => {
+        const panel = document.querySelector('.contents-panel-container')!.getBoundingClientRect()
+        const related = document.querySelector('.doc-related-column .rf-panel')!.getBoundingClientRect()
+        return { gap: related.left - panel.right, right: related.right, viewport: document.documentElement.clientWidth }
       })
-      expect(pos.relLeft).toBeGreaterThanOrEqual(pos.tocRight - 1) // 关联列在 TOC 列右侧
+      expect(bounds.gap).toBeGreaterThanOrEqual(0)
+      expect(bounds.right).toBeLessThanOrEqual(bounds.viewport)
     }
+
+    for (const colorScheme of ['light', 'dark'] as const) {
+      await page.emulateMedia({ colorScheme })
+      await expect(page.locator('html')).toHaveClass(colorScheme === 'dark' ? /dark/ : /^(?!.*dark)/)
+      await test.info().attach(`ultrawide-panels-${colorScheme}`, {
+        body: await page.screenshot(),
+        contentType: 'image/png',
+      })
+    }
+
+    await page.setViewportSize(WIDE)
+    await expect(page.getByRole('button', { name: '相关链接', exact: true })).toBeVisible()
+    await expect(page.getByRole('region', { name: '相关链接' })).toBeHidden()
   })
 })
 

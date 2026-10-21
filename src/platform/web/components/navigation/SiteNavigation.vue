@@ -19,14 +19,7 @@
             </template>
             <section id="site-navigation-panel" ref="panel" class="site-navigation-panel" :class="{ 'with-bottom-bar': withBottomBar }" aria-label="站点导航与工具" @keydown.esc.stop.prevent="closeMenu">
               <p class="panel-title">{{ siteName }}</p>
-              <nav class="panel-nav" aria-label="页面导航">
-                <router-link v-for="item in navList" :key="item.path" :to="item.path" :aria-current="$route.path.startsWith(item.match) ? 'page' : undefined" @click="collapse">
-                  <el-icon><component :is="item.icon" /></el-icon>{{ item.name }}
-                </router-link>
-              </nav>
               <div class="panel-actions">
-                <button type="button" @click="search('fulltext')"><el-icon><Search /></el-icon>全文搜索<kbd>{{ metaKeyLabel }} K</kbd></button>
-                <button type="button" @click="search('category')"><el-icon><Folder /></el-icon>目录搜索<kbd>{{ metaKeyLabel }} Q</kbd></button>
                 <div class="theme-row"><span>深色模式</span><theme-switcher class="action-item" aria-label="深色模式" /></div>
                 <button type="button" @click="toggleFullScreen"><el-icon><FullScreen /></el-icon>{{ fullscreen ? '退出全屏' : '全屏' }}</button>
                 <button type="button" @click="enterZenMode"><el-icon><Aim /></el-icon>专注模式</button>
@@ -49,7 +42,7 @@
 <script setup lang="ts">
 import { markRaw, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { Aim, ArrowRightBold, CollectionTag, Folder, FullScreen, HomeFilled, Menu, MoreFilled, Search, Share, TopRight } from '@element-plus/icons-vue';
+import { Aim, ArrowRightBold, CollectionTag, FullScreen, HomeFilled, Menu, MoreFilled, Search, Share, TopRight } from '@element-plus/icons-vue';
 import config from '@/core/config/config';
 import { isMac } from '@/adapters/browser/Platform';
 import { exitFullScreen, isFullScreen, requestFullScreen } from '@/adapters/browser/WindowAdapter';
@@ -124,7 +117,7 @@ function handleOutside(event: PointerEvent) {
 }
 
 function focusMenu() {
-  if (menuOpen.value) panel.value?.querySelector<HTMLAnchorElement>('a')?.focus();
+  if (menuOpen.value) panel.value?.querySelector<HTMLElement>('[role="switch"], button, a')?.focus();
 }
 
 async function closeMenu() {
@@ -301,7 +294,7 @@ kbd {
   font-weight: 600;
 }
 
-.panel-nav, .panel-links {
+.panel-links {
   display: flex;
   gap: var(--spacing-xs);
 
@@ -347,7 +340,6 @@ kbd {
   button {
     cursor: pointer;
     &:hover { background: var(--hover-bg-color); }
-    kbd { margin-left: auto; }
   }
 
   .theme-row { justify-content: space-between; }

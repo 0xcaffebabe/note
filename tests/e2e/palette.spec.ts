@@ -136,19 +136,14 @@ test.describe('command palette - fulltext mode (stub Algolia)', () => {
     await page.waitForFunction(() => new URL(location.href).searchParams.has('headingId'), null, { timeout: 20_000 })
 
     const url = new URL(page.url())
-    // 核心断言: URL 带上了 headingId 与 kw(本用例要覆盖的「全文片段点击 -> 锚点跳转」行为)
+    // 片段提供的定位信息随导航保留；真实章节的滚动定位由章节导航用例负责。
     expect(url.searchParams.get('headingId')).toBeTruthy()
     expect(url.searchParams.get('headingId')).toContain(SEARCH_KW) // 夹具片段 id = "安装 docker"
     expect(url.searchParams.get('kw')).toBe(SEARCH_KW)
 
-    // 已知 BUG: 全文结果点击后落地路径出现双重 .html(此处为 DOC + '.html')。
-    // 根因是 dto/算法链路的 url 形态不一致: 线上 Algolia 索引(src/build/SearchService.ts)存的是 .md 文件路径,
-    // CommandPalette.searchFulltext 用 docUrl2Id(doc.url) 解析时只剥 .md 后缀; 但本套件夹具 docHitFixture
-    // 注入的 url 是 DOC(已是 .html 路径), .html 不被 docUrl2Id 剥除, 残留进 docId, 经 docId2HtmlPath 回填又补一次 .html。
-    // 这是夹具 url 形态(html) 与组件预期(md) 的边界, 非组件主逻辑回归 —— 故以特征化方式记录当前真实落地路径, 不改 src/、不留红。
-    expect(decodeURI(url.pathname)).toBe(DOC + '.html')
-    // 面板关闭
+    expect(decodeURI(url.pathname)).toBe(DOC)
     await expect(page.locator('.palette-input')).toBeHidden({ timeout: 20_000 })
+    await expect(page.locator('.main-content .markdown-section')).toBeVisible()
   })
 
   test('点击 doc 标题行(无 headingId) -> URL 仅带 kw, 跳转到文档', async ({ page }) => {
@@ -172,8 +167,7 @@ test.describe('command palette - fulltext mode (stub Algolia)', () => {
 
     // 点击 doc 标题行 -> open(item)
     await docRow.click()
-    // 已知 BUG(同上): 夹具 url 为 .html 形态, 落地路径双重 .html(DOC + '.html')。等该路径出现即代表跳转完成。
-    await waitForPath(page, DOC + '.html')
+    await waitForPath(page, DOC)
 
     const url = new URL(page.url())
     // 核心断言: doc 标题行点击 -> query 只带 kw
@@ -181,5 +175,9 @@ test.describe('command palette - fulltext mode (stub Algolia)', () => {
     // doc 行无 headingId: query 为 {headingId: undefined, kw} -> router 序列化后不应出现 headingId 键
     expect(url.searchParams.has('headingId')).toBe(false)
     await expect(page.locator('.palette-input')).toBeHidden({ timeout: 20_000 })
+    await expect(page.locator('.main-content .markdown-section')).toBeVisible()
+    await openPalette(page)
+    await expect(page.locator('.palette-mode.active')).toHaveText('全文')
+    await page.keyboard.press('Escape')
   })
 })

@@ -211,12 +211,14 @@ export const SEARCH_KW = 'docker'
 
 // 指向所发现文档的 algolia 高亮结构(_highlightResult.segments[].{id,txt}.value 内含 <mark> 且含 SEARCH_KW)
 export function docHitFixture() {
+  // 搜索索引的协议使用 Markdown 路径；点击结果应落到现有正文页。
+  const markdownUrl = DOC.replace(/\.html$/i, '.md')
   return [
     {
-      url: DOC,
+      url: markdownUrl,
       createTime: '2020-01-01',
       _highlightResult: {
-        url: { value: DOC },
+        url: { value: markdownUrl },
         segments: [
           { id: { value: `安装 <mark>${SEARCH_KW}</mark>` }, txt: { value: `<mark>${SEARCH_KW}</mark> 片段示例` } },
         ],

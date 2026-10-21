@@ -11,6 +11,38 @@ import { test, expect, goto, docWithMermaid, docWithMath } from './fixtures'
 //             渲染异常时占位元素里会塞 <span style='color:red'>错误信息</span>
 // 故按「源 markdown 特征」发现文档(docWithMermaid/docWithMath), 都为空时 skip。
 test.describe('client rich rendering (P1)', () => {
+  // #622: 真实知识文档曾把公式包在普通方括号里, 不会生成 .tex,
+  // 因而只检查已有占位的通用用例无法发现这类遗漏。
+  for (const [doc, blockCount] of [
+    ['/数学/线性代数.html', 5],
+    ['/数学/概率论与数理统计.html', 8],
+    ['/数据技术/非监督学习.html', 7],
+    ['/数据技术/深度学习.html', 4],
+    ['/算法与数据结构/算法策略.html', 2],
+    ['/计算机系统/程序结构和执行/数据的表示.html', 2],
+  ] as const) {
+    test(`知识文档的全部块级公式均完成 KaTeX 渲染: ${doc}`, async ({ page }, testInfo) => {
+      await goto(page, doc)
+      const blocks = page.locator('.markdown-section .line_tex')
+      await expect(blocks).toHaveCount(blockCount)
+      await expect(page.locator('.markdown-section .line_tex .katex')).toHaveCount(blockCount, { timeout: 20_000 })
+      await expect(page.locator(".markdown-section .tex span[style*='color:red']")).toHaveCount(0)
+
+      if (doc === '/数学/线性代数.html') {
+        const svd = blocks.locator('annotation').filter({ hasText: 'A = U \\Sigma V^T' })
+        await expect(svd).toHaveCount(1)
+        await blocks.last().scrollIntoViewIfNeeded()
+        await testInfo.attach('SVD 公式渲染', {
+          body: await page.screenshot(),
+          contentType: 'image/png',
+        })
+      }
+      if (doc === '/数据技术/非监督学习.html') {
+        await expect(blocks.locator('.katex .mtable')).toHaveCount(1)
+      }
+    })
+  }
+
   test('Mermaid 围栏在客户端渲染为内联 SVG', async ({ page }) => {
     const d = docWithMermaid()
     test.skip(!d, '构建产物中未发现含 ```mermaid 围栏的文档')

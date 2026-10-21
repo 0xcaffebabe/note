@@ -4,8 +4,14 @@
     title="查看"
     width="80%"
     top="5vh"
+    append-to-body
+    :z-index="zIndex"
+    @close="dispose"
+    @closed="$emit('closed')"
   >
-    <div ref="container" id="mermaidshower"></div>
+    <p v-if="loading" role="status">图表加载中…</p>
+    <p v-if="error" role="alert">{{ error }}</p>
+    <div ref="container"></div>
   </el-dialog>
 
 </template>
@@ -14,34 +20,71 @@
 import { defineComponent } from 'vue'
 import MermaidUtils from '@/platform/web/util/MermaidUtils'
 import svgPanZoom from 'svg-pan-zoom'
+import IdGenUtils from '@/core/util/IdGenUtils'
 
 export default defineComponent({
+  emits: ['closed'],
   data() {
     return {
-      showDialog: false
+      showDialog: false,
+      loading: false,
+      error: '',
+      zIndex: 0,
+      renderVersion: 0,
+      panZoom: null as ReturnType<typeof svgPanZoom> | null,
     }
   },
   methods: {
     async show(diagram: string) {
-      console.log(diagram)
+      this.dispose()
+      const version = this.renderVersion
       this.showDialog = true
-      const mermaid = await MermaidUtils.load()
-      mermaid.render('mermaidshower-svg', diagram)
-        .then(data => {
-          (this.$refs.container as HTMLElement).innerHTML = data.svg.replace(/[ ]*max-width:[ 0-9\.]*px;/i , 'height:80vh')
+      this.loading = true
+      this.error = ''
+      this.zIndex = Number(getComputedStyle(document.documentElement).getPropertyValue('--z-popup')) + 1
+      // el-dialog 首次打开时才挂载内容，等待容器就绪后再渲染。
+      await this.$nextTick()
+      const container = this.$refs.container as HTMLElement
+      container.replaceChildren()
+      const renderId = 'mermaid-viewer-' + IdGenUtils.uuid()
+      try {
+        const mermaid = await MermaidUtils.load()
+        const data = await mermaid.render(renderId, diagram)
+        if (version !== this.renderVersion) {
+          return
+        }
+        container.innerHTML = data.svg.replace(/[ ]*max-width:[ 0-9\.]*px;/i , 'height:80vh')
+        this.loading = false
+        await this.$nextTick()
+        if (version !== this.renderVersion) {
+          return
+        }
+        // 每个查看器只操作自身 SVG，正文与预览可以独立重复打开。
+        this.panZoom = svgPanZoom(container.querySelector('svg')!, {
+          zoomEnabled: true,
+          controlIconsEnabled: true,
+          mouseWheelZoomEnabled: true,
+          fit: true,
+          center: true
         })
-        .then(() => {
-          svgPanZoom('#mermaidshower svg', {
-            zoomEnabled: true,
-            controlIconsEnabled: true,
-            mouseWheelZoomEnabled: true,
-            fit: true,
-            center: true
-          })
-        })
-      
+      } catch (err) {
+        document.getElementById('d' + renderId)?.remove()
+        if (version === this.renderVersion) {
+          container.replaceChildren()
+          this.loading = false
+          this.error = 'Mermaid 图表渲染失败: ' + ((err as Error)?.message || String(err))
+        }
+      }
+    },
+    dispose() {
+      this.renderVersion++
+      this.panZoom?.destroy()
+      this.panZoom = null
     }
-  }
+  },
+  beforeUnmount() {
+    this.dispose()
+  },
 })
 </script>
 

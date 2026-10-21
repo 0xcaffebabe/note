@@ -96,24 +96,33 @@ test.describe('导航返回最近文档', () => {
     await expect(recent).toBeFocused()
   })
 
-  test('文档加载失败不覆盖之前成功阅读的返回目标', async ({ page }) => {
-    await goto(page, DOC)
-    await expect(page.locator('.main-content .markdown-section')).toBeVisible()
-    await expect.poll(() => page.evaluate(key => localStorage.getItem(key), LAST_READ_KEY)).toBe(DOC_ID)
-    const candidate = page.locator('.doc-prev-next a').first()
-    await expect(candidate).toBeVisible()
-    const failedPath = decodeURI(new URL((await candidate.getAttribute('href'))!, page.url()).pathname)
-    const failedJson = failedPath.replace(/\.html$/, '.md.json')
-    await page.route(url => decodeURI(url.pathname) === failedJson, route => route.fulfill({
-      status: 503, contentType: 'text/plain', body: 'fixture unavailable',
-    }))
-    // 整页进入使文档缓存清空，明确覆盖请求失败路径。
-    await goto(page, failedPath)
-    await expect(page.locator('.doc-error')).toContainText('文档加载失败')
-    expect(await page.evaluate(key => localStorage.getItem(key), LAST_READ_KEY)).toBe(DOC_ID)
-    const navigation = await openNavigationTools(page)
-    const recent = navigation.getByRole('link', { name: RECENT_ACTION, exact: true })
-    expect(decodeURI(new URL((await recent.getAttribute('href'))!, page.url()).pathname)).toBe(DOC)
-    await expect(recent).toBeFocused()
+  test.describe('文档网络故障', () => {
+    // 仅故障注入用例关闭 SW，保证请求经过 page.route 而非缓存响应。
+    test.use({ serviceWorkers: 'block' })
+
+    test('文档加载失败不覆盖之前成功阅读的返回目标', async ({ page }) => {
+      await goto(page, DOC)
+      await expect(page.locator('.main-content .markdown-section')).toBeVisible()
+      await expect.poll(() => page.evaluate(key => localStorage.getItem(key), LAST_READ_KEY)).toBe(DOC_ID)
+      const candidate = page.locator('.doc-prev-next a').first()
+      await expect(candidate).toBeVisible()
+      const failedPath = decodeURI(new URL((await candidate.getAttribute('href'))!, page.url()).pathname)
+      const failedJson = failedPath.replace(/\.html$/, '.md.json')
+      await page.route(url => decodeURI(url.pathname) === failedJson, route => route.fulfill({
+        status: 503, contentType: 'text/plain', body: 'fixture unavailable',
+      }))
+      const failedResponse = page.waitForResponse(response => decodeURI(new URL(response.url()).pathname) === failedJson)
+      // 整页进入使文档缓存清空，明确覆盖请求失败路径。
+      await goto(page, failedPath)
+      const response = await failedResponse
+      expect(response.status()).toBe(503)
+      expect(response.fromServiceWorker()).toBe(false)
+      await expect(page.locator('.doc-error')).toContainText('文档加载失败')
+      expect(await page.evaluate(key => localStorage.getItem(key), LAST_READ_KEY)).toBe(DOC_ID)
+      const navigation = await openNavigationTools(page)
+      const recent = navigation.getByRole('link', { name: RECENT_ACTION, exact: true })
+      expect(decodeURI(new URL((await recent.getAttribute('href'))!, page.url()).pathname)).toBe(DOC)
+      await expect(recent).toBeFocused()
+    })
   })
 })

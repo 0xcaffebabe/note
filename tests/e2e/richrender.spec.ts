@@ -38,8 +38,12 @@ test.describe('client rich rendering (P1)', () => {
 
     for (let attempt = 0; attempt < 2; attempt++) {
       if (attempt === 1) {
-        await page.locator('.action-item.el-switch').click()
+        await page.getByRole('button', { name: '站点导航与工具', exact: true }).click()
+        const navigation = page.getByRole('dialog', { name: '站点导航与工具', exact: true })
+        await navigation.locator('.action-item.el-switch').click()
         await expect(page.locator('html')).toHaveClass(/dark/)
+        await page.keyboard.press('Escape')
+        await expect(navigation).toBeHidden()
       }
       await menuItem.click({ button: 'right' })
       const preview = page.getByRole('dialog', { name: '文档预览' })

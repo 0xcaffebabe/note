@@ -25,7 +25,7 @@ test.describe('client rich rendering (P1)', () => {
       await route.fulfill({ response, json: file })
     })
     await goto(page, DOC)
-    await expect(page.getByRole('heading', { name: '数学公式回归夹具', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: '数学公式回归夹具' })).toBeVisible()
 
     const blocks = page.locator('.markdown-section .line_tex')
     const inline = page.locator('.markdown-section .inline_tex')

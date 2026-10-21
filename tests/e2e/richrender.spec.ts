@@ -44,10 +44,10 @@ async function expectModernTheme(svg: Locator, dark = false) {
     document.body.appendChild(probe)
     const expected = getComputedStyle(probe).color
     probe.remove()
-    return { actual: getComputedStyle(el.querySelector('.nodeLabel p')!).color, expected }
+    return { actual: getComputedStyle(el.querySelector('.node .nodeLabel p')!).color, expected }
   }, palette.text)
   expect(labelColor.actual).toBe(labelColor.expected)
-  await expect(svg.locator('.nodeLabel').first()).toHaveCSS('font-family', /Recursive Variable/)
+  await expect(svg.locator('.node .nodeLabel').first()).toHaveCSS('font-family', /Recursive Variable/)
 }
 
 // 客户端富渲染管线(Mermaid / KaTeX)。

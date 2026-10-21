@@ -1,8 +1,9 @@
 <template>
-  <div class="site-navigation-host" :class="{ embedded, 'with-bottom-bar': withBottomBar }">
-    <nav ref="dock" class="site-dock" :class="{ expanded }" aria-label="站内导航" @pointerenter="handlePointerEnter" @pointerleave="scheduleCollapse" @focusin="cancelCollapse" @focusout="scheduleCollapse" @keydown.esc.stop.prevent="closeMenu">
+  <div class="site-navigation-host" :class="{ embedded, 'with-bottom-bar': withBottomBar, 'is-positioned': positioned }">
+    <div ref="dragBounds" class="navigation-drag-bounds" aria-hidden="true"></div>
+    <nav ref="dock" class="site-dock" :class="{ expanded, 'is-positioned': positioned, 'is-dragging': dragging, 'expand-right': layout?.side === 'right', stacked }" :style="dockStyle" aria-label="站内导航" @pointerenter="handlePointerEnter" @pointerleave="handlePointerLeave" @focusin="cancelCollapse" @focusout="scheduleCollapse" @keydown.esc.stop.prevent="closeMenu">
       <transition name="dock-shortcuts">
-        <div v-show="expanded" id="site-navigation-shortcuts" class="dock-shortcuts">
+        <div v-show="expanded" id="site-navigation-shortcuts" ref="shortcuts" class="dock-shortcuts" :style="shortcutStyle">
           <div class="site-nav">
             <router-link v-for="item in navList" :key="item.path" :to="item.path" class="nav-item dock-action" :aria-label="item.name" :title="item.name" :aria-current="$route.path.startsWith(item.match) ? 'page' : undefined" @click="collapse">
               <el-icon><component :is="item.icon" /></el-icon><span>{{ item.name }}</span>
@@ -11,7 +12,7 @@
           <button type="button" class="search-box dock-action" aria-label="搜索 (Ctrl+K)" @click="search()">
             <el-icon><Search /></el-icon><span>搜索</span><kbd>{{ metaKeyLabel }} K</kbd>
           </button>
-          <el-popover v-model:visible="menuOpen" trigger="click" role="dialog" aria-label="站点导航与工具" placement="top-end" :width="280" popper-class="site-navigation-popover" @after-enter="focusMenu" @after-leave="restoreLauncherFocus">
+          <el-popover v-model:visible="menuOpen" trigger="click" role="dialog" aria-label="站点导航与工具" placement="top-end" :popper-options="popperOptions" :width="280" popper-class="site-navigation-popover" @after-enter="focusMenu" @after-leave="restoreLauncherFocus">
             <template #reference>
               <button type="button" class="more-btn dock-action" title="更多工具" aria-label="站点导航与工具">
                 <el-icon><MoreFilled /></el-icon>
@@ -31,6 +32,7 @@
                 <div class="theme-row"><span>深色模式</span><theme-switcher class="action-item" aria-label="深色模式" /></div>
                 <button type="button" @click="toggleFullScreen"><el-icon><FullScreen /></el-icon>{{ fullscreen ? '退出全屏' : '全屏' }}</button>
                 <button type="button" @click="enterZenMode"><el-icon><Aim /></el-icon>专注模式</button>
+                <button v-if="positioned" type="button" @click="resetDockPosition"><el-icon><RefreshLeft /></el-icon>恢复默认位置</button>
               </div>
               <div class="panel-links">
                 <a v-for="link in linkList" :key="link.url" :href="link.url" target="_blank" rel="noopener noreferrer">{{ link.title }}<el-icon><TopRight /></el-icon></a>
@@ -40,7 +42,7 @@
           </el-popover>
         </div>
       </transition>
-      <button ref="launcher" type="button" class="navigation-launcher dock-action" :title="expanded ? '收起站点导航' : '展开站点导航'" :aria-label="expanded ? '收起站点导航' : '展开站点导航'" :aria-expanded="expanded" aria-controls="site-navigation-shortcuts" @click="toggleNavigation">
+      <button ref="launcher" type="button" class="navigation-launcher dock-action" :title="(expanded ? '收起站点导航' : '展开站点导航') + '（可拖动）'" :aria-label="expanded ? '收起站点导航' : '展开站点导航'" aria-description="拖动可调整位置，更多工具中可恢复默认位置" :aria-expanded="expanded" aria-controls="site-navigation-shortcuts" @pointerdown="start" @pointermove="move" @pointerup="handlePointerUp" @pointercancel="cancelPointer" @lostpointercapture="lostCapture" @contextmenu.prevent @click="toggleNavigation">
         <el-icon><ArrowRightBold v-if="expanded" /><Menu v-else /></el-icon>
       </button>
     </nav>
@@ -50,7 +52,7 @@
 <script setup lang="ts">
 import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { Aim, ArrowRightBold, CollectionTag, FullScreen, HomeFilled, Menu, MoreFilled, Reading, Search, Share, TopRight } from '@element-plus/icons-vue';
+import { Aim, ArrowRightBold, CollectionTag, FullScreen, HomeFilled, Menu, MoreFilled, Reading, RefreshLeft, Search, Share, TopRight } from '@element-plus/icons-vue';
 import config from '@/core/config/config';
 import DocUtils from '@/core/util/DocUtils';
 import { useServices } from '@/platform/web/app/useServices';
@@ -58,6 +60,7 @@ import { isMac } from '@/adapters/browser/Platform';
 import { exitFullScreen, isFullScreen, requestFullScreen } from '@/adapters/browser/WindowAdapter';
 import EventBus from '@/platform/web/components/EventBus';
 import ThemeSwitcher from '../header/ThemeSwitcher.vue';
+import { useDraggableNavigation } from './useDraggableNavigation';
 
 defineProps<{ embedded?: boolean; withBottomBar?: boolean }>();
 const route = useRoute();
@@ -73,6 +76,10 @@ const message = ref('');
 const dock = ref<HTMLElement>();
 const launcher = ref<HTMLButtonElement>();
 const panel = ref<HTMLElement>();
+const shortcuts = ref<HTMLElement>();
+const dragBounds = ref<HTMLElement>();
+const { positioned, dragging, hoverBlocked, layout, stacked, dockStyle, shortcutStyle, start, move, finish, cancel, cancelPointer, lostCapture, consumeClick, reset, allowHover } = useDraggableNavigation(dock, launcher, shortcuts, dragBounds, expanded, collapse);
+const popperOptions = { modifiers: [{ name: 'preventOverflow', options: { padding: 8, altAxis: true } }] };
 let collapseTimer: ReturnType<typeof setTimeout> | undefined;
 let returnFocusAfterMenu = false;
 const siteName = config.siteName;
@@ -103,25 +110,37 @@ function cancelCollapse() {
 
 function handlePointerEnter(event: PointerEvent) {
   cancelCollapse();
-  if (event.pointerType === 'mouse') expanded.value = true;
+  if (event.pointerType === 'mouse' && !hoverBlocked.value) expanded.value = true;
+}
+
+function handlePointerLeave() {
+  allowHover();
+  scheduleCollapse();
 }
 
 function scheduleCollapse() {
   cancelCollapse();
-  if (!expanded.value) return;
+  if (!expanded.value || dragging.value) return;
   collapseTimer = setTimeout(() => {
     if (!menuOpen.value && !dock.value?.contains(document.activeElement) && !dock.value?.matches(':hover')) collapse();
   }, 180);
 }
 
-async function toggleNavigation(event: MouseEvent) {
+function handlePointerUp(event: PointerEvent) {
+  if (!finish(event)) return;
+  launcher.value?.focus({ preventScroll: true });
+  toggleNavigation(event, true);
+}
+
+async function toggleNavigation(event: MouseEvent, fromTouch = false) {
+  if (!fromTouch && consumeClick(event)) return;
   if (expanded.value) {
     collapse();
   } else {
     expanded.value = true;
-    if (event.detail === 0) {
+    if (event.detail === 0 && !fromTouch) {
       await nextTick();
-      dock.value?.querySelector<HTMLAnchorElement>('.site-nav a')?.focus();
+      dock.value?.querySelector<HTMLAnchorElement>('.site-nav a')?.focus({ preventScroll: true });
     }
   }
 }
@@ -136,11 +155,17 @@ function focusMenu() {
 }
 
 async function closeMenu() {
+  cancel();
   const hadMenu = menuOpen.value;
   collapse();
   returnFocusAfterMenu = hadMenu;
   await nextTick();
   launcher.value?.focus({ preventScroll: true });
+}
+
+function resetDockPosition() {
+  reset();
+  closeMenu();
 }
 
 function restoreLauncherFocus() {
@@ -176,7 +201,7 @@ function syncFullScreen() {
   fullscreen.value = isFullScreen();
 }
 
-watch(() => route.fullPath, collapse);
+watch(() => route.fullPath, () => { cancel(); collapse(); });
 watch(menuOpen, (visible) => {
   if (visible) {
     recentDoc.value = docService.getLastReadRecord();
@@ -226,6 +251,15 @@ onBeforeUnmount(() => {
   .site-dock { position: absolute; right: 0; bottom: 0; }
 }
 
+.site-navigation-host.is-positioned { z-index: calc(var(--z-overlay) + 1); }
+
+.navigation-drag-bounds {
+  position: fixed;
+  inset: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) var(--navigation-bottom) max(8px, env(safe-area-inset-left));
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .site-dock {
   display: flex;
   align-items: center;
@@ -237,6 +271,21 @@ onBeforeUnmount(() => {
   background: var(--elevated-bg-color);
   box-shadow: var(--shadow-md);
   &.expanded { gap: var(--spacing-xs); }
+}
+
+.navigation-launcher { touch-action: none; user-select: none; -webkit-touch-callout: none; }
+.navigation-launcher .el-icon { pointer-events: none; }
+.is-positioned .navigation-launcher { cursor: grab; }
+.is-dragging .navigation-launcher { cursor: grabbing; }
+.site-dock.expand-right { flex-direction: row-reverse; }
+.site-dock.stacked .dock-shortcuts {
+  position: absolute;
+  width: max-content;
+  padding: var(--spacing-xs);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  background: var(--elevated-bg-color);
+  box-shadow: var(--shadow-md);
 }
 
 .dock-shortcuts, .site-nav { display: flex; align-items: center; gap: var(--spacing-xs); }

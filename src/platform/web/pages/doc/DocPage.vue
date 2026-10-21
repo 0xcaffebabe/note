@@ -470,9 +470,9 @@ export default defineComponent({
       const mainEl = (this.$refs.mainEl as any)?.$el as HTMLElement | undefined;
       if (mainEl) {
         TouchUtils.onSwipe(mainEl, (direction, delta, start) => {
-          // 忽略发生在横向滚动容器内的滑动 避免滚动代码块/表格被误判为手势
+          // 导航拖拽和正文内横向滚动各自处理，不触发整页滑动手势。
           const target = start.target as HTMLElement | null;
-          if (target?.closest?.('pre, .table-wrapper, .mermaid-wrapper')) {
+          if (target?.closest?.('.site-dock, pre, .table-wrapper, .mermaid-wrapper')) {
             return;
           }
           // 横向位移须显著大于纵向 才视为横滑手势

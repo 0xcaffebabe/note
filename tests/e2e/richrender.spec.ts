@@ -93,13 +93,17 @@ test.describe('client rich rendering (P1)', () => {
       await expect(viewport).not.toHaveAttribute('transform', transform!)
       await expect(preview).toBeVisible()
       if (attempt === 0) {
+        const screenshot = test.info().outputPath('mermaid-default-light.png')
+        await page.screenshot({ path: screenshot })
         await test.info().attach('mermaid-preview-fullscreen', {
-          body: await page.screenshot(), contentType: 'image/png',
+          path: screenshot, contentType: 'image/png',
         })
         await page.keyboard.press('Escape')
       } else {
+        const screenshot = test.info().outputPath('mermaid-default-dark.png')
+        await page.screenshot({ path: screenshot })
         await test.info().attach('mermaid-preview-fullscreen-dark', {
-          body: await page.screenshot(), contentType: 'image/png',
+          path: screenshot, contentType: 'image/png',
         })
         await viewer.locator('.el-dialog__headerbtn').click()
       }

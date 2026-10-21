@@ -1,4 +1,8 @@
 import { test, expect, goto, docWithMermaid, docWithMath, DOC, pathnameOf, openNavigationTools } from './fixtures'
+import fs from 'fs'
+
+// 使用 .txt 保存 Markdown，避免构建器将测试夹具作为站点文档发布。
+const mathFixture = fs.readFileSync(new URL('./data/math-rendering.txt', import.meta.url), 'utf8')
 
 // 客户端富渲染管线(Mermaid / KaTeX)。
 // 这两类标记在「预渲染 .html」里并不存在——它们由 DocRender(marked 自定义渲染)在客户端从 .md.json
@@ -11,6 +15,34 @@ import { test, expect, goto, docWithMermaid, docWithMath, DOC, pathnameOf, openN
 //             渲染异常时占位元素里会塞 <span style='color:red'>错误信息</span>
 // 故按「源 markdown 特征」发现文档(docWithMermaid/docWithMath), 都为空时 skip。
 test.describe('client rich rendering (P1)', () => {
+  test('KaTeX 固定夹具的行内、块级及分段公式均完成渲染', async ({ page }, testInfo) => {
+    // #622: 固定公式与断言都由测试维护；DOC 仅提供动态发现的页面路由。
+    // 知识文档改名、删除或内容演化不会改变被测公式。
+    const jsonPath = DOC.replace(/\.html$/, '.md.json')
+    await page.route(url => decodeURI(url.pathname) === jsonPath, async route => {
+      const response = await route.fetch()
+      const file = await response.json()
+      file.content = mathFixture
+      await route.fulfill({ response, json: file })
+    })
+    await goto(page, DOC)
+    await expect(page.getByRole('heading', { name: '数学公式回归夹具' })).toBeVisible()
+
+    const blocks = page.locator('.markdown-section .line_tex')
+    const inline = page.locator('.markdown-section .inline_tex')
+    await expect(blocks).toHaveCount(4)
+    await expect(inline).toHaveCount(2)
+    await expect(page.locator('.markdown-section .tex .katex')).toHaveCount(6, { timeout: 20_000 })
+    await expect(page.locator(".markdown-section .tex span[style*='color:red']")).toHaveCount(0)
+    await expect(blocks.first()).toHaveAttribute('raw', 'A = U \\Sigma V^T')
+    await expect(blocks.locator('.katex-mathml mtable > mtr')).toHaveCount(2)
+    await expect(inline.locator('annotation')).toHaveText(['V \\subseteq F^n', 'H_0'])
+    await testInfo.attach('固定公式夹具渲染', {
+      body: await page.screenshot(),
+      contentType: 'image/png',
+    })
+  })
+
   test('右键预览支持 Mermaid 全屏缩放，重复打开不影响正文图表', async ({ page }) => {
     test.setTimeout(60_000)
     // 在文档数据边界提供固定图表，走真实 Markdown、右键预览与 Mermaid 渲染管线。

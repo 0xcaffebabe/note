@@ -1,7 +1,9 @@
 import { type Locator, type Page } from '@playwright/test'
-import { test, expect, goto, DOC, NO_ANIM } from './fixtures'
+import { test, expect, goto, openNavigationTools, DOC, NO_ANIM } from './fixtures'
 
 const LAYOUT_KEY = 'doc-preview:layout'
+
+test.use({ colorScheme: 'light' })
 
 test.beforeEach(async ({ page }) => {
   // 固定正文长度，文档内容演化不会让滚动断言失去覆盖。
@@ -73,8 +75,14 @@ test('拖动、缩放后跨文档和刷新恢复位置/宽高，正文填满可�
   expect(await geometry(preview)).toEqual(resized)
   await page.screenshot({ path: 'test-results/preview-layout-light.png' })
   await page.keyboard.press('Escape')
-  await page.locator('.action-item.el-switch').click()
+  await expect(preview).toBeHidden()
+  // 主题开关位于折叠导航的工具面板，需先通过用户入口展开。
+  const tools = await openNavigationTools(page)
+  await tools.locator('.theme-row .el-switch').click()
+  await expect(tools.getByRole('switch')).toBeChecked()
   await expect(page.locator('html')).toHaveClass(/dark/)
+  await page.keyboard.press('Escape')
+  await expect(tools).toBeHidden()
   await openPreview(page)
   expect(await geometry(preview)).toEqual(resized)
   await page.screenshot({ path: 'test-results/preview-layout-dark.png' })

@@ -35,6 +35,12 @@ jobs:
         run: |
           node -e "const assert = require('node:assert/strict'); const words = require('nodejieba').cut('南京市长江大桥'); assert.deepEqual(words, ['南京市', '长江大桥']);"
 
+      - name: Repair an unusable native binary from source
+        run: |
+          node -e "require('node:fs').writeFileSync('node_modules/nodejieba/build/Release/nodejieba.node', 'invalid native binary');"
+          npm run postinstall
+          node -e "const assert = require('node:assert/strict'); const words = require('nodejieba').cut('南京市长江大桥'); assert.deepEqual(words, ['南京市', '长江大桥']);"
+
   unit:
     # 纯逻辑/组件层: 快、无浏览器、无密钥 几秒出结果
     runs-on: ubuntu-latest

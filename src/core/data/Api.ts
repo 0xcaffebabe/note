@@ -66,7 +66,15 @@ export class Api implements Cacheable {
 
   @cache
   public async getDocClusterScatter(): Promise<ClusterScatter> {
-    return this.http.fetch(UrlUtils.concatUrl(baseUrl(), UrlConst.docClusterScatterJson)).then(r => r.json())
+    const response = await this.http.fetch(UrlUtils.concatUrl(baseUrl(), UrlConst.docClusterScatterJson))
+    if (!response.ok) {
+      throw new Error(`聚类数据请求失败: HTTP ${response.status}`)
+    }
+    const data = await response.json()
+    if (!data || !Array.isArray(data.points) || !Array.isArray(data.clusters)) {
+      throw new Error('聚类数据格式无效')
+    }
+    return data
   }
 
   @cache

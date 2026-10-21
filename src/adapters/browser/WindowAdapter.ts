@@ -7,10 +7,10 @@ export function isFullScreen(): boolean {
   return !!document.fullscreenElement
 }
 
-export function requestFullScreen(): void {
-  document.body.requestFullscreen()
+export function requestFullScreen(): Promise<void> {
+  return document.body.requestFullscreen()
 }
 
-export function exitFullScreen(): void {
-  document.exitFullscreen()
+export function exitFullScreen(): Promise<void> {
+  return document.exitFullscreen()
 }

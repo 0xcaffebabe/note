@@ -33,10 +33,11 @@
       </div>
     </div>
 
-    <div class="chart-host cluster-host">
+    <div class="chart-host cluster-host" :aria-busy="chartState === 'loading'">
       <div ref="chartEl" class="chart-box" role="img" :aria-label="ariaLabel"></div>
       <div v-if="chartState === 'empty' || chartState === 'error'" class="chart-overlay" role="status">
-        {{ chartState === 'empty' ? '暂无聚类数据' : '聚类数据加载失败' }}
+        <span>{{ chartState === 'empty' ? '暂无聚类数据' : '聚类数据加载失败' }}</span>
+        <el-button v-if="chartState === 'error'" @click="renderChart()">重新加载</el-button>
       </div>
     </div>
   </div>
@@ -380,6 +381,14 @@ export default defineComponent({
 // 覆写全局 .chart-box 的默认 360px, 填满卡片
 .cluster-host .chart-box {
   height: 100%;
+}
+.cluster-host .chart-overlay {
+  flex-direction: column;
+  gap: var(--spacing-md);
+
+  .el-button {
+    pointer-events: auto;
+  }
 }
 
 @media (max-width: @bp-mobile) {

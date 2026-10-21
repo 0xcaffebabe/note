@@ -1,0 +1,444 @@
+<template>
+  <div class="site-navigation-host" :class="{ embedded, 'with-bottom-bar': withBottomBar, 'is-positioned': positioned }">
+    <div ref="dragBounds" class="navigation-drag-bounds" aria-hidden="true"></div>
+    <nav ref="dock" class="site-dock" :class="{ expanded, 'is-positioned': positioned, 'is-dragging': dragging, 'expand-right': layout?.side === 'right', stacked }" :style="dockStyle" aria-label="站内导航" @pointerenter="handlePointerEnter" @pointerleave="handlePointerLeave" @focusin="cancelCollapse" @focusout="scheduleCollapse" @keydown.esc.stop.prevent="closeMenu">
+      <transition name="dock-shortcuts">
+        <div v-show="expanded" id="site-navigation-shortcuts" ref="shortcuts" class="dock-shortcuts" :style="shortcutStyle">
+          <div class="site-nav">
+            <router-link v-for="item in navList" :key="item.path" :to="item.path" class="nav-item dock-action" :aria-label="item.name" :title="item.name" :aria-current="$route.path.startsWith(item.match) ? 'page' : undefined" @click="collapse">
+              <el-icon><component :is="item.icon" /></el-icon><span>{{ item.name }}</span>
+            </router-link>
+          </div>
+          <button type="button" class="search-box dock-action" aria-label="搜索 (Ctrl+K)" @click="search()">
+            <el-icon><Search /></el-icon><span>搜索</span><kbd>{{ metaKeyLabel }} K</kbd>
+          </button>
+          <el-popover v-model:visible="menuOpen" trigger="click" role="dialog" aria-label="站点导航与工具" placement="top-end" :popper-options="popperOptions" :width="280" popper-class="site-navigation-popover" @after-enter="focusMenu" @after-leave="restoreLauncherFocus">
+            <template #reference>
+              <button type="button" class="more-btn dock-action" title="更多工具" aria-label="站点导航与工具">
+                <el-icon><MoreFilled /></el-icon>
+              </button>
+            </template>
+            <section id="site-navigation-panel" ref="panel" class="site-navigation-panel" :class="{ 'with-bottom-bar': withBottomBar }" aria-label="站点导航与工具" @keydown.esc.stop.prevent="closeMenu">
+              <p class="panel-title">{{ siteName }}</p>
+              <router-link v-if="canReturnToRecentDoc" :to="recentDocPath" class="recent-document" aria-label="返回最近文档" :title="recentDocName" @click="collapse">
+                <el-icon><Reading /></el-icon>
+                <span><span class="recent-document-label">最近文档</span><span class="recent-document-name">{{ recentDocName }}</span></span>
+              </router-link>
+              <button v-else type="button" class="recent-document" aria-label="返回最近文档" :title="recentDocName || '暂无阅读记录'" disabled>
+                <el-icon><Reading /></el-icon>
+                <span><span class="recent-document-label">最近文档</span><span class="recent-document-name">{{ recentDoc ? '当前正在阅读' : '暂无阅读记录' }}</span></span>
+              </button>
+              <div class="panel-actions">
+                <div class="theme-row"><span>深色模式</span><theme-switcher class="action-item" aria-label="深色模式" /></div>
+                <button type="button" @click="toggleFullScreen"><el-icon><FullScreen /></el-icon>{{ fullscreen ? '退出全屏' : '全屏' }}</button>
+                <button type="button" @click="enterZenMode"><el-icon><Aim /></el-icon>专注模式</button>
+                <button v-if="positioned" type="button" @click="resetDockPosition"><el-icon><RefreshLeft /></el-icon>恢复默认位置</button>
+              </div>
+              <div class="panel-links">
+                <a v-for="link in linkList" :key="link.url" :href="link.url" target="_blank" rel="noopener noreferrer">{{ link.title }}<el-icon><TopRight /></el-icon></a>
+              </div>
+              <p v-if="message" class="panel-message" role="status">{{ message }}</p>
+            </section>
+          </el-popover>
+        </div>
+      </transition>
+      <button ref="launcher" type="button" class="navigation-launcher dock-action" :title="(expanded ? '收起站点导航' : '展开站点导航') + '（可拖动）'" :aria-label="expanded ? '收起站点导航' : '展开站点导航'" aria-description="拖动可调整位置，更多工具中可恢复默认位置" :aria-expanded="expanded" aria-controls="site-navigation-shortcuts" @pointerdown="start" @pointermove="move" @pointerup="handlePointerUp" @pointercancel="cancelPointer" @lostpointercapture="lostCapture" @contextmenu.prevent @click="toggleNavigation">
+        <el-icon><ArrowRightBold v-if="expanded" /><Menu v-else /></el-icon>
+      </button>
+    </nav>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import { Aim, ArrowRightBold, CollectionTag, FullScreen, HomeFilled, Menu, MoreFilled, Reading, RefreshLeft, Search, Share, TopRight } from '@element-plus/icons-vue';
+import config from '@/core/config/config';
+import DocUtils from '@/core/util/DocUtils';
+import { useServices } from '@/platform/web/app/useServices';
+import { isMac } from '@/adapters/browser/Platform';
+import { exitFullScreen, isFullScreen, requestFullScreen } from '@/adapters/browser/WindowAdapter';
+import EventBus from '@/platform/web/components/EventBus';
+import ThemeSwitcher from '../header/ThemeSwitcher.vue';
+import { useDraggableNavigation } from './useDraggableNavigation';
+
+defineProps<{ embedded?: boolean; withBottomBar?: boolean }>();
+const route = useRoute();
+const { docService } = useServices();
+const recentDoc = ref(docService.getLastReadRecord());
+const recentDocPath = computed(() => DocUtils.docId2HtmlPath(recentDoc.value));
+const recentDocName = computed(() => DocUtils.docId2DisplayName(recentDoc.value));
+const canReturnToRecentDoc = computed(() => !!recentDoc.value && recentDoc.value !== DocUtils.routeDocId(route));
+const expanded = ref(false);
+const menuOpen = ref(false);
+const fullscreen = ref(false);
+const message = ref('');
+const dock = ref<HTMLElement>();
+const launcher = ref<HTMLButtonElement>();
+const panel = ref<HTMLElement>();
+const shortcuts = ref<HTMLElement>();
+const dragBounds = ref<HTMLElement>();
+const { positioned, dragging, hoverBlocked, layout, stacked, dockStyle, shortcutStyle, start, move, finish, cancel, cancelPointer, lostCapture, consumeClick, reset, allowHover } = useDraggableNavigation(dock, launcher, shortcuts, dragBounds, expanded, collapse);
+const popperOptions = { modifiers: [{ name: 'preventOverflow', options: { padding: 8, altAxis: true } }] };
+let collapseTimer: ReturnType<typeof setTimeout> | undefined;
+let returnFocusAfterMenu = false;
+const siteName = config.siteName;
+const linkList = config.linkList;
+const metaKeyLabel = isMac() ? '⌘' : 'Ctrl';
+const navList = [
+  { name: '首页', path: '/home.html', match: '/home', icon: markRaw(HomeFilled) },
+  { name: '标签', path: '/tag.html', match: '/tag', icon: markRaw(CollectionTag) },
+  { name: '聚类', path: '/cluster.html', match: '/cluster', icon: markRaw(Share) },
+];
+
+function collapse() {
+  returnFocusAfterMenu = false;
+  cancelCollapse();
+  menuOpen.value = false;
+  expanded.value = false;
+}
+
+function search(mode?: 'category' | 'fulltext') {
+  collapse();
+  EventBus.emit('show-site-search', mode);
+}
+
+function cancelCollapse() {
+  clearTimeout(collapseTimer);
+  collapseTimer = undefined;
+}
+
+function handlePointerEnter(event: PointerEvent) {
+  cancelCollapse();
+  if (event.pointerType === 'mouse' && !hoverBlocked.value) expanded.value = true;
+}
+
+function handlePointerLeave() {
+  allowHover();
+  scheduleCollapse();
+}
+
+function scheduleCollapse() {
+  cancelCollapse();
+  if (!expanded.value || dragging.value) return;
+  collapseTimer = setTimeout(() => {
+    if (!menuOpen.value && !dock.value?.contains(document.activeElement) && !dock.value?.matches(':hover')) collapse();
+  }, 180);
+}
+
+function handlePointerUp(event: PointerEvent) {
+  if (!finish(event)) return;
+  launcher.value?.focus({ preventScroll: true });
+  toggleNavigation(event, true);
+}
+
+async function toggleNavigation(event: MouseEvent, fromTouch = false) {
+  if (!fromTouch && consumeClick(event)) return;
+  if (expanded.value) {
+    collapse();
+  } else {
+    expanded.value = true;
+    if (event.detail === 0 && !fromTouch) {
+      await nextTick();
+      dock.value?.querySelector<HTMLAnchorElement>('.site-nav a')?.focus({ preventScroll: true });
+    }
+  }
+}
+
+function handleOutside(event: PointerEvent) {
+  const target = event.target as Node;
+  if (!dock.value?.contains(target) && !panel.value?.contains(target)) collapse();
+}
+
+function focusMenu() {
+  if (menuOpen.value) panel.value?.querySelector<HTMLElement>('[role="switch"]:not(:disabled), button:not(:disabled), a[href]')?.focus();
+}
+
+async function closeMenu() {
+  cancel();
+  const hadMenu = menuOpen.value;
+  collapse();
+  returnFocusAfterMenu = hadMenu;
+  await nextTick();
+  launcher.value?.focus({ preventScroll: true });
+}
+
+function resetDockPosition() {
+  reset();
+  closeMenu();
+}
+
+function restoreLauncherFocus() {
+  if (!returnFocusAfterMenu) return;
+  returnFocusAfterMenu = false;
+  launcher.value?.focus({ preventScroll: true });
+}
+
+async function toggleFullScreen() {
+  message.value = '';
+  try {
+    if (isFullScreen()) await exitFullScreen();
+    else await requestFullScreen();
+    closeMenu();
+  } catch {
+    message.value = '当前浏览器无法切换全屏';
+  }
+}
+
+async function enterZenMode() {
+  closeMenu();
+  EventBus.emit('enter-zen-mode', null);
+  if (!isFullScreen() && document.fullscreenEnabled) {
+    try {
+      await requestFullScreen();
+    } catch {
+      // 全屏不可用时仍保留收起侧栏的专注布局。
+    }
+  }
+}
+
+function syncFullScreen() {
+  fullscreen.value = isFullScreen();
+}
+
+watch(() => route.fullPath, () => { cancel(); collapse(); });
+watch(menuOpen, (visible) => {
+  if (visible) {
+    recentDoc.value = docService.getLastReadRecord();
+    returnFocusAfterMenu = false;
+    cancelCollapse();
+    expanded.value = true;
+  } else {
+    scheduleCollapse();
+  }
+});
+onMounted(() => {
+  syncFullScreen();
+  document.addEventListener('fullscreenchange', syncFullScreen);
+  document.addEventListener('pointerdown', handleOutside);
+});
+onBeforeUnmount(() => {
+  cancelCollapse();
+  document.removeEventListener('fullscreenchange', syncFullScreen);
+  document.removeEventListener('pointerdown', handleOutside);
+});
+</script>
+
+<style lang="less" scoped>
+.site-navigation-host, .site-navigation-panel {
+  --navigation-bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom));
+}
+.site-navigation-host.with-bottom-bar, .site-navigation-panel.with-bottom-bar {
+  --navigation-bottom: calc(var(--mobile-action-bottom) + env(safe-area-inset-bottom));
+}
+
+.site-navigation-host {
+  position: fixed;
+  bottom: var(--navigation-bottom);
+  right: calc(var(--spacing-lg) + env(safe-area-inset-right));
+  z-index: var(--z-header);
+}
+
+.site-navigation-host.embedded {
+  position: sticky;
+  top: calc(100dvh - var(--navigation-bottom));
+  bottom: auto;
+  right: auto;
+  height: 0;
+  max-width: var(--content-max);
+  margin-inline: auto;
+
+  .site-dock { position: absolute; right: 0; bottom: 0; }
+}
+
+.site-navigation-host.is-positioned { z-index: calc(var(--z-overlay) + 1); }
+
+.navigation-drag-bounds {
+  position: fixed;
+  inset: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) var(--navigation-bottom) max(8px, env(safe-area-inset-left));
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.site-dock {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  max-width: calc(100vw - var(--spacing-xl));
+  padding: var(--spacing-xs);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  background: var(--elevated-bg-color);
+  box-shadow: var(--shadow-md);
+  &.expanded { gap: var(--spacing-xs); }
+}
+
+.navigation-launcher { touch-action: none; user-select: none; -webkit-touch-callout: none; }
+.navigation-launcher .el-icon { pointer-events: none; }
+.is-positioned .navigation-launcher { cursor: grab; }
+.is-dragging .navigation-launcher { cursor: grabbing; }
+.site-dock.expand-right { flex-direction: row-reverse; }
+.site-dock.stacked .dock-shortcuts {
+  position: absolute;
+  width: max-content;
+  padding: var(--spacing-xs);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  background: var(--elevated-bg-color);
+  box-shadow: var(--shadow-md);
+}
+
+.dock-shortcuts, .site-nav { display: flex; align-items: center; gap: var(--spacing-xs); }
+
+.dock-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--site-control-size);
+  height: var(--site-control-size);
+  padding: var(--spacing-sm);
+  flex-shrink: 0;
+  gap: var(--spacing-sm);
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--secondary-text-color);
+  font: inherit;
+  font-size: var(--font-size-base);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+
+  &:hover, &[aria-expanded="true"], &[aria-current="page"] {
+    background: var(--hover-bg-color);
+    color: var(--primary-color);
+  }
+
+  .el-icon { font-size: var(--font-size-xl); }
+}
+
+.nav-item, .search-box { width: auto; min-width: var(--site-control-size); padding-inline: var(--spacing-md); }
+.search-box { border-left: 1px solid var(--border-color); }
+
+.dock-shortcuts-enter-active, .dock-shortcuts-leave-active { transition: opacity var(--transition-fast), transform var(--transition-fast); }
+.dock-shortcuts-enter-from, .dock-shortcuts-leave-to { opacity: 0; transform: translateX(var(--spacing-sm)); }
+
+@media (max-width: @bp-desktop) {
+  .nav-item, .search-box { width: var(--site-control-size); padding-inline: var(--spacing-sm); }
+  .nav-item span, .search-box span, .search-box kbd { display: none; }
+  .embedded .site-dock { right: calc(var(--site-control-size) + var(--spacing-md)); }
+}
+
+.site-navigation-host.with-bottom-bar {
+  .site-dock { right: 0; gap: 0; }
+  .dock-shortcuts, .site-nav { gap: 0; }
+}
+
+@media (max-width: @bp-mobile) {
+  .site-dock, .dock-shortcuts, .site-nav { gap: 0; }
+}
+
+kbd {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--secondary-text-color);
+}
+
+.site-navigation-panel {
+  color: var(--main-text-color);
+  font-size: var(--font-size-base);
+  max-height: calc(100dvh - var(--navigation-bottom) - var(--site-control-size) - var(--spacing-3xl) - env(safe-area-inset-top));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.panel-title {
+  margin: 0 0 var(--spacing-md);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.recent-document {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  min-height: var(--site-control-size);
+  padding: var(--spacing-sm);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--main-text-color);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+
+  > span { min-width: 0; }
+  .el-icon { flex-shrink: 0; }
+  &:not(:disabled):hover { background: var(--hover-bg-color); }
+  &:disabled { color: var(--secondary-text-color); }
+}
+
+.recent-document-label, .recent-document-name { display: block; }
+.recent-document-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--secondary-text-color);
+  font-size: var(--font-size-sm);
+}
+
+.panel-links {
+  display: flex;
+  gap: var(--spacing-xs);
+
+  a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    flex: 1;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: var(--secondary-text-color);
+
+    &:hover, &[aria-current="page"] {
+      color: var(--primary-color);
+      background: var(--hover-bg-color);
+    }
+  }
+}
+
+.panel-actions {
+  display: flex;
+  flex-direction: column;
+  margin-block: var(--spacing-sm);
+  padding-block: var(--spacing-sm);
+  border-block: 1px solid var(--border-color);
+
+  button, .theme-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    min-height: var(--site-control-size);
+    padding: var(--spacing-sm);
+    border: 0;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+  }
+
+  button {
+    cursor: pointer;
+    &:hover { background: var(--hover-bg-color); }
+  }
+
+  .theme-row { justify-content: space-between; }
+}
+
+.panel-message { color: var(--secondary-text-color); }
+</style>

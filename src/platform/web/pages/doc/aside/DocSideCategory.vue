@@ -3,15 +3,8 @@
   <template v-if="!isMobile">
     <div ref="root" v-show="showAside">
       <el-aside width="280px" :lock-scroll="false" class="doc-aside">
-        <div
-          class="category-wrapper"
-          :style="{
-            height: parentShowHeader ? 'calc(100vh - 60px)' : '100vh',
-            top: parentShowHeader ? '60px' : '0',
-          }"
-        >
-          <!-- 顶栏显示时不重复展示品牌区 避免双logo堆叠 -->
-          <div class="category-header" v-if="!parentShowHeader">
+        <div class="category-wrapper">
+          <div class="category-header">
             <router-link to="/home" class="sidebar-logo">
               <div class="logo-icon">
                 <el-icon><Reading /></el-icon>
@@ -85,15 +78,9 @@ export default defineComponent({
     CategoryList,
   },
   emits: ["toggleAside"],
-  inject: ["showHeader"],
   props: {
     showAside: Boolean,
     doc: String,
-  },
-  data() {
-    return {
-      parentShowHeader: true,
-    };
   },
   computed: {
     isMobile() {
@@ -132,12 +119,6 @@ export default defineComponent({
     },
   },
   watch: {
-    showHeader: {
-      handler(val) {
-        this.parentShowHeader = val;
-      },
-      immediate: true,
-    },
     // 移动抽屉打开后 滚动到当前选中项
     showCategory(val: boolean) {
       if (val && this.isMobile) {
@@ -169,6 +150,8 @@ export default defineComponent({
 .category-wrapper {
   transition: all 0.3s ease;
   position: sticky;
+  top: 0;
+  height: 100vh;
   overflow: hidden;
   width: 280px;
   background-color: var(--card-bg-color);

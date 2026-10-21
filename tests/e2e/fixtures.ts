@@ -149,6 +149,20 @@ export async function goto(page: Page, p: string) {
   await page.addStyleTag({ content: NO_ANIM }).catch(() => {})
 }
 
+// 工具面板在折叠导航内；用键盘展开，避免鼠标悬停与点击展开之间的时序差异。
+export async function openNavigationTools(page: Page) {
+  const launcher = page.locator('.navigation-launcher')
+  await expect(launcher).toBeVisible()
+  if (await launcher.getAttribute('aria-expanded') === 'false') {
+    await launcher.focus()
+    await page.keyboard.press('Enter')
+  }
+  await page.getByRole('button', { name: '站点导航与工具', exact: true }).click()
+  const navigation = page.getByRole('dialog', { name: '站点导航与工具', exact: true })
+  await expect(navigation).toBeVisible()
+  return navigation
+}
+
 export function pathnameOf(page: Page): string {
   return decodeURI(new URL(page.url()).pathname)
 }
@@ -197,12 +211,14 @@ export const SEARCH_KW = 'docker'
 
 // 指向所发现文档的 algolia 高亮结构(_highlightResult.segments[].{id,txt}.value 内含 <mark> 且含 SEARCH_KW)
 export function docHitFixture() {
+  // 搜索索引的协议使用 Markdown 路径；点击结果应落到现有正文页。
+  const markdownUrl = DOC.replace(/\.html$/i, '.md')
   return [
     {
-      url: DOC,
+      url: markdownUrl,
       createTime: '2020-01-01',
       _highlightResult: {
-        url: { value: DOC },
+        url: { value: markdownUrl },
         segments: [
           { id: { value: `安装 <mark>${SEARCH_KW}</mark>` }, txt: { value: `<mark>${SEARCH_KW}</mark> 片段示例` } },
         ],

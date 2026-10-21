@@ -1,4 +1,5 @@
 import { SysUtils } from "./SysUtils"
+import IdGenUtils from "@/core/util/IdGenUtils"
 
 type Mermaid = typeof import("mermaid").default
 
@@ -78,6 +79,8 @@ function initWithNormal() {
 
 function renderNode(mermaid: Mermaid, v: Element) {
   const raw = v.textContent!
+  // 正文与预览可能复用缓存的 HTML，为每次渲染分配独立 ID，避免覆盖已有 SVG。
+  v.id = 'mermaid-' + IdGenUtils.uuid()
   mermaid.render(v.id + '-svg', raw)
     .then(data => {
       v.innerHTML = data.svg
@@ -96,8 +99,8 @@ function renderNode(mermaid: Mermaid, v: Element) {
     })
 }
 
-async function initAllNode() {
-  const nodeList = document.querySelectorAll('[id^=mermaid-]:not(.mermaid-rendered):not(.mermaid-render-error)')
+async function initAllNode(root: ParentNode = document) {
+  const nodeList = root.querySelectorAll('.mermaid-source:not(.mermaid-rendered):not(.mermaid-render-error)')
   if (nodeList.length === 0) {
     return
   }

@@ -1,4 +1,4 @@
-import { test, expect, goto, docWithMermaid, docWithMath } from './fixtures'
+import { test, expect, goto, docWithMermaid, docWithMath, DOC, pathnameOf } from './fixtures'
 
 // 客户端富渲染管线(Mermaid / KaTeX)。
 // 这两类标记在「预渲染 .html」里并不存在——它们由 DocRender(marked 自定义渲染)在客户端从 .md.json
@@ -42,6 +42,102 @@ test.describe('client rich rendering (P1)', () => {
       }
     })
   }
+  test('右键预览支持 Mermaid 全屏缩放，重复打开不影响正文图表', async ({ page }) => {
+    test.setTimeout(60_000)
+    // 在文档数据边界提供固定图表，走真实 Markdown、右键预览与 Mermaid 渲染管线。
+    const jsonPath = DOC.replace(/\.html$/, '.md.json')
+    await page.route(url => decodeURI(url.pathname) === jsonPath, async route => {
+      const response = await route.fetch()
+      const file = await response.json()
+      file.content = '## Mermaid 预览回归\n\n```mermaid\ngraph TD\n  A[Preview start] --> B[Preview end]\n```'
+      await route.fulfill({ response, json: file })
+    })
+    await goto(page, DOC)
+    const mainSource = page.locator('.main-content .mermaid-source').first()
+    await mainSource.scrollIntoViewIfNeeded()
+    await expect(mainSource).toHaveClass(/mermaid-rendered/, { timeout: 20_000 })
+    const mainSvg = mainSource.locator('svg')
+    const mainSvgId = await mainSvg.getAttribute('id')
+    const beforePath = pathnameOf(page)
+    const menuItem = page.locator('.el-menu .el-menu-item.is-active').first()
+    const viewer = page.getByRole('dialog', { name: '查看', exact: true })
+    // 先使用正文查看器，让其隐藏容器留在 DOM 中，验证预览不会操作错误实例。
+    await page.locator('.main-content').getByRole('button', { name: '全屏查看图表' }).click()
+    await expect(viewer.locator('.svg-pan-zoom_viewport')).toBeVisible({ timeout: 20_000 })
+    await page.keyboard.press('Escape')
+    await expect(viewer).toBeHidden()
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (attempt === 1) {
+        await page.locator('.action-item.el-switch').click()
+        await expect(page.locator('html')).toHaveClass(/dark/)
+      }
+      await menuItem.click({ button: 'right' })
+      const preview = page.getByRole('dialog', { name: '文档预览' })
+      await expect(preview).toBeVisible()
+      const source = preview.locator('.mermaid-source')
+      await source.scrollIntoViewIfNeeded()
+      await expect(source).toHaveClass(/mermaid-rendered/, { timeout: 20_000 })
+      const svg = source.locator('svg')
+      await expect(svg).toBeVisible()
+      await expect(svg).toContainText('Preview start')
+      expect(await svg.getAttribute('id')).not.toBe(mainSvgId)
+      await preview.getByRole('button', { name: '全屏查看图表' }).click()
+      await expect(viewer).toBeVisible()
+      await expect(viewer.locator('svg[id^="mermaid-viewer-"]')).toContainText('Preview start', { timeout: 20_000 })
+      const viewport = viewer.locator('.svg-pan-zoom_viewport')
+      await expect(viewport).toBeVisible()
+      const transform = await viewport.getAttribute('transform')
+      await viewer.locator('[id="svg-pan-zoom-zoom-in"]').click()
+      await expect(viewport).not.toHaveAttribute('transform', transform!)
+      await expect(preview).toBeVisible()
+      if (attempt === 0) {
+        await test.info().attach('mermaid-preview-fullscreen', {
+          body: await page.screenshot(), contentType: 'image/png',
+        })
+        await page.keyboard.press('Escape')
+      } else {
+        await test.info().attach('mermaid-preview-fullscreen-dark', {
+          body: await page.screenshot(), contentType: 'image/png',
+        })
+        await viewer.locator('.el-dialog__headerbtn').click()
+      }
+      await expect(viewer).toBeHidden()
+      await expect(preview).toBeVisible()
+      await expect(svg).toBeVisible()
+      await expect(mainSvg).toHaveAttribute('id', mainSvgId!)
+      await expect(page.locator('.mermaid-error-msg')).toHaveCount(0)
+      expect(pathnameOf(page)).toBe(beforePath)
+      await preview.getByRole('button', { name: '关闭预览' }).click()
+      await expect(preview).toBeHidden()
+    }
+    await page.locator('.main-content').getByRole('button', { name: '全屏查看图表' }).click()
+    await expect(viewer.locator('.svg-pan-zoom_viewport')).toBeVisible({ timeout: 20_000 })
+    await expect(viewer.locator('svg[id^="mermaid-viewer-"]')).toContainText('Preview start')
+    await page.keyboard.press('Escape')
+    await expect(viewer).toBeHidden()
+  })
+
+  test('无效 Mermaid 的全屏查看器显示错误，关闭后保留预览', async ({ page }) => {
+    const jsonPath = DOC.replace(/\.html$/, '.md.json')
+    await page.route(url => decodeURI(url.pathname) === jsonPath, async route => {
+      const response = await route.fetch()
+      const file = await response.json()
+      file.content = '## 无效图表\n\n```mermaid\nnot-a-diagram\n```'
+      await route.fulfill({ response, json: file })
+    })
+    await goto(page, DOC)
+    await page.locator('.main-content .mermaid-wrapper').waitFor()
+    await page.locator('.el-menu .el-menu-item.is-active').first().click({ button: 'right' })
+    const preview = page.getByRole('dialog', { name: '文档预览' })
+    await preview.getByRole('button', { name: '全屏查看图表' }).click()
+    const viewer = page.getByRole('dialog', { name: '查看', exact: true })
+    await expect(viewer.getByRole('alert')).toContainText('Mermaid 图表渲染失败', { timeout: 20_000 })
+    await page.keyboard.press('Escape')
+    await expect(viewer).toBeHidden()
+    await expect(preview).toBeVisible()
+    await preview.getByRole('button', { name: '关闭预览' }).click()
+  })
 
   test('Mermaid 围栏在客户端渲染为内联 SVG', async ({ page }) => {
     const d = docWithMermaid()

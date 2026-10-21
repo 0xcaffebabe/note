@@ -30,11 +30,12 @@
           ref="categoryItemContent"
         />
         <el-skeleton v-if="loading" :rows="6" animated class="preview-skeleton" />
-        <div v-else class="markdown-section preview-markdown" ref="previewSection" v-html="contentHtml" draggable="false"></div>
+        <div v-else class="markdown-section preview-markdown" ref="previewSection" v-html="contentHtml" draggable="false" @click="onPreviewClick"></div>
       </div>
     </div>
   </transition>
   </teleport>
+  <mermaid-shower ref="mermaidShower" @closed="showingMermaid = false" />
 </template>
 
 <script lang="ts">
@@ -45,6 +46,8 @@ import DocFileInfo from "@/core/domain/DocFileInfo";
 import DocUtils from "@/core/util/DocUtils";
 import { clampToBounds } from "@/core/util/GeometryUtils";
 import DocPostRender from "@/platform/web/render/DocPostRender";
+import MermaidUtils from "@/platform/web/util/MermaidUtils";
+import MermaidShower from "./mermaid-shower/MermaidShower.vue";
 
 export default defineComponent({
   components: {
@@ -52,6 +55,7 @@ export default defineComponent({
     Place,
     TopRight,
     CategoryItemContent,
+    MermaidShower,
   },
   data() {
     return {
@@ -60,6 +64,7 @@ export default defineComponent({
       loading: false,
       file: new DocFileInfo() as DocFileInfo,
       pin: false,
+      showingMermaid: false,
       // 触发show的那次右键事件会冒泡到document 未"上膛"前不视作外部点击
       armed: false,
       resizeObserver: null as ResizeObserver | null,
@@ -105,11 +110,22 @@ export default defineComponent({
         this.loading = false;
       }
       this.$nextTick(() => {
+        const previewSection = this.$refs.previewSection as HTMLElement;
         // 预览内容的代码块高亮
-        DocPostRender.highlightCode(this.$refs.previewSection as HTMLElement);
+        DocPostRender.highlightCode(previewSection);
+        MermaidUtils.initAllNode(previewSection);
         // 内容撑开高度后再夹一次
         this.clampToViewport();
       });
+    },
+    onPreviewClick(e: MouseEvent) {
+      const button = (e.target as Element).closest('.mermaid-wrapper .fullscreen button');
+      const diagram = button?.closest('.mermaid-wrapper')?.getAttribute('data-raw');
+      if (!diagram) {
+        return;
+      }
+      this.showingMermaid = true;
+      (this.$refs.mermaidShower as InstanceType<typeof MermaidShower>).show(diagram);
     },
     /* 拖拽: 把手仅标题栏 监听挂document 快速拖动不脱手 */
     startDrag(e: MouseEvent) {
@@ -142,7 +158,7 @@ export default defineComponent({
       this.hide0();
     },
     hide() {
-      if (this.pin) {
+      if (this.pin || this.showingMermaid) {
         return
       }
       this.hide0()
@@ -151,7 +167,7 @@ export default defineComponent({
       this.visible = false;
       (this.$refs.categoryItemContent as any).destroy();
     },
-    /* ---- 标准浮层消失行为(固定时点击/滚动豁免 Esc始终强制关闭) ---- */
+    /* ---- 标准浮层消失行为(固定时点击/滚动豁免，Esc 优先关闭图表查看器) ---- */
     onOutsidePointer(e: Event) {
       if (!this.visible || !this.armed) {
         return;
@@ -174,7 +190,7 @@ export default defineComponent({
     },
     handleKeydown(e: KeyboardEvent) {
       // Esc 关闭预览(忽略pin锁定)
-      if (e.key == 'Escape' && this.visible) {
+      if (e.key == 'Escape' && this.visible && !this.showingMermaid) {
         this.hide0()
       }
     },

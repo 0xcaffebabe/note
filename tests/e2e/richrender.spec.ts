@@ -1,4 +1,4 @@
-import { test, expect, goto, docWithMermaid, docWithMath, DOC, pathnameOf } from './fixtures'
+import { test, expect, goto, docWithMermaid, docWithMath, DOC, pathnameOf, openNavigationTools } from './fixtures'
 import fs from 'fs'
 
 // 使用 .txt 保存 Markdown，避免构建器将测试夹具作为站点文档发布。
@@ -70,8 +70,11 @@ test.describe('client rich rendering (P1)', () => {
 
     for (let attempt = 0; attempt < 2; attempt++) {
       if (attempt === 1) {
-        await page.locator('.action-item.el-switch').click()
+        const navigation = await openNavigationTools(page)
+        await navigation.locator('.action-item.el-switch').click()
         await expect(page.locator('html')).toHaveClass(/dark/)
+        await page.keyboard.press('Escape')
+        await expect(navigation).toBeHidden()
       }
       await menuItem.click({ button: 'right' })
       const preview = page.getByRole('dialog', { name: '文档预览' })

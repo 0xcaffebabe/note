@@ -231,10 +231,14 @@ class DocPageEventManager {
   public registerScrollListener() {
     this.removeAllScrollListener();
     this.scrollHandler = () => {
+      const doc = this.docPageInstance.doc;
+      if (!doc || this.docPageInstance.loading || this.docPageInstance.loadError || DocUtils.routeDocId(this.docPageInstance.$route) !== doc) return;
       // 限流更新阅读位置
       clearTimeout(this.scrollTimer);
       this.scrollTimer = setTimeout(() => {
-        DocService.setDocReadRecrod(this.docPageInstance.doc, window.scrollY);
+        if (this.docPageInstance.doc === doc && !this.docPageInstance.loading && !this.docPageInstance.loadError && DocUtils.routeDocId(this.docPageInstance.$route) === doc) {
+          DocService.setDocReadRecrod(doc, window.scrollY);
+        }
       }, 1000);
       // 滚动的同时将link-popover隐藏掉
       this.getRef('linkPopover') && (this.getRef('linkPopover') as InstanceType<typeof LinkPopover>).hide();

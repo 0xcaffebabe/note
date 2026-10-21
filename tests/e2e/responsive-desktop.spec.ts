@@ -1,6 +1,6 @@
-import { test, expect, goto, pathnameOf, waitForPath, collectPageProblems, BENIGN_CONSOLE, DOC, DOC_NO_SUFFIX } from './fixtures'
+import { test, expect, goto, pathnameOf, waitForPath, openNavigationTools, collectPageProblems, BENIGN_CONSOLE, DOC, DOC_NO_SUFFIX } from './fixtures'
 
-// 响应式合流(P0–P6)桌面端验证: 单一无前缀路由树 + 响应式 DocPage/Home/Header/工具栏。
+// 响应式桌面端验证: 单一无前缀路由树 + 响应式 DocPage/Home/浮动导航/工具栏。
 // 运行于 desktop-chromium(1440x900, 细指针)。断点为视口驱动, 故可用 setViewportSize 验证跨断点切换。
 // 文件名不含 mobile.spec.ts => 仅在 desktop 工程运行。
 
@@ -25,15 +25,6 @@ test.describe('route-completion rendering (desktop)', () => {
     await goto(page, DOC_NO_SUFFIX + '/')
     await waitForPath(page, DOC)
     await expect(page.locator('.markdown-section').first()).toBeVisible()
-  })
-
-  test('聚类从桌面顶栏导航可达并渲染', async ({ page }) => {
-    await goto(page, DOC)
-    await page.waitForSelector('.markdown-section')
-    await page.locator('.site-nav .nav-item', { hasText: '聚类' }).click()
-    await waitForPath(page, '/cluster.html')
-    expect(pathnameOf(page)).toBe('/cluster.html')
-    await page.waitForSelector('.cluster-host canvas', { timeout: 20000 })
   })
 })
 
@@ -134,7 +125,7 @@ test.describe('folded hazards & silent-break fixes (desktop)', () => {
 
   test('搜索统一到 CommandPalette: Ctrl+Q / Ctrl+K 均开同一面板', async ({ page }) => {
     await goto(page, '/home.html')
-    await page.locator('.search-box').waitFor({ state: 'visible' })
+    await page.locator('.navigation-launcher').waitFor({ state: 'visible' })
     await page.keyboard.press('Control+q')
     await page.waitForSelector('.command-palette .palette-input')
     await expect(page.locator('.command-palette')).toHaveCount(1)
@@ -220,19 +211,83 @@ test.describe('responsive breakpoint switching (resize)', () => {
     await expect(page.locator('.mobile-bottom-bar')).toHaveCount(0)
     expect(pathnameOf(page)).toBe(DOC)
   })
-
-  test('Header 内联导航(>820) ↔ 图标按钮(≤820) 随宽度切换', async ({ page }) => {
+  test('悬浮导航默认收起，悬停后可搜索和切换页面', async ({ page }) => {
     await goto(page, '/home.html')
-    await page.waitForSelector('.main-layout')
-    await expect(page.locator('.site-nav')).toHaveCount(1)
-    await expect(page.locator('.icon-btn')).toHaveCount(0)
-    await page.setViewportSize({ width: 800, height: 900 })
-    await page.waitForSelector('.main-layout.is-mobile')
-    await expect(page.locator('.site-nav')).toHaveCount(0)
-    await expect(page.locator('.icon-btn')).toHaveCount(3)
-    await page.setViewportSize({ width: 1440, height: 900 })
-    await page.waitForFunction(() => !document.querySelector('.main-layout')?.classList.contains('is-mobile'))
-    await expect(page.locator('.site-nav')).toHaveCount(1)
+    const launcher = page.locator('.navigation-launcher')
+    const navigation = page.getByRole('navigation', { name: '站内导航' })
+    await expect(launcher).toHaveAttribute('aria-expanded', 'false')
+    await launcher.hover()
+    await navigation.getByRole('link', { name: '首页', exact: true }).hover()
+    await expect(navigation.getByRole('link', { name: '标签', exact: true })).toBeVisible()
+    await page.mouse.move(1, 1)
+    await expect(launcher).toHaveAttribute('aria-expanded', 'false')
+
+    await launcher.hover()
+    await navigation.getByRole('button', { name: /^搜索/ }).click()
+    await expect(page.locator('.palette-input')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.locator('.palette-input')).toBeHidden()
+    await launcher.hover()
+    await navigation.getByRole('link', { name: '标签', exact: true }).click()
+    await waitForPath(page, '/tag.html')
+    await expect(launcher).toHaveAttribute('aria-expanded', 'false')
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    await expect(launcher).toHaveAttribute('aria-expanded', 'false')
+  })
+  test('键盘可操作导航和工具，关闭后恢复焦点，也可点击页面关闭', async ({ page }) => {
+    await goto(page, '/tag.html')
+    const launcher = page.locator('.navigation-launcher')
+    await launcher.focus()
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('navigation', { name: '站内导航' }).getByRole('link', { name: '首页', exact: true })).toBeFocused()
+    const more = page.getByRole('button', { name: '站点导航与工具', exact: true })
+    await more.focus()
+    await page.keyboard.press('Enter')
+    const tools = page.getByRole('dialog', { name: '站点导航与工具', exact: true })
+    await expect(tools.getByRole('button', { name: '返回最近文档', exact: true })).toBeDisabled()
+    await expect(tools.getByRole('switch')).toBeFocused()
+    await expect(tools.getByRole('link', { name: /^(首页|标签|聚类)$/ })).toHaveCount(0)
+    await expect(tools.getByRole('button', { name: /搜索/ })).toHaveCount(0)
+    await page.keyboard.press('Escape')
+    await expect(tools).toBeHidden()
+    await expect(launcher).toBeFocused()
+    await expect(launcher).toHaveAttribute('aria-expanded', 'false')
+    await openNavigationTools(page)
+    await page.locator('#main-content').click({ position: { x: 4, y: 4 } })
+    await expect(tools).toBeHidden()
+  })
+  test('阅读导航在普通和宽屏下跟随正文列，收起侧栏后仍可见', async ({ page }) => {
+    await goto(page, DOC)
+    await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
+    const navigation = page.getByRole('navigation', { name: '站内导航' })
+    await page.locator('.navigation-launcher').focus()
+    await page.keyboard.press('Enter')
+    const withinReadingColumn = () => navigation.evaluate(el => {
+      const dock = el.getBoundingClientRect()
+      const reading = document.querySelector('.main-content')!.getBoundingClientRect()
+      return dock.left >= reading.left - 1 && dock.right <= reading.right + 1
+    })
+    for (const width of [1440, 1920]) {
+      await page.setViewportSize({ width, height: 900 })
+      await page.evaluate(() => window.scrollTo(0, 400))
+      await expect.poll(withinReadingColumn).toBe(true)
+      await expect(navigation).toBeInViewport({ ratio: 1 })
+    }
+    expect((await page.locator('.tab-container').boundingBox())!.y).toBe(0)
+    await page.locator('.aside-toggle-btn').click()
+    await expect(page.locator('.doc-aside')).toBeHidden()
+    await expect.poll(withinReadingColumn).toBe(true)
+    await expect(navigation).toBeInViewport({ ratio: 1 })
+  })
+  test('从工具菜单进入专注阅读后仍能访问站点导航', async ({ page }) => {
+    await goto(page, DOC)
+    const tools = await openNavigationTools(page)
+    await tools.getByRole('button', { name: '专注模式', exact: true }).click()
+    await expect(tools).toBeHidden()
+    await expect(page.locator('.doc-aside')).toBeHidden()
+    await page.locator('.navigation-launcher').focus()
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('navigation', { name: '站内导航' }).getByRole('link', { name: '首页', exact: true })).toBeVisible()
   })
 
   test('中档(821–1279): 非移动但 TOC 列收起为浮层(消除旧死区)', async ({ page }) => {

@@ -1,4 +1,4 @@
-import { test, expect, goto, pathnameOf, waitForHtmlChange, DOC } from './fixtures'
+import { test, expect, goto, pathnameOf, waitForPath, waitForHtmlChange, DOC } from './fixtures'
 
 // 响应式合流(P3a/P3b/P4)移动端验证。文件名含 mobile.spec.ts => 仅在 mobile-chromium(Pixel 5, ≤820, 粗指针)运行。
 // 移动端 DocPage 折叠自原 MobileDocPage: 底部操作栏 / 章节抽屉 / 目录抽屉 / FAB 工具栏 / 统一搜索。
@@ -33,13 +33,19 @@ test.describe('mobile DocPage (Pixel 5)', () => {
     await expect(page.locator(".mobile-bottom-bar button[aria-label='回到顶部']")).toBeVisible()
     await expect(page.locator('.el-backtop')).toHaveCount(0)
   })
-
-  test('文档页顶栏不重复底栏入口: 搜索/目录图标整组下沉底栏', async ({ page }) => {
+  test('手机可展开导航并从正文切换到聚类页面', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 })
     await goto(page, DOC)
-    await page.waitForSelector('.mobile-bottom-bar')
-    // 文档页(route.meta.hasBottomBar)下, 顶栏窄屏图标入口(全文搜索/目录搜索/展开目录)整组隐藏
-    // —— 搜索与目录均走底栏的同一 CommandPalette/分类抽屉, 顶栏不再重复
-    await expect(page.locator('.site-header .icon-btn')).toHaveCount(0)
+    await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
+    const launcher = page.locator('.navigation-launcher')
+    await expect(launcher).toHaveAttribute('aria-expanded', 'false')
+    await launcher.tap()
+    const navigation = page.getByRole('navigation', { name: '站内导航' })
+    await expect(navigation).toBeInViewport({ ratio: 1 })
+    await navigation.getByRole('link', { name: '聚类', exact: true }).tap()
+    await waitForPath(page, '/cluster.html')
+    await expect(page.locator('.cluster-host canvas').first()).toBeVisible({ timeout: 20000 })
+    await expect(launcher).toHaveAttribute('aria-expanded', 'false')
   })
 
   test('章节按钮打开底部 TOC 抽屉(复用 contents-list mode=drawer)', async ({ page }) => {
@@ -129,6 +135,7 @@ test.describe('mobile DocPage (Pixel 5)', () => {
 })
 
 test.describe('mobile home & charts (Pixel 5)', () => {
+
   test('移动首页: is-mobile 外壳 + 统计卡片网格', async ({ page }) => {
     await goto(page, '/home.html')
     await page.waitForSelector('.main-layout.is-mobile')
@@ -152,18 +159,6 @@ test.describe('mobile home & charts (Pixel 5)', () => {
     await page.waitForSelector('.quick-access')
     const cols = await page.evaluate(() => getComputedStyle(document.querySelector('.quick-access')!).gridTemplateColumns)
     expect(cols.trim().split(/\s+/).length).toBe(1)
-  })
-
-  test('聚类从移动顶栏溢出菜单可达', async ({ page }) => {
-    await goto(page, DOC)
-    await page.waitForSelector('.mobile-bottom-bar')
-    await page.locator('.more-btn').click()
-    const item = page.locator('.el-dropdown-menu__item', { hasText: '聚类' })
-    await item.waitFor({ state: 'visible', timeout: 20000 })
-    await item.click()
-    await page.waitForFunction(() => location.pathname.endsWith('/cluster.html'), undefined, { timeout: 20000 })
-    expect(pathnameOf(page)).toBe('/cluster.html')
-    await page.waitForSelector('.cluster-host canvas', { timeout: 20000 })
   })
 })
 

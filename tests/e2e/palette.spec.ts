@@ -12,16 +12,16 @@ import {
 
 // 命令面板(CommandPalette.vue)交互覆盖。
 // 触发与挂载时序(对照 App.vue): Ctrl+K 的全局 keydown 监听在 App created/mounted 后才挂上,
-// 而 domcontentloaded 早于水合 —— 故先等头部 .search-box 出现(== 应用已挂载)再按键, 否则按早了无人响应。
+// 而 domcontentloaded 早于水合 —— 故先等导航按钮 .navigation-launcher 出现(== 应用已挂载)再按键, 否则按早了无人响应。
 // 面板用 el-dialog(默认 teleport 到 body), 输入框 .palette-input 出现即代表对话框已打开并可交互。
 //
 // 两类模式(component 源):
 //  - category(默认): 纯前端按目录名/拼音过滤 this.flatCategoryList, 无网络。空输入展示「最近访问」记录。
 //  - fulltext: searchService.search(kw,'algolia') 走 Algolia —— 用 stubAlgolia 在网络边界拦截, 离线确定性可跑。
 
-// 等应用水合完成(头部搜索入口出现)后按 Ctrl+K 打开面板, 返回已可见的输入框 locator。
+// 等应用水合完成(导航按钮出现)后按 Ctrl+K 打开面板, 返回已可见的输入框 locator。
 async function openPalette(page: import('@playwright/test').Page) {
-  await page.locator('.search-box').waitFor({ state: 'visible', timeout: 20_000 })
+  await page.locator('.navigation-launcher').waitFor({ state: 'visible', timeout: 20_000 })
   await page.keyboard.press('Control+k')
   const input = page.locator('.palette-input')
   await input.waitFor({ state: 'visible', timeout: 20_000 })
@@ -136,19 +136,14 @@ test.describe('command palette - fulltext mode (stub Algolia)', () => {
     await page.waitForFunction(() => new URL(location.href).searchParams.has('headingId'), null, { timeout: 20_000 })
 
     const url = new URL(page.url())
-    // 核心断言: URL 带上了 headingId 与 kw(本用例要覆盖的「全文片段点击 -> 锚点跳转」行为)
+    // 片段提供的定位信息随导航保留；真实章节的滚动定位由章节导航用例负责。
     expect(url.searchParams.get('headingId')).toBeTruthy()
     expect(url.searchParams.get('headingId')).toContain(SEARCH_KW) // 夹具片段 id = "安装 docker"
     expect(url.searchParams.get('kw')).toBe(SEARCH_KW)
 
-    // 已知 BUG: 全文结果点击后落地路径出现双重 .html(此处为 DOC + '.html')。
-    // 根因是 dto/算法链路的 url 形态不一致: 线上 Algolia 索引(src/build/SearchService.ts)存的是 .md 文件路径,
-    // CommandPalette.searchFulltext 用 docUrl2Id(doc.url) 解析时只剥 .md 后缀; 但本套件夹具 docHitFixture
-    // 注入的 url 是 DOC(已是 .html 路径), .html 不被 docUrl2Id 剥除, 残留进 docId, 经 docId2HtmlPath 回填又补一次 .html。
-    // 这是夹具 url 形态(html) 与组件预期(md) 的边界, 非组件主逻辑回归 —— 故以特征化方式记录当前真实落地路径, 不改 src/、不留红。
-    expect(decodeURI(url.pathname)).toBe(DOC + '.html')
-    // 面板关闭
+    expect(decodeURI(url.pathname)).toBe(DOC)
     await expect(page.locator('.palette-input')).toBeHidden({ timeout: 20_000 })
+    await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
   })
 
   test('点击 doc 标题行(无 headingId) -> URL 仅带 kw, 跳转到文档', async ({ page }) => {
@@ -172,8 +167,7 @@ test.describe('command palette - fulltext mode (stub Algolia)', () => {
 
     // 点击 doc 标题行 -> open(item)
     await docRow.click()
-    // 已知 BUG(同上): 夹具 url 为 .html 形态, 落地路径双重 .html(DOC + '.html')。等该路径出现即代表跳转完成。
-    await waitForPath(page, DOC + '.html')
+    await waitForPath(page, DOC)
 
     const url = new URL(page.url())
     // 核心断言: doc 标题行点击 -> query 只带 kw
@@ -181,5 +175,9 @@ test.describe('command palette - fulltext mode (stub Algolia)', () => {
     // doc 行无 headingId: query 为 {headingId: undefined, kw} -> router 序列化后不应出现 headingId 键
     expect(url.searchParams.has('headingId')).toBe(false)
     await expect(page.locator('.palette-input')).toBeHidden({ timeout: 20_000 })
+    await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
+    await openPalette(page)
+    await expect(page.locator('.palette-mode.active')).toHaveText('全文')
+    await page.keyboard.press('Escape')
   })
 })

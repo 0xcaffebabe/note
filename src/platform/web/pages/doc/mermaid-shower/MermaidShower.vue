@@ -31,12 +31,19 @@ export default defineComponent({
       error: '',
       zIndex: 0,
       renderVersion: 0,
+      diagram: '',
       panZoom: null as ReturnType<typeof svgPanZoom> | null,
     }
+  },
+  watch: {
+    '$store.state.isDarkMode'() {
+      if (this.showDialog) this.show(this.diagram)
+    },
   },
   methods: {
     async show(diagram: string) {
       this.dispose()
+      this.diagram = diagram
       const version = this.renderVersion
       this.showDialog = true
       this.loading = true
@@ -48,8 +55,7 @@ export default defineComponent({
       container.replaceChildren()
       const renderId = 'mermaid-viewer-' + IdGenUtils.uuid()
       try {
-        const mermaid = await MermaidUtils.load()
-        const data = await mermaid.render(renderId, diagram)
+        const data = await MermaidUtils.render(renderId, diagram)
         if (version !== this.renderVersion) {
           return
         }

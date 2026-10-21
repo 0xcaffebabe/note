@@ -1,8 +1,54 @@
 import { test, expect, goto, docWithMermaid, docWithMath, DOC, pathnameOf } from './fixtures'
 import fs from 'fs'
+import mermaid from 'mermaid'
+import type { Locator } from '@playwright/test'
 
 // 使用 .txt 保存 Markdown，避免构建器将测试夹具作为站点文档发布。
 const mathFixture = fs.readFileSync(new URL('./data/math-rendering.txt', import.meta.url), 'utf8')
+
+// 颜色基准来自 mermaid.live 管理的内置主题，不复制站点初始化逻辑。
+async function expectModernTheme(svg: Locator, dark = false) {
+  mermaid.initialize({ theme: dark ? 'redux-dark-color' : 'redux-color' })
+  const variables = mermaid.mermaidAPI.getConfig().themeVariables
+  const palette = {
+    fills: variables.bkgColorArray as string[],
+    borders: variables.borderColorArray as string[],
+    background: variables.clusterBkg as string,
+    text: variables.nodeTextColor as string,
+  }
+  await expect(svg).toBeVisible()
+  const nodes = svg.locator('.cluster[data-color-id][data-look="neo"]')
+  await expect(nodes.first()).toBeVisible()
+  const matches = await nodes.evaluateAll((elements, colors) => {
+    const normalize = (color: string) => {
+      const probe = document.createElement('span')
+      probe.style.color = color
+      document.body.appendChild(probe)
+      const result = getComputedStyle(probe).color
+      probe.remove()
+      return result
+    }
+    return elements.map(node => {
+      const slot = Number(node.getAttribute('data-color-id')!.replace('color-', ''))
+      const shape = getComputedStyle(node.querySelector('rect, polygon, circle, path')!)
+      return {
+        actual: { fill: shape.fill, stroke: shape.stroke },
+        expected: { fill: normalize(colors.fills[slot] ?? colors.background), stroke: normalize(colors.borders[slot]) },
+      }
+    })
+  }, palette)
+  expect(matches.map(color => color.actual)).toEqual(matches.map(color => color.expected))
+  const labelColor = await svg.evaluate((el, color) => {
+    const probe = document.createElement('span')
+    probe.style.color = color
+    document.body.appendChild(probe)
+    const expected = getComputedStyle(probe).color
+    probe.remove()
+    return { actual: getComputedStyle(el.querySelector('.nodeLabel p')!).color, expected }
+  }, palette.text)
+  expect(labelColor.actual).toBe(labelColor.expected)
+  await expect(svg.locator('.nodeLabel').first()).toHaveCSS('font-family', /Recursive Variable/)
+}
 
 // 客户端富渲染管线(Mermaid / KaTeX)。
 // 这两类标记在「预渲染 .html」里并不存在——它们由 DocRender(marked 自定义渲染)在客户端从 .md.json
@@ -15,6 +61,83 @@ const mathFixture = fs.readFileSync(new URL('./data/math-rendering.txt', import.
 //             渲染异常时占位元素里会塞 <span style='color:red'>错误信息</span>
 // 故按「源 markdown 特征」发现文档(docWithMermaid/docWithMath), 都为空时 skip。
 test.describe('client rich rendering (P1)', () => {
+  test('打开的全屏查看器跟随系统主题重绘', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'light' })
+    const jsonPath = DOC.replace(/\.html$/, '.md.json')
+    await page.route(url => decodeURI(url.pathname) === jsonPath, async route => {
+      const response = await route.fetch()
+      const file = await response.json()
+      file.content = '## 全屏主题回归\n\n```mermaid\nflowchart LR\n subgraph Plan[Plan]\n A[System light]\n end\n subgraph Result[Result]\n B[System dark]\n end\n A --> B\n```'
+      await route.fulfill({ response, json: file })
+    })
+    await goto(page, DOC)
+    await page.locator('.main-content .mermaid-source').scrollIntoViewIfNeeded()
+    await expect(page.locator('.main-content .mermaid-source')).toHaveClass(/mermaid-rendered/, { timeout: 20_000 })
+    await page.locator('.main-content').getByRole('button', { name: '全屏查看图表' }).click()
+    const viewer = page.getByRole('dialog', { name: '查看', exact: true })
+    const svg = viewer.locator('svg[id^="mermaid-viewer-"]')
+    await expectModernTheme(svg)
+    const previousId = await svg.getAttribute('id')
+    await page.emulateMedia({ colorScheme: 'dark' })
+    await expect(page.locator('html')).toHaveClass(/dark/)
+    await expect(svg).not.toHaveAttribute('id', previousId!)
+    await expectModernTheme(svg, true)
+    await expect(viewer.locator('.svg-pan-zoom_viewport')).toBeVisible()
+    expect(await page.evaluate(() => localStorage.getItem('system::theme'))).toBeNull()
+    await page.keyboard.press('Escape')
+    await expect(viewer).toBeHidden()
+    await expectModernTheme(page.locator('.main-content .mermaid-source svg'), true)
+  })
+
+  test('按图种采用默认主题，系统暗色、切回亮色和显式主题均正确', async ({ page }, testInfo) => {
+    test.setTimeout(60_000)
+    await page.emulateMedia({ colorScheme: 'dark' })
+    const jsonPath = DOC.replace(/\.html$/, '.md.json')
+    await page.route(url => decodeURI(url.pathname) === jsonPath, async route => {
+      const response = await route.fetch()
+      const file = await response.json()
+      file.content = [
+        '## 图种默认主题回归',
+        '```mermaid\nflowchart LR\n subgraph Plan[Plan]\n A[Research] --> B[Compare]\n end\n subgraph Result[Result]\n C[Fix]\n end\n B --> C\n```',
+        '```mermaid\npie title Pie keeps its own default\n "A": 30\n "B": 70\n```',
+        '```mermaid\n---\nconfig:\n  theme: forest\n---\nflowchart LR\n subgraph Authored[Authored forest]\n A[Keep this theme] --> B[Across site modes]\n end\n```',
+      ].join('\n\n')
+      await route.fulfill({ response, json: file })
+    })
+    await goto(page, DOC)
+    await expect(page.locator('html')).toHaveClass(/dark/)
+    expect(await page.evaluate(() => localStorage.getItem('system::theme'))).toBeNull()
+    const sources = page.locator('.main-content .mermaid-source')
+    for (let n = 0; n < 3; n++) {
+      await sources.nth(n).scrollIntoViewIfNeeded()
+      await expect(sources.nth(n)).toHaveClass(/mermaid-rendered/, { timeout: 20_000 })
+    }
+    const flow = sources.nth(0).locator('svg')
+    const pie = sources.nth(1).locator('svg')
+    const forest = sources.nth(2).locator('svg')
+    await flow.scrollIntoViewIfNeeded()
+    await expectModernTheme(flow, true)
+    await expect(pie.locator('.pieCircle')).toHaveCount(2)
+    await expect(forest.locator('.cluster[data-color-id]')).toHaveCount(0)
+    const authoredFill = await forest.locator('.node rect').first().evaluate(el => getComputedStyle(el).fill)
+    expect(await page.evaluate(() => Array.from(document.fonts).some(font =>
+      font.family.replace(/["']/g, '') === 'Recursive Variable' && font.status === 'loaded'
+    ))).toBe(true)
+
+    const oldIds = await sources.locator('svg').evaluateAll(elements => elements.map(el => el.id))
+    await page.locator('.action-item.el-switch').click()
+    await expect(page.locator('html')).not.toHaveClass(/dark/)
+    for (let n = 0; n < 3; n++) {
+      await expect(sources.nth(n).locator('svg')).not.toHaveAttribute('id', oldIds[n])
+    }
+    await flow.scrollIntoViewIfNeeded()
+    await expectModernTheme(flow)
+    await expect(pie.locator('.pieCircle')).toHaveCount(2)
+    expect(await forest.locator('.node rect').first().evaluate(el => getComputedStyle(el).fill)).toBe(authoredFill)
+    await expect(page.locator('.mermaid-error-msg')).toHaveCount(0)
+    await testInfo.attach('mermaid-live-defaults', { body: await page.screenshot(), contentType: 'image/png' })
+  })
+
   test('KaTeX 固定夹具的行内、块级及分段公式均完成渲染', async ({ page }, testInfo) => {
     // #622: 固定公式与断言都由测试维护；DOC 仅提供动态发现的页面路由。
     // 知识文档改名、删除或内容演化不会改变被测公式。
@@ -50,7 +173,7 @@ test.describe('client rich rendering (P1)', () => {
     await page.route(url => decodeURI(url.pathname) === jsonPath, async route => {
       const response = await route.fetch()
       const file = await response.json()
-      file.content = '## Mermaid 预览回归\n\n```mermaid\ngraph TD\n  A[Preview start] --> B[Preview end]\n```'
+      file.content = '## Mermaid 预览回归\n\n```mermaid\ngraph TD\n subgraph Input[Input]\n A[Preview start]\n end\n subgraph Output[Output]\n B[Preview end]\n end\n A --> B\n```'
       await route.fulfill({ response, json: file })
     })
     await goto(page, DOC)
@@ -58,7 +181,8 @@ test.describe('client rich rendering (P1)', () => {
     await mainSource.scrollIntoViewIfNeeded()
     await expect(mainSource).toHaveClass(/mermaid-rendered/, { timeout: 20_000 })
     const mainSvg = mainSource.locator('svg')
-    const mainSvgId = await mainSvg.getAttribute('id')
+    let mainSvgId = await mainSvg.getAttribute('id')
+    await expectModernTheme(mainSvg)
     const beforePath = pathnameOf(page)
     const menuItem = page.locator('.el-menu .el-menu-item.is-active').first()
     const viewer = page.getByRole('dialog', { name: '查看', exact: true })
@@ -72,6 +196,9 @@ test.describe('client rich rendering (P1)', () => {
       if (attempt === 1) {
         await page.locator('.action-item.el-switch').click()
         await expect(page.locator('html')).toHaveClass(/dark/)
+        await expect(mainSvg).not.toHaveAttribute('id', mainSvgId!)
+        mainSvgId = await mainSvg.getAttribute('id')
+        await expectModernTheme(mainSvg, true)
       }
       await menuItem.click({ button: 'right' })
       const preview = page.getByRole('dialog', { name: '文档预览' })
@@ -82,10 +209,12 @@ test.describe('client rich rendering (P1)', () => {
       const svg = source.locator('svg')
       await expect(svg).toBeVisible()
       await expect(svg).toContainText('Preview start')
+      await expectModernTheme(svg, attempt === 1)
       expect(await svg.getAttribute('id')).not.toBe(mainSvgId)
       await preview.getByRole('button', { name: '全屏查看图表' }).click()
       await expect(viewer).toBeVisible()
       await expect(viewer.locator('svg[id^="mermaid-viewer-"]')).toContainText('Preview start', { timeout: 20_000 })
+      await expectModernTheme(viewer.locator('svg[id^="mermaid-viewer-"]'), attempt === 1)
       const viewport = viewer.locator('.svg-pan-zoom_viewport')
       await expect(viewport).toBeVisible()
       const transform = await viewport.getAttribute('transform')

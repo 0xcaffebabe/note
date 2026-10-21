@@ -31,7 +31,7 @@ export namespace SysUtils {
     if (persist) {
       localStorage.setItem('system::theme', "dark");
     }
-    MermaidUtils.initWithDark()
+    MermaidUtils.refreshTheme()
   }
 
   export function enterLightMode(vm: ComponentPublicInstance, persist: boolean = true) {
@@ -41,6 +41,6 @@ export namespace SysUtils {
     if (persist) {
       localStorage.setItem('system::theme', "light");
     }
-    MermaidUtils.initWithNormal()
+    MermaidUtils.refreshTheme()
   }
 }

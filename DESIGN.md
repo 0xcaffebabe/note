@@ -69,7 +69,7 @@
 
 ## 2. 暗色模式
 
-- **Mermaid**：亮色使用 Mermaid 内置 `default` 主题，暗色使用内置 `dark` 主题；正文、文档预览与全屏查看器共用初始化入口，不覆盖 `themeVariables`、`themeCSS` 或图表内部颜色与字体。
+- **Mermaid**：采用与 mermaid.live 一致的图种默认值，先识别图种，再从 Mermaid 的默认配置读取其主题并用于渲染；暗色使用该主题的内置暗色对应项（如 `redux-color` → `redux-dark-color`，其他主题回退 `dark`），`look` 保留库默认值。`default` 是旧主题名，不代表新版图种默认样式。正文、文档预览与全屏查看器共用渲染队列，主题切换时重绘已显示图表；按需加载与 mermaid.live 一致的 Recursive Variable 字体并等其就绪后测量图表，不覆盖主题变量、图表 CSS 或作者显式指定的样式。
 
 - **CSS 侧**：真源是 `html.dark`（与 Element Plus 暗色变量同作用域），同名令牌换值。组件不写第二份暗色样式。
 - **JS 侧**：读 `this.$store.state.isDarkMode`。切换走 `SysUtils.enterDarkMode/enterLightMode`（同时置 store + `html.dark` + `body[theme=dark]` 兼容标记）。

@@ -6,6 +6,7 @@ import DocBuildMove from './src/platform/node/plugins/DocBuildMove'
 import StatisticInfoGenerator from './src/platform/node/plugins/StatisticInfoGenerator'
 import CommitTotalTrendGenerator from './src/platform/node/plugins/CommitTotalTrendGenerator'
 import BuildTimeGenerator from './src/platform/node/plugins/BuildTimeGenerator'
+import AssetRecovery from './src/platform/node/plugins/AssetRecovery'
 import VitePluginPrismjs from 'vite-plugin-prismjs'
 import DataGenrator from './src/platform/node/plugins/DataGenerator'
 import {visualizer} from "rollup-plugin-visualizer"
@@ -89,7 +90,7 @@ export default defineConfig({
         globPatterns: ['**/index.html'],
         // .html是真实静态入口 导航不走app shell 保证直接访问/查看源码拿到带正文的静态文件
         // 无扩展名路径(/ /cluster 及旧链接)仍由app shell接管
-        navigateFallbackDenylist: [/\.html(\?|$)/],
+        navigateFallbackDenylist: [/\.html(\?|$)/, /[?&]__asset_retry=/],
         runtimeCaching: [
           {
             // 文档页导航网络优先 离线时回退到已访问过的缓存副本
@@ -146,6 +147,7 @@ export default defineConfig({
       }
     }),
     vue(),
+    AssetRecovery(),
     DocServer(),
     BuildTimeGenerator(),
     {

@@ -7,9 +7,9 @@ import { recoverDocPath as recoverDocPathPure } from '@/core/routing/recoverDocP
 
 // 每次导航时求值: 新访客(无阅读记录)落到首页 老用户续读上次文档
 function lastReadRedirect() {
-  return () => {
+  return (to: RouteLocationNormalized) => {
     const lastRead = DocService.getLastReadRecord()
-    return lastRead ? DocUtils.docId2HtmlPath(lastRead) : '/home.html'
+    return { path: lastRead ? DocUtils.docId2HtmlPath(lastRead) : '/home.html', query: to.query, hash: to.hash }
   }
 }
 
@@ -47,7 +47,7 @@ const routes: RouteRecordRaw[] = [
         path: "/doc/:doc",
         redirect: to => ({ path: DocUtils.docId2HtmlPath(to.params.doc.toString()), query: to.query })
       },
-      { path: "/index.html", redirect: "/" },
+      { path: "/index.html", redirect: to => ({ path: '/', query: to.query, hash: to.hash }) },
       { path: "/tag", redirect: to => ({ path: "/tag.html", query: to.query }) },
       { path: "/tag.html", component: () => import("@/platform/web/pages/tag/TagListPage.vue") },
       // 浏览总目录: 由 category.json 结构化驱动(取代旧的跳 /README.html); 须在贪婪的 /:docPath(.*\.html) 之前

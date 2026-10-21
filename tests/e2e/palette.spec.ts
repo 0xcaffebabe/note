@@ -143,7 +143,7 @@ test.describe('command palette - fulltext mode (stub Algolia)', () => {
 
     expect(decodeURI(url.pathname)).toBe(DOC)
     await expect(page.locator('.palette-input')).toBeHidden({ timeout: 20_000 })
-    await expect(page.locator('.main-content .markdown-section')).toBeVisible()
+    await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
   })
 
   test('点击 doc 标题行(无 headingId) -> URL 仅带 kw, 跳转到文档', async ({ page }) => {
@@ -175,7 +175,7 @@ test.describe('command palette - fulltext mode (stub Algolia)', () => {
     // doc 行无 headingId: query 为 {headingId: undefined, kw} -> router 序列化后不应出现 headingId 键
     expect(url.searchParams.has('headingId')).toBe(false)
     await expect(page.locator('.palette-input')).toBeHidden({ timeout: 20_000 })
-    await expect(page.locator('.main-content .markdown-section')).toBeVisible()
+    await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
     await openPalette(page)
     await expect(page.locator('.palette-mode.active')).toHaveText('全文')
     await page.keyboard.press('Escape')

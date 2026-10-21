@@ -47,7 +47,7 @@ async function expectAnchor(page: Page, expected: Rect) {
 test('触摸横向拖动不滚动或触发文档手势，之后仍可导航、刷新保留位置并恢复默认', async ({ page }) => {
   await goto(page, '/tag.html')
   await goto(page, DOC)
-  await expect(page.locator('.main-content .markdown-section')).toBeVisible()
+  await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
   const client = await page.context().newCDPSession(page)
   const initial = await launcherBox(page)
   const y = initial.y + initial.height / 2
@@ -60,7 +60,7 @@ test('触摸横向拖动不滚动或触发文档手势，之后仍可导航、�
   expect(Math.abs(left.x + left.width / 2 - 50)).toBeLessThanOrEqual(2)
   await dragTouch(page, client, 310, y)
   await touchTargetBox(page)
-  await expect(page.locator('.main-content .markdown-section')).toBeVisible()
+  await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
   await expect(page.locator('.mobile-category-drawer')).toBeHidden()
   expect(pathnameOf(page)).toBe(DOC)
   expect(await page.evaluate(() => window.scrollY)).toBe(beforeScroll)
@@ -92,7 +92,7 @@ test('触摸横向拖动不滚动或触发文档手势，之后仍可导航、�
 test('320px 顶边拖动后工具弹层仍可完整访问，并可用 Escape 关闭和恢复焦点', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 260 })
   await goto(page, DOC)
-  await expect(page.locator('.main-content .markdown-section')).toBeVisible()
+  await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
   const client = await page.context().newCDPSession(page)
   await dragTouch(page, client, 160, 15)
   const positioned = await launcherBox(page)

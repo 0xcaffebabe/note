@@ -4,7 +4,7 @@ test.use({ colorScheme: 'light' })
 
 test('主题偏好在文档切换和刷新后保留，也能切回亮色', async ({ page }) => {
   await goto(page, DOC)
-  await expect(page.locator('.main-content .markdown-section')).toBeVisible()
+  await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
   let tools = await openNavigationTools(page)
   await expect(tools.getByRole('switch')).not.toBeChecked()
   await expect(page.locator('html')).toHaveCSS('color-scheme', 'light')
@@ -20,7 +20,7 @@ test('主题偏好在文档切换和刷新后保留，也能切回亮色', async
   expect(nextPath).not.toBe(DOC)
   await nextDocument.click()
   await waitForPath(page, nextPath)
-  await expect(page.locator('.main-content .markdown-section')).toBeVisible()
+  await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
   await expect(page.locator('html')).toHaveCSS('color-scheme', 'dark')
 
   await page.reload({ waitUntil: 'domcontentloaded' })

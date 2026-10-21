@@ -18,7 +18,7 @@ async function expectAnchor(page: Page, expected: Rect) {
 
 test('拖动文档导航后仍可点击和键盘操作，位置跨路由刷新保留并可恢复默认', async ({ page }) => {
   await goto(page, DOC)
-  await expect(page.locator('.main-content .markdown-section')).toBeVisible()
+  await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
   const launcher = page.locator('.navigation-launcher')
   const before = await launcherBox(page)
   await page.mouse.move(before.x + before.width / 2, before.y + before.height / 2)

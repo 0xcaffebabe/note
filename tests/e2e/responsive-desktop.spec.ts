@@ -258,7 +258,7 @@ test.describe('responsive breakpoint switching (resize)', () => {
   })
   test('阅读导航在普通和宽屏下跟随正文列，收起侧栏后仍可见', async ({ page }) => {
     await goto(page, DOC)
-    await expect(page.locator('.main-content .markdown-section')).toBeVisible()
+    await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
     const navigation = page.getByRole('navigation', { name: '站内导航' })
     await page.locator('.navigation-launcher').focus()
     await page.keyboard.press('Enter')

@@ -36,7 +36,7 @@ test.describe('mobile DocPage (Pixel 5)', () => {
   test('手机可展开导航并从正文切换到聚类页面', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 })
     await goto(page, DOC)
-    await expect(page.locator('.main-content .markdown-section')).toBeVisible()
+    await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
     const launcher = page.locator('.navigation-launcher')
     await expect(launcher).toHaveAttribute('aria-expanded', 'false')
     await launcher.tap()

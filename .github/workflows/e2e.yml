@@ -19,6 +19,22 @@ permissions:
   contents: read
 
 jobs:
+  # Ubuntu 22.04 的 GLIBC 2.35 低于 nodejieba 预编译包要求的 2.38。
+  # 在真实旧 GLIBC 主机上执行 npm ci，验证安装期的源码编译修复。
+  native-glibc:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26.x
+          cache: npm
+      - run: getconf GNU_LIBC_VERSION
+      - run: npm ci
+      - name: Native segmentation smoke test
+        run: |
+          node -e "const assert = require('node:assert/strict'); const words = require('nodejieba').cut('南京市长江大桥'); assert.deepEqual(words, ['南京市', '长江大桥']);"
+
   unit:
     # 纯逻辑/组件层: 快、无浏览器、无密钥 几秒出结果
     runs-on: ubuntu-latest

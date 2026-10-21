@@ -1,7 +1,8 @@
 import { test, expect, goto, docWithMermaid, docWithMath, DOC, pathnameOf } from './fixtures'
 import fs from 'fs'
 
-const mathFixture = fs.readFileSync(new URL('./data/math-rendering.md', import.meta.url), 'utf8')
+// 使用 .txt 保存 Markdown，避免构建器将测试夹具作为站点文档发布。
+const mathFixture = fs.readFileSync(new URL('./data/math-rendering.txt', import.meta.url), 'utf8')
 
 // 客户端富渲染管线(Mermaid / KaTeX)。
 // 这两类标记在「预渲染 .html」里并不存在——它们由 DocRender(marked 自定义渲染)在客户端从 .md.json

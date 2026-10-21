@@ -1,48 +1,48 @@
 <template>
   <div class="site-navigation-host" :class="{ embedded, 'with-bottom-bar': withBottomBar }">
-  <nav ref="dock" class="site-dock" :class="{ expanded }" aria-label="站内导航" @pointerenter="handlePointerEnter" @pointerleave="scheduleCollapse" @focusin="cancelCollapse" @focusout="scheduleCollapse" @keydown.esc.stop.prevent="closeMenu">
-    <transition name="dock-shortcuts">
-    <div v-show="expanded" id="site-navigation-shortcuts" class="dock-shortcuts">
-      <div class="site-nav">
-        <router-link v-for="item in navList" :key="item.path" :to="item.path" class="nav-item dock-action" :aria-label="item.name" :title="item.name" :aria-current="$route.path.startsWith(item.match) ? 'page' : undefined" @click="collapse">
-          <el-icon><component :is="item.icon" /></el-icon><span>{{ item.name }}</span>
-        </router-link>
-      </div>
-      <button type="button" class="search-box dock-action" aria-label="搜索 (Ctrl+K)" @click="search()">
-        <el-icon><Search /></el-icon><span>搜索</span><kbd>{{ metaKeyLabel }} K</kbd>
+    <nav ref="dock" class="site-dock" :class="{ expanded }" aria-label="站内导航" @pointerenter="handlePointerEnter" @pointerleave="scheduleCollapse" @focusin="cancelCollapse" @focusout="scheduleCollapse" @keydown.esc.stop.prevent="closeMenu">
+      <transition name="dock-shortcuts">
+        <div v-show="expanded" id="site-navigation-shortcuts" class="dock-shortcuts">
+          <div class="site-nav">
+            <router-link v-for="item in navList" :key="item.path" :to="item.path" class="nav-item dock-action" :aria-label="item.name" :title="item.name" :aria-current="$route.path.startsWith(item.match) ? 'page' : undefined" @click="collapse">
+              <el-icon><component :is="item.icon" /></el-icon><span>{{ item.name }}</span>
+            </router-link>
+          </div>
+          <button type="button" class="search-box dock-action" aria-label="搜索 (Ctrl+K)" @click="search()">
+            <el-icon><Search /></el-icon><span>搜索</span><kbd>{{ metaKeyLabel }} K</kbd>
+          </button>
+          <el-popover v-model:visible="menuOpen" trigger="click" role="dialog" aria-label="站点导航与工具" placement="top-end" :width="280" popper-class="site-navigation-popover" @after-enter="focusMenu" @after-leave="restoreLauncherFocus">
+            <template #reference>
+              <button type="button" class="more-btn dock-action" title="更多工具" aria-label="站点导航与工具">
+                <el-icon><MoreFilled /></el-icon>
+              </button>
+            </template>
+            <section id="site-navigation-panel" ref="panel" class="site-navigation-panel" :class="{ 'with-bottom-bar': withBottomBar }" aria-label="站点导航与工具" @keydown.esc.stop.prevent="closeMenu">
+              <p class="panel-title">{{ siteName }}</p>
+              <nav class="panel-nav" aria-label="页面导航">
+                <router-link v-for="item in navList" :key="item.path" :to="item.path" :aria-current="$route.path.startsWith(item.match) ? 'page' : undefined" @click="collapse">
+                  <el-icon><component :is="item.icon" /></el-icon>{{ item.name }}
+                </router-link>
+              </nav>
+              <div class="panel-actions">
+                <button type="button" @click="search('fulltext')"><el-icon><Search /></el-icon>全文搜索<kbd>{{ metaKeyLabel }} K</kbd></button>
+                <button type="button" @click="search('category')"><el-icon><Folder /></el-icon>目录搜索<kbd>{{ metaKeyLabel }} Q</kbd></button>
+                <div class="theme-row"><span>深色模式</span><theme-switcher class="action-item" aria-label="深色模式" /></div>
+                <button type="button" @click="toggleFullScreen"><el-icon><FullScreen /></el-icon>{{ fullscreen ? '退出全屏' : '全屏' }}</button>
+                <button type="button" @click="enterZenMode"><el-icon><Aim /></el-icon>专注模式</button>
+              </div>
+              <div class="panel-links">
+                <a v-for="link in linkList" :key="link.url" :href="link.url" target="_blank" rel="noopener noreferrer">{{ link.title }}<el-icon><TopRight /></el-icon></a>
+              </div>
+              <p v-if="message" class="panel-message" role="status">{{ message }}</p>
+            </section>
+          </el-popover>
+        </div>
+      </transition>
+      <button ref="launcher" type="button" class="navigation-launcher dock-action" :title="expanded ? '收起站点导航' : '展开站点导航'" :aria-label="expanded ? '收起站点导航' : '展开站点导航'" :aria-expanded="expanded" aria-controls="site-navigation-shortcuts" @click="toggleNavigation">
+        <el-icon><ArrowRightBold v-if="expanded" /><Menu v-else /></el-icon>
       </button>
-    <el-popover v-model:visible="menuOpen" trigger="click" role="dialog" aria-label="站点导航与工具" placement="top-end" :width="280" popper-class="site-navigation-popover" @after-enter="focusMenu" @after-leave="restoreLauncherFocus">
-      <template #reference>
-        <button type="button" class="more-btn dock-action" title="更多工具" aria-label="站点导航与工具">
-          <el-icon><MoreFilled /></el-icon>
-        </button>
-      </template>
-      <section id="site-navigation-panel" ref="panel" class="site-navigation-panel" :class="{ 'with-bottom-bar': withBottomBar }" aria-label="站点导航与工具" @keydown.esc.stop.prevent="closeMenu">
-        <p class="panel-title">{{ siteName }}</p>
-        <nav class="panel-nav" aria-label="页面导航">
-          <router-link v-for="item in navList" :key="item.path" :to="item.path" :aria-current="$route.path.startsWith(item.match) ? 'page' : undefined" @click="collapse">
-            <el-icon><component :is="item.icon" /></el-icon>{{ item.name }}
-          </router-link>
-        </nav>
-        <div class="panel-actions">
-          <button type="button" @click="search('fulltext')"><el-icon><Search /></el-icon>全文搜索<kbd>{{ metaKeyLabel }} K</kbd></button>
-          <button type="button" @click="search('category')"><el-icon><Folder /></el-icon>目录搜索<kbd>{{ metaKeyLabel }} Q</kbd></button>
-          <div class="theme-row"><span>深色模式</span><theme-switcher class="action-item" aria-label="深色模式" /></div>
-          <button type="button" @click="toggleFullScreen"><el-icon><FullScreen /></el-icon>{{ fullscreen ? '退出全屏' : '全屏' }}</button>
-          <button type="button" @click="enterZenMode"><el-icon><Aim /></el-icon>专注模式</button>
-        </div>
-        <div class="panel-links">
-          <a v-for="link in linkList" :key="link.url" :href="link.url" target="_blank" rel="noopener noreferrer">{{ link.title }}<el-icon><TopRight /></el-icon></a>
-        </div>
-        <p v-if="message" class="panel-message" role="status">{{ message }}</p>
-      </section>
-    </el-popover>
-    </div>
-    </transition>
-    <button ref="launcher" type="button" class="navigation-launcher dock-action" :title="expanded ? '收起站点导航' : '展开站点导航'" :aria-label="expanded ? '收起站点导航' : '展开站点导航'" :aria-expanded="expanded" aria-controls="site-navigation-shortcuts" @click="toggleNavigation">
-      <el-icon><ArrowRightBold v-if="expanded" /><Menu v-else /></el-icon>
-    </button>
-  </nav>
+    </nav>
   </div>
 </template>
 

@@ -2,6 +2,7 @@
   <el-container class="doc-layout" :class="{ 'is-mobile': isMobile }">
     <doc-side-category :doc="doc" :showAside="showAside" @toggle-aside="showAside = !showAside" ref="docSideCategory" />
     <el-main class="main" ref="mainEl">
+      <site-navigation embedded :with-bottom-bar="isMobile" />
       <keep-alive v-if="!isMobile">
         <doc-tab-nav @dbclick="handleTabNavDbclick" />
       </keep-alive>
@@ -101,6 +102,7 @@ import { defineComponent, defineAsyncComponent, reactive, ref } from "vue";
 import Content from "@/core/domain/Content";
 import HistoryList from "./commit/HistoryList.vue";
 import ToolBox from './ToolBox.vue';
+import SiteNavigation from '@/platform/web/components/navigation/SiteNavigation.vue';
 import RelatedContent from "./RelatedContent.vue";
 import { RelatedLink } from "@/core/domain/RelatedLink";
 import DocFileInfo from "@/core/domain/DocFileInfo";
@@ -140,6 +142,7 @@ export default defineComponent({
     HistoryList,
     MindGraph,
     ToolBox,
+    SiteNavigation,
     DocSideCategory,
     KnowledgeNetwork,
     DocBreadcrumbNav,

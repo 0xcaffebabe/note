@@ -1,4 +1,4 @@
-import { test, expect, goto, DOC } from './fixtures'
+import { test, expect, goto, openNavigationTools, DOC } from './fixtures'
 
 // 主题(暗色模式)持久化
 // 组件链路: src/components/header/ThemeSwitcher.vue(el-switch + toggleDarkMode)
@@ -35,7 +35,7 @@ test.describe('暗色模式切换与持久化', () => {
     await goto(page, PAGE)
     await page.evaluate((k) => localStorage.removeItem(k), THEME_KEY)
     await page.reload({ waitUntil: 'domcontentloaded' })
-    await page.getByRole('button', { name: '站点导航与工具', exact: true }).click()
+    await openNavigationTools(page)
   })
 
   test('导航面板中的主题开关: 初始无手动主题键(跟随系统), 开关可见', async ({ page }) => {
@@ -85,7 +85,7 @@ test.describe('暗色模式切换与持久化', () => {
 
     // 重载: Main.vue created() 读 localStorage 'dark' -> enterDarkMode(persist=false)
     await page.reload({ waitUntil: 'domcontentloaded' })
-    await page.getByRole('button', { name: '站点导航与工具', exact: true }).click()
+    await openNavigationTools(page)
 
     await expect(page.locator('body[theme="dark"]')).toHaveCount(1)
     await expect(page.locator('html.dark')).toHaveCount(1)

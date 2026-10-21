@@ -9,12 +9,12 @@
       </router-view>
     </el-main>
   </el-container>
-  <site-navigation @search="showSearch" @category-search="showCategorySearch" />
+  <site-navigation v-if="!$route.meta.hasBottomBar" />
   <command-palette ref="commandPalette" />
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
+import { defineComponent, onBeforeUnmount, ref } from "vue";
 import SiteNavigation from "./components/navigation/SiteNavigation.vue";
 import CommandPalette from "@/platform/web/components/search/CommandPalette.vue";
 import EventBus from "./components/EventBus";
@@ -28,14 +28,13 @@ export default defineComponent({
   setup() {
     const commandPalette = ref<InstanceType<typeof CommandPalette>>()
     // 统一搜索入口: 全文 / 目录 都走 CommandPalette(取代移动端 Search 抽屉 + CategorySearch 弹窗)
-    const showSearch = (mode?: 'fulltext') => {
+    const showSearch = (mode?: 'category' | 'fulltext') => {
       commandPalette.value?.show(mode)
     }
-    const showCategorySearch = () => {
-      commandPalette.value?.show('category')
-    }
+    EventBus.on('show-site-search', showSearch)
+    onBeforeUnmount(() => EventBus.off('show-site-search', showSearch))
     return {
-      commandPalette, showSearch, showCategorySearch,
+      commandPalette,
     }
   },
   created() {

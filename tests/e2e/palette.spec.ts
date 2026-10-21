@@ -12,7 +12,7 @@ import {
 
 // 命令面板(CommandPalette.vue)交互覆盖。
 // 触发与挂载时序(对照 App.vue): Ctrl+K 的全局 keydown 监听在 App created/mounted 后才挂上,
-// 而 domcontentloaded 早于水合 —— 故先等导航按钮 .more-btn 出现(== 应用已挂载)再按键, 否则按早了无人响应。
+// 而 domcontentloaded 早于水合 —— 故先等导航按钮 .navigation-launcher 出现(== 应用已挂载)再按键, 否则按早了无人响应。
 // 面板用 el-dialog(默认 teleport 到 body), 输入框 .palette-input 出现即代表对话框已打开并可交互。
 //
 // 两类模式(component 源):
@@ -21,7 +21,7 @@ import {
 
 // 等应用水合完成(导航按钮出现)后按 Ctrl+K 打开面板, 返回已可见的输入框 locator。
 async function openPalette(page: import('@playwright/test').Page) {
-  await page.locator('.more-btn').waitFor({ state: 'visible', timeout: 20_000 })
+  await page.locator('.navigation-launcher').waitFor({ state: 'visible', timeout: 20_000 })
   await page.keyboard.press('Control+k')
   const input = page.locator('.palette-input')
   await input.waitFor({ state: 'visible', timeout: 20_000 })

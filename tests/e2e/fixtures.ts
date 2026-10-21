@@ -149,6 +149,20 @@ export async function goto(page: Page, p: string) {
   await page.addStyleTag({ content: NO_ANIM }).catch(() => {})
 }
 
+// 工具面板在折叠导航内；用键盘展开，避免鼠标悬停与点击展开之间的时序差异。
+export async function openNavigationTools(page: Page) {
+  const launcher = page.locator('.navigation-launcher')
+  await expect(launcher).toBeVisible()
+  if (await launcher.getAttribute('aria-expanded') === 'false') {
+    await launcher.focus()
+    await page.keyboard.press('Enter')
+  }
+  await page.getByRole('button', { name: '站点导航与工具', exact: true }).click()
+  const navigation = page.getByRole('dialog', { name: '站点导航与工具', exact: true })
+  await expect(navigation).toBeVisible()
+  return navigation
+}
+
 export function pathnameOf(page: Page): string {
   return decodeURI(new URL(page.url()).pathname)
 }

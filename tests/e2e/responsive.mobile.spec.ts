@@ -1,4 +1,4 @@
-import { test, expect, goto, pathnameOf, waitForHtmlChange, DOC } from './fixtures'
+import { test, expect, goto, pathnameOf, waitForHtmlChange, openNavigationTools, DOC } from './fixtures'
 
 // 响应式合流(P3a/P3b/P4)移动端验证。文件名含 mobile.spec.ts => 仅在 mobile-chromium(Pixel 5, ≤820, 粗指针)运行。
 // 移动端 DocPage 折叠自原 MobileDocPage: 底部操作栏 / 章节抽屉 / 目录抽屉 / FAB 工具栏 / 统一搜索。
@@ -34,24 +34,34 @@ test.describe('mobile DocPage (Pixel 5)', () => {
     await expect(page.locator('.el-backtop')).toHaveCount(0)
   })
 
-  test('文档页右上角默认仅显示导航按钮，避开底栏与工具按钮', async ({ page }) => {
+  test('文档页点击展开横向导航，避开底栏与上方工具按钮', async ({ page }) => {
     await goto(page, DOC)
     await page.waitForSelector('.mobile-bottom-bar')
     const dock = page.locator('.site-dock')
+    const launcher = dock.locator('.navigation-launcher')
+    const shortcuts = dock.locator('.dock-shortcuts')
     await expect(dock).toBeVisible()
-    await expect(dock.locator('button')).toHaveCount(1)
-    await expect(dock.locator('.more-btn')).toHaveAttribute('aria-expanded', 'false')
+    await expect(dock.locator('button:visible')).toHaveCount(1)
+    await expect(launcher).toHaveAttribute('aria-expanded', 'false')
     await expect(page.locator('.site-navigation-panel')).toBeHidden()
     await expect(page.locator('.site-header, .el-header, .header-toggle-button')).toHaveCount(0)
+    const target = (await launcher.boundingBox())!
+    expect(target.width).toBe(44)
+    expect(target.height).toBe(44)
+    await launcher.tap()
+    await expect(shortcuts).toBeVisible()
+    await expect(shortcuts.locator('.site-nav a')).toHaveCount(3)
+    await expect(shortcuts.locator('.search-box')).toBeVisible()
     const dockBox = (await dock.boundingBox())!
     const bottomBar = (await page.locator('.mobile-bottom-bar').boundingBox())!
     expect(dockBox.y + dockBox.height).toBeLessThanOrEqual(bottomBar.y)
-    expect(dockBox.width).toBe(44)
-    expect(dockBox.height).toBe(44)
-    expect(dockBox.x).toBeGreaterThan(page.viewportSize()!.width / 2)
-    expect(dockBox.y).toBeLessThanOrEqual(32)
+    expect(dockBox.x).toBeGreaterThanOrEqual(0)
+    expect(dockBox.x + dockBox.width).toBeLessThanOrEqual(page.viewportSize()!.width)
     const tools = (await page.locator('.tool-box.is-mobile').boundingBox())!
-    expect(dockBox.y + dockBox.height).toBeLessThan(tools.y)
+    expect(tools.y + tools.height).toBeLessThanOrEqual(dockBox.y)
+    await launcher.tap()
+    await expect(shortcuts).toBeHidden()
+    await expect(launcher).toHaveAttribute('aria-expanded', 'false')
   })
 
   test('章节按钮打开底部 TOC 抽屉(复用 contents-list mode=drawer)', async ({ page }) => {
@@ -141,23 +151,36 @@ test.describe('mobile DocPage (Pixel 5)', () => {
 })
 
 test.describe('mobile home & charts (Pixel 5)', () => {
-  test('320px 单按钮导航不横溢且默认收起，横屏面板可滚动访问底部链接', async ({ page }) => {
+  test('320px 横向导航可点开且不横溢，横屏工具面板可滚动到底部链接', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 })
     await goto(page, '/tag.html')
     const dock = page.locator('.site-dock')
+    const launcher = dock.locator('.navigation-launcher')
     await expect(dock).toBeVisible()
+    await expect(launcher).toHaveAttribute('aria-expanded', 'false')
+    await launcher.tap()
+    await expect(dock.locator('.dock-shortcuts')).toBeVisible()
     const dockBox = (await dock.boundingBox())!
     expect(dockBox.x).toBeGreaterThanOrEqual(0)
     expect(dockBox.x + dockBox.width).toBeLessThanOrEqual(320)
-    await expect(dock.locator('button')).toHaveCount(1)
+    await expect(dock.locator('.dock-action:visible')).toHaveCount(6)
+    for (const action of await dock.locator('.dock-action:visible').all()) {
+      const box = (await action.boundingBox())!
+      expect(box.width).toBeGreaterThanOrEqual(44)
+      expect(box.height).toBeGreaterThanOrEqual(44)
+      expect(box.x).toBeGreaterThanOrEqual(dockBox.x)
+      expect(box.x + box.width).toBeLessThanOrEqual(dockBox.x + dockBox.width)
+    }
     await expect(page.locator('.site-navigation-panel')).toBeHidden()
+    await launcher.tap()
+    await expect(dock.locator('.dock-shortcuts')).toBeHidden()
 
     await page.setViewportSize({ width: 640, height: 320 })
     await expect(page.locator('.site-navigation-panel')).toBeHidden()
-    await page.getByRole('button', { name: '站点导航与工具', exact: true }).click()
-    const panel = page.locator('.site-navigation-panel')
-    await expect(panel.locator('.panel-nav a').first()).toBeFocused()
-    const panelBox = (await panel.boundingBox())!
+    const navigation = await openNavigationTools(page)
+    const panel = navigation.locator('.site-navigation-panel')
+    await expect(navigation.locator('.panel-nav a').first()).toBeFocused()
+    const panelBox = (await navigation.boundingBox())!
     expect(panelBox.y).toBeGreaterThanOrEqual(0)
     expect(panelBox.y + panelBox.height).toBeLessThanOrEqual(320)
     expect(await panel.evaluate(el => el.scrollHeight > el.clientHeight)).toBe(true)
@@ -195,8 +218,7 @@ test.describe('mobile home & charts (Pixel 5)', () => {
   test('聚类从移动全站导航面板可达，跳转后面板关闭', async ({ page }) => {
     await goto(page, DOC)
     await page.waitForSelector('.mobile-bottom-bar')
-    await page.locator('.more-btn').click()
-    const panel = page.locator('.site-navigation-panel')
+    const panel = await openNavigationTools(page)
     const item = panel.locator('.panel-nav').getByRole('link', { name: '聚类', exact: true })
     await item.waitFor({ state: 'visible', timeout: 20000 })
     await item.click()

@@ -1,4 +1,4 @@
-import { test, expect, goto, docWithMermaid, docWithMath, DOC, pathnameOf } from './fixtures'
+import { test, expect, goto, docWithMermaid, docWithMath, DOC, pathnameOf, openNavigationTools } from './fixtures'
 
 // 客户端富渲染管线(Mermaid / KaTeX)。
 // 这两类标记在「预渲染 .html」里并不存在——它们由 DocRender(marked 自定义渲染)在客户端从 .md.json
@@ -38,8 +38,7 @@ test.describe('client rich rendering (P1)', () => {
 
     for (let attempt = 0; attempt < 2; attempt++) {
       if (attempt === 1) {
-        await page.getByRole('button', { name: '站点导航与工具', exact: true }).click()
-        const navigation = page.getByRole('dialog', { name: '站点导航与工具', exact: true })
+        const navigation = await openNavigationTools(page)
         await navigation.locator('.action-item.el-switch').click()
         await expect(page.locator('html')).toHaveClass(/dark/)
         await page.keyboard.press('Escape')

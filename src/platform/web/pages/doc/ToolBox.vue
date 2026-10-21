@@ -224,7 +224,7 @@ export default defineComponent({
 .tool-box.is-mobile {
   top: auto;
   right: 16px;
-  bottom: calc(72px + env(safe-area-inset-bottom));
+  bottom: calc(var(--mobile-action-bottom) + var(--site-control-size) + var(--spacing-lg) + env(safe-area-inset-bottom));
   padding: 0;
 
   .tool-button {

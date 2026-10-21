@@ -34,19 +34,24 @@ test.describe('mobile DocPage (Pixel 5)', () => {
     await expect(page.locator('.el-backtop')).toHaveCount(0)
   })
 
-  test('文档页全站导航独立于底栏，保留正文空间且不重复搜索', async ({ page }) => {
+  test('文档页右上角默认仅显示导航按钮，避开底栏与工具按钮', async ({ page }) => {
     await goto(page, DOC)
     await page.waitForSelector('.mobile-bottom-bar')
-    const dock = page.locator('.site-dock.document-mobile')
+    const dock = page.locator('.site-dock')
     await expect(dock).toBeVisible()
-    await expect(dock.locator('.search-box')).toBeHidden()
+    await expect(dock.locator('button')).toHaveCount(1)
+    await expect(dock.locator('.more-btn')).toHaveAttribute('aria-expanded', 'false')
+    await expect(page.locator('.site-navigation-panel')).toBeHidden()
     await expect(page.locator('.site-header, .el-header, .header-toggle-button')).toHaveCount(0)
     const dockBox = (await dock.boundingBox())!
     const bottomBar = (await page.locator('.mobile-bottom-bar').boundingBox())!
     expect(dockBox.y + dockBox.height).toBeLessThanOrEqual(bottomBar.y)
-    expect(dockBox.width).toBeLessThan(page.viewportSize()!.width / 2)
+    expect(dockBox.width).toBe(44)
+    expect(dockBox.height).toBe(44)
+    expect(dockBox.x).toBeGreaterThan(page.viewportSize()!.width / 2)
+    expect(dockBox.y).toBeLessThanOrEqual(32)
     const tools = (await page.locator('.tool-box.is-mobile').boundingBox())!
-    expect(dockBox.x + dockBox.width).toBeLessThan(tools.x)
+    expect(dockBox.y + dockBox.height).toBeLessThan(tools.y)
   })
 
   test('章节按钮打开底部 TOC 抽屉(复用 contents-list mode=drawer)', async ({ page }) => {
@@ -136,7 +141,7 @@ test.describe('mobile DocPage (Pixel 5)', () => {
 })
 
 test.describe('mobile home & charts (Pixel 5)', () => {
-  test('320px 导航不横溢，横屏时面板可滚动访问底部链接', async ({ page }) => {
+  test('320px 单按钮导航不横溢且默认收起，横屏面板可滚动访问底部链接', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 })
     await goto(page, '/tag.html')
     const dock = page.locator('.site-dock')
@@ -144,14 +149,11 @@ test.describe('mobile home & charts (Pixel 5)', () => {
     const dockBox = (await dock.boundingBox())!
     expect(dockBox.x).toBeGreaterThanOrEqual(0)
     expect(dockBox.x + dockBox.width).toBeLessThanOrEqual(320)
-    for (const action of await dock.locator('.dock-action').all()) {
-      await expect(action).toBeVisible()
-      const box = (await action.boundingBox())!
-      expect(box.x).toBeGreaterThanOrEqual(dockBox.x)
-      expect(box.x + box.width).toBeLessThanOrEqual(dockBox.x + dockBox.width)
-    }
+    await expect(dock.locator('button')).toHaveCount(1)
+    await expect(page.locator('.site-navigation-panel')).toBeHidden()
 
     await page.setViewportSize({ width: 640, height: 320 })
+    await expect(page.locator('.site-navigation-panel')).toBeHidden()
     await page.getByRole('button', { name: '站点导航与工具', exact: true }).click()
     const panel = page.locator('.site-navigation-panel')
     await expect(panel.locator('.panel-nav a').first()).toBeFocused()

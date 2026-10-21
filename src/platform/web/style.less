@@ -55,10 +55,8 @@
   --home-max-wide: 1480px;
   --chart-h: 360px;
   --card-pad: var(--spacing-lg); // 卡片内边距(大屏宽档放大一档让加宽的卡片呼吸)
-  // 全站浮动导航与移动文档底栏的触控尺寸、内容避让空间
+  // 全站导航按钮的最小触控尺寸
   --site-control-size: 44px;
-  --site-dock-clearance: calc(var(--site-control-size) + var(--spacing-2xl) + env(safe-area-inset-bottom));
-  --mobile-bar-clearance: 72px;
 
   // 圆角系统
   --radius-sm: 4px;
@@ -411,8 +409,6 @@ body {
   .el-main.main {
     padding: 0 !important;
   }
-
-  .main-layout { padding-bottom: 0 !important; }
 
   .markdown-section {
     width: 100% !important;

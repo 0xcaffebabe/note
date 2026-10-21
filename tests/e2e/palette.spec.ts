@@ -12,16 +12,16 @@ import {
 
 // 命令面板(CommandPalette.vue)交互覆盖。
 // 触发与挂载时序(对照 App.vue): Ctrl+K 的全局 keydown 监听在 App created/mounted 后才挂上,
-// 而 domcontentloaded 早于水合 —— 故先等浮动导航 .search-box 出现(== 应用已挂载)再按键, 否则按早了无人响应。
+// 而 domcontentloaded 早于水合 —— 故先等导航按钮 .more-btn 出现(== 应用已挂载)再按键, 否则按早了无人响应。
 // 面板用 el-dialog(默认 teleport 到 body), 输入框 .palette-input 出现即代表对话框已打开并可交互。
 //
 // 两类模式(component 源):
 //  - category(默认): 纯前端按目录名/拼音过滤 this.flatCategoryList, 无网络。空输入展示「最近访问」记录。
 //  - fulltext: searchService.search(kw,'algolia') 走 Algolia —— 用 stubAlgolia 在网络边界拦截, 离线确定性可跑。
 
-// 等应用水合完成(浮动导航搜索入口出现)后按 Ctrl+K 打开面板, 返回已可见的输入框 locator。
+// 等应用水合完成(导航按钮出现)后按 Ctrl+K 打开面板, 返回已可见的输入框 locator。
 async function openPalette(page: import('@playwright/test').Page) {
-  await page.locator('.search-box').waitFor({ state: 'visible', timeout: 20_000 })
+  await page.locator('.more-btn').waitFor({ state: 'visible', timeout: 20_000 })
   await page.keyboard.press('Control+k')
   const input = page.locator('.palette-input')
   await input.waitFor({ state: 'visible', timeout: 20_000 })

@@ -8,8 +8,8 @@ test.describe('search (P1, stubbed)', () => {
     await goto(page, '/home.html')
 
     // Ctrl+K 的快捷键监听在 App.vue mounted 后才挂上(domcontentloaded 早于水合)
-    // 等浮动导航搜索入口出现 == 应用已挂载 再按键 否则按早了无人响应
-    await page.locator('.search-box').waitFor({ state: 'visible', timeout: 20_000 })
+    // 等导航按钮出现 == 应用已挂载 再按键 否则按早了无人响应
+    await page.locator('.more-btn').waitFor({ state: 'visible', timeout: 20_000 })
     await page.keyboard.press('Control+k')
     const input = page.locator('.palette-input')
     await input.waitFor({ state: 'visible', timeout: 20_000 })
@@ -32,7 +32,7 @@ test.describe('search (P1, stubbed)', () => {
 test.describe('search (real backend)', () => {
   test('真实 Algolia 全文搜索往返成功并渲染结果', { tag: '@network' }, async ({ page }) => {
     await goto(page, '/home.html')
-    await page.locator('.search-box').waitFor({ state: 'visible', timeout: 20_000 })
+    await page.locator('.more-btn').waitFor({ state: 'visible', timeout: 20_000 })
     await page.keyboard.press('Control+k')
     const input = page.locator('.palette-input')
     await input.waitFor({ state: 'visible', timeout: 20_000 })

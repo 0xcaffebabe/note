@@ -115,7 +115,6 @@ export default defineComponent({
 <style lang="less" scoped>
 .main-layout {
   min-height: 100vh;
-  padding-bottom: var(--site-dock-clearance);
 }
 
 .el-main {

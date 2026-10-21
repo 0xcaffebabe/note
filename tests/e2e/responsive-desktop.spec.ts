@@ -27,10 +27,11 @@ test.describe('route-completion rendering (desktop)', () => {
     await expect(page.locator('.markdown-section').first()).toBeVisible()
   })
 
-  test('聚类从桌面浮动导航可达并渲染', async ({ page }) => {
+  test('聚类从桌面导航面板可达并渲染', async ({ page }) => {
     await goto(page, DOC)
     await page.waitForSelector('.markdown-section')
-    await page.locator('.site-nav .nav-item', { hasText: '聚类' }).click()
+    await page.getByRole('button', { name: '站点导航与工具', exact: true }).click()
+    await page.locator('.panel-nav').getByRole('link', { name: '聚类', exact: true }).click()
     await waitForPath(page, '/cluster.html')
     expect(pathnameOf(page)).toBe('/cluster.html')
     await page.waitForSelector('.cluster-host canvas', { timeout: 20000 })
@@ -134,7 +135,7 @@ test.describe('folded hazards & silent-break fixes (desktop)', () => {
 
   test('搜索统一到 CommandPalette: Ctrl+Q / Ctrl+K 均开同一面板', async ({ page }) => {
     await goto(page, '/home.html')
-    await page.locator('.search-box').waitFor({ state: 'visible' })
+    await page.locator('.more-btn').waitFor({ state: 'visible' })
     await page.keyboard.press('Control+q')
     await page.waitForSelector('.command-palette .palette-input')
     await expect(page.locator('.command-palette')).toHaveCount(1)
@@ -221,33 +222,53 @@ test.describe('responsive breakpoint switching (resize)', () => {
     expect(pathnameOf(page)).toBe(DOC)
   })
 
-  test('浮动导航在首页跨断点保留入口，不占据顶部空间', async ({ page }) => {
+  test('右上角导航默认收起，刷新和跨断点保持单按钮且不占据顶部空间', async ({ page }) => {
     await goto(page, '/home.html')
-    await expect(page.locator('.site-dock')).toBeVisible()
+    const launcher = page.getByRole('button', { name: '站点导航与工具', exact: true })
+    const panel = page.locator('.site-navigation-panel')
+    await expect(launcher).toBeVisible()
+    await expect(launcher).toHaveAttribute('aria-expanded', 'false')
+    await expect(panel).toBeHidden()
     await expect(page.locator('.site-header, .el-header, .header-toggle-button')).toHaveCount(0)
     expect((await page.locator('#main-content').boundingBox())!.y).toBe(0)
-    await expect(page.locator('.site-nav .nav-item')).toHaveCount(3)
-    await expect(page.locator('.search-box')).toBeVisible()
-    await page.setViewportSize({ width: 800, height: 900 })
-    await page.waitForSelector('.main-layout.is-mobile')
-    await expect(page.locator('.site-dock')).toBeVisible()
-    await expect(page.locator('.search-box')).toBeVisible()
-    await page.setViewportSize({ width: 1440, height: 900 })
-    await page.waitForFunction(() => !document.querySelector('.main-layout')?.classList.contains('is-mobile'))
-    await expect(page.locator('.site-nav .nav-item')).toHaveCount(3)
+    await launcher.click()
+    await expect(panel).toBeVisible()
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    await expect(launcher).toBeVisible()
+    await expect(panel).toBeHidden()
+    for (const width of [800, 1440]) {
+      await page.setViewportSize({ width, height: 900 })
+      await expect(launcher).toHaveAttribute('aria-expanded', 'false')
+      await expect(panel).toBeHidden()
+      await expect(page.locator('.site-dock button')).toHaveCount(1)
+      const box = (await launcher.boundingBox())!
+      expect(box.width).toBe(44)
+      expect(box.height).toBe(44)
+      expect(box.y).toBeGreaterThanOrEqual(0)
+      expect(box.y).toBeLessThanOrEqual(32)
+      expect(width - box.x - box.width).toBeGreaterThanOrEqual(0)
+      expect(width - box.x - box.width).toBeLessThanOrEqual(32)
+    }
   })
 
-  test('导航面板支持键盘开关，真实链接导航后关闭', async ({ page }) => {
+  test('导航面板支持键盘与外部点击收起，真实链接导航后关闭', async ({ page }) => {
     await goto(page, '/home.html')
     const launcher = page.getByRole('button', { name: '站点导航与工具', exact: true })
     const panel = page.locator('.site-navigation-panel')
     await launcher.focus()
     await page.keyboard.press('Enter')
     await expect(panel).toBeVisible()
+    await expect(page.getByRole('dialog', { name: '站点导航与工具', exact: true })).toBeVisible()
+    await expect(launcher).toHaveAttribute('aria-expanded', 'true')
     await expect(panel.locator('.panel-nav a').first()).toBeFocused()
     await page.keyboard.press('Escape')
     await expect(panel).toBeHidden()
     await expect(launcher).toBeFocused()
+    await launcher.click()
+    await expect(panel).toBeVisible()
+    await page.locator('#main-content').click({ position: { x: 4, y: 4 } })
+    await expect(panel).toBeHidden()
+    await expect(launcher).toHaveAttribute('aria-expanded', 'false')
     await launcher.click()
     const link = panel.locator('.panel-nav').getByRole('link', { name: '标签', exact: true })
     await expect(link).toHaveAttribute('href', '/tag.html')
@@ -265,12 +286,13 @@ test.describe('responsive breakpoint switching (resize)', () => {
     await expect(page.locator('.category-header')).toBeVisible()
   })
 
-  test('导航面板保留两种搜索模式、外链和可恢复的专注入口', async ({ page }) => {
+  test('导航面板保留两种搜索模式、外链和专注入口', async ({ page }) => {
     await goto(page, DOC)
     const launcher = page.getByRole('button', { name: '站点导航与工具', exact: true })
     const panel = page.locator('.site-navigation-panel')
     await launcher.click()
     await expect(panel.locator('.panel-links a').first()).toHaveAttribute('target', '_blank')
+    await expect(panel.getByRole('button', { name: /全屏/ })).toBeVisible()
     await panel.getByRole('button', { name: /全文搜索/ }).click()
     await expect(page.locator('.palette-mode.active')).toHaveText('全文')
     await page.keyboard.press('Escape')
@@ -280,12 +302,12 @@ test.describe('responsive breakpoint switching (resize)', () => {
     await page.keyboard.press('Escape')
     await launcher.click()
     await panel.getByRole('button', { name: '专注模式', exact: true }).click()
-    await expect(page.locator('.site-dock')).toHaveClass(/is-focused/)
+    await expect(panel).toBeHidden()
     await expect(page.locator('.doc-aside')).toBeHidden()
     await expect(launcher).toBeVisible()
     await launcher.click()
-    await panel.getByRole('button', { name: '展开导航', exact: true }).click()
-    await expect(page.locator('.site-nav')).toBeVisible()
+    await expect(panel.locator('.panel-nav').getByRole('link', { name: '首页', exact: true })).toBeVisible()
+    await expect(panel.getByRole('button', { name: '专注模式', exact: true })).toBeVisible()
   })
 
   test('中档(821–1279): 非移动但 TOC 列收起为浮层(消除旧死区)', async ({ page }) => {

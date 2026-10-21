@@ -1,4 +1,4 @@
-import { test, expect, goto, docWithMermaid, docWithMath, DOC, pathnameOf } from './fixtures'
+import { test, expect, goto, docWithMermaid, docWithMath, DOC, pathnameOf, openNavigationTools } from './fixtures'
 import fs from 'fs'
 import mermaid from 'mermaid'
 import type { Locator } from '@playwright/test'
@@ -125,8 +125,11 @@ test.describe('client rich rendering (P1)', () => {
     ))).toBe(true)
 
     const oldIds = await sources.locator('svg').evaluateAll(elements => elements.map(el => el.id))
-    await page.locator('.action-item.el-switch').click()
+    const navigation = await openNavigationTools(page)
+    await navigation.locator('.theme-row .el-switch').click()
     await expect(page.locator('html')).not.toHaveClass(/dark/)
+    await page.keyboard.press('Escape')
+    await expect(navigation).toBeHidden()
     for (let n = 0; n < 3; n++) {
       await expect(sources.nth(n).locator('svg')).not.toHaveAttribute('id', oldIds[n])
     }
@@ -194,8 +197,11 @@ test.describe('client rich rendering (P1)', () => {
 
     for (let attempt = 0; attempt < 2; attempt++) {
       if (attempt === 1) {
-        await page.locator('.action-item.el-switch').click()
+        const navigation = await openNavigationTools(page)
+        await navigation.locator('.theme-row .el-switch').click()
         await expect(page.locator('html')).toHaveClass(/dark/)
+        await page.keyboard.press('Escape')
+        await expect(navigation).toBeHidden()
         await expect(mainSvg).not.toHaveAttribute('id', mainSvgId!)
         mainSvgId = await mainSvg.getAttribute('id')
         await expectModernTheme(mainSvg, true)

@@ -4,8 +4,6 @@
     <div
       class="contents-panel-container"
       :style="{
-        'top': parentShowHeader ? '60px': '0',
-        'height': parentShowHeader ? 'calc(100vh - 60px)': '100vh',
         'display': showContentsList ? 'flex' : 'none',
         'flex-direction': 'column'
       }"
@@ -54,10 +52,6 @@ export default defineComponent({
     doc: {
       type: String,
       required: true
-    },
-    parentShowHeader: {
-      type: Boolean,
-      default: true
     }
   },
   emits: ["item-click", "toggle-contents"],
@@ -121,6 +115,8 @@ export default defineComponent({
 .contents-panel-container {
   transition: all 0.2s;
   position: sticky;
+  top: 0;
+  height: 100vh;
   width: 290px;
   overflow: hidden; /* 防止内容溢出 */
   display: flex;

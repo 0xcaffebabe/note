@@ -1,5 +1,5 @@
 <template>
-  <div class="tool-box" :class="{ 'is-mobile': isMobile }" :style="deskStyle">
+  <div class="tool-box" :class="{ 'is-mobile': isMobile }">
     <el-dropdown trigger="click" :placement="isMobile ? 'top-end' : 'bottom-end'">
       <el-button
         type="default"
@@ -92,15 +92,6 @@ interface Action {
 }
 
 export default defineComponent({
-  inject: ['showHeader'],
-  watch: {
-    showHeader: {
-      handler(val){
-        this.parentShowHeader = val;
-      },
-      immediate: true
-    }
-  },
   emits: [
     'showMindGraph',
     'showKnowledgeNetwork',
@@ -115,7 +106,6 @@ export default defineComponent({
     return {
       showDrawer: false,
       fontSize: (this.$services.configService.get('fontSize') as number) || 16,
-      parentShowHeader: true,
       flatCategoryList: [] as Category[],
       actionList: [
         {name: '思维导图', type: 'success', action: 'showMindGraph', icon: markRaw(Share), hotkey: 'alt + l'},
@@ -147,10 +137,6 @@ export default defineComponent({
     },
     fontMax(): number {
       return this.isMobile ? 48 : 24;
-    },
-    // 桌面端按顶栏显隐微调纵向锚点; 移动端用 CSS 固定 FAB 定位
-    deskStyle(): Record<string, string> {
-      return this.isMobile ? {} : { top: this.parentShowHeader ? '66px' : '6px' };
     },
   },
   methods: {
@@ -227,6 +213,7 @@ export default defineComponent({
 .tool-box {
   transition: all var(--transition-normal);
   position: fixed;
+  top: var(--spacing-xs);
   // TOC列宽300 + 20留白
   right: 320px;
   z-index: var(--z-overlay);
@@ -237,7 +224,7 @@ export default defineComponent({
 .tool-box.is-mobile {
   top: auto;
   right: 16px;
-  bottom: calc(72px + env(safe-area-inset-bottom));
+  bottom: calc(var(--mobile-action-bottom) + var(--site-control-size) + var(--spacing-lg) + env(safe-area-inset-bottom));
   padding: 0;
 
   .tool-button {

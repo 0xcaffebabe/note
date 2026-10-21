@@ -55,6 +55,9 @@
   --home-max-wide: 1480px;
   --chart-h: 360px;
   --card-pad: var(--spacing-lg); // 卡片内边距(大屏宽档放大一档让加宽的卡片呼吸)
+  // 全站导航按钮的最小触控尺寸
+  --site-control-size: 44px;
+  --mobile-action-bottom: 72px;
 
   // 圆角系统
   --radius-sm: 4px;
@@ -253,16 +256,8 @@ body {
   overflow: visible;
 }
 
-// EP的el-header默认padding 0 20px会让顶栏两端露出20px页面灰底
-.main-layout > .el-header {
-  padding: 0;
-}
-
-// 窄屏外壳(App.vue 响应式): 紧凑顶栏 + 主区贴近内容(白底 + 小内边距)
+// 窄屏外壳(App.vue 响应式): 主区贴近内容(白底 + 小内边距)
 // 迁自已退役的 MobileApp.vue; 两级选择器保证特异性高于 EP 容器默认样式
-.main-layout.is-mobile > .el-header {
-  height: 48px;
-}
 .main-layout.is-mobile > .el-main {
   padding: var(--spacing-sm);
   background-color: var(--card-bg-color);
@@ -270,14 +265,6 @@ body {
 
 .doc-layout .doc-aside {
   overflow: visible;
-}
-
-.el-header {
-  padding: 0;
-  border-bottom: 1px solid var(--border-color);
-  background-color: transparent;
-  box-shadow: none;
-  transition: border-color 0.3s ease;
 }
 
 // 简洁风格的抽屉和模态框
@@ -411,8 +398,9 @@ body {
   .doc-contents-and-panel,
   .toc-toggle-btn,
   .tool-box,
-  .header-toggle-button,
-  .el-header,
+  .site-dock,
+  .site-navigation-popover,
+  .mobile-bottom-bar,
   .el-backtop,
   #buildTime {
     display: none !important;

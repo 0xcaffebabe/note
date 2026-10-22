@@ -54,21 +54,20 @@ test.describe('desktop DocPage layout', () => {
 
   // 不再逐字断言整份 9 项清单 + kbd==16(改词/调序/加一项即误挂、却无行为回归)。
   // 改测承载性不变量: 必备项均在(顺序无关)、「在VSC打开」是桌面独有标记、桌面非触屏下确有键盘提示。
-  test('桌面工具栏下拉含必备项与桌面独有「在VSC打开」及键盘提示', async ({ page }) => {
+  test('桌面导航含文档工具与桌面独有「在VSC打开」及键盘提示', async ({ page }) => {
     await goto(page, DOC)
     await page.waitForSelector('.markdown-section h2')
-    await expect(page.locator('.tool-box.is-mobile')).toHaveCount(0)
-    await page.locator('.tool-box .tool-button').click()
-    await page.waitForSelector('.dropdown-menu .dropdown-item')
+    await expect(page.locator('.tool-box')).toHaveCount(0)
+    await openNavigationTools(page)
     // 必备功能项均存在(顺序无关)
     const mustHave = ['思维导图', '知识网络', '知识回顾', '知识助手', '路径复制', '知识复制', '随机复习', '更多设置']
     for (const name of mustHave) {
-      await expect(page.locator('.dropdown-menu .action-name', { hasText: name })).toHaveCount(1)
+      await expect(page.locator('.document-actions .action-name', { hasText: name })).toHaveCount(1)
     }
-    // 「在VSC打开」是桌面独有(ToolBox fullOnly: true), 移动端用例断言其缺席 —— 二者构成区分桌/移动的不变量
-    await expect(page.locator('.dropdown-menu .action-name', { hasText: '在VSC打开' })).toHaveCount(1)
+    // 「在VSC打开」仅 full 档可用, 移动端用例断言其缺席
+    await expect(page.locator('.document-actions .action-name', { hasText: '在VSC打开' })).toHaveCount(1)
     // 桌面(非触屏)应渲染键盘提示: 不数死 16, 只要确有 kbd 即证明 v-if 接线生效
-    await expect.poll(() => page.locator('.dropdown-menu .action-keys kbd').count(), { timeout: 20_000 }).toBeGreaterThan(0)
+    await expect.poll(() => page.locator('.document-actions .action-keys kbd').count(), { timeout: 20_000 }).toBeGreaterThan(0)
   })
 
   test('正文中仅一个 LinkPopover(死实例已移除, 真实例在 CategoryList 内)', async ({ page }) => {
@@ -136,15 +135,15 @@ test.describe('folded hazards & silent-break fixes (desktop)', () => {
     await expect(page.locator('.command-palette')).toHaveCount(1)
   })
 
-  test('仅一个 ToolBox 实例(单一 keydown 层), 下拉项不重复', async ({ page }) => {
+  test('仅一个导航入口和文档工具分组，工具项不重复', async ({ page }) => {
     await goto(page, DOC)
-    await page.waitForSelector('.tool-box .tool-button')
-    await expect(page.locator('.tool-box')).toHaveCount(1)
-    await page.locator('.tool-box .tool-button').click()
-    await page.waitForSelector('.dropdown-menu .dropdown-item')
+    await expect(page.locator('.navigation-launcher')).toHaveCount(1)
+    await expect(page.locator('.tool-box')).toHaveCount(0)
+    const navigation = await openNavigationTools(page)
+    await expect(navigation.getByRole('group', { name: '文档工具' })).toHaveCount(1)
     // 「不重复」= 每个必备项恰好出现 1 次(双实例会让同名项变 2 个); 不再硬编码总数 9
     for (const name of ['思维导图', '知识网络', '在VSC打开', '更多设置']) {
-      await expect(page.locator('.dropdown-menu .action-name', { hasText: name })).toHaveCount(1)
+      await expect(page.locator('.document-actions .action-name', { hasText: name })).toHaveCount(1)
     }
   })
 })
@@ -203,7 +202,8 @@ test.describe('responsive breakpoint switching (resize)', () => {
     await expect(page.locator('.mobile-bottom-bar')).toBeVisible()
     await expect(page.locator('.mobile-bottom-bar button')).toHaveCount(4)
     await expect(page.locator('.doc-contents-and-panel')).toHaveCount(0)
-    await expect(page.locator('.tool-box.is-mobile')).toHaveCount(1)
+    await expect(page.locator('.navigation-launcher')).toHaveCount(1)
+    await expect(page.locator('.tool-box')).toHaveCount(0)
     expect(pathnameOf(page)).toBe(before)
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.waitForFunction(() => !document.querySelector('.main-layout')?.classList.contains('is-mobile'))

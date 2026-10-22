@@ -1,6 +1,6 @@
-import { test, expect, goto, DOC } from './fixtures'
+import { test, expect, goto, openNavigationTools, DOC } from './fixtures'
 
-// 文档 ToolBox 异步面板: 思维导图(jsMind/svg) / 知识网络(echarts) / 知识回顾(echarts 散点).
+// 站点导航中的文档工具: 思维导图(jsMind/svg) / 知识网络(echarts) / 知识回顾(echarts 散点).
 // 三个面板都是 defineAsyncComponent + panels[name] 开关首开才挂载(见 DocPage.setup.openPanel):
 //   - 点击下拉项 -> $emit -> DocPage 调 openPanel -> 异步 chunk 下载 -> ref 就绪后 .show()
 //   - 知识网络首开额外调 .init() 触发 echarts.init + 数据拉取
@@ -8,25 +8,22 @@ import { test, expect, goto, DOC } from './fixtures'
 //   jsMind(svg) / echarts(canvas) 在 headless 下尺寸/绘制不稳, 容器 DOM 才是可靠信号.
 // 合成一条 spec 摊薄文档加载(DOC 富渲染较重), 每个面板内嵌「开 -> 容器就绪 -> 关」.
 
-// 下拉每次点击菜单项后会收起, 故每开一个面板前都要重新点开工具栏按钮.
-async function openToolboxItem(page: import('@playwright/test').Page, label: string) {
-  await page.locator('.tool-box .tool-button').click()
-  await page.waitForSelector('.dropdown-menu .dropdown-item', { timeout: 20000 })
-  // 菜单项文本在 .action-name 里; 用其可见性确保下拉真正展开后再点
-  const item = page.locator('.dropdown-menu .action-name', { hasText: label })
-  await expect(item).toBeVisible()
-  await item.click()
+// 每次选择后导航收起, 故每开一个面板前都要重新打开导航工具.
+async function openDocTool(page: import('@playwright/test').Page, label: string) {
+  const navigation = await openNavigationTools(page)
+  await navigation.getByRole('button', { name: label }).click()
+  await expect(navigation).toBeHidden()
 }
 
-test.describe('文档 ToolBox 异步面板', () => {
+test.describe('导航中的文档工具', () => {
   test('思维导图 / 知识网络 / 知识回顾 依次懒挂载、容器就绪并可关闭', async ({ page }) => {
     await goto(page, DOC)
-    // 正文异步注入 .main.markdown-section 后 ToolBox 才在稳定布局里; 等标题作稳定信号
+    // 等正文异步注入后再操作导航
     await page.waitForSelector('.markdown-section h2', { timeout: 20000 })
-    await page.waitForSelector('.tool-box .tool-button', { timeout: 20000 })
+    await expect(page.locator('.tool-box')).toHaveCount(0)
 
     // ---------- 思维导图 (jsMind, svg 引擎) ----------
-    await openToolboxItem(page, '思维导图')
+    await openDocTool(page, '思维导图')
     // 面板骨架: 抽屉内 .mind-panel + 标题"思维导图"
     const mindPanel = page.locator('.mind-panel')
     await expect(mindPanel).toBeVisible({ timeout: 20000 })
@@ -41,7 +38,7 @@ test.describe('文档 ToolBox 异步面板', () => {
     await expect(mindPanel).toBeHidden({ timeout: 20000 })
 
     // ---------- 知识网络 (echarts force/circular, 首开触发 init) ----------
-    await openToolboxItem(page, '知识网络')
+    await openDocTool(page, '知识网络')
     const netPanel = page.locator('.net-panel')
     await expect(netPanel).toBeVisible({ timeout: 20000 })
     await expect(netPanel.locator('.panel-title')).toHaveText('知识网络')
@@ -56,7 +53,7 @@ test.describe('文档 ToolBox 异步面板', () => {
     await expect(netPanel).toBeHidden({ timeout: 20000 })
 
     // ---------- 知识回顾 (echarts 散点 + 时间线) ----------
-    await openToolboxItem(page, '知识回顾')
+    await openDocTool(page, '知识回顾')
     const reviewPanel = page.locator('.review-panel')
     await expect(reviewPanel).toBeVisible({ timeout: 20000 })
     await expect(reviewPanel.locator('.panel-title')).toHaveText('知识回顾')
@@ -69,5 +66,60 @@ test.describe('文档 ToolBox 异步面板', () => {
     await expect(scatterChart.locator('canvas').first()).toBeAttached({ timeout: 20000 })
     await reviewPanel.locator('.panel-close').click()
     await expect(reviewPanel).toBeHidden({ timeout: 20000 })
+  })
+
+  test('未展开导航可用快捷键，跨路由清理并恢复文档工具', async ({ page }) => {
+    await goto(page, DOC)
+    await page.waitForSelector('.markdown-section h2')
+    await page.keyboard.press('Alt+l')
+    const mindPanel = page.locator('.mind-panel')
+    await expect(mindPanel).toBeVisible()
+    await mindPanel.locator('.panel-close').click()
+    await page.locator('.navigation-launcher').focus()
+    await page.keyboard.press('Enter')
+    await page.getByRole('navigation', { name: '站内导航' }).getByRole('link', { name: '标签', exact: true }).click()
+    await expect(page.getByRole('heading', { name: '标签', exact: true })).toBeVisible()
+    await expect(page.locator('.navigation-launcher')).toHaveCount(1)
+    const navigation = await openNavigationTools(page)
+    await expect(navigation.getByRole('group', { name: '文档工具' })).toHaveCount(0)
+    await page.keyboard.press('Escape')
+    await page.keyboard.press('Alt+l')
+    await expect(mindPanel).toHaveCount(0)
+    const recent = await openNavigationTools(page)
+    await recent.getByRole('link', { name: '返回最近文档', exact: true }).click()
+    await page.waitForSelector('.markdown-section h2')
+    await page.keyboard.press('Alt+l')
+    await expect(mindPanel).toHaveCount(1)
+    await expect(mindPanel).toBeVisible()
+  })
+
+  test('导航中的字号设置即时生效并在刷新后保留', async ({ page }) => {
+    await goto(page, DOC)
+    await page.waitForSelector('.markdown-section h2')
+    await openDocTool(page, '更多设置')
+    const settings = page.getByRole('dialog', { name: '更多设置', exact: true })
+    await expect(settings).toBeVisible()
+    const slider = settings.getByRole('slider', { name: '字体大小' })
+    await slider.focus()
+    await page.keyboard.press('Home')
+    await page.keyboard.press('ArrowRight')
+    await expect(page.locator('.main.markdown-section')).toHaveCSS('font-size', '15px')
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    await expect(page.locator('.main.markdown-section')).toHaveCSS('font-size', '15px')
+  })
+
+  test('复制路径后收起导航并将键盘焦点返回入口', async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator.clipboard, 'writeText', {
+        value: async (text: string) => { (window as any).__copiedText = text },
+      })
+    })
+    await goto(page, DOC)
+    await page.waitForSelector('.markdown-section h2')
+    const navigation = await openNavigationTools(page)
+    await navigation.getByRole('button', { name: '路径复制' }).click()
+    await expect(navigation).toBeHidden()
+    await expect.poll(() => page.evaluate(() => (window as any).__copiedText)).toBe(DOC.replace(/\.html$/, '.md'))
+    await expect(page.locator('.navigation-launcher')).toBeFocused()
   })
 })

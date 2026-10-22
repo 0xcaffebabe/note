@@ -79,8 +79,17 @@ test.describe('expired asset recovery', () => {
   test('真实懒加载 chunk 404 后自动恢复目标页面', async ({ page }) => {
     await goto(page, DOC)
     await expect(page.locator('.markdown-section h2').first()).toBeVisible()
-    await page.route(/\/resource\/TagListPage-.*\.js$/, route => route.fulfill({ status: 404, body: '' }), { times: 1 })
-    await page.locator('a[href="/tag.html"]').first().click()
+    let missingChunkRequests = 0
+    await page.route(/\/resource\/TagListPage-.*\.js$/, route => {
+      missingChunkRequests++
+      return route.fulfill({ status: 404, body: '' })
+    }, { times: 1 })
+    const launcher = page.getByRole('button', { name: '展开站点导航', exact: true })
+    await expect(launcher).toBeVisible()
+    await launcher.focus()
+    await page.keyboard.press('Enter')
+    await page.getByRole('navigation', { name: '站内导航' }).getByRole('link', { name: '标签', exact: true }).click()
+    await expect.poll(() => missingChunkRequests).toBe(1)
     await page.waitForURL(url => url.searchParams.has('__asset_retry'))
     await expect(page.getByRole('heading', { name: '标签', exact: true })).toBeVisible()
     await expect(page).toHaveURL(/\/tag.html/)

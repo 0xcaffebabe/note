@@ -80,6 +80,8 @@ export default defineComponent({
       boundMouseDown: null as ((e: PointerEvent) => void) | null,
       // canvas 悬停监听(tooltip)的可移除引用: 重入 init 时先解绑 避免累积
       boundCanvasMove: null as ((e: PointerEvent) => void) | null,
+      boundCanvasLeave: null as (() => void) | null,
+      initVersion: 0,
       resizeObserver: null as ResizeObserver | null,
       resizeTimer: undefined as ReturnType<typeof setTimeout> | undefined,
     };
@@ -117,6 +119,7 @@ export default defineComponent({
   },
   methods: {
     toggleMode(mode3D: boolean) {
+      if (this.tooltip) this.tooltip.style.display = "none";
       this.is3D = mode3D;
       if (this.is3D) {
         this.init3DLayout();
@@ -149,10 +152,9 @@ export default defineComponent({
 
     // 设置 3D 事件
     setup3DEvents() {
+      this.remove3DEvents();
       if (!this.canvas || !this.tooltip) return;
 
-      const dpr = window.devicePixelRatio || 1;
-      const tooltip = this.tooltip;
       const canvas = this.canvas;
 
       // 指针事件统一鼠标/触屏: 移动端可拖拽旋转 3D 词云
@@ -163,8 +165,6 @@ export default defineComponent({
       this.boundDrag = (e: PointerEvent) => {
         if (this.isDragging) {
           this.drag(e);
-        } else {
-          this.handle3DMouseMove(e, tooltip, dpr);
         }
       };
 
@@ -190,6 +190,10 @@ export default defineComponent({
         document.removeEventListener("pointerup", this.boundEndDrag);
         document.removeEventListener("pointercancel", this.boundEndDrag);
       }
+      this.boundMouseDown = null;
+      this.boundDrag = null;
+      this.boundEndDrag = null;
+      this.isDragging = false;
     },
 
     // 2D 重新渲染（不重新布局）
@@ -318,6 +322,7 @@ export default defineComponent({
 
     startDrag(e: MouseEvent) {
       if (!this.is3D) return;
+      if (this.tooltip) this.tooltip.style.display = "none";
       this.isDragging = true;
       this.lastMouseX = e.clientX;
       this.lastMouseY = e.clientY;
@@ -467,13 +472,16 @@ export default defineComponent({
 
       const tooltip = document.createElement("div");
       tooltip.id = "wordcloud-tooltip";
-      tooltip.style.position = "absolute";
-      tooltip.style.padding = "4px 8px";
-      tooltip.style.borderRadius = "4px";
-      tooltip.style.fontSize = "12px";
+      // clientX/clientY 是视口坐标，fixed 避免首页滚动后提示层偏移。
+      tooltip.style.position = "fixed";
+      tooltip.style.padding = "var(--spacing-xs) var(--spacing-sm)";
+      tooltip.style.borderRadius = "var(--radius-sm)";
+      tooltip.style.fontSize = "var(--font-size-xs)";
+      tooltip.style.backgroundColor = "var(--elevated-bg-color)";
+      tooltip.style.color = "var(--main-text-color)";
       tooltip.style.pointerEvents = "none";
       tooltip.style.display = "none";
-      tooltip.style.zIndex = "1000";
+      tooltip.style.zIndex = "var(--z-overlay)";
       document.body.appendChild(tooltip);
       this.tooltip = tooltip;
 
@@ -485,7 +493,7 @@ export default defineComponent({
         }
 
         if (this.is3D) {
-          this.handle3DMouseMove(e, tooltip, dpr);
+          this.handle3DMouseMove(e, tooltip);
           return;
         }
 
@@ -510,8 +518,6 @@ export default defineComponent({
             tooltip.style.display = "block";
             tooltip.style.left = `${e.clientX + 10}px`;
             tooltip.style.top = `${e.clientY + 10}px`;
-            tooltip.style.backgroundColor = this.isDark ? "#666" : "#fff";
-            tooltip.style.color = this.isDark ? "#bbb" : "#333";
             tooltip.textContent = `${word.name}: ${word.value}`;
             // 词不可点(命令面板不支持预填关键词), 故 hover 不切换 pointer 光标, 仅展示词频
             hovered = true;
@@ -526,6 +532,9 @@ export default defineComponent({
 
       // 指针事件: 2D 触屏点按/悬停也能命中 tooltip(仅展示词频, 不做跳转)
       this.canvas.addEventListener("pointermove", this.boundCanvasMove);
+      this.boundCanvasLeave = () => { tooltip.style.display = "none"; };
+      this.canvas.addEventListener("pointerleave", this.boundCanvasLeave);
+      this.canvas.addEventListener("pointercancel", this.boundCanvasLeave);
     },
 
     // 解绑全部交互监听 + 移除 tooltip(isDark 切换 / 容器 resize 重入 init 前调用, 防累积泄漏)
@@ -534,13 +543,19 @@ export default defineComponent({
       if (this.canvas && this.boundCanvasMove) {
         this.canvas.removeEventListener("pointermove", this.boundCanvasMove);
       }
+      if (this.canvas && this.boundCanvasLeave) {
+        this.canvas.removeEventListener("pointerleave", this.boundCanvasLeave);
+        this.canvas.removeEventListener("pointercancel", this.boundCanvasLeave);
+      }
+      this.boundCanvasMove = null;
+      this.boundCanvasLeave = null;
       if (this.tooltip) {
         this.tooltip.remove();
         this.tooltip = null;
       }
     },
 
-    handle3DMouseMove(e: MouseEvent, tooltip: HTMLDivElement, dpr: number) {
+    handle3DMouseMove(e: MouseEvent, tooltip: HTMLDivElement) {
       const rect = this.canvas!.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
@@ -563,8 +578,6 @@ export default defineComponent({
           tooltip.style.display = "block";
           tooltip.style.left = `${e.clientX + 10}px`;
           tooltip.style.top = `${e.clientY + 10}px`;
-          tooltip.style.backgroundColor = this.isDark ? "#666" : "#fff";
-          tooltip.style.color = this.isDark ? "#bbb" : "#333";
           tooltip.textContent = `${word.name}: ${word.value}`;
           // 词不可点, 不改 pointer 光标; 保留拖拽的 grab 语义
           hovered = true;
@@ -578,6 +591,9 @@ export default defineComponent({
     },
 
     async init() {
+      const canvas = this.$refs.canvasRef as HTMLCanvasElement | undefined;
+      if (!canvas) return;
+      const version = ++this.initVersion;
       // 幂等重入(isDark 切换 / 容器 resize): 先解绑上一轮交互, 避免监听与 tooltip 累积
       this.teardownInteractions();
       // 数据缺失(构建跳过生成/离线)时 r.json() 会抛错; 统一降级为空/错态, 避免未捕获 rejection 与空白画布
@@ -585,9 +601,11 @@ export default defineComponent({
       try {
         list = await this.$services.api.getWordCloud();
       } catch {
-        this.wcState = 'error';
+        if (version === this.initVersion) this.wcState = 'error';
         return;
       }
+      // 首次加载、resize 和主题切换可能重叠；过期请求或已卸载组件不得重新绑定资源。
+      if (version !== this.initVersion) return;
       if (!list.length) {
         this.wcState = 'empty';
         return;
@@ -628,7 +646,7 @@ export default defineComponent({
       });
 
       // 初始化 canvas
-      this.canvas = document.getElementById("wordcloud") as HTMLCanvasElement;
+      this.canvas = canvas;
       const container = this.canvas!.parentElement!;
       const dpr = window.devicePixelRatio || 1;
       const rect = container.getBoundingClientRect();
@@ -712,6 +730,7 @@ export default defineComponent({
     }
   },
   beforeUnmount() {
+    ++this.initVersion;
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
     clearTimeout(this.resizeTimer);
@@ -721,6 +740,8 @@ export default defineComponent({
     }
     // 解绑全部交互监听 + 移除 tooltip
     this.teardownInteractions();
+    this.canvas = null;
+    this.ctx = null;
   },
 });
 </script>

@@ -8,10 +8,12 @@
     :x="card.x"
     :y="card.y"
     :pinned="card.pinned"
+    :minimized="card.minimized"
     :stack-order="index"
     @activate="activate(card.docId)"
     @pin-change="setPinned(card.docId, $event)"
     @close="remove(card.docId)"
+    @minimize-all="minimizeAll"
   />
 </template>
 
@@ -19,12 +21,13 @@
 import { defineComponent } from 'vue'
 import EventBus from '@/platform/web/components/EventBus'
 import LinkPopover from './LinkPopover.vue'
-import type { LinkPreviewRequest } from './LinkPreview'
+import { linkPreviewCounts, type LinkPreviewRequest } from './LinkPreview'
 import DocUtils from '@/core/util/DocUtils'
 import { readPinnedLinkPreviews, savePinnedLinkPreviews } from './LinkPreviewState'
 
 interface PreviewCard extends LinkPreviewRequest {
   pinned: boolean
+  minimized: boolean
 }
 
 export default defineComponent({
@@ -37,20 +40,42 @@ export default defineComponent({
         x: 80 + index * 24,
         y: 80 + index * 24,
         pinned: true,
+        minimized: false,
       })),
     }
   },
+  watch: {
+    cards: {
+      deep: true,
+      immediate: true,
+      handler() {
+        linkPreviewCounts.hidden = this.cards.filter(card => card.minimized).length
+        linkPreviewCounts.visible = this.cards.length - linkPreviewCounts.hidden
+      },
+    },
+  },
   methods: {
     open(request: LinkPreviewRequest) {
-      if (this.cards.some(card => card.docId === request.docId)) {
+      const existing = this.cards.find(card => card.docId === request.docId)
+      if (existing) {
+        existing.minimized = false
         this.activate(request.docId)
         this.focus(request.docId)
         return
       }
-      // 固定卡片独立保留；临时预览同时只保留一张。
+      // 固定及已收起卡片独立保留；新开预览替换显示中的临时卡片。
       this.popovers().forEach(card => card.hide())
-      this.cards.push({ ...request, pinned: false })
+      this.cards.push({ ...request, pinned: false, minimized: false })
       this.focus(request.docId)
+    },
+    minimizeAll() {
+      this.cards.forEach(card => { card.minimized = true })
+      this.$nextTick(() => EventBus.emit('focus-link-preview-restore', null))
+    },
+    restoreAll() {
+      this.cards.forEach(card => { card.minimized = false })
+      const top = this.cards[this.cards.length - 1]
+      if (top) this.focus(top.docId)
     },
     popovers(): InstanceType<typeof LinkPopover>[] {
       return (this.$refs.popovers || []) as InstanceType<typeof LinkPopover>[]
@@ -89,14 +114,17 @@ export default defineComponent({
       if (this.popovers().some(card => card.showingMermaid)) return
       if (Array.from(document.querySelectorAll<HTMLElement>('[role="dialog"][aria-modal="true"]'))
         .some(dialog => dialog.getClientRects().length > 0)) return
-      const top = this.cards[this.cards.length - 1]
+      const top = this.cards.filter(card => !card.minimized).at(-1)
+      if (!top) return
       this.popovers().find(card => card.docId === top.docId)?.hide0()
-      const next = this.cards[this.cards.length - 1]
+      const next = this.cards.filter(card => !card.minimized).at(-1)
       if (next) this.focus(next.docId)
     },
   },
   mounted() {
     EventBus.on('show-link-preview', this.open)
+    EventBus.on('minimize-link-previews', this.minimizeAll)
+    EventBus.on('restore-link-previews', this.restoreAll)
     document.addEventListener('keydown', this.onKeydown)
     window.addEventListener('pagehide', this.rememberCards)
     document.addEventListener('visibilitychange', this.onVisibilityChange)
@@ -105,7 +133,11 @@ export default defineComponent({
     this.rememberCards()
   },
   unmounted() {
+    linkPreviewCounts.hidden = 0
+    linkPreviewCounts.visible = 0
     EventBus.off('show-link-preview', this.open)
+    EventBus.off('minimize-link-previews', this.minimizeAll)
+    EventBus.off('restore-link-previews', this.restoreAll)
     document.removeEventListener('keydown', this.onKeydown)
     window.removeEventListener('pagehide', this.rememberCards)
     document.removeEventListener('visibilitychange', this.onVisibilityChange)

@@ -1,5 +1,9 @@
 import DocUtils from '@/core/util/DocUtils'
 import EventBus from '@/platform/web/components/EventBus'
+import { reactive } from 'vue'
+
+// 预览层与站点导航共享当前会话的控件状态，导航跨布局重建时也能立即读取。
+export const linkPreviewCounts = reactive({ hidden: 0, visible: 0 })
 
 export interface LinkPreviewRequest {
   docId: string

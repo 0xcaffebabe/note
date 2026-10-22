@@ -97,12 +97,13 @@ test.describe('P2 doc centered shell & re-anchored affordances (wide)', () => {
     expect(Math.abs(box.left - box.rightGap)).toBeLessThan(30) // 左右≈相等 = 居中
   })
 
-  test('1920: 浮动工具栏随居中壳右移, 不贴视口边', async ({ page }) => {
+  test('1920: 文档工具使用正文中的统一导航入口', async ({ page }) => {
     await page.setViewportSize(WIDE)
     await goto(page, DOC)
-    await page.waitForSelector('.tool-box:not(.is-mobile)')
+    await expect(page.locator('.tool-box')).toHaveCount(0)
+    await page.waitForSelector('.main .navigation-launcher')
     const rightOffset = await page.evaluate(() => {
-      const el = document.querySelector('.tool-box:not(.is-mobile)') as HTMLElement
+      const el = document.querySelector('.main .navigation-launcher') as HTMLElement
       const r = el.getBoundingClientRect()
       return Math.round(document.documentElement.clientWidth - r.right)
     })

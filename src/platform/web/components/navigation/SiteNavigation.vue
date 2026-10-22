@@ -8,6 +8,12 @@
             <router-link v-for="item in navList" :key="item.path" :to="item.path" class="nav-item dock-action" :aria-label="item.name" :title="item.name" :aria-current="$route.path.startsWith(item.match) ? 'page' : undefined" @click="collapse">
               <el-icon><component :is="item.icon" /></el-icon><span>{{ item.name }}</span>
             </router-link>
+            <router-link v-if="canReturnToRecentDoc" :to="recentDocPath" class="recent-document dock-action" aria-label="返回最近文档" :title="`返回最近文档：${recentDocName}`" @click="collapse">
+              <el-icon><Reading /></el-icon>
+            </router-link>
+            <button v-else type="button" class="recent-document dock-action" aria-label="返回最近文档" :title="recentDoc ? `当前正在阅读：${recentDocName}` : '暂无阅读记录'" disabled>
+              <el-icon><Reading /></el-icon>
+            </button>
           </div>
           <button type="button" class="search-box dock-action" aria-label="搜索 (Ctrl+K)" @click="search()">
             <el-icon><Search /></el-icon><span>搜索</span><kbd>{{ metaKeyLabel }} K</kbd>
@@ -20,20 +26,13 @@
             </template>
             <section id="site-navigation-panel" ref="panel" class="site-navigation-panel" :class="{ 'with-bottom-bar': withBottomBar }" aria-label="站点导航与工具" @keydown.esc.stop.prevent="closeMenu">
               <p class="panel-title">{{ siteName }}</p>
-              <router-link v-if="canReturnToRecentDoc" :to="recentDocPath" class="recent-document" aria-label="返回最近文档" :title="recentDocName" @click="collapse">
-                <el-icon><Reading /></el-icon>
-                <span><span class="recent-document-label">最近文档</span><span class="recent-document-name">{{ recentDocName }}</span></span>
-              </router-link>
-              <button v-else type="button" class="recent-document" aria-label="返回最近文档" :title="recentDocName || '暂无阅读记录'" disabled>
-                <el-icon><Reading /></el-icon>
-                <span><span class="recent-document-label">最近文档</span><span class="recent-document-name">{{ recentDoc ? '当前正在阅读' : '暂无阅读记录' }}</span></span>
-              </button>
               <div class="panel-actions">
                 <div class="theme-row"><span>深色模式</span><theme-switcher class="action-item" aria-label="深色模式" /></div>
                 <button type="button" @click="toggleFullScreen"><el-icon><FullScreen /></el-icon>{{ fullscreen ? '退出全屏' : '全屏' }}</button>
                 <button type="button" @click="enterZenMode"><el-icon><Aim /></el-icon>专注模式</button>
                 <button v-if="positioned" type="button" @click="resetDockPosition"><el-icon><RefreshLeft /></el-icon>恢复默认位置</button>
               </div>
+              <slot name="document-tools" :close="closeDocumentTools" />
               <div class="panel-links">
                 <a v-for="link in linkList" :key="link.url" :href="link.url" target="_blank" rel="noopener noreferrer">{{ link.title }}<el-icon><TopRight /></el-icon></a>
               </div>
@@ -96,6 +95,11 @@ function collapse() {
   cancelCollapse();
   menuOpen.value = false;
   expanded.value = false;
+}
+
+function closeDocumentTools() {
+  collapse();
+  launcher.value?.focus({ preventScroll: true });
 }
 
 function search(mode?: 'category' | 'fulltext') {
@@ -202,9 +206,11 @@ function syncFullScreen() {
 }
 
 watch(() => route.fullPath, () => { cancel(); collapse(); });
+watch(expanded, (visible) => {
+  if (visible) recentDoc.value = docService.getLastReadRecord();
+});
 watch(menuOpen, (visible) => {
   if (visible) {
-    recentDoc.value = docService.getLastReadRecord();
     returnFocusAfterMenu = false;
     cancelCollapse();
     expanded.value = true;
@@ -278,7 +284,7 @@ onBeforeUnmount(() => {
 .is-positioned .navigation-launcher { cursor: grab; }
 .is-dragging .navigation-launcher { cursor: grabbing; }
 .site-dock.expand-right { flex-direction: row-reverse; }
-.site-dock.stacked .dock-shortcuts {
+.shortcut-surface() {
   position: absolute;
   width: max-content;
   padding: var(--spacing-xs);
@@ -287,6 +293,7 @@ onBeforeUnmount(() => {
   background: var(--elevated-bg-color);
   box-shadow: var(--shadow-md);
 }
+.site-dock.stacked .dock-shortcuts { .shortcut-surface(); }
 
 .dock-shortcuts, .site-nav { display: flex; align-items: center; gap: var(--spacing-xs); }
 
@@ -310,10 +317,12 @@ onBeforeUnmount(() => {
   cursor: pointer;
   transition: color var(--transition-fast), background-color var(--transition-fast);
 
-  &:hover, &[aria-expanded="true"], &[aria-current="page"] {
+  &:hover:not(:disabled), &[aria-expanded="true"], &[aria-current="page"] {
     background: var(--hover-bg-color);
     color: var(--primary-color);
   }
+
+  &:disabled { cursor: default; opacity: 0.5; }
 
   .el-icon { font-size: var(--font-size-xl); }
 }
@@ -331,12 +340,22 @@ onBeforeUnmount(() => {
 }
 
 .site-navigation-host.with-bottom-bar {
+  &.embedded {
+    max-width: calc(100vw - var(--spacing-xl));
+    margin-inline: 0;
+  }
   .site-dock { right: 0; gap: 0; }
   .dock-shortcuts, .site-nav { gap: 0; }
 }
 
 @media (max-width: @bp-mobile) {
   .site-dock, .dock-shortcuts, .site-nav { gap: 0; }
+  // 六个入口在按钮上方展开，保留 320px 屏幕上的完整触控尺寸。
+  .site-dock:not(.is-positioned) .dock-shortcuts {
+    .shortcut-surface();
+    right: 0;
+    bottom: calc(100% + var(--spacing-xs));
+  }
 }
 
 kbd {
@@ -357,36 +376,6 @@ kbd {
   margin: 0 0 var(--spacing-md);
   font-size: var(--font-size-lg);
   font-weight: 600;
-}
-
-.recent-document {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  width: 100%;
-  min-height: var(--site-control-size);
-  padding: var(--spacing-sm);
-  border: 0;
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--main-text-color);
-  font: inherit;
-  text-align: left;
-  text-decoration: none;
-
-  > span { min-width: 0; }
-  .el-icon { flex-shrink: 0; }
-  &:not(:disabled):hover { background: var(--hover-bg-color); }
-  &:disabled { color: var(--secondary-text-color); }
-}
-
-.recent-document-label, .recent-document-name { display: block; }
-.recent-document-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--secondary-text-color);
-  font-size: var(--font-size-sm);
 }
 
 .panel-links {

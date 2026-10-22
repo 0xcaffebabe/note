@@ -1,7 +1,7 @@
-import { test, expect, goto, pathnameOf, waitForPath, waitForHtmlChange, DOC } from './fixtures'
+import { test, expect, goto, openNavigationTools, pathnameOf, waitForPath, waitForHtmlChange, DOC } from './fixtures'
 
 // 响应式合流(P3a/P3b/P4)移动端验证。文件名含 mobile.spec.ts => 仅在 mobile-chromium(Pixel 5, ≤820, 粗指针)运行。
-// 移动端 DocPage 折叠自原 MobileDocPage: 底部操作栏 / 章节抽屉 / 目录抽屉 / FAB 工具栏 / 统一搜索。
+// 移动端 DocPage: 底部操作栏 / 章节抽屉 / 目录抽屉 / 站点导航中的文档工具 / 统一搜索。
 
 // 移动端 URL 不变量(P5 合流: 移动端复用单一路由树, 不再有 /m 分流/重定向)。
 // 这是 mobile project 唯一断言 URL 落点的地方 —— routing.spec.ts 跑在 desktop project, 不覆盖「移动视口下 URL 是否被改写」。
@@ -33,7 +33,7 @@ test.describe('mobile DocPage (Pixel 5)', () => {
     await expect(page.locator(".mobile-bottom-bar button[aria-label='回到顶部']")).toBeVisible()
     await expect(page.locator('.el-backtop')).toHaveCount(0)
   })
-  test('手机可展开导航并从正文切换到聚类页面', async ({ page }) => {
+  test('手机可从外层导航返回最近文档并切换到聚类页面', async ({ page }, testInfo) => {
     await page.setViewportSize({ width: 320, height: 568 })
     await goto(page, DOC)
     await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
@@ -42,6 +42,19 @@ test.describe('mobile DocPage (Pixel 5)', () => {
     await launcher.tap()
     const navigation = page.getByRole('navigation', { name: '站内导航' })
     await expect(navigation).toBeInViewport({ ratio: 1 })
+    await expect(page.locator('.dock-shortcuts')).toBeInViewport({ ratio: 1 })
+    await expect(navigation.getByRole('button', { name: '返回最近文档', exact: true })).toBeDisabled()
+    await navigation.getByRole('link', { name: '标签', exact: true }).tap()
+    await waitForPath(page, '/tag.html')
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    await launcher.tap()
+    await expect(page.locator('.dock-shortcuts')).toBeInViewport({ ratio: 1 })
+    await testInfo.attach('recent-document-mobile-320px', { body: await page.screenshot(), contentType: 'image/png' })
+    await navigation.getByRole('link', { name: '返回最近文档', exact: true }).tap()
+    await waitForPath(page, DOC)
+    await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
+    await expect(launcher).toHaveAttribute('aria-expanded', 'false')
+    await launcher.tap()
     await navigation.getByRole('link', { name: '聚类', exact: true }).tap()
     await waitForPath(page, '/cluster.html')
     await expect(page.locator('.cluster-host canvas').first()).toBeVisible({ timeout: 20000 })
@@ -90,19 +103,21 @@ test.describe('mobile DocPage (Pixel 5)', () => {
   })
 
   // 不硬编码 8 项: 改测不变量 —— 桌面独有的「在VSC打开」缺席(fullOnly 过滤)、核心功能项均在、触屏不显快捷键。
-  test('移动 FAB 工具栏: 含核心项、不含桌面独有「在VSC打开」、触屏无快捷键', async ({ page }) => {
+  test('移动导航文档工具: 含核心项、不含桌面独有「在VSC打开」、触屏无快捷键', async ({ page }) => {
     await goto(page, DOC)
-    await page.waitForSelector('.tool-box.is-mobile .tool-button')
-    await page.click('.tool-box.is-mobile .tool-button')
-    await page.waitForSelector('.dropdown-menu .action-name')
+    await expect(page.locator('.tool-box')).toHaveCount(0)
+    const navigation = await openNavigationTools(page)
     // 桌面独有项缺席(移动端区分标记)
-    await expect(page.locator('.dropdown-menu .action-name', { hasText: '在VSC打开' })).toHaveCount(0)
+    await expect(navigation.locator('.action-name', { hasText: '在VSC打开' })).toHaveCount(0)
     // 核心功能项移动端也都在(顺序无关)
     for (const name of ['思维导图', '知识网络', '知识回顾', '知识助手', '路径复制', '知识复制', '随机复习', '更多设置']) {
-      await expect(page.locator('.dropdown-menu .action-name', { hasText: name })).toHaveCount(1)
+      await expect(navigation.locator('.action-name', { hasText: name })).toHaveCount(1)
     }
     // 触屏端(isTouch)不渲染键盘提示
-    await expect(page.locator('.dropdown-menu .action-keys kbd')).toHaveCount(0)
+    await expect(navigation.locator('.action-keys kbd')).toHaveCount(0)
+    await navigation.getByRole('button', { name: '知识助手', exact: true }).tap()
+    await expect(navigation).toBeHidden()
+    await expect(page.getByRole('dialog', { name: '模板生成问题', exact: true })).toBeVisible()
   })
 
   test('移动文档页: 正文 + 面包屑 + 更新历史, 无桌面标签页', async ({ page }) => {
@@ -112,6 +127,29 @@ test.describe('mobile DocPage (Pixel 5)', () => {
     await expect(page.locator('.el-breadcrumb')).toBeVisible()
     await expect(page.locator('.footer-wrapper .block')).toContainText('更新历史')
     await expect(page.locator('.tab-container')).toHaveCount(0)
+  })
+
+  test('宽正文不把统一导航挤出视口，文档字号设置仍可操作', async ({ page }) => {
+    await goto(page, DOC)
+    await page.waitForSelector('.markdown-section h2')
+    // 模拟长表格/不可换行内容撑宽正文的情形。
+    await page.addStyleTag({ content: '.main-content { min-width: 700px; }' })
+    const launcher = page.locator('.navigation-launcher')
+    await expect.poll(async () => {
+      const box = (await launcher.boundingBox())!
+      return box.x + box.width
+    }).toBeLessThanOrEqual(page.viewportSize()!.width)
+    await launcher.tap()
+    await page.getByRole('button', { name: '站点导航与工具', exact: true }).tap()
+    const navigation = page.getByRole('dialog', { name: '站点导航与工具', exact: true })
+    await navigation.getByRole('button', { name: '更多设置', exact: true }).tap()
+    await expect(navigation).toBeHidden()
+    const slider = page.getByRole('dialog', { name: '更多设置', exact: true }).getByRole('slider', { name: '字体大小' })
+    await expect(slider).toHaveAttribute('aria-valuemax', '48')
+    await slider.focus()
+    await page.keyboard.press('Home')
+    await page.keyboard.press('ArrowRight')
+    await expect(page.locator('.main.markdown-section')).toHaveCSS('font-size', '17px')
   })
 
   test('回顶按钮滚回顶部', async ({ page }) => {
@@ -165,18 +203,16 @@ test.describe('mobile home & charts (Pixel 5)', () => {
 test.describe('mobile regression guards (fixed defects)', () => {
   // 修复前: 从目录抽屉选文档后抽屉不自动关闭, 新文档加载在抽屉之下。
   // 修复后: beforeRouteUpdate 提交 setShowCategory(false), 选文档后抽屉关闭。
-  // 修复前: 移动端用 type=primary(白图标), 但通用 .tool-button 卡片底色以更高特异度盖住蓝底,
-  // 白图标落浅底"隐形", 唤起获得 :focus 蓝底后才显形。修复后: 与桌面端一致的描边+卡片底+深色图标。
-  test('FAB 图标静置即可见(底色与图标色不同, 非两浅色相融)', async ({ page }) => {
+  test('统一导航图标静置即可见(底色与图标色不同)', async ({ page }) => {
     await goto(page, DOC)
-    const btn = page.locator('.tool-box.is-mobile .tool-button')
+    const btn = page.locator('.navigation-launcher')
     await btn.waitFor({ state: 'visible' })
     const colors = await page.evaluate(() => {
-      const b = document.querySelector('.tool-box.is-mobile .tool-button') as HTMLElement
+      const b = document.querySelector('.navigation-launcher') as HTMLElement
       const svg = b.querySelector('svg') as SVGElement | null
       return {
         hasIcon: !!svg,
-        bg: getComputedStyle(b).backgroundColor,
+        bg: getComputedStyle(b.closest('.site-dock')!).backgroundColor,
         icon: svg ? getComputedStyle(svg).color : '',
       }
     })

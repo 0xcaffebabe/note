@@ -13,11 +13,22 @@ const unsavedStates = new Map<string, LinkPreviewState>()
 const pinnedPreviewsKey = 'link-preview:pinned-documents'
 let unsavedPinnedPreviews: string[] | null = null
 
+export interface RestorableLinkPreview {
+  docId: string
+  pinned: boolean
+  minimized: boolean
+}
+
+const restorablePreviewsKey = 'link-preview:restorable-documents'
+let unsavedRestorablePreviews: RestorableLinkPreview[] | null = null
+
+function isPreviewDocId(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0 && !/[\\/?#]/.test(value)
+}
+
 function pinnedDocIds(value: unknown): string[] {
   if (!Array.isArray(value)) return []
-  return [...new Set(value.filter((id): id is string =>
-    typeof id === 'string' && id.trim().length > 0 && !/[\\/?#]/.test(id)
-  ))]
+  return [...new Set(value.filter(isPreviewDocId))]
 }
 
 // 固定列表仅保存文档身份和层叠顺序，布局与阅读位置仍由各文档独立保存。
@@ -37,6 +48,42 @@ export function savePinnedLinkPreviews(docIds: string[]): void {
   const value = JSON.stringify(snapshot)
   browserStorage.setItem(pinnedPreviewsKey, value)
   unsavedPinnedPreviews = browserStorage.getItem(pinnedPreviewsKey) === value ? null : snapshot
+}
+
+function restorablePreviews(value: unknown): RestorableLinkPreview[] {
+  if (!Array.isArray(value)) return []
+  const seen = new Set<string>()
+  const result: RestorableLinkPreview[] = []
+  for (const entry of value) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue
+    const { docId, pinned, minimized } = entry
+    if (!isPreviewDocId(docId) || typeof pinned !== 'boolean' || typeof minimized !== 'boolean'
+      || (!pinned && !minimized) || seen.has(docId)) continue
+    seen.add(docId)
+    result.push({ docId, pinned, minimized })
+  }
+  return result
+}
+
+// 固定卡片及已隐藏的临时卡片都可恢复，按原顺序保存固定和隐藏状态。
+export function readRestorableLinkPreviews(): RestorableLinkPreview[] {
+  if (unsavedRestorablePreviews !== null) return unsavedRestorablePreviews.map(card => ({ ...card }))
+  try {
+    const raw = browserStorage.getItem(restorablePreviewsKey)
+    if (raw !== null) return restorablePreviews(JSON.parse(raw))
+    // 兼容升级前仅保存固定文档身份的记录。
+    return readPinnedLinkPreviews().map(docId => ({ docId, pinned: true, minimized: false }))
+  } catch {
+    return []
+  }
+}
+
+export function saveRestorableLinkPreviews(cards: RestorableLinkPreview[]): void {
+  if (!Array.isArray(cards)) return
+  const snapshot = restorablePreviews(cards)
+  const value = JSON.stringify(snapshot)
+  browserStorage.setItem(restorablePreviewsKey, value)
+  unsavedRestorablePreviews = browserStorage.getItem(restorablePreviewsKey) === value ? null : snapshot
 }
 
 function isLinkPreviewState(value: unknown): value is LinkPreviewState {

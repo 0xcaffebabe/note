@@ -171,7 +171,7 @@ export default defineComponent({
       // 渲染出尺寸后夹紧到视口内 贴边右键不再溢出
       this.$nextTick(() => {
         this.clampToViewport();
-        this.armed = true;
+        this.armed = !this.minimized;
       });
       this.initDoc();
     },

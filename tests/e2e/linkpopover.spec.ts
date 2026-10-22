@@ -329,6 +329,50 @@ test.describe('文档预览卡片', () => {
     await expect(second).toHaveCount(0)
   })
 
+  test('刷新保留部分和全部隐藏，临时卡片隐藏后也能继续恢复阅读', async ({ page }) => {
+    await prepareDocuments(page)
+    const first = await openFromBody(page, '甲')
+    await first.getByTitle('固定(点击外部/滚动不再关闭)', { exact: true }).click()
+    await resizeCard(page, first, 460, 330)
+    await moveCard(page, first, 24, 400)
+    const firstScroll = await readFurther(page, first, 240)
+    const firstBox = (await first.boundingBox())!
+    const second = await openFromBody(page, '乙')
+    await resizeCard(page, second, 430, 330)
+    await moveCard(page, second, 800, 400)
+    const secondScroll = await readFurther(page, second, 400)
+    const secondBox = (await second.boundingBox())!
+    const restoreOne = page.getByRole('button', { name: '恢复全部 1 个隐藏预览', exact: true })
+    const restoreAll = page.getByRole('button', { name: '恢复全部 2 个隐藏预览', exact: true })
+
+    await second.getByRole('button', { name: '隐藏预览', exact: true }).click()
+    await goto(page, DOC)
+    await expect(restoreOne).toBeVisible()
+    await expect(second).toBeHidden()
+    await expectSavedState(first, firstBox, firstScroll)
+    await first.getByRole('button', { name: '隐藏预览', exact: true }).click()
+    await goto(page, DOC)
+    await expect(restoreAll).toBeVisible()
+    await expect(first).toBeHidden()
+    await expect(second).toBeHidden()
+    await restoreAll.click()
+    await expectSavedState(first, firstBox, firstScroll)
+    await expectSavedState(second, secondBox, secondScroll)
+    await expect(first.getByTitle('取消固定', { exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await expect(second.getByTitle('固定(点击外部/滚动不再关闭)', { exact: true })).toHaveAttribute('aria-pressed', 'false')
+
+    // 恢复后刷新，未固定卡片不再自动打开；固定卡片继续显示。
+    await goto(page, DOC)
+    await expect(first).toBeVisible()
+    await expect(second).toHaveCount(0)
+    await expect(restoreOne).toHaveCount(0)
+    await expect(restoreAll).toHaveCount(0)
+    await first.getByRole('button', { name: '关闭预览', exact: true }).click()
+    await goto(page, DOC)
+    await expect(first).toHaveCount(0)
+    await expect(restoreOne).toHaveCount(0)
+  })
+
   test('首页和标签页隐藏固定卡片，返回文档后恢复布局和阅读进度', async ({ page }) => {
     test.setTimeout(120_000)
     await prepareDocuments(page)

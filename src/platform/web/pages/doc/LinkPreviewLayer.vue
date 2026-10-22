@@ -23,7 +23,7 @@ import EventBus from '@/platform/web/components/EventBus'
 import LinkPopover from './LinkPopover.vue'
 import { linkPreviewCounts, type LinkPreviewRequest } from './LinkPreview'
 import DocUtils from '@/core/util/DocUtils'
-import { readPinnedLinkPreviews, savePinnedLinkPreviews } from './LinkPreviewState'
+import { readRestorableLinkPreviews, saveRestorableLinkPreviews } from './LinkPreviewState'
 
 interface PreviewCard extends LinkPreviewRequest {
   pinned: boolean
@@ -34,13 +34,11 @@ export default defineComponent({
   components: { LinkPopover },
   data() {
     return {
-      cards: readPinnedLinkPreviews().map((docId, index): PreviewCard => ({
-        docId,
-        docLink: '/' + DocUtils.docId2Url(docId),
+      cards: readRestorableLinkPreviews().map((card, index): PreviewCard => ({
+        ...card,
+        docLink: '/' + DocUtils.docId2Url(card.docId),
         x: 80 + index * 24,
         y: 80 + index * 24,
-        pinned: true,
-        minimized: false,
       })),
     }
   },
@@ -51,6 +49,7 @@ export default defineComponent({
       handler() {
         linkPreviewCounts.hidden = this.cards.filter(card => card.minimized).length
         linkPreviewCounts.visible = this.cards.length - linkPreviewCounts.hidden
+        saveRestorableLinkPreviews(this.cards)
       },
     },
   },
@@ -90,25 +89,20 @@ export default defineComponent({
       const index = this.cards.findIndex(card => card.docId === docId)
       if (index < 0 || index === this.cards.length - 1) return
       this.cards.push(...this.cards.splice(index, 1))
-      this.rememberPinned()
     },
     focus(docId: string) {
       this.$nextTick(() => this.popovers().find(card => card.docId === docId)?.focus())
     },
     remove(docId: string) {
       this.cards = this.cards.filter(card => card.docId !== docId)
-      this.rememberPinned()
     },
     setPinned(docId: string, pinned: boolean) {
       const card = this.cards.find(card => card.docId === docId)
       if (!card) return
       card.pinned = pinned
-      this.rememberPinned()
-    },
-    rememberPinned() {
-      savePinnedLinkPreviews(this.cards.filter(card => card.pinned).map(card => card.docId))
     },
     rememberCards() {
+      saveRestorableLinkPreviews(this.cards)
       this.popovers().forEach(card => card.rememberLayout(false))
     },
     onVisibilityChange() {

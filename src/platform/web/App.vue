@@ -11,12 +11,15 @@
   </el-container>
   <site-navigation v-if="!$route.meta.hasBottomBar" />
   <command-palette ref="commandPalette" />
+  <!-- 文档路由独有 docPath；离开时保存并卸载，返回时恢复固定卡片。 -->
+  <link-preview-layer v-if="$route.params.docPath" />
 </template>
 
 <script lang="ts">
 import { defineComponent, onBeforeUnmount, ref } from "vue";
 import SiteNavigation from "./components/navigation/SiteNavigation.vue";
 import CommandPalette from "@/platform/web/components/search/CommandPalette.vue";
+import LinkPreviewLayer from "@/platform/web/pages/doc/LinkPreviewLayer.vue";
 import EventBus from "./components/EventBus";
 
 const cateListKey='system::currentCategoryList';
@@ -24,6 +27,7 @@ export default defineComponent({
   components: {
     SiteNavigation,
     CommandPalette,
+    LinkPreviewLayer,
   },
   setup() {
     const commandPalette = ref<InstanceType<typeof CommandPalette>>()

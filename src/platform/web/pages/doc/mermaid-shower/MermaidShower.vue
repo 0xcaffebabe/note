@@ -48,7 +48,10 @@ export default defineComponent({
       this.showDialog = true
       this.loading = true
       this.error = ''
-      this.zIndex = Number(getComputedStyle(document.documentElement).getPropertyValue('--z-popup')) + 1
+      const popupLayer = Number(getComputedStyle(document.documentElement).getPropertyValue('--z-popup'))
+      const previewLayers = Array.from(document.querySelectorAll<HTMLElement>('.popover'))
+        .map(card => Number(getComputedStyle(card).zIndex) || popupLayer)
+      this.zIndex = Math.max(popupLayer, ...previewLayers) + 1
       // el-dialog 首次打开时才挂载内容，等待容器就绪后再渲染。
       await this.$nextTick()
       const container = this.$refs.container as HTMLElement

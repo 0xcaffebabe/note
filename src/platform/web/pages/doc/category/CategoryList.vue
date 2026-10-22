@@ -31,14 +31,13 @@
       </el-menu>
     </template>
   </el-skeleton>
-  <link-popover ref="linkPopover"/>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
 import Category from "@/core/domain/Category";
 import CategoryTree from "./CategoryTree.vue";
-import LinkPopover from '@/platform/web/pages/doc/LinkPopover.vue'
+import { showLinkPreview } from '@/platform/web/pages/doc/LinkPreview'
 import { Search } from "@element-plus/icons-vue";
 import { hashCode } from "@/core/util/StringUtils";
 import { filterCategoryTree } from "@/core/util/CategoryUtils";
@@ -48,8 +47,7 @@ export default defineComponent({
     doc: String,
   },
   components: {
-    CategoryTree,
-    LinkPopover
+    CategoryTree
   },
   emits: ['firstLoad'],
   setup() {
@@ -116,8 +114,9 @@ export default defineComponent({
       this.$router.push("/doc/" + index);
     },
     handleContextMenu(e: MouseEvent,link: string) {
-      (this.$refs.linkPopover as any).show(link, e.clientX, e.clientY)
+      showLinkPreview(link, e.clientX, e.clientY)
       e.preventDefault()
+      e.stopPropagation()
     },
     // 过滤目录树 保留自身匹配或后代匹配的节点 返回克隆节点避免污染原树
     filterTree(list: Category[], kw: string): Category[] {

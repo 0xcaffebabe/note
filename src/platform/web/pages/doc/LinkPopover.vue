@@ -2,7 +2,18 @@
   <!-- teleport到body: 宿主(侧栏等)自带z-index会创建层叠上下文 浮窗在其内部永远盖不过外部浮动控件 -->
   <teleport to="body">
   <transition name="fade">
-    <div ref="popover" class="popover" :class="{ 'has-custom-size': hasCustomSize }" v-show="visible" role="dialog" aria-label="文档预览">
+    <div
+      ref="popover"
+      class="popover"
+      :class="{ 'has-custom-size': hasCustomSize }"
+      :style="{ zIndex: `calc(var(--z-popup) + ${stackOrder})` }"
+      v-show="visible"
+      role="dialog"
+      aria-label="文档预览"
+      tabindex="-1"
+      @pointerdown="$emit('activate')"
+      @focusin="$emit('activate')"
+    >
       <!-- 标题栏即拖拽把手 正文区不再劫持mousedown 文字可正常选中 -->
       <div class="popover-header" @pointerdown="startDrag">
         <span class="popover-title" :title="docTitle">{{ docTitle }}</span>
@@ -11,8 +22,9 @@
             type="button"
             class="action-btn"
             :class="{ active: pin }"
+            :aria-pressed="pin"
             :title="pin ? '取消固定' : '固定(点击外部/滚动不再关闭)'"
-            @click="pin = !pin"
+            @click="togglePin"
           >
             <el-icon><place /></el-icon>
           </button>
@@ -24,12 +36,24 @@
           </button>
         </div>
       </div>
-      <div class="popover-body">
+      <div
+        ref="body"
+        class="popover-body"
+        @scroll.passive="rememberScroll"
+        @wheel.passive="cancelScrollRestore"
+        @touchmove.passive="cancelScrollRestore"
+        @pointerdown="cancelScrollRestore"
+        @load.capture="restoreScroll"
+      >
         <category-item-content
           :category-link="docLink"
           ref="categoryItemContent"
         />
         <el-skeleton v-if="loading" :rows="6" animated class="preview-skeleton" />
+        <div v-else-if="loadError" role="status" class="preview-error">
+          <p>文档预览加载失败</p>
+          <button type="button" class="retry-btn" @click="initDoc">重试</button>
+        </div>
         <div v-else class="markdown-section preview-markdown" ref="previewSection" v-html="contentHtml" draggable="false" @click="onPreviewClick"></div>
       </div>
       <button
@@ -53,8 +77,8 @@ import CategoryItemContent from "./category/CategoryItemContent.vue";
 import DocFileInfo from "@/core/domain/DocFileInfo";
 import DocUtils from "@/core/util/DocUtils";
 import { clamp, clampToBounds } from "@/core/util/GeometryUtils";
-import { browserStorage } from "@/adapters/browser/LocalStorageAdapter";
-import { PREVIEW_LAYOUT_KEY, readPreviewLayout, type PreviewLayout } from "./PreviewLayout";
+import { readLinkPreviewState, saveLinkPreviewState } from "./LinkPreviewState";
+import { showLinkPreview } from "./LinkPreview";
 import DocPostRender from "@/platform/web/render/DocPostRender";
 import MermaidUtils from "@/platform/web/util/MermaidUtils";
 import MermaidShower from "./mermaid-shower/MermaidShower.vue";
@@ -67,23 +91,38 @@ export default defineComponent({
     CategoryItemContent,
     MermaidShower,
   },
+  props: {
+    docId: { type: String, required: true },
+    docLink: { type: String, required: true },
+    x: { type: Number, required: true },
+    y: { type: Number, required: true },
+    stackOrder: { type: Number, default: 0 },
+    pinned: { type: Boolean, default: false },
+  },
+  emits: ['activate', 'close', 'pin-change'],
   data() {
     return {
-      docLink: "",
       visible: false,
       loading: false,
+      loadError: false,
+      ready: false,
+      disposed: false,
       file: new DocFileInfo() as DocFileInfo,
-      pin: false,
       showingMermaid: false,
       // 触发show的那次右键事件会冒泡到document 未"上膛"前不视作外部点击
       armed: false,
       resizeObserver: null as ResizeObserver | null,
-      layout: readPreviewLayout(browserStorage.getItem(PREVIEW_LAYOUT_KEY)),
+      layout: readLinkPreviewState(this.docId),
       hasCustomSize: false,
       stopInteraction: null as (() => void) | null,
+      scrollTimer: undefined as ReturnType<typeof setTimeout> | undefined,
+      pendingScrollTop: null as number | null,
     };
   },
   computed: {
+    pin(): boolean {
+      return this.pinned;
+    },
     contentHtml(): string {
       return this.$services.docService.renderMd(this.file);
     },
@@ -92,25 +131,29 @@ export default defineComponent({
     }
   },
   methods: {
-    show(docLink: string, x: number, y: number) {
-      this.stopInteraction?.();
-      this.docLink = docLink;
-      this.pin = false;
-      this.initDoc();
-      (this.$refs.categoryItemContent as any).init(docLink);
+    togglePin() {
+      this.rememberLayout(false);
+      this.$emit('pin-change', !this.pin);
+    },
+    show() {
       const popover = this.$refs.popover as HTMLElement;
       this.visible = true;
-      popover.style.left = (this.layout?.left ?? x) + "px";
-      popover.style.top = (this.layout?.top ?? y) + "px";
+      popover.style.left = (this.layout?.left ?? this.x) + "px";
+      popover.style.top = (this.layout?.top ?? this.y) + "px";
       if (this.layout) {
         this.hasCustomSize = true;
         popover.style.width = this.layout.width + "px";
         popover.style.height = this.layout.height + "px";
       }
-      this.armed = false;
-      setTimeout(() => { this.armed = true });
       // 渲染出尺寸后夹紧到视口内 贴边右键不再溢出
-      this.$nextTick(() => this.clampToViewport());
+      this.$nextTick(() => {
+        this.clampToViewport();
+        this.armed = true;
+      });
+      this.initDoc();
+    },
+    focus() {
+      (this.$refs.popover as HTMLElement).focus({ preventScroll: true });
     },
     clampToViewport() {
       if (!this.visible) {
@@ -123,21 +166,49 @@ export default defineComponent({
     },
     async initDoc() {
       this.loading = true;
+      this.loadError = false;
+      this.ready = false;
       try {
-        this.file = await this.$services.docService.getDocFileInfo(DocUtils.docUrl2Id(this.docLink));
+        const [file] = await Promise.all([
+          this.$services.docService.getDocFileInfo(this.docId),
+          (this.$refs.categoryItemContent as InstanceType<typeof CategoryItemContent>).init(this.docLink),
+        ]);
+        if (this.disposed) return;
+        this.file = file;
+      } catch {
+        if (!this.disposed) this.loadError = true;
       } finally {
-        this.loading = false;
+        if (!this.disposed) this.loading = false;
       }
-      this.$nextTick(() => {
-        const previewSection = this.$refs.previewSection as HTMLElement;
-        // 预览内容的代码块高亮
-        DocPostRender.highlightCode(previewSection);
-        MermaidUtils.initAllNode(previewSection);
-        // 内容撑开高度后再夹一次
-        this.clampToViewport();
-      });
+      if (this.disposed || this.loadError) return;
+      await this.$nextTick();
+      if (this.disposed) return;
+      const previewSection = this.$refs.previewSection as HTMLElement;
+      DocPostRender.highlightCode(previewSection);
+      MermaidUtils.initAllNode(previewSection);
+      this.clampToViewport();
+      this.pendingScrollTop = this.layout?.scrollTop ?? 0;
+      this.restoreScroll();
+      // 图片、Mermaid 等异步内容增高后继续恢复，用户开始操作时停止。
+      this.resizeObserver?.observe(previewSection);
+      this.ready = true;
+      // 加载时固定/切到后台可能先保存了骨架屏尺寸，正文就绪后补记自动展开的大小。
+      if (!this.layout || !this.hasCustomSize) this.rememberLayout();
     },
     onPreviewClick(e: MouseEvent) {
+      const link = (e.target as Element).closest('a[origin-link]');
+      if (link && e.button === 0 && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        const href = link.getAttribute('href') || '';
+        if (e.altKey) {
+          showLinkPreview(href, e.clientX, e.clientY);
+        } else if (href) {
+          this.$router.push(href);
+          this.hide();
+        }
+        return;
+      }
       const button = (e.target as Element).closest('.mermaid-wrapper .fullscreen button');
       const diagram = button?.closest('.mermaid-wrapper')?.getAttribute('data-raw');
       if (!diagram) {
@@ -146,13 +217,33 @@ export default defineComponent({
       this.showingMermaid = true;
       (this.$refs.mermaidShower as InstanceType<typeof MermaidShower>).show(diagram);
     },
-    rememberLayout() {
+    rememberLayout(updateGeometry = true) {
+      if (!this.visible) return;
       const el = this.$refs.popover as HTMLElement;
-      this.layout = {
+      // 只有用户拖动/缩放才更新布局偏好；窗口变小造成的夹紧不覆盖原布局。
+      const geometry = !updateGeometry && this.layout ? this.layout : {
         left: el.offsetLeft, top: el.offsetTop,
         width: el.offsetWidth, height: el.offsetHeight,
-      } satisfies PreviewLayout;
-      browserStorage.setItem(PREVIEW_LAYOUT_KEY, JSON.stringify(this.layout));
+      };
+      this.layout = {
+        ...geometry,
+        scrollTop: this.pendingScrollTop ?? (this.ready ? (this.$refs.body as HTMLElement).scrollTop : (this.layout?.scrollTop ?? 0)),
+      };
+      saveLinkPreviewState(this.docId, this.layout);
+    },
+    rememberScroll() {
+      if (!this.ready || this.pendingScrollTop !== null) return;
+      clearTimeout(this.scrollTimer);
+      this.scrollTimer = setTimeout(() => this.rememberLayout(false), 100);
+    },
+    restoreScroll() {
+      if (this.pendingScrollTop === null || !this.visible) return;
+      const body = this.$refs.body as HTMLElement;
+      body.scrollTop = this.pendingScrollTop;
+      if (Math.abs(body.scrollTop - this.pendingScrollTop) < 1) this.pendingScrollTop = null;
+    },
+    cancelScrollRestore() {
+      this.pendingScrollTop = null;
     },
     setSize(width: number, height: number) {
       const el = this.$refs.popover as HTMLElement;
@@ -233,7 +324,7 @@ export default defineComponent({
       e.preventDefault();
     },
     openDoc() {
-      this.$router.push('/doc/' + DocUtils.docUrl2Id(this.docLink));
+      this.$router.push(DocUtils.docId2HtmlPath(this.docId));
       this.hide0();
     },
     hide() {
@@ -244,8 +335,9 @@ export default defineComponent({
     },
     hide0() {
       this.stopInteraction?.();
+      this.rememberLayout(false);
       this.visible = false;
-      (this.$refs.categoryItemContent as any).destroy();
+      this.$emit('close');
     },
     /* ---- 标准浮层消失行为(固定时点击/滚动豁免，Esc 优先关闭图表查看器) ---- */
     onOutsidePointer(e: Event) {
@@ -253,7 +345,8 @@ export default defineComponent({
         return;
       }
       const root = this.$refs.popover as HTMLElement;
-      if (!root.contains(e.target as Node)) {
+      // 重试等操作可能在冒泡结束前移除按钮，事件原始路径仍能识别为卡片内部点击。
+      if (!e.composedPath().includes(root)) {
         this.hide();
       }
     },
@@ -268,33 +361,30 @@ export default defineComponent({
       }
       this.hide();
     },
-    handleKeydown(e: KeyboardEvent) {
-      // Esc 关闭预览(忽略pin锁定)
-      if (e.key == 'Escape' && this.visible && !this.showingMermaid) {
-        this.hide0()
-      }
-    },
   },
   mounted() {
+    this.show()
     // capture捕获window与嵌套容器(如侧栏)的滚动
     document.addEventListener('scroll', this.onScrollCapture, true)
     document.addEventListener('click', this.onOutsidePointer)
     document.addEventListener('contextmenu', this.onOutsidePointer)
-    document.addEventListener('keydown', this.handleKeydown)
     window.addEventListener('resize', this.clampToViewport)
     // 预览正文/元信息卡片异步加载会持续撑高浮窗 尺寸一变就重新夹紧视口
     this.resizeObserver = new ResizeObserver(() => {
       if (this.visible) {
         this.clampToViewport()
+        this.restoreScroll()
       }
     })
     this.resizeObserver.observe(this.$refs.popover as HTMLElement)
   },
-  unmounted() {
+  beforeUnmount() {
+    this.rememberLayout(false)
+    this.disposed = true
+    clearTimeout(this.scrollTimer)
     document.removeEventListener('scroll', this.onScrollCapture, true)
     document.removeEventListener('click', this.onOutsidePointer)
     document.removeEventListener('contextmenu', this.onOutsidePointer)
-    document.removeEventListener('keydown', this.handleKeydown)
     window.removeEventListener('resize', this.clampToViewport)
     this.stopInteraction?.()
     this.resizeObserver?.disconnect()
@@ -438,6 +528,20 @@ export default defineComponent({
 
 .preview-markdown {
   margin-top: var(--spacing-sm);
+}
+
+.preview-error {
+  padding: var(--spacing-md) 0;
+  color: var(--secondary-text-color);
+}
+
+.retry-btn {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--card-bg-color);
+  color: var(--primary-color);
+  cursor: pointer;
 }
 
 // 弹出/收起动画: 仅作用于enter/leave阶段 不影响显示中的拖拽

@@ -70,11 +70,11 @@ test.describe('desktop DocPage layout', () => {
     await expect.poll(() => page.locator('.document-actions .action-keys kbd').count(), { timeout: 20_000 }).toBeGreaterThan(0)
   })
 
-  test('正文中仅一个 LinkPopover(死实例已移除, 真实例在 CategoryList 内)', async ({ page }) => {
+  test('初次阅读不显示文档预览卡片', async ({ page }) => {
     await goto(page, DOC)
     await page.waitForSelector('.markdown-section h2')
     await page.waitForSelector('.el-menu .el-menu-item')
-    await expect(page.locator('body > .popover')).toHaveCount(1)
+    await expect(page.getByRole('dialog', { name: '文档预览', exact: true })).toHaveCount(0)
   })
 
   test('滚动时 TOC 活动标题高亮(IntersectionObserver)', async ({ page }) => {

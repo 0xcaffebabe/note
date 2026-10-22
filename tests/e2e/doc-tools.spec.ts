@@ -1,4 +1,4 @@
-import { test, expect, goto, openNavigationTools, DOC } from './fixtures'
+import { test, expect, goto, openNavigationTools, waitForPath, DOC } from './fixtures'
 
 // 站点导航中的文档工具: 思维导图(jsMind/svg) / 知识网络(echarts) / 知识回顾(echarts 散点).
 // 三个面板都是 defineAsyncComponent + panels[name] 开关首开才挂载(见 DocPage.setup.openPanel):
@@ -85,8 +85,12 @@ test.describe('导航中的文档工具', () => {
     await page.keyboard.press('Escape')
     await page.keyboard.press('Alt+l')
     await expect(mindPanel).toHaveCount(0)
-    const recent = await openNavigationTools(page)
+    // 续读入口位于导航栏，工具弹层只包含站点设置和文档工具。
+    await page.locator('.navigation-launcher').focus()
+    await page.keyboard.press('Enter')
+    const recent = page.getByRole('navigation', { name: '站内导航' })
     await recent.getByRole('link', { name: '返回最近文档', exact: true }).click()
+    await waitForPath(page, DOC)
     await page.waitForSelector('.markdown-section h2')
     await page.keyboard.press('Alt+l')
     await expect(mindPanel).toHaveCount(1)

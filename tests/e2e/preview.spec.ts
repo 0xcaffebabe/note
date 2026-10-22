@@ -21,6 +21,8 @@ async function openPreview(page: Page) {
   const preview = page.getByRole('dialog', { name: '文档预览' })
   await expect(preview).toBeVisible()
   await expect(preview.locator('.preview-markdown')).toContainText(/\S/)
+  // visible / 正文就绪不代表 Vue 的 scale 过渡已结束；重开时缓存正文会立即出现。
+  await expect(preview).not.toHaveClass(/fade-(enter|leave)-/)
   return preview
 }
 

@@ -72,9 +72,6 @@
       <button type="button" @click="openToc" aria-label="打开本页章节">
         <el-icon><Tickets /></el-icon><span>章节</span>
       </button>
-      <button type="button" @click="openSearch" aria-label="打开搜索">
-        <el-icon><Search /></el-icon><span>搜索</span>
-      </button>
       <button type="button" @click="scrollToTop" aria-label="回到顶部">
         <el-icon><Top /></el-icon><span>回顶</span>
       </button>
@@ -127,11 +124,10 @@ import MermaidShower from './mermaid-shower/MermaidShower.vue';
 import DocContentsAndPanel from './contents/DocContentsAndPanel.vue';
 import ContentsList from './contents/ContentsList.vue';
 import TouchUtils from '@/platform/web/util/TouchUtils';
-import EventBus from '@/platform/web/components/EventBus';
 import { writeText } from '@/adapters/browser/Clipboard';
 import { openExternal } from '@/adapters/browser/WindowAdapter';
 import { isMobile, isTouch, isUltra } from '@/platform/web/composables/useBreakpoint';
-import { Memo, Tickets, Search, Top } from '@element-plus/icons-vue';
+import { Memo, Tickets, Top } from '@element-plus/icons-vue';
 
 // 重量级隐藏面板(echarts/jsmind/LLM)按需异步加载: 首次打开时才挂载与下载对应chunk
 const MindGraph = defineAsyncComponent(() => import('./mind/MindGraph.vue'))
@@ -159,7 +155,7 @@ export default defineComponent({
     DocContentsAndPanel,
     ContentsList,
     RelatedContent,
-    Memo, Tickets, Search, Top,
+    Memo, Tickets, Top,
 },
   watch: {
     '$route.fullPath'() {
@@ -315,10 +311,6 @@ export default defineComponent({
     },
     openToc() {
       this.showMobileToc = true;
-    },
-    openSearch() {
-      // 统一搜索入口: 交由 App 的 CommandPalette 接管
-      EventBus.emit('show-mobile-search', null);
     },
     scrollToTop() {
       window.scrollTo({top: 0, behavior: 'smooth'});
@@ -606,7 +598,7 @@ export default defineComponent({
   bottom: 0;
   z-index: var(--z-float);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   height: 52px;
   padding-bottom: env(safe-area-inset-bottom);
   background-color: var(--card-bg-color);

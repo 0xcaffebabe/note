@@ -99,22 +99,23 @@
 /* Text Formating
 -------------------- */
 
-.markdown-section p {
+// SVG 内的 HTML 标签由图表主题管理，避免正文排版覆盖图表的文字颜色。
+.markdown-section p:not(svg *) {
   margin: 12px 0;
   color: var(--main-text-color);
   line-height: 1.7;
 }
 
-.markdown-section strong {
+.markdown-section strong:not(svg *) {
   font-weight: 600;
   color: var(--main-text-color);
 }
 
-.markdown-section em {
+.markdown-section em:not(svg *) {
   color: var(--main-text-color);
 }
 
-.markdown-section del {
+.markdown-section del:not(svg *) {
   color: var(--secondary-text-color);
   text-decoration: line-through;
 }
@@ -585,7 +586,7 @@ div[id^=mermaid-] {
 body[theme=dark] {
   .markdown-section {
     // 暗色专属: 亮色侧段落为主文本色, 暗色侧原设计降为次级文本色以降低亮度刺激
-    p {
+    p:not(svg *) {
       color: var(--secondary-text-color);
     }
 

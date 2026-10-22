@@ -1,4 +1,4 @@
-import { test, expect, goto, openNavigationTools, pathnameOf, waitForPath, waitForHtmlChange, DOC } from './fixtures'
+import { test, expect, goto, openNavigationTools, pathnameOf, waitForPath, waitForHtmlChange, stubAlgolia, docHitFixture, SEARCH_KW, DOC } from './fixtures'
 
 // 响应式合流(P3a/P3b/P4)移动端验证。文件名含 mobile.spec.ts => 仅在 mobile-chromium(Pixel 5, ≤820, 粗指针)运行。
 // 移动端 DocPage: 底部操作栏 / 章节抽屉 / 目录抽屉 / 站点导航中的文档工具 / 统一搜索。
@@ -23,17 +23,17 @@ test.describe('mobile URL invariants (Pixel 5, no /m split)', () => {
 })
 
 test.describe('mobile DocPage (Pixel 5)', () => {
-  test('底部操作栏 4 个入口(目录/章节/搜索/回顶), 无桌面 backtop', async ({ page }) => {
+  test('底部操作栏仅保留目录/章节/回顶三个入口, 无桌面 backtop', async ({ page }) => {
     await goto(page, DOC)
     await page.waitForSelector('.mobile-bottom-bar')
-    await expect(page.locator('.mobile-bottom-bar button')).toHaveCount(4)
+    await expect(page.locator('.mobile-bottom-bar button')).toHaveCount(3)
     await expect(page.locator(".mobile-bottom-bar button[aria-label='打开站点目录']")).toBeVisible()
     await expect(page.locator(".mobile-bottom-bar button[aria-label='打开本页章节']")).toBeVisible()
-    await expect(page.locator(".mobile-bottom-bar button[aria-label='打开搜索']")).toBeVisible()
+    await expect(page.locator('.mobile-bottom-bar').getByRole('button', { name: /搜索/ })).toHaveCount(0)
     await expect(page.locator(".mobile-bottom-bar button[aria-label='回到顶部']")).toBeVisible()
     await expect(page.locator('.el-backtop')).toHaveCount(0)
   })
-  test('手机可展开导航并从正文切换到聚类页面', async ({ page }) => {
+  test('手机可从外层导航返回最近文档并切换到聚类页面', async ({ page }, testInfo) => {
     await page.setViewportSize({ width: 320, height: 568 })
     await goto(page, DOC)
     await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
@@ -42,6 +42,19 @@ test.describe('mobile DocPage (Pixel 5)', () => {
     await launcher.tap()
     const navigation = page.getByRole('navigation', { name: '站内导航' })
     await expect(navigation).toBeInViewport({ ratio: 1 })
+    await expect(page.locator('.dock-shortcuts')).toBeInViewport({ ratio: 1 })
+    await expect(navigation.getByRole('button', { name: '返回最近文档', exact: true })).toBeDisabled()
+    await navigation.getByRole('link', { name: '标签', exact: true }).tap()
+    await waitForPath(page, '/tag.html')
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    await launcher.tap()
+    await expect(page.locator('.dock-shortcuts')).toBeInViewport({ ratio: 1 })
+    await testInfo.attach('recent-document-mobile-320px', { body: await page.screenshot(), contentType: 'image/png' })
+    await navigation.getByRole('link', { name: '返回最近文档', exact: true }).tap()
+    await waitForPath(page, DOC)
+    await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
+    await expect(launcher).toHaveAttribute('aria-expanded', 'false')
+    await launcher.tap()
     await navigation.getByRole('link', { name: '聚类', exact: true }).tap()
     await waitForPath(page, '/cluster.html')
     await expect(page.locator('.cluster-host canvas').first()).toBeVisible({ timeout: 20000 })
@@ -80,13 +93,26 @@ test.describe('mobile DocPage (Pixel 5)', () => {
     await expect(page.locator('.mobile-category-drawer .el-menu').first()).toBeVisible()
   })
 
-  test('搜索按钮经 EventBus 打开统一 CommandPalette', async ({ page }) => {
+  test('手机从 SiteNavigation 搜索, 可切换目录和全文模式', async ({ page }, testInfo) => {
+    await stubAlgolia(page, { hits: docHitFixture() })
     await goto(page, DOC)
-    await page.waitForSelector('.mobile-bottom-bar')
-    await page.click(".mobile-bottom-bar button[aria-label='打开搜索']")
-    await page.waitForSelector('.command-palette .palette-input')
-    await expect(page.locator('.command-palette')).toHaveCount(1)
-    await expect(page.locator('.command-palette .palette-input')).toBeVisible()
+    await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
+    await page.locator('.navigation-launcher').tap()
+    const navigation = page.getByRole('navigation', { name: '站内导航' })
+    await expect(navigation.getByRole('button', { name: /^搜索/ })).toBeInViewport({ ratio: 1 })
+    await testInfo.attach('mobile-search-navigation', { body: await page.screenshot(), contentType: 'image/png' })
+    await navigation.getByRole('button', { name: /^搜索/ }).tap()
+    const palette = page.locator('.command-palette')
+    const input = palette.locator('.palette-input')
+    await expect(input).toBeVisible()
+    await expect(input).toHaveAttribute('placeholder', '搜索目录(支持拼音)…')
+    await palette.getByRole('button', { name: '全文', exact: true }).tap()
+    await expect(input).toHaveAttribute('placeholder', '全文搜索, 回车立即执行…')
+    await input.fill(SEARCH_KW)
+    await input.press('Enter')
+    await expect(palette.locator('.palette-item.segment').first()).toContainText(`${SEARCH_KW} 片段示例`)
+    await palette.getByRole('button', { name: '目录', exact: true }).tap()
+    await expect(input).toHaveAttribute('placeholder', '搜索目录(支持拼音)…')
   })
 
   // 不硬编码 8 项: 改测不变量 —— 桌面独有的「在VSC打开」缺席(fullOnly 过滤)、核心功能项均在、触屏不显快捷键。

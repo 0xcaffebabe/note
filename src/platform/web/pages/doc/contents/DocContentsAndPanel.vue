@@ -102,16 +102,6 @@ export default defineComponent({
   }
 }
 
-// 大屏宽档: TOC 列加宽(深层标题不再截断); 仅 min-width, 不影响 <=@bp-desktop 的收起态
-@media (min-width: @bp-wide) {
-  .doc-contents-and-panel:not(.collapsed) {
-    width: var(--doc-toc-w);
-  }
-  .contents-panel-container {
-    width: calc(var(--doc-toc-w) - 10px);
-  }
-}
-
 .contents-panel-container {
   transition: all 0.2s;
   position: sticky;
@@ -121,6 +111,16 @@ export default defineComponent({
   overflow: hidden; /* 防止内容溢出 */
   display: flex;
   flex-direction: column;
+}
+
+// 放在基础宽度之后, 让知识图谱和 TOC 随列加宽, 避免超宽屏关联列前出现空带。
+@media (min-width: @bp-wide) {
+  .doc-contents-and-panel:not(.collapsed) {
+    width: var(--doc-toc-w);
+  }
+  .contents-panel-container {
+    width: calc(var(--doc-toc-w) - var(--spacing-sm));
+  }
 }
 
 .toc-wrapper-flex {

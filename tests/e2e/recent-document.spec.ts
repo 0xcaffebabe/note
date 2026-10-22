@@ -1,23 +1,27 @@
-import { test, expect, goto, waitForPath, openNavigationTools, DOC } from './fixtures'
+import { test, expect, goto, waitForPath, DOC } from './fixtures'
 import type { Page } from '@playwright/test'
 
 async function resumeReading(page: Page) {
-  const tools = await openNavigationTools(page)
-  await tools.getByRole('link', { name: '返回最近文档', exact: true }).click()
+  await page.locator('.navigation-launcher').hover()
+  const navigation = page.getByRole('navigation', { name: '站内导航' })
+  await navigation.getByRole('link', { name: '返回最近文档', exact: true }).click()
   await waitForPath(page, DOC)
   await expect(page).toHaveTitle(/ - 知识体系$/)
   await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
-  await expect(tools).toBeHidden()
+  await expect(page.locator('.dock-shortcuts')).toBeHidden()
 }
 
 test.describe('继续阅读', () => {
-  test('阅读及切换文档后可返回最近文档，刷新后仍可继续阅读', async ({ page }) => {
+  test('阅读及切换文档后可返回最近文档，刷新后仍可继续阅读', async ({ page }, testInfo) => {
     await goto(page, DOC)
     await expect(page.locator('#app .main-content .markdown-section')).toBeVisible()
     await expect(page).toHaveTitle(/ - 知识体系$/)
     const documentTitle = await page.title()
     // 直接离开，避免点击页面底部链接时的自动滚动替代“打开即记录”。
     await goto(page, '/tag.html')
+    await page.locator('.navigation-launcher').hover()
+    await expect(page.getByRole('link', { name: '返回最近文档', exact: true })).toBeVisible()
+    await testInfo.attach('recent-document-desktop', { body: await page.screenshot(), contentType: 'image/png' })
     await resumeReading(page)
 
     const otherDocument = page.locator('.doc-prev-next a').first()
@@ -36,8 +40,8 @@ test.describe('继续阅读', () => {
     await waitForPath(page, '/tag.html')
     await page.reload({ waitUntil: 'domcontentloaded' })
     await resumeReading(page)
-    const tools = await openNavigationTools(page)
-    await expect(tools.getByRole('button', { name: '返回最近文档', exact: true })).toBeDisabled()
+    await page.locator('.navigation-launcher').hover()
+    await expect(page.getByRole('navigation', { name: '站内导航' }).getByRole('button', { name: '返回最近文档', exact: true })).toBeDisabled()
   })
 
   test.describe('加载失败后的阅读恢复', () => {

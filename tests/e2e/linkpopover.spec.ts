@@ -235,6 +235,55 @@ test.describe('文档预览卡片', () => {
     await expect(second).toHaveCount(0)
   })
 
+  test('首页和标签页隐藏固定卡片，返回文档后恢复布局和阅读进度', async ({ page }) => {
+    test.setTimeout(120_000)
+    await prepareDocuments(page)
+    const preview = await openFromBody(page, '甲')
+    await preview.getByTitle('固定(点击外部/滚动不再关闭)', { exact: true }).click()
+    await resizeCard(page, preview, 430, 320)
+    await moveCard(page, preview, 40, 450)
+    const scrollTop = await readFurther(page, preview, 240)
+    const box = (await preview.boundingBox())!
+
+    const followNavigation = async (name: '首页' | '标签' | '返回最近文档') => {
+      const launcher = page.locator('.navigation-launcher')
+      await expect(launcher).toHaveCount(1)
+      if (await launcher.getAttribute('aria-expanded') === 'false') {
+        await launcher.focus()
+        await page.keyboard.press('Enter')
+      }
+      await page.getByRole('navigation', { name: '站内导航', exact: true })
+        .getByRole('link', { name, exact: true }).click()
+    }
+    const returnToDocument = async () => {
+      await followNavigation('返回最近文档')
+      await waitForPath(page, DOC)
+      await expect(preview.getByTitle('取消固定', { exact: true })).toHaveAttribute('aria-pressed', 'true')
+      await expectSavedState(preview, box, scrollTop)
+    }
+
+    for (const { name, path } of [
+      { name: '首页', path: '/home.html' },
+      { name: '标签', path: '/tag.html' },
+    ] as const) {
+      // 使用站内导航切换，验证同一个 App 内的预览层卸载与恢复。
+      await followNavigation(name)
+      await waitForPath(page, path)
+      await expect(page.getByRole('dialog', { name: '文档预览', exact: true })).toHaveCount(0)
+      await returnToDocument()
+
+      // 非文档页刷新也不恢复浮窗，重新进入文档页时再恢复。
+      await goto(page, path)
+      await expect(page.locator('.navigation-launcher')).toBeVisible()
+      await expect(page.getByRole('dialog', { name: '文档预览', exact: true })).toHaveCount(0)
+      await returnToDocument()
+    }
+
+    // 直接进入文档页也能恢复固定卡片。
+    await goto(page, DOC)
+    await expectSavedState(preview, box, scrollTop)
+  })
+
   test('相关链接两组均支持 Alt 点击预览，并保留当前正文', async ({ page }) => {
     await prepareDocuments(page)
     const tab = page.locator('#app .related-floating').getByRole('button', { name: '相关链接', exact: true })

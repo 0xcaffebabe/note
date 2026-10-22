@@ -11,7 +11,8 @@
   </el-container>
   <site-navigation v-if="!$route.meta.hasBottomBar" />
   <command-palette ref="commandPalette" />
-  <link-preview-layer />
+  <!-- 文档路由独有 docPath；离开时保存并卸载，返回时恢复固定卡片。 -->
+  <link-preview-layer v-if="$route.params.docPath" />
 </template>
 
 <script lang="ts">

@@ -15,24 +15,32 @@ function documentPaths(categories: Category[]): string[] {
   ])
 }
 
-async function prepareDocuments(page: Page, options: { failFirstPreview?: boolean } = {}) {
+async function prepareDocuments(page: Page, options: { failFirstPreview?: boolean; navigation?: boolean; emptySecond?: boolean } = {}) {
   // 使用真实文档地址，固定网络边界的正文，避免依赖知识内容中恰好有两条内链或足够长的正文。
   const catalog = await page.request.get('/category.json')
   expect(catalog.ok()).toBe(true)
   const paths = [...new Set(documentPaths(await catalog.json()))]
     .filter(path => path !== DOC && !['/README.html', '/SUMMARY.html'].includes(path))
-  const [firstPath, secondPath] = paths
+  const [firstPath, secondPath, relatedPath] = paths
   if (!firstPath || !secondPath) throw new Error('多卡片阅读夹具需要两篇不同的现有文档')
   const firstMarkdown = firstPath.replace(/\.html$/, '.md')
   const secondMarkdown = secondPath.replace(/\.html$/, '.md')
+  const relatedMarkdown = (relatedPath || DOC).replace(/\.html$/, '.md')
   const firstJsonPath = firstPath.replace(/\.html$/, '.md.json')
   let failFirstPreview = !!options.failFirstPreview
   const longContent = (title: string) => [
     '# ' + title,
     '## 继续阅读',
-    ...(title === FIRST_TITLE ? [`[从卡片继续阅读](${secondMarkdown})`] : []),
+    ...(title === FIRST_TITLE && !options.navigation ? [`[从卡片继续阅读](${secondMarkdown})`] : []),
     ...Array.from({ length: 45 }, (_, i) =>
       `第 ${i + 1} 段：每张卡片可以保留自己的阅读位置，以便比较不同文档并继续阅读。`),
+    ...(options.navigation ? [
+      '## 深入阅读',
+      `[从卡片继续阅读](${secondMarkdown})`,
+      ...Array.from({ length: 15 }, () => '后续内容让标题可以定位到当前卡片滚动区域顶部。'),
+      '## 关联内容',
+      `- [${relatedMarkdown}](${relatedMarkdown}) 继续阅读关联主题`,
+    ] : []),
   ].join('\n\n')
   const documents = new Map([
     [DOC.replace(/\.html$/, '.md.json'), {
@@ -42,13 +50,14 @@ async function prepareDocuments(page: Page, options: { failFirstPreview?: boolea
         '## 预览入口',
         `[正文预览甲](${firstMarkdown})`,
         `[正文预览乙](${secondMarkdown})`,
+        ...(options.navigation ? ['## 深入阅读', `[背景引用](${secondMarkdown})`] : []),
         ...Array.from({ length: 28 }, (_, i) => `第 ${i + 1} 段正文，用于比较预览卡片并继续阅读当前文档。`),
         '## 关联内容',
         `- [${firstMarkdown}](${firstMarkdown}) 关联预览入口`,
       ].join('\n\n'),
     }],
     [firstJsonPath, { title: FIRST_TITLE, content: longContent(FIRST_TITLE) }],
-    [secondPath.replace(/\.html$/, '.md.json'), { title: SECOND_TITLE, content: longContent(SECOND_TITLE) }],
+    [secondPath.replace(/\.html$/, '.md.json'), { title: SECOND_TITLE, content: options.emptySecond ? '没有章节和链接的短文。' : longContent(SECOND_TITLE) }],
   ])
   await page.route(url => documents.has(decodeURI(url.pathname)), async route => {
     if (decodeURI(new URL(route.request().url()).pathname) === firstJsonPath && failFirstPreview) {
@@ -60,12 +69,18 @@ async function prepareDocuments(page: Page, options: { failFirstPreview?: boolea
     const document = documents.get(decodeURI(new URL(route.request().url()).pathname))!
     file.name = document.title + '.md'
     file.content = document.content
+    if (options.navigation) {
+      file.commitList = [{ hash: '654abc', date: '2026-10-20T00:00:00Z', message: '预览历史回归记录' }]
+      file.hasMoreCommit = true
+      file.totalCommits = 12
+    }
+    if (options.emptySecond && document.title === SECOND_TITLE) file.commitList = []
     delete file.relatedLinks
     await route.fulfill({ response, json: file })
   })
   await goto(page, DOC)
   await expect(page.locator('#app .main-content .markdown-section').getByRole('heading', { name: MAIN_TITLE })).toBeVisible()
-  return { firstPath, secondPath, allowFirstPreview: () => { failFirstPreview = false } }
+  return { firstPath, secondPath, relatedPath: relatedPath || DOC, allowFirstPreview: () => { failFirstPreview = false } }
 }
 
 function card(page: Page, title: string): Locator {
@@ -128,6 +143,99 @@ async function expectSavedState(preview: Locator, box: NonNullable<Awaited<Retur
 test.describe('文档预览卡片', () => {
   test.use({ serviceWorkers: 'block', colorScheme: 'light' })
   test.setTimeout(60_000)
+
+  test('吸附目录和相关链接只定位当前卡片，底部展示该文档提交历史', async ({ page }) => {
+    const { firstPath, relatedPath } = await prepareDocuments(page, { navigation: true })
+    const first = await openFromBody(page, '甲')
+    await first.getByTitle('固定(点击外部/滚动不再关闭)', { exact: true }).click()
+    await moveCard(page, first, 800, 400)
+    await resizeCard(page, first, 500, 450)
+    const second = await openFromBody(page, '乙')
+    await second.getByTitle('固定(点击外部/滚动不再关闭)', { exact: true }).click()
+    await moveCard(page, second, 24, 100)
+    await moveCard(page, first, 700, 100)
+    const backgroundScroll = await page.evaluate(() => window.scrollY)
+    const backgroundActive = await page.locator('#app .toc .active').getAttribute('href')
+    const tocButton = first.getByRole('button', { name: '本页章节', exact: true })
+    const toc = first.getByRole('region', { name: '本页章节', exact: true })
+    await expect(tocButton).toHaveAttribute('aria-expanded', 'false')
+    await tocButton.hover()
+    await expect(toc).toBeVisible()
+    const headingLink = toc.getByRole('link', { name: '深入阅读', exact: true })
+    await headingLink.click()
+    await expect.poll(() => first.locator('.popover-body').evaluate(el => el.scrollTop)).toBeGreaterThan(500)
+    await expect(headingLink).toHaveClass(/active/)
+    await expect.poll(() => toc.locator('.toc-progress-bar').evaluate(el => parseFloat((el as HTMLElement).style.width))).toBeGreaterThan(50)
+    await expect(second.locator('.popover-body')).toHaveJSProperty('scrollTop', 0)
+    expect(await page.evaluate(() => window.scrollY)).toBe(backgroundScroll)
+    expect(await page.locator('#app .toc .active').getAttribute('href')).toBe(backgroundActive)
+    await first.screenshot({ path: 'test-results/preview-navigation-light.png' })
+    await first.locator('.popover-title').hover()
+    await expect(toc).toBeHidden()
+
+    // 从卡片内回到开头，再用“其他链接”定位同一份预览中的引用。
+    await tocButton.focus()
+    await expect(toc).toBeVisible()
+    await toc.getByRole('link', { name: FIRST_TITLE, exact: true }).click()
+    await expect.poll(() => first.locator('.popover-body').evaluate(el => el.scrollTop)).toBeLessThan(300)
+    const relatedButton = first.getByRole('button', { name: '相关链接', exact: true })
+    await relatedButton.hover()
+    const related = first.getByRole('region', { name: '相关链接', exact: true })
+    await expect(related).toBeVisible()
+    await first.screenshot({ path: 'test-results/preview-related-light.png' })
+    await related.getByRole('link', { name: /从卡片继续阅读/ }).click()
+    await expect(first.locator('.preview-markdown').getByRole('link', { name: '从卡片继续阅读' })).toBeInViewport({ ratio: 1 })
+    expect(await page.evaluate(() => window.scrollY)).toBe(backgroundScroll)
+    await expect(second.locator('.popover-body')).toHaveJSProperty('scrollTop', 0)
+    expect(pathnameOf(page)).toBe(DOC)
+    await first.locator('.popover-title').hover()
+    await relatedButton.focus()
+    await expect(related).toBeVisible()
+    await first.getByRole('button', { name: '调整预览大小' }).focus()
+    await expect(related).toBeHidden()
+
+    const history = first.getByRole('contentinfo', { name: '提交历史' })
+    await history.getByRole('link', { name: '预览历史回归记录' }).scrollIntoViewIfNeeded()
+    await expect(history).toBeInViewport()
+    await expect(history.getByRole('link', { name: '预览历史回归记录' })).toHaveAttribute('href', /\/commit\/654abc$/)
+    expect(await history.getByRole('link', { name: '全部历史(12条)' }).getAttribute('href'))
+      .toBe('https://github.com/0xcaffebabe/note/tree/master/doc' + firstPath.replace(/\.html$/, '.md'))
+    await first.screenshot({ path: 'test-results/preview-history-light.png' })
+    await relatedButton.click()
+    await related.getByRole('link', { name: /继续阅读关联主题/ }).click()
+    await waitForPath(page, relatedPath)
+  })
+
+  test('暗色窄卡片的导航保持在边界内', async ({ page }) => {
+    await prepareDocuments(page, { navigation: true })
+    const first = await openFromBody(page, '甲')
+    await first.getByTitle('固定(点击外部/滚动不再关闭)', { exact: true }).click()
+    await moveCard(page, first, 24, 100)
+    await resizeCard(page, first, 280, 300)
+    const tools = await openNavigationTools(page)
+    await tools.locator('.theme-row .el-switch').click()
+    await expect(page.locator('html')).toHaveClass(/dark/)
+    await page.setViewportSize({ width: 390, height: 700 })
+    await first.getByRole('button', { name: '本页章节', exact: true }).focus()
+    const toc = first.getByRole('region', { name: '本页章节', exact: true })
+    await expect(toc).toBeVisible()
+    const cardBox = (await first.boundingBox())!
+    const panelBox = (await toc.boundingBox())!
+    expect(panelBox.x).toBeGreaterThanOrEqual(cardBox.x)
+    expect(panelBox.x + panelBox.width).toBeLessThanOrEqual(cardBox.x + cardBox.width)
+    expect(panelBox.y + panelBox.height).toBeLessThanOrEqual(cardBox.y + cardBox.height)
+    await first.screenshot({ path: 'test-results/preview-navigation-dark-narrow.png' })
+  })
+
+  test('没有章节、链接和提交记录时显示历史空态', async ({ page }) => {
+    await prepareDocuments(page, { emptySecond: true })
+    await page.locator('#app .main-content .markdown-section')
+      .getByRole('link', { name: '正文预览乙', exact: true }).click({ modifiers: ['Alt'] })
+    const second = card(page, SECOND_TITLE)
+    await expect(second.locator('.preview-markdown')).toContainText('没有章节和链接的短文。')
+    await expect(second.locator('.preview-nav')).toHaveCount(0)
+    await expect(second.getByRole('contentinfo', { name: '提交历史' })).toContainText('暂无提交历史')
+  })
 
   test('目录预览与正文 Alt 点击共用卡片，多张固定后可独立置前和关闭', async ({ page }) => {
     await prepareDocuments(page)

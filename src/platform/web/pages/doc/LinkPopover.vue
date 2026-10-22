@@ -39,25 +39,70 @@
           </button>
         </div>
       </div>
-      <div
-        ref="body"
-        class="popover-body"
-        @scroll.passive="rememberScroll"
-        @wheel.passive="cancelScrollRestore"
-        @touchmove.passive="cancelScrollRestore"
-        @pointerdown="cancelScrollRestore"
-        @load.capture="restoreScroll"
-      >
-        <category-item-content
-          :category-link="docLink"
-          ref="categoryItemContent"
-        />
-        <el-skeleton v-if="loading" :rows="6" animated class="preview-skeleton" />
-        <div v-else-if="loadError" role="status" class="preview-error">
-          <p>文档预览加载失败</p>
-          <button type="button" class="retry-btn" @click="initDoc">重试</button>
+      <div class="popover-content">
+        <div
+          ref="body"
+          class="popover-body"
+          @scroll.passive="rememberScroll"
+          @wheel.passive="cancelScrollRestore"
+          @touchmove.passive="cancelScrollRestore"
+          @pointerdown="cancelScrollRestore"
+          @load.capture="restoreScroll"
+        >
+          <category-item-content
+            :category-link="docLink"
+            ref="categoryItemContent"
+          />
+          <el-skeleton v-if="loading" :rows="6" animated class="preview-skeleton" />
+          <div v-else-if="loadError" role="status" class="preview-error">
+            <p>文档预览加载失败</p>
+            <button type="button" class="retry-btn" @click="initDoc">重试</button>
+          </div>
+          <template v-else>
+            <div class="markdown-section preview-markdown" ref="previewSection" v-html="contentHtml" draggable="false" @click="onPreviewClick"></div>
+            <footer class="preview-history" aria-label="提交历史">
+              <history-list v-if="file.commitList.length" :file="file" :doc="docId" />
+              <p v-else>暂无提交历史</p>
+            </footer>
+          </template>
         </div>
-        <div v-else class="markdown-section preview-markdown" ref="previewSection" v-html="contentHtml" draggable="false" @click="onPreviewClick"></div>
+        <aside
+          v-if="ready && (contents.length || relatedLinks.length || docLinks.length)"
+          class="preview-nav"
+          aria-label="预览导航"
+          @mouseleave="activeNavigation = ''"
+          @focusout="onNavigationFocusOut"
+        >
+          <div class="preview-nav-tabs">
+            <button
+              v-if="contents.length"
+              type="button"
+              class="preview-nav-tab"
+              aria-label="本页章节"
+              :aria-expanded="activeNavigation === 'toc'"
+              @mouseenter="activeNavigation = 'toc'"
+              @focus="activeNavigation = 'toc'"
+              @click="activeNavigation = 'toc'"
+            ><el-icon><Tickets /></el-icon></button>
+            <button
+              v-if="relatedLinks.length || docLinks.length"
+              type="button"
+              class="preview-nav-tab"
+              aria-label="相关链接"
+              :aria-expanded="activeNavigation === 'related'"
+              @mouseenter="activeNavigation = 'related'"
+              @focus="activeNavigation = 'related'"
+              @click="activeNavigation = 'related'"
+            ><el-icon><Connection /></el-icon></button>
+          </div>
+          <section v-if="contents.length" v-show="activeNavigation === 'toc'" class="preview-nav-panel" aria-label="本页章节">
+            <div class="preview-nav-heading">本页章节</div>
+            <contents-list :doc="docId" :contents="contents" :content-root="previewRoot!" :scroll-container="previewScrollRoot!" mode="drawer" @item-click="scrollToHeading" />
+          </section>
+          <div v-if="relatedLinks.length || docLinks.length" v-show="activeNavigation === 'related'" class="preview-nav-panel">
+            <related-content inline :related="relatedLinks" :doc-links="docLinks" :content-root="previewRoot!" :scroll-container="previewScrollRoot!" @navigate="hide" />
+          </div>
+        </aside>
       </div>
       <button
         type="button"
@@ -75,7 +120,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { Close, Minus, Place, TopRight } from "@element-plus/icons-vue";
+import { Close, Connection, Minus, Place, Tickets, TopRight } from "@element-plus/icons-vue";
 import CategoryItemContent from "./category/CategoryItemContent.vue";
 import DocFileInfo from "@/core/domain/DocFileInfo";
 import DocUtils from "@/core/util/DocUtils";
@@ -85,6 +130,11 @@ import { showLinkPreview } from "./LinkPreview";
 import DocPostRender from "@/platform/web/render/DocPostRender";
 import MermaidUtils from "@/platform/web/util/MermaidUtils";
 import MermaidShower from "./mermaid-shower/MermaidShower.vue";
+import ContentsList from "./contents/ContentsList.vue";
+import RelatedContent from "./RelatedContent.vue";
+import HistoryList from "./commit/HistoryList.vue";
+import Content from "@/core/domain/Content";
+import { RelatedLink } from "@/core/domain/RelatedLink";
 
 export default defineComponent({
   components: {
@@ -94,6 +144,11 @@ export default defineComponent({
     TopRight,
     CategoryItemContent,
     MermaidShower,
+    ContentsList,
+    RelatedContent,
+    HistoryList,
+    Tickets,
+    Connection,
   },
   props: {
     docId: { type: String, required: true },
@@ -122,6 +177,9 @@ export default defineComponent({
       stopInteraction: null as (() => void) | null,
       scrollTimer: undefined as ReturnType<typeof setTimeout> | undefined,
       pendingScrollTop: null as number | null,
+      activeNavigation: '' as '' | 'toc' | 'related',
+      previewRoot: null as HTMLElement | null,
+      previewScrollRoot: null as HTMLElement | null,
     };
   },
   computed: {
@@ -133,11 +191,21 @@ export default defineComponent({
     },
     docTitle(): string {
       return this.file?.name?.replace(/\.md$/i, '') || '文档预览';
-    }
+    },
+    contents(): Content[] {
+      return this.$services.docService.getContent(this.contentHtml);
+    },
+    relatedLinks(): RelatedLink[] {
+      return this.file.relatedLinks || [];
+    },
+    docLinks(): RelatedLink[] {
+      return this.$services.docService.resolveDocLinks(this.contentHtml, this.docId, this.relatedLinks.map(link => link.href));
+    },
   },
   watch: {
     minimized(value: boolean) {
       if (value) {
+        this.activeNavigation = '';
         this.stopInteraction?.();
         // watcher 在 DOM 隐藏前保存阅读位置，保持卡片及异步内容挂载。
         this.rememberLayout(false);
@@ -191,6 +259,7 @@ export default defineComponent({
       this.loading = true;
       this.loadError = false;
       this.ready = false;
+      this.activeNavigation = '';
       try {
         const [file] = await Promise.all([
           this.$services.docService.getDocFileInfo(this.docId),
@@ -214,9 +283,29 @@ export default defineComponent({
       this.restoreScroll();
       // 图片、Mermaid 等异步内容增高后继续恢复，用户开始操作时停止。
       this.resizeObserver?.observe(previewSection);
+      this.previewRoot = previewSection;
+      this.previewScrollRoot = this.$refs.body as HTMLElement;
       this.ready = true;
       // 加载时固定/切到后台可能先保存了骨架屏尺寸，正文就绪后补记自动展开的大小。
       if (!this.layout || !this.hasCustomSize) this.rememberLayout();
+    },
+    onNavigationFocusOut(e: FocusEvent) {
+      const navigation = e.currentTarget as HTMLElement;
+      // 鼠标切换面板会隐藏旧面板中已聚焦的链接，此时仍停留在导航内。
+      if (!navigation.contains(e.relatedTarget as Node | null) && !navigation.matches(':hover')) {
+        this.activeNavigation = '';
+      }
+    },
+    scrollToHeading(id: string) {
+      const heading = Array.from(this.previewRoot?.querySelectorAll<HTMLElement>('h1, h2, h3, h4, h5, h6') || [])
+        .find(element => element.id === id);
+      const body = this.previewScrollRoot;
+      if (!heading || !body) return;
+      this.cancelScrollRestore();
+      body.scrollTo({
+        top: body.scrollTop + heading.getBoundingClientRect().top - body.getBoundingClientRect().top,
+        behavior: 'smooth',
+      });
     },
     onPreviewClick(e: MouseEvent) {
       const link = (e.target as Element).closest('a[origin-link]');
@@ -502,17 +591,111 @@ export default defineComponent({
   }
 }
 
-.popover-body {
-  padding: 10px 12px;
+.popover-content {
+  position: relative;
+  container-type: inline-size;
+  display: flex;
   flex: 1;
   min-height: 0;
   max-height: min(600px, 70vh);
+  overflow: hidden;
+}
+
+.popover-body {
+  padding: var(--spacing-sm) var(--spacing-xl) var(--spacing-md) var(--spacing-sm);
+  flex: 1;
+  min-width: 0;
   overflow-y: auto;
+  // 位置由恢复逻辑管理，避免正文替换骨架屏后浏览器再次按底部历史调整滚动。
+  overflow-anchor: none;
   cursor: default;
 }
 
-.has-custom-size .popover-body {
+.has-custom-size .popover-content {
   max-height: none;
+}
+
+.preview-history {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  color: var(--secondary-text-color);
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+// 导航吸附在卡片右缘，展开面板覆盖正文，不挤压阅读列；离开或移出焦点后收起。
+.preview-nav {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: 0;
+  bottom: var(--spacing-lg);
+  width: var(--spacing-xl);
+}
+
+.preview-nav-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.preview-nav-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--spacing-xl);
+  height: var(--spacing-xl);
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-right: 0;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  background: var(--elevated-bg-color);
+  color: var(--secondary-text-color);
+  cursor: pointer;
+
+  &:hover, &[aria-expanded='true'] {
+    color: var(--primary-color);
+    background: var(--hover-bg-color);
+  }
+}
+
+.preview-nav-panel {
+  position: absolute;
+  top: 0;
+  right: 100%;
+  bottom: 0;
+  width: min(var(--doc-related-w), calc(100cqw - var(--spacing-2xl)));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--elevated-bg-color);
+  box-shadow: var(--shadow-md);
+
+  :deep(.toc-container) {
+    min-width: 0;
+    min-height: 0;
+  }
+
+  :deep(.related-inline), :deep(.rf-panel) {
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+  }
+
+  :deep(.rf-panel) {
+    box-sizing: border-box;
+    border: 0;
+  }
+}
+
+.preview-nav-heading {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--divider-color);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--main-text-color);
 }
 
 .resize-handle {

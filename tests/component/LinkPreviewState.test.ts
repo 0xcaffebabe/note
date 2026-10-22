@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { readLinkPreviewState, saveLinkPreviewState, readPinnedLinkPreviews, savePinnedLinkPreviews } from '@/platform/web/pages/doc/LinkPreviewState'
+import { readLinkPreviewState, saveLinkPreviewState, readPinnedLinkPreviews, savePinnedLinkPreviews, readRestorableLinkPreviews, saveRestorableLinkPreviews } from '@/platform/web/pages/doc/LinkPreviewState'
 
 const first = { left: 120, top: 80, width: 400, height: 560, scrollTop: 230 }
 const second = { left: 650, top: 110, width: 480, height: 420, scrollTop: 65 }
@@ -92,6 +92,88 @@ describe('LinkPopover 文档状态持久化', () => {
     const restored = readLinkPreviewState('blocked-doc')!
     restored.scrollTop = 999
     expect(readLinkPreviewState('blocked-doc')).toEqual(first)
+  })
+})
+
+describe('LinkPopover 固定及隐藏状态恢复列表', () => {
+  const key = 'link-preview:restorable-documents'
+  const visible = { docId: 'java-集合', pinned: true, minimized: false }
+  const hidden = { docId: 'os-内存', pinned: false, minimized: true }
+
+  beforeEach(() => {
+    savePinnedLinkPreviews([])
+    saveRestorableLinkPreviews([])
+  })
+
+  it('保存部分隐藏、固定状态和层叠顺序，跳过显示中的临时卡片', () => {
+    saveRestorableLinkPreviews([hidden, visible, { docId: 'temp', pinned: false, minimized: false }])
+    expect(readRestorableLinkPreviews()).toEqual([hidden, visible])
+    expect(JSON.parse(localStorage.getItem(key)!)).toEqual([hidden, visible])
+    saveRestorableLinkPreviews([visible, { ...hidden, pinned: true }])
+    expect(readRestorableLinkPreviews()).toEqual([visible, { ...hidden, pinned: true }])
+  })
+
+  it('全部隐藏可以恢复，显示临时卡片或关闭后删除对应记录', () => {
+    saveRestorableLinkPreviews([{ ...visible, minimized: true }, hidden])
+    expect(readRestorableLinkPreviews()).toEqual([{ ...visible, minimized: true }, hidden])
+    saveRestorableLinkPreviews([visible, { ...hidden, minimized: false }])
+    expect(readRestorableLinkPreviews()).toEqual([visible])
+    saveRestorableLinkPreviews([])
+    expect(readRestorableLinkPreviews()).toEqual([])
+  })
+
+  it('首次升级迁移原固定列表，清空后的新记录不重新读取旧卡片', () => {
+    savePinnedLinkPreviews(['java-集合', 'os-内存'])
+    localStorage.removeItem(key)
+    expect(readRestorableLinkPreviews()).toEqual([visible, { ...hidden, pinned: true, minimized: false }])
+    saveRestorableLinkPreviews([])
+    expect(readRestorableLinkPreviews()).toEqual([])
+  })
+
+  it.each(['{broken', 'null', '{}', '"doc"'])('损坏的新记录返回空列表: %s', raw => {
+    savePinnedLinkPreviews(['java-集合'])
+    localStorage.setItem(key, raw)
+    expect(readRestorableLinkPreviews()).toEqual([])
+  })
+
+  it('过滤无效条目和重复身份，不接受非布尔状态', () => {
+    localStorage.setItem(key, JSON.stringify([
+      null, [], 12, {}, { ...visible, docId: '/invalid' },
+      { ...visible, pinned: 'true' }, { ...hidden, minimized: 1 },
+      visible, { ...visible, minimized: true }, hidden,
+    ]))
+    expect(readRestorableLinkPreviews()).toEqual([visible, hidden])
+    saveRestorableLinkPreviews(null as unknown as typeof visible[])
+    expect(readRestorableLinkPreviews()).toEqual([visible, hidden])
+  })
+
+  it('配额耗尽时保留独立的会话快照，恢复存储后能保存及清空', () => {
+    saveRestorableLinkPreviews([visible])
+    const setter = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Storage full', 'QuotaExceededError')
+    })
+    const cards = [{ ...hidden }]
+    saveRestorableLinkPreviews(cards)
+    cards[0].minimized = false
+    const restored = readRestorableLinkPreviews()
+    restored[0].docId = 'changed'
+    expect(readRestorableLinkPreviews()).toEqual([hidden])
+    expect(JSON.parse(localStorage.getItem(key)!)).toEqual([visible])
+    setter.mockRestore()
+    saveRestorableLinkPreviews([])
+    expect(readRestorableLinkPreviews()).toEqual([])
+  })
+
+  it('完全禁用存储时仍可保存并恢复隐藏状态', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('Access denied', 'SecurityError')
+    })
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Access denied', 'SecurityError')
+    })
+    expect(() => saveRestorableLinkPreviews([hidden])).not.toThrow()
+    expect(readRestorableLinkPreviews()).toEqual([hidden])
+    saveRestorableLinkPreviews([])
   })
 })
 

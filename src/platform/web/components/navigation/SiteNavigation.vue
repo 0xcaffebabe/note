@@ -20,7 +20,7 @@
           </button>
           <el-popover v-model:visible="menuOpen" trigger="click" role="dialog" aria-label="站点导航与工具" placement="top-end" :popper-options="popperOptions" :width="280" popper-class="site-navigation-popover" @after-enter="focusMenu" @after-leave="restoreLauncherFocus">
             <template #reference>
-              <button type="button" class="more-btn dock-action" title="更多工具" aria-label="站点导航与工具">
+              <button type="button" class="more-btn dock-action" title="更多工具" aria-label="站点导航与工具" data-link-preview-control>
                 <el-icon><MoreFilled /></el-icon>
               </button>
             </template>
@@ -31,6 +31,7 @@
                 <button type="button" @click="toggleFullScreen"><el-icon><FullScreen /></el-icon>{{ fullscreen ? '退出全屏' : '全屏' }}</button>
                 <button type="button" @click="enterZenMode"><el-icon><Aim /></el-icon>专注模式</button>
                 <button v-if="positioned" type="button" @click="resetDockPosition"><el-icon><RefreshLeft /></el-icon>恢复默认位置</button>
+                <button v-if="linkPreviewCounts.visible" type="button" data-link-preview-control @click.stop="minimizePreviews"><el-icon><Hide /></el-icon>隐藏所有预览</button>
               </div>
               <slot name="document-tools" :close="closeDocumentTools" />
               <div class="panel-links">
@@ -41,9 +42,20 @@
           </el-popover>
         </div>
       </transition>
-      <button ref="launcher" type="button" class="navigation-launcher dock-action" :title="(expanded ? '收起站点导航' : '展开站点导航') + '（可拖动）'" :aria-label="expanded ? '收起站点导航' : '展开站点导航'" aria-description="拖动可调整位置，更多工具中可恢复默认位置" :aria-expanded="expanded" aria-controls="site-navigation-shortcuts" @pointerdown="start" @pointermove="move" @pointerup="handlePointerUp" @pointercancel="cancelPointer" @lostpointercapture="lostCapture" @contextmenu.prevent @click="toggleNavigation">
-        <el-icon><ArrowRightBold v-if="expanded" /><Menu v-else /></el-icon>
-      </button>
+      <div class="navigation-handle" data-link-preview-control>
+        <button ref="launcher" type="button" class="navigation-launcher dock-action" :title="(expanded ? '收起站点导航' : '展开站点导航') + '（可拖动）'" :aria-label="expanded ? '收起站点导航' : '展开站点导航'" aria-description="拖动可调整位置，更多工具中可恢复默认位置" :aria-expanded="expanded" aria-controls="site-navigation-shortcuts" @pointerdown="start" @pointermove="move" @pointerup="handlePointerUp" @pointercancel="cancelPointer" @lostpointercapture="lostCapture" @contextmenu.prevent @click="toggleNavigation">
+          <el-icon><ArrowRightBold v-if="expanded" /><Menu v-else /></el-icon>
+        </button>
+        <button
+          v-if="linkPreviewCounts.hidden"
+          ref="restorePreviewsButton"
+          type="button"
+          class="preview-restore"
+          :aria-label="`恢复全部 ${linkPreviewCounts.hidden} 个隐藏预览`"
+          :title="`恢复全部 ${linkPreviewCounts.hidden} 个隐藏预览`"
+          @click.stop="restorePreviews"
+        >{{ linkPreviewCounts.hidden }}</button>
+      </div>
     </nav>
   </div>
 </template>
@@ -51,7 +63,7 @@
 <script setup lang="ts">
 import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { Aim, ArrowRightBold, CollectionTag, FullScreen, HomeFilled, Menu, MoreFilled, Reading, RefreshLeft, Search, Share, TopRight } from '@element-plus/icons-vue';
+import { Aim, ArrowRightBold, CollectionTag, FullScreen, Hide, HomeFilled, Menu, MoreFilled, Reading, RefreshLeft, Search, Share, TopRight } from '@element-plus/icons-vue';
 import config from '@/core/config/config';
 import DocUtils from '@/core/util/DocUtils';
 import { useServices } from '@/platform/web/app/useServices';
@@ -60,6 +72,7 @@ import { exitFullScreen, isFullScreen, requestFullScreen } from '@/adapters/brow
 import EventBus from '@/platform/web/components/EventBus';
 import ThemeSwitcher from '../header/ThemeSwitcher.vue';
 import { useDraggableNavigation } from './useDraggableNavigation';
+import { linkPreviewCounts } from '@/platform/web/pages/doc/LinkPreview';
 
 defineProps<{ embedded?: boolean; withBottomBar?: boolean }>();
 const route = useRoute();
@@ -74,6 +87,7 @@ const fullscreen = ref(false);
 const message = ref('');
 const dock = ref<HTMLElement>();
 const launcher = ref<HTMLButtonElement>();
+const restorePreviewsButton = ref<HTMLButtonElement>();
 const panel = ref<HTMLElement>();
 const shortcuts = ref<HTMLElement>();
 const dragBounds = ref<HTMLElement>();
@@ -100,6 +114,20 @@ function collapse() {
 function closeDocumentTools() {
   collapse();
   launcher.value?.focus({ preventScroll: true });
+}
+
+function minimizePreviews() {
+  collapse();
+  EventBus.emit('minimize-link-previews', null);
+}
+
+function restorePreviews() {
+  collapse();
+  EventBus.emit('restore-link-previews', null);
+}
+
+function focusPreviewRestore() {
+  restorePreviewsButton.value?.focus({ preventScroll: true });
 }
 
 function search(mode?: 'category' | 'fulltext') {
@@ -219,11 +247,13 @@ watch(menuOpen, (visible) => {
   }
 });
 onMounted(() => {
+  EventBus.on('focus-link-preview-restore', focusPreviewRestore);
   syncFullScreen();
   document.addEventListener('fullscreenchange', syncFullScreen);
   document.addEventListener('pointerdown', handleOutside);
 });
 onBeforeUnmount(() => {
+  EventBus.off('focus-link-preview-restore', focusPreviewRestore);
   cancelCollapse();
   document.removeEventListener('fullscreenchange', syncFullScreen);
   document.removeEventListener('pointerdown', handleOutside);
@@ -279,7 +309,26 @@ onBeforeUnmount(() => {
   &.expanded { gap: var(--spacing-xs); }
 }
 
+.navigation-handle { position: relative; flex-shrink: 0; }
 .navigation-launcher { touch-action: none; user-select: none; -webkit-touch-callout: none; }
+.preview-restore {
+  position: absolute;
+  top: calc(-1 * var(--spacing-xs));
+  right: calc(-1 * var(--spacing-xs));
+  min-width: var(--spacing-lg);
+  height: var(--spacing-lg);
+  padding: 0 var(--spacing-xs);
+  border: 1px solid var(--elevated-bg-color);
+  border-radius: var(--radius-xl);
+  background: var(--primary-color);
+  color: var(--el-color-white);
+  font: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover { background: var(--el-color-primary-dark-2); }
+}
 .navigation-launcher .el-icon { pointer-events: none; }
 .is-positioned .navigation-launcher { cursor: grab; }
 .is-dragging .navigation-launcher { cursor: grabbing; }

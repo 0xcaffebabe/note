@@ -7,7 +7,7 @@
       class="popover"
       :class="{ 'has-custom-size': hasCustomSize }"
       :style="{ zIndex: `calc(var(--z-popup) + ${stackOrder})` }"
-      v-show="visible"
+      v-show="visible && !minimized"
       role="dialog"
       aria-label="文档预览"
       tabindex="-1"
@@ -30,6 +30,9 @@
           </button>
           <button type="button" class="action-btn" title="打开该文档" @click="openDoc">
             <el-icon><top-right /></el-icon>
+          </button>
+          <button type="button" class="action-btn" title="隐藏预览" aria-label="隐藏预览" @click.stop="$emit('minimize')">
+            <el-icon><minus /></el-icon>
           </button>
           <button type="button" class="action-btn" title="关闭 (Esc)" aria-label="关闭预览" @click="hide0">
             <el-icon><close /></el-icon>
@@ -72,7 +75,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { Close, Place, TopRight } from "@element-plus/icons-vue";
+import { Close, Minus, Place, TopRight } from "@element-plus/icons-vue";
 import CategoryItemContent from "./category/CategoryItemContent.vue";
 import DocFileInfo from "@/core/domain/DocFileInfo";
 import DocUtils from "@/core/util/DocUtils";
@@ -86,6 +89,7 @@ import MermaidShower from "./mermaid-shower/MermaidShower.vue";
 export default defineComponent({
   components: {
     Close,
+    Minus,
     Place,
     TopRight,
     CategoryItemContent,
@@ -98,8 +102,9 @@ export default defineComponent({
     y: { type: Number, required: true },
     stackOrder: { type: Number, default: 0 },
     pinned: { type: Boolean, default: false },
+    minimized: { type: Boolean, default: false },
   },
-  emits: ['activate', 'close', 'pin-change'],
+  emits: ['activate', 'close', 'pin-change', 'minimize'],
   data() {
     return {
       visible: false,
@@ -130,6 +135,24 @@ export default defineComponent({
       return this.file?.name?.replace(/\.md$/i, '') || '文档预览';
     }
   },
+  watch: {
+    minimized(value: boolean) {
+      if (value) {
+        this.stopInteraction?.();
+        // watcher 在 DOM 隐藏前保存阅读位置，保持卡片及异步内容挂载。
+        this.rememberLayout(false);
+        clearTimeout(this.scrollTimer);
+        this.armed = false;
+      } else {
+        this.pendingScrollTop ??= this.layout?.scrollTop ?? 0;
+        this.$nextTick(() => {
+          this.clampToViewport();
+          this.restoreScroll();
+          this.armed = true;
+        });
+      }
+    },
+  },
   methods: {
     togglePin() {
       this.rememberLayout(false);
@@ -148,7 +171,7 @@ export default defineComponent({
       // 渲染出尺寸后夹紧到视口内 贴边右键不再溢出
       this.$nextTick(() => {
         this.clampToViewport();
-        this.armed = true;
+        this.armed = !this.minimized;
       });
       this.initDoc();
     },
@@ -156,7 +179,7 @@ export default defineComponent({
       (this.$refs.popover as HTMLElement).focus({ preventScroll: true });
     },
     clampToViewport() {
-      if (!this.visible) {
+      if (!this.visible || this.minimized) {
         return;
       }
       // offset*取布局尺寸 不受enter动画scale影响(getBoundingClientRect会量到缩放中的尺寸)
@@ -220,6 +243,8 @@ export default defineComponent({
     rememberLayout(updateGeometry = true) {
       if (!this.visible) return;
       const el = this.$refs.popover as HTMLElement;
+      // 已收起的卡片没有布局尺寸，不能覆盖此前保存的布局与阅读位置。
+      if (!el.offsetWidth || !el.offsetHeight) return;
       // 只有用户拖动/缩放才更新布局偏好；窗口变小造成的夹紧不覆盖原布局。
       const geometry = !updateGeometry && this.layout ? this.layout : {
         left: el.offsetLeft, top: el.offsetTop,
@@ -232,12 +257,12 @@ export default defineComponent({
       saveLinkPreviewState(this.docId, this.layout);
     },
     rememberScroll() {
-      if (!this.ready || this.pendingScrollTop !== null) return;
+      if (!this.ready || this.minimized || this.pendingScrollTop !== null) return;
       clearTimeout(this.scrollTimer);
       this.scrollTimer = setTimeout(() => this.rememberLayout(false), 100);
     },
     restoreScroll() {
-      if (this.pendingScrollTop === null || !this.visible) return;
+      if (this.pendingScrollTop === null || !this.visible || this.minimized) return;
       const body = this.$refs.body as HTMLElement;
       body.scrollTop = this.pendingScrollTop;
       if (Math.abs(body.scrollTop - this.pendingScrollTop) < 1) this.pendingScrollTop = null;
@@ -328,7 +353,7 @@ export default defineComponent({
       this.hide0();
     },
     hide() {
-      if (this.pin || this.showingMermaid) {
+      if (this.pin || this.showingMermaid || this.minimized) {
         return
       }
       this.hide0()
@@ -341,7 +366,11 @@ export default defineComponent({
     },
     /* ---- 标准浮层消失行为(固定时点击/滚动豁免，Esc 优先关闭图表查看器) ---- */
     onOutsidePointer(e: Event) {
-      if (!this.visible || !this.armed) {
+      if (!this.visible || this.minimized || !this.armed) {
+        return;
+      }
+      // 导航中的预览入口需要保留临时卡片，才能在菜单中一键收起全部。
+      if (e.composedPath().some(target => target instanceof HTMLElement && target.hasAttribute('data-link-preview-control'))) {
         return;
       }
       const root = this.$refs.popover as HTMLElement;
@@ -351,12 +380,11 @@ export default defineComponent({
       }
     },
     onScrollCapture(e: Event) {
-      if (!this.visible) {
+      if (!this.visible || this.minimized) {
         return;
       }
-      // 浮窗内部滚动(预览正文)不关闭
-      const root = this.$refs.popover as HTMLElement;
-      if (root.contains(e.target as Node)) {
+      // 卡片内部滚动（包括恢复阅读位置）不能关闭其他已恢复的临时卡片。
+      if (e.target instanceof Element && e.target.closest('.popover')) {
         return;
       }
       this.hide();

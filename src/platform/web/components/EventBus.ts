@@ -2,5 +2,6 @@
 import { EventEmitter } from '@/core/util/EventEmitter'
 
 export type EventType = 'enter-zen-mode' | 'show-mobile-search' | 'show-site-search' | 'show-link-preview'
+  | 'minimize-link-previews' | 'restore-link-previews' | 'focus-link-preview-restore'
 
 export default new EventEmitter<EventType>()

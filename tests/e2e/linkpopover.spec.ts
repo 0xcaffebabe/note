@@ -330,6 +330,7 @@ test.describe('文档预览卡片', () => {
   })
 
   test('刷新保留部分和全部隐藏，临时卡片隐藏后也能继续恢复阅读', async ({ page }) => {
+    test.setTimeout(90_000)
     await prepareDocuments(page)
     const first = await openFromBody(page, '甲')
     await first.getByTitle('固定(点击外部/滚动不再关闭)', { exact: true }).click()

@@ -44,6 +44,7 @@
 - `--reading-measure: 820px`（正文阅读列宽）、`--content-max: 860px`（文档主区）、`--home-max: 1080px`（落地页/工具页内容中线）。
 - **大屏 wide 档（`@bp-wide` 换值）**：`--reading-measure→880` · `--content-max→920` · `--home-max→1320` · `--content-pad→clamp(32,4vw,48)` · `--card-pad: lg→xl`。大屏专用令牌：`--doc-shell-max: 1680`（文档三栏居中外壳上限；ultra 档 `@bp-ultra` 加宽到 2080 容纳第4列，正文 `--reading-measure→1080` / `--content-max→1120`）、`--home-max-wide: 1480`（首页图表区独享更宽上限，负 margin 破出文字块、同轴居中，不用 transform 以免成 echarts 浮层包含块）、`--chart-h: 360→clamp(360,34vh,480)`（图表卡高度，floor=360 保证 ≤当前不缩）、`--doc-aside-w: 280→320` / `--doc-toc-w: 300→340`（侧栏/TOC 列宽；ultra 档 TOC→360 并多出 `--doc-related-w:280` 第4列）。
 - **大屏文档关联内容（只在超宽才常驻）**：`RelatedContent` 有 `inline` prop（静态常驻面板）。**仅 ultra 档 `≥2040`** 把 related 独立成**右侧第4列**（`<aside class="doc-related-column">` in DocPage，sticky；`--doc-related-w:280`，壳 `--doc-shell-max→2080`，TOC `--doc-toc-w→360`）。关联列标题与分类路径分行，长标题和描述允许换行，将更多横向空间留给正文。**`<2040`（含 ≤1920）一律为右缘悬浮标签**（collapsed，hover/tap 展开）——不在右列常驻（曾试过 inline 堆在 TOC 下方，遮挡/占位感强，已移除：关联链接被 DocService 从正文剥离，故悬浮标签是它在非超宽屏的唯一入口，不能整体删）。文档工具统一由正文中的 `SiteNavigation` 提供，不再单独定位悬浮工具栏。
+- **大屏右侧面板间距**：知识图谱与 TOC 的内部容器跟随 `--doc-toc-w` 加宽，列尾仅保留 `--spacing-sm`；与关联面板自身的 `--spacing-md` 内边距合计为 24px，避免外列加宽而内层仍固定 290px 形成空带。
 
 ### 圆角
 `--radius-sm 4` · `md 6` · `lg 8` · `xl 16`。卡片用 `xl`；小控件用 `md`；纯胶囊用 `999px`。

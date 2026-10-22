@@ -24,7 +24,7 @@
             :class="{ active: pin }"
             :aria-pressed="pin"
             :title="pin ? '取消固定' : '固定(点击外部/滚动不再关闭)'"
-            @click="pin = !pin"
+            @click="togglePin"
           >
             <el-icon><place /></el-icon>
           </button>
@@ -97,8 +97,9 @@ export default defineComponent({
     x: { type: Number, required: true },
     y: { type: Number, required: true },
     stackOrder: { type: Number, default: 0 },
+    pinned: { type: Boolean, default: false },
   },
-  emits: ['activate', 'close'],
+  emits: ['activate', 'close', 'pin-change'],
   data() {
     return {
       visible: false,
@@ -107,7 +108,6 @@ export default defineComponent({
       ready: false,
       disposed: false,
       file: new DocFileInfo() as DocFileInfo,
-      pin: false,
       showingMermaid: false,
       // 触发show的那次右键事件会冒泡到document 未"上膛"前不视作外部点击
       armed: false,
@@ -120,6 +120,9 @@ export default defineComponent({
     };
   },
   computed: {
+    pin(): boolean {
+      return this.pinned;
+    },
     contentHtml(): string {
       return this.$services.docService.renderMd(this.file);
     },
@@ -128,6 +131,10 @@ export default defineComponent({
     }
   },
   methods: {
+    togglePin() {
+      this.rememberLayout(false);
+      this.$emit('pin-change', !this.pin);
+    },
     show() {
       const popover = this.$refs.popover as HTMLElement;
       this.visible = true;
@@ -185,7 +192,8 @@ export default defineComponent({
       // 图片、Mermaid 等异步内容增高后继续恢复，用户开始操作时停止。
       this.resizeObserver?.observe(previewSection);
       this.ready = true;
-      if (!this.layout) this.rememberLayout();
+      // 加载时固定/切到后台可能先保存了骨架屏尺寸，正文就绪后补记自动展开的大小。
+      if (!this.layout || !this.hasCustomSize) this.rememberLayout();
     },
     onPreviewClick(e: MouseEvent) {
       const link = (e.target as Element).closest('a[origin-link]');

@@ -192,6 +192,49 @@ test.describe('文档预览卡片', () => {
     await expectSavedState(await openFromBody(page, '乙'), secondBox, secondScroll)
   })
 
+  test('刷新自动恢复固定卡片及层叠顺序，关闭和取消固定后不再恢复', async ({ page }) => {
+    test.setTimeout(90_000)
+    await prepareDocuments(page)
+    const first = await openFromBody(page, '甲')
+    await first.getByTitle('固定(点击外部/滚动不再关闭)', { exact: true }).click()
+    await resizeCard(page, first, 510, 330)
+    await moveCard(page, first, 40, 450)
+    const firstScroll = await readFurther(page, first, 240)
+    const firstBox = (await first.boundingBox())!
+
+    const second = await openFromBody(page, '乙')
+    await second.getByTitle('固定(点击外部/滚动不再关闭)', { exact: true }).click()
+    await resizeCard(page, second, 430, 300)
+    await moveCard(page, second, 800, 450)
+    const secondScroll = await readFurther(page, second, 560)
+    const secondBox = (await second.boundingBox())!
+    // 激活第一张卡片，刷新后应保留它在最上层的顺序和各自的阅读进度。
+    await first.locator('.popover-title').click()
+
+    await goto(page, DOC)
+    await expect(first).toBeVisible()
+    await expect(second).toBeVisible()
+    await expect(first.getByTitle('取消固定', { exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await expect(second.getByTitle('取消固定', { exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await expectSavedState(first, firstBox, firstScroll)
+    await expectSavedState(second, secondBox, secondScroll)
+    await page.keyboard.press('Escape')
+    await expect(first).toHaveCount(0)
+    await expect(second).toBeVisible()
+
+    // 关闭卡片和取消固定都要同步更新刷新恢复的列表。
+    await goto(page, DOC)
+    await expect(second).toBeVisible()
+    await expect(first).toHaveCount(0)
+    await expectSavedState(second, secondBox, secondScroll)
+    await second.getByTitle('取消固定', { exact: true }).click()
+    await expect(second.getByTitle('固定(点击外部/滚动不再关闭)', { exact: true })).toHaveAttribute('aria-pressed', 'false')
+    await goto(page, DOC)
+    await expect(page.locator('#app .main-content .markdown-section').getByRole('heading', { name: MAIN_TITLE })).toBeVisible()
+    await expect(first).toHaveCount(0)
+    await expect(second).toHaveCount(0)
+  })
+
   test('相关链接两组均支持 Alt 点击预览，并保留当前正文', async ({ page }) => {
     await prepareDocuments(page)
     const tab = page.locator('#app .related-floating').getByRole('button', { name: '相关链接', exact: true })

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { readLinkPreviewState, saveLinkPreviewState } from '@/platform/web/pages/doc/LinkPreviewState'
+import { readLinkPreviewState, saveLinkPreviewState, readPinnedLinkPreviews, savePinnedLinkPreviews } from '@/platform/web/pages/doc/LinkPreviewState'
 
 const first = { left: 120, top: 80, width: 400, height: 560, scrollTop: 230 }
 const second = { left: 650, top: 110, width: 480, height: 420, scrollTop: 65 }
@@ -92,5 +92,90 @@ describe('LinkPopover 文档状态持久化', () => {
     const restored = readLinkPreviewState('blocked-doc')!
     restored.scrollTop = 999
     expect(readLinkPreviewState('blocked-doc')).toEqual(first)
+  })
+})
+
+describe('LinkPopover 固定卡片恢复列表', () => {
+  const key = 'link-preview:pinned-documents'
+
+  beforeEach(() => savePinnedLinkPreviews([]))
+
+  it('按层叠顺序保存多篇文档, 重新置顶时更新顺序', () => {
+    savePinnedLinkPreviews(['java-集合', 'os-内存'])
+    expect(readPinnedLinkPreviews()).toEqual(['java-集合', 'os-内存'])
+    savePinnedLinkPreviews(['os-内存', 'java-集合'])
+    expect(readPinnedLinkPreviews()).toEqual(['os-内存', 'java-集合'])
+    expect(readLinkPreviewState('java-集合')).toBeNull()
+  })
+
+  it('取消固定或关闭后删除文档, 清空列表不会恢复旧卡片', () => {
+    savePinnedLinkPreviews(['java-集合', 'os-内存'])
+    savePinnedLinkPreviews(['os-内存'])
+    expect(readPinnedLinkPreviews()).toEqual(['os-内存'])
+    savePinnedLinkPreviews([])
+    expect(readPinnedLinkPreviews()).toEqual([])
+  })
+
+  it('列表命名空间与名为 pinned 的文档布局互不覆盖', () => {
+    saveLinkPreviewState('pinned', first)
+    savePinnedLinkPreviews(['pinned', 'os-内存'])
+    expect(readPinnedLinkPreviews()).toEqual(['pinned', 'os-内存'])
+    expect(readLinkPreviewState('pinned')).toEqual(first)
+  })
+
+  it.each(['{broken', 'null', '{}', '"java-集合"', '12'])('损坏的列表返回空数组: %s', raw => {
+    localStorage.setItem(key, raw)
+    expect(readPinnedLinkPreviews()).toEqual([])
+  })
+
+  it('读取时跳过无效身份, 去重并保留合法文档顺序', () => {
+    localStorage.setItem(key, JSON.stringify([
+      'java-集合', null, '', 12, {}, 'java-集合', ' ', '/doc/one', 'a?query', 'b#heading', 'c\\file', 'os-内存',
+    ]))
+    expect(readPinnedLinkPreviews()).toEqual(['java-集合', 'os-内存'])
+  })
+
+  it('写入时清理重复及无效条目, 非数组不覆盖已有列表', () => {
+    savePinnedLinkPreviews(['java-集合', '', 'java-集合', 'os-内存'])
+    savePinnedLinkPreviews(null as unknown as string[])
+    expect(readPinnedLinkPreviews()).toEqual(['java-集合', 'os-内存'])
+  })
+
+  it('读取被禁用时返回空列表', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('Access denied', 'SecurityError')
+    })
+    expect(readPinnedLinkPreviews()).toEqual([])
+  })
+
+  it('配额耗尽时保留会话内的顺序及清空操作, 存储恢复后解除降级', () => {
+    savePinnedLinkPreviews(['java-集合'])
+    const setter = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Storage full', 'QuotaExceededError')
+    })
+    savePinnedLinkPreviews(['os-内存', 'java-集合'])
+    expect(readPinnedLinkPreviews()).toEqual(['os-内存', 'java-集合'])
+    expect(JSON.parse(localStorage.getItem(key)!)).toEqual(['java-集合'])
+    savePinnedLinkPreviews([])
+    expect(readPinnedLinkPreviews()).toEqual([])
+    setter.mockRestore()
+    savePinnedLinkPreviews(['os-内存'])
+    localStorage.clear()
+    expect(readPinnedLinkPreviews()).toEqual([])
+  })
+
+  it('完全禁用存储时读写不抛错, 外部修改不会改变会话快照', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('Access denied', 'SecurityError')
+    })
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Access denied', 'SecurityError')
+    })
+    const docIds = ['java-集合', 'os-内存']
+    expect(() => savePinnedLinkPreviews(docIds)).not.toThrow()
+    docIds.reverse()
+    const restored = readPinnedLinkPreviews()
+    restored.pop()
+    expect(readPinnedLinkPreviews()).toEqual(['java-集合', 'os-内存'])
   })
 })

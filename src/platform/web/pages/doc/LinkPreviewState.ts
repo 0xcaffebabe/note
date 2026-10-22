@@ -10,6 +10,34 @@ export interface LinkPreviewState {
 
 // 存储被禁用或配额耗尽时, 仍保留本次会话中最后一次调整。
 const unsavedStates = new Map<string, LinkPreviewState>()
+const pinnedPreviewsKey = 'link-preview:pinned-documents'
+let unsavedPinnedPreviews: string[] | null = null
+
+function pinnedDocIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return [...new Set(value.filter((id): id is string =>
+    typeof id === 'string' && id.trim().length > 0 && !/[\\/?#]/.test(id)
+  ))]
+}
+
+// 固定列表仅保存文档身份和层叠顺序，布局与阅读位置仍由各文档独立保存。
+export function readPinnedLinkPreviews(): string[] {
+  if (unsavedPinnedPreviews !== null) return [...unsavedPinnedPreviews]
+  try {
+    const raw = browserStorage.getItem(pinnedPreviewsKey)
+    return pinnedDocIds(raw ? JSON.parse(raw) : null)
+  } catch {
+    return []
+  }
+}
+
+export function savePinnedLinkPreviews(docIds: string[]): void {
+  if (!Array.isArray(docIds)) return
+  const snapshot = pinnedDocIds(docIds)
+  const value = JSON.stringify(snapshot)
+  browserStorage.setItem(pinnedPreviewsKey, value)
+  unsavedPinnedPreviews = browserStorage.getItem(pinnedPreviewsKey) === value ? null : snapshot
+}
 
 function isLinkPreviewState(value: unknown): value is LinkPreviewState {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {

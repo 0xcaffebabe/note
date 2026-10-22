@@ -383,9 +383,8 @@ export default defineComponent({
       if (!this.visible || this.minimized) {
         return;
       }
-      // 浮窗内部滚动(预览正文)不关闭
-      const root = this.$refs.popover as HTMLElement;
-      if (root.contains(e.target as Node)) {
+      // 卡片内部滚动（包括恢复阅读位置）不能关闭其他已恢复的临时卡片。
+      if (e.target instanceof Element && e.target.closest('.popover')) {
         return;
       }
       this.hide();

@@ -2,7 +2,21 @@
   <el-container class="doc-layout" :class="{ 'is-mobile': isMobile }">
     <doc-side-category :doc="doc" :showAside="showAside" @toggle-aside="showAside = !showAside" ref="docSideCategory" />
     <el-main class="main" ref="mainEl">
-      <site-navigation embedded :with-bottom-bar="isMobile" />
+      <site-navigation embedded :with-bottom-bar="isMobile">
+        <template #document-tools="{ close }">
+          <doc-tools
+            @select="close"
+            @showMindGraph="showMindGraph();showAside = false;isDrawerShow = true"
+            @showKnowledgeNetwork="showKnowledgeNetwork();showAside = false;isDrawerShow = true"
+            @copyDocPath="handleCopyDocPath"
+            @copyDocContent="handleCopyDocContent"
+            @showKnowledgeReviewer="showKnowledgeReviewer"
+            @show-llm="showLLM();showAside = false;isDrawerShow = true"
+            @open-in-editor="openInEditor"
+            @handleRandomReview="handleRandomReview"
+          />
+        </template>
+      </site-navigation>
       <keep-alive v-if="!isMobile">
         <doc-tab-nav @dbclick="handleTabNavDbclick" />
       </keep-alive>
@@ -71,18 +85,6 @@
     </el-drawer>
   </template>
 
-  <!-- 工具栏(响应式: 桌面右上锚定 / 移动右下FAB) -->
-  <tool-box
-    @showMindGraph="showMindGraph();showAside = false;isDrawerShow = true"
-    @showKnowledgeNetwork="showKnowledgeNetwork();showAside = false;isDrawerShow = true"
-    @copyDocPath="handleCopyDocPath"
-    @copyDocContent="handleCopyDocContent"
-    @showKnowledgeReviewer="showKnowledgeReviewer"
-    @show-llm="showLLM();showAside = false;isDrawerShow = true"
-    @open-in-editor="openInEditor"
-    @handleRandomReview="handleRandomReview"
-  />
-  <!-- 工具栏结束 -->
   <el-backtop v-if="!isMobile" :bottom="32" :right="28" />
   <!-- 相关链接: 超宽档独立成右侧第4列(见下方 aside); 其余尺寸(含 ≤1920)为右缘悬浮标签 -->
   <related-content v-if="!isUltra" :related="relatedLinks" :doc-links="docLinks" />
@@ -101,7 +103,7 @@
 import { defineComponent, defineAsyncComponent, reactive, ref } from "vue";
 import Content from "@/core/domain/Content";
 import HistoryList from "./commit/HistoryList.vue";
-import ToolBox from './ToolBox.vue';
+import DocTools from './DocTools.vue';
 import SiteNavigation from '@/platform/web/components/navigation/SiteNavigation.vue';
 import RelatedContent from "./RelatedContent.vue";
 import { RelatedLink } from "@/core/domain/RelatedLink";
@@ -141,7 +143,7 @@ export default defineComponent({
   components: {
     HistoryList,
     MindGraph,
-    ToolBox,
+    DocTools,
     SiteNavigation,
     DocSideCategory,
     KnowledgeNetwork,

@@ -34,6 +34,7 @@
                 <button type="button" @click="enterZenMode"><el-icon><Aim /></el-icon>专注模式</button>
                 <button v-if="positioned" type="button" @click="resetDockPosition"><el-icon><RefreshLeft /></el-icon>恢复默认位置</button>
               </div>
+              <slot name="document-tools" :close="closeDocumentTools" />
               <div class="panel-links">
                 <a v-for="link in linkList" :key="link.url" :href="link.url" target="_blank" rel="noopener noreferrer">{{ link.title }}<el-icon><TopRight /></el-icon></a>
               </div>
@@ -96,6 +97,11 @@ function collapse() {
   cancelCollapse();
   menuOpen.value = false;
   expanded.value = false;
+}
+
+function closeDocumentTools() {
+  collapse();
+  launcher.value?.focus({ preventScroll: true });
 }
 
 function search(mode?: 'category' | 'fulltext') {
@@ -331,6 +337,10 @@ onBeforeUnmount(() => {
 }
 
 .site-navigation-host.with-bottom-bar {
+  &.embedded {
+    max-width: calc(100vw - var(--spacing-xl));
+    margin-inline: 0;
+  }
   .site-dock { right: 0; gap: 0; }
   .dock-shortcuts, .site-nav { gap: 0; }
 }

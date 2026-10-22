@@ -1,94 +1,89 @@
-import { SysUtils } from "./SysUtils"
 import IdGenUtils from "@/core/util/IdGenUtils"
+import type { MermaidConfig } from "mermaid"
 
 type Mermaid = typeof import("mermaid").default
 
 // mermaid 体积大（约800KB），延迟到页面真正出现图表时才加载
 let mermaidPromise: Promise<Mermaid> | null = null
 let loadedMermaid: Mermaid | null = null
+let renderQueue: Promise<unknown> = Promise.resolve()
+const sources = new WeakMap<Element, string>()
+const renderVersions = new WeakMap<Element, number>()
+let renderVersion = 0
 
 function load(): Promise<Mermaid> {
   if (!mermaidPromise) {
-    mermaidPromise = import("mermaid").then(m => {
+    mermaidPromise = Promise.all([
+      import("mermaid"),
+      import("@fontsource-variable/recursive/crsv.css"),
+    ]).then(async ([m]) => {
+      // 与 mermaid.live 使用相同字体，先等字体就绪再测量 SVG 文本，加载失败时使用内置回退字体。
+      await document.fonts?.load('14px "Recursive Variable"').catch(() => {})
       loadedMermaid = m.default
-      applyCurrentTheme(loadedMermaid)
+      loadedMermaid.initialize({startOnLoad: false})
       return loadedMermaid
+    }).catch(err => {
+      mermaidPromise = null
+      throw err
     })
   }
   return mermaidPromise
 }
 
-function applyCurrentTheme(mermaid: Mermaid) {
-  if (SysUtils.isDarkMode()) {
-    applyDarkTheme(mermaid)
-  } else {
-    applyNormalTheme(mermaid)
+function defaultTheme(mermaid: Mermaid, diagramType: string): NonNullable<MermaidConfig['theme']> {
+  // 与 mermaid.live 一致：解析器 ID 与配置分支名称并非总是相同。
+  const aliases: Record<string, string> = {
+    'flowchart-v2': 'flowchart', 'flowchart-elk': 'flowchart',
+    classDiagram: 'class', stateDiagram: 'state', xychart: 'xyChart',
+    railroadAbnf: 'railroad', railroadEbnf: 'railroad', railroadPeg: 'railroad',
   }
+  const defaults = mermaid.mermaidAPI.defaultConfig
+  const section = defaults[(aliases[diagramType] ?? diagramType) as keyof MermaidConfig]
+  return (section && typeof section === 'object' && 'theme' in section && typeof section.theme === 'string'
+    ? section.theme : defaults.theme || 'default') as NonNullable<MermaidConfig['theme']>
 }
 
-function applyDarkTheme(mermaid: Mermaid) {
-  mermaid.initialize({theme: 'dark', startOnLoad: false})
+function darkVariant(theme: string): NonNullable<MermaidConfig['theme']> {
+  return (theme.includes('dark') ? theme : theme.startsWith('redux') ? theme.replace('redux', 'redux-dark') : 'dark') as NonNullable<MermaidConfig['theme']>
 }
 
-function applyNormalTheme(mermaid: Mermaid) {
-  mermaid.initialize({
-    theme: 'base', startOnLoad: false,
-    themeVariables: {
-        background: '#ffffff',
-        primaryColor: '#ffffff',
-        primaryTextColor: '#171717', // Neutral 900
-        primaryBorderColor: '#e5e5e5', // Neutral 200
-        lineColor: '#737373', // Neutral 500
-        secondaryColor: '#fafafa',
-        tertiaryColor: '#f5f5f5',
-        fontFamily: '"Inter", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-        fontSize: '14px',
-      },
-    themeCSS: `
-        .node rect, .node circle, .node polygon, .node path { stroke-width: 1.5px; }
-        .edgePath .path { stroke-width: 1.5px; }
-        .cluster rect { stroke-dasharray: 4 4; stroke: #d4d4d4; fill: #fafafa; }
-
-        /* XYChart styles - Sophisticated muted tones */
-        .line-plot-0 path { stroke: #5B7C99 !important; stroke-width: 3px !important; } /* Muted slate blue */
-        .line-plot-1 path { stroke: #6B9080 !important; stroke-width: 3px !important; } /* Sage green */
-        .line-plot-2 path { stroke: #C17C74 !important; stroke-width: 3px !important; } /* Dusty rose */
-        .bar-plot-0 rect { fill: #A8C5DD !important; stroke: #5B7C99 !important; stroke-width: 1.5px !important; }
-        .bar-plot-1 rect { fill: #B8CEC2 !important; stroke: #6B9080 !important; stroke-width: 1.5px !important; }
-        .bar-plot-2 rect { fill: #E0BAB5 !important; stroke: #C17C74 !important; stroke-width: 1.5px !important; }
-        .chart-title text { fill: #171717 !important; font-weight: 600 !important; font-size: 20px !important; }
-        .left-axis .label text, .bottom-axis .label text { fill: #171717 !important; font-size: 14px !important; }
-        .left-axis .title text { fill: #525252 !important; font-size: 16px !important; }
-        .bottom-axis .title text { fill: #525252 !important; font-size: 16px !important; }
-      `
+function render(id: string, source: string) {
+  // Mermaid 的初始化配置是共享状态；识别图种、配置主题和渲染必须作为同一项排队。
+  const task = renderQueue.then(async () => {
+    const mermaid = await load()
+    mermaid.initialize({startOnLoad: false})
+    const parsed = await mermaid.parse(source)
+    const theme = defaultTheme(mermaid, parsed ? parsed.diagramType : '')
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: document.documentElement.classList.contains('dark') ? darkVariant(theme) : theme,
+    })
+    // render 会重新应用图表源码中的 frontmatter/directive，保留作者显式设置。
+    return mermaid.render(id, source)
   })
+  renderQueue = task.catch(() => {})
+  return task
 }
 
-// 主题切换时只需重配已加载的实例；未加载则等首次渲染时按当前主题初始化
-function initWithDark() {
-  if (loadedMermaid) {
-    applyDarkTheme(loadedMermaid)
-  }
-}
-
-function initWithNormal() {
-  if (loadedMermaid) {
-    applyNormalTheme(loadedMermaid)
-  }
-}
-
-function renderNode(mermaid: Mermaid, v: Element) {
-  const raw = v.textContent!
+function renderNode(v: Element) {
+  const raw = sources.get(v) ?? v.textContent ?? ''
+  sources.set(v, raw)
+  const version = ++renderVersion
+  renderVersions.set(v, version)
+  v.classList.add('mermaid-rendering')
   // 正文与预览可能复用缓存的 HTML，为每次渲染分配独立 ID，避免覆盖已有 SVG。
   v.id = 'mermaid-' + IdGenUtils.uuid()
-  mermaid.render(v.id + '-svg', raw)
+  const id = v.id + '-svg'
+  return render(id, raw)
     .then(data => {
+      if (renderVersions.get(v) !== version) return
       v.innerHTML = data.svg
       v.classList.add('mermaid-rendered')
     })
     .catch(err => {
       // 语法错误兜底: 渲染失败时回退展示原始代码并给出提示 不残留mermaid错误SVG
-      document.getElementById('d' + v.id + '-svg')?.remove()
+      document.getElementById('d' + id)?.remove()
+      if (renderVersions.get(v) !== version) return
       v.classList.add('mermaid-render-error')
       const msg = document.createElement('div')
       msg.className = 'mermaid-error-msg'
@@ -97,25 +92,34 @@ function renderNode(mermaid: Mermaid, v: Element) {
       pre.textContent = raw
       v.replaceChildren(msg, pre)
     })
+    .finally(() => {
+      if (renderVersions.get(v) === version) v.classList.remove('mermaid-rendering')
+    })
+}
+
+// 已显示和渲染中的图表也需更新；未加载时仍保持懒加载。
+async function refreshTheme() {
+  if (!loadedMermaid) return
+  const nodes = document.querySelectorAll('.mermaid-source.mermaid-rendered, .mermaid-source.mermaid-rendering')
+  await Promise.all(Array.from(nodes, renderNode))
 }
 
 async function initAllNode(root: ParentNode = document) {
-  const nodeList = root.querySelectorAll('.mermaid-source:not(.mermaid-rendered):not(.mermaid-render-error)')
+  const nodeList = root.querySelectorAll('.mermaid-source:not(.mermaid-rendered):not(.mermaid-render-error):not(.mermaid-rendering)')
   if (nodeList.length === 0) {
     return
   }
-  const mermaid = await load()
-  applyCurrentTheme(mermaid)
+  await load()
   // 仅渲染进入视口的图表 多图长文不再一次性渲染
   if (typeof IntersectionObserver === 'undefined') {
-    nodeList.forEach(v => renderNode(mermaid, v))
+    await Promise.all(Array.from(nodeList, renderNode))
     return
   }
   const io = new IntersectionObserver(entries => {
     for (const entry of entries) {
       if (entry.isIntersecting) {
         io.unobserve(entry.target)
-        renderNode(mermaid, entry.target)
+        renderNode(entry.target)
       }
     }
   }, {rootMargin: '300px'})
@@ -123,8 +127,7 @@ async function initAllNode(root: ParentNode = document) {
 }
 
 export default {
-  load,
-  initWithDark,
-  initWithNormal,
+  render,
+  refreshTheme,
   initAllNode
 }

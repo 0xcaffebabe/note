@@ -13,7 +13,7 @@
     @activate="activate(card.docId)"
     @pin-change="setPinned(card.docId, $event)"
     @close="remove(card.docId)"
-    @minimize-all="minimizeAll"
+    @minimize="minimize(card.docId)"
   />
 </template>
 
@@ -67,6 +67,12 @@ export default defineComponent({
       this.popovers().forEach(card => card.hide())
       this.cards.push({ ...request, pinned: false, minimized: false })
       this.focus(request.docId)
+    },
+    minimize(docId: string) {
+      const card = this.cards.find(card => card.docId === docId)
+      if (!card) return
+      card.minimized = true
+      this.$nextTick(() => EventBus.emit('focus-link-preview-restore', null))
     },
     minimizeAll() {
       this.cards.forEach(card => { card.minimized = true })

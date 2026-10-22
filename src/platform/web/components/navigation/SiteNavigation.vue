@@ -20,7 +20,7 @@
           </button>
           <el-popover v-model:visible="menuOpen" trigger="click" role="dialog" aria-label="站点导航与工具" placement="top-end" :popper-options="popperOptions" :width="280" popper-class="site-navigation-popover" @after-enter="focusMenu" @after-leave="restoreLauncherFocus">
             <template #reference>
-              <button type="button" class="more-btn dock-action" title="更多工具" aria-label="站点导航与工具">
+              <button type="button" class="more-btn dock-action" title="更多工具" aria-label="站点导航与工具" data-link-preview-control>
                 <el-icon><MoreFilled /></el-icon>
               </button>
             </template>
@@ -31,7 +31,7 @@
                 <button type="button" @click="toggleFullScreen"><el-icon><FullScreen /></el-icon>{{ fullscreen ? '退出全屏' : '全屏' }}</button>
                 <button type="button" @click="enterZenMode"><el-icon><Aim /></el-icon>专注模式</button>
                 <button v-if="positioned" type="button" @click="resetDockPosition"><el-icon><RefreshLeft /></el-icon>恢复默认位置</button>
-                <button v-if="linkPreviewCounts.visible" type="button" @click.stop="minimizePreviews"><el-icon><Hide /></el-icon>隐藏所有预览</button>
+                <button v-if="linkPreviewCounts.visible" type="button" data-link-preview-control @click.stop="minimizePreviews"><el-icon><Hide /></el-icon>隐藏所有预览</button>
               </div>
               <slot name="document-tools" :close="closeDocumentTools" />
               <div class="panel-links">
@@ -42,7 +42,7 @@
           </el-popover>
         </div>
       </transition>
-      <div class="navigation-handle">
+      <div class="navigation-handle" data-link-preview-control>
         <button ref="launcher" type="button" class="navigation-launcher dock-action" :title="(expanded ? '收起站点导航' : '展开站点导航') + '（可拖动）'" :aria-label="expanded ? '收起站点导航' : '展开站点导航'" aria-description="拖动可调整位置，更多工具中可恢复默认位置" :aria-expanded="expanded" aria-controls="site-navigation-shortcuts" @pointerdown="start" @pointermove="move" @pointerup="handlePointerUp" @pointercancel="cancelPointer" @lostpointercapture="lostCapture" @contextmenu.prevent @click="toggleNavigation">
           <el-icon><ArrowRightBold v-if="expanded" /><Menu v-else /></el-icon>
         </button>

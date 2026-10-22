@@ -192,7 +192,7 @@ test.describe('文档预览卡片', () => {
     await expectSavedState(await openFromBody(page, '乙'), secondBox, secondScroll)
   })
 
-  test('一键隐藏全部预览并显示数量，恢复后保留固定状态、布局和阅读进度', async ({ page }) => {
+  test('隐藏单张或全部预览，导航角标恢复后保留固定状态、布局和阅读进度', async ({ page }) => {
     await prepareDocuments(page)
     const first = await openFromBody(page, '甲')
     await first.getByTitle('固定(点击外部/滚动不再关闭)', { exact: true }).click()
@@ -207,8 +207,11 @@ test.describe('文档预览卡片', () => {
     const secondBox = (await second.boundingBox())!
     const navigation = page.getByRole('navigation', { name: '站内导航', exact: true })
     const restore = navigation.getByRole('button', { name: '恢复全部 2 个隐藏预览', exact: true })
+    const restoreOne = navigation.getByRole('button', { name: '恢复全部 1 个隐藏预览', exact: true })
 
-    await second.getByRole('button', { name: '隐藏所有预览', exact: true }).click()
+    const hideTools = await openNavigationTools(page)
+    await hideTools.getByRole('button', { name: '隐藏所有预览', exact: true }).click()
+    await expect(hideTools).toBeHidden()
     await expect(first).toBeHidden()
     await expect(second).toBeHidden()
     await expect(restore).toBeFocused()
@@ -228,10 +231,16 @@ test.describe('文档预览卡片', () => {
     await expect(second.getByTitle('固定(点击外部/滚动不再关闭)', { exact: true })).toHaveAttribute('aria-pressed', 'false')
     await expect(second).toBeFocused()
 
-    await first.getByRole('button', { name: '隐藏所有预览', exact: true }).click()
+    await second.getByRole('button', { name: '隐藏预览', exact: true }).click()
+    await expect(first).toBeVisible()
+    await expect(second).toBeHidden()
+    await expect(restoreOne).toBeVisible()
+    await page.screenshot({ path: 'test-results/link-preview-partially-hidden.png' })
+    // 可以继续逐个收起卡片，隐藏数量随之累加。
+    await first.getByRole('button', { name: '隐藏预览', exact: true }).click()
+    await expect(restore).toBeVisible()
     // 再次请求隐藏文档只恢复该卡片；其余隐藏预览仍保留。
     await openFromBody(page, '甲')
-    const restoreOne = page.getByRole('button', { name: '恢复全部 1 个隐藏预览', exact: true })
     await expect(restoreOne).toBeVisible()
     await expect(second).toBeHidden()
     await first.getByRole('button', { name: '关闭预览', exact: true }).click()
@@ -242,7 +251,7 @@ test.describe('文档预览卡片', () => {
     await expect(restoreOne).toHaveCount(0)
 
     // 隐藏的临时卡片在打开另一篇预览时仍保留；小屏及暗色下入口可操作。
-    await second.getByRole('button', { name: '隐藏所有预览', exact: true }).click()
+    await second.getByRole('button', { name: '隐藏预览', exact: true }).click()
     await openFromBody(page, '甲')
     await expect(restoreOne).toBeVisible()
     await first.getByTitle('固定(点击外部/滚动不再关闭)', { exact: true }).click()

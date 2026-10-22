@@ -31,7 +31,7 @@
           <button type="button" class="action-btn" title="打开该文档" @click="openDoc">
             <el-icon><top-right /></el-icon>
           </button>
-          <button type="button" class="action-btn" title="隐藏所有预览" aria-label="隐藏所有预览" @click.stop="$emit('minimize-all')">
+          <button type="button" class="action-btn" title="隐藏预览" aria-label="隐藏预览" @click.stop="$emit('minimize')">
             <el-icon><minus /></el-icon>
           </button>
           <button type="button" class="action-btn" title="关闭 (Esc)" aria-label="关闭预览" @click="hide0">
@@ -104,7 +104,7 @@ export default defineComponent({
     pinned: { type: Boolean, default: false },
     minimized: { type: Boolean, default: false },
   },
-  emits: ['activate', 'close', 'pin-change', 'minimize-all'],
+  emits: ['activate', 'close', 'pin-change', 'minimize'],
   data() {
     return {
       visible: false,
@@ -367,6 +367,10 @@ export default defineComponent({
     /* ---- 标准浮层消失行为(固定时点击/滚动豁免，Esc 优先关闭图表查看器) ---- */
     onOutsidePointer(e: Event) {
       if (!this.visible || this.minimized || !this.armed) {
+        return;
+      }
+      // 导航中的预览入口需要保留临时卡片，才能在菜单中一键收起全部。
+      if (e.composedPath().some(target => target instanceof HTMLElement && target.hasAttribute('data-link-preview-control'))) {
         return;
       }
       const root = this.$refs.popover as HTMLElement;

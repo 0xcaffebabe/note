@@ -25,6 +25,8 @@ async function openPreview(page: Page) {
 }
 
 async function geometry(preview: Locator) {
+  // v-show 入场时仍可能带 scale(0.98)，可见不代表已恢复最终尺寸。
+  await expect(preview).toHaveCSS('transform', 'none')
   return preview.evaluate(el => {
     const { x, y, width, height } = el.getBoundingClientRect()
     return { x, y, width, height }

@@ -81,15 +81,17 @@ test.describe('expired asset recovery', () => {
     await expect(page.locator('.markdown-section h2').first()).toBeVisible()
     let missingChunkRequests = 0
     await page.route(/\/resource\/TagListPage-.*\.js$/, route => {
+      // 旧页面中的预加载和动态 import 都失败，恢复后的新 HTML 才能取得资源。
+      if (new URL(route.request().frame().url()).searchParams.has('__asset_retry')) return route.continue()
       missingChunkRequests++
       return route.fulfill({ status: 404, body: '' })
-    }, { times: 1 })
+    })
     const launcher = page.getByRole('button', { name: '展开站点导航', exact: true })
     await expect(launcher).toBeVisible()
     await launcher.focus()
     await page.keyboard.press('Enter')
     await page.getByRole('navigation', { name: '站内导航' }).getByRole('link', { name: '标签', exact: true }).click()
-    await expect.poll(() => missingChunkRequests).toBe(1)
+    await expect.poll(() => missingChunkRequests).toBeGreaterThan(0)
     await page.waitForURL(url => url.searchParams.has('__asset_retry'))
     await expect(page.getByRole('heading', { name: '标签', exact: true })).toBeVisible()
     await expect(page).toHaveURL(/\/tag.html/)

@@ -77,6 +77,8 @@ const router = createRouter()
 // 守卫异常/懒加载chunk失败则只触发onError 不配对会让pending永不归零 进度条永驻
 let navInProgress = false
 router.beforeEach((to, from, next) => {
+  // 懒加载失败前地址尚未改变，先把目标交给内联的资源恢复脚本。
+  window.dispatchEvent(new CustomEvent('asset-recovery:navigation', { detail: to.fullPath }))
   if (!navInProgress) {
     navInProgress = true
     NProgress.start()
@@ -84,6 +86,7 @@ router.beforeEach((to, from, next) => {
   next()
 })
 const finishNav = () => {
+  window.dispatchEvent(new CustomEvent('asset-recovery:navigation'))
   if (navInProgress) {
     navInProgress = false
     NProgress.done()

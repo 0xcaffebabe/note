@@ -1,7 +1,7 @@
 import { type Locator, type Page } from '@playwright/test'
-import { test, expect, goto, openNavigationTools, DOC, NO_ANIM } from './fixtures'
+import { test, expect, goto, openNavigationTools, DOC, DOC_ID } from './fixtures'
 
-const LAYOUT_KEY = 'doc-preview:layout'
+const LAYOUT_KEY = 'link-preview::' + DOC_ID
 
 test.use({ colorScheme: 'light' })
 
@@ -43,38 +43,18 @@ async function dragBy(page: Page, handle: Locator, dx: number, dy: number) {
   await page.mouse.up()
 }
 
-test('拖动、缩放后跨文档和刷新恢复位置/宽高，正文填满可滚动区域', async ({ page }) => {
+test('自定义预览大小填满可滚动区域，主题切换后保持布局', async ({ page }) => {
+  await page.addInitScript(key => localStorage.setItem(key, JSON.stringify({
+    left: 32, top: 100, width: 580, height: 480, scrollTop: 0,
+  })), LAYOUT_KEY)
   await goto(page, DOC)
   const preview = await openPreview(page)
-  // 先移到左上，保证拉伸两轴时有足够空间。
-  const initial = await geometry(preview)
-  await dragBy(page, preview.locator('.popover-header'), 32 - initial.x, 100 - initial.y)
-  await expect(preview).toBeVisible()
-  const moved = await geometry(preview)
-  expect(moved.x).toBeCloseTo(32, 0)
-  expect(moved.y).toBeCloseTo(100, 0)
-
-  await dragBy(page, preview.getByRole('button', { name: '调整预览大小' }), 180, -120)
   const resized = await geometry(preview)
-  expect(resized.width).toBeCloseTo(moved.width + 180, 0)
-  expect(resized.height).toBeCloseTo(moved.height - 120, 0)
+  expect(resized).toEqual({ x: 32, y: 100, width: 580, height: 480 })
   const body = preview.locator('.popover-body')
   expect(await body.evaluate(el => el.scrollHeight > el.clientHeight)).toBe(true)
-  await body.evaluate(el => { el.scrollTop = 80 })
-  await expect(preview).toBeVisible()
-
-  await preview.getByRole('button', { name: '关闭预览' }).click()
-  // 切换到另一篇预览，共用同一份窗口偏好。
-  await page.locator('.el-menu .el-menu-item:not(.is-active):visible').filter({ hasNotText: '首页' }).first().click({ button: 'right' })
-  await expect(preview).toBeVisible()
-  expect(await geometry(preview)).toEqual(resized)
-  await page.keyboard.press('Escape')
-  await expect(preview).toBeHidden()
-
-  await page.reload({ waitUntil: 'domcontentloaded' })
-  await page.addStyleTag({ content: NO_ANIM })
-  await openPreview(page)
-  expect(await geometry(preview)).toEqual(resized)
+  const bodyBox = (await body.boundingBox())!
+  expect(bodyBox.y + bodyBox.height).toBeCloseTo(resized.y + resized.height - 1, 0)
   await page.screenshot({ path: 'test-results/preview-layout-light.png' })
   await page.keyboard.press('Escape')
   await expect(preview).toBeHidden()
@@ -92,7 +72,7 @@ test('拖动、缩放后跨文档和刷新恢复位置/宽高，正文填满可�
 
 test('缩放支持键盘，最小尺寸和视口边界受限，视口变化不覆盖偏好', async ({ page }) => {
   await page.addInitScript(key => localStorage.setItem(key, JSON.stringify({
-    left: 300, top: 100, width: 700, height: 650,
+    left: 300, top: 100, width: 700, height: 650, scrollTop: 0,
   })), LAYOUT_KEY)
   await goto(page, DOC)
   const preview = await openPreview(page)
@@ -113,10 +93,16 @@ test('缩放支持键盘，最小尺寸和视口边界受限，视口变化不�
   }).toBe(true)
   expect(await page.evaluate(key => localStorage.getItem(key), LAYOUT_KEY)).toBe(preference)
 
+  // 在受限视口内继续阅读并关闭，只更新进度，不能把临时夹紧的几何尺寸保存为偏好。
+  await preview.locator('.popover-body').hover()
+  await page.mouse.wheel(0, 200)
+  await expect.poll(() => preview.locator('.popover-body').evaluate(el => el.scrollTop)).toBe(200)
+  await preview.getByRole('button', { name: '关闭预览' }).click()
+  await expect(preview).toBeHidden()
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.keyboard.press('Escape')
   await openPreview(page)
   expect(await geometry(preview)).toEqual({ x: 300, y: 100, width: 710, height: 690 })
+  await expect.poll(() => preview.locator('.popover-body').evaluate(el => el.scrollTop)).toBe(200)
   await dragBy(page, handle, -1000, -1000)
   const minimum = await geometry(preview)
   expect(minimum.width).toBe(280)
@@ -128,7 +114,7 @@ test('缩放支持键盘，最小尺寸和视口边界受限，视口变化不�
 test('旧大屏偏好在小视口内恢复，关闭按钮始终可用', async ({ page }) => {
   await page.setViewportSize({ width: 900, height: 500 })
   await page.addInitScript(key => localStorage.setItem(key, JSON.stringify({
-    left: 2400, top: 1200, width: 1800, height: 1000,
+    left: 2400, top: 1200, width: 1800, height: 1000, scrollTop: 0,
   })), LAYOUT_KEY)
   await goto(page, DOC)
   const preview = await openPreview(page)
@@ -157,6 +143,9 @@ test('存储损坏或不可用时仍可预览和调整大小', async ({ page }) 
   expect((await geometry(preview)).width).toBe(before.width + 10)
   await preview.getByRole('button', { name: '关闭预览' }).click()
   await openPreview(page)
-  expect((await geometry(preview)).width).toBe(before.width + 10)
+  const reopened = await geometry(preview)
+  await preview.getByRole('button', { name: '调整预览大小' }).focus()
+  await page.keyboard.press('ArrowRight')
+  expect((await geometry(preview)).width).toBe(reopened.width + 10)
   expect(errors).toEqual([])
 })

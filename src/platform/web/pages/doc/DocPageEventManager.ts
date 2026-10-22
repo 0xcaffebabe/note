@@ -1,6 +1,6 @@
 import DocUtils from "@/core/util/DocUtils";
 import DocPage from "./DocPage.vue";
-import LinkPopover from "./LinkPopover.vue";
+import { showLinkPreview } from "./LinkPreview";
 import DocService from "@/platform/web/service/DocService";
 import ResourceBrower from "./ResourceBrower.vue";
 import EventBus from "@/platform/web/components/EventBus";
@@ -58,11 +58,17 @@ class DocPageEventManager {
       const a = docLinkList[i];
       a.onclick = (e: MouseEvent) => {
         // 修饰键点击交还浏览器默认行为(.html地址是真实入口 可新标签/新窗口打开)
-        if (e.ctrlKey || e.metaKey || e.shiftKey) {
+        if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) {
           return
         }
         const href = a.getAttribute("href");
         if (href) {
+          if (e.altKey) {
+            showLinkPreview(href, e.clientX, e.clientY);
+            e.preventDefault();
+            e.stopPropagation();
+            return false
+          }
           this.docPageInstance.$router.push(href);
           e.preventDefault();
           e.stopPropagation();
@@ -240,8 +246,6 @@ class DocPageEventManager {
           DocService.setDocReadRecrod(doc, window.scrollY);
         }
       }, 1000);
-      // 滚动的同时将link-popover隐藏掉
-      this.getRef('linkPopover') && (this.getRef('linkPopover') as InstanceType<typeof LinkPopover>).hide();
     };
     document.addEventListener("scroll", this.scrollHandler);
   }

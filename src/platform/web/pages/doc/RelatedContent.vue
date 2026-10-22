@@ -21,7 +21,7 @@
               :key="'r-' + link.href + i"
               class="rf-item"
               :href="link.href"
-              @click.prevent="go(link.href)"
+              @click="handleLinkClick($event, link.href, false)"
             >
               <div class="rf-item-head">
                 <span class="rf-name">{{ docName(link.path) }}</span>
@@ -37,7 +37,7 @@
               :key="'d-' + link.href + i"
               class="rf-item"
               :href="link.href"
-              @click.prevent="locate(link.href)"
+              @click="handleLinkClick($event, link.href, true)"
             >
               <div class="rf-item-head">
                 <span class="rf-name">{{ docName(link.path) }}</span>
@@ -73,6 +73,7 @@ import { defineComponent, PropType } from 'vue'
 import { Connection } from '@element-plus/icons-vue'
 import { RelatedLink } from '@/core/domain/RelatedLink'
 import DocUtils from '@/core/util/DocUtils'
+import { showLinkPreview } from './LinkPreview'
 
 export default defineComponent({
   components: { Connection },
@@ -105,6 +106,22 @@ export default defineComponent({
     },
   },
   methods: {
+    handleLinkClick(e: MouseEvent, href: string, locateInDoc: boolean) {
+      if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) {
+        return
+      }
+      e.preventDefault()
+      if (e.altKey) {
+        e.stopPropagation()
+        showLinkPreview(href, e.clientX, e.clientY)
+        return
+      }
+      if (locateInDoc) {
+        this.locate(href)
+      } else {
+        this.go(href)
+      }
+    },
     reveal() {
       clearTimeout(this.leaveTimer)
       this.open = true

@@ -200,7 +200,7 @@ test.describe('responsive breakpoint switching (resize)', () => {
     await page.setViewportSize({ width: 800, height: 900 })
     await page.waitForSelector('.main-layout.is-mobile')
     await expect(page.locator('.mobile-bottom-bar')).toBeVisible()
-    await expect(page.locator('.mobile-bottom-bar button')).toHaveCount(4)
+    await expect(page.locator('.mobile-bottom-bar button')).toHaveCount(3)
     await expect(page.locator('.doc-contents-and-panel')).toHaveCount(0)
     await expect(page.locator('.navigation-launcher')).toHaveCount(1)
     await expect(page.locator('.tool-box')).toHaveCount(0)

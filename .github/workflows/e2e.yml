@@ -122,8 +122,8 @@ jobs:
             npx playwright test --shard=${{ matrix.shard }}/3 --grep-invert "@prod|@network"
           fi
 
-      - name: Upload report + traces (on failure)
-        if: failure()
+      - name: Upload report + screenshots + traces
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: playwright-report-shard-${{ matrix.shard }}

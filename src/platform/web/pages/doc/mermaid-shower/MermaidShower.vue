@@ -1,28 +1,46 @@
 <template>
   <el-dialog
     v-model="showDialog"
-    title="查看"
-    width="80%"
-    top="5vh"
+    title="查看图表"
+    width="90%"
+    class="mermaid-viewer-dialog"
+    align-center
     append-to-body
     :z-index="zIndex"
     @close="dispose"
     @closed="$emit('closed')"
   >
-    <p v-if="loading" role="status">图表加载中…</p>
-    <p v-if="error" role="alert">{{ error }}</p>
-    <div ref="container"></div>
+    <div class="mermaid-viewer" :aria-busy="loading">
+      <div class="mermaid-viewer-stage">
+        <div ref="container" class="mermaid-viewer-canvas" role="img" aria-label="Mermaid 图表"></div>
+        <p v-if="loading" class="mermaid-viewer-status" role="status">图表加载中…</p>
+        <p v-else-if="error" class="mermaid-viewer-status" role="alert">{{ error }}</p>
+        <el-button-group class="mermaid-viewer-controls" role="group" aria-label="图表缩放控制">
+          <el-button size="small" :disabled="!panZoom" aria-label="缩小图表" title="缩小图表" @click="panZoom?.zoomOut()">
+            <el-icon><ZoomOut /></el-icon>
+          </el-button>
+          <el-button size="small" :disabled="!panZoom" aria-label="放大图表" title="放大图表" @click="panZoom?.zoomIn()">
+            <el-icon><ZoomIn /></el-icon>
+          </el-button>
+          <el-button size="small" :disabled="!panZoom" aria-label="重置图表" title="重置图表" @click="panZoom?.reset()">
+            <el-icon><RefreshLeft /></el-icon>
+          </el-button>
+        </el-button-group>
+      </div>
+    </div>
   </el-dialog>
 
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent, markRaw } from 'vue'
+import { RefreshLeft, ZoomIn, ZoomOut } from '@element-plus/icons-vue'
 import MermaidUtils from '@/platform/web/util/MermaidUtils'
-import svgPanZoom from 'svg-pan-zoom'
+import { createSvgPanZoom } from './SvgPanZoom'
 import IdGenUtils from '@/core/util/IdGenUtils'
 
 export default defineComponent({
+  components: { RefreshLeft, ZoomIn, ZoomOut },
   emits: ['closed'],
   data() {
     return {
@@ -32,7 +50,7 @@ export default defineComponent({
       zIndex: 0,
       renderVersion: 0,
       diagram: '',
-      panZoom: null as ReturnType<typeof svgPanZoom> | null,
+      panZoom: null as ReturnType<typeof createSvgPanZoom> | null,
     }
   },
   watch: {
@@ -54,6 +72,7 @@ export default defineComponent({
       this.zIndex = Math.max(popupLayer, ...previewLayers) + 1
       // el-dialog 首次打开时才挂载内容，等待容器就绪后再渲染。
       await this.$nextTick()
+      if (version !== this.renderVersion) return
       const container = this.$refs.container as HTMLElement
       container.replaceChildren()
       const renderId = 'mermaid-viewer-' + IdGenUtils.uuid()
@@ -62,20 +81,21 @@ export default defineComponent({
         if (version !== this.renderVersion) {
           return
         }
-        container.innerHTML = data.svg.replace(/[ ]*max-width:[ 0-9\.]*px;/i , 'height:80vh')
+        container.innerHTML = data.svg
+        const svg = container.querySelector('svg')
+        if (!svg) throw new Error('未生成 SVG 图表')
+        // 不依赖 Mermaid 输出的内联样式格式，各图种都填满同一个画布。
+        svg.style.width = '100%'
+        svg.style.height = '100%'
+        svg.style.maxWidth = 'none'
+        svg.style.display = 'block'
         this.loading = false
         await this.$nextTick()
         if (version !== this.renderVersion) {
           return
         }
         // 每个查看器只操作自身 SVG，正文与预览可以独立重复打开。
-        this.panZoom = svgPanZoom(container.querySelector('svg')!, {
-          zoomEnabled: true,
-          controlIconsEnabled: true,
-          mouseWheelZoomEnabled: true,
-          fit: true,
-          center: true
-        })
+        this.panZoom = markRaw(createSvgPanZoom(svg))
       } catch (err) {
         document.getElementById('d' + renderId)?.remove()
         if (version === this.renderVersion) {
@@ -98,4 +118,89 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
+.mermaid-viewer {
+  height: 100%;
+}
+
+.mermaid-viewer-controls {
+  position: absolute;
+  right: var(--spacing-sm);
+  bottom: var(--spacing-sm);
+  z-index: var(--z-aside);
+  display: inline-flex;
+  background: color-mix(in srgb, var(--card-bg-color) 90%, transparent);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(var(--spacing-xs));
+
+  :deep(.el-button) {
+    width: var(--spacing-xl);
+    height: var(--spacing-xl);
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--secondary-text-color);
+    font-size: var(--font-size-base);
+
+    &:not(.is-disabled):hover {
+      background: var(--hover-bg-color);
+      color: var(--primary-color);
+    }
+
+    &.is-disabled {
+      color: var(--el-disabled-text-color);
+    }
+
+    @media (pointer: coarse) {
+      width: var(--site-control-size);
+      height: var(--site-control-size);
+    }
+  }
+}
+
+.mermaid-viewer-stage {
+  position: relative;
+  isolation: isolate;
+  height: 100%;
+  overflow: hidden;
+}
+
+.mermaid-viewer-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.mermaid-viewer-status {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: var(--spacing-md);
+  color: var(--secondary-text-color);
+  overflow: auto;
+}
+</style>
+
+<style lang="less">
+// 对话框挂载到 body，使用专属类覆盖全局内边距，让画板与弹窗外壳连成一体。
+.el-dialog.mermaid-viewer-dialog {
+  display: flex;
+  flex-direction: column;
+  height: 90vh;
+  height: 90dvh;
+  padding: 0;
+  overflow: hidden;
+
+  .el-dialog__header {
+    flex-shrink: 0;
+  }
+
+  .el-dialog__body {
+    flex: 1;
+    min-height: 0;
+    padding: 0;
+  }
+}
 </style>

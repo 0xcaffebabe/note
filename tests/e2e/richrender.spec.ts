@@ -2,6 +2,7 @@ import { test, expect, goto, docWithMermaid, docWithMath, DOC, pathnameOf, openN
 import fs from 'fs'
 import mermaid from 'mermaid'
 import type { Locator } from '@playwright/test'
+import { viewBox, expectViewBox } from './mermaidviewer'
 
 // 使用 .txt 保存 Markdown，避免构建器将测试夹具作为站点文档发布。
 const mathFixture = fs.readFileSync(new URL('./data/math-rendering.txt', import.meta.url), 'utf8')
@@ -74,7 +75,7 @@ test.describe('client rich rendering (P1)', () => {
     await page.locator('.main-content .mermaid-source').scrollIntoViewIfNeeded()
     await expect(page.locator('.main-content .mermaid-source')).toHaveClass(/mermaid-rendered/, { timeout: 20_000 })
     await page.locator('.main-content').getByRole('button', { name: '全屏查看图表' }).click()
-    const viewer = page.getByRole('dialog', { name: '查看', exact: true })
+    const viewer = page.getByRole('dialog', { name: '查看图表', exact: true })
     const svg = viewer.locator('svg[id^="mermaid-viewer-"]')
     await expectModernTheme(svg)
     const previousId = await svg.getAttribute('id')
@@ -82,7 +83,7 @@ test.describe('client rich rendering (P1)', () => {
     await expect(page.locator('html')).toHaveClass(/dark/)
     await expect(svg).not.toHaveAttribute('id', previousId!)
     await expectModernTheme(svg, true)
-    await expect(viewer.locator('.svg-pan-zoom_viewport')).toBeVisible()
+    await expect(viewer.getByRole('button', { name: '放大图表', exact: true })).toBeEnabled()
     expect(await page.evaluate(() => localStorage.getItem('system::theme'))).toBeNull()
     await page.keyboard.press('Escape')
     await expect(viewer).toBeHidden()
@@ -188,10 +189,14 @@ test.describe('client rich rendering (P1)', () => {
     await expectModernTheme(mainSvg)
     const beforePath = pathnameOf(page)
     const menuItem = page.locator('.el-menu .el-menu-item.is-active').first()
-    const viewer = page.getByRole('dialog', { name: '查看', exact: true })
+    const viewer = page.getByRole('dialog', { name: '查看图表', exact: true })
+    const viewerSvg = viewer.locator('.mermaid-viewer-canvas > svg')
     // 先使用正文查看器，让其隐藏容器留在 DOM 中，验证预览不会操作错误实例。
     await page.locator('.main-content').getByRole('button', { name: '全屏查看图表' }).click()
-    await expect(viewer.locator('.svg-pan-zoom_viewport')).toBeVisible({ timeout: 20_000 })
+    await expect(viewerSvg).toBeVisible({ timeout: 20_000 })
+    const initialViewBox = await viewBox(viewerSvg)
+    await viewer.getByRole('button', { name: '放大图表', exact: true }).click()
+    await expect.poll(async () => (await viewBox(viewerSvg)).width).toBeLessThan(initialViewBox.width)
     await page.keyboard.press('Escape')
     await expect(viewer).toBeHidden()
 
@@ -221,11 +226,9 @@ test.describe('client rich rendering (P1)', () => {
       await expect(viewer).toBeVisible()
       await expect(viewer.locator('svg[id^="mermaid-viewer-"]')).toContainText('Preview start', { timeout: 20_000 })
       await expectModernTheme(viewer.locator('svg[id^="mermaid-viewer-"]'), attempt === 1)
-      const viewport = viewer.locator('.svg-pan-zoom_viewport')
-      await expect(viewport).toBeVisible()
-      const transform = await viewport.getAttribute('transform')
-      await viewer.locator('[id="svg-pan-zoom-zoom-in"]').click()
-      await expect(viewport).not.toHaveAttribute('transform', transform!)
+      const initialPreviewBox = await viewBox(viewerSvg)
+      await viewer.getByRole('button', { name: '放大图表', exact: true }).click()
+      await expect.poll(async () => (await viewBox(viewerSvg)).width).toBeLessThan(initialPreviewBox.width)
       await expect(preview).toBeVisible()
       if (attempt === 0) {
         const screenshot = test.info().outputPath('mermaid-default-light.png')
@@ -252,7 +255,8 @@ test.describe('client rich rendering (P1)', () => {
       await expect(preview).toBeHidden()
     }
     await page.locator('.main-content').getByRole('button', { name: '全屏查看图表' }).click()
-    await expect(viewer.locator('.svg-pan-zoom_viewport')).toBeVisible({ timeout: 20_000 })
+    await expect(viewerSvg).toBeVisible({ timeout: 20_000 })
+    await expectViewBox(viewerSvg, await viewBox(mainSvg))
     await expect(viewer.locator('svg[id^="mermaid-viewer-"]')).toContainText('Preview start')
     await page.keyboard.press('Escape')
     await expect(viewer).toBeHidden()
@@ -271,7 +275,7 @@ test.describe('client rich rendering (P1)', () => {
     await page.locator('.el-menu .el-menu-item.is-active').first().click({ button: 'right' })
     const preview = page.getByRole('dialog', { name: '文档预览' })
     await preview.getByRole('button', { name: '全屏查看图表' }).click()
-    const viewer = page.getByRole('dialog', { name: '查看', exact: true })
+    const viewer = page.getByRole('dialog', { name: '查看图表', exact: true })
     await expect(viewer.getByRole('alert')).toContainText('Mermaid 图表渲染失败', { timeout: 20_000 })
     await page.keyboard.press('Escape')
     await expect(viewer).toBeHidden()

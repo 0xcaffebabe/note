@@ -2,6 +2,12 @@
   <el-drawer v-model="showDrawer" :size="$isMobile() ? '75%' : '44%'" :direction="$isMobile() ? 'btt' : 'rtl'"
     title="模板生成问题" :modal="false" @close="$emit('close')" :lock-scroll="false" modal-penetrable resizable>
     <div class="llm-container">
+      <el-radio-group v-model="assistantMode" aria-label="知识助手模式">
+        <el-radio-button value="template">模板复制</el-radio-button>
+        <el-radio-button value="chat">文档问答</el-radio-button>
+      </el-radio-group>
+      <DocumentQA v-if="assistantMode === 'chat' && showDrawer" :doc="doc" />
+      <div v-show="assistantMode === 'template'" class="template-content">
       <el-row :gutter="12">
         <el-col :span="24">
           问题模板：
@@ -33,6 +39,7 @@
           <el-button type="success" @click="handleCopy" style="width:100%">复制提问</el-button>
         </el-col>
       </el-row>
+      </div>
     </div>
   </el-drawer>
 </template>
@@ -44,8 +51,10 @@ import { writeText } from '@/adapters/browser/Clipboard';
 import { indent, applyTemplateVariables, cleanTemplateLines, contentsToOutline, categoriesToOutline } from '@/core/util/LlmTemplateUtils';
 import templates from '@/platform/web/templates/llmTemplates';
 import { LlmTemplate } from '@/platform/web/templates/llmTemplates';
+import DocumentQA from './DocumentQA.vue';
 
 export default defineComponent({
+  components: { DocumentQA },
   props: {
     doc: {
       type: String,
@@ -55,6 +64,7 @@ export default defineComponent({
   data() {
     return {
       showDrawer: false,
+      assistantMode: 'template',
       llmMode: 'review',
       query: '',
       presets: templates as LlmTemplate[],
@@ -209,11 +219,12 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .llm-container {
-  padding: 10px;
+  padding: var(--spacing-md);
   display: flex;
   flex-direction: column;
   height: 100%;
   flex: 1;
+  gap: var(--spacing-md);
 }
 
 .content {

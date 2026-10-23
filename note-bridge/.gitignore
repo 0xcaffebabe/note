@@ -1,0 +1,9 @@
+node_modules/
+dist/
+target/
+test-results/
+playwright-report/
+src-tauri/icons/
+src-tauri/gen/
+*.log
+.DS_Store

@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main-desktop",
+  "description": "Local application window only; website model access uses the separate paired bridge protocol.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

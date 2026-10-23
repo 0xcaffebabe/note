@@ -7,6 +7,12 @@ import tagService from '@/platform/web/service/TagService'
 import knowledgeNetworkService from '@/platform/web/service/KnowledgeNetworkService'
 import searchService from '@/platform/web/service/SearchService'
 import configService from '@/platform/web/service/ConfigService'
+import { AiContextService } from '@/core/service/AiContextService'
+import { BrowserAiBridge } from '@/adapters/browser/BrowserAiBridge'
+import { browserDomParser } from '@/adapters/browser/BrowserDomParser'
+
+const aiContextService = new AiContextService(docService, browserDomParser)
+const createAiBridge = () => new BrowserAiBridge()
 
 export const services = {
   api,
@@ -16,6 +22,8 @@ export const services = {
   knowledgeNetworkService,
   searchService,
   configService,
+  aiContextService,
+  createAiBridge,
 }
 
 export type Services = typeof services

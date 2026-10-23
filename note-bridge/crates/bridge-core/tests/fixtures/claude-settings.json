@@ -1,0 +1,7 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://claude.example.test/v1",
+    "ANTHROPIC_API_KEY": "fixture-claude-key-not-real",
+    "ANTHROPIC_MODEL": "fixture-claude-model"
+  }
+}

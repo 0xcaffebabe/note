@@ -1,0 +1,1 @@
+var e;(function(e){function t(e){let n=0;return e.map(e=>({id:e.link,topic:e.name,children:t(e.chidren),direction:n++%2==0?`right`:`left`}))}function n(e,n=`目录`){let r=t(e);return r.length>1?[{id:`root`,topic:n,expanded:!0,children:r,direction:`left`}]:r}e.mindConvert=n})(e||={});export{e as t};

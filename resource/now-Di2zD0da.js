@@ -1,0 +1,1 @@
+import{E as e}from"./_arrayPush-CS18qtiM.js";var t=function(){return e.Date.now()};export{t};

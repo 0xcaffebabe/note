@@ -1,0 +1,1 @@
+import{nn as e}from"./css-BDCDcwVg.js";import{t}from"./pick-B_OQSBqZ.js";var n=`update:modelValue`,r=`change`,i=`input`,a=e({ariaLabel:String,ariaOrientation:{type:String,values:[`horizontal`,`vertical`,`undefined`]},ariaControls:String}),o=e=>t(a,e);export{n as i,r as n,i as r,o as t};

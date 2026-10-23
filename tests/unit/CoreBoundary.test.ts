@@ -6,7 +6,7 @@ import { resolve, join } from 'node:path'
  * 架构边界守护(六边形分层的持久护栏):
  * src/core 是纯逻辑核心层 —— 必须能脱离当前框架/库独立编译运行, 逻辑可迁移到其它平台。
  * 因此 core 内任何文件都不得:
- *   1. import 任何框架/UI 库(vue/vuex/vue-router/element-plus/echarts/jsmind/mermaid/svg-pan-zoom)
+ *   1. import 任何框架/UI 库(vue/vuex/vue-router/element-plus/echarts/jsmind/mermaid)
  *   2. import 任何受限第三方逻辑库(marked/katex/prismjs/js-yaml/tiny-pinyin/algoliasearch/nodejieba/
  *      simple-git/jsdom) —— 这些一律经 core/ports 端口接口注入, 实现放在 adapters/
  *   3. import 任何 Node 内置模块(fs/path/...) —— core 与运行环境无关
@@ -48,7 +48,7 @@ function importSources(code: string): string[] {
 
 const FORBIDDEN_LIBS = [
   'vue', 'vuex', 'vue-router', 'element-plus', '@element-plus',
-  'echarts', 'echarts-gl', 'jsmind', 'mermaid', 'svg-pan-zoom',
+  'echarts', 'echarts-gl', 'jsmind', 'mermaid',
   'marked', 'katex', 'prismjs', 'js-yaml', 'tiny-pinyin', 'algoliasearch', '@algolia',
   'nodejieba', 'simple-git', 'jsdom',
 ]

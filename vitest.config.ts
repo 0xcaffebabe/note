@@ -1,8 +1,9 @@
 import { defineConfig } from 'vitest/config'
 import path from 'path'
+import vue from '@vitejs/plugin-vue'
 
 // 故意不复用 vite.config.ts: 那里挂着 DocServer / 各类 *Generator / VitePWA 等重型插件
-// 单测/组件测只需要 @ 别名 + ts 解析 不想在每次跑测时触发文档生成与 git 扫描
+// 只启用 @ 别名、TS 解析和组件所需的 Vue 插件，避免跑测时触发文档生成与 git 扫描
 const alias = { '@': path.resolve(import.meta.dirname, 'src') }
 
 export default defineConfig({
@@ -20,6 +21,7 @@ export default defineConfig({
       },
       {
         resolve: { alias },
+        plugins: [vue()],
         test: {
           name: 'component',
           environment: 'jsdom',

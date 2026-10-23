@@ -184,6 +184,7 @@ export default defineComponent({
 
 ## 7. 交互与状态
 
+- **Mermaid 查看器**：正文与链接预览共用查看器，通过原生 SVG `viewBox` 适应画布、居中和缩放。支持鼠标/单指拖动、滚轮指向位置缩放、双击/双击触摸放大、Shift+双击缩小；倍率限制为初始适配尺寸的 0.5～10 倍。画布外提供可键盘操作的放大、缩小、复位按钮，加载期间禁用。关闭、换图与卸载时释放交互状态；主题变化沿用统一 Mermaid 渲染流程。
 - **hover**：`--hover-bg-color` 底，或边框转 `--primary-color`，可 `transform: translateY(-1px)`，过渡用 `--transition-fast`。
 - **键盘焦点**：依赖全局 `:focus-visible`（2px 主色环），**不要 `outline: none`**；需要更强提示时叠 `box-shadow`。
 - **加载/空/错**：异步数据三态齐全；echarts 走 mixin；列表/卡片走 `v-if` + 占位文案；首屏脏值要守卫（如日期空值显 `—`、数据未就绪不渲染 0/Invalid）。

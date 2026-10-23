@@ -10,15 +10,21 @@
     @closed="$emit('closed')"
   >
     <div class="mermaid-viewer" :aria-busy="loading">
-      <div class="mermaid-viewer-controls" role="group" aria-label="图表缩放控制">
-        <el-button :disabled="!panZoom" aria-label="缩小图表" @click="panZoom?.zoomOut()">缩小</el-button>
-        <el-button :disabled="!panZoom" aria-label="放大图表" @click="panZoom?.zoomIn()">放大</el-button>
-        <el-button :disabled="!panZoom" aria-label="重置图表" @click="panZoom?.reset()">复位</el-button>
-      </div>
       <div class="mermaid-viewer-stage">
         <div ref="container" class="mermaid-viewer-canvas" role="img" aria-label="Mermaid 图表"></div>
         <p v-if="loading" class="mermaid-viewer-status" role="status">图表加载中…</p>
         <p v-else-if="error" class="mermaid-viewer-status" role="alert">{{ error }}</p>
+        <el-button-group class="mermaid-viewer-controls" role="group" aria-label="图表缩放控制">
+          <el-button size="small" :disabled="!panZoom" aria-label="缩小图表" title="缩小图表" @click="panZoom?.zoomOut()">
+            <el-icon><ZoomOut /></el-icon>
+          </el-button>
+          <el-button size="small" :disabled="!panZoom" aria-label="放大图表" title="放大图表" @click="panZoom?.zoomIn()">
+            <el-icon><ZoomIn /></el-icon>
+          </el-button>
+          <el-button size="small" :disabled="!panZoom" aria-label="重置图表" title="重置图表" @click="panZoom?.reset()">
+            <el-icon><RefreshLeft /></el-icon>
+          </el-button>
+        </el-button-group>
       </div>
     </div>
   </el-dialog>
@@ -27,11 +33,13 @@
 
 <script lang="ts">
 import { defineComponent, markRaw } from 'vue'
+import { RefreshLeft, ZoomIn, ZoomOut } from '@element-plus/icons-vue'
 import MermaidUtils from '@/platform/web/util/MermaidUtils'
 import { createSvgPanZoom } from './SvgPanZoom'
 import IdGenUtils from '@/core/util/IdGenUtils'
 
 export default defineComponent({
+  components: { RefreshLeft, ZoomIn, ZoomOut },
   emits: ['closed'],
   data() {
     return {
@@ -110,18 +118,45 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .mermaid-viewer-controls {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--spacing-xs);
-  margin-bottom: var(--spacing-sm);
+  position: absolute;
+  right: var(--spacing-sm);
+  bottom: var(--spacing-sm);
+  z-index: var(--z-aside);
+  display: inline-flex;
+  background: color-mix(in srgb, var(--card-bg-color) 90%, transparent);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(var(--spacing-xs));
 
-  .el-button + .el-button {
-    margin-left: 0;
+  :deep(.el-button) {
+    width: var(--spacing-xl);
+    height: var(--spacing-xl);
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--secondary-text-color);
+    font-size: var(--font-size-base);
+
+    &:not(.is-disabled):hover {
+      background: var(--hover-bg-color);
+      color: var(--primary-color);
+    }
+
+    &.is-disabled {
+      color: var(--el-disabled-text-color);
+    }
+
+    @media (pointer: coarse) {
+      width: var(--site-control-size);
+      height: var(--site-control-size);
+    }
   }
 }
 
 .mermaid-viewer-stage {
   position: relative;
+  isolation: isolate;
   height: 72vh;
   height: 72dvh;
   border: 1px solid var(--border-color);

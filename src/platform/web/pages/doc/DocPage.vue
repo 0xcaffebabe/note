@@ -522,10 +522,11 @@ export default defineComponent({
 .doc-related-sticky {
   position: sticky;
   top: 0;
-  max-height: 100vh;
+  height: 100vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   padding: var(--spacing-md);
 }
 

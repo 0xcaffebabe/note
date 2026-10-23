@@ -299,7 +299,7 @@ export default defineComponent({
   position: static;
   transform: none;
   width: 100%;
-  max-height: 38vh;
+  max-height: min(72vh, calc(100vh - 2 * var(--spacing-md)));
   box-shadow: none;
   background-color: var(--card-bg-color);
 }

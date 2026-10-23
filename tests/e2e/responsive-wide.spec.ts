@@ -1,4 +1,4 @@
-import { test, expect, goto, DOC, docWithRelated } from './fixtures'
+import { test, expect, goto, DOC } from './fixtures'
 
 // 大屏宽档(>= @bp-wide 1680)验证: 回收死白 / 内容居中加宽 / 图表 2-up / 浮层随居中壳重锚。
 // 运行于 desktop-chromium 工程(文件名不含 mobile.spec.ts); 各用例自行 setViewportSize 到 1920/2560。
@@ -123,6 +123,8 @@ test.describe('P2 doc centered shell & re-anchored affordances (wide)', () => {
 
 // ── P-ultra: 关联内容独立第4列 (>=@bp-ultra 2040) ─────────────────────────
 test.describe('P-ultra related as 4th column (ultra)', () => {
+  test.use({ serviceWorkers: 'block' })
+
   test('2560: 右列内联关联/悬浮标签均退场, 壳加宽到 --doc-shell-max(2080)', async ({ page }) => {
     await page.setViewportSize(ULTRA)
     await goto(page, DOC)
@@ -136,15 +138,35 @@ test.describe('P-ultra related as 4th column (ultra)', () => {
     expect(w).toBeGreaterThan(1900)      // 比 wide 档 1840 更宽
   })
 
-  test('超宽屏关联列紧邻知识图谱和 TOC, 收窄后恢复悬浮入口', async ({ page }) => {
-    const doc = docWithRelated()
-    expect(doc, '需要含关联内容的文档验证相邻面板间距').toBeTruthy()
+  test('超宽屏关联面板加高并垂直居中, 收窄后恢复悬浮入口', async ({ page }) => {
+    // 固定长文和足够多的关联项, 避免知识库内容变化导致布局断言失去覆盖。
+    const markdownPath = DOC.replace(/\.html$/, '.md')
+    await page.route(url => decodeURI(url.pathname) === DOC.replace(/\.html$/, '.md.json'), async route => {
+      const response = await route.fetch()
+      const file = await response.json()
+      file.content = [
+        '# 超宽屏关联阅读', '## 正文',
+        ...Array.from({ length: 24 }, (_, i) => `第 ${i + 1} 段：阅读长文时，相关链接应始终在视口内居中并可独立滚动。`),
+        '## 关联内容',
+        ...Array.from({ length: 18 }, (_, i) => `- [关联主题${i + 1}](${markdownPath}) 展开相关知识，继续阅读关联主题及其适用边界。`),
+      ].join('\n\n')
+      delete file.relatedLinks
+      await route.fulfill({ response, json: file })
+    })
     await page.setViewportSize(ULTRA)
-    await goto(page, doc!)
+    await goto(page, DOC)
     await expect(page.getByRole('region', { name: '相关链接' })).toBeVisible()
 
-    for (const width of [2040, ULTRA.width]) {
-      await page.setViewportSize({ ...ULTRA, width })
+    const expectCentered = async () => {
+      await expect.poll(() => page.locator('.doc-related-column .rf-panel').evaluate(el => {
+        const rect = el.getBoundingClientRect()
+        return Math.abs(rect.top + rect.height / 2 - window.innerHeight / 2)
+      })).toBeLessThanOrEqual(1)
+    }
+
+    for (const viewport of [{ width: 2040, height: 900 }, ULTRA, { ...ULTRA, height: 600 }]) {
+      await page.setViewportSize(viewport)
+      await expectCentered()
       await expect.poll(() => page.evaluate(() => {
         const panel = document.querySelector('.contents-panel-container')!
         const related = document.querySelector('.doc-related-column .rf-panel')!
@@ -153,11 +175,33 @@ test.describe('P-ultra related as 4th column (ultra)', () => {
       const bounds = await page.evaluate(() => {
         const panel = document.querySelector('.contents-panel-container')!.getBoundingClientRect()
         const related = document.querySelector('.doc-related-column .rf-panel')!.getBoundingClientRect()
-        return { gap: related.left - panel.right, right: related.right, viewport: document.documentElement.clientWidth }
+        return {
+          gap: related.left - panel.right, right: related.right,
+          top: related.top, bottom: related.bottom, height: related.height,
+          viewport: document.documentElement.clientWidth,
+        }
       })
       expect(bounds.gap).toBeGreaterThanOrEqual(0)
       expect(bounds.right).toBeLessThanOrEqual(bounds.viewport)
+      expect(bounds.height).toBeGreaterThan(viewport.height * 0.38) // 突破旧的 38vh 上限
+      expect(bounds.height).toBeLessThanOrEqual(viewport.height * 0.72 + 1)
+      expect(bounds.top).toBeGreaterThanOrEqual(16)
+      expect(bounds.bottom).toBeLessThanOrEqual(viewport.height - 16)
     }
+
+    // 矮视口中仍可滚动到最后一项, 标题始终留在面板内。
+    const relatedPanel = page.locator('.doc-related-column .rf-panel')
+    await relatedPanel.locator('.rf-body').hover()
+    await page.mouse.wheel(0, 10_000)
+    await expect(relatedPanel.locator('.rf-item').last()).toBeInViewport()
+    await expect(relatedPanel.locator('.rf-panel-head')).toBeInViewport()
+
+    await page.locator('.main.markdown-section').hover()
+    await page.mouse.wheel(0, 1000)
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100)
+    await expectCentered()
+    await page.setViewportSize(ULTRA)
+    await expectCentered()
 
     for (const colorScheme of ['light', 'dark'] as const) {
       await page.emulateMedia({ colorScheme })

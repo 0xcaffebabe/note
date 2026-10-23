@@ -131,6 +131,14 @@ async function readFurther(page: Page, preview: Locator, delta: number) {
   return body.evaluate(el => el.scrollTop)
 }
 
+async function expectCenteredNavigation(preview: Locator) {
+  const body = (await preview.locator('.popover-content').boundingBox())!
+  const tabs = (await preview.locator('.preview-nav-tabs').boundingBox())!
+  expect(Math.abs(tabs.y + tabs.height / 2 - body.y - body.height / 2)).toBeLessThanOrEqual(1)
+  expect(tabs.y).toBeGreaterThanOrEqual(body.y)
+  expect(tabs.y + tabs.height).toBeLessThanOrEqual(body.y + body.height)
+}
+
 async function expectSavedState(preview: Locator, box: NonNullable<Awaited<ReturnType<Locator['boundingBox']>>>, scrollTop: number) {
   await expect.poll(async () => {
     const restored = (await preview.boundingBox())!
@@ -147,6 +155,9 @@ test.describe('文档预览卡片', () => {
   test('吸附目录和相关链接只定位当前卡片，底部展示该文档提交历史', async ({ page }) => {
     const { firstPath, relatedPath } = await prepareDocuments(page, { navigation: true })
     const first = await openFromBody(page, '甲')
+    await expectCenteredNavigation(first)
+    await expect(first.getByRole('button', { name: '本页章节', exact: true }).locator('.preview-nav-count')).toHaveText('3')
+    await expect(first.getByRole('button', { name: '相关链接', exact: true }).locator('.preview-nav-count')).toHaveText('2')
     await first.getByTitle('固定(点击外部/滚动不再关闭)', { exact: true }).click()
     await moveCard(page, first, 800, 400)
     await resizeCard(page, first, 500, 450)
@@ -154,6 +165,8 @@ test.describe('文档预览卡片', () => {
     await second.getByTitle('固定(点击外部/滚动不再关闭)', { exact: true }).click()
     await moveCard(page, second, 24, 100)
     await moveCard(page, first, 700, 100)
+    await expectCenteredNavigation(first)
+    await first.screenshot({ path: 'test-results/preview-docked-tabs-light.png' })
     const backgroundScroll = await page.evaluate(() => window.scrollY)
     const backgroundActive = await page.locator('#app .toc .active').getAttribute('href')
     const tocButton = first.getByRole('button', { name: '本页章节', exact: true })
@@ -211,11 +224,14 @@ test.describe('文档预览卡片', () => {
     const first = await openFromBody(page, '甲')
     await first.getByTitle('固定(点击外部/滚动不再关闭)', { exact: true }).click()
     await moveCard(page, first, 24, 100)
+    await resizeCard(page, first, 280, 160)
+    await expectCenteredNavigation(first)
     await resizeCard(page, first, 280, 300)
     const tools = await openNavigationTools(page)
     await tools.locator('.theme-row .el-switch').click()
     await expect(page.locator('html')).toHaveClass(/dark/)
     await page.setViewportSize({ width: 390, height: 700 })
+    await expectCenteredNavigation(first)
     await first.getByRole('button', { name: '本页章节', exact: true }).focus()
     const toc = first.getByRole('region', { name: '本页章节', exact: true })
     await expect(toc).toBeVisible()
@@ -225,6 +241,8 @@ test.describe('文档预览卡片', () => {
     expect(panelBox.x + panelBox.width).toBeLessThanOrEqual(cardBox.x + cardBox.width)
     expect(panelBox.y + panelBox.height).toBeLessThanOrEqual(cardBox.y + cardBox.height)
     await first.screenshot({ path: 'test-results/preview-navigation-dark-narrow.png' })
+    await first.locator('.popover-title').hover()
+    await first.screenshot({ path: 'test-results/preview-docked-tabs-dark-narrow.png' })
   })
 
   test('没有章节、链接和提交记录时显示历史空态', async ({ page }) => {

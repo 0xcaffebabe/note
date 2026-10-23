@@ -79,21 +79,29 @@
               type="button"
               class="preview-nav-tab"
               aria-label="本页章节"
+              :title="`本页章节（${headingCount}）`"
               :aria-expanded="activeNavigation === 'toc'"
               @mouseenter="activeNavigation = 'toc'"
               @focus="activeNavigation = 'toc'"
               @click="activeNavigation = 'toc'"
-            ><el-icon><Tickets /></el-icon></button>
+            >
+              <el-icon><Tickets /></el-icon>
+              <span class="preview-nav-count" aria-hidden="true">{{ headingCount }}</span>
+            </button>
             <button
               v-if="relatedLinks.length || docLinks.length"
               type="button"
               class="preview-nav-tab"
               aria-label="相关链接"
+              :title="`相关链接（${relatedLinks.length + docLinks.length}）`"
               :aria-expanded="activeNavigation === 'related'"
               @mouseenter="activeNavigation = 'related'"
               @focus="activeNavigation = 'related'"
               @click="activeNavigation = 'related'"
-            ><el-icon><Connection /></el-icon></button>
+            >
+              <el-icon><Connection /></el-icon>
+              <span class="preview-nav-count" aria-hidden="true">{{ relatedLinks.length + docLinks.length }}</span>
+            </button>
           </div>
           <section v-if="contents.length" v-show="activeNavigation === 'toc'" class="preview-nav-panel" aria-label="本页章节">
             <div class="preview-nav-heading">本页章节</div>
@@ -194,6 +202,10 @@ export default defineComponent({
     },
     contents(): Content[] {
       return this.$services.docService.getContent(this.contentHtml);
+    },
+    headingCount(): number {
+      const count = (items: Content[]): number => items.reduce((total, item) => total + 1 + count(item.chidren), 0);
+      return count(this.contents);
     },
     relatedLinks(): RelatedLink[] {
       return this.file.relatedLinks || [];
@@ -513,6 +525,7 @@ export default defineComponent({
 .popover {
   --preview-min-width: 280px;
   --preview-min-height: 160px;
+  --preview-nav-width: calc(var(--spacing-xl) + var(--spacing-sm));
   // 注意: 不要给.popover本体加transition 拖拽改top/left时会跟手延迟
   background-color: var(--elevated-bg-color);
   width: min(400px, 92vw);
@@ -602,7 +615,7 @@ export default defineComponent({
 }
 
 .popover-body {
-  padding: var(--spacing-sm) var(--spacing-xl) var(--spacing-md) var(--spacing-sm);
+  padding: var(--spacing-sm) var(--preview-nav-width) var(--spacing-md) var(--spacing-sm);
   flex: 1;
   min-width: 0;
   overflow-y: auto;
@@ -629,34 +642,59 @@ export default defineComponent({
   position: absolute;
   top: var(--spacing-sm);
   right: 0;
-  bottom: var(--spacing-lg);
-  width: var(--spacing-xl);
+  bottom: var(--spacing-sm);
+  width: var(--preview-nav-width);
 }
 
 .preview-nav-tabs {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100%;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-sm);
 }
 
 .preview-nav-tab {
   display: flex;
+  flex: 0 1 var(--spacing-3xl);
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: var(--spacing-xl);
-  height: var(--spacing-xl);
-  padding: 0;
+  gap: var(--spacing-xs);
+  width: 100%;
+  height: var(--spacing-3xl);
+  min-height: var(--spacing-2xl);
+  box-sizing: border-box;
+  padding: var(--spacing-xs) 0;
   border: 1px solid var(--border-color);
   border-right: 0;
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
-  background: var(--elevated-bg-color);
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  background: var(--card-bg-color);
   color: var(--secondary-text-color);
+  font-size: var(--font-size-lg);
+  box-shadow: var(--shadow-md);
   cursor: pointer;
+  transition: color var(--transition-fast), box-shadow var(--transition-fast);
 
   &:hover, &[aria-expanded='true'] {
     color: var(--primary-color);
-    background: var(--hover-bg-color);
+    box-shadow: var(--shadow-lg);
   }
+}
+
+.preview-nav-count {
+  flex-shrink: 0;
+  min-width: var(--spacing-md);
+  padding: 0 var(--spacing-xs);
+  border-radius: 999px;
+  background: var(--primary-color);
+  color: var(--el-color-white);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  line-height: var(--font-size-xl);
 }
 
 .preview-nav-panel {

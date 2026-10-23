@@ -204,6 +204,11 @@ describe('SVG 原生缩放与平移', () => {
     svg.style.touchAction = 'pan-y'
     svg.style.cursor = 'crosshair'
     controller = createSvgPanZoom(svg)
+    const touchStart = () => new Event('touchstart', { bubbles: true, cancelable: true })
+    expect(svg.dispatchEvent(touchStart())).toBe(false)
+    const button = document.createElement('button')
+    svg.after(button)
+    expect(button.dispatchEvent(touchStart())).toBe(true)
     vi.mocked(svg.getScreenCTM).mockReturnValue(null)
     svg.dispatchEvent(new MouseEvent('dblclick'))
     svg.dispatchEvent(new WheelEvent('wheel', { deltaY: -100 }))
@@ -213,6 +218,7 @@ describe('SVG 原生缩放与平移', () => {
     expect(frames.size).toBe(1)
     controller.destroy()
     expect(frames.size).toBe(0)
+    expect(svg.dispatchEvent(touchStart())).toBe(true)
     expect(svg.style.touchAction).toBe('pan-y')
     expect(svg.style.cursor).toBe('crosshair')
     controller.zoomIn()

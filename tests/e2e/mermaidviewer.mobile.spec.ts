@@ -31,6 +31,7 @@ test('单指拖动不滚动正文，触摸按钮和双击可缩放图表', async
   expect(await page.evaluate(() => window.scrollY)).toBe(beforeScroll)
   await expect(viewer).toBeVisible()
   await expect(page.locator('.mobile-category-drawer')).toBeHidden()
+  // 快速拖动后立即触摸按钮：浏览器的惯性滚动手势不能吞掉这次 click。
   await viewer.getByRole('button', { name: '重置图表', exact: true }).tap()
   await expectViewBox(svg, initial)
   await testInfo.attach('mermaid-viewer-mobile', { body: await viewer.screenshot(), contentType: 'image/png' })
@@ -40,7 +41,7 @@ test('单指拖动不滚动正文，触摸按钮和双击可缩放图表', async
   const tapPoint = { x: bounds.x + bounds.width * 0.6, y: bounds.y + bounds.height * 0.3 }
   await page.touchscreen.tap(tapPoint.x, tapPoint.y)
   await page.touchscreen.tap(tapPoint.x, tapPoint.y)
-  // 连续真实触摸同时走兼容鼠标事件；缩放只能执行一次，不能变成 2.2²。
+  // 触屏双击由指针事件识别；缩放只能执行一次，不能变成 2.2²。
   await page.evaluate(() => new Promise<void>(resolve => {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
   }))

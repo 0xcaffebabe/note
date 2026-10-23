@@ -159,6 +159,9 @@ export function createSvgPanZoom(svg: SVGSVGElement) {
     releasePointer()
   }
 
+  // Pointer Events 和 touch-action 不会消费原始触摸手势；Chromium 仍可能在快速拖动后
+  // 建立惯性滚动并吞掉下一次按钮点击。在画布起点取消默认手势，平移/双击仍由指针事件处理。
+  svg.addEventListener('touchstart', event => event.preventDefault(), { passive: false, signal: listeners.signal })
   svg.addEventListener('wheel', onWheel, { passive: false, signal: listeners.signal })
   svg.addEventListener('dblclick', onDoubleClick, { signal: listeners.signal })
   svg.addEventListener('pointerdown', onPointerDown, { signal: listeners.signal })

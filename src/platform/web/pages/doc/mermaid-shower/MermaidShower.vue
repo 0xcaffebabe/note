@@ -2,8 +2,9 @@
   <el-dialog
     v-model="showDialog"
     title="查看图表"
-    width="80%"
-    top="5vh"
+    width="90%"
+    class="mermaid-viewer-dialog"
+    align-center
     append-to-body
     :z-index="zIndex"
     @close="dispose"
@@ -117,6 +118,10 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
+.mermaid-viewer {
+  height: 100%;
+}
+
 .mermaid-viewer-controls {
   position: absolute;
   right: var(--spacing-sm);
@@ -157,10 +162,7 @@ export default defineComponent({
 .mermaid-viewer-stage {
   position: relative;
   isolation: isolate;
-  height: 72vh;
-  height: 72dvh;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  height: 100%;
   overflow: hidden;
 }
 
@@ -178,5 +180,27 @@ export default defineComponent({
   padding: var(--spacing-md);
   color: var(--secondary-text-color);
   overflow: auto;
+}
+</style>
+
+<style lang="less">
+// 对话框挂载到 body，使用专属类覆盖全局内边距，让画板与弹窗外壳连成一体。
+.el-dialog.mermaid-viewer-dialog {
+  display: flex;
+  flex-direction: column;
+  height: 90vh;
+  height: 90dvh;
+  padding: 0;
+  overflow: hidden;
+
+  .el-dialog__header {
+    flex-shrink: 0;
+  }
+
+  .el-dialog__body {
+    flex: 1;
+    min-height: 0;
+    padding: 0;
+  }
 }
 </style>

@@ -121,6 +121,8 @@ export default defineComponent({
 }
 
 .el-main {
+  // 允许外层 flex 主区随视口收缩，避免标签栏的内容最小宽度撑开整页
+  min-width: 0;
   padding: 0;
   transition: all 0.3s ease;
   // 为页面过渡的离场页(绝对定位)提供定位上下文

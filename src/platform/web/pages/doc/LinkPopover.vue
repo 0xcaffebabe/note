@@ -552,7 +552,7 @@ export default defineComponent({
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  padding: 6px var(--spacing-sm) 6px 12px;
+  padding: 6px var(--spacing-sm) 6px var(--spacing-lg);
   border-bottom: 1px solid var(--divider-color);
   background-color: var(--card-bg-color);
   cursor: move;
@@ -615,7 +615,7 @@ export default defineComponent({
 }
 
 .popover-body {
-  padding: var(--spacing-sm) var(--preview-nav-width) var(--spacing-md) var(--spacing-sm);
+  padding: var(--spacing-sm) var(--preview-nav-width) var(--spacing-md) var(--spacing-lg);
   flex: 1;
   min-width: 0;
   overflow-y: auto;

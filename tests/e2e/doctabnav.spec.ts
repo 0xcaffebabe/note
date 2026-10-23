@@ -1,4 +1,5 @@
 import { test, expect, goto, pathnameOf, waitForHtmlChange, DOC } from './fixtures'
+import DocUtils from '../../src/core/util/DocUtils'
 
 // 覆盖文档标签导航 DocTabNav.vue + TabNavContextMenu.vue + vuex 的
 // removeFromCategoryList / removeFromCategoryListExcept。
@@ -162,5 +163,84 @@ test.describe('文档标签导航 DocTabNav', () => {
 
     await page.keyboard.press('Escape')
     await expect(menu).toBeHidden()
+  })
+})
+
+test.describe('标签栏横向滚动', () => {
+  test.use({ serviceWorkers: 'block' })
+
+  test('标签挤满后仅在栏内滚动，跨宽屏断点及切换文档均不撑宽页面', async ({ page }) => {
+    const catalog = await page.request.get('/category.json')
+    expect(catalog.ok()).toBe(true)
+    type Category = { link?: string; chidren?: Category[] }
+    const linksOf = (nodes: Category[]): string[] => nodes.flatMap(node => [
+      ...(node.link ? [node.link] : []), ...linksOf(node.chidren || []),
+    ])
+    const currentId = DocUtils.htmlUrl2Id(DOC)
+    const links = [...new Set(linksOf(await catalog.json()))]
+    const current = links.find(link => DocUtils.docUrl2Id(link) === currentId)!
+    expect(current).toBeTruthy()
+    // 恢复九个真实标签，选长标题保证在居中壳的最大宽度下也会挤满。
+    const others = links.filter(link => link !== current)
+      .sort((a, b) => DocUtils.docId2DisplayName(DocUtils.docUrl2Id(b)).length
+        - DocUtils.docId2DisplayName(DocUtils.docUrl2Id(a)).length)
+      .slice(0, 8)
+    expect(others).toHaveLength(8)
+    await page.addInitScript(tabs => {
+      localStorage.setItem('system::currentCategoryList', JSON.stringify(tabs))
+    }, [...others, current])
+
+    // 固定正文与关联列，隔离文章更新和正文长表格等其他溢出来源。
+    await page.route(url => decodeURI(url.pathname) === DOC.replace(/\.html$/, '.md.json'), async route => {
+      const response = await route.fetch()
+      const file = await response.json()
+      file.content = '# 标签栏滚动回归\n\n## 正文\n\n阅读正文时，标签栏应在自身范围内滚动。\n\n'
+        + '## 关联内容\n\n- [关联文档](/' + DocUtils.docId2Url(DocUtils.docUrl2Id(others[0])) + ') 继续阅读'
+      delete file.relatedLinks
+      await route.fulfill({ response, json: file })
+    })
+    await page.setViewportSize({ width: 2040, height: 900 })
+    await goto(page, DOC)
+    await expect(page.locator('.tab-container .nav-tab-item')).toHaveCount(9)
+    await expect(page.locator('.doc-related-column')).toBeVisible()
+    const wrapper = page.locator('.tab-container-wrapper')
+    const tabs = page.locator('.tab-container .nav-tab-item')
+
+    for (const width of [2040, 2560, 3440, 1920, 1440, 1280]) {
+      await page.setViewportSize({ width, height: 900 })
+      await expect.poll(() => page.evaluate(() =>
+        document.documentElement.scrollWidth - document.documentElement.clientWidth), {
+        message: `标签挤满时 ${width}px 视口不应横向溢出`,
+      }).toBeLessThanOrEqual(1)
+      expect(await wrapper.evaluate(el => el.scrollWidth - el.clientWidth)).toBeGreaterThan(100)
+      await wrapper.hover()
+      await page.mouse.wheel(0, -10_000)
+      // 滚动位置可能落在子像素上，容许不到 1% 的边缘舍入。
+      await expect(tabs.first()).toBeInViewport({ ratio: 0.99 })
+      await page.mouse.wheel(0, 10_000)
+      await expect.poll(() => wrapper.evaluate(el => el.scrollLeft)).toBeGreaterThan(0)
+      await expect(tabs.last()).toBeInViewport({ ratio: 0.99 })
+      expect(await page.evaluate(() => window.scrollX)).toBe(0)
+    }
+
+    await page.setViewportSize({ width: 2040, height: 900 })
+    for (const colorScheme of ['light', 'dark'] as const) {
+      await page.emulateMedia({ colorScheme })
+      await expect(page.locator('html')).toHaveClass(colorScheme === 'dark' ? /dark/ : /^(?!.*dark)/)
+      await test.info().attach(`filled-doc-tabs-${colorScheme}`, {
+        body: await page.screenshot(), contentType: 'image/png',
+      })
+    }
+    await wrapper.hover()
+    await page.mouse.wheel(0, -10_000)
+    await expect(tabs.first()).toBeInViewport({ ratio: 0.99 })
+    await Promise.all([waitForHtmlChange(page, DOC), tabs.first().locator('.tab-main').click()])
+    await expect(page.locator('.nav-tab-item.active')).toBeInViewport({ ratio: 0.99 })
+    expect(pathnameOf(page)).toBe(DocUtils.docId2HtmlPath(DocUtils.docUrl2Id(others[0])))
+    expect(await page.evaluate(() => window.scrollX)).toBe(0)
+    await page.goBack()
+    await expect(tabs.last()).toHaveClass(/active/)
+    await expect(tabs.last()).toBeInViewport({ ratio: 0.99 })
+    expect(await page.evaluate(() => window.scrollX)).toBe(0)
   })
 })

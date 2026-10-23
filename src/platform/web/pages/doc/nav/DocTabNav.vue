@@ -55,7 +55,6 @@ import DocUtils from "@/core/util/DocUtils";
 import { findByLink } from "@/core/util/CategoryUtils";
 import { defineComponent } from "vue";
 import TabNavContextMenu from "./TabNavContextMenu.vue";
-import { ElScrollbar } from 'element-plus';
 
 export default defineComponent({
   emits: ['dbclick'],

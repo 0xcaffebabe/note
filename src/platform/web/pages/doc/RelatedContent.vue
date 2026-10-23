@@ -77,7 +77,10 @@ import { showLinkPreview } from './LinkPreview'
 
 export default defineComponent({
   components: { Connection },
+  emits: ['navigate'],
   props: {
+    contentRoot: Object as PropType<HTMLElement>,
+    scrollContainer: Object as PropType<HTMLElement>,
     // 关联内容章节(带关联理由, 点击跳转到目标文档)
     related: {
       type: Array as PropType<RelatedLink[]>,
@@ -154,6 +157,7 @@ export default defineComponent({
       // 保持面板打开: 跳转后组件复用 清掉待执行的关闭计时器避免被误关
       clearTimeout(this.leaveTimer)
       this.$router.push(href)
+      this.$emit('navigate')
     },
     // 其他链接: 滚动到正文中该链接首次出现的位置 并短暂高亮
     locate(href: string) {
@@ -163,7 +167,7 @@ export default defineComponent({
       } catch {
         return
       }
-      const section = document.querySelector('.main.markdown-section') || document.querySelector('.markdown-section')
+      const section = this.contentRoot || document.querySelector('.main.markdown-section') || document.querySelector('.markdown-section')
       if (!section) {
         return
       }
@@ -182,8 +186,12 @@ export default defineComponent({
       clearTimeout(this.leaveTimer)
       // 让目标停在视口竖直中间, 一眼可见(而非贴着顶栏)
       const rect = target.getBoundingClientRect()
-      const top = window.scrollY + rect.top - (window.innerHeight - rect.height) / 2
-      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
+      const container = this.scrollContainer
+      const top = container
+        ? container.scrollTop + rect.top - container.getBoundingClientRect().top - (container.clientHeight - rect.height) / 2
+        : window.scrollY + rect.top - (window.innerHeight - rect.height) / 2
+      const scrollTarget = container || window
+      scrollTarget.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
       // 短暂高亮被定位的链接
       const orig = target.style.backgroundColor
       target.style.transition = 'background-color 0.3s ease'

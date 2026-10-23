@@ -36,6 +36,10 @@ export default defineComponent({
       type: Boolean,
       default: true,
     },
+    // 预览窗复用目录时，标题和滚动均限制在当前卡片内。
+    contentRoot: Object as PropType<HTMLElement>,
+    scrollContainer: Object as PropType<HTMLElement>,
+    contents: Array as PropType<Content[]>,
     // 呈现形态: column=桌面粘性列(自带卡片描边) / drawer=移动底部抽屉内(去描边铺满)
     mode: {
       type: String as PropType<'column' | 'drawer'>,
@@ -69,7 +73,7 @@ export default defineComponent({
         }
         try {
           // "关联内容"章节的排除已下沉到 DocService.getContentByDocId 源头
-          this.contentList = await this.$services.docService.getContentByDocId(this.doc);
+          this.contentList = this.contents ?? await this.$services.docService.getContentByDocId(this.doc);
         } catch (e: any) {
           ElMessage.error(e.message);
         }
@@ -102,22 +106,27 @@ export default defineComponent({
       };
 
       // 添加滚动事件监听器
-      document.addEventListener("scroll", this.scrollHandler);
+      (this.scrollContainer || document).addEventListener("scroll", this.scrollHandler);
     },
     // 更新阅读进度(当前文档滚动百分比)
     updateReadingProgress() {
-      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const container = this.scrollContainer;
+      const scrollable = container
+        ? container.scrollHeight - container.clientHeight
+        : document.documentElement.scrollHeight - window.innerHeight;
       if (scrollable <= 0) {
         this.readingProgress = 0;
         return;
       }
-      const percent = (window.scrollY / scrollable) * 100;
+      const percent = ((container ? container.scrollTop : window.scrollY) / scrollable) * 100;
       this.readingProgress = Math.min(100, Math.max(0, percent));
     },
     // 构建标题可见性观察器 取视口内最上方的标题为active
     setupHeadingObserver() {
       this.teardownHeadingObserver();
-      const headings = Array.from(document.querySelectorAll(HEADING_SELECTOR)) as HTMLElement[];
+      const headings = Array.from(this.contentRoot
+        ? this.contentRoot.querySelectorAll('h1, h2, h3, h4, h5, h6')
+        : document.querySelectorAll(HEADING_SELECTOR)) as HTMLElement[];
       if (headings.length === 0) {
         // 文档主体可能尚未渲染完成 稍后重试(最多重试10次)
         if (this.rebuildRetryCount < 10) {
@@ -139,7 +148,8 @@ export default defineComponent({
         this.updateActiveHeading(headings, visibleHeadings);
       }, {
         // 上偏移顶栏高度 避免被固定顶栏遮挡的标题被误判为可见
-        rootMargin: `-${HEADER_OFFSET}px 0px 0px 0px`,
+        root: this.scrollContainer || null,
+        rootMargin: this.scrollContainer ? '0px' : `-${HEADER_OFFSET}px 0px 0px 0px`,
         threshold: 0,
       });
       headings.forEach(heading => this.headingObserver!.observe(heading));
@@ -169,7 +179,7 @@ export default defineComponent({
       } else {
         // 视口内没有标题时 回退到最后一个位于视口上方的标题
         for (const heading of headings) {
-          if (heading.getBoundingClientRect().top < HEADER_OFFSET) {
+          if (heading.getBoundingClientRect().top < (this.scrollContainer?.getBoundingClientRect().top ?? HEADER_OFFSET)) {
             activeNode = heading;
           } else {
             break;
@@ -187,7 +197,7 @@ export default defineComponent({
       this.applyActiveClass(id);
       // 记录当前标题
       this.currentId = id;
-      this.$store.commit("setCurrentHeading", id);
+      if (!this.scrollContainer) this.$store.commit("setCurrentHeading", id);
     },
     // 高亮TOC中对应的项 并保证其在TOC可视区内
     applyActiveClass(id: string) {
@@ -196,7 +206,8 @@ export default defineComponent({
         return;
       }
       const previousActive = tocElm.querySelector(".active");
-      const tocLink = tocElm.querySelector(`a[href='#${id}']`);
+      const tocLink = Array.from(tocElm.querySelectorAll('a[href]'))
+        .find(link => link.getAttribute('href') === '#' + id);
       if (previousActive === tocLink) {
         return;
       }
@@ -241,7 +252,7 @@ export default defineComponent({
   unmounted() {
     // 移除滚动事件监听器
     if (this.scrollHandler) {
-      document.removeEventListener("scroll", this.scrollHandler);
+      (this.scrollContainer || document).removeEventListener("scroll", this.scrollHandler);
       this.scrollHandler = null;
     }
     // 销毁标题观察器

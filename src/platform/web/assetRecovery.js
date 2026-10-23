@@ -4,9 +4,11 @@
   var storageKey = 'chunkReloadAt'
   var recovering = false
   var notified = false
+  var navigationUrl = null
+  var recoveryUrl = null
 
   function retryUrl() {
-    var url = new URL(location.href)
+    var url = new URL(recoveryUrl || location.href)
     // 旧 SW 的 app shell 会忽略导航查询参数；真实 .html 入口走网络优先，能绕开旧 shell。
     var entries = { '/': '/index.html', '/home': '/home.html', '/tag': '/tag.html', '/catalog': '/catalog.html', '/cluster': '/cluster.html' }
     url.pathname = entries[url.pathname] || url.pathname
@@ -36,6 +38,8 @@
 
   function recover() {
     if (recovering || notified) return
+    // chunk 失败时 Vue Router 尚未提交地址，保留失败导航的目标。
+    recoveryUrl = navigationUrl || location.href
     if (navigator.onLine === false) {
       notify('网络不可用，请连接网络后重试。')
       return
@@ -81,6 +85,14 @@
     } catch (_) { /* 不支持 SW 时仍能恢复 */ }
   }
 
+  window.addEventListener('asset-recovery:navigation', function (event) {
+    navigationUrl = null
+    if (typeof event.detail !== 'string') return
+    try {
+      var url = new URL(event.detail, location.href)
+      if (url.origin === location.origin) navigationUrl = url.href
+    } catch (_) { /* 无效目标仍恢复当前页面 */ }
+  })
   window.addEventListener('vite:preloadError', recover)
   window.addEventListener('error', function (event) {
     var target = event.target

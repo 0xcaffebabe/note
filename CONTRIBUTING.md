@@ -43,7 +43,11 @@
 
 ## 本地开发与验证
 
-使用与 CI 一致的 Node.js 版本（当前为 26.x），通过 npm 安装锁定依赖：
+使用根目录 `.node-version` 指定的 Node.js 26，与 CI 保持一致。Cloudflare Pages 也通过该文件选择 Node.js 版本，避免平台默认版本缺少 jsdom/undici 所需的运行时 API。
+
+Cloudflare Pages 后台已有 `NODE_VERSION` 环境变量时，应将 Preview 和 Production 的值同步设为 `26`；仅更新仓库里的 `.node-version` 不会替换后台已指定的版本。以构建日志中的实际安装版本为准。
+
+通过 npm 安装锁定依赖：
 
 ```sh
 npm ci

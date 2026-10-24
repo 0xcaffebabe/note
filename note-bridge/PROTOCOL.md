@@ -48,6 +48,8 @@ A turn contains id, question, answer, status (`running/complete/cancelled/error`
 
 A message sends only current user text and document references; it never submits full model history or tool schemas. Text is bounded to 20,000 characters; attachments are at most three `{docId,headingIds?,contentHash?}` references. The bridge binds the website origin from authentication, obtains the current manifest and validates attachment hashes. It persists a normalized request hash: identical clientRequestId+payload returns the original IDs, conflicting reuse fails. Busy sessions reject a second unrelated send.
 
+Omitting `headingIds` or supplying `[]` attaches only document metadata and a bounded TOC, without body text. A nonempty selection attaches only those sections; stale or unknown heading IDs are rejected. Both forms preserve the pinned content hash, revision and citation IDs, and report truncation when evidence exceeds the result budget.
+
 ## Committed updates and reconnect
 
 ```json

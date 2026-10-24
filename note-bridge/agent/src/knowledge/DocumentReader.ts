@@ -60,32 +60,45 @@ export class DocumentReader {
     };
   }
 
-  /** 按所选锚点构造有界附件，引用 ID 与模型触发的正文读取保持一致。 */
+  /** 未选章节时仅附加目录和元信息；选中章节使用与正文读取一致的引用 ID。 */
   public async attachment(
     docId: string,
     headingIds?: string[],
     signal?: AbortSignal,
   ): Promise<KnowledgeToolResult> {
     const doc = this.documents.entry(docId);
-    const body = await this.documents.load(doc, signal);
     if (
-      headingIds &&
+      headingIds !== undefined &&
       (!Array.isArray(headingIds) ||
         headingIds.length > 256 ||
-        headingIds.some(
-          (id) =>
-            typeof id !== 'string' ||
-            !body.sections.some((section) => section.headingId === id),
-        ))
+        headingIds.some((id) => typeof id !== 'string'))
+    ) {
+      invalid('附件章节已变化或不存在');
+    }
+    if (!headingIds?.length) {
+      const toc = await this.toc(doc, {}, signal);
+      return finishKnowledgeResult(
+        'attachment',
+        { docId },
+        {
+          data: { ...toc.data, sections: [], totalSections: 0 },
+          sources: toc.sources?.length
+            ? toc.sources
+            : [this.results.citation(doc)],
+        },
+      );
+    }
+    const body = await this.documents.load(doc, signal);
+    if (
+      headingIds.some(
+        (id) => !body.sections.some((section) => section.headingId === id),
+      )
     ) {
       invalid('附件章节已变化或不存在');
     }
     const selected = body.sections
       .map((section, index) => ({ ...section, section: index }))
-      .filter(
-        (section) =>
-          !headingIds?.length || headingIds.includes(section.headingId),
-      );
+      .filter((section) => headingIds.includes(section.headingId));
     if (!selected.length) {
       invalid('附件没有可读取的正文');
     }

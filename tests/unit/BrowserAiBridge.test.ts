@@ -71,7 +71,8 @@ describe('BrowserAiBridge persistent session protocol', () => {
 
   it('撤销凭证后清除本地记忆并停止自动尝试', async () => {
     vi.useFakeTimers()
-    const { bridge, sockets, storage } = setup()
+    const lifecycle = new EventTarget()
+    const { bridge, sockets, storage } = setup(new MemoryStorage(), lifecycle)
     const socket = await authenticate(bridge, sockets)
     socket.onclose?.()
     vi.advanceTimersByTime(1000)
@@ -79,8 +80,75 @@ describe('BrowserAiBridge persistent session protocol', () => {
     sockets[1].receive({ type: 'error', code: 'auth_failed', message: '授权已撤销，请重新配对' })
     expect(storage.getItem(AI_BRIDGE_STORAGE_KEY)).toBeNull()
     expect(bridge.snapshot()).toMatchObject({ state: 'disconnected', remembered: false })
+    lifecycle.dispatchEvent(new Event('online'))
     vi.advanceTimersByTime(120000)
     expect(sockets).toHaveLength(2)
+  })
+
+  it.each(['agent_unavailable', 'authorization_unavailable'])('%s 后按退避恢复认证，保留凭证且不重发业务请求', async code => {
+    vi.useFakeTimers()
+    const { bridge, sockets, storage } = setup()
+    const first = await authenticate(bridge, sockets)
+    const saved = storage.getItem(AI_BRIDGE_STORAGE_KEY)
+    const sending = bridge.sendMessage(input)
+    const rejected = expect(sending).rejects.toMatchObject({ code: 'disconnected' })
+    first.onclose?.()
+    await rejected
+    vi.advanceTimersByTime(1000)
+
+    sockets[1].open()
+    sockets[1].receive({ type: 'error', code, message: '服务暂时不可用' })
+    expect(bridge.snapshot()).toMatchObject({ state: 'disconnected', remembered: true, message: '服务暂时不可用' })
+    expect(storage.getItem(AI_BRIDGE_STORAGE_KEY)).toBe(saved)
+    vi.advanceTimersByTime(1999)
+    expect(sockets).toHaveLength(2)
+    vi.advanceTimersByTime(1)
+
+    sockets[2].open()
+    sockets[2].receive({ type: 'error', code, message: '服务暂时不可用' })
+    vi.advanceTimersByTime(3999)
+    expect(sockets).toHaveLength(3)
+    vi.advanceTimersByTime(1)
+    const recovered = sockets[3]
+    recovered.open()
+    recovered.receive({ type: 'auth.ok', token: 'memory-only-token', providers: [provider], capabilities: ['persistent_sessions', 'knowledge_tools'] })
+    expect(bridge.snapshot()).toMatchObject({ state: 'ready', remembered: true, providers: [provider] })
+    expect(storage.getItem(AI_BRIDGE_STORAGE_KEY)).toBe(saved)
+    expect(sockets.slice(1).map(socket => socket.sent)).toEqual(Array.from({ length: 3 }, () => [{ v: 2, type: 'auth', token: 'memory-only-token' }]))
+    expect(sockets.flatMap(socket => socket.sent).filter(frame => frame.method === 'messages.send')).toHaveLength(1)
+  })
+
+  it.each(['agent_unavailable', 'authorization_unavailable'])('%s 后手动断开会取消重试，网络恢复也不重新连接', async code => {
+    vi.useFakeTimers()
+    const lifecycle = new EventTarget()
+    const { bridge, sockets } = setup(new MemoryStorage(), lifecycle)
+    const first = await authenticate(bridge, sockets)
+    first.onclose?.()
+    vi.advanceTimersByTime(1000)
+    sockets[1].open()
+    sockets[1].receive({ type: 'error', code, message: '服务暂时不可用' })
+
+    bridge.disconnect()
+    lifecycle.dispatchEvent(new Event('online'))
+    vi.advanceTimersByTime(120000)
+    expect(sockets).toHaveLength(2)
+    expect(bridge.snapshot()).toMatchObject({ state: 'disconnected', remembered: true })
+  })
+
+  it('协议不兼容时保留凭证但停止自动重试', async () => {
+    vi.useFakeTimers()
+    const lifecycle = new EventTarget()
+    const { bridge, sockets } = setup(new MemoryStorage(), lifecycle)
+    const first = await authenticate(bridge, sockets)
+    first.onclose?.()
+    vi.advanceTimersByTime(1000)
+    sockets[1].open()
+    sockets[1].receive({ type: 'error', code: 'unsupported_version', message: '协议版本不兼容' })
+
+    lifecycle.dispatchEvent(new Event('online'))
+    vi.advanceTimersByTime(120000)
+    expect(sockets).toHaveLength(2)
+    expect(bridge.snapshot()).toMatchObject({ state: 'disconnected', remembered: true })
   })
 
   it('断开保留记忆且本页暂停；忘记撤销当前授权并阻止刷新恢复', async () => {

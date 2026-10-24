@@ -1,4 +1,5 @@
 import { AgentError } from '../domain/AgentError.js';
+import { textPrefix } from '../text.js';
 import type { RuntimeProvider, Authorization, RpcContext } from '../types.js';
 import { selectedModel } from '../models.js';
 import type { RunState } from '../domain/AgentState.js';
@@ -45,6 +46,6 @@ export class RuntimeConfiguration {
         text = text.split(p.secret).join('[redacted]');
       }
     }
-    return text.slice(0, 1000);
+    return textPrefix(text, 1000);
   }
 }

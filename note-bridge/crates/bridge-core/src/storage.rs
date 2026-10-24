@@ -51,6 +51,26 @@ impl Storage {
             .clone()
     }
 
+    /// 在同一配置锁内读取 worker 的已启用配置及凭据，避免同步时混合不同版本。
+    /// 单项凭据不可用时保留配置并省略秘密值，由 Agent 在使用该服务时报告错误。
+    pub(crate) fn enabled_providers_with_secrets(
+        &self,
+    ) -> Result<Vec<(Provider, Option<String>)>, String> {
+        let config = self.config.lock().map_err(|_| "配置存储不可用")?;
+        Ok(config
+            .providers
+            .iter()
+            .filter(|provider| provider.enabled)
+            .map(|provider| {
+                let secret = config
+                    .credential_refs
+                    .get(&provider.id)
+                    .and_then(|reference| self.secrets.get(reference).ok().flatten());
+                (provider.clone(), secret)
+            })
+            .collect())
+    }
+
     /// 校验并保存新建/编辑配置，省略 api_key 时保留现有凭据。
     ///
     /// 持有配置锁直至原子提交完成；暂存条目不改变正在使用的旧引用。

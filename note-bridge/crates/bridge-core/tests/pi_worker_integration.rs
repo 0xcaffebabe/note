@@ -185,7 +185,9 @@ async fn actual_pi_session_reads_remote_tools_survives_socket_close_and_bridge_r
         json!({"sessionId":session["id"]}),
     )
     .await;
-    rpc(&mut socket,"send","messages.send",json!({"sessionId":session["id"],"clientRequestId":"pi-real-1","providerId":provider.id,"model":provider.model,"text":"Read the guide and summarize."})).await;
+    // The title cutoff used to split this emoji and terminate Rust's JSONL reader.
+    let question = format!("{}😀 Read the guide and summarize.", "q".repeat(59));
+    rpc(&mut socket,"send","messages.send",json!({"sessionId":session["id"],"clientRequestId":"pi-real-1","providerId":provider.id,"model":provider.model,"text":question})).await;
     socket.close(None).await.unwrap();
     let mut socket = connect(port, &origin).await;
     send(
@@ -209,6 +211,10 @@ async fn actual_pi_session_reads_remote_tools_survives_socket_close_and_bridge_r
         tokio::time::sleep(Duration::from_millis(30)).await;
     }
     assert_eq!(page["turns"][0]["status"], "complete", "{page}");
+    assert_eq!(page["session"]["title"], "q".repeat(59));
+    assert_eq!(page["turns"][0]["question"], question);
+    let list = rpc(&mut socket, "list", "sessions.list", json!({})).await;
+    assert_eq!(list["sessions"][0]["title"], "q".repeat(59));
     assert_eq!(
         page["turns"][0]["answer"],
         "Answer verified from the website."
@@ -233,6 +239,7 @@ async fn actual_pi_session_reads_remote_tools_survives_socket_close_and_bridge_r
     )
     .await;
     assert_eq!(restored["turns"], page["turns"]);
+    assert_eq!(restored["session"]["title"], "q".repeat(59));
     assert_eq!(site.calls.load(Ordering::SeqCst), 2);
     bridge.stop().await;
     server.abort();

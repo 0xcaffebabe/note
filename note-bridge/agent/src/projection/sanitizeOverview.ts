@@ -1,15 +1,18 @@
 import type { Overview } from '../domain/Conversation.js';
+import { textPrefix } from '../text.js';
 
 /** Only the public UI projection is bounded; original arguments and evidence stay in Pi. */
 export function sanitizeOverview(value: Overview): Overview {
   const clean = (text: string, max: number) =>
-    text
-      .replace(
-        /[\u0000-\u001f\u007f-\u009f\u200e\u200f\u202a-\u202e\u2066-\u2069]/g,
-        ' ',
-      )
-      .trim()
-      .slice(0, max);
+    textPrefix(
+      text
+        .replace(
+          /[\u0000-\u001f\u007f-\u009f\u200e\u200f\u202a-\u202e\u2066-\u2069]/g,
+          ' ',
+        )
+        .trim(),
+      max,
+    );
   const input = value.input
     .slice(0, 8)
     .map((item) => ({

@@ -119,6 +119,73 @@ fn credential_rotation_commits_a_new_reference_with_its_endpoint() {
 }
 
 #[test]
+fn enabled_provider_snapshot_holds_the_config_lock_during_credential_reads() {
+    use std::sync::mpsc;
+
+    struct PausedReadStore {
+        values: MemorySecretStore,
+        pause: Mutex<Option<(mpsc::Sender<()>, mpsc::Receiver<()>)>>,
+    }
+    impl SecretStore for PausedReadStore {
+        fn get(&self, id: &str) -> Result<Option<String>, String> {
+            let pause = self.pause.lock().unwrap().take();
+            if let Some((started, resume)) = pause {
+                started.send(()).unwrap();
+                resume
+                    .recv_timeout(std::time::Duration::from_secs(5))
+                    .unwrap();
+            }
+            self.values.get(id)
+        }
+
+        fn set(&self, id: &str, secret: &str) -> Result<(), String> {
+            self.values.set(id, secret)
+        }
+
+        fn delete(&self, id: &str) -> Result<(), String> {
+            self.values.delete(id)
+        }
+    }
+
+    let dir = tempfile::tempdir().unwrap();
+    let secrets = Arc::new(PausedReadStore {
+        values: MemorySecretStore::new(),
+        pause: Mutex::new(None),
+    });
+    let store = Arc::new(Storage::with_secrets(dir.path().into(), secrets.clone()).unwrap());
+    let provider = store.save(input(Some("fixture-old-key"))).unwrap();
+    let (started, reading) = mpsc::channel();
+    let (resume, paused) = mpsc::channel();
+    *secrets.pause.lock().unwrap() = Some((started, paused));
+    let reader = {
+        let store = store.clone();
+        std::thread::spawn(move || store.enabled_providers_with_secrets().unwrap())
+    };
+    reading
+        .recv_timeout(std::time::Duration::from_secs(5))
+        .unwrap();
+    assert!(store.config.try_lock().is_err());
+
+    let mut update = input(Some("fixture-rotated-key"));
+    update.id = Some(provider.id.clone());
+    update.base_url = "https://replacement.example.test/v1".into();
+    let writer = {
+        let store = store.clone();
+        std::thread::spawn(move || store.save(update).unwrap())
+    };
+    resume.send(()).unwrap();
+    assert_eq!(
+        reader.join().unwrap(),
+        vec![(provider, Some("fixture-old-key".into()))]
+    );
+    let saved = writer.join().unwrap();
+    assert_eq!(
+        store.enabled_providers_with_secrets().unwrap(),
+        vec![(saved, Some("fixture-rotated-key".into()))]
+    );
+}
+
+#[test]
 fn disabling_auth_removes_even_an_already_missing_credential_reference() {
     let dir = tempfile::tempdir().unwrap();
     let secrets = Arc::new(MemorySecretStore::new());

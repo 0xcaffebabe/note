@@ -17,6 +17,7 @@ import type { ModelGuard, RequestPermit } from './RequestPermit.js';
 import { boundedModelFetch } from './BoundedModelFetch.js';
 import { modelPayloadPolicy } from './ModelPayloadPolicy.js';
 import { EMPTY_COST } from './constants.js';
+import { textPrefix } from '../text.js';
 
 /**
  * 把 Pi 协议流适配到 Note Bridge 的运行预算。每次调用独立持有许可，所有退出路径都释放。
@@ -159,5 +160,8 @@ function safeError(
 ): string {
   const text = value ?? '模型请求失败';
   // Redact before truncation: a cutoff through a key must not expose its prefix.
-  return (secret ? text.split(secret).join('[redacted]') : text).slice(0, 1000);
+  return textPrefix(
+    secret ? text.split(secret).join('[redacted]') : text,
+    1000,
+  );
 }

@@ -1,6 +1,7 @@
 import type { Writable } from 'node:stream';
 import { AgentError } from '../domain/AgentError.js';
 import { LIMITS } from '../config/limits.js';
+import { wellFormedText } from '../text.js';
 
 const MAX_BUFFER_BYTES = 32 * 1024 * 1024;
 
@@ -42,7 +43,11 @@ export class JsonlOutput {
   }
 
   send(value: unknown) {
-    const line = JSON.stringify(value) + '\n';
+    // 旧检查点或模型输出也可能包含孤立代理项；仅修复传输副本，保留原始历史。
+    const line =
+      JSON.stringify(value, (_key, item: unknown) =>
+        typeof item === 'string' ? wellFormedText(item) : item,
+      ) + '\n';
     if (Buffer.byteLength(line) > LIMITS.ipcBytes) {
       throw new AgentError('response_limit', 'IPC 响应超过上限');
     }

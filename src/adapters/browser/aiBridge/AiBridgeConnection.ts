@@ -322,7 +322,10 @@ export class AiBridgeConnection {
       }
       this.credentials.clear(authenticating)
     }
-    this.retry.disable()
+    // worker 恢复和授权存储暂时不可用不会使凭证失效，继续按既有退避认证。
+    if (frame.code !== 'agent_unavailable' && frame.code !== 'authorization_unavailable') {
+      this.retry.disable()
+    }
     this.failConnection(typeof frame.message === 'string' ? frame.message : '桥接请求失败')
   }
 

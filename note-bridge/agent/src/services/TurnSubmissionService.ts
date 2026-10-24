@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { textPrefix } from '../text.js';
 import { BACKGROUND_CONTEXT as CTX } from '@earendil-works/chord/context';
 import { AgentError } from '../domain/AgentError.js';
 import type { TurnSubmission } from '../domain/TurnSubmission.js';
@@ -189,7 +190,7 @@ export class TurnSubmissionService {
       state.effort = effort;
       state.updatedAt = startedAt;
       if (state.turns.length === 1) {
-        state.title = text.slice(0, 60);
+        state.title = textPrefix(text, 60);
       }
       const run = await tx.doc(RunDoc, this.store.cid(sessionId), turnId, null);
       Object.assign(run, {

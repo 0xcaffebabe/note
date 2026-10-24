@@ -160,7 +160,7 @@ test('failed fulltext returns explicit catalog fallback and attachments preserve
   assert.equal((selected.data.sections as unknown[]).length, 1)
   const direct = await snapshot.execute('get_document', { docId: '测试-文档', section: 1 })
   assert.equal(selected.sources![0].sourceId, direct.sources![0].sourceId)
-  const large = await snapshot.attachment('测试-文档')
+  const large = await snapshot.attachment('测试-文档', ['first'])
   assert.ok(large.data.truncated); assert.ok(Buffer.byteLength(JSON.stringify(large)) <= KNOWLEDGE_TOOL_RESULT_BYTES)
   await assert.rejects(snapshot.attachment('测试-文档', ['missing']), /章节/)
 })

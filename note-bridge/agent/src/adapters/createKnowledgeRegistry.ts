@@ -8,6 +8,7 @@ import {
   hook,
 } from '@earendil-works/pi-durable';
 import { AgentError } from '../domain/AgentError.js';
+import { textPrefix } from '../text.js';
 import type { AgentLimits } from '../config/limits.js';
 import { KNOWLEDGE_TOOL_DEFINITIONS } from '../knowledge.js';
 import { IndexDoc, RunDoc } from '../persistence/documents.js';
@@ -96,7 +97,7 @@ export function createKnowledgeRegistry(
                   overview: {
                     input: Object.entries(args).map(([label, value]) => ({
                       label,
-                      value: String(value).slice(0, 500),
+                      value: textPrefix(String(value), 500),
                     })),
                     summary: message,
                   },

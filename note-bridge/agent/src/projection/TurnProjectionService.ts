@@ -11,6 +11,7 @@ import type { AgentLimits } from '../config/limits.js';
 import type { AgentStore } from '../persistence/AgentStore.js';
 import { EvidenceDoc } from '../persistence/documents.js';
 import { sanitizeOverview } from './sanitizeOverview.js';
+import { textPrefix } from '../text.js';
 
 /**
  * 将 Pi 原始日志与实时文档投影为 v2 回合。只裁剪 UI 投影，不改写原始证据。
@@ -150,7 +151,7 @@ export class TurnProjectionService {
     }
     turn.sources = [...sources.values()];
     turn.toolCalls = [...calls.values()].slice(0, this.limits.tools);
-    turn.answer = turn.answer.slice(0, this.limits.answerChars);
+    turn.answer = textPrefix(turn.answer, this.limits.answerChars);
     if (turn.status !== 'running') {
       this.completed.set(turnId, turn);
       if (this.completed.size > 100) {
@@ -207,11 +208,13 @@ export class TurnProjectionService {
             : {}),
         ...(message.isError
           ? {
-              message: message.content
-                .filter((c) => c.type === 'text')
-                .map((c) => c.text)
-                .join('')
-                .slice(0, 1000),
+              message: textPrefix(
+                message.content
+                  .filter((c) => c.type === 'text')
+                  .map((c) => c.text)
+                  .join(''),
+                1000,
+              ),
             }
           : {}),
       });

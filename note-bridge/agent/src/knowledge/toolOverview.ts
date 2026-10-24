@@ -84,7 +84,9 @@ function overviewSummary(
     case 'get_related_documents':
       return `找到 ${String(data.total)} 篇${name === 'search_documents' ? '匹配' : '相关'}文档，本次返回 ${count} 篇。`;
     case 'attachment':
-      return `附加 ${(data.sections as unknown[]).length} 个章节。`;
+      return Array.isArray(data.headings)
+        ? `附加目录与元信息，返回 ${count} / ${String(data.total)} 个章节标题。`
+        : `附加 ${(data.sections as unknown[]).length} 个章节。`;
     default:
       return `返回 ${count} 项`;
   }

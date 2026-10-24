@@ -37,12 +37,17 @@ export function makeModels(
         : p.protocol === 'responses'
           ? 'openai-responses'
           : 'openai-completions';
+    // Anthropic SDK 会自行追加 /v1/messages；与原生探测、模型目录保持同一地址约定。
+    const baseUrl =
+      p.protocol === 'anthropic'
+        ? p.baseUrl.replace(/\/+$/, '').replace(/\/v1$/, '')
+        : p.baseUrl;
     const listed = modelOptions(p).map((m) => ({
       id: m.id,
       name: m.name,
       provider: p.id,
       api,
-      baseUrl: p.baseUrl,
+      baseUrl,
       input: ['text'] as ['text'],
       cost: EMPTY_COST,
       reasoning: true,
@@ -56,7 +61,7 @@ export function makeModels(
       createProvider({
         id: p.id,
         name: p.name,
-        baseUrl: p.baseUrl,
+        baseUrl,
         auth: {
           apiKey: {
             name: 'Note Bridge credentials',

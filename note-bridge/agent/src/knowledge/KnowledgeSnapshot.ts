@@ -51,7 +51,7 @@ export class KnowledgeSnapshot {
     return this.reader.describe(docId, signal);
   }
 
-  /** 读取用户选择的正文附件，保留与工具读取一致的引用与截断信息。 */
+  /** 未选章节时附加目录，选择后附加正文；保留与工具读取一致的引用和截断信息。 */
   public async attachment(
     docId: string,
     headingIds?: string[],

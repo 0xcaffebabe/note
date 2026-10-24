@@ -4,6 +4,9 @@ use crate::agent::{AgentCommand, AgentProcess};
 use serde_json::{json, Value};
 use std::sync::Arc;
 
+#[cfg(test)]
+mod tests;
+
 impl Bridge {
     /// 桌面注入包内运行时路径；测试和开发可注入隔离的 worker fixture。
     pub fn set_agent_command(&self, command: AgentCommand) {
@@ -26,30 +29,23 @@ impl Bridge {
                 .collect::<Vec<_>>()
         };
         let bridge = self.clone();
-        let providers = tokio::task::spawn_blocking(move || {
-            bridge
+        let providers = tokio::task::spawn_blocking(move || -> Result<Vec<Value>, String> {
+            Ok(bridge
                 .inner
                 .storage
-                .providers()
+                .enabled_providers_with_secrets()?
                 .into_iter()
-                .filter(|p| p.enabled)
-                .map(|provider| {
-                    let secret = bridge
-                        .inner
-                        .storage
-                        .provider_with_secret(&provider.id)
-                        .ok()
-                        .and_then(|(_, secret)| secret);
+                .map(|(provider, secret)| {
                     let mut value = serde_json::to_value(provider).expect("provider serialization");
                     if let Some(secret) = secret {
                         value["secret"] = json!(secret);
                     }
                     value
                 })
-                .collect::<Vec<_>>()
+                .collect())
         })
         .await
-        .map_err(|_| "无法读取模型配置")?;
+        .map_err(|_| "无法读取模型配置")??;
         Ok(json!({
             "providers": providers,
             "authorizations": authorizations,

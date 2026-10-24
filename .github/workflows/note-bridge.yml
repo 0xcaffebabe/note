@@ -1,0 +1,144 @@
+name: note-bridge
+
+on:
+  pull_request:
+    paths: ['note-bridge/**', '.github/workflows/note-bridge.yml']
+  push:
+    branches: [master]
+    tags: ['note-bridge-v*']
+    paths: ['note-bridge/**', '.github/workflows/note-bridge.yml']
+  workflow_dispatch:
+    inputs:
+      draft_release:
+        description: 'Create a draft release (select a note-bridge-v* tag as the run ref)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: note-bridge-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: note-bridge
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26.12.1
+          cache: npm
+          cache-dependency-path: |
+            note-bridge/package-lock.json
+            note-bridge/agent/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - run: npm ci
+      - run: npm run agent:install
+      - run: npm run format:check
+      - run: npm run agent:build
+      - run: npm run agent:test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:ui
+      - name: Upload desktop UI report and screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: note-bridge-ui-report
+          path: |
+            note-bridge/playwright-report/
+            note-bridge/test-results/
+          retention-days: 7
+      - run: cargo fmt --all --check
+      - run: cargo test --locked -p bridge-core
+      - run: cargo clippy --locked -p bridge-core --all-targets -- -D warnings
+
+  desktop:
+    needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            target: aarch64-apple-darwin
+            bundles: dmg
+          - os: macos-14
+            target: x86_64-apple-darwin
+            bundles: dmg
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            bundles: nsis
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: note-bridge
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26.12.1
+          cache: npm
+          cache-dependency-path: |
+            note-bridge/package-lock.json
+            note-bridge/agent/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - run: npm ci
+      - run: npm run agent:install
+      - run: npm run agent:build
+      - run: npm run agent:test
+      - name: Test core on the host platform
+        run: cargo test --locked -p bridge-core
+      - name: Build unsigned evaluation package
+        run: npm run desktop:build -- --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} --ci
+      - name: Upload package for manual platform verification
+        uses: actions/upload-artifact@v7
+        with:
+          name: note-bridge-${{ matrix.target }}
+          path: |
+            note-bridge/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+            note-bridge/target/${{ matrix.target }}/release/bundle/nsis/*.exe
+          if-no-files-found: error
+          retention-days: 14
+
+  draft-release:
+    if: github.event_name == 'workflow_dispatch' && inputs.draft_release && startsWith(github.ref, 'refs/tags/note-bridge-v')
+    needs: desktop
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: note-bridge-*
+          path: packages
+          merge-multiple: true
+      - name: Verify independent release version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; const v = JSON.parse(fs.readFileSync('note-bridge/package.json')).version; if (process.env.RELEASE_TAG !== 'note-bridge-v' + v) process.exit(1);"
+      - name: Create draft with unsigned packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          cat > release-notes.md <<'NOTES'
+          独立 note-bridge 桌面应用预览包。
+
+          此处产物尚未配置开发者签名和 macOS 公证，只用于手动评估；不能视为已经完成 Windows / macOS / 浏览器兼容性验收的正式发行版。
+
+          发布前请完成 note-bridge/README.md 中的手动验收，并接入平台签名、公证及版本校验流程。
+          NOTES
+          mapfile -d '' assets < <(find packages -type f \( -name '*.dmg' -o -name '*.exe' \) -print0)
+          test "${#assets[@]}" -gt 0
+          gh release create "$RELEASE_TAG" "${assets[@]}" --verify-tag --draft --title "$RELEASE_TAG" --notes-file release-notes.md

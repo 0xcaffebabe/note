@@ -1,0 +1,38 @@
+import { test, expect, goto, DOC } from './fixtures'
+
+test('320px 手机导航可配对，收起后仍显示已连接，连接面板完整可操作', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 })
+  await page.routeWebSocket('ws://127.0.0.1:19661/ws', socket => {
+    socket.onMessage(raw => {
+      const frame = JSON.parse(String(raw))
+      if (frame.type === 'pair') socket.send(JSON.stringify({ v: 2, type: 'auth.ok', capabilities: ['persistent_sessions', 'knowledge_tools'], token: 'mobile-persistent-grant-token', connectionId: 'mobile',
+        providers: [{ id: 'mock', name: '本机模型', protocol: 'responses', model: 'mock-model' }] }))
+    })
+  })
+  await goto(page, DOC)
+  const launcher = page.locator('.navigation-launcher')
+  await expect(launcher).toBeVisible()
+  await launcher.tap()
+  await expect(page.locator('.dock-shortcuts')).toBeInViewport({ ratio: 1 })
+  const bridgeButton = page.getByRole('button', { name: /^Note Bridge：/ })
+  await expect(bridgeButton).toBeInViewport({ ratio: 1 })
+  await bridgeButton.tap()
+  const dialog = page.getByRole('dialog', { name: 'Note Bridge 连接', exact: true })
+  await expect(dialog).toBeInViewport({ ratio: 1 })
+  await dialog.getByRole('textbox', { name: '配对码', exact: true }).fill('123456')
+  await dialog.getByRole('button', { name: '连接 Note Bridge', exact: true }).tap()
+  await expect(dialog.getByText('已连接 Note Bridge', { exact: true })).toBeVisible()
+  await dialog.getByRole('button', { name: /关闭|close/i }).tap()
+  await expect(launcher).toBeFocused()
+  await expect(launcher).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.getByRole('status', { name: 'Note Bridge 已连接', exact: true })).toBeVisible()
+  const connectedImage = test.info().outputPath('note-bridge-mobile-connected.png')
+  await page.screenshot({ path: connectedImage })
+  await test.info().attach('note-bridge-mobile-connected', { path: connectedImage, contentType: 'image/png' })
+  await launcher.tap()
+  await bridgeButton.tap()
+  await expect(dialog.getByRole('button', { name: '忘记连接', exact: true })).toBeInViewport({ ratio: 1 })
+  const settingsImage = test.info().outputPath('note-bridge-mobile-settings.png')
+  await dialog.screenshot({ path: settingsImage })
+  await test.info().attach('note-bridge-mobile-settings', { path: settingsImage, contentType: 'image/png' })
+})

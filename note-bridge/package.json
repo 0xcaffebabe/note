@@ -1,0 +1,40 @@
+{
+  "name": "note-bridge",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "build": "npm run check && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test:ui": "playwright test",
+    "format": "prettier --write src agent/src scripts tests package.json tsconfig.json vite.config.ts playwright.config.ts index.html",
+    "format:check": "prettier --check src agent/src scripts",
+    "tauri": "tauri",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build",
+    "agent:install": "npm --prefix agent ci --ignore-scripts",
+    "agent:build": "npm --prefix agent run build",
+    "agent:test": "npm --prefix agent test",
+    "dev:desktop": "npm run agent:build && vite --host 127.0.0.1",
+    "build:desktop-resources": "npm run build && npm run agent:build && node scripts/prepare-agent.mjs"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "2.12.4",
+    "svelte": "5.57.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "@tauri-apps/cli": "2.12.4",
+    "prettier": "3.6.2",
+    "prettier-plugin-svelte": "3.4.0",
+    "svelte-check": "4.7.7",
+    "typescript": "6.0.3",
+    "vite": "8.3.5"
+  }
+}

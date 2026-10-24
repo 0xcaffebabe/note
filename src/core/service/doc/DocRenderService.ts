@@ -1,5 +1,4 @@
 import Content from '../../domain/Content'
-import DocUtils from '../../util/DocUtils'
 import DocFileInfo from '../../domain/DocFileInfo'
 import DocSegement from '../../domain/doc/DocSegement'
 import type { DocMetadata } from '../../domain/doc/DocMetadata'
@@ -8,6 +7,9 @@ import type DocRender from '../../render/DocRender'
 import type { TagService } from '../TagService'
 import type { KnowledgeNetworkService } from '../KnowledgeNetworkService'
 import type { DomParserPort } from '../../ports'
+import { extractRelatedContent } from './RelatedContentExtractor'
+
+export { extractRelatedContent } from './RelatedContentExtractor'
 
 /**
  * 跨方法调用回调: 渲染链里若干步骤本应命中 DocService 外层 @cache(同一作用域 id/键),
@@ -52,50 +54,7 @@ export class DocRenderService {
 
   // 取文档时一次性把正文末尾"关联内容(自动生成)"章节抽取为 relatedLinks 并从 content 剥离
   public extractRelatedContent(file: DocFileInfo): void {
-    if (file.relatedLinks !== undefined) {
-      return
-    }
-    file.relatedLinks = []
-    const content = file.content
-    if (!content || !/关联内容/.test(content)) {
-      return
-    }
-    const lines = content.split('\n')
-    const startIdx = lines.findIndex(l => /^#{2,3}\s*关联内容/.test(l))
-    if (startIdx === -1) {
-      return
-    }
-    const level = (lines[startIdx].match(/^(#+)/) as RegExpMatchArray)[1].length
-    let endIdx = lines.length
-    for (let i = startIdx + 1; i < lines.length; i++) {
-      const hm = lines[i].match(/^(#{1,6})\s/)
-      if (hm && hm[1].length <= level) {
-        endIdx = i
-        break
-      }
-    }
-    const linkRe = /^-\s*\[([^\]]+)\]\(([^)]+)\)\s*(.*)$/
-    for (let i = startIdx + 1; i < endIdx; i++) {
-      const m = lines[i].match(linkRe)
-      if (!m) {
-        continue
-      }
-      try {
-        const { id } = DocUtils.resloveDocUrl(m[2].trim())
-        file.relatedLinks.push({
-          href: DocUtils.docId2HtmlPath(id),
-          path: m[1].trim(),
-          desc: m[3].trim(),
-        })
-      } catch {
-        // 跳过无法解析的链接
-      }
-    }
-    lines.splice(startIdx, endIdx - startIdx)
-    while (lines.length && lines[lines.length - 1].trim() === '') {
-      lines.pop()
-    }
-    file.content = lines.join('\n')
+    extractRelatedContent(file)
   }
 
   public renderMdWithStructed(file: DocFileInfo): DocSegement[] {

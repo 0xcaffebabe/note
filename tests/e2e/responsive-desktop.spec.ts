@@ -60,10 +60,12 @@ test.describe('desktop DocPage layout', () => {
     await expect(page.locator('.tool-box')).toHaveCount(0)
     await openNavigationTools(page)
     // 必备功能项均存在(顺序无关)
-    const mustHave = ['思维导图', '知识网络', '知识回顾', '知识助手', '路径复制', '知识复制', '随机复习', '更多设置']
+    const mustHave = ['思维导图', '知识网络', '知识回顾', '路径复制', '知识复制', '随机复习', '更多设置']
     for (const name of mustHave) {
       await expect(page.locator('.document-actions .action-name', { hasText: name })).toHaveCount(1)
     }
+    // 知识助手为全站工具，在文档页也只有一个入口。
+    await expect(page.getByRole('button', { name: '知识助手', exact: true })).toHaveCount(1)
     // 「在VSC打开」仅 full 档可用, 移动端用例断言其缺席
     await expect(page.locator('.document-actions .action-name', { hasText: '在VSC打开' })).toHaveCount(1)
     // 桌面(非触屏)应渲染键盘提示: 不数死 16, 只要确有 kbd 即证明 v-if 接线生效
@@ -247,7 +249,7 @@ test.describe('responsive breakpoint switching (resize)', () => {
     await more.focus()
     await page.keyboard.press('Enter')
     const tools = page.getByRole('dialog', { name: '站点导航与工具', exact: true })
-    await expect(tools.getByRole('switch')).toBeFocused()
+    await expect(tools.getByRole('button', { name: '知识助手', exact: true })).toBeFocused()
     await expect(tools.getByRole('link', { name: /^(首页|标签|聚类)$/ })).toHaveCount(0)
     await expect(tools.getByRole('button', { name: /搜索/ })).toHaveCount(0)
     await page.keyboard.press('Escape')

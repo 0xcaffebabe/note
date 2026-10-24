@@ -1,0 +1,85 @@
+// 仅由聊天子组件的 scoped 样式导入，不影响站点其他界面。
+p,
+h2 {
+  margin: 0;
+}
+button,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+}
+button:disabled,
+select:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+button,
+select {
+  min-height: var(--site-control-size);
+}
+button svg {
+  width: var(--font-size-xl);
+  height: var(--font-size-xl);
+  flex-shrink: 0;
+}
+.qa-icon-button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--site-control-size);
+  padding: var(--spacing-sm);
+  color: var(--secondary-text-color);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-lg);
+}
+.qa-icon-button:hover {
+  background: var(--hover-bg-color);
+  color: var(--main-text-color);
+}
+.qa-hide-history,
+.qa-show-history {
+  display: none;
+}
+.qa-muted {
+  color: var(--secondary-text-color);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-normal);
+}
+.qa-error {
+  color: var(--danger-color);
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+  line-height: var(--leading-normal);
+}
+.qa-load-more {
+  display: block;
+  margin: var(--spacing-sm) auto;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--card-bg-color);
+  font-size: var(--font-size-xs);
+}
+.qa-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+@media (max-width: @bp-mobile) {
+  .qa-hide-history,
+  .qa-show-history {
+    display: inline-flex;
+  }
+}

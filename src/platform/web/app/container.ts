@@ -7,6 +7,9 @@ import tagService from '@/platform/web/service/TagService'
 import knowledgeNetworkService from '@/platform/web/service/KnowledgeNetworkService'
 import searchService from '@/platform/web/service/SearchService'
 import configService from '@/platform/web/service/ConfigService'
+import { BrowserAiBridge } from '@/adapters/browser/BrowserAiBridge'
+
+const aiBridge = new BrowserAiBridge()
 
 export const services = {
   api,
@@ -16,6 +19,7 @@ export const services = {
   knowledgeNetworkService,
   searchService,
   configService,
+  aiBridge,
 }
 
 export type Services = typeof services

@@ -3,7 +3,7 @@ import type { FileSystemPort } from '../ports/FileSystemPort'
 // 目录遍历(平台无关): 经 FileSystemPort 的 readdirSync/lstatSync 递归列文件, 按"路径段"剪枝忽略目录。
 // 提取自 build/BaseService(逐字), 任何运行时只要提供 FileSystemPort 即可复用同一套枚举口径。
 
-export const DEFAULT_IGNORE_PREFIXES = ['.git', 'node_modules', 'dist', 'doc/.agents', 'QWEN', 'test-results', 'playwright-report']
+export const DEFAULT_IGNORE_PREFIXES = ['.git', 'node_modules', 'dist', 'doc/.agents', 'QWEN', 'test-results', 'playwright-report', 'note-bridge']
 
 /** 递归列出 path 下所有文件; 命中 ignorePrefixs(按路径段滑窗匹配)的目录整棵跳过。 */
 export function listAllFile(fs: FileSystemPort, path: string, ignorePrefixs: string[] = DEFAULT_IGNORE_PREFIXES): string[] {

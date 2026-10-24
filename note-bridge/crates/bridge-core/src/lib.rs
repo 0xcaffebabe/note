@@ -34,7 +34,7 @@ use std::{
 use storage::{SecretStore, Storage};
 use tokio::{
     net::TcpListener,
-    sync::{mpsc, Mutex, Semaphore},
+    sync::{mpsc, oneshot, Mutex, Semaphore},
     task::JoinHandle,
 };
 use tokio_util::sync::CancellationToken;
@@ -133,6 +133,17 @@ struct Session {
     info: ConnectionInfo,
     authorization_id: String,
     cancel: CancellationToken,
+}
+
+type PendingTools = Arc<
+    Mutex<HashMap<String, oneshot::Sender<Result<provider::ToolResult, provider::UpstreamError>>>>,
+>;
+
+struct ActiveChat {
+    id: String,
+    cancel: CancellationToken,
+    task: JoinHandle<()>,
+    tools: PendingTools,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -751,7 +762,7 @@ async fn socket_session(
         .providers()
         .into_iter()
         .filter(|p| p.enabled)
-        .map(|p| json!({"id":p.id,"name":p.name,"protocol":p.protocol,"model":p.model}))
+        .map(|p| json!({"id":p.id,"name":p.name,"protocol":p.protocol,"model":p.model,"efforts":provider::supported_efforts(&p)}))
         .collect();
     let sent = tokio::select! {
         biased;
@@ -779,7 +790,7 @@ async fn socket_session(
         }
         let _ = tokio::time::timeout(Duration::from_secs(1), sink.close()).await;
     });
-    let mut active: Option<(String, CancellationToken, JoinHandle<()>)> = None;
+    let mut active: Option<ActiveChat> = None;
     let mut used_ids = HashSet::new();
     loop {
         let incoming = tokio::select! {
@@ -820,30 +831,59 @@ async fn socket_session(
                 let _ = tx.send(json!({"v":VERSION,"type":"pong"})).await;
             }
             ClientMessage::ChatCancel { request_id } => {
-                if let Some((id, cancel, _)) = &active {
-                    if *id == request_id {
-                        cancel.cancel();
+                if let Some(chat) = &active {
+                    if chat.id == request_id {
+                        chat.cancel.cancel();
                     }
+                }
+            }
+            ClientMessage::ToolResult {
+                request_id,
+                call_id,
+                result,
+                is_error,
+            } => {
+                let reply = if let Some(chat) = &active {
+                    if chat.id == request_id
+                        && !chat.cancel.is_cancelled()
+                        && !chat.task.is_finished()
+                    {
+                        chat.tools.lock().await.remove(&call_id)
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
+                if let Some(reply) = reply {
+                    let checked = provider::validate_tool_result(&result, is_error)
+                        .map(|()| provider::ToolResult { result, is_error });
+                    let _ = reply.send(checked);
+                } else {
+                    let _ = tx
+                        .send(error(
+                            "tool_result_rejected",
+                            "工具结果不属于当前连接的待处理调用",
+                        ))
+                        .await;
                 }
             }
             ClientMessage::ChatStart(chat) => {
                 if active
                     .as_ref()
-                    .is_some_and(|(_, cancel, _)| cancel.is_cancelled())
+                    .is_some_and(|chat| chat.cancel.is_cancelled())
                 {
-                    if let Some((_, _, mut task)) = active.take() {
-                        if tokio::time::timeout(Duration::from_secs(2), &mut task)
+                    if let Some(mut previous) = active.take() {
+                        if tokio::time::timeout(Duration::from_secs(2), &mut previous.task)
                             .await
                             .is_err()
                         {
-                            task.abort();
+                            previous.task.abort();
                         }
                     }
                 }
                 let invalid = chat.validate().err();
-                let busy = active
-                    .as_ref()
-                    .is_some_and(|(_, _, task)| !task.is_finished());
+                let busy = active.as_ref().is_some_and(|chat| !chat.task.is_finished());
                 let duplicate = used_ids.contains(&chat.request_id);
                 if invalid.is_some() || busy || duplicate || used_ids.len() >= 1000 {
                     // Invalid ID is never reflected; valid duplicate IDs do not emit a second terminal event.
@@ -861,10 +901,17 @@ async fn socket_session(
                 let job_tx = tx.clone();
                 let job_cancel = cancel.clone();
                 let id = chat.request_id.clone();
+                let tools = Arc::new(Mutex::new(HashMap::new()));
+                let job_tools = tools.clone();
                 let task = tokio::spawn(async move {
-                    run_chat(job_bridge, chat, job_tx, job_cancel).await;
+                    run_chat(job_bridge, chat, job_tx, job_cancel, job_tools).await;
                 });
-                active = Some((id, cancel, task));
+                active = Some(ActiveChat {
+                    id,
+                    cancel,
+                    task,
+                    tools,
+                });
             }
             _ => {
                 let _ = tx
@@ -874,13 +921,13 @@ async fn socket_session(
         }
     }
     connection_cancel.cancel();
-    if let Some((_, cancel, mut task)) = active {
-        cancel.cancel();
-        if tokio::time::timeout(Duration::from_secs(2), &mut task)
+    if let Some(mut chat) = active {
+        chat.cancel.cancel();
+        if tokio::time::timeout(Duration::from_secs(2), &mut chat.task)
             .await
             .is_err()
         {
-            task.abort();
+            chat.task.abort();
         }
     }
     drop(tx);
@@ -898,6 +945,7 @@ async fn run_chat(
     chat: ChatRequest,
     output: mpsc::Sender<Value>,
     cancel: CancellationToken,
+    pending_tools: PendingTools,
 ) {
     let started = Instant::now();
     let mut seq = 0u64;
@@ -913,33 +961,35 @@ async fn run_chat(
         }
     };
     bridge.log("info", "开始生成回答", Some((&chat, 0))).await;
-    let (text_tx, mut text_rx) = mpsc::channel(32);
+    let (event_tx, mut event_rx) = mpsc::channel(32);
     let mut generation = Box::pin(provider::generate(
         &bridge.inner.client,
         &provider,
         secret.as_deref(),
         &chat,
-        text_tx,
+        event_tx,
         cancel.clone(),
     ));
     let result = loop {
         tokio::select! {
             biased;
             _ = cancel.cancelled() => break Ok(()),
-            text = text_rx.recv() => {
-                if let Some(delta) = text {
+            event = event_rx.recv() => {
+                if let Some(event) = event {
                     seq += 1;
+                    let frame = generation_frame(event, &chat.request_id, seq, &pending_tools).await;
                     tokio::select! {
                         _ = cancel.cancelled() => break Ok(()),
-                        result = output.send(json!({"v":VERSION,"type":"chat.delta","requestId":chat.request_id,"seq":seq,"delta":delta})) => if result.is_err() { cancel.cancel(); break Ok(()); },
+                        result = tokio::time::timeout(Duration::from_secs(5), output.send(frame)) => if !matches!(result, Ok(Ok(()))) { cancel.cancel(); break Ok(()); },
                     }
                 } else { break generation.as_mut().await; }
             }
             result = &mut generation => {
-                // generate may finish before the bounded text queue has been drained.
-                while let Ok(delta) = text_rx.try_recv() {
+                // Generation may finish before its bounded output queue has drained.
+                while let Ok(event) = event_rx.try_recv() {
                     seq += 1;
-                    if output.send(json!({"v":VERSION,"type":"chat.delta","requestId":chat.request_id,"seq":seq,"delta":delta})).await.is_err() { break; }
+                    let frame = generation_frame(event, &chat.request_id, seq, &pending_tools).await;
+                    if !matches!(tokio::time::timeout(Duration::from_secs(5), output.send(frame)).await, Ok(Ok(()))) { break; }
                 }
                 break result;
             }
@@ -948,6 +998,7 @@ async fn run_chat(
     // Drop the response stream immediately when cancelled, before waiting for
     // downstream writes or log persistence.
     drop(generation);
+    pending_tools.lock().await.clear();
     seq += 1;
     let terminal = match result {
         _ if cancel.is_cancelled() => {
@@ -975,6 +1026,28 @@ async fn run_chat(
         )
         .await;
     let _ = tokio::time::timeout(Duration::from_secs(5), output.send(terminal)).await;
+}
+
+async fn generation_frame(
+    event: provider::GenerationEvent,
+    request_id: &str,
+    seq: u64,
+    pending_tools: &PendingTools,
+) -> Value {
+    match event {
+        provider::GenerationEvent::Text(delta) => {
+            json!({"v":VERSION,"type":"chat.delta","requestId":request_id,"seq":seq,"delta":delta})
+        }
+        provider::GenerationEvent::ToolCall {
+            call_id,
+            name,
+            arguments,
+            reply,
+        } => {
+            pending_tools.lock().await.insert(call_id.clone(), reply);
+            json!({"v":VERSION,"type":"tool.call","requestId":request_id,"seq":seq,"callId":call_id,"name":name,"arguments":arguments})
+        }
+    }
 }
 
 #[cfg(test)]

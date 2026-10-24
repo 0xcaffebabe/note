@@ -11,7 +11,7 @@
             @copyDocPath="handleCopyDocPath"
             @copyDocContent="handleCopyDocContent"
             @showKnowledgeReviewer="showKnowledgeReviewer"
-            @show-llm="showLLM();showAside = false;isDrawerShow = true"
+            @show-llm="showLLM"
             @open-in-editor="openInEditor"
             @handleRandomReview="handleRandomReview"
           />
@@ -90,7 +90,7 @@
   <knowledge-reviewer v-if="panels.knowledgeReviewer" ref="knowledgeReviewer" :doc="doc"/>
   <mermaid-shower ref="mermaidShower"/>
   <knowledge-network v-if="panels.knowledgeNetwork" ref="knowledgeNetwork" :doc="doc" @close="showAside = true;isDrawerShow = false"/>
-  <LLM v-if="panels.llm" :doc="doc" ref="llm" @close="showAside = true;isDrawerShow = false"/>
+  <LLM v-if="panels.llm" :doc="doc" ref="llm"/>
   <image-viewer ref="imageViewer" />
   <resource-brower ref="resourceBrower" />
 </template>

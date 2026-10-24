@@ -130,7 +130,7 @@ test.describe('mobile DocPage (Pixel 5)', () => {
     await expect(navigation.locator('.action-keys kbd')).toHaveCount(0)
     await navigation.getByRole('button', { name: '知识助手', exact: true }).tap()
     await expect(navigation).toBeHidden()
-    await expect(page.getByRole('dialog', { name: '模板生成问题', exact: true })).toBeVisible()
+    await expect(page.getByRole('dialog', { name: '知识助手', exact: true })).toBeVisible()
   })
 
   test('移动文档页: 正文 + 面包屑 + 更新历史, 无桌面标签页', async ({ page }) => {

@@ -68,7 +68,7 @@ export class AiContextService {
     return {
       docId,
       title: file.name,
-      url: DocUtils.docId2HtmlPath(docId),
+      url: encodeURI(DocUtils.docId2HtmlPath(docId)),
       contentHash: `fnv1a:${(hash >>> 0).toString(16)}`,
       metadata: file.formattedMetadata,
       headings,

@@ -84,11 +84,37 @@ async fn mock_upstream(
     Json(body): Json<Value>,
 ) -> Response {
     let slow = body["model"] == "fixture-slow-model";
+    let tool_round = body.get("tools").is_some()
+        && (body["model"] == "fixture-loop-tools"
+            || !body.to_string().contains("fixture-tool-result-marker"));
+    let unknown_tool = body["model"] == "fixture-unknown-tool";
+    let multiple_tools = body["model"] == "fixture-multiple-tools";
     requests.lock().unwrap().push(RecordedRequest {
         path: uri.path().into(),
         headers,
         body,
     });
+    if tool_round {
+        let events = if multiple_tools {
+            multiple_tool_events(uri.path())
+        } else {
+            tool_events(uri.path(), unknown_tool)
+        };
+        let text = events
+            .iter()
+            .map(|event| format!("data: {event}\r\n\r\n"))
+            .collect::<String>();
+        // Fragment the UTF-8 arguments and SSE lines at arbitrary byte boundaries.
+        let chunks: Vec<_> = text
+            .as_bytes()
+            .chunks(3)
+            .map(|chunk| Ok::<_, Infallible>(Bytes::copy_from_slice(chunk)))
+            .collect();
+        return Response::builder()
+            .header("content-type", "text/event-stream")
+            .body(Body::from_stream(futures_util::stream::iter(chunks)))
+            .unwrap();
+    }
     let (delta, done) = match uri.path() {
         "/v1/messages" => (
             json!({"type":"content_block_delta","delta":{"type":"text_delta","text":"fixture answer [fixture_source]"}}),
@@ -128,6 +154,86 @@ async fn mock_upstream(
         .unwrap()
 }
 
+fn tool_events(path: &str, unknown: bool) -> Vec<Value> {
+    let name = if unknown {
+        "execute_shell"
+    } else {
+        "get_document"
+    };
+    let args = json!({"docId":"fixture-文档"}).to_string();
+    let (first, second) = args.split_at(8);
+    match path {
+        "/v1/responses" => vec![
+            json!({"type":"response.output_item.done","output_index":0,"item":{"type":"reasoning","id":"rs_fixture","summary":[],"encrypted_content":"fixture-private-opaque-reasoning"}}),
+            json!({"type":"response.output_item.added","output_index":1,"item":{"type":"function_call","id":"fc_fixture","call_id":"upstream-call-1","name":name,"arguments":""}}),
+            json!({"type":"response.function_call_arguments.delta","output_index":1,"delta":first}),
+            json!({"type":"response.function_call_arguments.delta","output_index":1,"delta":second}),
+            json!({"type":"response.completed","response":{"status":"completed"}}),
+        ],
+        "/v1/messages" => vec![
+            json!({"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":"","signature":""}}),
+            json!({"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"fixture-private-thinking"}}),
+            json!({"type":"content_block_delta","index":0,"delta":{"type":"signature_delta","signature":"fixture-private-signature"}}),
+            json!({"type":"content_block_stop","index":0}),
+            json!({"type":"content_block_start","index":1,"content_block":{"type":"tool_use","id":"upstream-call-1","name":name,"input":{}}}),
+            json!({"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":first}}),
+            json!({"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":second}}),
+            json!({"type":"content_block_stop","index":1}),
+            json!({"type":"message_delta","delta":{"stop_reason":"tool_use"}}),
+            json!({"type":"message_stop"}),
+        ],
+        "/v1/chat/completions" => vec![
+            json!({"choices":[{"delta":{"tool_calls":[{"index":0,"id":"upstream-call-1","type":"function","function":{"name":name,"arguments":first}}]}}]}),
+            json!({"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":second}}]}}]}),
+            json!({"choices":[{"delta":{},"finish_reason":"tool_calls"}]}),
+        ],
+        _ => unreachable!(),
+    }
+}
+
+fn multiple_tool_events(path: &str) -> Vec<Value> {
+    let first = tool_events(path, false);
+    let mut second = first.clone();
+    for event in &mut second {
+        for key in ["output_index", "index"] {
+            if let Some(index) = event[key].as_u64() {
+                event[key] = json!(index + 2);
+            }
+        }
+        if let Some(id) = event["item"]["call_id"].as_str() {
+            event["item"]["call_id"] = json!(format!("{id}-second"));
+        }
+        if event["content_block"]["type"] == "tool_use" {
+            event["content_block"]["id"] = json!("upstream-call-2");
+        }
+        if let Some(calls) = event
+            .get_mut("choices")
+            .and_then(Value::as_array_mut)
+            .and_then(|choices| choices.first_mut())
+            .and_then(|choice| choice.get_mut("delta"))
+            .and_then(|delta| delta.get_mut("tool_calls"))
+            .and_then(Value::as_array_mut)
+        {
+            for call in calls {
+                call["index"] = json!(1);
+                if call.get("id").is_some() {
+                    call["id"] = json!("upstream-call-2");
+                }
+            }
+        }
+    }
+    first
+        .into_iter()
+        .filter(|event| {
+            !matches!(
+                event["type"].as_str(),
+                Some("response.completed" | "message_delta" | "message_stop")
+            ) && event["choices"][0]["finish_reason"].is_null()
+        })
+        .chain(second)
+        .collect()
+}
+
 struct Harness {
     _dir: TempDir,
     secrets: Arc<MemorySecretStore>,
@@ -155,18 +261,25 @@ impl Harness {
     }
 
     async fn add_provider(&self, protocol: Protocol, slow: bool) -> Provider {
+        self.add_model(
+            protocol,
+            if slow {
+                "fixture-slow-model"
+            } else {
+                "fixture-model"
+            },
+        )
+        .await
+    }
+
+    async fn add_model(&self, protocol: Protocol, model: &str) -> Provider {
         self.bridge
             .save_provider(ProviderInput {
                 id: None,
                 name: format!("Fixture {protocol:?}"),
                 protocol,
                 base_url: self.upstream.base_url.clone(),
-                model: if slow {
-                    "fixture-slow-model"
-                } else {
-                    "fixture-model"
-                }
-                .into(),
+                model: model.into(),
                 auth_kind: if protocol == Protocol::Anthropic {
                     AuthKind::ApiKey
                 } else {
@@ -268,6 +381,298 @@ fn chat(provider: &Provider, id: &str) -> Value {
         "context":{"documents":[{"docId":"fixture-doc","title":"Fixture document","url":"https://note.example.test/doc", "contentHash":"fixture-hash","metadata":{},"headings":[],"relatedLinks":[],
             "sources":[{"sourceId":"fixture_source","headingId":"fixture_heading","title":"Fixture section","text":PRIVATE_DOCUMENT}]}]}
     })
+}
+
+fn tool_chat(provider: &Provider, id: &str) -> Value {
+    let mut request = chat(provider, id);
+    request["context"]["documents"][0]["sources"] = json!([]);
+    request["effort"] = json!("high");
+    request["tools"] = json!([{
+        "name":"get_document", "description":"Read a document section for context.",
+        "inputSchema":{"type":"object","properties":{"docId":{"type":"string","maxLength":512}},"required":["docId"],"additionalProperties":false}
+    }]);
+    request
+}
+
+fn tool_result(event: &Value) -> Value {
+    json!({"v":1,"type":"tool.result","requestId":event["requestId"],"callId":event["callId"],"result":{
+        "data":{"text":"fixture-tool-result-marker private document text"},
+        "sources":[{"sourceId":"fixture_source","title":"Fixture section","url":"/fixture.html#section"}]
+    }})
+}
+
+#[tokio::test]
+async fn tools_round_trip_through_the_browser_for_all_protocols_with_effort_and_private_reasoning()
+{
+    let harness = Harness::new().await;
+    let mut providers = Vec::new();
+    for protocol in [
+        Protocol::Responses,
+        Protocol::ChatCompletions,
+        Protocol::Anthropic,
+    ] {
+        providers.push(harness.add_provider(protocol, false).await);
+    }
+    let (mut socket, auth) = harness.pair().await;
+    for provider in auth["providers"].as_array().unwrap() {
+        assert_eq!(
+            provider["efforts"],
+            json!(["default", "low", "medium", "high"])
+        );
+    }
+    for (index, provider) in providers.iter().enumerate() {
+        let id = format!("tool-round-{index}");
+        send(&mut socket, tool_chat(provider, &id)).await;
+        let tool = receive(&mut socket).await;
+        assert_eq!(tool["type"], "tool.call", "{tool}");
+        assert_eq!(tool["name"], "get_document");
+        assert_eq!(tool["arguments"], json!({"docId":"fixture-文档"}));
+        assert_eq!(tool["requestId"], id);
+        assert_eq!(tool["seq"], 1);
+        assert_ne!(tool["callId"], "upstream-call-1");
+        assert!(!tool.to_string().contains("private"));
+        send(&mut socket, tool_result(&tool)).await;
+        let delta = receive(&mut socket).await;
+        assert_eq!(delta["type"], "chat.delta");
+        assert_eq!(delta["seq"], 2);
+        assert_eq!(delta["delta"], "fixture answer [fixture_source]");
+        let done = receive(&mut socket).await;
+        assert_eq!(done["type"], "chat.done");
+        assert_eq!(done["seq"], 3);
+        assert_eq!(done["finishReason"], "stop");
+    }
+    let requests = harness.upstream.requests.lock().unwrap().clone();
+    assert_eq!(requests.len(), 6);
+    for pair in requests.chunks(2) {
+        assert!(!pair[0]
+            .body
+            .to_string()
+            .contains("fixture-tool-result-marker"));
+        assert!(pair[1]
+            .body
+            .to_string()
+            .contains("fixture-tool-result-marker"));
+        assert_eq!(pair[0].body["model"], pair[1].body["model"]);
+    }
+    let responses = &requests[1].body;
+    assert_eq!(responses["store"], false);
+    assert!(responses.get("previous_response_id").is_none());
+    assert_eq!(responses["include"], json!(["reasoning.encrypted_content"]));
+    assert_eq!(responses["reasoning"]["effort"], "high");
+    assert_eq!(
+        responses["input"][1]["encrypted_content"],
+        "fixture-private-opaque-reasoning"
+    );
+    assert_eq!(responses["input"][2]["type"], "function_call");
+    assert_eq!(responses["input"][3]["type"], "function_call_output");
+    assert_eq!(responses["input"][3]["call_id"], "upstream-call-1");
+    let completions = &requests[3].body;
+    assert_eq!(completions["reasoning_effort"], "high");
+    assert_eq!(
+        completions["messages"][2]["tool_calls"][0]["function"]["name"],
+        "get_document"
+    );
+    assert_eq!(completions["messages"][3]["role"], "tool");
+    assert_eq!(
+        completions["messages"][3]["tool_call_id"],
+        "upstream-call-1"
+    );
+    let anthropic = &requests[5].body;
+    assert_eq!(anthropic["output_config"]["effort"], "high");
+    assert!(anthropic.get("thinking").is_none());
+    assert_eq!(
+        anthropic["messages"][1]["content"][0]["thinking"],
+        "fixture-private-thinking"
+    );
+    assert_eq!(
+        anthropic["messages"][1]["content"][0]["signature"],
+        "fixture-private-signature"
+    );
+    assert_eq!(anthropic["messages"][1]["content"][1]["type"], "tool_use");
+    assert_eq!(
+        anthropic["messages"][2]["content"][0]["type"],
+        "tool_result"
+    );
+    assert_eq!(
+        anthropic["messages"][2]["content"][0]["tool_use_id"],
+        "upstream-call-1"
+    );
+    let logs = harness.bridge.export_logs().await;
+    for forbidden in [
+        "fixture-private-thinking",
+        "fixture-private-signature",
+        "fixture-private-opaque-reasoning",
+        "fixture-tool-result-marker",
+    ] {
+        assert!(!logs.contains(forbidden));
+    }
+    harness.bridge.stop().await;
+}
+
+#[tokio::test]
+async fn multiple_calls_in_one_round_keep_call_ids_and_tool_errors_in_the_upstream_transcript() {
+    for protocol in [
+        Protocol::Responses,
+        Protocol::ChatCompletions,
+        Protocol::Anthropic,
+    ] {
+        let harness = Harness::new().await;
+        let provider = harness.add_model(protocol, "fixture-multiple-tools").await;
+        let (mut socket, _) = harness.pair().await;
+        send(&mut socket, tool_chat(&provider, "multiple-calls")).await;
+        let first = receive(&mut socket).await;
+        assert_eq!(first["type"], "tool.call");
+        let mut failed = tool_result(&first);
+        failed["isError"] = json!(true);
+        failed["result"]["data"] = json!({"error":"fixture-tool-result-marker missing section"});
+        send(&mut socket, failed).await;
+        let second = receive(&mut socket).await;
+        assert_eq!(second["type"], "tool.call");
+        assert_ne!(first["callId"], second["callId"]);
+        assert_eq!(second["seq"], 2);
+        send(&mut socket, tool_result(&second)).await;
+        assert_eq!(receive(&mut socket).await["type"], "chat.delta");
+        assert_eq!(receive(&mut socket).await["type"], "chat.done");
+        let requests = harness.upstream.requests.lock().unwrap().clone();
+        assert_eq!(requests.len(), 2);
+        let body = &requests[1].body;
+        match protocol {
+            Protocol::Responses => {
+                let results: Vec<_> = body["input"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .filter(|item| item["type"] == "function_call_output")
+                    .collect();
+                assert_eq!(results.len(), 2);
+                assert_ne!(results[0]["call_id"], results[1]["call_id"]);
+                assert!(results[0]["output"].as_str().unwrap().contains("isError"));
+            }
+            Protocol::ChatCompletions => {
+                let results: Vec<_> = body["messages"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .filter(|item| item["role"] == "tool")
+                    .collect();
+                assert_eq!(results.len(), 2);
+                assert_ne!(results[0]["tool_call_id"], results[1]["tool_call_id"]);
+                assert!(results[0]["content"].as_str().unwrap().contains("isError"));
+            }
+            Protocol::Anthropic => {
+                let results = body["messages"].as_array().unwrap().last().unwrap()["content"]
+                    .as_array()
+                    .unwrap();
+                assert_eq!(results.len(), 2);
+                assert_ne!(results[0]["tool_use_id"], results[1]["tool_use_id"]);
+                assert_eq!(results[0]["is_error"], true);
+                assert_eq!(results[1]["is_error"], false);
+            }
+        }
+        harness.bridge.stop().await;
+    }
+}
+
+#[tokio::test]
+async fn tool_results_require_the_exact_socket_request_and_pending_call_and_cannot_be_replayed() {
+    let harness = Harness::new().await;
+    let provider = harness.add_provider(Protocol::Responses, false).await;
+    let (mut socket, auth) = harness.pair().await;
+    let (mut other_socket, _) = harness.authenticate(&auth["token"]).await;
+    send(&mut socket, tool_chat(&provider, "isolation-request")).await;
+    let tool = receive(&mut socket).await;
+    send(&mut other_socket, tool_result(&tool)).await;
+    assert_eq!(
+        receive(&mut other_socket).await["code"],
+        "tool_result_rejected"
+    );
+    for (key, value) in [("requestId", "other-request"), ("callId", "other-call")] {
+        let mut wrong = tool_result(&tool);
+        wrong[key] = json!(value);
+        send(&mut socket, wrong).await;
+        assert_eq!(receive(&mut socket).await["code"], "tool_result_rejected");
+        assert_eq!(harness.upstream.requests.lock().unwrap().len(), 1);
+    }
+    send(&mut socket, tool_result(&tool)).await;
+    assert_eq!(receive(&mut socket).await["type"], "chat.delta");
+    assert_eq!(receive(&mut socket).await["type"], "chat.done");
+    send(&mut socket, tool_result(&tool)).await;
+    assert_eq!(receive(&mut socket).await["code"], "tool_result_rejected");
+    assert_eq!(harness.upstream.requests.lock().unwrap().len(), 2);
+    harness.bridge.stop().await;
+}
+
+#[tokio::test]
+async fn unknown_tools_and_oversized_results_end_without_another_upstream_call() {
+    let harness = Harness::new().await;
+    let unknown = harness
+        .add_model(Protocol::Responses, "fixture-unknown-tool")
+        .await;
+    let valid = harness.add_provider(Protocol::Responses, false).await;
+    let (mut socket, _) = harness.pair().await;
+    send(&mut socket, tool_chat(&unknown, "unknown-tool-request")).await;
+    let rejected = receive(&mut socket).await;
+    assert_eq!(rejected["type"], "chat.error");
+    assert_eq!(rejected["code"], "unknown_tool");
+    send(&mut socket, tool_chat(&valid, "oversized-tool-result")).await;
+    let tool = receive(&mut socket).await;
+    let mut result = tool_result(&tool);
+    result["result"]["data"] = json!("x".repeat(64 * 1024));
+    send(&mut socket, result).await;
+    let rejected = receive(&mut socket).await;
+    assert_eq!(rejected["type"], "chat.error");
+    assert_eq!(rejected["code"], "tool_result_limit");
+    assert_eq!(harness.upstream.requests.lock().unwrap().len(), 2);
+    harness.bridge.stop().await;
+}
+
+#[tokio::test]
+async fn cancelling_or_revoking_during_a_tool_wait_never_resumes_upstream() {
+    let harness = Harness::new().await;
+    let provider = harness.add_provider(Protocol::Responses, false).await;
+    let (mut socket, auth) = harness.pair().await;
+    send(&mut socket, tool_chat(&provider, "cancel-tool-wait")).await;
+    let tool = receive(&mut socket).await;
+    send(
+        &mut socket,
+        json!({"v":1,"type":"chat.cancel","requestId":"cancel-tool-wait"}),
+    )
+    .await;
+    let done = receive(&mut socket).await;
+    assert_eq!(done["type"], "chat.done");
+    assert_eq!(done["finishReason"], "cancelled");
+    send(&mut socket, tool_result(&tool)).await;
+    assert_eq!(receive(&mut socket).await["code"], "tool_result_rejected");
+    send(&mut socket, tool_chat(&provider, "revoke-tool-wait")).await;
+    assert_eq!(receive(&mut socket).await["type"], "tool.call");
+    harness
+        .bridge
+        .revoke_authorization(auth["authorizationId"].as_str().unwrap().into())
+        .await
+        .unwrap();
+    assert_closed(&mut socket).await;
+    assert_eq!(harness.upstream.requests.lock().unwrap().len(), 2);
+    harness.bridge.stop().await;
+}
+
+#[tokio::test]
+async fn repeated_tool_calls_have_a_hard_round_limit() {
+    let harness = Harness::new().await;
+    let provider = harness
+        .add_model(Protocol::Responses, "fixture-loop-tools")
+        .await;
+    let (mut socket, _) = harness.pair().await;
+    send(&mut socket, tool_chat(&provider, "bounded-loop")).await;
+    for _ in 0..7 {
+        let tool = receive(&mut socket).await;
+        assert_eq!(tool["type"], "tool.call");
+        send(&mut socket, tool_result(&tool)).await;
+    }
+    let done = receive(&mut socket).await;
+    assert_eq!(done["type"], "chat.error");
+    assert_eq!(done["code"], "tool_limit");
+    assert_eq!(harness.upstream.requests.lock().unwrap().len(), 8);
+    harness.bridge.stop().await;
 }
 
 #[tokio::test]

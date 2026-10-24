@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AI_BRIDGE_STORAGE_KEY, BrowserAiBridge } from '@/adapters/browser/BrowserAiBridge'
-import type { AiBridgeEvent, AiChatInput } from '@/core/ports/AiBridgePort'
+import type { AiBridgeEvent, AiChatInput, AiProvider, AiToolDefinition } from '@/core/ports/AiBridgePort'
 import type { StoragePort } from '@/core/ports/StoragePort'
 
 class MemoryStorage implements StoragePort {
@@ -24,7 +24,8 @@ class Socket {
 }
 
 const input: AiChatInput = { providerId: 'local', model: 'test', messages: [{ role: 'user', content: '问题' }], context: { documents: [] } }
-const provider = { id: 'local', name: 'Local', protocol: 'responses', model: 'test' }
+const provider: AiProvider = { id: 'local', name: 'Local', protocol: 'responses', model: 'test', efforts: ['default', 'low', 'medium', 'high'] }
+const documentTool: AiToolDefinition = { name: 'get_toc', description: 'Read a document table of contents', inputSchema: { type: 'object', properties: { docId: { type: 'string' } }, required: ['docId'], additionalProperties: false } }
 const clients: BrowserAiBridge[] = []
 function setup(storage: StoragePort = new MemoryStorage(), lifecycle?: EventTarget) {
   const sockets: Socket[] = []
@@ -280,5 +281,73 @@ describe('BrowserAiBridge', () => {
     other.sockets[1].receive({ type: 'auth.ok', token: 'new-remembered-token', providers: [provider] })
     expect(other.bridge.snapshot().state).toBe('ready')
     expect(first.bridge.snapshot().state).toBe('ready')
+  })
+
+  it('传递effort与函数定义，执行已注册文档工具并回传结果和来源', async () => {
+    const { bridge, sockets, events } = setup()
+    const result = { data: { headings: ['章节'] }, sources: [{ sourceId: 'D123S1', title: '来源', url: '/doc.html?headingId=one' }] }
+    const execute = vi.fn(async () => result)
+    bridge.configureTools([documentTool], execute)
+    const socket = await authenticate(bridge, sockets)
+    const requestId = bridge.start({ ...input, effort: 'high' })
+    expect(socket.sent[1]).toMatchObject({ tools: [documentTool], effort: 'high' })
+    socket.receive({ type: 'tool.call', requestId, seq: 1, callId: 'call-1', name: 'get_toc', arguments: { docId: 'doc' } })
+    await vi.waitFor(() => expect(socket.sent).toContainEqual({ v: 1, type: 'tool.result', requestId, callId: 'call-1', result, isError: false }))
+    expect(execute).toHaveBeenCalledWith('get_toc', { docId: 'doc' }, expect.any(AbortSignal))
+    expect(events).toContainEqual({ type: 'tool', requestId, callId: 'call-1', name: 'get_toc', status: 'complete', sources: result.sources })
+    socket.receive({ type: 'chat.delta', requestId, seq: 2, delta: '基于文档的回答' })
+    socket.receive({ type: 'chat.done', requestId, seq: 3, finishReason: 'stop' })
+    expect(events).toContainEqual({ type: 'delta', requestId, delta: '基于文档的回答' })
+  })
+
+  it('工具只响应当前请求且不重复执行；未知函数不能调用本地执行器', async () => {
+    const { bridge, sockets } = setup()
+    const execute = vi.fn(async () => ({ data: 'ok' }))
+    bridge.configureTools([documentTool], execute)
+    const socket = await authenticate(bridge, sockets)
+    const requestId = bridge.start(input)
+    socket.receive({ type: 'tool.call', requestId: 'another', seq: 1, callId: 'bad', name: 'get_toc', arguments: {} })
+    const call = { type: 'tool.call', requestId, seq: 1, callId: 'call-1', name: 'get_toc', arguments: { docId: 'doc' } }
+    socket.receive(call)
+    socket.receive(call)
+    await vi.waitFor(() => expect(execute).toHaveBeenCalledTimes(1))
+    socket.receive({ type: 'tool.call', requestId, seq: 2, callId: 'call-2', name: 'run_shell', arguments: {} })
+    await vi.waitFor(() => expect(socket.sent).toContainEqual(expect.objectContaining({ type: 'tool.result', callId: 'call-2', isError: true })))
+    expect(execute).toHaveBeenCalledTimes(1)
+  })
+
+  it('取消/断线中止工具，迟到的工具结果不能进入新问题', async () => {
+    const { bridge, sockets } = setup()
+    let signal: AbortSignal | undefined
+    let finish!: (value: { data: string }) => void
+    bridge.configureTools([documentTool], async (_name, _args, abort) => { signal = abort; return new Promise(resolve => { finish = resolve }) })
+    const socket = await authenticate(bridge, sockets)
+    const requestId = bridge.start(input)
+    socket.receive({ type: 'tool.call', requestId, seq: 1, callId: 'call-1', name: 'get_toc', arguments: { docId: 'doc' } })
+    bridge.cancel(requestId)
+    expect(signal?.aborted).toBe(true)
+    bridge.start(input)
+    finish({ data: 'late private document' })
+    await Promise.resolve(); await Promise.resolve()
+    expect(socket.sent.filter(frame => frame.type === 'tool.result')).toHaveLength(0)
+  })
+
+  it('工具等待超时和过大结果安全返回错误而不是无限等待或发送超大正文', async () => {
+    vi.useFakeTimers()
+    const { bridge, sockets, events } = setup()
+    bridge.configureTools([documentTool], async () => new Promise(() => {}))
+    const socket = await authenticate(bridge, sockets)
+    const requestId = bridge.start(input)
+    socket.receive({ type: 'tool.call', requestId, seq: 1, callId: 'timeout', name: 'get_toc', arguments: {} })
+    await vi.advanceTimersByTimeAsync(25001)
+    expect(socket.sent).toContainEqual(expect.objectContaining({ type: 'tool.result', callId: 'timeout', isError: true }))
+    expect(events).toContainEqual(expect.objectContaining({ type: 'tool', status: 'error', message: expect.stringContaining('超时') }))
+    bridge.cancel()
+    bridge.configureTools([documentTool], async () => ({ data: '字'.repeat(65000) }))
+    const secondId = bridge.start(input)
+    socket.receive({ type: 'tool.call', requestId: secondId, seq: 1, callId: 'large', name: 'get_toc', arguments: {} })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(socket.sent).toContainEqual(expect.objectContaining({ type: 'tool.result', callId: 'large', isError: true }))
+    expect(JSON.stringify(socket.sent)).not.toContain('字'.repeat(100))
   })
 })

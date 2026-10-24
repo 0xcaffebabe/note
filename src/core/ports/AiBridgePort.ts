@@ -1,8 +1,15 @@
+import type { AiCitation, AiDocumentToolDefinition, AiDocumentToolResult } from '../domain/AiDocumentTools'
+
+export type AiEffort = 'default' | 'low' | 'medium' | 'high'
+export type AiToolDefinition = AiDocumentToolDefinition
+export type AiToolExecutor = (name: string, argumentsValue: unknown, signal: AbortSignal) => Promise<AiDocumentToolResult>
+
 export interface AiProvider {
   id: string
   name: string
   protocol: string
   model: string
+  efforts?: AiEffort[]
 }
 
 export interface AiSource {
@@ -34,6 +41,8 @@ export interface AiChatInput {
   messages: { role: 'user' | 'assistant'; content: string }[]
   context: AiContext
   maxOutputTokens?: number
+  effort?: AiEffort
+  tools?: AiToolDefinition[]
 }
 
 export type AiBridgeState = 'disconnected' | 'connecting' | 'ready'
@@ -51,9 +60,11 @@ export type AiBridgeEvent =
   | { type: 'delta'; requestId: string; delta: string }
   | { type: 'done'; requestId: string; cancelled: boolean }
   | { type: 'error'; requestId: string; message: string }
+  | { type: 'tool'; requestId: string; callId: string; name: string; status: 'running' | 'complete' | 'error'; message?: string; sources?: AiCitation[] }
 
 /** Shared website connection. Only the origin-bound bridge grant is persisted, never an AI API key. */
 export interface AiBridgePort {
+  configureTools(definitions: AiToolDefinition[], execute: AiToolExecutor): void
   initialize(): void
   snapshot(): AiBridgeSnapshot
   pair(code: string, port?: number): Promise<AiProvider[]>

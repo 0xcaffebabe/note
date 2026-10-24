@@ -1085,6 +1085,9 @@ footer {
   gap: 12px;
   margin-top: 8px;
 }
+.model-budget-hint {
+  margin-top: 0;
+}
 .model-efforts summary {
   cursor: pointer;
   color: var(--muted);

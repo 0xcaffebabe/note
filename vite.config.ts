@@ -7,6 +7,7 @@ import StatisticInfoGenerator from './src/platform/node/plugins/StatisticInfoGen
 import CommitTotalTrendGenerator from './src/platform/node/plugins/CommitTotalTrendGenerator'
 import BuildTimeGenerator from './src/platform/node/plugins/BuildTimeGenerator'
 import AssetRecovery from './src/platform/node/plugins/AssetRecovery'
+import AiKnowledgeData from './src/platform/node/plugins/AiKnowledgeData'
 import VitePluginPrismjs from 'vite-plugin-prismjs'
 import DataGenrator from './src/platform/node/plugins/DataGenerator'
 import {visualizer} from "rollup-plugin-visualizer"
@@ -93,6 +94,16 @@ export default defineConfig({
         navigateFallbackDenylist: [/\.html(\?|$)/, /[?&]__asset_retry=/],
         runtimeCaching: [
           {
+            // A new run must bind a current manifest; never serve a stale revision via SW.
+            urlPattern: /\/ai\/manifest\.json(?:\?|$)/,
+            handler: 'NetworkOnly',
+          },
+          {
+            urlPattern: /\/ai\/objects\/[a-f0-9]{64}\.json(?:\?|$)/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'ai-knowledge-resources', expiration: { maxEntries: 100, maxAgeSeconds: 30 * 24 * 60 * 60 }, cacheableResponse: { statuses: [200] } },
+          },
+          {
             // 文档页导航网络优先 离线时回退到已访问过的缓存副本
             urlPattern: /\.html(\?|$)/,
             handler: 'NetworkFirst',
@@ -148,6 +159,7 @@ export default defineConfig({
     }),
     vue(),
     AssetRecovery(),
+    AiKnowledgeData(),
     DocServer(),
     BuildTimeGenerator(),
     {

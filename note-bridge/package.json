@@ -1,6 +1,6 @@
 {
   "name": "note-bridge",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -15,7 +15,12 @@
     "format": "prettier --write src tests package.json tsconfig.json vite.config.ts playwright.config.ts index.html",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
-    "desktop:build": "tauri build"
+    "desktop:build": "tauri build",
+    "agent:install": "npm --prefix agent ci --ignore-scripts",
+    "agent:build": "npm --prefix agent run build",
+    "agent:test": "npm --prefix agent test",
+    "dev:desktop": "npm run agent:build && vite --host 127.0.0.1",
+    "build:desktop-resources": "npm run build && npm run agent:build && node scripts/prepare-agent.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "2.12.4",

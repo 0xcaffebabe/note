@@ -1,458 +1,245 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import type { AiBridgeEvent, AiBridgeSnapshot, AiContextDocument, AiProvider } from '@/core/ports/AiBridgePort'
-import type { AiChatSession } from '@/core/service/AiChatHistoryService'
+import type { AiBridgeEvent, AiBridgeSnapshot, AiDocumentMetadata, AiSessionSummary, AiSessionTurn, AiMessageInput } from '@/core/ports/AiBridgePort'
 
-const mocks = vi.hoisted(() => ({ snapshot: vi.fn(), pair: vi.fn(), start: vi.fn(), cancel: vi.fn(), disconnect: vi.fn(), subscribe: vi.fn(), load: vi.fn(), build: vi.fn(), list: vi.fn(), save: vi.fn(), remove: vi.fn() }))
-vi.mock('@/platform/web/app/useServices', () => ({ useServices: () => ({ aiBridge: mocks, aiContextService: mocks, aiChatHistory: mocks }) }))
+const mocks = vi.hoisted(() => ({ snapshot: vi.fn(), subscribe: vi.fn(), listSessions: vi.fn(), createSession: vi.fn(), getSession: vi.fn(), archiveSession: vi.fn(), subscribeSession: vi.fn(), unsubscribeSession: vi.fn(), sendMessage: vi.fn(), cancelRun: vi.fn(), document: vi.fn() }))
+vi.mock('@/platform/web/app/useServices', () => ({ useServices: () => ({ aiBridge: mocks }) }))
 import DocumentQA from '@/platform/web/pages/doc/knowledge/DocumentQA.vue'
 import EventBus from '@/platform/web/components/EventBus'
 
-const doc: AiContextDocument = { docId: 'current', title: '当前文章', url: '/current.html', contentHash: 'test', metadata: {},
-  headings: [{ id: 'real-heading', title: '章节' }], relatedLinks: [{ url: '/related.html', title: '/关联.md' }],
-  sources: [{ sourceId: 'D1S1', headingId: 'real-heading', title: '章节', text: '正文' }], truncated: false }
+const doc: AiDocumentMetadata = { docId: 'current', title: '当前文章', url: '/current.html', contentHash: 'revision-hash', headings: [{ id: 'real-heading', title: '章节' }] }
 const listeners = new Set<(event: AiBridgeEvent) => void>()
 let snapshot: AiBridgeSnapshot
-let stored: AiChatSession[]
+let server: { session: AiSessionSummary; turns: AiSessionTurn[] }[]
+let sequence = 0
+const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
 function emit(event: AiBridgeEvent) {
   if (event.type === 'state') snapshot = { ...snapshot, state: event.state, message: event.message }
   listeners.forEach(listener => listener(event))
 }
+function createStored(id = 'session-old', title = '已有聊天', status: AiSessionSummary['status'] = 'idle') {
+  return { session: { id, title, providerId: 'provider', model: 'test', effort: 'default' as const, status, createdAt: 1, updatedAt: 1, revision: 1 }, turns: [] as AiSessionTurn[] }
+}
+function publish(index = 0, patch: Partial<AiSessionTurn> = {}) {
+  const entry = server[index]
+  const turn = entry.turns.at(-1)!
+  Object.assign(turn, patch)
+  entry.session.revision++
+  entry.session.status = turn.status === 'running' ? 'running' : 'idle'
+  emit({ type: 'session.updated', sessionId: entry.session.id, revision: entry.session.revision, session: clone(entry.session), turn: clone(turn) })
+}
 const wrappers: ReturnType<typeof mount>[] = []
 beforeEach(() => {
-  vi.clearAllMocks(); listeners.clear(); stored = []
+  vi.clearAllMocks(); listeners.clear(); server = []; sequence = 0
   snapshot = { state: 'ready', providers: [{ id: 'provider', name: '测试模型', protocol: 'responses', model: 'test', efforts: ['default', 'low', 'medium', 'high'] }], remembered: true, port: 19661 }
-  mocks.snapshot.mockImplementation(() => snapshot)
+  mocks.snapshot.mockImplementation(() => clone(snapshot))
   mocks.subscribe.mockImplementation(listener => { listeners.add(listener); return () => listeners.delete(listener) })
-  mocks.load.mockImplementation(async (docId: string) => ({ ...doc, docId }))
-  mocks.build.mockResolvedValue({ documents: [doc] })
-  mocks.start.mockReturnValue('request-1')
-  mocks.list.mockImplementation(() => JSON.parse(JSON.stringify(stored)))
-  mocks.save.mockImplementation((session: AiChatSession) => { stored = [...stored.filter(item => item.id !== session.id), JSON.parse(JSON.stringify(session))] })
-  mocks.remove.mockImplementation((id: string) => { stored = stored.filter(item => item.id !== id) })
+  mocks.document.mockImplementation(async (docId: string) => ({ ...doc, docId }))
+  mocks.listSessions.mockImplementation(async () => ({ sessions: clone(server.map(entry => entry.session)) }))
+  mocks.createSession.mockImplementation(async selection => {
+    const entry = createStored(`session-${++sequence}`, '新聊天')
+    Object.assign(entry.session, selection); server.unshift(entry); return clone(entry.session)
+  })
+  mocks.getSession.mockImplementation(async id => clone(server.find(entry => entry.session.id === id)!))
+  mocks.subscribeSession.mockResolvedValue(undefined)
+  mocks.unsubscribeSession.mockResolvedValue(undefined)
+  mocks.archiveSession.mockImplementation(async id => { server = server.filter(entry => entry.session.id !== id) })
+  mocks.sendMessage.mockImplementation(async (input: AiMessageInput) => {
+    const entry = server.find(entry => entry.session.id === input.sessionId)!
+    Object.assign(entry.session, { title: input.text.slice(0, 80), providerId: input.providerId, model: input.model, effort: input.effort, status: 'running', updatedAt: Date.now() })
+    const turn: AiSessionTurn = { id: `turn-${++sequence}`, question: input.text, answer: '', sources: [], toolCalls: [], status: 'running', createdAt: sequence }
+    entry.turns.push(turn); publish(server.indexOf(entry))
+    return { runId: 'run-1', turnId: turn.id }
+  })
+  mocks.cancelRun.mockImplementation(async id => { const index = server.findIndex(entry => entry.session.id === id); publish(index, { status: 'cancelled' }) })
 })
 afterEach(() => { wrappers.splice(0).forEach(wrapper => wrapper.unmount()); vi.useRealTimers() })
-async function setup(props: { doc?: string } = { doc: 'current' }) {
-  const wrapper = mount(DocumentQA, { props })
-  wrappers.push(wrapper); await flushPromises(); return wrapper
-}
-async function send(wrapper: ReturnType<typeof mount>, question = '解释这段内容') {
-  await wrapper.get('textarea').setValue(question)
-  await wrapper.get('form').trigger('submit'); await flushPromises()
-}
-async function chooseSection(wrapper: ReturnType<typeof mount>) {
-  await wrapper.get('button[aria-controls="assistant-context"]').trigger('click')
-  await flushPromises()
-  await wrapper.get('input[aria-label="附加当前文档目录"]').setValue(true)
-  await wrapper.get('select[aria-label="选择当前文档章节"]').setValue(['real-heading'])
-}
-const modelKey = (providerId: string, model: string) => JSON.stringify([providerId, model])
+async function setup(props: { doc?: string } = { doc: 'current' }) { const wrapper = mount(DocumentQA, { props }); wrappers.push(wrapper); await flushPromises(); return wrapper }
+async function send(wrapper: ReturnType<typeof mount>, question = '解释知识库中的概念') { await wrapper.get('textarea').setValue(question); await wrapper.get('form').trigger('submit'); await flushPromises() }
 function unmount(wrapper: ReturnType<typeof mount>) { wrapper.unmount(); wrappers.splice(wrappers.indexOf(wrapper), 1) }
+const modelKey = (providerId: string, model: string) => JSON.stringify([providerId, model])
 
-describe('DocumentQA', () => {
-  it('默认向整个知识库提问而不读取当前文档，模型及强度控制请求参数，工具来源支持Markdown', async () => {
+describe('DocumentQA persistent thin client', () => {
+  it('sends a global question and model choices without loading website documents or composing model history', async () => {
     const wrapper = await setup()
     await wrapper.get('select[aria-label="思考强度"]').setValue('high')
     await send(wrapper)
-    expect(mocks.load).not.toHaveBeenCalled()
-    expect(mocks.build).not.toHaveBeenCalled()
-    expect(mocks.start.mock.calls[0][0]).toMatchObject({ providerId: 'provider', model: 'test', effort: 'high', context: { scope: 'knowledge_base', documents: [] } })
-    expect(stored[0]).toMatchObject({ scope: 'knowledge_base' })
-    expect(stored[0]).not.toHaveProperty('docId')
-    emit({ type: 'tool', requestId: 'request-1', callId: 'tool-1', name: 'get_document', status: 'running' })
+    expect(mocks.document).not.toHaveBeenCalled()
+    expect(mocks.createSession).toHaveBeenCalledWith({ providerId: 'provider', model: 'test', effort: 'high' })
+    expect(mocks.sendMessage).toHaveBeenCalledWith({ sessionId: 'session-1', clientRequestId: expect.any(String), providerId: 'provider', model: 'test', effort: 'high', text: '解释知识库中的概念' })
+    expect(wrapper.text()).toContain('聊天记录保存在本机 Note Bridge')
+    expect(wrapper.text()).toContain('关闭窗口或切换聊天后，回答会在 Note Bridge 中继续')
+    expect(mocks.subscribeSession.mock.invocationCallOrder[0]).toBeLessThan(mocks.getSession.mock.invocationCallOrder[0])
+    expect(wrapper.get('textarea').element.value).toBe('')
+  })
+
+  it('ignores old browser chat data without importing it into bridge sessions', async () => {
+    const legacy = JSON.stringify([{ id: 'legacy', title: '旧浏览器聊天', turns: [{ question: '历史问题', answer: '旧答案' }] }])
+    localStorage.setItem('note:ai-chat-history:v1', legacy)
+    try {
+      const wrapper = await setup()
+      expect(wrapper.text()).not.toContain('旧浏览器聊天')
+      expect(wrapper.text()).not.toContain('旧答案')
+      expect(mocks.createSession).not.toHaveBeenCalled()
+      expect(mocks.sendMessage).not.toHaveBeenCalled()
+      expect(localStorage.getItem('note:ai-chat-history:v1')).toBe(legacy)
+    } finally { localStorage.removeItem('note:ai-chat-history:v1') }
+  })
+
+  it('renders persisted Markdown, safe citations and expandable tool summaries', async () => {
+    const wrapper = await setup()
+    await send(wrapper)
+    publish(0, { status: 'complete', answer: '## 结论\n\n**重点** [D1S1]\n\n<img src=x onerror=alert(1)>', sources: [{ sourceId: 'D1S1', title: '当前文章 · 章节', url: '/current.html#real-heading' }, { sourceId: 'D2S1', title: '恶意链接', url: 'javascript:alert(1)' }], toolCalls: [{ callId: 'tool-1', name: 'get_document', status: 'complete', overview: { input: [{ label: '文档', value: '<img src=x onerror=alert(1)>' }], summary: '已读取章节', items: ['重要概念'], note: '使用站点版本 release-1' } }] })
     await flushPromises()
-    expect(wrapper.text()).toContain('读取中…')
-    emit({ type: 'tool', requestId: 'request-1', callId: 'tool-1', name: 'get_document', status: 'complete', sources: [{ sourceId: 'D1S1', title: '当前文章 · 章节', url: '/current.html?headingId=real-heading' }, { sourceId: 'D2S1', title: '不可信来源', url: 'javascript:alert(1)' }] })
-    emit({ type: 'delta', requestId: 'request-1', delta: '## 结论\n\n**重点** [D1S1] [D9S9] [D2S1]\n\n<img src=x onerror=alert(1)>' })
-    emit({ type: 'done', requestId: 'request-1', cancelled: false })
-    await flushPromises()
-    expect(wrapper.find('img').exists()).toBe(false)
     expect(wrapper.get('.qa-assistant-message h2').text()).toBe('结论')
-    expect(wrapper.get('.qa-assistant-message strong').text()).toBe('重点')
-    expect(wrapper.get('nav[aria-label="回答来源"] a').attributes('href')).toBe('/current.html?headingId=real-heading')
+    expect(wrapper.find('img').exists()).toBe(false)
     expect(wrapper.findAll('nav[aria-label="回答来源"] a')).toHaveLength(1)
-    expect(wrapper.text()).toContain('已读取')
-    expect(wrapper.get('.qa-tool-overview').text()).toContain('此条历史调用未保存概览')
-    expect(wrapper.find('a[href^="javascript:"]').exists()).toBe(false)
-    expect(stored[0].turns[0].sources).toHaveLength(1)
-  })
-
-  it('工具概览从读取范围更新到结果，保留失败信息并随聊天恢复；概览文本不可执行', async () => {
-    const wrapper = await setup()
-    await send(wrapper)
-    const input = [{ label: '查询词', value: '<img src=x onerror=alert(1)>' }, { label: '范围', value: '目录与全文索引' }]
-    emit({ type: 'tool', requestId: 'request-1', callId: 'search', name: 'search_documents', status: 'running', overview: { input } })
-    await flushPromises()
-    const details = wrapper.get('.qa-tool-call')
-    expect(details.attributes('open')).toBeUndefined()
-    expect(details.get('summary').text()).toContain('查找文档')
-    expect(details.get('.qa-tool-input').text()).toContain(input[0].value)
-    expect(details.text()).toContain('完成后将在这里显示结果概览')
-    expect(stored[0].turns[0].toolCalls[0].overview).toEqual({ input })
-    const overview = { input, summary: '返回 2 篇文档', items: ['缓存设计', '缓存一致性'], note: '全文索引不可用，仅检索目录。' }
-    emit({ type: 'tool', requestId: 'request-1', callId: 'search', name: 'search_documents', status: 'complete', overview })
-    emit({ type: 'tool', requestId: 'request-1', callId: 'read', name: 'get_document', status: 'running', overview: { input: [{ label: '文档', value: '缓存设计' }] } })
-    emit({ type: 'tool', requestId: 'request-1', callId: 'read', name: 'get_document', status: 'error', message: '读取超时，请重试' })
-    emit({ type: 'done', requestId: 'request-1', cancelled: false })
-    await flushPromises()
-    expect(wrapper.findAll('.qa-tool-call')).toHaveLength(2)
-    expect(details.get('.qa-tool-result').text()).toBe(overview.summary)
-    expect(details.findAll('.qa-tool-items li').map(item => item.text())).toEqual(overview.items)
-    expect(details.get('.qa-tool-note').text()).toBe(overview.note)
-    expect(details.find('img').exists()).toBe(false)
-    expect(wrapper.get('.qa-tool-calls > .error').text()).toContain('缓存设计')
-    expect(wrapper.get('.qa-tool-calls > .error').text()).toContain('读取超时，请重试')
+    expect(wrapper.get('.qa-tool-call summary').text()).toContain('读取文档')
+    expect(wrapper.get('.qa-tool-call').attributes('open')).toBeUndefined()
+    expect(wrapper.get('.qa-tool-overview').text()).toContain('已读取章节')
+    expect(wrapper.get('.qa-tool-overview').text()).toContain('<img src=x onerror=alert(1)>')
     unmount(wrapper)
     const restored = await setup()
-    expect(restored.findAll('.qa-tool-call')).toHaveLength(2)
-    expect(restored.get('.qa-tool-result').text()).toBe(overview.summary)
-    expect(restored.get('.qa-tool-error').text()).toBe('读取超时，请重试')
+    expect(restored.get('.qa-tool-overview').text()).toContain('使用站点版本 release-1')
+    expect(restored.get('.qa-assistant-message h2').text()).toBe('结论')
   })
 
-  it('通过小入口显式选择章节和关联文档才附加正文', async () => {
+  it('unmount, switching sessions, new chat and document navigation never cancel active runs', async () => {
     const wrapper = await setup()
-    expect(wrapper.find('select[aria-label="选择当前文档章节"]').exists()).toBe(false)
-    await chooseSection(wrapper)
-    await wrapper.get('fieldset input[type="checkbox"]').setValue(true)
     await send(wrapper)
-    expect(mocks.build).toHaveBeenCalledWith([{ docId: 'current', headingIds: ['real-heading'] }, { docId: 'related', headingIds: [] }])
-    expect(mocks.start.mock.calls[0][0].context.documents[0].sources).toEqual(doc.sources)
+    await wrapper.setProps({ doc: 'another' })
+    expect(wrapper.get('button[aria-label="停止生成"]').exists()).toBe(true)
+    await wrapper.get('.qa-new-chat').trigger('click'); await flushPromises()
+    expect(mocks.unsubscribeSession).toHaveBeenCalledWith('session-1')
+    await wrapper.get('.qa-session-select').trigger('click'); await flushPromises()
+    expect(wrapper.text()).toContain('正在思考')
+    unmount(wrapper)
+    expect(mocks.cancelRun).not.toHaveBeenCalled()
+    expect(mocks.unsubscribeSession).toHaveBeenCalledTimes(2)
+    publish(0, { status: 'complete', answer: '后台完成的答案' })
+    const reopened = await setup()
+    expect(reopened.text()).toContain('后台完成的答案')
   })
 
-  it('非文档页面仍能发起全局问题，打开上下文不会尝试读取虚构文档', async () => {
-    const wrapper = await setup({})
-    await wrapper.get('button[aria-controls="assistant-context"]').trigger('click')
-    expect(wrapper.text()).toContain('当前页面没有可附加的文档')
-    await send(wrapper, '知识库包含哪些技术主题？')
-    expect(mocks.load).not.toHaveBeenCalled()
-    expect(mocks.start.mock.calls[0][0].context).toEqual({ scope: 'knowledge_base', documents: [] })
-    expect(wrapper.get('.qa-current-document').text()).toContain('整个知识库')
+  it('only the stop button invokes durable cancellation and shows the server result', async () => {
+    const wrapper = await setup()
+    await send(wrapper)
+    await wrapper.get('button[aria-label="停止生成"]').trigger('click'); await flushPromises()
+    expect(mocks.cancelRun).toHaveBeenCalledExactlyOnceWith('session-1')
+    expect(wrapper.text()).toContain('回答已停止')
+    expect(wrapper.find('button[aria-label="停止生成"]').exists()).toBe(false)
   })
 
-  it('只有显式选择当前文档才发送目录，取消附加后恢复全局上下文', async () => {
+  it('disconnect retains running projection; reconnect subscribes and reloads without resending', async () => {
+    const wrapper = await setup()
+    await send(wrapper)
+    publish(0, { answer: '已保存片段' })
+    emit({ type: 'state', state: 'disconnected', message: '断线' }); await flushPromises()
+    expect(wrapper.text()).toContain('回答仍在 Note Bridge 中继续')
+    expect(wrapper.text()).toContain('已保存片段')
+    Object.assign(server[0].turns[0], { status: 'complete', answer: '离线期间完成的答案' }); server[0].session.status = 'idle'; server[0].session.revision++
+    emit({ type: 'state', state: 'ready' }); await flushPromises()
+    expect(wrapper.text()).toContain('离线期间完成的答案')
+    expect(mocks.sendMessage).toHaveBeenCalledTimes(1)
+    expect(mocks.subscribeSession).toHaveBeenCalledTimes(2)
+    expect(mocks.cancelRun).not.toHaveBeenCalled()
+  })
+
+  it('uses bridge-approved document metadata and sends attachment references only', async () => {
     const wrapper = await setup()
     await wrapper.get('button[aria-controls="assistant-context"]').trigger('click'); await flushPromises()
-    expect(mocks.load).toHaveBeenCalledExactlyOnceWith('current')
-    expect(wrapper.get('input[aria-label="附加当前文档目录"]').element.checked).toBe(false)
+    expect(mocks.document).toHaveBeenCalledExactlyOnceWith('current')
     await wrapper.get('input[aria-label="附加当前文档目录"]').setValue(true)
+    await wrapper.get('select[aria-label="选择当前文档章节"]').setValue(['real-heading'])
     await send(wrapper)
-    expect(mocks.build).not.toHaveBeenCalled()
-    expect(mocks.start.mock.calls[0][0].context).toMatchObject({ scope: 'knowledge_base', documents: [{ docId: 'current', sources: [], headings: doc.headings }] })
-    emit({ type: 'done', requestId: 'request-1', cancelled: false }); await flushPromises()
-    await wrapper.get('button[aria-controls="assistant-context"]').trigger('click')
-    await wrapper.get('.qa-clear-context').trigger('click')
-    await send(wrapper, '再看看其他主题')
-    expect(mocks.start.mock.calls[1][0].context).toEqual({ scope: 'knowledge_base', documents: [] })
+    expect(mocks.sendMessage.mock.calls[0][0].attachments).toEqual([{ docId: 'current', headingIds: ['real-heading'], contentHash: 'revision-hash' }])
+    expect(mocks.sendMessage.mock.calls[0][0]).not.toHaveProperty('context')
+    expect(mocks.sendMessage.mock.calls[0][0]).not.toHaveProperty('messages')
+    expect(mocks.sendMessage.mock.calls[0][0]).not.toHaveProperty('tools')
   })
 
-  it('附加文档读取失败和仍在加载时都不阻塞全局提问', async () => {
-    mocks.load.mockRejectedValueOnce(new Error('document unavailable'))
+  it('supports live custom model catalogs and per-model effort choices', async () => {
+    snapshot.providers[0].models = [{ id: 'test', name: '默认', efforts: ['default', 'low'] }, { id: 'custom/model', name: '自定义', efforts: ['default', 'xhigh'], defaultEffort: 'xhigh', contextWindowTokens: 128000, maxOutputTokens: 8192 }]
     const wrapper = await setup()
-    await wrapper.get('button[aria-controls="assistant-context"]').trigger('click'); await flushPromises()
-    expect(wrapper.text()).toContain('当前文档读取失败，仍可向整个知识库提问')
-    await send(wrapper, '先搜索其他文档')
-    expect(mocks.start.mock.calls[0][0].context.documents).toEqual([])
-    emit({ type: 'done', requestId: 'request-1', cancelled: false }); await flushPromises()
-    mocks.load.mockReturnValueOnce(new Promise(() => {}))
-    await wrapper.get('button[aria-controls="assistant-context"]').trigger('click'); await flushPromises()
-    expect(wrapper.text()).toContain('正在读取文档')
-    await send(wrapper, '查询全局知识图谱')
-    expect(mocks.start).toHaveBeenCalledTimes(2)
-  })
-
-  it('新聊天、切换聊天和刷新保留各自历史，取消只影响活动请求', async () => {
-    const wrapper = await setup()
-    await send(wrapper, '第一个问题')
-    emit({ type: 'delta', requestId: 'request-1', delta: '第一个回答' })
-    emit({ type: 'done', requestId: 'request-1', cancelled: false })
-    await flushPromises()
-    await wrapper.get('.qa-new-chat').trigger('click')
-    expect(wrapper.find('.qa-user-message').exists()).toBe(false)
-    await send(wrapper, '第二个问题')
-    expect(stored).toHaveLength(2)
-    await wrapper.findAll('.qa-session-select').find(item => item.text().includes('第一个问题'))!.trigger('click')
-    expect(mocks.cancel).toHaveBeenCalledExactlyOnceWith('request-1')
-    expect(wrapper.get('.qa-assistant-message').text()).toContain('第一个回答')
-    expect(wrapper.findAll('.qa-user-message')).toHaveLength(1)
-    unmount(wrapper)
-    const restored = await setup()
-    await restored.findAll('.qa-session-select').find(item => item.text().includes('第一个问题'))!.trigger('click')
-    expect(restored.get('.qa-assistant-message').text()).toContain('第一个回答')
-    expect(mocks.disconnect).not.toHaveBeenCalled()
-  })
-
-  it('切换文档和非文档页面不切换会话、不取消生成，并保留草稿和全局追问历史', async () => {
-    const wrapper = await setup()
-    await send(wrapper, '比较多个文档中的缓存方案')
-    await wrapper.get('textarea').setValue('下一条问题草稿')
-    await wrapper.setProps({ doc: 'next' }); await flushPromises()
-    emit({ type: 'delta', requestId: 'request-1', delta: '跨文档回答' }); await flushPromises()
-    expect(mocks.cancel).not.toHaveBeenCalled()
-    expect(wrapper.text()).toContain('跨文档回答')
-    expect(wrapper.get('textarea').element.value).toBe('下一条问题草稿')
-    await wrapper.setProps({ doc: undefined }); await flushPromises()
-    emit({ type: 'done', requestId: 'request-1', cancelled: false }); await flushPromises()
-    await send(wrapper, '继续追问')
-    expect(mocks.start.mock.calls.at(-1)![0]).toMatchObject({ context: { scope: 'knowledge_base', documents: [] }, messages: [
-      { role: 'user', content: '比较多个文档中的缓存方案' }, { role: 'assistant', content: '跨文档回答' }, { role: 'user', content: '继续追问' },
-    ] })
-    expect(stored).toHaveLength(1)
-    expect(mocks.load).not.toHaveBeenCalled()
-    unmount(wrapper)
-    expect(mocks.disconnect).not.toHaveBeenCalled()
-    expect(listeners.size).toBe(0)
-  })
-
-  it('旧文档会话继续作为全局聊天，保留历史消息和可信引用而不绑定原文档', async () => {
-    stored = [{ id: 'legacy-chat', scope: 'knowledge_base', docId: 'original', docTitle: '原文档', title: '旧问题', providerId: 'provider', model: 'test', effort: 'default', createdAt: 1, updatedAt: 1,
-      turns: [{ id: 'old-turn', question: '旧问题', answer: '原文档结论 [D1S1]', context: { documents: [doc] }, sources: [], toolCalls: [], status: 'complete' }] }]
-    const wrapper = await setup({})
-    expect(wrapper.text()).toContain('原文档结论')
-    await send(wrapper, '与其他文档比较')
-    expect(mocks.load).not.toHaveBeenCalled()
-    expect(mocks.start.mock.calls[0][0]).toMatchObject({ context: { scope: 'knowledge_base', documents: [] }, messages: [
-      { role: 'user', content: '旧问题' }, { role: 'assistant', content: '原文档结论 [D1S1]' }, { role: 'user', content: '与其他文档比较' },
-    ] })
-    emit({ type: 'delta', requestId: 'request-1', delta: '上次引用仍可查看 [D1S1]' }); await flushPromises()
-    expect(wrapper.findAll('nav[aria-label="回答来源"] a').map(link => link.attributes('href'))).toEqual(['/current.html?headingId=real-heading', '/current.html?headingId=real-heading'])
-  })
-
-  it('旧记录的顺序来源编号不覆盖新附件，工具重新读取时更新已有来源', async () => {
-    stored = [{ id: 'legacy-chat', scope: 'knowledge_base', title: '旧问题', providerId: 'provider', model: 'test', effort: 'default', createdAt: 1, updatedAt: 1,
-      turns: [{ id: 'old-turn', question: '旧问题', answer: '旧来源 [D1S1]', context: { documents: [{ ...doc, docId: 'old', url: '/old.html' }] }, sources: [], toolCalls: [], status: 'complete' }] }]
-    const wrapper = await setup()
-    await chooseSection(wrapper); await send(wrapper)
-    emit({ type: 'delta', requestId: 'request-1', delta: '当前来源 [D1S1]' }); await flushPromises()
-    expect(wrapper.findAll('nav[aria-label="回答来源"] a').map(link => link.attributes('href'))).toEqual(['/old.html?headingId=real-heading', '/current.html?headingId=real-heading'])
-    emit({ type: 'done', requestId: 'request-1', cancelled: false }); await flushPromises()
-    await wrapper.get('button[aria-controls="assistant-context"]').trigger('click')
-    await wrapper.get('.qa-clear-context').trigger('click')
-    await send(wrapper, '重新读取这个来源')
-    emit({ type: 'tool', requestId: 'request-1', callId: 'new-tool', name: 'get_document', status: 'complete', sources: [{ sourceId: 'D1S1', title: '更新的来源', url: '/current.html?headingId=updated-heading' }] })
-    emit({ type: 'delta', requestId: 'request-1', delta: '更新来源 [D1S1]' }); await flushPromises()
-    expect(wrapper.findAll('nav[aria-label="回答来源"] a').at(-1)!.attributes('href')).toBe('/current.html?headingId=updated-heading')
-  })
-
-  it('准备上下文期间输入的下一条草稿不会被当前发送清空', async () => {
-    let finish: (value: { documents: AiContextDocument[] }) => void = () => {}
-    mocks.build.mockReturnValueOnce(new Promise(resolve => { finish = resolve }))
-    const wrapper = await setup()
-    await chooseSection(wrapper); await send(wrapper, '正在发送的问题')
-    await wrapper.get('textarea').setValue('下一条问题的草稿')
-    finish({ documents: [doc] }); await flushPromises()
-    expect(mocks.start.mock.calls[0][0].messages.at(-1)).toEqual({ role: 'user', content: '正在发送的问题' })
-    expect(wrapper.get('textarea').element.value).toBe('下一条问题的草稿')
-  })
-
-  it('文档切换使未完成的上下文读取失效，不发送旧问题', async () => {
-    let finish: (value: { documents: AiContextDocument[] }) => void = () => {}
-    mocks.build.mockReturnValue(new Promise(resolve => { finish = resolve }))
-    const wrapper = await setup()
-    await chooseSection(wrapper); await send(wrapper)
-    await wrapper.setProps({ doc: 'next' })
-    finish({ documents: [doc] }); await flushPromises()
-    expect(mocks.start).not.toHaveBeenCalled()
-  })
-
-  it('准备上下文期间断线并恢复，旧准备结果失效，必须手动重新发送', async () => {
-    let finish: (value: { documents: AiContextDocument[] }) => void = () => {}
-    mocks.build.mockReturnValueOnce(new Promise(resolve => { finish = resolve }))
-    const wrapper = await setup()
-    await chooseSection(wrapper); await send(wrapper)
-    emit({ type: 'state', state: 'disconnected', message: '连接断开' }); await flushPromises()
-    snapshot = { ...snapshot, providers: [{ id: 'new-provider', name: '新服务商', protocol: 'responses', model: 'new-model', efforts: ['default'] }] }
-    emit({ type: 'state', state: 'ready' }); await flushPromises()
-    finish({ documents: [doc] }); await flushPromises()
-    expect(mocks.start).not.toHaveBeenCalled()
-    expect(wrapper.get('textarea').element.value).toBe('解释这段内容')
-    await wrapper.get('form').trigger('submit'); await flushPromises()
-    expect(mocks.start).toHaveBeenCalledOnce()
-    expect(mocks.start.mock.calls[0][0].providerId).toBe('new-provider')
-  })
-
-  it.each(['model', 'effort'])('准备上下文时已提交的%s失效会保留问题并提示确认，不自动改用其他配置', async (changed) => {
-    let finish: (value: { documents: AiContextDocument[] }) => void = () => {}
-    mocks.build.mockReturnValueOnce(new Promise(resolve => { finish = resolve }))
-    const wrapper = await setup()
-    await wrapper.get('select[aria-label="思考强度"]').setValue('high')
-    await chooseSection(wrapper); await send(wrapper)
-    snapshot = { ...snapshot, providers: changed === 'model'
-      ? [{ id: 'other-provider', name: '另一服务商', protocol: 'responses', model: 'other-model', efforts: ['default'] }]
-      : [{ ...snapshot.providers[0], efforts: ['default'] }] }
-    emit({ type: 'providers' }); await flushPromises()
-    finish({ documents: [doc] }); await flushPromises()
-    expect(mocks.start).not.toHaveBeenCalled()
-    expect(mocks.save).not.toHaveBeenCalled()
-    expect(wrapper.get('textarea').element.value).toBe('解释这段内容')
-    expect(wrapper.get('[role="alert"]').text()).toContain('所选模型或思考强度已更新')
-    expect(wrapper.find('button[aria-label="停止生成"]').exists()).toBe(false)
-    await wrapper.get('form').trigger('submit'); await flushPromises()
-    expect(mocks.start.mock.calls[0][0]).toMatchObject(changed === 'model'
-      ? { providerId: 'other-provider', model: 'other-model', effort: 'default' }
-      : { providerId: 'provider', model: 'test', effort: 'default' })
-  })
-
-  it('准备上下文时历史模型重新出现，当前提交仍使用点击发送时的有效模型', async () => {
-    stored = [{ id: 'saved-session', scope: 'knowledge_base', docId: 'current', docTitle: '当前文章', title: '已保存聊天', providerId: 'saved-provider', model: 'saved-model', effort: 'high', turns: [], createdAt: 1, updatedAt: 1 }]
-    let finish: (value: { documents: AiContextDocument[] }) => void = () => {}
-    mocks.build.mockReturnValueOnce(new Promise(resolve => { finish = resolve }))
-    const wrapper = await setup()
-    expect(wrapper.get('select[aria-label="模型"]').element.value).toBe(modelKey('provider', 'test'))
-    await chooseSection(wrapper); await send(wrapper)
-    snapshot = { ...snapshot, providers: [...snapshot.providers, { id: 'saved-provider', name: '历史模型', protocol: 'responses', model: 'saved-model', efforts: ['default', 'high'] }] }
-    emit({ type: 'providers' }); await flushPromises()
-    expect(wrapper.get('select[aria-label="模型"]').element.value).toBe(modelKey('saved-provider', 'saved-model'))
-    finish({ documents: [doc] }); await flushPromises()
-    expect(mocks.start.mock.calls[0][0]).toMatchObject({ providerId: 'provider', model: 'test', effort: 'high' })
-    expect(stored[0]).toMatchObject({ providerId: 'provider', model: 'test', effort: 'high' })
-    expect(wrapper.get('select[aria-label="模型"]').element.value).toBe(modelKey('provider', 'test'))
-  })
-
-  it('未连接时打开导航连接设置，空闲关闭不取消其他面板请求', async () => {
-    snapshot = { ...snapshot, state: 'disconnected', providers: [], remembered: false }
-    const open = vi.fn(); EventBus.on('show-note-bridge', open)
-    const wrapper = await setup()
-    expect(wrapper.find('input[aria-label="配对码"]').exists()).toBe(false)
-    await wrapper.findAll('button').find(button => button.text() === '打开 Note Bridge 连接设置')!.trigger('click')
-    expect(open).toHaveBeenCalledOnce()
-    expect(wrapper.emitted('open-connection')).toHaveLength(1)
-    EventBus.off('show-note-bridge', open); unmount(wrapper)
-    expect(mocks.cancel).not.toHaveBeenCalled()
-    expect(mocks.disconnect).not.toHaveBeenCalled()
-  })
-
-  it('关闭有活动请求的面板只取消该请求，并保存部分回答', async () => {
-    const wrapper = await setup(); await send(wrapper)
-    emit({ type: 'delta', requestId: 'request-1', delta: '部分回答' })
-    unmount(wrapper)
-    expect(mocks.cancel).toHaveBeenCalledExactlyOnceWith('request-1')
-    expect(mocks.disconnect).not.toHaveBeenCalled()
-    expect(stored[0].turns[0]).toMatchObject({ answer: '部分回答', cancelled: true, status: 'cancelled' })
-  })
-
-  it('历史回答与显示长度边界不会劈开emoji，超长输出仍会停止', async () => {
-    const wrapper = await setup(); await send(wrapper)
-    emit({ type: 'delta', requestId: 'request-1', delta: 'a'.repeat(3999) + '😀' })
-    emit({ type: 'done', requestId: 'request-1', cancelled: false }); await flushPromises()
-    await send(wrapper)
-    expect(mocks.start.mock.calls[1][0].messages[1].content).toBe('a'.repeat(3999))
-    const cancelledBefore = mocks.cancel.mock.calls.length
-    emit({ type: 'delta', requestId: 'request-1', delta: 'b'.repeat(99999) + '😀' }); await flushPromises()
-    const answer = stored[0].turns.at(-1)!.answer
-    expect(answer).toHaveLength(99999); expect(answer.isWellFormed()).toBe(true)
-    expect(wrapper.find('button[aria-label="停止生成"]').exists()).toBe(false)
-    expect(mocks.cancel).toHaveBeenCalledTimes(cancelledBefore + 1)
-  })
-
-  it('存储失败仍可继续聊天并显示可理解的反馈，删除历史同步更新本地存储', async () => {
-    const wrapper = await setup(); await send(wrapper)
-    emit({ type: 'done', requestId: 'request-1', cancelled: false }); await flushPromises()
-    await wrapper.get('.qa-delete-chat').trigger('click')
-    expect(stored).toHaveLength(0); expect(wrapper.find('.qa-session').exists()).toBe(false)
-    mocks.save.mockImplementation(() => { throw new Error('浏览器存储已满，本次聊天仍可继续。') })
-    await send(wrapper)
-    expect(wrapper.text()).toContain('浏览器存储已满')
-    expect(wrapper.find('.qa-user-message').exists()).toBe(true)
-  })
-
-  it('刷新恢复的工具读取不显示为仍在执行，也不自动重发问题', async () => {
-    const wrapper = await setup(); await send(wrapper)
-    emit({ type: 'tool', requestId: 'request-1', callId: 'tool-1', name: 'get_toc', status: 'running' })
-    const interrupted = JSON.parse(JSON.stringify(stored)) as AiChatSession[]
-    interrupted[0].turns[0].answer = '尚未完成的回答'
-    interrupted[0].turns[0].toolCalls = [{ callId: 'tool-1', name: 'get_toc', status: 'running' }]
-    unmount(wrapper); stored = interrupted
-    const restored = await setup()
-    expect(restored.text()).toContain('读取已中断')
-    expect(restored.text()).not.toContain('读取中…')
-    expect(mocks.start).toHaveBeenCalledOnce()
-    await send(restored, '刷新后的问题')
-    expect(mocks.start.mock.calls.at(-1)![0].messages).toEqual([{ role: 'user', content: '刷新后的问题' }])
-  })
-
-  it('历史先于连接元数据加载时恢复保存的模型和思考强度，不自动覆盖偏好', async () => {
-    stored = [{ id: 'saved-session', scope: 'knowledge_base', docId: 'current', docTitle: '当前文章', title: '已保存聊天', providerId: 'saved-provider', model: 'saved-model', effort: 'high', turns: [], createdAt: 1, updatedAt: 1 }]
-    const firstProvider = snapshot.providers[0]
-    snapshot = { ...snapshot, state: 'connecting', providers: [] }
-    const wrapper = await setup()
-    expect(mocks.save).not.toHaveBeenCalled()
-    expect(stored[0]).toMatchObject({ providerId: 'saved-provider', effort: 'high' })
-    snapshot = { ...snapshot, providers: [firstProvider, { id: 'saved-provider', name: '历史模型', protocol: 'responses', model: 'default-model', models: [{ id: 'default-model', name: '默认模型', efforts: ['default'] }, { id: 'saved-model', name: '保存的模型', efforts: ['default', 'low', 'medium', 'high'] }] }] }
-    emit({ type: 'state', state: 'ready' }); await flushPromises()
-    expect(wrapper.get('select[aria-label="模型"]').element.value).toBe(modelKey('saved-provider', 'saved-model'))
-    expect(wrapper.get('select[aria-label="思考强度"]').element.value).toBe('high')
-    expect(mocks.save).not.toHaveBeenCalled()
-    await send(wrapper)
-    expect(mocks.start.mock.calls.at(-1)![0]).toMatchObject({ providerId: 'saved-provider', model: 'saved-model', effort: 'high' })
-  })
-
-  it('重连时的临时fallback不覆盖历史偏好，显式选择后使用新偏好', async () => {
-    stored = [{ id: 'saved-session', scope: 'knowledge_base', docId: 'current', docTitle: '当前文章', title: '已保存聊天', providerId: 'saved-provider', model: 'saved-model', effort: 'high', turns: [], createdAt: 1, updatedAt: 1 }]
-    const firstProvider = snapshot.providers[0]
-    const savedProvider = { ...firstProvider, id: 'saved-provider', name: '历史模型', model: 'saved-model' }
-    const wrapper = await setup()
-    expect(wrapper.get('select[aria-label="模型"]').element.value).toBe(modelKey('provider', 'test'))
-    expect(mocks.save).not.toHaveBeenCalled()
-    snapshot = { ...snapshot, providers: [firstProvider, savedProvider] }
-    emit({ type: 'state', state: 'ready' }); await flushPromises()
-    expect(wrapper.get('select[aria-label="模型"]').element.value).toBe(modelKey('saved-provider', 'saved-model'))
-    expect(wrapper.get('select[aria-label="思考强度"]').element.value).toBe('high')
-    await wrapper.get('select[aria-label="模型"]').setValue(modelKey('provider', 'test'))
-    await wrapper.get('select[aria-label="思考强度"]').setValue('low')
-    expect(stored[0]).toMatchObject({ providerId: 'provider', effort: 'low' })
-    snapshot = { ...snapshot, providers: [] }
-    emit({ type: 'state', state: 'connecting' }); await flushPromises()
-    expect(stored[0]).toMatchObject({ providerId: 'provider', effort: 'low' })
-    snapshot = { ...snapshot, providers: [savedProvider, firstProvider] }
-    emit({ type: 'state', state: 'ready' }); await flushPromises()
-    expect(wrapper.get('select[aria-label="模型"]').element.value).toBe(modelKey('provider', 'test'))
-    expect(wrapper.get('select[aria-label="思考强度"]').element.value).toBe('low')
-    await send(wrapper)
-    expect(mocks.start.mock.calls.at(-1)![0]).toMatchObject({ providerId: 'provider', effort: 'low' })
-  })
-
-  it('同服务商的多个模型独立选择，实时更新修正思考强度且不会中断当前回答', async () => {
-    const gateway: AiProvider = { id: 'gateway', name: '自定义网关', protocol: 'responses', model: 'default-model', models: [
-      { id: 'default-model', name: '默认模型', efforts: ['default', 'low'] },
-      { id: 'custom/reasoner', name: '自定义推理模型', efforts: ['default', 'high', 'xhigh'] },
-    ] }
-    snapshot = { ...snapshot, providers: [gateway, { ...gateway, id: 'other-gateway', name: '另一网关' }] }
-    const wrapper = await setup()
-    const models = wrapper.get('select[aria-label="模型"]')
-    expect(models.findAll('optgroup').map(group => group.attributes('label'))).toEqual(['自定义网关', '另一网关'])
-    expect(models.findAll('option')).toHaveLength(4)
-    await models.setValue(modelKey('gateway', 'custom/reasoner'))
+    await wrapper.get('select[aria-label="模型"]').setValue(modelKey('provider', 'custom/model'))
     await wrapper.get('select[aria-label="思考强度"]').setValue('xhigh')
     await send(wrapper)
-    expect(mocks.start.mock.calls[0][0]).toMatchObject({ providerId: 'gateway', model: 'custom/reasoner', effort: 'xhigh' })
-    snapshot = { ...snapshot, providers: [{ ...gateway, models: [gateway.models![0],
-      { id: 'custom/reasoner', name: '推理模型（更新）', efforts: ['default', 'medium'], defaultEffort: 'medium' },
-      { id: 'new-model', name: '新增模型', efforts: ['default'] },
-    ] }] }
+    expect(mocks.sendMessage.mock.calls[0][0]).toMatchObject({ model: 'custom/model', effort: 'xhigh' })
+    publish(0, { status: 'complete', answer: '完成' }); await flushPromises()
+    snapshot.providers[0].models.push({ id: 'new', name: '新增', efforts: ['default', 'ultra'] })
     emit({ type: 'providers' }); await flushPromises()
-    expect(models.element.value).toBe(modelKey('gateway', 'custom/reasoner'))
-    expect(models.text()).toContain('新增模型')
-    expect(wrapper.get('select[aria-label="思考强度"]').element.value).toBe('medium')
-    expect(wrapper.get('button[aria-label="停止生成"]').exists()).toBe(true)
-    expect(mocks.cancel).not.toHaveBeenCalled()
-    emit({ type: 'delta', requestId: 'request-1', delta: '列表更新后继续回答' })
-    emit({ type: 'done', requestId: 'request-1', cancelled: false }); await flushPromises()
-    expect(wrapper.get('.qa-assistant-message').text()).toContain('列表更新后继续回答')
-    await send(wrapper, '使用更新后的强度')
-    expect(mocks.start.mock.calls.at(-1)![0]).toMatchObject({ providerId: 'gateway', model: 'custom/reasoner', effort: 'medium' })
-    emit({ type: 'done', requestId: 'request-1', cancelled: false }); await flushPromises()
-    await models.setValue(modelKey('gateway', 'default-model'))
-    expect(wrapper.get('select[aria-label="思考强度"]').element.value).toBe('default')
-    expect(stored[0]).toMatchObject({ providerId: 'gateway', model: 'default-model', effort: 'default' })
+    expect(wrapper.findAll('select[aria-label="模型"] option').map(option => option.attributes('value'))).toContain(modelKey('provider', 'new'))
   })
 
-  it('Enter发送，Shift+Enter和中文输入法提交不触发发送', async () => {
+  it('paginates sessions and older complete turns without requesting full history', async () => {
+    server.push(createStored())
+    server[0].turns = [{ id: 'new-turn', question: '最新问题', answer: '最新回答', createdAt: 2, status: 'complete', sources: [], toolCalls: [] }]
+    mocks.listSessions.mockImplementation(async cursor => cursor ? { sessions: [createStored('older-session', '更早聊天').session] } : { sessions: [server[0].session], nextCursor: 'session-page-2' })
+    mocks.getSession.mockImplementation(async (_id, cursor) => ({ session: server[0].session, turns: cursor ? [{ ...server[0].turns[0], id: 'old-turn', question: '更早问题', createdAt: 1 }] : server[0].turns, ...(cursor ? {} : { nextCursor: 'turn-page-2' }) }))
     const wrapper = await setup()
-    await wrapper.get('textarea').setValue('新的问题')
-    await wrapper.get('textarea').trigger('keydown', { key: 'Enter', shiftKey: true })
-    await wrapper.get('textarea').trigger('keydown', { key: 'Enter', isComposing: true })
-    expect(mocks.start).not.toHaveBeenCalled()
-    await wrapper.get('textarea').trigger('keydown', { key: 'Enter' }); await flushPromises()
-    expect(mocks.start).toHaveBeenCalledOnce()
+    await wrapper.findAll('.qa-load-more').find(button => button.text() === '加载更多聊天')!.trigger('click'); await flushPromises()
+    expect(mocks.listSessions).toHaveBeenLastCalledWith('session-page-2')
+    await wrapper.findAll('.qa-load-more').find(button => button.text() === '加载更早的消息')!.trigger('click'); await flushPromises()
+    expect(mocks.getSession).toHaveBeenLastCalledWith('session-old', 'turn-page-2')
+    expect(wrapper.findAll('.qa-user-message').map(item => item.text())).toEqual(['你：更早问题', '你：最新问题'])
+    expect(wrapper.findAll('.qa-session-select')).toHaveLength(2)
+  })
+
+  it('a stale get response cannot overwrite a newer committed update', async () => {
+    server.push(createStored('race'))
+    const older: AiSessionTurn = { id: 'turn', question: '问题', answer: '旧快照', status: 'running', sources: [], toolCalls: [], createdAt: 1 }
+    let finish!: (value: unknown) => void
+    mocks.getSession.mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+    const wrapper = await setup()
+    const newer = { ...server[0].session, revision: 3, status: 'idle' as const }
+    emit({ type: 'session.updated', sessionId: 'race', revision: 3, session: newer, turn: { ...older, status: 'complete', answer: '新快照' } })
+    finish({ session: server[0].session, turns: [older] }); await flushPromises()
+    expect(wrapper.text()).toContain('新快照')
+    expect(wrapper.text()).not.toContain('旧快照')
+    expect(wrapper.find('button[aria-label="停止生成"]').exists()).toBe(false)
+  })
+
+  it('late results from a previously selected conversation do not replace current history', async () => {
+    server.push(createStored('first', '第一聊天'), createStored('second', '第二聊天'))
+    let finish!: (value: unknown) => void
+    mocks.getSession.mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+    const wrapper = await setup()
+    await wrapper.findAll('.qa-session-select').find(button => button.text().includes('第二聊天'))!.trigger('click'); await flushPromises()
+    finish({ session: server[0].session, turns: [{ id: 'late', question: '旧问题', answer: '迟到答案', createdAt: 1, status: 'complete', sources: [], toolCalls: [] }] }); await flushPromises()
+    expect(wrapper.text()).not.toContain('迟到答案')
+    expect(wrapper.get('.qa-session.active').text()).toContain('第二聊天')
+    expect(mocks.cancelRun).not.toHaveBeenCalled()
+  })
+
+  it('archives on bridge, does not remove local browser history, and rejects archiving running chats', async () => {
+    const wrapper = await setup()
+    await send(wrapper)
+    expect(wrapper.get('button[aria-label^="归档聊天"]').attributes('disabled')).toBeDefined()
+    publish(0, { status: 'complete', answer: '完成' }); await flushPromises()
+    await wrapper.get('button[aria-label^="归档聊天"]').trigger('click'); await flushPromises()
+    expect(mocks.archiveSession).toHaveBeenCalledExactlyOnceWith('session-1')
+    expect(wrapper.findAll('.qa-session-select')).toHaveLength(0)
+    expect(mocks.cancelRun).not.toHaveBeenCalled()
+  })
+
+  it('retries an unacknowledged identical message with the same idempotency key', async () => {
+    mocks.sendMessage.mockRejectedValue(new Error('确认超时'))
+    const wrapper = await setup()
+    await send(wrapper, '不要重复生成')
+    expect(wrapper.text()).toContain('确认超时')
+    await wrapper.get('form').trigger('submit'); await flushPromises()
+    expect(mocks.sendMessage).toHaveBeenCalledTimes(2)
+    expect(mocks.sendMessage.mock.calls[0][0].clientRequestId).toBe(mocks.sendMessage.mock.calls[1][0].clientRequestId)
+    expect(mocks.createSession).toHaveBeenCalledTimes(1)
+  })
+
+  it('opens shared connection settings when disconnected and allows an empty global entry point', async () => {
+    snapshot.state = 'disconnected'; snapshot.providers = []
+    const handler = vi.fn(); EventBus.on('show-note-bridge', handler)
+    const wrapper = await setup({})
+    expect(wrapper.get('button[aria-label="发送问题"]').attributes('disabled')).toBeDefined()
+    await wrapper.get('.qa-connection-prompt button').trigger('click')
+    expect(handler).toHaveBeenCalled(); expect(wrapper.emitted('open-connection')).toHaveLength(1)
+    EventBus.off('show-note-bridge', handler)
   })
 })

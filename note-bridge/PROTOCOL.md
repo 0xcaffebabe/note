@@ -1,167 +1,76 @@
-# note-bridge WebSocket protocol v1
+# note-bridge WebSocket protocol v2
 
-The website and desktop application implement this contract independently. No note source files, Node modules, or build artifacts are shared with bridge-core.
+The website is a thin client of the desktop-owned Pi agent. All frames use UTF-8 JSON with `v: 2`. v1 chat generation and browser-executed tool results are no longer supported; incompatible clients receive an upgrade error. Old browser chat histories are neither read nor imported. Existing pairing grants and model configuration remain usable.
 
-The listener binds **127.0.0.1 only**, default port **19661**, path **/ws**. The port can be changed in the desktop application. The client must use that literal loopback address. A handshake requires an exact allowed `Origin` and `Host: 127.0.0.1:<port>`; missing or `null` origins are rejected. Allowlisting an origin does not authenticate it.
+## Connection and authentication
 
-All messages are UTF-8 JSON objects with `v: 1` and a `type`. Frames/messages are limited to 512 KiB. Unknown protocol versions fail authentication. At most eight sockets can remain connected (including sockets waiting for authentication). No HTTP forwarding, credential export, file access, or configuration-management operations are exposed over WebSocket. An authenticated website can revoke only its own remembered authorization.
+The listener binds only `127.0.0.1`, default port `19661`, path `/ws`. An exact allowed Origin and `Host: 127.0.0.1:<port>` are required; missing/null origins fail. Authentication must arrive within ten seconds. At most eight connections are admitted. Each frame is bounded to 16 MiB.
 
-## Pairing
-
-1. Start the service and open pairing in the desktop application. It displays a six-digit code, valid for two minutes. Ten failed attempts invalidate the code.
-2. The website opens a socket and sends its first message within ten seconds:
-
-   ```json
-   {"v":1,"type":"pair","code":"123456"}
-   ```
-
-3. A correct code is consumed once and authenticates the website immediately. No additional desktop approval is required. The website receives the following frame directly. The provider list contains only enabled providers and no endpoint, key, source file, or credential reference:
-
-   ```json
-   {"v":1,"type":"auth.ok","connectionId":"socket-uuid","authorizationId":"authorization-uuid","token":"opaque-random-token","providers":[{"id":"uuid","name":"My model","protocol":"responses","model":"configured-model","efforts":["default","high"],"models":[{"id":"configured-model","name":"Default model","efforts":["default","high"]},{"id":"vendor/custom-model","name":"Custom model","efforts":["default","xhigh"],"defaultEffort":"xhigh"}]}]}
-   ```
-
-Successful pairing creates a persistent authorization bound to the exact origin and a high-entropy opaque token. The desktop persists only the token hash and authorization metadata in its application data directory; raw tokens are never included in desktop snapshots, UI, or logs. The note website stores `{version: 1, port, token}` under `note:ai-bridge:v1` in origin-scoped `localStorage`, so a refresh or subsequent visit can authenticate again. Up to 32 remembered authorizations are retained, with no automatic expiry; explicitly revoke unused authorizations to make room for another pairing. This is a local bridge authorization, not an upstream model API key. Provider API keys remain in the operating system credential store and are never sent to the website. Tokens must not be put in URL query parameters.
-
-## Model lists and live updates
-
-Each provider keeps `model` as its default and includes `models: [{id,name,efforts,defaultEffort?}]`. IDs are scoped to the provider; two services may use the same model ID. At most 200 models per provider and 400 across all providers are stored. No endpoint, local path or credential is included. The legacy provider-level `efforts` describes its default model.
-
-Saving, enabling, disabling or deleting a provider in the native application pushes the complete enabled list to authenticated sockets:
+Pair with `{v:2,type:"pair",code:"123456"}`. A correct six-digit code authenticates immediately, is consumed once, and expires after two minutes; ten failed attempts invalidate it. Reconnect with `{v:2,type:"auth",token:"opaque-token"}`. The successful response is:
 
 ```json
-{"v":1,"type":"providers.updated","providers":[{"id":"provider-uuid","name":"Gateway","protocol":"responses","model":"vendor/default","models":[{"id":"vendor/default","name":"Default","efforts":["default"]},{"id":"vendor/reasoner","name":"Reasoner","efforts":["default","high","xhigh"]}]}]}
+{"v":2,"type":"auth.ok","connectionId":"socket-id","authorizationId":"grant-id","token":"opaque-token","capabilities":["persistent_sessions","knowledge_tools"],"providers":[{"id":"provider-id","name":"Gateway","protocol":"responses","model":"custom-model","models":[{"id":"custom-model","name":"My model","efforts":["default","high"],"contextWindowTokens":1000000,"maxOutputTokens":16384}]}]}
 ```
 
-This is a metadata update, not a connection state change. Clients update selectors without cancelling an active answer; subsequent requests validate against the current saved list. A question still preparing context must not silently switch to another provider if its submitted selection disappears. Histories persist provider ID, model ID and effort independently.
+Only provider/model display metadata is exposed, never endpoint, secret or local source path. Desktop provider edits push `{v:2,type:"providers.updated",providers:[...]}`. Browser pairing storage remains `{version:1,port,token}` under `note:ai-bridge:v1`; this storage version is independent of the wire protocol. The bridge stores only token hashes, bound to exact Origin. Up to 32 grants persist until revoked. Multiple tabs may use one grant concurrently.
 
-Only native IPC exposes `fetch_provider_models(id)`: it queries the saved provider endpoint/auth with a 15-second total timeout, 1-MiB response bound, no redirects, and bounded pagination. It returns candidates without modifying storage. Users select or manually configure models, then save. Websites cannot request configuration scans, model-list network fetches, edits or credentials.
+`auth.forget` revokes only the caller's grant and closes its sockets. Native revocation also aborts the grant's active work. Ordinary disconnection drops subscriptions, not Pi tasks. A saved token alone never means connected. The browser retries transport failures with 1/2/4/8/16/30 second backoff, and does not resend model requests automatically. `auth_failed` clears the rejected token.
 
-## Reconnection and revocation
+Send `{v:2,type:"ping"}` periodically; the response is `pong`. Silent sockets close after 90 seconds. Connection failures use `{v:2,type:"error",code,message}`.
 
-On refresh or after a lost connection, the website opens a new socket and sends this as its first frame within ten seconds:
+## Session RPC
+
+Request and responses:
 
 ```json
-{"v":1,"type":"auth","token":"opaque-random-token"}
+{"v":2,"type":"request","id":"rpc-id","method":"sessions.list","params":{"limit":20}}
+{"v":2,"type":"response","id":"rpc-id","result":{"sessions":[]}}
+{"v":2,"type":"response","id":"rpc-id","error":{"code":"busy","message":"此对话正在生成回答"}}
 ```
 
-A successful authentication returns `auth.ok` with the same `authorizationId` and token, a new socket-specific `connectionId`, and the current enabled providers. The token does not rotate. Multiple tabs may authenticate using the same token concurrently; one tab reconnecting does not replace another tab's connection. The eight-socket limit still applies.
+RPC IDs contain 1–80 ASCII letters/digits or `_ - : .`. Params must be an object, at most 128 KiB; at most 16 RPCs per connection and 64 private IPC calls are outstanding. Private calls have a 45-second response deadline; a timeout does not imply a generation was not accepted. Read the session before resubmitting. `clientRequestId` provides durable generation idempotency.
 
-Closing a socket, stopping the listener, or quitting/restarting the desktop application cancels active requests and closes sockets but retains remembered authorizations. After the listener restarts, clients can authenticate with their saved token without another pairing code, provided their exact origin is still allowed. The note client retries connection failures after 1, 2, 4, 8, 16, then 30 seconds, keeping a 30-second cap, including when the desktop service is not running yet. The website navigation displays green “已连接” only after receiving `auth.ok`; a saved token by itself does not imply a live connection. `auth_failed` clears the rejected local credential and stops retrying; a new pairing is required. The website’s “断开” action pauses the current page’s connection and retries while retaining the saved credential; refreshing the page enables automatic authentication again. Reconnection never replays a generation request.
+| Method | Params | Result |
+| --- | --- | --- |
+| sessions.list | cursor?, limit? | sessions, nextCursor? |
+| sessions.create | providerId, model, effort? | SessionSummary |
+| sessions.get | sessionId, cursor?, limit? | session, turns, nextCursor? |
+| sessions.archive | sessionId | ok; active sessions must first be stopped |
+| session.subscribe | sessionId | ok; later committed pushes |
+| session.unsubscribe | sessionId | ok; does not cancel |
+| messages.send | sessionId, clientRequestId, text, providerId, model, effort?, attachments? | runId, turnId |
+| runs.cancel | sessionId | ok; durably cancels the active run |
+| knowledge.document | docId | docId, title, url, contentHash, headings |
 
-The desktop lists remembered authorizations even when all their sockets are offline. Revoking an authorization deletes the stored grant and closes every socket using it, cancelling their active requests. The old token can no longer authenticate. Desktop `revoke_connection` also revokes the entire authorization associated with that connection; `revoke_authorization` uses the persistent authorization ID and works while offline.
+List/page sizes default to 20, maximum 50. Session lists are newest first. Turn pages are chronological; the first page holds newest turns and nextCursor requests earlier ones. The server also bounds serialized page bytes. A session summary contains id, title, providerId, model, effort, createdAt, updatedAt, status (`idle/running/error`) and revision.
 
-An authenticated website can send the following frame to revoke its own authorization, including the connections from other tabs using that token:
+A turn contains id, question, answer, status (`running/complete/cancelled/error`), sources, toolCalls, createdAt, optional error and contextNotice. Tool records contain callId, name, status (`running/complete/error`), optional message and overview. Overviews are display metadata with input label/value pairs, summary, items and note; raw opaque provider reasoning is not exposed to the webpage. Citations carry sourceId, title, canonical site-relative URL and optional contentHash/revision.
+
+A message sends only current user text and document references; it never submits full model history or tool schemas. Text is bounded to 20,000 characters; attachments are at most three `{docId,headingIds?,contentHash?}` references. The bridge binds the website origin from authentication, obtains the current manifest and validates attachment hashes. It persists a normalized request hash: identical clientRequestId+payload returns the original IDs, conflicting reuse fails. Busy sessions reject a second unrelated send.
+
+## Committed updates and reconnect
 
 ```json
-{"v":1,"type":"auth.forget"}
+{"v":2,"type":"session.updated","sessionId":"123","revision":456,"session":{"id":"123","title":"Question","providerId":"provider-id","model":"custom-model","effort":"default","createdAt":1,"updatedAt":2,"status":"running","revision":456},"turn":{"id":"turn-id","question":"Question","answer":"Partial answer","createdAt":2,"status":"running","sources":[],"toolCalls":[]}}
+{"v":2,"type":"sessions.changed"}
 ```
 
-`auth.forget` does not take an authorization ID or token; the server resolves the grant from the authenticated socket. On success the connection closes after revocation, without a separate acknowledgment. If persisting the deletion fails, the server returns an `error` with code `forget_failed` and retains the grant; it can be revoked later from the desktop. The note website's “忘记连接” action clears its saved bridge token and port and, while connected, sends `auth.forget`. If the website is offline, forgetting clears only browser storage; the retained desktop authorization can be revoked in the desktop application. A new connection then requires pairing. Clearing browser data similarly removes its local token without removing the desktop grant.
+A push replaces the specified turn by ID; it is a bounded projection of committed state, not a raw Pi delta or a second transcript. Clients subscribe before reading the newest page and use revision to avoid overwriting newer updates with older RPC snapshots. Reconnect performs subscribe/get again. Slow downstreams, lost internal events and a restarted worker close the socket so reconnect obtains a fresh snapshot. A disconnected page never replays messages.send automatically.
 
-Authentication/connection errors use `{v:1,type:"error",code,message}`. Messages contain sanitized descriptions. Clients should end the connection on these errors. The browser API cannot reliably distinguish CSP, local-network permission, and mixed-content blocking, so the UI presents these as possible connection causes rather than guessing one.
+Closing the assistant, navigating and changing sessions only unsubscribe. Explicit runs.cancel is the only website operation that stops generation. SQLite and tasks belong to the worker, independent of connectionId. On bridge service restart, valid unfinished tasks resume subject to persisted authorization, model, deadline and budgets. This may resend an interrupted model HTTP request; it is not exact network-stream continuation. Explicitly cancelled tasks stay cancelled.
 
-## Generation and document tools
+## Knowledge data and execution
 
-```json
-{
-  "v":1,"type":"chat.start","requestId":"unique-id",
-  "providerId":"provider-uuid","model":"configured-model",
-  "messages":[{"role":"user","content":"Explain the example."}],
-  "maxOutputTokens":2048,
-  "context":{"documents":[{
-    "docId":"example","title":"Example","url":"/example.html",
-    "contentHash":"local-content-fingerprint","metadata":{"tags":["sample"]},
-    "headings":[{"id":"example-heading","title":"Example heading"}],
-    "relatedLinks":[],
-    "sources":[{"sourceId":"D1S1","headingId":"example-heading","title":"Example heading","text":"Reference content."}]
-  }]}
-}
-```
+Knowledge content remains independently published on the core website. Bridge reads `/ai/manifest.json` at the authenticated Origin and only hash-verified resources under `/ai/`. Manifest schema version and content revision are independent of desktop release and chat protocol. The six registered tools are get_knowledge_overview, search_documents, get_toc, get_document, get_knowledge_network and get_related_documents. No arbitrary URL, local file, shell or config tools are available. Results are paginated and bounded; source evidence and UI overview metadata persist with the turn.
 
-- One active generation per connection. Request IDs must be new within the connection, at most 80 ASCII letters/digits or `_ - : .`; reconnect after 1,000 requests.
-- `providerId` must reference an enabled local provider. `model` must be one of that provider's configured `models` (legacy providers without a list use their single configured model). Websites cannot override the endpoint, authorization, or protocol.
-- `messages` contains 1–40 user/assistant messages and ends with a user message. User-provided system messages and fabricated tool-call history are unsupported; the bridge constructs tool turns only from the current upstream response.
-- `context.scope` may be `knowledge_base`. In that scope `context.documents` may be empty when both `get_document` and at least one discovery tool (`search_documents` or `get_knowledge_overview`) are registered. Otherwise it contains 1–3 documents, each with at most 256 sources. Without registered tools each document requires at least one source, preserving the original text-only contract. With tools, `sources: []` is allowed so the initial request can carry just document metadata. Source IDs are unique across the initial request, at most 100 ASCII letters/digits or `_ - : .`.
-- Serialized context plus message text is limited to 100,000 Unicode characters; the note UI uses a smaller 24,000-character context budget and bounded recent history. `maxOutputTokens` is 1–8192, default 2048. These are bounds, not claims of model-specific token counting.
-- Document content and tool results are untrusted reference material. The adapter asks the model to read necessary documents using registered tools and cite only supplied `[sourceId]` values. The website resolves only IDs from its initial context or locally executed tool results to verified site links.
-- Optional `effort` is `default`, `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`, or `ultra`; omission means `default`. Each model advertises its configured `efforts` and optional `defaultEffort`; the server rejects undeclared explicit values. Missing capability information means default-only for newly discovered models. Legacy single-model configurations preserve low/medium/high for compatibility. `default` omits the upstream effort parameter. Explicit values map to Responses `reasoning.effort`, Chat Completions `reasoning_effort`, or Anthropic `output_config.effort`. Declared metadata is not proof that a gateway accepts every setting; parameter rejection remains a sanitized error.
+Search may use a public, read-only site index such as Algolia. Index revisions may differ from the content snapshot; results are discovery candidates, and canonical references are validated through the pinned catalog and document content. Failures and directory-only fallback are explicit.
 
-### Knowledge-base scope
+Pi owns the loop, transcript, compression and task recovery. Bridge enforces 32 normal model requests plus one final tools-disabled synthesis, 128 tool executions, 20-minute total deadline, 60-second tool deadline and 180-second upstream wait budget. Requests for retry/compaction count toward persisted budgets. Model context/output defaults are 1,000,000/16,384 tokens, overridable per model; Pi compresses older context without deleting its original transcript. Raw upstream input is bounded to 16 MiB, cumulative response to 64 MiB and visible answer projection to 200,000 characters.
 
-The website starts global questions with `context: {"scope":"knowledge_base","documents":[]}` and registered discovery/read tools. The prompt directs the model to discover relevant documents, read their contents, compare sources across topics, and distinguish index failures or truncated results from exhaustive coverage. Optional attached documents are reference material and never restrict the tool catalog. Legacy requests with attached documents remain supported.
+## Native and private boundary
 
-`get_knowledge_overview` accepts optional `category`, `offset`, `limit`, `categoryOffset` and `categoryLimit`, returning paginated catalog references and category counts. `get_knowledge_network` now permits omitted `docId` for a global graph and uses `offset`/`nextOffset` for edges; a supplied ID retains one-hop filtering. `search_documents` accepts optional `scope: all|catalog|fulltext` (default `all`). Full-text results come through the existing site search service, with at most 200 candidates and three 480-character snippets per document; URLs must resolve through the catalog whitelist. Results include `requestedScope`, actual `scope`, and `fulltext.status` (`not_requested`, `ok`, `unavailable`, `failed`). Failed full-text queries explicitly fall back to title/path results. These tools never fetch the full raw corpus upfront or follow arbitrary model-supplied URLs.
+Desktop configuration discovery, model-list fetch and credential editing remain native-only. The three model protocols are Anthropic Messages, OpenAI Responses and Chat Completions, with arbitrary configured model IDs and compatible custom endpoints. `default` effort omits the upstream parameter; it is not `none`. Unsupported explicit settings fail rather than silently degrading.
 
-Histories are knowledge-base conversations, including legacy document histories. Navigation updates only the optional attachment, retaining active conversation and in-flight generation. Each turn carries its own optional context; recent completed turns can inform a follow-up across topics. Source IDs are stable across attachment order and section selection, using the same document/section identity as tool results.
+Rust launches its bundled Node process using private stdin/stdout JSONL. It injects enabled provider configuration and credentials, and current exact-origin grants. Neither executable arguments nor browser frames contain API keys. Pi credential environment/file discovery is disabled. Secrets enter only actual HTTP auth headers, never persistent stream options, compaction or generation checkpoints. No Node execution endpoint is exposed on another port.
 
-### Read-only function calling
-
-The website can append `tools` to `chat.start`, for example:
-
-```json
-{
-  "effort":"medium",
-  "tools":[{
-    "name":"get_document",
-    "description":"Read a section of a site document; cite returned sourceId values.",
-    "inputSchema":{
-      "type":"object",
-      "properties":{"docId":{"type":"string","minLength":1,"maxLength":512}},
-      "required":["docId"],
-      "additionalProperties":false
-    }
-  }]
-}
-```
-
-Only `get_document`, `get_toc`, `get_knowledge_network`, `get_related_documents`, `search_documents`, and `get_knowledge_overview` are allowed. Definitions must have distinct names; at most eight definitions, 2,048 description bytes and 8,192 schema bytes per tool are accepted. Schemas use a bounded local subset: `type` (object/array/string/integer/number/boolean/null), `description`, `properties`, `required`, `additionalProperties` (boolean), `items`, `enum`, `minimum`, `maximum`, `minLength`, `maxLength`, `minItems`, `maxItems`, and `default`. Nesting is limited to eight levels and each properties/required/enum list to 32 entries. References, code, remote schema retrieval and other schema keywords are unsupported. Both the bridge and website validate call arguments; arguments must be JSON objects of at most 16 KiB.
-
-After assembling streamed function arguments and validating the entire round, the bridge sends one call at a time. `callId` is generated by the bridge and is independent of the upstream's identifier:
-
-```json
-{"v":1,"type":"tool.call","requestId":"unique-id","callId":"bridge-call-uuid","seq":1,"name":"get_document","arguments":{"docId":"example"}}
-```
-
-The authenticated website dispatches only its registered read APIs against catalog-verified documents. No URLs, code, local files, bridge configuration APIs or credentials are executed/accessed by the bridge. Successful results contain `data` and optional `sources`:
-
-```json
-{"v":1,"type":"tool.result","requestId":"unique-id","callId":"bridge-call-uuid","result":{"data":{"text":"Reference content."},"sources":[{"sourceId":"D1S1","title":"Example heading","url":"/example.html#heading"}]}}
-```
-
-For a tool failure, send `isError: true` with a JSON result object describing the failure; the model may choose another permitted call or explain the unavailable context. Result JSON is limited to 64 KiB, including citation metadata, with at most 256 source records. The website uses a smaller 48-KiB budget. Results must match the current socket, request and outstanding call; unrequested, duplicate, stale and other-socket results return `tool_result_rejected` and are never forwarded. A matched malformed/oversized result ends that generation with an error.
-
-At most eight upstream rounds and 16 total tool calls are allowed per generation. Calls execute sequentially, with a 30-second result deadline per call and a three-minute deadline for the entire generation including tool waits. An eighth response requesting further tools returns `tool_limit` rather than another request. Accumulated upstream transcript is limited to 2 MiB and total received upstream bytes to 8 MiB. Cancelling, disconnecting, revoking authorization or stopping the bridge drops both the upstream and pending tool waits. Tools are not replayed on reconnect. Tool call frames and text deltas share one increasing `seq`; a tool stop reason is intermediate and never produces its own `chat.done`.
-
-The server sends monotonically increasing `seq` values per request:
-
-```json
-{"v":1,"type":"chat.delta","requestId":"unique-id","seq":1,"delta":"Answer [D1S1]"}
-{"v":1,"type":"chat.done","requestId":"unique-id","seq":2,"finishReason":"stop"}
-```
-
-Each accepted request receives one terminal `chat.done` or `chat.error` while the connection remains open. Early failures may have sequence 0. A failure is `{v:1,type:"chat.error",requestId,seq,code,message}`. Duplicate IDs or invalid/busy requests return a connection-level `error` instead of a second terminal event for the same ID.
-
-Cancel with `{v:1,type:"chat.cancel",requestId}`. It aborts the upstream operation and ends with `chat.done` / `finishReason:"cancelled"`. Cancelling an unknown or already completed request has no effect. Closing/revoking the socket cancels its upstream request. A disconnected client must not replay generation automatically: partial answers can already have incurred provider charges.
-
-The response path has bounded queues and a 512-KiB text-output cap across all rounds. Upstream connections use a 15-second connect timeout and 45-second stream-idle timeout; the complete generation, including all upstream rounds and browser tool waits, has a three-minute deadline. Downstream writes are bounded; slow or disconnected clients release their request resources.
-
-Send `{v:1,type:"ping"}` periodically (the note client uses 25 seconds); expect `{v:1,type:"pong"}`. Sockets without inbound activity for 90 seconds close. Heartbeat does not start or repeat model calls.
-
-## Upstream adapters
-
-| protocol | baseURL example | request endpoint | authentication |
-| --- | --- | --- | --- |
-| `anthropic` | `https://api.anthropic.com` or gateway prefix | append `/v1/messages`; if prefix ends in `/v1`, append `/messages` | `apiKey`: `x-api-key`; `bearer`: Authorization Bearer |
-| `responses` | `https://api.openai.com/v1` | append `/responses` | Authorization Bearer |
-| `chatCompletions` | `https://gateway.example/v1` | append `/chat/completions` | Authorization Bearer |
-
-`none` is available for explicitly configured unauthenticated providers. Remote endpoints require HTTPS; HTTP is restricted to loopback. Redirects are rejected so credentials cannot silently move to a different upstream. Endpoints are API prefixes, not complete request URLs. Streaming requires `text/event-stream`. SSE comments, CRLF, fragmented UTF-8 and fragmented JSON arguments are supported. Only visible text and validated document calls are exposed to the website. Private reasoning and upstream error bodies are never echoed to the website or logs.
-
-Responses sends `store: false`, requests `reasoning.encrypted_content` when tools are registered, and replays returned output items followed by `function_call_output` in `input`; it does not depend on `previous_response_id`. Chat Completions replays the assistant's `tool_calls` followed by messages with `role: "tool"`, and uses `max_completion_tokens` for requests with tools or explicit effort; legacy text-only requests with default effort retain `max_tokens`. Anthropic replays assistant `tool_use` blocks followed by user `tool_result` blocks, preserving thinking/redacted-thinking blocks and streamed signatures only in the transient upstream transcript. None of the upstream transcripts or tool data are persisted by bridge-core.
-
-## Compatibility and verification
-
-Localhost development success does not prove that an HTTPS website can reach this listener. Production CSP, browser versions, mixed-content rules, and local-network permission affect availability. The default `ws://127.0.0.1` transport deliberately does not install certificates, disable protections, expose a LAN listener, or add a cloud relay. The browser matrix and outstanding manual checks are in README.md. A WSS or extension transport would need its own compatibility and deployment design.
-
-Rust integration tests exercise real sockets and fake local upstreams, including full tool/result/final-answer rounds for all three protocols, explicit effort fields, opaque reasoning preservation, fragmented UTF-8 arguments, wrong-socket/request/call isolation, replay rejection, unknown tools, result size limits, round limits and cancellation/revocation during a tool wait. These tests neither read installed CLI configuration nor contact paid models. Frontend tests mock the same protocol and cover pairing, saved authorization and automatic reconnection, revocation, streaming, cancellation, document changes, and citation navigation. Desktop IPC tests also verify online/offline remembered websites and offline revocation.
+The private methods are initialize/configure/request/detach/shutdown. They are not website RPC methods. The gateway supplies connectionId, authorizationId and Origin itself. Configuration failures shut down the stale worker before automatic recovery. One worker owns one SQLite database; saved model transcript is the sole message truth. Browser storage holds only pairing information/UI preferences.

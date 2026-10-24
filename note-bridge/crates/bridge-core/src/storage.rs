@@ -405,6 +405,8 @@ mod tests {
             ModelOption::configured("fixture-model"),
             ModelOption::configured("vendor/alias"),
         ];
+        provider.models[0].context_window_tokens = Some(200_000);
+        provider.models[0].max_output_tokens = Some(32_768);
         let saved = store.save(provider.clone()).unwrap();
         let reopened = Storage::with_secrets(dir.path().into(), secrets).unwrap();
         assert_eq!(reopened.providers()[0].models, saved.models);

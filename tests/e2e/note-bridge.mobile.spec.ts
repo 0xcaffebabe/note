@@ -5,7 +5,7 @@ test('320px 手机导航可配对，收起后仍显示已连接，连接面板�
   await page.routeWebSocket('ws://127.0.0.1:19661/ws', socket => {
     socket.onMessage(raw => {
       const frame = JSON.parse(String(raw))
-      if (frame.type === 'pair') socket.send(JSON.stringify({ v: 1, type: 'auth.ok', token: 'mobile-persistent-grant-token', connectionId: 'mobile',
+      if (frame.type === 'pair') socket.send(JSON.stringify({ v: 2, type: 'auth.ok', capabilities: ['persistent_sessions', 'knowledge_tools'], token: 'mobile-persistent-grant-token', connectionId: 'mobile',
         providers: [{ id: 'mock', name: '本机模型', protocol: 'responses', model: 'mock-model' }] }))
     })
   })

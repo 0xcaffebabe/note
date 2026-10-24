@@ -31,13 +31,18 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: 26.x
+          node-version: 26.12.1
           cache: npm
-          cache-dependency-path: note-bridge/package-lock.json
+          cache-dependency-path: |
+            note-bridge/package-lock.json
+            note-bridge/agent/package-lock.json
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
       - run: npm ci
+      - run: npm run agent:install
+      - run: npm run agent:build
+      - run: npm run agent:test
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:ui
@@ -77,13 +82,18 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: 26.x
+          node-version: 26.12.1
           cache: npm
-          cache-dependency-path: note-bridge/package-lock.json
+          cache-dependency-path: |
+            note-bridge/package-lock.json
+            note-bridge/agent/package-lock.json
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
       - run: npm ci
+      - run: npm run agent:install
+      - run: npm run agent:build
+      - run: npm run agent:test
       - name: Test core on the host platform
         run: cargo test --locked -p bridge-core
       - name: Build unsigned evaluation package

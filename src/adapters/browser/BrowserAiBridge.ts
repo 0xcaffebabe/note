@@ -1,20 +1,21 @@
 import { AI_EFFORTS } from '@/core/ports/AiBridgePort'
-import type { AiBridgeEvent, AiBridgePort, AiBridgeSnapshot, AiBridgeState, AiChatInput, AiProvider, AiToolDefinition, AiToolExecutor, AiEffort } from '@/core/ports/AiBridgePort'
-import type { AiCitation, AiDocumentToolResult } from '@/core/domain/AiDocumentTools'
-import { buildAiToolCallOverview } from '@/core/service/AiToolCallOverview'
+import { AI_MAX_FRAME_BYTES, AI_MAX_QUESTION_CHARS, resolveAiModelLimits } from '@/core/domain/AiLimits'
+import type { AiBridgeEvent, AiBridgePort, AiBridgeSnapshot, AiBridgeState, AiProvider, AiEffort, AiSessionSummary, AiSessionPage, AiTurnPage, AiModelSelection, AiMessageInput, AiDocumentMetadata } from '@/core/ports/AiBridgePort'
+import { readSession, readTurn, readSessionPage, readTurnPage, readDocumentMetadata, isRecord } from './AiBridgeProtocol'
 import type { StoragePort } from '@/core/ports/StoragePort'
 import { browserStorage } from './LocalStorageAdapter'
 
 type SocketFactory = (url: string) => WebSocket
 interface SavedConnection { version: 1; port: number; token: string }
 export const AI_BRIDGE_STORAGE_KEY = 'note:ai-bridge:v1'
-interface ActiveRequest {
-  id: string
-  seq: number
-  tools: Set<string>
-  execute?: AiToolExecutor
-  calls: Map<string, AbortController>
-  seenCalls: Set<string>
+interface PendingRpc {
+  resolve: (value: unknown) => void
+  reject: (error: Error) => void
+  timer: ReturnType<typeof setTimeout>
+}
+
+export class AiBridgeRpcError extends Error {
+  constructor(readonly code: string, message: string) { super(message); this.name = 'AiBridgeRpcError' }
 }
 
 /** One socket per page; reconnect only authenticates, never replays a generation. */
@@ -31,12 +32,9 @@ export class BrowserAiBridge implements AiBridgePort {
   private paused = false
   private retryEnabled = false
   private retryAttempt = 0
-  private active?: ActiveRequest
-  private tools: AiToolDefinition[] = []
-  private executeTool?: AiToolExecutor
+  private pending = new Map<string, PendingRpc>()
   private pendingReject?: (error: Error) => void
   private pairTimer?: ReturnType<typeof setTimeout>
-  private responseTimer?: ReturnType<typeof setTimeout>
   private heartbeat?: ReturnType<typeof setInterval>
   private retryTimer?: ReturnType<typeof setTimeout>
   private awaitingPong = false
@@ -49,14 +47,6 @@ export class BrowserAiBridge implements AiBridgePort {
   snapshot(): AiBridgeSnapshot {
     return { state: this.state, providers: this.copyProviders(),
       remembered: this.remembered, port: this.port, ...(this.message ? { message: this.message } : {}) }
-  }
-
-  configureTools(definitions: AiToolDefinition[], execute: AiToolExecutor) {
-    if (definitions.length > 8 || new Set(definitions.map(tool => tool.name)).size !== definitions.length
-      || definitions.some(tool => !/^[a-z][a-z_]{0,63}$/.test(tool.name) || !tool.inputSchema)
-      || JSON.stringify(definitions).length > 16000) throw new Error('文档工具定义无效或过大')
-    this.tools = JSON.parse(JSON.stringify(definitions))
-    this.executeTool = execute
   }
 
   subscribe(listener: (event: AiBridgeEvent) => void): () => void {
@@ -179,11 +169,9 @@ export class BrowserAiBridge implements AiBridgePort {
     const wasRemembered = this.remembered
     clearTimeout(this.retryTimer)
     this.retryTimer = undefined
-    this.cancel()
     this.pendingReject?.(new Error('连接已替换'))
     this.pendingReject = undefined
     this.teardownSocket()
-    // Context preparation in an open question panel must also be invalidated.
     this.setState('disconnected')
     this.setState('connecting')
     return new Promise((resolve, reject) => {
@@ -205,11 +193,21 @@ export class BrowserAiBridge implements AiBridgePort {
       socket.onmessage = event => {
         if (!current()) return
         try {
-          if (typeof event.data !== 'string' || event.data.length > 1000000) throw new Error('invalid frame')
+          if (typeof event.data !== 'string' || event.data.length > AI_MAX_FRAME_BYTES || new TextEncoder().encode(event.data).length > AI_MAX_FRAME_BYTES) throw new Error('invalid frame')
           const frame: Record<string, unknown> = JSON.parse(event.data)
-          if (frame.v !== 1 || typeof frame.type !== 'string') throw new Error('invalid protocol')
+          if (frame.v === 1) {
+            this.retryEnabled = false
+            this.failConnection('Note Bridge 版本过旧，请升级桌面端以使用持久化知识助手')
+            return
+          }
+          if (frame.v !== 2 || typeof frame.type !== 'string') throw new Error('invalid protocol')
           if (frame.type === 'auth.ok' && this.state !== 'ready') {
             if (!this.validToken(frame.token)) throw new Error('invalid auth')
+            if (!Array.isArray(frame.capabilities) || !frame.capabilities.includes('persistent_sessions') || !frame.capabilities.includes('knowledge_tools')) {
+              this.retryEnabled = false
+              this.failConnection('Note Bridge 不支持持久化知识助手，请升级桌面端')
+              return
+            }
             const providers = this.readProviders(frame.providers)
             if (authenticating) {
               if (frame.token !== authenticating.token) throw new Error('unexpected token rotation')
@@ -253,8 +251,17 @@ export class BrowserAiBridge implements AiBridgePort {
             }
             this.retryEnabled = false
             this.failConnection(typeof frame.message === 'string' ? frame.message : '桥接请求失败')
-          } else if (frame.type === 'tool.call') this.receiveTool(frame)
-          else if (frame.type.startsWith('chat.')) this.receiveChat(frame)
+          } else if (frame.type === 'response') this.receiveResponse(frame)
+          else if (frame.type === 'sessions.changed') {
+            if (this.state !== 'ready') throw new Error('unauthenticated update')
+            this.emit({ type: 'sessions.changed' })
+          } else if (frame.type === 'session.updated') {
+            if (this.state !== 'ready') throw new Error('unauthenticated update')
+            const session = readSession(frame.session)
+            if (frame.sessionId !== session.id || frame.revision !== session.revision) throw new Error('invalid revision')
+            const turn = frame.turn === undefined ? undefined : readTurn(frame.turn)
+            this.emit({ type: 'session.updated', sessionId: session.id, revision: session.revision, session, ...(turn ? { turn } : {}) })
+          } else throw new Error('unknown frame')
         } catch {
           this.retryEnabled = false
           this.failConnection('桥接返回了无效数据，请检查客户端版本')
@@ -295,89 +302,91 @@ export class BrowserAiBridge implements AiBridgePort {
           modelIds.add(model.id)
           const supported = efforts(model.efforts)
           const defaultEffort = model.defaultEffort as AiEffort
+          if ((model.contextWindowTokens !== undefined && typeof model.contextWindowTokens !== 'number')
+            || (model.maxOutputTokens !== undefined && typeof model.maxOutputTokens !== 'number')) throw new Error('invalid model limits')
+          const limits = resolveAiModelLimits({ contextWindowTokens: model.contextWindowTokens as number | undefined, maxOutputTokens: model.maxOutputTokens as number | undefined })
           return { id: model.id, name: model.name, efforts: supported,
-            ...(supported.includes(defaultEffort) ? { defaultEffort } : {}) }
+            ...(supported.includes(defaultEffort) ? { defaultEffort } : {}),
+            ...(model.contextWindowTokens !== undefined ? { contextWindowTokens: limits.contextWindowTokens } : {}),
+            ...(model.maxOutputTokens !== undefined ? { maxOutputTokens: limits.maxOutputTokens } : {}) }
         })
       }
       return result
     })
   }
 
-  private receiveChat(frame: Record<string, unknown>) {
-    const active = this.active
-    if (!active || frame.requestId !== active.id) return
-    if (!Number.isInteger(frame.seq) || (frame.seq as number) <= active.seq) return
-    active.seq = frame.seq as number
-    if (frame.type === 'chat.delta' && typeof frame.delta === 'string') {
-      this.armResponseTimeout()
-      this.emit({ type: 'delta', requestId: active.id, delta: frame.delta })
-    } else if (frame.type === 'chat.done' && (frame.finishReason === 'stop' || frame.finishReason === 'cancelled')) {
-      this.abortTools(active)
-      this.active = undefined
-      clearTimeout(this.responseTimer)
-      this.emit({ type: 'done', requestId: active.id, cancelled: frame.finishReason === 'cancelled' })
-    } else if (frame.type === 'chat.error' && typeof frame.message === 'string') {
-      this.abortTools(active)
-      this.active = undefined
-      clearTimeout(this.responseTimer)
-      this.emit({ type: 'error', requestId: active.id, message: frame.message })
-    } else throw new Error('invalid stream')
+  private rpc(method: string, params: Record<string, unknown>): Promise<unknown> {
+    if (this.state !== 'ready') return Promise.reject(new Error('请先连接 Note Bridge'))
+    if (this.pending.size >= 32) return Promise.reject(new Error('请求过多，请稍后重试'))
+    const id = this.requestId()
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pending.delete(id)
+        reject(new AiBridgeRpcError('timeout', '请求确认超时；请重新载入聊天确认结果，问题不会自动重发'))
+      }, 30000)
+      this.pending.set(id, { resolve, reject, timer })
+      try { this.send({ type: 'request', id, method, params }) }
+      catch (cause) { clearTimeout(timer); this.pending.delete(id); reject(cause) }
+    })
   }
 
-  start(input: AiChatInput): string {
-    if (this.state !== 'ready' || !this.credential) throw new Error('请先连接 Note Bridge')
-    if (this.active) throw new Error('请等待当前回答结束或停止生成')
-    if (JSON.stringify({ messages: input.messages, context: input.context }).length > 100000) throw new Error('问题与上下文过长，请减少内容')
-    const requested = input.tools ?? this.tools
-    if (requested.some(tool => !this.tools.some(known => known.name === tool.name))) throw new Error('请求包含未注册的文档工具')
-    const tools = this.tools.filter(tool => requested.some(selected => selected.name === tool.name))
-    if (input.effort && !AI_EFFORTS.includes(input.effort)) throw new Error('思考强度无效')
-    const requestId = this.requestId()
-    this.active = { id: requestId, seq: -1, tools: new Set(tools.map(tool => tool.name)), execute: this.executeTool, calls: new Map(), seenCalls: new Set() }
-    try { this.send({ ...input, tools, type: 'chat.start', requestId }) }
-    catch (error) { this.active = undefined; throw error }
-    this.armResponseTimeout()
-    return requestId
+  private receiveResponse(frame: Record<string, unknown>) {
+    if (this.state !== 'ready' || typeof frame.id !== 'string') throw new Error('invalid response')
+    const pending = this.pending.get(frame.id)
+    if (!pending) return // A timed-out request may still have been committed; never resubmit it.
+    if (frame.error !== undefined && (!isRecord(frame.error) || typeof frame.error.code !== 'string' || typeof frame.error.message !== 'string')) throw new Error('invalid error')
+    this.pending.delete(frame.id)
+    clearTimeout(pending.timer)
+    if (isRecord(frame.error)) pending.reject(new AiBridgeRpcError(String(frame.error.code), String(frame.error.message)))
+    else if ('result' in frame) pending.resolve(frame.result)
+    else pending.reject(new Error('桥接响应缺少结果'))
   }
 
-  private armResponseTimeout() {
-    clearTimeout(this.responseTimer)
-    this.responseTimer = setTimeout(() => {
-      const id = this.active?.id
-      if (this.active) this.abortTools(this.active)
-      this.active = undefined
-      if (id && this.socket?.readyState === 1) {
-        try { this.send({ type: 'chat.cancel', requestId: id }) }
-        catch { this.failConnection('连接已断开，稍后自动重连') }
-      }
-      if (id) this.emit({ type: 'error', requestId: id, message: '回答超时，已停止；你可以手动重新发送' })
-    }, 90000)
+  async listSessions(cursor?: string): Promise<AiSessionPage> {
+    return readSessionPage(await this.rpc('sessions.list', { ...(cursor ? { cursor } : {}) }))
   }
-
-  cancel(requestId?: string) {
-    const active = this.active
-    if (requestId !== undefined && requestId !== active?.id) return
-    if (active) this.abortTools(active)
-    this.active = undefined
-    clearTimeout(this.responseTimer)
-    if (active && this.socket?.readyState === 1) {
-      try { this.send({ type: 'chat.cancel', requestId: active.id }) }
-      catch { this.failConnection('连接已断开，稍后自动重连') }
-    }
-    if (active) this.emit({ type: 'done', requestId: active.id, cancelled: true })
+  async createSession(model: AiModelSelection): Promise<AiSessionSummary> {
+    return readSession(await this.rpc('sessions.create', { ...model }))
+  }
+  async getSession(sessionId: string, cursor?: string): Promise<AiTurnPage> {
+    const page = readTurnPage(await this.rpc('sessions.get', { sessionId, ...(cursor ? { cursor } : {}) }))
+    if (page.session.id !== sessionId) throw new Error('桥接返回了其他聊天的记录')
+    return page
+  }
+  async archiveSession(sessionId: string): Promise<void> { await this.ok('sessions.archive', { sessionId }) }
+  async subscribeSession(sessionId: string): Promise<void> { await this.ok('session.subscribe', { sessionId }) }
+  async unsubscribeSession(sessionId: string): Promise<void> {
+    if (this.state === 'ready') await this.ok('session.unsubscribe', { sessionId })
+  }
+  async cancelRun(sessionId: string): Promise<void> { await this.ok('runs.cancel', { sessionId }) }
+  async document(docId: string): Promise<AiDocumentMetadata> {
+    const result = readDocumentMetadata(await this.rpc('knowledge.document', { docId }))
+    if (result.docId !== docId) throw new Error('桥接返回了其他文档的目录')
+    return result
+  }
+  async sendMessage(input: AiMessageInput): Promise<{ runId: string; turnId: string }> {
+    if (!input.text.trim() || input.text.length > AI_MAX_QUESTION_CHARS) throw new Error('问题须为 1 至 20,000 个字符')
+    if ((input.attachments?.length || 0) > 3) throw new Error('最多附加 3 篇文档')
+    const result = await this.rpc('messages.send', { ...input })
+    if (!isRecord(result) || typeof result.runId !== 'string' || typeof result.turnId !== 'string') throw new Error('桥接返回了无效的提交结果')
+    return { runId: result.runId, turnId: result.turnId }
+  }
+  private async ok(method: string, params: Record<string, unknown>): Promise<void> {
+    const result = await this.rpc(method, params)
+    if (!isRecord(result) || result.ok !== true) throw new Error('桥接未确认操作成功')
   }
 
   private send(frame: Record<string, unknown>) {
     if (this.socket?.readyState !== 1) throw new Error('连接已断开')
-    this.socket.send(JSON.stringify({ v: 1, ...frame }))
+    const encoded = JSON.stringify({ v: 2, ...frame })
+    if (new TextEncoder().encode(encoded).length > AI_MAX_FRAME_BYTES) throw new Error('桥接请求过大，请减少上下文')
+    this.socket.send(encoded)
   }
 
   private failConnection(message: string) {
-    const id = this.active?.id
     this.pendingReject?.(new Error(message))
     this.pendingReject = undefined
     this.teardownSocket()
-    if (id) this.emit({ type: 'error', requestId: id, message })
     this.setState('disconnected', message)
     if (!this.paused && this.retryEnabled && this.credential && !this.retryTimer) {
       const delay = Math.min(30000, 1000 * 2 ** Math.min(this.retryAttempt++, 5))
@@ -387,78 +396,17 @@ export class BrowserAiBridge implements AiBridgePort {
 
   private teardownSocket() {
     clearTimeout(this.pairTimer)
-    clearTimeout(this.responseTimer)
     clearInterval(this.heartbeat)
     const socket = this.socket
     this.socket = undefined
-    if (this.active) this.abortTools(this.active)
-    this.active = undefined
+    for (const pending of this.pending.values()) {
+      clearTimeout(pending.timer)
+      pending.reject(new AiBridgeRpcError('disconnected', '连接已断开；Note Bridge 中的回答会继续，重连后将重新载入'))
+    }
+    this.pending.clear()
     this.providers = []
     this.awaitingPong = false
     if (socket) { socket.onclose = null; socket.onerror = null; socket.onmessage = null; socket.onopen = null; socket.close() }
-  }
-
-  private abortTools(active: ActiveRequest) {
-    for (const controller of active.calls.values()) controller.abort()
-    active.calls.clear()
-  }
-
-  private receiveTool(frame: Record<string, unknown>) {
-    const active = this.active
-    if (!active || frame.requestId !== active.id) return
-    if (!Number.isInteger(frame.seq) || (frame.seq as number) <= active.seq) return
-    if (typeof frame.callId !== 'string' || !/^[A-Za-z0-9_.:-]{1,128}$/.test(frame.callId) || typeof frame.name !== 'string'
-      || !frame.arguments || typeof frame.arguments !== 'object' || Array.isArray(frame.arguments)) throw new Error('invalid tool call')
-    active.seq = frame.seq as number
-    if (active.seenCalls.has(frame.callId)) return
-    if (active.seenCalls.size >= 16) throw new Error('too many tool calls')
-    active.seenCalls.add(frame.callId)
-    this.armResponseTimeout()
-    void this.runTool(active, frame.callId, frame.name, frame.arguments)
-  }
-
-  private async runTool(active: ActiveRequest, callId: string, name: string, args: unknown) {
-    const controller = new AbortController()
-    active.calls.set(callId, controller)
-    const current = () => this.active === active && this.state === 'ready' && active.calls.get(callId) === controller
-    let timedOut = false
-    const timer = setTimeout(() => { timedOut = true; controller.abort() }, 25000)
-    let abortListener: (() => void) | undefined
-    const overview = buildAiToolCallOverview(name, args)
-    this.emit({ type: 'tool', requestId: active.id, callId, name, status: 'running', ...(overview ? { overview } : {}) })
-    try {
-      if (!active.tools.has(name) || !active.execute) throw new Error('未注册的文档工具')
-      const aborted = new Promise<never>((_, reject) => {
-        abortListener = () => reject(new Error(timedOut ? '文档读取超时，请缩小读取范围后重试' : '文档读取已取消'))
-        controller.signal.addEventListener('abort', abortListener, { once: true })
-      })
-      const result = await Promise.race([active.execute(name, args, controller.signal), aborted])
-      if (!current() || controller.signal.aborted) return
-      if (!result || typeof result !== 'object' || !('data' in result)) throw new Error('文档工具返回格式无效')
-      if (new TextEncoder().encode(JSON.stringify(result)).length > 64 * 1024) throw new Error('文档工具结果过大，请缩小读取范围')
-      const sources = (result.sources || []).filter(this.safeCitation)
-      const safeResult: AiDocumentToolResult = { data: result.data, ...(sources.length ? { sources } : {}) }
-      this.send({ type: 'tool.result', requestId: active.id, callId, result: safeResult, isError: false })
-      this.armResponseTimeout()
-      this.emit({ type: 'tool', requestId: active.id, callId, name, status: 'complete', sources, overview: buildAiToolCallOverview(name, args, safeResult) })
-    } catch (cause) {
-      if (!current()) return
-      const message = cause instanceof Error ? cause.message.slice(0, 1000) : '文档工具读取失败'
-      try {
-        this.send({ type: 'tool.result', requestId: active.id, callId, result: { data: { error: message } }, isError: true })
-        this.emit({ type: 'tool', requestId: active.id, callId, name, status: 'error', message, ...(overview ? { overview } : {}) })
-      } catch { this.failConnection('连接已断开，稍后自动重连；问题不会自动重发') }
-    } finally {
-      clearTimeout(timer)
-      if (abortListener) controller.signal.removeEventListener('abort', abortListener)
-      active.calls.delete(callId)
-    }
-  }
-
-  private safeCitation(source: AiCitation): boolean {
-    return !!source && /^D\d{1,24}S\d{1,8}$/.test(source.sourceId) && typeof source.title === 'string' && source.title.length <= 2000
-      && typeof source.url === 'string' && source.url.startsWith('/') && !source.url.startsWith('//')
-      && !/[\u0000-\u0020\u007f\\]/.test(source.url) && /^[^?#]*\.html(?:[?#]|$)/.test(source.url)
   }
 
   disconnect() {
@@ -466,7 +414,6 @@ export class BrowserAiBridge implements AiBridgePort {
     this.retryEnabled = false
     clearTimeout(this.retryTimer)
     this.retryTimer = undefined
-    this.cancel()
     this.pendingReject?.(new Error('连接已取消'))
     this.pendingReject = undefined
     this.teardownSocket()
@@ -474,7 +421,6 @@ export class BrowserAiBridge implements AiBridgePort {
   }
 
   forget() {
-    this.cancel()
     if (this.state === 'ready') {
       try { this.send({ type: 'auth.forget' }) } catch { /* Offline grants remain revocable in the desktop app. */ }
     }

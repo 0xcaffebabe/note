@@ -15,6 +15,8 @@ export interface ModelOption {
   name: string;
   efforts: Effort[];
   defaultEffort?: Effort;
+  contextWindowTokens?: number;
+  maxOutputTokens?: number;
 }
 
 export interface Provider {

@@ -349,7 +349,7 @@ dependencies = [
 
 [[package]]
 name = "bridge-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "axum",
  "dirs 6.0.0",
@@ -2275,7 +2275,7 @@ checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
 
 [[package]]
 name = "note-bridge-desktop"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bridge-core",
  "png 0.17.16",

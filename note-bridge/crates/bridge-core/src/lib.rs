@@ -1,3 +1,4 @@
+pub mod agent;
 mod authorization;
 pub mod discovery;
 pub mod model;
@@ -6,6 +7,7 @@ pub mod protocol;
 pub mod provider;
 pub mod storage;
 
+use agent::{AgentCommand, AgentProcess};
 use authorization::{Authorization, MAX_AUTHORIZATIONS};
 use axum::{
     extract::{
@@ -20,22 +22,22 @@ use axum::{
 pub use discovery::{DiscoveredProvider, DiscoveryPaths};
 use futures_util::{SinkExt, StreamExt};
 pub use model::{ModelOption, Provider, ProviderInput};
-use protocol::{ChatRequest, ClientFrame, ClientMessage, VERSION};
+use protocol::{ClientFrame, ClientMessage, VERSION};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{
-    collections::{HashMap, HashSet, VecDeque},
+    collections::{HashMap, VecDeque},
     fs,
     io::Write,
     path::PathBuf,
-    sync::Arc,
-    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
+    sync::{Arc, RwLock},
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 use storage::{SecretStore, Storage};
 use tokio::{
     net::TcpListener,
-    sync::{mpsc, oneshot, watch, Mutex, Semaphore},
+    sync::{mpsc, watch, Mutex, Semaphore},
     task::JoinHandle,
 };
 use tokio_util::sync::CancellationToken;
@@ -63,6 +65,9 @@ struct Inner {
     state: Mutex<Runtime>,
     slots: Arc<Semaphore>,
     provider_changes: watch::Sender<u64>,
+    agent: Mutex<Option<Arc<AgentProcess>>>,
+    agent_command: RwLock<AgentCommand>,
+    lifecycle: Mutex<()>,
 }
 
 struct Runtime {
@@ -70,6 +75,7 @@ struct Runtime {
     settings: Settings,
     shutdown: CancellationToken,
     server: Option<JoinHandle<()>>,
+    supervisor: Option<JoinHandle<()>>,
     pairing: Option<PairingWindow>,
     pair_attempts: u8,
     sessions: HashMap<String, Session>,
@@ -135,17 +141,6 @@ struct Session {
     info: ConnectionInfo,
     authorization_id: String,
     cancel: CancellationToken,
-}
-
-type PendingTools = Arc<
-    Mutex<HashMap<String, oneshot::Sender<Result<provider::ToolResult, provider::UpstreamError>>>>,
->;
-
-struct ActiveChat {
-    id: String,
-    cancel: CancellationToken,
-    task: JoinHandle<()>,
-    tools: PendingTools,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -218,11 +213,15 @@ impl Bridge {
                 client: provider::client()?,
                 slots: Arc::new(Semaphore::new(8)),
                 provider_changes: watch::channel(0).0,
+                agent: Mutex::new(None),
+                agent_command: RwLock::new(AgentCommand::default()),
+                lifecycle: Mutex::new(()),
                 state: Mutex::new(Runtime {
                     running: false,
                     settings,
                     shutdown: CancellationToken::new(),
                     server: None,
+                    supervisor: None,
                     pairing: None,
                     pair_attempts: 0,
                     sessions: HashMap::new(),
@@ -267,7 +266,89 @@ impl Bridge {
         }
     }
 
+    /// Desktop injects packaged paths; tests/dev may inject isolated worker fixtures.
+    pub fn set_agent_command(&self, command: AgentCommand) {
+        *self
+            .inner
+            .agent_command
+            .write()
+            .expect("agent command lock") = command;
+    }
+
+    async fn agent_configuration(&self) -> Result<Value, String> {
+        let authorizations = {
+            let state = self.inner.state.lock().await;
+            state
+                .authorizations
+                .iter()
+                .filter(|grant| state.settings.allowed_origins.contains(&grant.origin))
+                .map(|grant| json!({"id":grant.id,"origin":grant.origin}))
+                .collect::<Vec<_>>()
+        };
+        let bridge = self.clone();
+        let providers = tokio::task::spawn_blocking(move || {
+            bridge
+                .inner
+                .storage
+                .providers()
+                .into_iter()
+                .filter(|p| p.enabled)
+                .map(|provider| {
+                    let secret = bridge
+                        .inner
+                        .storage
+                        .provider_with_secret(&provider.id)
+                        .ok()
+                        .and_then(|(_, secret)| secret);
+                    let mut value = serde_json::to_value(provider).expect("provider serialization");
+                    if let Some(secret) = secret {
+                        value["secret"] = json!(secret);
+                    }
+                    value
+                })
+                .collect::<Vec<_>>()
+        })
+        .await
+        .map_err(|_| "无法读取模型配置")?;
+        Ok(json!({"providers":providers,"authorizations":authorizations}))
+    }
+
+    async fn ensure_agent(&self) -> Result<Arc<AgentProcess>, String> {
+        let mut slot = self.inner.agent.lock().await;
+        if let Some(worker) = slot.as_ref().filter(|worker| worker.alive()) {
+            return Ok(worker.clone());
+        }
+        if let Some(previous) = slot.take() {
+            previous.shutdown().await;
+        }
+        let mut config = self.agent_configuration().await?;
+        config["dataDir"] = json!(self.inner.data_dir.join("agent"));
+        let command = self
+            .inner
+            .agent_command
+            .read()
+            .expect("agent command lock")
+            .clone();
+        let worker = AgentProcess::spawn(&command, config).await?;
+        *slot = Some(worker.clone());
+        Ok(worker)
+    }
+
+    async fn sync_agent_configuration(&self) -> Result<(), String> {
+        let slot = self.inner.agent.lock().await;
+        if let Some(worker) = slot.as_ref().filter(|worker| worker.alive()) {
+            let config = self.agent_configuration().await?;
+            if worker.call("configure", config).await.is_err() {
+                // A failed revocation/config update must never leave a stale worker making requests.
+                worker.shutdown().await;
+                return Err("Agent 配置同步失败，服务将自动恢复".into());
+            }
+        }
+        Ok(())
+    }
+
     pub async fn start(&self, port: u16, origins: Vec<String>) -> Result<(), String> {
+        let _lifecycle = self.inner.lifecycle.lock().await;
         validate_settings(port, &origins)?;
         let mut state = self.inner.state.lock().await;
         if state.running {
@@ -282,6 +363,9 @@ impl Bridge {
         };
         save_settings(&self.inner.data_dir, &settings)?;
         state.settings = settings;
+        drop(state);
+        self.ensure_agent().await?;
+        let mut state = self.inner.state.lock().await;
         state.shutdown = CancellationToken::new();
         let shutdown = state.shutdown.clone();
         state.running = true;
@@ -293,12 +377,26 @@ impl Bridge {
                 .with_graceful_shutdown(shutdown.cancelled_owned())
                 .await;
         }));
+        let bridge = self.clone();
+        let shutdown = state.shutdown.clone();
+        state.supervisor = Some(tokio::spawn(async move {
+            let mut delay = 2;
+            loop {
+                tokio::select! { _ = shutdown.cancelled() => break, _ = tokio::time::sleep(Duration::from_secs(delay)) => {} }
+                if bridge.ensure_agent().await.is_err() {
+                    delay = (delay * 2).min(30);
+                } else {
+                    delay = 2;
+                }
+            }
+        }));
         drop(state);
-        self.log("info", "本机服务已启动", None).await;
+        self.log("info", "本机服务与 Agent 已启动", None).await;
         Ok(())
     }
 
     pub async fn stop(&self) {
+        let _lifecycle = self.inner.lifecycle.lock().await;
         let mut state = self.inner.state.lock().await;
         state.running = false;
         state.shutdown.cancel();
@@ -308,7 +406,12 @@ impl Bridge {
         }
         state.sessions.clear();
         let server = state.server.take();
+        let supervisor = state.supervisor.take();
         drop(state);
+        if let Some(task) = supervisor {
+            task.abort();
+            let _ = task.await;
+        }
         if let Some(mut task) = server {
             if tokio::time::timeout(Duration::from_secs(3), &mut task)
                 .await
@@ -316,8 +419,12 @@ impl Bridge {
             {
                 task.abort();
             }
-            self.log("info", "本机服务已停止", None).await;
         }
+        if let Some(worker) = self.inner.agent.lock().await.take() {
+            worker.shutdown().await;
+        }
+        self.log("info", "本机服务已停止，Agent 状态已保存", None)
+            .await;
     }
 
     pub async fn open_pairing(&self) -> Result<PairingWindow, String> {
@@ -344,6 +451,7 @@ impl Bridge {
             .clone();
         self.revoke_locked(&mut state, &authorization_id)?;
         drop(state);
+        self.sync_agent_configuration().await?;
         self.log("info", "已撤销网站授权", None).await;
         Ok(())
     }
@@ -352,6 +460,7 @@ impl Bridge {
         let mut state = self.inner.state.lock().await;
         self.revoke_locked(&mut state, &id)?;
         drop(state);
+        self.sync_agent_configuration().await?;
         self.log("info", "已撤销网站授权", None).await;
         Ok(())
     }
@@ -426,6 +535,7 @@ impl Bridge {
         self.inner
             .provider_changes
             .send_modify(|revision| *revision = revision.wrapping_add(1));
+        self.sync_agent_configuration().await?;
         self.log("info", "模型配置已保存", None).await;
         Ok(provider)
     }
@@ -438,6 +548,7 @@ impl Bridge {
         self.inner
             .provider_changes
             .send_modify(|revision| *revision = revision.wrapping_add(1));
+        self.sync_agent_configuration().await?;
         self.log("info", "模型配置已删除", None).await;
         Ok(())
     }
@@ -456,19 +567,7 @@ impl Bridge {
 
     pub async fn test_provider(&self, id: String) -> Result<(), String> {
         let (provider, secret) = self.provider_snapshot(id).await?;
-        let chat: ChatRequest = serde_json::from_value(json!({"requestId":"connection-test", "providerId":provider.id, "model":provider.model, "messages":[{"role":"user", "content":"Reply OK."}], "context":{"documents":[]}, "maxOutputTokens":16})).map_err(|_| "连接测试初始化失败")?;
-        let (tx, mut rx) = mpsc::channel(16);
-        let drain = tokio::spawn(async move { while rx.recv().await.is_some() {} });
-        let result = provider::generate(
-            &self.inner.client,
-            &provider,
-            secret.as_deref(),
-            &chat,
-            tx,
-            CancellationToken::new(),
-        )
-        .await;
-        let _ = drain.await;
+        let result = provider::probe(&self.inner.client, &provider, secret.as_deref()).await;
         self.log(
             if result.is_ok() { "info" } else { "warn" },
             if result.is_ok() {
@@ -476,10 +575,10 @@ impl Bridge {
             } else {
                 "模型连接测试失败"
             },
-            Some((&chat, 0)),
+            None,
         )
         .await;
-        result.map_err(|error| error.message.to_string())
+        result
     }
 
     async fn provider_snapshot(&self, id: String) -> Result<(Provider, Option<String>), String> {
@@ -508,15 +607,15 @@ impl Bridge {
             .join("\n")
     }
 
-    async fn log(&self, level: &str, message: &str, chat: Option<(&ChatRequest, u64)>) {
+    async fn log(&self, level: &str, message: &str, chat: Option<(&str, &str, &str, u64)>) {
         let entry = LogEntry {
             timestamp: now(),
             level: level.into(),
             message: message.into(),
-            request_id: chat.map(|(c, _)| c.request_id.clone()),
-            provider_id: chat.map(|(c, _)| c.provider_id.clone()),
-            model: chat.map(|(c, _)| c.model.clone()),
-            duration_ms: chat.map(|(_, ms)| ms),
+            request_id: chat.map(|(id, _, _, _)| id.into()),
+            provider_id: chat.map(|(_, provider, _, _)| provider.into()),
+            model: chat.map(|(_, _, model, _)| model.into()),
+            duration_ms: chat.map(|(_, _, _, ms)| ms),
         };
         let mut state = self.inner.state.lock().await;
         state.logs.push_back(entry.clone());
@@ -777,18 +876,48 @@ async fn socket_session(
     else {
         return;
     };
-    let mut provider_changes = bridge.inner.provider_changes.subscribe();
-    let providers = bridge.browser_providers();
-    let sent = tokio::select! {
+    let prepared = tokio::select! {
+        biased;
+        _ = connection_cancel.cancelled() => { remove_session(&bridge, &info.id).await; return; },
+        prepared = bridge.ensure_agent() => prepared,
+    };
+    let worker = match prepared {
+        Ok(worker) => worker,
+        Err(_) => {
+            send(
+                &mut socket,
+                error("agent_unavailable", "Agent 服务正在恢复，请稍后重连"),
+            )
+            .await;
+            remove_session(&bridge, &info.id).await;
+            return;
+        }
+    };
+    let configured = tokio::select! {
         biased;
         _ = connection_cancel.cancelled() => false,
-        sent = send(&mut socket, json!({"v":VERSION,"type":"auth.ok","token":token,"providers":providers,"connectionId":info.id,"authorizationId":authorization_id})) => sent,
+        result = bridge.sync_agent_configuration() => result.is_ok(),
     };
-    if !sent {
+    if !configured {
         remove_session(&bridge, &info.id).await;
         return;
     }
-    bridge.log("info", "网站已连接", None).await;
+    let mut events = worker.subscribe();
+    // Subscribe before this check, so an exit cannot be lost between preparation and the event loop.
+    if !worker.alive() {
+        remove_session(&bridge, &info.id).await;
+        return;
+    }
+    let mut provider_changes = bridge.inner.provider_changes.subscribe();
+    let authenticated = tokio::select! {
+        biased;
+        _ = connection_cancel.cancelled() => false,
+        sent = send(&mut socket, json!({"v":VERSION,"type":"auth.ok","token":token,"providers":bridge.browser_providers(),"connectionId":info.id,"authorizationId":authorization_id,"capabilities":["persistent_sessions","knowledge_tools"]})) => sent,
+    };
+    if !authenticated {
+        remove_session(&bridge, &info.id).await;
+        return;
+    }
     let (mut sink, mut source) = socket.split();
     let (tx, mut rx) = mpsc::channel::<Value>(64);
     let writer_cancel = connection_cancel.clone();
@@ -805,17 +934,34 @@ async fn socket_session(
         }
         let _ = tokio::time::timeout(Duration::from_secs(1), sink.close()).await;
     });
-    let mut active: Option<ActiveChat> = None;
-    let mut used_ids = HashSet::new();
+    let mut calls = tokio::task::JoinSet::new();
     loop {
         let incoming = tokio::select! {
             biased;
             _ = connection_cancel.cancelled() => break,
+            event = events.recv() => {
+                match event {
+                    Ok(frame) if frame["event"] == "worker.offline" => break,
+                    Ok(frame) if frame["connectionId"] == info.id => {
+                        let kind = frame["event"].as_str().unwrap_or("");
+                        if matches!(kind, "session.updated" | "sessions.changed") {
+                            let mut payload = frame["data"].as_object().cloned().unwrap_or_default();
+                            payload.insert("v".into(), json!(VERSION)); payload.insert("type".into(), json!(kind));
+                            if !matches!(tokio::time::timeout(Duration::from_secs(5), tx.send(Value::Object(payload))).await, Ok(Ok(()))) { break; }
+                        }
+                    }
+                    Ok(_) => {},
+                    // Lost increments require a fresh snapshot, obtained by reconnecting.
+                    Err(_) => break,
+                }
+                continue;
+            },
             changed = provider_changes.changed() => {
                 if changed.is_err() { break; }
                 let _ = tx.send(json!({"v":VERSION,"type":"providers.updated","providers":bridge.browser_providers()})).await;
                 continue;
             },
+            Some(_) = calls.join_next(), if !calls.is_empty() => { continue; },
             result = tokio::time::timeout(Duration::from_secs(90), source.next()) => match result { Ok(Some(Ok(message))) => message, _ => break },
         };
         if matches!(incoming, Message::Close(_)) {
@@ -828,7 +974,10 @@ async fn socket_session(
             Ok(frame) if frame.v == VERSION => frame,
             _ => {
                 let _ = tx
-                    .send(error("invalid_message", "消息格式或协议版本无效"))
+                    .send(error(
+                        "invalid_message",
+                        "消息格式或协议版本无效，请更新站点与 bridge",
+                    ))
                     .await;
                 continue;
             }
@@ -841,96 +990,31 @@ async fn socket_session(
                     .is_err()
                 {
                     let _ = tx
-                        .send(error("forget_failed", "无法撤销网站授权，请在桌面端重试"))
+                        .send(error("forget_failed", "授权更新失败，请在桌面端检查服务"))
                         .await;
-                } else {
-                    break;
                 }
+                break;
             }
             ClientMessage::Ping => {
                 let _ = tx.send(json!({"v":VERSION,"type":"pong"})).await;
             }
-            ClientMessage::ChatCancel { request_id } => {
-                if let Some(chat) = &active {
-                    if chat.id == request_id {
-                        chat.cancel.cancel();
-                    }
-                }
-            }
-            ClientMessage::ToolResult {
-                request_id,
-                call_id,
-                result,
-                is_error,
-            } => {
-                let reply = if let Some(chat) = &active {
-                    if chat.id == request_id
-                        && !chat.cancel.is_cancelled()
-                        && !chat.task.is_finished()
-                    {
-                        chat.tools.lock().await.remove(&call_id)
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                };
-                if let Some(reply) = reply {
-                    let checked = provider::validate_tool_result(&result, is_error)
-                        .map(|()| provider::ToolResult { result, is_error });
-                    let _ = reply.send(checked);
-                } else {
-                    let _ = tx
-                        .send(error(
-                            "tool_result_rejected",
-                            "工具结果不属于当前连接的待处理调用",
-                        ))
-                        .await;
-                }
-            }
-            ClientMessage::ChatStart(chat) => {
-                if active
-                    .as_ref()
-                    .is_some_and(|chat| chat.cancel.is_cancelled())
-                {
-                    if let Some(mut previous) = active.take() {
-                        if tokio::time::timeout(Duration::from_secs(2), &mut previous.task)
-                            .await
-                            .is_err()
-                        {
-                            previous.task.abort();
-                        }
-                    }
-                }
-                let invalid = chat.validate().err();
-                let busy = active.as_ref().is_some_and(|chat| !chat.task.is_finished());
-                let duplicate = used_ids.contains(&chat.request_id);
-                if invalid.is_some() || busy || duplicate || used_ids.len() >= 1000 {
-                    // Invalid ID is never reflected; valid duplicate IDs do not emit a second terminal event.
-                    let message = invalid.unwrap_or(if busy {
-                        "已有回答正在生成"
-                    } else {
-                        "请求 ID 已使用或会话请求数达到上限"
-                    });
-                    let _ = tx.send(error("request_rejected", message)).await;
+            ClientMessage::Request { id, method, params } => {
+                if !protocol::valid_request(&id, &method, &params) || calls.len() >= 16 {
+                    let _ = tx.send(json!({"v":VERSION,"type":"response","id":id.chars().take(80).collect::<String>(),"error":{"code":"request_rejected","message":"请求无效或过多"}})).await;
                     continue;
                 }
-                used_ids.insert(chat.request_id.clone());
-                let cancel = connection_cancel.child_token();
-                let job_bridge = bridge.clone();
-                let job_tx = tx.clone();
-                let job_cancel = cancel.clone();
-                let id = chat.request_id.clone();
-                let tools = Arc::new(Mutex::new(HashMap::new()));
-                let job_tools = tools.clone();
-                let task = tokio::spawn(async move {
-                    run_chat(job_bridge, chat, job_tx, job_cancel, job_tools).await;
-                });
-                active = Some(ActiveChat {
-                    id,
-                    cancel,
-                    task,
-                    tools,
+                let worker = worker.clone();
+                let output = tx.clone();
+                let request = json!({"connectionId":info.id,"authorizationId":authorization_id,"origin":origin,"request":{"id":id,"method":method,"params":params}});
+                calls.spawn(async move {
+                    let result = worker.call("request", request).await;
+                    let frame = match result {
+                        Ok(result) => {
+                            json!({"v":VERSION,"type":"response","id":id,"result":result})
+                        }
+                        Err(error) => json!({"v":VERSION,"type":"response","id":id,"error":error}),
+                    };
+                    let _ = tokio::time::timeout(Duration::from_secs(5), output.send(frame)).await;
                 });
             }
             _ => {
@@ -941,137 +1025,27 @@ async fn socket_session(
         }
     }
     connection_cancel.cancel();
-    if let Some(mut chat) = active {
-        chat.cancel.cancel();
-        if tokio::time::timeout(Duration::from_secs(2), &mut chat.task)
+    // Finish already-admitted RPCs before detach; neither disconnect nor unsubscribe cancels a Pi run.
+    while !calls.is_empty() {
+        if tokio::time::timeout(Duration::from_secs(2), calls.join_next())
             .await
             .is_err()
         {
-            chat.task.abort();
+            calls.abort_all();
+            break;
         }
     }
+    let _ = tokio::time::timeout(
+        Duration::from_secs(3),
+        worker.call("detach", json!({"connectionId":info.id})),
+    )
+    .await;
     drop(tx);
     let _ = writer.await;
     remove_session(&bridge, &info.id).await;
 }
-
 async fn remove_session(bridge: &Bridge, id: &str) {
-    // Every socket has its own identity; disconnecting never revokes its grant.
     bridge.inner.state.lock().await.sessions.remove(id);
-}
-
-async fn run_chat(
-    bridge: Bridge,
-    chat: ChatRequest,
-    output: mpsc::Sender<Value>,
-    cancel: CancellationToken,
-    pending_tools: PendingTools,
-) {
-    let started = Instant::now();
-    let mut seq = 0u64;
-    let (provider, secret) = match bridge.provider_snapshot(chat.provider_id.clone()).await {
-        Ok(snapshot)
-            if snapshot.0.enabled && snapshot.0.accepts_model(&chat.model, chat.effort) =>
-        {
-            snapshot
-        }
-        Ok(_) => {
-            let _ = output.send(json!({"v":VERSION,"type":"chat.error","requestId":chat.request_id,"seq":seq,"code":"provider_unavailable","message":"模型或思考强度不可用，请选择桌面端已配置的模型"})).await;
-            return;
-        }
-        Err(_) => {
-            let _ = output.send(json!({"v":VERSION,"type":"chat.error","requestId":chat.request_id,"seq":seq,"code":"missing_credential","message":"无法读取模型凭据，请检查桌面端配置"})).await;
-            return;
-        }
-    };
-    bridge.log("info", "开始生成回答", Some((&chat, 0))).await;
-    let (event_tx, mut event_rx) = mpsc::channel(32);
-    let mut generation = Box::pin(provider::generate(
-        &bridge.inner.client,
-        &provider,
-        secret.as_deref(),
-        &chat,
-        event_tx,
-        cancel.clone(),
-    ));
-    let result = loop {
-        tokio::select! {
-            biased;
-            _ = cancel.cancelled() => break Ok(()),
-            event = event_rx.recv() => {
-                if let Some(event) = event {
-                    seq += 1;
-                    let frame = generation_frame(event, &chat.request_id, seq, &pending_tools).await;
-                    tokio::select! {
-                        _ = cancel.cancelled() => break Ok(()),
-                        result = tokio::time::timeout(Duration::from_secs(5), output.send(frame)) => if !matches!(result, Ok(Ok(()))) { cancel.cancel(); break Ok(()); },
-                    }
-                } else { break generation.as_mut().await; }
-            }
-            result = &mut generation => {
-                // Generation may finish before its bounded output queue has drained.
-                while let Ok(event) = event_rx.try_recv() {
-                    seq += 1;
-                    let frame = generation_frame(event, &chat.request_id, seq, &pending_tools).await;
-                    if !matches!(tokio::time::timeout(Duration::from_secs(5), output.send(frame)).await, Ok(Ok(()))) { break; }
-                }
-                break result;
-            }
-        }
-    };
-    // Drop the response stream immediately when cancelled, before waiting for
-    // downstream writes or log persistence.
-    drop(generation);
-    pending_tools.lock().await.clear();
-    seq += 1;
-    let terminal = match result {
-        _ if cancel.is_cancelled() => {
-            json!({"v":VERSION,"type":"chat.done","requestId":chat.request_id,"seq":seq,"finishReason":"cancelled"})
-        }
-        Ok(()) => {
-            json!({"v":VERSION,"type":"chat.done","requestId":chat.request_id,"seq":seq,"finishReason":"stop"})
-        }
-        Err(ref error) => {
-            json!({"v":VERSION,"type":"chat.error","requestId":chat.request_id,"seq":seq,"code":error.code,"message":error.message})
-        }
-    };
-    let status = if cancel.is_cancelled() {
-        "回答生成已取消"
-    } else if result.is_ok() {
-        "回答生成完成"
-    } else {
-        "回答生成失败"
-    };
-    bridge
-        .log(
-            if result.is_ok() { "info" } else { "warn" },
-            status,
-            Some((&chat, started.elapsed().as_millis() as u64)),
-        )
-        .await;
-    let _ = tokio::time::timeout(Duration::from_secs(5), output.send(terminal)).await;
-}
-
-async fn generation_frame(
-    event: provider::GenerationEvent,
-    request_id: &str,
-    seq: u64,
-    pending_tools: &PendingTools,
-) -> Value {
-    match event {
-        provider::GenerationEvent::Text(delta) => {
-            json!({"v":VERSION,"type":"chat.delta","requestId":request_id,"seq":seq,"delta":delta})
-        }
-        provider::GenerationEvent::ToolCall {
-            call_id,
-            name,
-            arguments,
-            reply,
-        } => {
-            pending_tools.lock().await.insert(call_id.clone(), reply);
-            json!({"v":VERSION,"type":"tool.call","requestId":request_id,"seq":seq,"callId":call_id,"name":name,"arguments":arguments})
-        }
-    }
 }
 
 #[cfg(test)]
@@ -1090,6 +1064,10 @@ mod pairing_tests {
         let dir = tempfile::tempdir().unwrap();
         let bridge =
             Bridge::with_secrets(dir.path().into(), Arc::new(MemorySecretStore::new())).unwrap();
+        bridge.set_agent_command(AgentCommand {
+            entry: PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/worker.mjs"),
+            ..AgentCommand::default()
+        });
         let reservation = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let port = reservation.local_addr().unwrap().port();
         drop(reservation);
@@ -1117,7 +1095,7 @@ mod pairing_tests {
         let (mut socket, _) = connect_async(request).await.unwrap();
         socket
             .send(ClientSocketMessage::Text(
-                json!({"v":1,"type":"pair","code":pairing.code})
+                json!({"v":VERSION,"type":"pair","code":pairing.code})
                     .to_string()
                     .into(),
             ))

@@ -1,7 +1,10 @@
 //! Read-only model discovery using the selected provider's endpoint and credentials.
 //! A catalog is only a set of candidates: native UI selection and save make models available.
 use crate::{
-    model::{AuthKind, ModelOption, Protocol, Provider, MAX_MODELS_PER_PROVIDER},
+    model::{
+        AuthKind, ModelOption, Protocol, Provider, MAX_CONTEXT_WINDOW_TOKENS,
+        MAX_MODELS_PER_PROVIDER, MAX_OUTPUT_TOKENS, MIN_CONTEXT_WINDOW_TOKENS, MIN_OUTPUT_TOKENS,
+    },
     protocol::Effort,
 };
 use futures_util::StreamExt;
@@ -194,6 +197,24 @@ fn parse_model_page(value: &Value) -> Result<Vec<ModelOption>, String> {
             .or_else(|| row.get("defaultEffort"))
             .and_then(|value| serde_json::from_value::<Effort>(value.clone()).ok())
             .filter(|effort| model.supports_effort(*effort));
+        model.context_window_tokens = row
+            .get("context_window")
+            .or_else(|| row.get("context_length"))
+            .or_else(|| row.get("contextWindowTokens"))
+            .and_then(Value::as_u64)
+            .and_then(|value| u32::try_from(value).ok())
+            .filter(|value| {
+                (MIN_CONTEXT_WINDOW_TOKENS..=MAX_CONTEXT_WINDOW_TOKENS).contains(value)
+            });
+        model.max_output_tokens = row
+            .get("max_output_tokens")
+            .or_else(|| row.get("maxOutputTokens"))
+            .and_then(Value::as_u64)
+            .and_then(|value| u32::try_from(value).ok())
+            .filter(|value| {
+                (MIN_OUTPUT_TOKENS..=MAX_OUTPUT_TOKENS).contains(value)
+                    && *value <= model.effective_context_window_tokens() / 2
+            });
         if model.validate().is_ok() {
             seen.insert(id.to_string());
             models.push(model);
@@ -225,6 +246,31 @@ mod tests {
             vec![Effort::Default, Effort::Low, Effort::Xhigh]
         );
         assert_eq!(catalog[0].default_effort, Some(Effort::Xhigh));
+    }
+
+    #[test]
+    fn imports_known_budget_metadata_without_inventing_or_trusting_invalid_limits() {
+        let models = parse_models(&json!({"models":[
+            {"slug":"large","context_window":1_000_000,"max_output_tokens":32_768},
+            {"id":"small","context_length":16_384},
+            {"id":"inconsistent","context_window":32_768,"max_output_tokens":65_536},
+            {"id":"invalid","context_window":-1,"max_output_tokens":1.5},
+            {"id":"oversize","context_window":4_294_967_296_u64,"max_output_tokens":100_000},
+            {"id":"unknown"}
+        ]}))
+        .unwrap();
+        assert_eq!(models.len(), 6);
+        assert_eq!(models[0].context_window_tokens, Some(1_000_000));
+        assert_eq!(models[0].max_output_tokens, Some(32_768));
+        assert_eq!(models[1].context_window_tokens, Some(16_384));
+        assert_eq!(models[1].max_output_tokens, None);
+        assert_eq!(models[1].effective_max_output_tokens(), 8_192);
+        assert_eq!(models[2].context_window_tokens, Some(32_768));
+        assert_eq!(models[2].max_output_tokens, None);
+        for model in &models[3..] {
+            assert_eq!(model.context_window_tokens, None);
+            assert_eq!(model.max_output_tokens, None);
+        }
     }
 
     #[test]

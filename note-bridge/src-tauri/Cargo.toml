@@ -1,6 +1,6 @@
 [package]
 name = "note-bridge-desktop"
-version = "0.1.0"
+version = "0.2.0"
 description = "Local model bridge for note"
 edition = "2021"
 license.workspace = true

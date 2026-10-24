@@ -237,6 +237,19 @@
       delete model.defaultEffort;
   }
 
+  function modelBudgetError(model: ModelOption): string {
+    const context = model.contextWindowTokens ?? 1_000_000;
+    const output =
+      model.maxOutputTokens ?? Math.min(16_384, Math.floor(context / 2));
+    if (!Number.isInteger(context) || context < 16_384 || context > 2_000_000)
+      return '上下文预算须为 16,384 至 2,000,000 tokens 的整数';
+    if (!Number.isInteger(output) || output < 256 || output > 65_536)
+      return '输出预算须为 256 至 65,536 tokens 的整数';
+    if (output > Math.floor(context / 2))
+      return '输出预算不能超过上下文预算的一半，请调低输出或调高上下文预算';
+    return '';
+  }
+
   async function fetchModels() {
     if (!canFetchModels) return;
     const identity = modelIdentity;
@@ -333,6 +346,10 @@
             efforts: ['default'],
           });
         if (models.length > 200) throw new Error('每个服务最多配置 200 个模型');
+        for (const [index, model] of models.entries()) {
+          const budgetError = modelBudgetError(model);
+          if (budgetError) throw new Error(`模型 ${index + 1}：${budgetError}`);
+        }
         await invoke('save_provider', {
           input: {
             ...draft,
@@ -424,7 +441,7 @@
         >
       </div>
       <p>凭据保存在本机。<br />网站通过配对调用模型。</p>
-      <span class="version">note-bridge 0.1.0</span>
+      <span class="version">note-bridge 0.2.0</span>
     </div>
   </aside>
 
@@ -1021,6 +1038,46 @@
                     /></label
                   >
                 </div>
+                <div class="two-column form-columns">
+                  <label
+                    >上下文预算（tokens）<input
+                      aria-label={`模型 ${index + 1} 上下文预算（tokens）`}
+                      type="number"
+                      bind:value={model.contextWindowTokens}
+                      min="16384"
+                      max="2000000"
+                      step="1"
+                      placeholder="1000000"
+                    /></label
+                  >
+                  <label
+                    >输出预算（tokens）<input
+                      aria-label={`模型 ${index + 1} 输出预算（tokens）`}
+                      type="number"
+                      bind:value={model.maxOutputTokens}
+                      min="256"
+                      max="65536"
+                      step="1"
+                      placeholder={String(
+                        Math.min(
+                          16_384,
+                          Math.floor(
+                            (model.contextWindowTokens ?? 1_000_000) / 2,
+                          ),
+                        ),
+                      )}
+                    /></label
+                  >
+                </div>
+                <p class="tip model-budget-hint">
+                  按当前服务的模型能力配置。留空采用 1,000,000 tokens
+                  上下文、16,384 tokens 输出；较小上下文的默认输出不超过其一半。
+                </p>
+                {#if modelBudgetError(model)}
+                  <p class="tip danger-text" role="alert">
+                    {modelBudgetError(model)}
+                  </p>
+                {/if}
                 <details class="model-efforts">
                   <summary
                     >支持的思考强度 · {model.efforts

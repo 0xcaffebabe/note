@@ -52,50 +52,7 @@ export class DocRenderService {
 
   // 取文档时一次性把正文末尾"关联内容(自动生成)"章节抽取为 relatedLinks 并从 content 剥离
   public extractRelatedContent(file: DocFileInfo): void {
-    if (file.relatedLinks !== undefined) {
-      return
-    }
-    file.relatedLinks = []
-    const content = file.content
-    if (!content || !/关联内容/.test(content)) {
-      return
-    }
-    const lines = content.split('\n')
-    const startIdx = lines.findIndex(l => /^#{2,3}\s*关联内容/.test(l))
-    if (startIdx === -1) {
-      return
-    }
-    const level = (lines[startIdx].match(/^(#+)/) as RegExpMatchArray)[1].length
-    let endIdx = lines.length
-    for (let i = startIdx + 1; i < lines.length; i++) {
-      const hm = lines[i].match(/^(#{1,6})\s/)
-      if (hm && hm[1].length <= level) {
-        endIdx = i
-        break
-      }
-    }
-    const linkRe = /^-\s*\[([^\]]+)\]\(([^)]+)\)\s*(.*)$/
-    for (let i = startIdx + 1; i < endIdx; i++) {
-      const m = lines[i].match(linkRe)
-      if (!m) {
-        continue
-      }
-      try {
-        const { id } = DocUtils.resloveDocUrl(m[2].trim())
-        file.relatedLinks.push({
-          href: DocUtils.docId2HtmlPath(id),
-          path: m[1].trim(),
-          desc: m[3].trim(),
-        })
-      } catch {
-        // 跳过无法解析的链接
-      }
-    }
-    lines.splice(startIdx, endIdx - startIdx)
-    while (lines.length && lines[lines.length - 1].trim() === '') {
-      lines.pop()
-    }
-    file.content = lines.join('\n')
+    extractRelatedContent(file)
   }
 
   public renderMdWithStructed(file: DocFileInfo): DocSegement[] {
@@ -198,4 +155,31 @@ export class DocRenderService {
     }
     return result
   }
+}
+
+/** Shared by the reader and site-owned AI data publishing; keeps section numbering aligned. */
+export function extractRelatedContent(file: DocFileInfo): void {
+  if (file.relatedLinks !== undefined) return
+  file.relatedLinks = []
+  if (!file.content || !/关联内容/.test(file.content)) return
+  const lines = file.content.split('\n')
+  const start = lines.findIndex(line => /^#{2,3}\s*关联内容/.test(line))
+  if (start === -1) return
+  const level = lines[start].match(/^(#+)/)![1].length
+  let end = lines.length
+  for (let i = start + 1; i < lines.length; i++) {
+    const heading = lines[i].match(/^(#{1,6})\s/)
+    if (heading && heading[1].length <= level) { end = i; break }
+  }
+  for (const line of lines.slice(start + 1, end)) {
+    const link = line.match(/^-\s*\[([^\]]+)\]\(([^)]+)\)\s*(.*)$/)
+    if (!link) continue
+    try {
+      const { id } = DocUtils.resloveDocUrl(link[2].trim())
+      file.relatedLinks.push({ href: DocUtils.docId2HtmlPath(id), path: link[1].trim(), desc: link[3].trim() })
+    } catch { /* An invalid reference cannot affect the document body. */ }
+  }
+  lines.splice(start, end - start)
+  while (lines.length && lines[lines.length - 1].trim() === '') lines.pop()
+  file.content = lines.join('\n')
 }

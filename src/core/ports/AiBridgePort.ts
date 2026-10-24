@@ -1,15 +1,15 @@
-import type { AiCitation, AiDocumentToolDefinition, AiDocumentToolResult, AiToolCallOverview } from '../domain/AiDocumentTools'
+import type { AiCitation, AiToolCallOverview } from '../domain/AiDocumentTools'
 
 export const AI_EFFORTS = ['default', 'none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max', 'ultra'] as const
 export type AiEffort = typeof AI_EFFORTS[number]
-export type AiToolDefinition = AiDocumentToolDefinition
-export type AiToolExecutor = (name: string, argumentsValue: unknown, signal: AbortSignal) => Promise<AiDocumentToolResult>
 
 export interface AiModel {
   id: string
   name: string
   efforts: AiEffort[]
   defaultEffort?: AiEffort
+  contextWindowTokens?: number
+  maxOutputTokens?: number
 }
 
 export interface AiProvider {
@@ -19,41 +19,6 @@ export interface AiProvider {
   model: string
   efforts?: AiEffort[]
   models?: AiModel[]
-}
-
-export interface AiSource {
-  sourceId: string
-  headingId: string
-  title: string
-  text: string
-}
-
-export interface AiContextDocument {
-  docId: string
-  title: string
-  url: string
-  contentHash: string
-  metadata: unknown
-  headings: { id: string; title: string }[]
-  relatedLinks: { url: string; title: string }[]
-  sources: AiSource[]
-  truncated: boolean
-}
-
-export interface AiContext {
-  /** Whole-library questions can start without any attached document. */
-  scope?: 'knowledge_base'
-  documents: AiContextDocument[]
-}
-
-export interface AiChatInput {
-  providerId: string
-  model: string
-  messages: { role: 'user' | 'assistant'; content: string }[]
-  context: AiContext
-  maxOutputTokens?: number
-  effort?: AiEffort
-  tools?: AiToolDefinition[]
 }
 
 export type AiBridgeState = 'disconnected' | 'connecting' | 'ready'
@@ -66,23 +31,72 @@ export interface AiBridgeSnapshot {
   message?: string
 }
 
+export interface AiSessionSummary {
+  id: string
+  title: string
+  providerId: string
+  model: string
+  effort: AiEffort
+  createdAt: number
+  updatedAt: number
+  status: 'idle' | 'running' | 'error'
+  revision: number
+}
+export interface AiToolCallRecord {
+  callId: string
+  name: string
+  status: 'running' | 'complete' | 'error'
+  message?: string
+  overview?: AiToolCallOverview
+}
+export interface AiSessionTurn {
+  id: string
+  question: string
+  answer: string
+  status: 'running' | 'complete' | 'cancelled' | 'error'
+  sources: AiCitation[]
+  toolCalls: AiToolCallRecord[]
+  error?: string
+  contextNotice?: string
+  createdAt: number
+}
+export interface AiSessionPage { sessions: AiSessionSummary[]; nextCursor?: string }
+export interface AiTurnPage { session: AiSessionSummary; turns: AiSessionTurn[]; nextCursor?: string }
+export interface AiDocumentMetadata {
+  docId: string
+  title: string
+  url: string
+  contentHash: string
+  headings: { id: string; title: string }[]
+}
+export interface AiModelSelection { providerId: string; model: string; effort?: AiEffort }
+export interface AiMessageInput extends AiModelSelection {
+  sessionId: string
+  clientRequestId: string
+  text: string
+  attachments?: { docId: string; headingIds?: string[]; contentHash?: string }[]
+}
 export type AiBridgeEvent =
   | { type: 'state'; state: AiBridgeState; message?: string }
   | { type: 'providers' }
-  | { type: 'delta'; requestId: string; delta: string }
-  | { type: 'done'; requestId: string; cancelled: boolean }
-  | { type: 'error'; requestId: string; message: string }
-  | { type: 'tool'; requestId: string; callId: string; name: string; status: 'running' | 'complete' | 'error'; message?: string; sources?: AiCitation[]; overview?: AiToolCallOverview }
+  | { type: 'sessions.changed' }
+  | { type: 'session.updated'; sessionId: string; revision: number; session: AiSessionSummary; turn?: AiSessionTurn }
 
-/** Shared website connection. Only the origin-bound bridge grant is persisted, never an AI API key. */
+/** The browser displays committed projections; agent execution and all chat data belong to Note Bridge. */
 export interface AiBridgePort {
-  configureTools(definitions: AiToolDefinition[], execute: AiToolExecutor): void
   initialize(): void
   snapshot(): AiBridgeSnapshot
   pair(code: string, port?: number): Promise<AiProvider[]>
   reconnect(): Promise<AiProvider[]>
-  start(input: AiChatInput): string
-  cancel(requestId?: string): void
+  listSessions(cursor?: string): Promise<AiSessionPage>
+  createSession(model: AiModelSelection): Promise<AiSessionSummary>
+  getSession(sessionId: string, cursor?: string): Promise<AiTurnPage>
+  archiveSession(sessionId: string): Promise<void>
+  subscribeSession(sessionId: string): Promise<void>
+  unsubscribeSession(sessionId: string): Promise<void>
+  sendMessage(input: AiMessageInput): Promise<{ runId: string; turnId: string }>
+  cancelRun(sessionId: string): Promise<void>
+  document(docId: string): Promise<AiDocumentMetadata>
   disconnect(): void
   forget(): void
   subscribe(listener: (event: AiBridgeEvent) => void): () => void

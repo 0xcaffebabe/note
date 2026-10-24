@@ -88,6 +88,8 @@ async function desktopFixture(
                 id: 'custom/deep-model',
                 name: '自定义推理模型',
                 efforts: ['default', 'high', 'xhigh'],
+                contextWindowTokens: 1_000_000,
+                maxOutputTokens: 32_768,
               },
               { id: 'embedding-model', name: '向量模型', efforts: ['default'] },
             ];
@@ -269,6 +271,8 @@ test('model catalog can fetch selected custom models, keep overrides and save ac
   await dialog
     .getByLabel('模型 1 显示名称', { exact: true })
     .fill('我的默认模型');
+  await dialog.getByLabel('模型 1 上下文预算（tokens）').fill('200000');
+  await dialog.getByLabel('模型 1 输出预算（tokens）').fill('32768');
   await dialog.getByRole('button', { name: '从 API 获取模型' }).click();
   await dialog.getByRole('checkbox', { name: /自定义推理模型/ }).check();
   await dialog
@@ -276,6 +280,12 @@ test('model catalog can fetch selected custom models, keep overrides and save ac
     .click();
   await expect(dialog.getByLabel('模型 2 ID', { exact: true })).toHaveValue(
     'custom/deep-model',
+  );
+  await expect(dialog.getByLabel('模型 2 上下文预算（tokens）')).toHaveValue(
+    '1000000',
+  );
+  await expect(dialog.getByLabel('模型 2 输出预算（tokens）')).toHaveValue(
+    '32768',
   );
   await expect(
     dialog.getByLabel('模型 1 显示名称', { exact: true }),
@@ -307,12 +317,10 @@ test('model catalog can fetch selected custom models, keep overrides and save ac
     dialog.getByRole('button', { name: /添加所选模型/ }),
   ).toHaveCount(0);
   await dialog.getByLabel('API 基础地址').fill('https://api.example.test/v1');
-  await test
-    .info()
-    .attach('note-bridge-multiple-models', {
-      body: await page.screenshot({ fullPage: true }),
-      contentType: 'image/png',
-    });
+  await test.info().attach('note-bridge-multiple-models', {
+    body: await page.screenshot({ fullPage: true }),
+    contentType: 'image/png',
+  });
   await dialog.getByRole('button', { name: '保存服务' }).click();
   await expect(dialog).not.toBeVisible();
   const input = await page.evaluate(
@@ -334,11 +342,15 @@ test('model catalog can fetch selected custom models, keep overrides and save ac
         id: 'fixture-model',
         name: '我的默认模型',
         efforts: ['default', 'low', 'medium', 'high'],
+        contextWindowTokens: 200_000,
+        maxOutputTokens: 32_768,
       },
       {
         id: 'custom/deep-model',
         name: '自定义推理模型',
         efforts: ['default', 'high', 'xhigh'],
+        contextWindowTokens: 1_000_000,
+        maxOutputTokens: 32_768,
       },
       {
         id: 'gateway/private-model',
@@ -390,4 +402,51 @@ test('model fetch failure preserves editable custom models', async ({
     ],
   });
   expect(JSON.stringify(input)).not.toContain('fixture-model');
+});
+
+test('model budgets validate small windows and cleared fields retain adaptive defaults', async ({
+  page,
+}) => {
+  await desktopFixture(page);
+  await page.getByRole('button', { name: '模型服务' }).click();
+  await page.getByRole('button', { name: '编辑', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  const context = dialog.getByLabel('模型 1 上下文预算（tokens）');
+  const output = dialog.getByLabel('模型 1 输出预算（tokens）');
+  await expect(context).toHaveAttribute('placeholder', '1000000');
+  await expect(output).toHaveAttribute('placeholder', '16384');
+  const screenshot = test.info().outputPath('model-context-budget.png');
+  await dialog.locator('.model-row').first().screenshot({ path: screenshot });
+  await test.info().attach('model-context-budget', { path: screenshot, contentType: 'image/png' });
+  await context.fill('16384');
+  await expect(output).toHaveAttribute('placeholder', '8192');
+  await output.fill('16384');
+  await expect(dialog.getByRole('alert')).toContainText(
+    '不能超过上下文预算的一半',
+  );
+  await dialog.getByRole('button', { name: '保存服务' }).click();
+  expect(
+    await page.evaluate(() =>
+      (
+        window as unknown as { __testCalls: { command: string }[] }
+      ).__testCalls.some((call) => call.command === 'save_provider'),
+    ),
+  ).toBe(false);
+  await output.fill('');
+  await dialog.getByRole('button', { name: '保存服务' }).click();
+  await expect(dialog).not.toBeVisible();
+  const models = await page.evaluate(
+    () =>
+      (
+        window as unknown as {
+          __testCalls: {
+            command: string;
+            args: { input?: { models: Record<string, unknown>[] } };
+          }[];
+        }
+      ).__testCalls.find((call) => call.command === 'save_provider')?.args.input
+        ?.models,
+  );
+  expect(models?.[0].contextWindowTokens).toBe(16_384);
+  expect(models?.[0].maxOutputTokens ?? undefined).toBeUndefined();
 });

@@ -21,6 +21,12 @@ pub enum AuthKind {
 
 pub const MAX_MODELS_PER_PROVIDER: usize = 200;
 pub const MAX_MODELS_TOTAL: usize = 400;
+pub const DEFAULT_CONTEXT_WINDOW_TOKENS: u32 = 1_000_000;
+pub const DEFAULT_MAX_OUTPUT_TOKENS: u32 = 16_384;
+pub const MIN_CONTEXT_WINDOW_TOKENS: u32 = 16_384;
+pub const MAX_CONTEXT_WINDOW_TOKENS: u32 = 2_000_000;
+pub const MIN_OUTPUT_TOKENS: u32 = 256;
+pub const MAX_OUTPUT_TOKENS: u32 = 65_536;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -31,6 +37,10 @@ pub struct ModelOption {
     pub efforts: Vec<Effort>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub default_effort: Option<Effort>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context_window_tokens: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_output_tokens: Option<u32>,
 }
 
 impl ModelOption {
@@ -47,10 +57,34 @@ impl ModelOption {
             id,
             efforts: vec![Effort::Default],
             default_effort: None,
+            context_window_tokens: None,
+            max_output_tokens: None,
         }
     }
 
+    pub fn effective_context_window_tokens(&self) -> u32 {
+        self.context_window_tokens
+            .unwrap_or(DEFAULT_CONTEXT_WINDOW_TOKENS)
+    }
+
+    pub fn effective_max_output_tokens(&self) -> u32 {
+        self.max_output_tokens.unwrap_or_else(|| {
+            DEFAULT_MAX_OUTPUT_TOKENS.min(self.effective_context_window_tokens() / 2)
+        })
+    }
+
     pub fn validate(&self) -> Result<(), String> {
+        let context = self.effective_context_window_tokens();
+        let output = self.effective_max_output_tokens();
+        if !(MIN_CONTEXT_WINDOW_TOKENS..=MAX_CONTEXT_WINDOW_TOKENS).contains(&context) {
+            return Err("模型上下文预算须为 16,384 至 2,000,000 tokens".into());
+        }
+        if !(MIN_OUTPUT_TOKENS..=MAX_OUTPUT_TOKENS).contains(&output) {
+            return Err("模型输出预算须为 256 至 65,536 tokens".into());
+        }
+        if output > context / 2 {
+            return Err("模型输出预算不能超过上下文预算的一半；请同时调整两项预算".into());
+        }
         for (value, limit) in [(&self.id, 256), (&self.name, 120)] {
             if value.trim().is_empty()
                 || value.trim() != value
@@ -270,6 +304,52 @@ fn validate_fields(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn legacy_models_use_default_budgets_and_optional_budgets_roundtrip() {
+        let mut model: ModelOption =
+            serde_json::from_str(r#"{"id":"fixture","name":"Fixture","efforts":["default"]}"#)
+                .unwrap();
+        assert_eq!(model.effective_context_window_tokens(), 1_000_000);
+        assert_eq!(model.effective_max_output_tokens(), 16_384);
+        assert!(model.validate().is_ok());
+        assert!(serde_json::to_value(&model)
+            .unwrap()
+            .get("contextWindowTokens")
+            .is_none());
+        model.context_window_tokens = Some(200_000);
+        model.max_output_tokens = Some(32_768);
+        assert!(model.validate().is_ok());
+        let saved = serde_json::to_value(&model).unwrap();
+        assert_eq!(saved["contextWindowTokens"], 200_000);
+        assert_eq!(saved["maxOutputTokens"], 32_768);
+        assert_eq!(serde_json::from_value::<ModelOption>(saved).unwrap(), model);
+    }
+
+    #[test]
+    fn validates_budget_ranges_and_reserves_context_for_input() {
+        let mut model = ModelOption::configured("fixture");
+        for context in [0, 16_383, 2_000_001, u32::MAX] {
+            model.context_window_tokens = Some(context);
+            assert!(model.validate().is_err());
+        }
+        model.context_window_tokens = Some(1_000_000);
+        for output in [0, 255, 65_537, u32::MAX] {
+            model.max_output_tokens = Some(output);
+            assert!(model.validate().is_err());
+        }
+        for (context, output) in [(16_384, 256), (16_384, 8_192), (2_000_000, 65_536)] {
+            model.context_window_tokens = Some(context);
+            model.max_output_tokens = Some(output);
+            assert!(model.validate().is_ok());
+        }
+        model.context_window_tokens = Some(16_384);
+        model.max_output_tokens = Some(8_193);
+        assert!(model.validate().unwrap_err().contains("一半"));
+        model.max_output_tokens = None;
+        assert_eq!(model.effective_max_output_tokens(), 8_192);
+        assert!(model.validate().is_ok());
+    }
 
     #[test]
     fn allows_https_and_loopback_http_only() {

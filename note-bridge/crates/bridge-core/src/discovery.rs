@@ -1232,7 +1232,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         fs::write(dir.path().join("models.json"), serde_json::json!({"models":[
             {"slug":"vendor/fast", "display_name":"Fast model", "visibility":"list", "supported_in_api":true,
-             "supported_reasoning_levels":[{"effort":"low"},{"effort":"xhigh"},{"effort":"unknown"}],"default_reasoning_level":"xhigh"},
+             "supported_reasoning_levels":[{"effort":"low"},{"effort":"xhigh"},{"effort":"unknown"}],"default_reasoning_level":"xhigh",
+             "context_window":400_000,"max_output_tokens":32_768},
             {"slug":"hidden", "visibility":"hide"}, {"slug":"non-api", "supported_in_api":false}
         ]}).to_string()).unwrap();
         let source = dir
@@ -1253,6 +1254,8 @@ mod tests {
         assert_eq!(first.model, "vendor/fast");
         assert_eq!(first.models.len(), 1);
         assert_eq!(first.models[0].name, "Fast model");
+        assert_eq!(first.models[0].context_window_tokens, Some(400_000));
+        assert_eq!(first.models[0].max_output_tokens, Some(32_768));
         assert_eq!(
             first.models[0].default_effort,
             Some(crate::protocol::Effort::Xhigh)

@@ -169,6 +169,20 @@ pub fn run() {
         ])
         .setup(|app| {
             let bridge = Bridge::new(app.path().app_data_dir()?).map_err(std::io::Error::other)?;
+            if !cfg!(debug_assertions) {
+                let executable = std::env::current_exe()?;
+                let binary_dir = executable
+                    .parent()
+                    .ok_or_else(|| std::io::Error::other("无法定位 Agent 运行时"))?;
+                bridge.set_agent_command(bridge_core::agent::AgentCommand {
+                    node: binary_dir.join(if cfg!(windows) {
+                        "note-agent-node.exe"
+                    } else {
+                        "note-agent-node"
+                    }),
+                    entry: app.path().resource_dir()?.join("agent/dist/index.js"),
+                });
+            }
             app.manage(bridge.clone());
             let status = MenuItem::with_id(app, "status", "服务已停止", false, None::<&str>)?;
             let show = MenuItem::with_id(app, "show", "显示 / 隐藏窗口", true, None::<&str>)?;

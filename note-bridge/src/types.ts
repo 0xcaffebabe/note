@@ -45,7 +45,13 @@ export interface Snapshot {
   allowedOrigins: string[];
   providers: Provider[];
   pairing: { code: string; expiresAt: number } | null;
-  pendingPairings: { id: string; origin: string; expiresAt: number }[];
+  authorizations: {
+    id: string;
+    origin: string;
+    createdAt: number;
+    lastConnectedAt: number;
+    connected: boolean;
+  }[];
   connections: { id: string; origin: string; connectedAt: number }[];
   logs: LogEntry[];
 }

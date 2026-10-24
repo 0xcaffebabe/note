@@ -3,20 +3,18 @@
     <p class="qa-hint">通过本机 Note Bridge 使用已配置的模型。发送时会把问题和下方选中的文档内容交给所选服务商；密钥只在桌面端管理。</p>
     <div class="qa-card">
       <p role="status">{{ statusText }}</p>
-      <form v-if="state !== 'ready'" class="qa-fields" @submit.prevent="pair">
-        <label>配对码<input v-model="code" aria-label="配对码" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="桌面端的 6 位配对码" /></label>
-        <label>本地端口<input v-model.number="port" aria-label="本地端口" type="number" min="1024" max="65535" /></label>
-        <button type="submit" :disabled="state === 'connecting' || state === 'pending'">连接 Note Bridge</button>
-      </form>
+      <div v-if="state !== 'ready'" class="qa-fields">
+        <p class="qa-hint">请通过站点导航中的 Note Bridge 入口连接本机，连接后即可提问。</p>
+        <button type="button" @click="openBridge">打开 Note Bridge 连接设置</button>
+      </div>
       <div v-else class="qa-fields">
         <label>服务商<select v-model="providerId" aria-label="服务商" :disabled="busy" @change="selectProvider">
           <option v-for="provider in providers" :key="provider.id" :value="provider.id">{{ provider.name }}</option>
         </select></label>
         <label>模型<input :value="model" aria-label="模型" readonly /></label>
-        <p class="qa-hint">模型由桌面端配置；更换模型后请重新配对。</p>
-        <button type="button" @click="disconnect">断开连接</button>
+        <p class="qa-hint">模型由桌面端配置；更换模型后可通过站点导航中的 Note Bridge 入口重新连接。</p>
       </div>
-      <p v-if="state === 'ready' && !providers.length" class="qa-hint">桌面端尚无可用服务商，请先配置模型并重新配对。</p>
+      <p v-if="state === 'ready' && !providers.length" class="qa-hint">桌面端尚无可用服务商，请先配置模型，再通过站点导航重新连接。</p>
     </div>
 
     <div class="qa-card">
@@ -66,20 +64,18 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import type { AiBridgeEvent, AiContext, AiContextDocument, AiProvider } from '@/core/ports/AiBridgePort'
+import type { AiBridgeEvent, AiContext, AiContextDocument } from '@/core/ports/AiBridgePort'
 import { AI_CONTEXT_BUDGET, aiCitationLinks } from '@/core/service/AiContextService'
 import DocUtils from '@/core/util/DocUtils'
 import { safeTextPrefix } from '@/core/util/StringUtils'
 import { useServices } from '@/platform/web/app/useServices'
+import { useAiBridgeConnection } from '@/platform/web/components/navigation/useAiBridgeConnection'
+import EventBus from '@/platform/web/components/EventBus'
 
 const props = defineProps<{ doc: string }>()
-const { aiContextService, createAiBridge } = useServices()
-const bridge = createAiBridge()
+const { aiContextService } = useServices()
+const { bridge, state, providers, statusText } = useAiBridgeConnection()
 const budget = AI_CONTEXT_BUDGET
-const state = ref('disconnected')
-const code = ref('')
-const port = ref(19661)
-const providers = ref<AiProvider[]>([])
 const providerId = ref('')
 const model = ref('')
 const document = ref<AiContextDocument>()
@@ -95,9 +91,7 @@ const turns = ref<Turn[]>([])
 let activeId = ''
 let epoch = 0
 let loadEpoch = 0
-let pairingEpoch = 0
 let disposed = false
-const statusText = computed(() => ({ disconnected: '未连接 Note Bridge', connecting: '正在连接本机…', pending: '请在桌面端确认此次配对', ready: '已连接 Note Bridge' })[state.value])
 const relatedOptions = computed(() => (document.value?.relatedLinks || [])
   .filter(link => link.url.startsWith('/') && !link.url.startsWith('//') && /\.html(?:[?#]|$)/.test(link.url))
   .map(link => ({ docId: DocUtils.htmlUrl2Id(link.url), title: DocUtils.pathLeafName(link.title) }))
@@ -106,14 +100,13 @@ const citations = (turn: Turn) => aiCitationLinks(turn.answer, turn.context)
 
 function onEvent(event: AiBridgeEvent) {
   if (event.type === 'state') {
-    state.value = event.state
-    if (event.state === 'disconnected') {
+    if (event.state !== 'ready') {
       // Invalidate context preparation as well as an active stream: reconnect never replays a question.
       epoch++
       activeId = ''
       busy.value = false
     }
-    if (event.message) error.value = event.message
+    error.value = event.message || ''
     return
   }
   if (event.requestId !== activeId) return
@@ -134,31 +127,18 @@ function onEvent(event: AiBridgeEvent) {
 const unsubscribe = bridge.subscribe(onEvent)
 
 function selectProvider() { model.value = providers.value.find(provider => provider.id === providerId.value)?.model || '' }
-
-async function pair() {
-  cancel()
-  const pairing = ++pairingEpoch
-  error.value = ''
-  try {
-    const available = await bridge.pair(code.value, port.value)
-    if (disposed || pairing !== pairingEpoch) return
-    providers.value = available
-    providerId.value = providers.value[0]?.id || ''
-    selectProvider()
-    code.value = ''
-  } catch (cause) {
-    if (!disposed && pairing === pairingEpoch) error.value = cause instanceof Error ? cause.message : '配对失败'
-  }
-}
+watch(providers, available => {
+  if (!available.some(provider => provider.id === providerId.value)) providerId.value = available[0]?.id || ''
+  selectProvider()
+}, { immediate: true })
+function openBridge() { EventBus.emit('show-note-bridge', null) }
 
 function cancel() {
   epoch++
-  bridge.cancel()
+  if (activeId) bridge.cancel(activeId)
   activeId = ''
   busy.value = false
 }
-
-function disconnect() { pairingEpoch++; cancel(); bridge.disconnect() }
 
 async function send() {
   if (busy.value || state.value !== 'ready' || !document.value || !question.value.trim()) return
@@ -206,7 +186,7 @@ watch(() => props.doc, async docId => {
   finally { if (generation === loadEpoch && !disposed) loading.value = false }
 }, { immediate: true })
 
-onBeforeUnmount(() => { disposed = true; epoch++; loadEpoch++; pairingEpoch++; unsubscribe(); bridge.disconnect() })
+onBeforeUnmount(() => { disposed = true; loadEpoch++; cancel(); unsubscribe() })
 </script>
 
 <style scoped lang="less">

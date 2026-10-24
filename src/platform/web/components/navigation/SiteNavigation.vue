@@ -18,6 +18,9 @@
           <button type="button" class="search-box dock-action" aria-label="搜索 (Ctrl+K)" @click="search()">
             <el-icon><Search /></el-icon><span>搜索</span><kbd>{{ metaKeyLabel }} K</kbd>
           </button>
+          <button type="button" class="bridge-button dock-action" :class="{ connected: bridgeState === 'ready' }" :aria-label="`Note Bridge：${bridgeStatusText}`" :title="bridgeStatusText" @click="openBridge">
+            <el-icon><Connection /></el-icon><span>Note Bridge</span><span v-if="bridgeState === 'ready'" class="bridge-label">已连接</span>
+          </button>
           <el-popover v-model:visible="menuOpen" trigger="click" role="dialog" aria-label="站点导航与工具" placement="top-end" :popper-options="popperOptions" :width="280" popper-class="site-navigation-popover" @after-enter="focusMenu" @after-leave="restoreLauncherFocus">
             <template #reference>
               <button type="button" class="more-btn dock-action" title="更多工具" aria-label="站点导航与工具" data-link-preview-control>
@@ -43,8 +46,9 @@
         </div>
       </transition>
       <div class="navigation-handle" data-link-preview-control>
-        <button ref="launcher" type="button" class="navigation-launcher dock-action" :title="(expanded ? '收起站点导航' : '展开站点导航') + '（可拖动）'" :aria-label="expanded ? '收起站点导航' : '展开站点导航'" aria-description="拖动可调整位置，更多工具中可恢复默认位置" :aria-expanded="expanded" aria-controls="site-navigation-shortcuts" @pointerdown="start" @pointermove="move" @pointerup="handlePointerUp" @pointercancel="cancelPointer" @lostpointercapture="lostCapture" @contextmenu.prevent @click="toggleNavigation">
+        <button ref="launcher" type="button" class="navigation-launcher dock-action" :class="{ 'bridge-ready': bridgeState === 'ready' }" :title="(expanded ? '收起站点导航' : '展开站点导航') + '（可拖动）'" :aria-label="expanded ? '收起站点导航' : '展开站点导航'" :aria-describedby="bridgeState === 'ready' ? 'navigation-bridge-status' : undefined" aria-description="拖动可调整位置，更多工具中可恢复默认位置" :aria-expanded="expanded" aria-controls="site-navigation-shortcuts" @pointerdown="start" @pointermove="move" @pointerup="handlePointerUp" @pointercancel="cancelPointer" @lostpointercapture="lostCapture" @contextmenu.prevent @click="toggleNavigation">
           <el-icon><ArrowRightBold v-if="expanded" /><Menu v-else /></el-icon>
+          <span v-if="bridgeState === 'ready'" id="navigation-bridge-status" class="bridge-mini-status" role="status" aria-label="Note Bridge 已连接">已连接</span>
         </button>
         <button
           v-if="linkPreviewCounts.hidden"
@@ -57,13 +61,14 @@
         >{{ linkPreviewCounts.hidden }}</button>
       </div>
     </nav>
+    <NoteBridgeConnection v-model="bridgeOpen" @closed="restoreBridgeFocus" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { Aim, ArrowRightBold, CollectionTag, FullScreen, Hide, HomeFilled, Menu, MoreFilled, Reading, RefreshLeft, Search, Share, TopRight } from '@element-plus/icons-vue';
+import { Aim, ArrowRightBold, CollectionTag, Connection, FullScreen, Hide, HomeFilled, Menu, MoreFilled, Reading, RefreshLeft, Search, Share, TopRight } from '@element-plus/icons-vue';
 import config from '@/core/config/config';
 import DocUtils from '@/core/util/DocUtils';
 import { useServices } from '@/platform/web/app/useServices';
@@ -73,10 +78,14 @@ import EventBus from '@/platform/web/components/EventBus';
 import ThemeSwitcher from '../header/ThemeSwitcher.vue';
 import { useDraggableNavigation } from './useDraggableNavigation';
 import { linkPreviewCounts } from '@/platform/web/pages/doc/LinkPreview';
+import NoteBridgeConnection from './NoteBridgeConnection.vue';
+import { useAiBridgeConnection } from './useAiBridgeConnection';
 
 defineProps<{ embedded?: boolean; withBottomBar?: boolean }>();
 const route = useRoute();
 const { docService } = useServices();
+const { bridge, state: bridgeState, statusText: bridgeStatusText } = useAiBridgeConnection();
+const bridgeOpen = ref(false);
 const recentDoc = ref(docService.getLastReadRecord());
 const recentDocPath = computed(() => DocUtils.docId2HtmlPath(recentDoc.value));
 const recentDocName = computed(() => DocUtils.docId2DisplayName(recentDoc.value));
@@ -95,6 +104,7 @@ const { positioned, dragging, hoverBlocked, layout, stacked, dockStyle, shortcut
 const popperOptions = { modifiers: [{ name: 'preventOverflow', options: { padding: 8, altAxis: true } }] };
 let collapseTimer: ReturnType<typeof setTimeout> | undefined;
 let returnFocusAfterMenu = false;
+let bridgeReturnFocus: HTMLElement | null = null;
 const siteName = config.siteName;
 const linkList = config.linkList;
 const metaKeyLabel = isMac() ? '⌘' : 'Ctrl';
@@ -109,6 +119,18 @@ function collapse() {
   cancelCollapse();
   menuOpen.value = false;
   expanded.value = false;
+}
+
+function openBridge() {
+  bridgeReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  collapse();
+  bridgeOpen.value = true;
+}
+
+function restoreBridgeFocus() {
+  const target = bridgeReturnFocus?.isConnected && bridgeReturnFocus.getClientRects().length ? bridgeReturnFocus : launcher.value;
+  target?.focus({ preventScroll: true });
+  bridgeReturnFocus = null;
 }
 
 function closeDocumentTools() {
@@ -233,7 +255,7 @@ function syncFullScreen() {
   fullscreen.value = isFullScreen();
 }
 
-watch(() => route.fullPath, () => { cancel(); collapse(); });
+watch(() => route.fullPath, () => { cancel(); collapse(); bridgeOpen.value = false; });
 watch(expanded, (visible) => {
   if (visible) recentDoc.value = docService.getLastReadRecord();
 });
@@ -247,12 +269,15 @@ watch(menuOpen, (visible) => {
   }
 });
 onMounted(() => {
+  bridge.initialize();
+  EventBus.on('show-note-bridge', openBridge);
   EventBus.on('focus-link-preview-restore', focusPreviewRestore);
   syncFullScreen();
   document.addEventListener('fullscreenchange', syncFullScreen);
   document.addEventListener('pointerdown', handleOutside);
 });
 onBeforeUnmount(() => {
+  EventBus.off('show-note-bridge', openBridge);
   EventBus.off('focus-link-preview-restore', focusPreviewRestore);
   cancelCollapse();
   document.removeEventListener('fullscreenchange', syncFullScreen);
@@ -300,6 +325,8 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   width: max-content;
+  // 入口栏选择换行布局时，拖拽锚点仍保持单个按钮的尺寸。
+  height: calc(var(--site-control-size) + var(--spacing-xs) * 2 + 2px);
   max-width: calc(100vw - var(--spacing-xl));
   padding: var(--spacing-xs);
   border: 1px solid var(--border-color);
@@ -311,6 +338,10 @@ onBeforeUnmount(() => {
 
 .navigation-handle { position: relative; flex-shrink: 0; }
 .navigation-launcher { touch-action: none; user-select: none; -webkit-touch-callout: none; }
+.navigation-launcher.bridge-ready { flex-direction: column; gap: 0; padding: var(--spacing-xs); }
+.bridge-mini-status { color: var(--success-color); font-size: var(--font-size-xs); line-height: var(--leading-tight); pointer-events: none; }
+.bridge-button.connected, .bridge-button.connected:hover:not(:disabled) { color: var(--success-color); }
+.bridge-label { font-size: var(--font-size-xs); }
 .preview-restore {
   position: absolute;
   top: calc(-1 * var(--spacing-xs));
@@ -345,6 +376,7 @@ onBeforeUnmount(() => {
 .site-dock.stacked .dock-shortcuts { .shortcut-surface(); }
 
 .dock-shortcuts, .site-nav { display: flex; align-items: center; gap: var(--spacing-xs); }
+.dock-shortcuts { flex-shrink: 0; }
 
 .dock-action {
   display: flex;
@@ -376,15 +408,15 @@ onBeforeUnmount(() => {
   .el-icon { font-size: var(--font-size-xl); }
 }
 
-.nav-item, .search-box { width: auto; min-width: var(--site-control-size); padding-inline: var(--spacing-md); }
+.nav-item, .search-box, .bridge-button { width: auto; min-width: var(--site-control-size); padding-inline: var(--spacing-md); }
 .search-box { border-left: 1px solid var(--border-color); }
 
 .dock-shortcuts-enter-active, .dock-shortcuts-leave-active { transition: opacity var(--transition-fast), transform var(--transition-fast); }
 .dock-shortcuts-enter-from, .dock-shortcuts-leave-to { opacity: 0; transform: translateX(var(--spacing-sm)); }
 
 @media (max-width: @bp-desktop) {
-  .nav-item, .search-box { width: var(--site-control-size); padding-inline: var(--spacing-sm); }
-  .nav-item span, .search-box span, .search-box kbd { display: none; }
+  .nav-item, .search-box, .bridge-button { width: var(--site-control-size); padding-inline: var(--spacing-sm); }
+  .nav-item span, .search-box span, .search-box kbd, .bridge-button span { display: none; }
   .embedded .site-dock { right: calc(var(--site-control-size) + var(--spacing-md)); }
 }
 
@@ -399,7 +431,8 @@ onBeforeUnmount(() => {
 
 @media (max-width: @bp-mobile) {
   .site-dock, .dock-shortcuts, .site-nav { gap: 0; }
-  // 六个入口在按钮上方展开，保留 320px 屏幕上的完整触控尺寸。
+  .dock-shortcuts { box-sizing: border-box; flex-wrap: wrap; max-width: calc(100vw - var(--spacing-xl)); }
+  // 七个入口在按钮上方展开，窄屏换行保留完整触控尺寸。
   .site-dock:not(.is-positioned) .dock-shortcuts {
     .shortcut-surface();
     right: 0;

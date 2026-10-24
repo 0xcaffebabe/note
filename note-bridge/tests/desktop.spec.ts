@@ -19,15 +19,30 @@ async function desktopFixture(page: Page, failSave = false) {
             enabled: true,
           },
         ],
-        pairing: null,
-        pendingPairings: [
+        pairing: null as { code: string; expiresAt: number } | null,
+        authorizations: [
           {
-            id: 'pair-test',
+            id: 'authorization-online',
             origin: 'https://notes.example.test',
-            expiresAt: Date.now() + 60000,
+            createdAt: Date.now() - 86400000,
+            lastConnectedAt: Date.now(),
+            connected: true,
+          },
+          {
+            id: 'authorization-offline',
+            origin: 'https://offline.example.test',
+            createdAt: Date.now() - 86400000,
+            lastConnectedAt: Date.now() - 3600000,
+            connected: false,
           },
         ],
-        connections: [],
+        connections: [
+          {
+            id: 'connection-test',
+            origin: 'https://notes.example.test',
+            connectedAt: Date.now(),
+          },
+        ],
         logs: [
           { timestamp: Date.now(), level: 'info', message: '本机服务已启动' },
         ],
@@ -44,8 +59,22 @@ async function desktopFixture(page: Page, failSave = false) {
         invoke: async (command: string, args: Record<string, unknown> = {}) => {
           if (command === 'get_snapshot') return structuredClone(state);
           calls.push({ command, args });
-          if (command === 'approve_pairing') state.pendingPairings = [];
-          if (command === 'stop_bridge') state.running = false;
+          if (command === 'open_pairing') {
+            state.pairing = { code: '123456', expiresAt: Date.now() + 120000 };
+            return structuredClone(state.pairing);
+          }
+          if (command === 'stop_bridge') {
+            state.running = false;
+            state.connections = [];
+            state.authorizations.forEach((authorization) => {
+              authorization.connected = false;
+            });
+          }
+          if (command === 'revoke_authorization') {
+            state.authorizations = state.authorizations.filter(
+              (authorization) => authorization.id !== args.id,
+            );
+          }
           if (command === 'save_provider' && failSave)
             throw new Error('系统凭据库暂时不可用');
           if (command === 'save_logs') return '/test/note-bridge-logs.txt';
@@ -58,7 +87,7 @@ async function desktopFixture(page: Page, failSave = false) {
   await page.goto('/');
 }
 
-test('requires an explicit approval of the full website origin', async ({
+test('generates a short-lived pairing code without a desktop approval step', async ({
   page,
 }) => {
   await desktopFixture(page);
@@ -68,25 +97,28 @@ test('requires an explicit approval of the full website origin', async ({
   await expect(
     page.getByText('ws://127.0.0.1:19661/ws', { exact: true }),
   ).toBeVisible();
-  const request = page.locator('.pending-item');
   await expect(
-    request.getByText('https://notes.example.test', { exact: true }),
-  ).toBeVisible();
+    page.getByRole('button', { name: '批准', exact: true }),
+  ).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: '确认连接请求' })).toHaveCount(
+    0,
+  );
   const calls = () =>
     page.evaluate(
       () => (window as unknown as { __testCalls: unknown[] }).__testCalls,
     );
   expect(await calls()).toEqual([]);
+  await page.getByRole('button', { name: '生成配对码', exact: true }).click();
+  await expect.poll(calls).toEqual([{ command: 'open_pairing', args: {} }]);
+  await expect(page.getByLabel('配对码 123456')).toBeVisible();
+  await expect(page.getByText(/秒后失效 · 仅用于本次配对/)).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: '生成新的配对码' }),
+  ).toBeVisible();
   await test.info().attach('note-bridge-connection', {
     body: await page.screenshot({ fullPage: true }),
     contentType: 'image/png',
   });
-  await request.getByRole('button', { name: '批准', exact: true }).click();
-  await expect.poll(calls).toContainEqual({
-    command: 'approve_pairing',
-    args: { id: 'pair-test', allow: true },
-  });
-  await expect(page.getByText('等待网站发起连接')).toBeVisible();
 });
 
 test('editing with a blank credential preserves the saved key', async ({
@@ -161,4 +193,51 @@ test('a normal browser preview cannot expose desktop controls', async ({
   await expect(page.getByRole('button', { name: '启动服务' })).toBeDisabled();
   await page.getByRole('button', { name: '模型服务' }).click();
   await expect(page.getByRole('button', { name: '添加服务' })).toBeDisabled();
+});
+
+test('remembered websites show online and offline states and can be revoked offline', async ({
+  page,
+}) => {
+  await desktopFixture(page);
+  const online = page.locator('.connection-item').filter({
+    hasText: 'https://notes.example.test',
+  });
+  const offline = page.locator('.connection-item').filter({
+    hasText: 'https://offline.example.test',
+  });
+  await expect(online.getByText('已连接', { exact: true })).toHaveClass(
+    /green/,
+  );
+  await expect(offline.getByText('离线', { exact: true })).not.toHaveClass(
+    /green/,
+  );
+  await expect(offline).toContainText('最近连接');
+  await test.info().attach('note-bridge-remembered-websites', {
+    body: await page.screenshot({ fullPage: true }),
+    contentType: 'image/png',
+  });
+  await offline.getByRole('button', { name: '撤销授权' }).click();
+  await expect(offline).toHaveCount(0);
+  await expect(online).toBeVisible();
+  await expect(page.getByRole('status')).toContainText('再次连接需要重新配对');
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { __testCalls: unknown[] }).__testCalls,
+    ),
+  ).toContainEqual({
+    command: 'revoke_authorization',
+    args: { id: 'authorization-offline' },
+  });
+});
+
+test('stopping the service retains remembered websites and renders them offline', async ({
+  page,
+}) => {
+  await desktopFixture(page);
+  await page.getByRole('button', { name: '停止服务' }).click();
+  await expect(page.getByRole('button', { name: '启动服务' })).toBeVisible();
+  const websites = page.locator('.connection-item');
+  await expect(websites).toHaveCount(2);
+  await expect(websites.getByText('离线', { exact: true })).toHaveCount(2);
+  await expect(websites.getByText('已连接', { exact: true })).toHaveCount(0);
 });

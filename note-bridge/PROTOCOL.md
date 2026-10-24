@@ -4,7 +4,7 @@ The website and desktop application implement this contract independently. No no
 
 The listener binds **127.0.0.1 only**, default port **19661**, path **/ws**. The port can be changed in the desktop application. The client must use that literal loopback address. A handshake requires an exact allowed `Origin` and `Host: 127.0.0.1:<port>`; missing or `null` origins are rejected. Allowlisting an origin does not authenticate it.
 
-All messages are UTF-8 JSON objects with `v: 1` and a `type`. Frames/messages are limited to 512 KiB. Unknown protocol versions fail authentication. At most eight sockets can remain connected (including sockets waiting for authentication). No HTTP forwarding, credential export, file access, or configuration-management operations are exposed over WebSocket.
+All messages are UTF-8 JSON objects with `v: 1` and a `type`. Frames/messages are limited to 512 KiB. Unknown protocol versions fail authentication. At most eight sockets can remain connected (including sockets waiting for authentication). No HTTP forwarding, credential export, file access, or configuration-management operations are exposed over WebSocket. An authenticated website can revoke only its own remembered authorization.
 
 ## Pairing
 
@@ -15,14 +15,35 @@ All messages are UTF-8 JSON objects with `v: 1` and a `type`. Frames/messages ar
    {"v":1,"type":"pair","code":"123456"}
    ```
 
-3. A correct code is consumed once. The website receives `pair.pending` with `pairingId`; the desktop shows the exact requesting origin. The user must approve it within one minute. Denial, expiry, or shutdown ends the pairing.
-4. Approval returns the following frame. The provider list contains only enabled providers and no endpoint, key, source file, or credential reference:
+3. A correct code is consumed once and authenticates the website immediately. No additional desktop approval is required. The website receives the following frame directly. The provider list contains only enabled providers and no endpoint, key, source file, or credential reference:
 
    ```json
-   {"v":1,"type":"auth.ok","connectionId":"uuid","token":"opaque-random-token","providers":[{"id":"uuid","name":"My model","protocol":"responses","model":"configured-model"}]}
+   {"v":1,"type":"auth.ok","connectionId":"socket-uuid","authorizationId":"authorization-uuid","token":"opaque-random-token","providers":[{"id":"uuid","name":"My model","protocol":"responses","model":"configured-model"}]}
    ```
 
-Tokens are bound to the origin and held only in memory. They are revoked when the connection ends, when the desktop revokes the connection, or when the service stops. An `auth` first frame with an active token can replace its existing connection; it rotates the token and disconnects the previous socket. The note client asks the user to pair again after disconnection and never persists tokens. Secrets must not be put in URL query parameters or local storage.
+Successful pairing creates a persistent authorization bound to the exact origin and a high-entropy opaque token. The desktop persists only the token hash and authorization metadata in its application data directory; raw tokens are never included in desktop snapshots, UI, or logs. The note website stores `{version: 1, port, token}` under `note:ai-bridge:v1` in origin-scoped `localStorage`, so a refresh or subsequent visit can authenticate again. Up to 32 remembered authorizations are retained, with no automatic expiry; explicitly revoke unused authorizations to make room for another pairing. This is a local bridge authorization, not an upstream model API key. Provider API keys remain in the operating system credential store and are never sent to the website. Tokens must not be put in URL query parameters.
+
+### Reconnection and revocation
+
+On refresh or after a lost connection, the website opens a new socket and sends this as its first frame within ten seconds:
+
+```json
+{"v":1,"type":"auth","token":"opaque-random-token"}
+```
+
+A successful authentication returns `auth.ok` with the same `authorizationId` and token, a new socket-specific `connectionId`, and the current enabled providers. The token does not rotate. Multiple tabs may authenticate using the same token concurrently; one tab reconnecting does not replace another tab's connection. The eight-socket limit still applies.
+
+Closing a socket, stopping the listener, or quitting/restarting the desktop application cancels active requests and closes sockets but retains remembered authorizations. After the listener restarts, clients can authenticate with their saved token without another pairing code, provided their exact origin is still allowed. The note client retries connection failures after 1, 2, 4, 8, 16, then 30 seconds, keeping a 30-second cap, including when the desktop service is not running yet. The website navigation displays green “已连接” only after receiving `auth.ok`; a saved token by itself does not imply a live connection. `auth_failed` clears the rejected local credential and stops retrying; a new pairing is required. The website’s “断开” action pauses the current page’s connection and retries while retaining the saved credential; refreshing the page enables automatic authentication again. Reconnection never replays a generation request.
+
+The desktop lists remembered authorizations even when all their sockets are offline. Revoking an authorization deletes the stored grant and closes every socket using it, cancelling their active requests. The old token can no longer authenticate. Desktop `revoke_connection` also revokes the entire authorization associated with that connection; `revoke_authorization` uses the persistent authorization ID and works while offline.
+
+An authenticated website can send the following frame to revoke its own authorization, including the connections from other tabs using that token:
+
+```json
+{"v":1,"type":"auth.forget"}
+```
+
+`auth.forget` does not take an authorization ID or token; the server resolves the grant from the authenticated socket. On success the connection closes after revocation, without a separate acknowledgment. If persisting the deletion fails, the server returns an `error` with code `forget_failed` and retains the grant; it can be revoked later from the desktop. The note website's “忘记连接” action clears its saved bridge token and port and, while connected, sends `auth.forget`. If the website is offline, forgetting clears only browser storage; the retained desktop authorization can be revoked in the desktop application. A new connection then requires pairing. Clearing browser data similarly removes its local token without removing the desktop grant.
 
 Authentication/connection errors use `{v:1,type:"error",code,message}`. Messages contain sanitized descriptions. Clients should end the connection on these errors. The browser API cannot reliably distinguish CSP, local-network permission, and mixed-content blocking, so the UI presents these as possible connection causes rather than guessing one.
 
@@ -80,4 +101,4 @@ Send `{v:1,type:"ping"}` periodically (the note client uses 25 seconds); expect 
 
 Localhost development success does not prove that an HTTPS website can reach this listener. Production CSP, browser versions, mixed-content rules, and local-network permission affect availability. The default `ws://127.0.0.1` transport deliberately does not install certificates, disable protections, expose a LAN listener, or add a cloud relay. The browser matrix and outstanding manual checks are in README.md. A WSS or extension transport would need its own compatibility and deployment design.
 
-Rust integration tests exercise real sockets and fake local upstreams, without reading installed CLI configuration or contacting paid models. Frontend tests mock the same protocol and cover pairing, streaming, cancellation, document changes, and citation navigation.
+Rust integration tests exercise real sockets and fake local upstreams, without reading installed CLI configuration or contacting paid models. Frontend tests mock the same protocol and cover pairing, saved authorization and automatic reconnection, revocation, streaming, cancellation, document changes, and citation navigation. Desktop IPC tests also verify online/offline remembered websites and offline revocation.

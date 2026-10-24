@@ -130,6 +130,7 @@ async fn mock_upstream(
 
 struct Harness {
     _dir: TempDir,
+    secrets: Arc<MemorySecretStore>,
     bridge: Bridge,
     port: u16,
     upstream: Upstream,
@@ -138,14 +139,15 @@ struct Harness {
 impl Harness {
     async fn new() -> Self {
         let dir = tempfile::tempdir().unwrap();
-        let bridge =
-            Bridge::with_secrets(dir.path().into(), Arc::new(MemorySecretStore::new())).unwrap();
+        let secrets = Arc::new(MemorySecretStore::new());
+        let bridge = Bridge::with_secrets(dir.path().into(), secrets.clone()).unwrap();
         let reservation = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let port = reservation.local_addr().unwrap().port();
         drop(reservation);
         bridge.start(port, vec![ORIGIN.into()]).await.unwrap();
         Self {
             _dir: dir,
+            secrets,
             bridge,
             port,
             upstream: Upstream::start().await,
@@ -179,37 +181,40 @@ impl Harness {
     }
 
     async fn connect(&self) -> Socket {
+        self.connect_origin(ORIGIN).await
+    }
+
+    async fn connect_origin(&self, origin: &str) -> Socket {
         let mut request = format!("ws://127.0.0.1:{}/ws", self.port)
             .into_client_request()
             .unwrap();
         request
             .headers_mut()
-            .insert("origin", HeaderValue::from_static(ORIGIN));
+            .insert("origin", HeaderValue::from_str(origin).unwrap());
         connect_async(request).await.unwrap().0
+    }
+
+    async fn authenticate(&self, token: &Value) -> (Socket, Value) {
+        let mut socket = self.connect().await;
+        send(&mut socket, json!({"v":1,"type":"auth","token":token})).await;
+        let reply = receive(&mut socket).await;
+        (socket, reply)
     }
 
     async fn pair(&self) -> (Socket, Value) {
         let pairing = self.bridge.open_pairing().await.unwrap();
-        let mut socket = self.connect().await;
-        send(
-            &mut socket,
-            json!({"v":1,"type":"pair","code":pairing.code}),
-        )
-        .await;
-        let pending = receive(&mut socket).await;
-        assert_eq!(pending["type"], "pair.pending");
-        let id = pending["pairingId"].as_str().unwrap().to_owned();
-        let snapshot = self.bridge.snapshot().await;
-        assert!(snapshot
-            .pending_pairings
-            .iter()
-            .any(|candidate| candidate.id == id && candidate.origin == ORIGIN));
-        self.bridge.approve_pairing(id, true).await.unwrap();
-        let auth = receive(&mut socket).await;
+        let (socket, auth) = self.pair_code(&pairing.code).await;
         assert_eq!(auth["type"], "auth.ok");
         assert!(!auth.to_string().contains(FAKE_KEY));
         assert!(!auth.to_string().contains(&self.upstream.base_url));
         (socket, auth)
+    }
+
+    async fn pair_code(&self, code: &str) -> (Socket, Value) {
+        let mut socket = self.connect().await;
+        send(&mut socket, json!({"v":1,"type":"pair","code":code})).await;
+        let response = receive(&mut socket).await;
+        (socket, response)
     }
 }
 
@@ -237,6 +242,23 @@ async fn receive(socket: &mut Socket) -> Value {
     })
     .await
     .expect("bridge response timeout")
+}
+
+async fn wait_disconnected(bridge: &Bridge) {
+    timeout(Duration::from_secs(5), async {
+        while !bridge.snapshot().await.connections.is_empty() {
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .expect("disconnected sessions were not removed");
+}
+
+async fn assert_closed(socket: &mut Socket) {
+    let end = timeout(Duration::from_secs(5), socket.next())
+        .await
+        .expect("revoked socket did not close");
+    assert!(matches!(end, None | Some(Ok(Message::Close(_)))));
 }
 
 fn chat(provider: &Provider, id: &str) -> Value {
@@ -306,6 +328,14 @@ async fn pairs_and_streams_all_protocols_without_exposing_keys_or_private_logs()
     }
     let logs = harness.bridge.export_logs().await;
     let disk = std::fs::read_to_string(harness._dir.path().join("providers.json")).unwrap();
+    let grants = std::fs::read_to_string(harness._dir.path().join("authorizations.json")).unwrap();
+    let snapshot = serde_json::to_string(&harness.bridge.snapshot().await).unwrap();
+    let token = auth["token"].as_str().unwrap();
+    assert_eq!(token.len(), 64);
+    for stored in [&logs, &disk, &grants, &snapshot] {
+        assert!(!stored.contains(token));
+    }
+    assert!(!snapshot.contains("tokenHash"));
     for private in [FAKE_KEY, PRIVATE_PROMPT, PRIVATE_DOCUMENT] {
         assert!(!logs.contains(private));
         assert!(!disk.contains(private));
@@ -404,26 +434,27 @@ async fn disconnect_cancels_active_generation_without_replaying_it_on_reconnect(
     send(&mut socket, chat(&provider, "disconnect-request")).await;
     assert_eq!(receive(&mut socket).await["type"], "chat.delta");
     socket.close(None).await.unwrap();
-    timeout(Duration::from_secs(5), async {
-        while !harness.bridge.snapshot().await.connections.is_empty() {
-            tokio::time::sleep(Duration::from_millis(10)).await;
-        }
-    })
-    .await
-    .expect("disconnected session was not removed");
+    wait_disconnected(&harness.bridge).await;
+    let snapshot = harness.bridge.snapshot().await;
+    assert_eq!(snapshot.authorizations.len(), 1);
+    assert!(!snapshot.authorizations[0].connected);
     let mut reconnect = harness.connect().await;
     send(
         &mut reconnect,
         json!({"v":1,"type":"auth","token":auth["token"]}),
     )
     .await;
-    assert_eq!(receive(&mut reconnect).await["code"], "auth_failed");
+    let resumed = receive(&mut reconnect).await;
+    assert_eq!(resumed["type"], "auth.ok");
+    assert_eq!(resumed["token"], auth["token"]);
+    assert_eq!(resumed["authorizationId"], auth["authorizationId"]);
+    assert_ne!(resumed["connectionId"], auth["connectionId"]);
     assert_eq!(harness.upstream.requests.lock().unwrap().len(), 1);
     harness.bridge.stop().await;
 }
 
 #[tokio::test]
-async fn resumed_socket_keeps_connection_identity_and_old_snapshot_can_revoke_it() {
+async fn same_grant_supports_multiple_sockets_and_connection_revoke_closes_them_all() {
     let harness = Harness::new().await;
     let (mut original_socket, initial_auth) = harness.pair().await;
     let mut replacement = harness.connect().await;
@@ -434,23 +465,22 @@ async fn resumed_socket_keeps_connection_identity_and_old_snapshot_can_revoke_it
     .await;
     let resumed = receive(&mut replacement).await;
     assert_eq!(resumed["type"], "auth.ok");
-    assert_eq!(resumed["connectionId"], initial_auth["connectionId"]);
-    assert_ne!(resumed["token"], initial_auth["token"]);
-    let original_end = timeout(Duration::from_secs(5), original_socket.next())
-        .await
-        .expect("original socket did not close after replacement");
-    assert!(matches!(original_end, None | Some(Ok(Message::Close(_)))));
+    assert_ne!(resumed["connectionId"], initial_auth["connectionId"]);
+    assert_eq!(resumed["authorizationId"], initial_auth["authorizationId"]);
+    assert_eq!(resumed["token"], initial_auth["token"]);
+    send(&mut original_socket, json!({"v":1,"type":"ping"})).await;
+    assert_eq!(receive(&mut original_socket).await["type"], "pong");
     let snapshot = harness.bridge.snapshot().await;
-    assert_eq!(snapshot.connections.len(), 1);
-    assert_eq!(
-        snapshot.connections[0].id,
-        initial_auth["connectionId"].as_str().unwrap()
-    );
+    assert_eq!(snapshot.connections.len(), 2);
+    assert_eq!(snapshot.authorizations.len(), 1);
+    assert!(snapshot.authorizations[0].connected);
     harness
         .bridge
         .revoke_connection(initial_auth["connectionId"].as_str().unwrap().into())
         .await
         .unwrap();
+    assert_closed(&mut original_socket).await;
+    assert_closed(&mut replacement).await;
     let mut reconnect = harness.connect().await;
     send(
         &mut reconnect,
@@ -459,5 +489,213 @@ async fn resumed_socket_keeps_connection_identity_and_old_snapshot_can_revoke_it
     .await;
     assert_eq!(receive(&mut reconnect).await["code"], "auth_failed");
     assert!(harness.upstream.requests.lock().unwrap().is_empty());
+    harness.bridge.stop().await;
+}
+
+#[tokio::test]
+async fn authorization_survives_service_and_bridge_restart_then_offline_revoke_persists() {
+    let mut harness = Harness::new().await;
+    let (mut initial, auth) = harness.pair().await;
+    harness.bridge.stop().await;
+    assert_closed(&mut initial).await;
+    assert!(!harness.bridge.snapshot().await.authorizations[0].connected);
+    harness
+        .bridge
+        .start(harness.port, vec![ORIGIN.into()])
+        .await
+        .unwrap();
+    let (mut after_stop, reply) = harness.authenticate(&auth["token"]).await;
+    assert_eq!(reply["type"], "auth.ok");
+    assert_eq!(reply["token"], auth["token"]);
+    assert_eq!(reply["authorizationId"], auth["authorizationId"]);
+    harness.bridge.stop().await;
+    assert_closed(&mut after_stop).await;
+    harness.bridge =
+        Bridge::with_secrets(harness._dir.path().into(), harness.secrets.clone()).unwrap();
+    assert_eq!(harness.bridge.snapshot().await.authorizations.len(), 1);
+    harness
+        .bridge
+        .start(harness.port, vec![ORIGIN.into()])
+        .await
+        .unwrap();
+    let (mut after_restart, reply) = harness.authenticate(&auth["token"]).await;
+    assert_eq!(reply["type"], "auth.ok");
+    assert_eq!(reply["authorizationId"], auth["authorizationId"]);
+    after_restart.close(None).await.unwrap();
+    wait_disconnected(&harness.bridge).await;
+    harness
+        .bridge
+        .revoke_authorization(auth["authorizationId"].as_str().unwrap().into())
+        .await
+        .unwrap();
+    harness.bridge.stop().await;
+    harness.bridge =
+        Bridge::with_secrets(harness._dir.path().into(), harness.secrets.clone()).unwrap();
+    assert!(harness.bridge.snapshot().await.authorizations.is_empty());
+    harness
+        .bridge
+        .start(harness.port, vec![ORIGIN.into()])
+        .await
+        .unwrap();
+    let (_, denied) = harness.authenticate(&auth["token"]).await;
+    assert_eq!(denied["code"], "auth_failed");
+    assert!(denied.get("providers").is_none());
+    harness.bridge.stop().await;
+}
+
+#[tokio::test]
+async fn saved_authorization_requires_its_exact_origin_even_when_both_origins_are_allowed() {
+    let harness = Harness::new().await;
+    let (_, auth) = harness.pair().await;
+    harness.bridge.stop().await;
+    let other = "http://localhost:4392";
+    harness
+        .bridge
+        .start(harness.port, vec![ORIGIN.into(), other.into()])
+        .await
+        .unwrap();
+    let mut socket = harness.connect_origin(other).await;
+    send(
+        &mut socket,
+        json!({"v":1,"type":"auth","token":auth["token"]}),
+    )
+    .await;
+    let denied = receive(&mut socket).await;
+    assert_eq!(denied["code"], "auth_failed");
+    assert!(denied.get("providers").is_none());
+    assert!(harness.bridge.snapshot().await.connections.is_empty());
+    let (_, reply) = harness.authenticate(&auth["token"]).await;
+    assert_eq!(reply["type"], "auth.ok");
+    harness.bridge.stop().await;
+}
+
+#[tokio::test]
+async fn website_forget_revokes_only_its_authenticated_grant_and_all_its_sockets() {
+    let harness = Harness::new().await;
+    let (mut first, first_auth) = harness.pair().await;
+    let (mut same_grant, _) = harness.authenticate(&first_auth["token"]).await;
+    let (mut other, other_auth) = harness.pair().await;
+    let mut unauthenticated = harness.connect().await;
+    send(
+        &mut unauthenticated,
+        json!({"v":1,"type":"auth.forget","authorizationId":other_auth["authorizationId"]}),
+    )
+    .await;
+    assert_eq!(receive(&mut unauthenticated).await["code"], "auth_required");
+    send(
+        &mut first,
+        json!({"v":1,"type":"auth.forget","authorizationId":other_auth["authorizationId"]}),
+    )
+    .await;
+    assert_closed(&mut first).await;
+    assert_closed(&mut same_grant).await;
+    let snapshot = harness.bridge.snapshot().await;
+    assert_eq!(snapshot.authorizations.len(), 1);
+    assert_eq!(
+        snapshot.authorizations[0].id,
+        other_auth["authorizationId"].as_str().unwrap()
+    );
+    send(&mut other, json!({"v":1,"type":"ping"})).await;
+    assert_eq!(receive(&mut other).await["type"], "pong");
+    let (_, denied) = harness.authenticate(&first_auth["token"]).await;
+    assert_eq!(denied["code"], "auth_failed");
+    let (_, accepted) = harness.authenticate(&other_auth["token"]).await;
+    assert_eq!(accepted["type"], "auth.ok");
+    harness.bridge.stop().await;
+}
+
+#[tokio::test]
+async fn failed_pair_persistence_never_issues_a_token_or_registers_a_session() {
+    let harness = Harness::new().await;
+    std::fs::create_dir(harness._dir.path().join("authorizations.json")).unwrap();
+    let code = harness.bridge.open_pairing().await.unwrap().code;
+    let mut socket = harness.connect().await;
+    send(&mut socket, json!({"v":1,"type":"pair","code":code})).await;
+    let failed = receive(&mut socket).await;
+    assert_eq!(failed["code"], "authorization_unavailable");
+    assert!(failed.get("token").is_none());
+    assert!(failed.get("providers").is_none());
+    let snapshot = harness.bridge.snapshot().await;
+    assert!(snapshot.authorizations.is_empty());
+    assert!(snapshot.connections.is_empty());
+    harness.bridge.stop().await;
+}
+
+#[tokio::test]
+async fn concurrent_auth_and_revoke_cannot_restore_a_revoked_grant() {
+    let harness = Harness::new().await;
+    let (_, auth) = harness.pair().await;
+    let id = auth["authorizationId"].as_str().unwrap().to_owned();
+    let mut reconnect = harness.connect().await;
+    let (_, revoked) = tokio::join!(
+        send(
+            &mut reconnect,
+            json!({"v":1,"type":"auth","token":auth["token"]})
+        ),
+        harness.bridge.revoke_authorization(id),
+    );
+    revoked.unwrap();
+    let snapshot = harness.bridge.snapshot().await;
+    assert!(snapshot.authorizations.is_empty());
+    assert!(snapshot.connections.is_empty());
+    let (_, denied) = harness.authenticate(&auth["token"]).await;
+    assert_eq!(denied["code"], "auth_failed");
+    harness.bridge.stop().await;
+}
+
+#[tokio::test]
+async fn correct_code_authenticates_immediately_and_wrong_or_replayed_codes_cannot_add_grants() {
+    let harness = Harness::new().await;
+    let pairing = harness.bridge.open_pairing().await.unwrap();
+    let wrong = if pairing.code == "000000" {
+        "000001"
+    } else {
+        "000000"
+    };
+    let (_, denied) = harness.pair_code(wrong).await;
+    assert_eq!(denied["code"], "pairing_failed");
+    assert!(denied.get("token").is_none());
+    assert!(harness.bridge.snapshot().await.authorizations.is_empty());
+    assert!(!harness._dir.path().join("authorizations.json").exists());
+
+    let (mut socket, accepted) = harness.pair_code(&pairing.code).await;
+    assert_eq!(accepted["type"], "auth.ok");
+    let snapshot = harness.bridge.snapshot().await;
+    assert_eq!(snapshot.authorizations.len(), 1);
+    assert_eq!(snapshot.authorizations[0].origin, ORIGIN);
+    assert!(snapshot.pairing.is_none());
+    let before = std::fs::read(harness._dir.path().join("authorizations.json")).unwrap();
+    let (_, replayed) = harness.pair_code(&pairing.code).await;
+    assert_eq!(replayed["code"], "pairing_failed");
+    assert!(replayed.get("token").is_none());
+    assert_eq!(harness.bridge.snapshot().await.authorizations.len(), 1);
+    assert_eq!(
+        std::fs::read(harness._dir.path().join("authorizations.json")).unwrap(),
+        before
+    );
+    socket.close(None).await.unwrap();
+    harness.bridge.stop().await;
+}
+
+#[tokio::test]
+async fn ten_failed_pairing_attempts_invalidate_the_code_until_a_new_window_is_opened() {
+    let harness = Harness::new().await;
+    let pairing = harness.bridge.open_pairing().await.unwrap();
+    let wrong = if pairing.code == "000000" {
+        "000001"
+    } else {
+        "000000"
+    };
+    for _ in 0..10 {
+        let (_, denied) = harness.pair_code(wrong).await;
+        assert_eq!(denied["code"], "pairing_failed");
+    }
+    assert!(harness.bridge.snapshot().await.pairing.is_none());
+    let (_, denied) = harness.pair_code(&pairing.code).await;
+    assert_eq!(denied["code"], "pairing_failed");
+    assert!(harness.bridge.snapshot().await.authorizations.is_empty());
+    assert!(!harness._dir.path().join("authorizations.json").exists());
+    let (_, accepted) = harness.pair().await;
+    assert_eq!(accepted["type"], "auth.ok");
     harness.bridge.stop().await;
 }

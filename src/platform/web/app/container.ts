@@ -12,7 +12,7 @@ import { BrowserAiBridge } from '@/adapters/browser/BrowserAiBridge'
 import { browserDomParser } from '@/adapters/browser/BrowserDomParser'
 
 const aiContextService = new AiContextService(docService, browserDomParser)
-const createAiBridge = () => new BrowserAiBridge()
+const aiBridge = new BrowserAiBridge()
 
 export const services = {
   api,
@@ -23,7 +23,7 @@ export const services = {
   searchService,
   configService,
   aiContextService,
-  createAiBridge,
+  aiBridge,
 }
 
 export type Services = typeof services

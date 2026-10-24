@@ -1,34 +1,36 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import type { AiBridgeEvent, AiContextDocument } from '@/core/ports/AiBridgePort'
+import type { AiBridgeEvent, AiBridgeSnapshot, AiContextDocument } from '@/core/ports/AiBridgePort'
 
-const mocks = vi.hoisted(() => ({ pair: vi.fn(), start: vi.fn(), cancel: vi.fn(), disconnect: vi.fn(), subscribe: vi.fn(), load: vi.fn(), build: vi.fn() }))
-vi.mock('@/platform/web/app/useServices', () => ({ useServices: () => ({ createAiBridge: () => mocks, aiContextService: mocks }) }))
+const mocks = vi.hoisted(() => ({ snapshot: vi.fn(), pair: vi.fn(), start: vi.fn(), cancel: vi.fn(), disconnect: vi.fn(), subscribe: vi.fn(), load: vi.fn(), build: vi.fn() }))
+vi.mock('@/platform/web/app/useServices', () => ({ useServices: () => ({ aiBridge: mocks, aiContextService: mocks }) }))
 import DocumentQA from '@/platform/web/pages/doc/knowledge/DocumentQA.vue'
+import EventBus from '@/platform/web/components/EventBus'
 
 const doc: AiContextDocument = { docId: 'current', title: '当前文章', url: '/current.html', contentHash: 'test', metadata: {},
   headings: [{ id: 'real-heading', title: '章节' }], relatedLinks: [{ url: '/related.html', title: '/关联.md' }],
   sources: [{ sourceId: 'D1S1', headingId: 'real-heading', title: '章节', text: '正文' }], truncated: false }
-let emit: (event: AiBridgeEvent) => void
+const listeners = new Set<(event: AiBridgeEvent) => void>()
+let snapshot: AiBridgeSnapshot
+function emit(event: AiBridgeEvent) {
+  if (event.type === 'state') snapshot = { ...snapshot, state: event.state, message: event.message }
+  listeners.forEach(listener => listener(event))
+}
 const wrappers: ReturnType<typeof mount>[] = []
 beforeEach(() => {
   vi.clearAllMocks()
-  mocks.subscribe.mockImplementation(listener => { emit = listener; return vi.fn() })
+  listeners.clear()
+  snapshot = { state: 'ready', providers: [{ id: 'provider', name: '测试模型', protocol: 'responses', model: 'test' }], remembered: true, port: 19661 }
+  mocks.snapshot.mockImplementation(() => snapshot)
+  mocks.subscribe.mockImplementation(listener => { listeners.add(listener); return () => listeners.delete(listener) })
   mocks.load.mockResolvedValue(doc)
   mocks.build.mockResolvedValue({ documents: [doc] })
   mocks.start.mockReturnValue('request-1')
-  mocks.pair.mockImplementation(async () => {
-    emit({ type: 'state', state: 'ready' })
-    return [{ id: 'provider', name: '测试模型', protocol: 'responses', model: 'test' }]
-  })
 })
 afterEach(() => wrappers.splice(0).forEach(wrapper => wrapper.unmount()))
 async function setup() {
   const wrapper = mount(DocumentQA, { props: { doc: 'current' } })
   wrappers.push(wrapper)
-  await flushPromises()
-  await wrapper.get('input[aria-label="配对码"]').setValue('123456')
-  await wrapper.findAll('form')[0].trigger('submit')
   await flushPromises()
   return wrapper
 }
@@ -52,19 +54,21 @@ describe('DocumentQA', () => {
     expect(wrapper.get('nav a').attributes('href')).toBe('/current.html?headingId=real-heading')
   })
 
-  it('切换文档时取消生成，忽略旧流；关闭会释放连接', async () => {
+  it('切换文档时仅取消本面板生成，忽略旧流；关闭保留共享连接', async () => {
     const wrapper = await setup()
     await send(wrapper)
     await wrapper.setProps({ doc: 'next' })
     await flushPromises()
     emit({ type: 'delta', requestId: 'request-1', delta: '旧文档回答' })
     await flushPromises()
-    expect(mocks.cancel).toHaveBeenCalled()
+    expect(mocks.cancel).toHaveBeenCalledWith('request-1')
     expect(wrapper.text()).not.toContain('旧文档回答')
     expect(wrapper.get('textarea').element.value).toBe('')
     wrapper.unmount()
     wrappers.pop()
-    expect(mocks.disconnect).toHaveBeenCalledOnce()
+    expect(mocks.disconnect).not.toHaveBeenCalled()
+    expect(mocks.cancel).toHaveBeenCalledOnce()
+    expect(listeners.size).toBe(0)
   })
 
   it('文档切换使未完成的上下文读取失效，不发送旧问题', async () => {
@@ -84,26 +88,22 @@ describe('DocumentQA', () => {
     await send(wrapper)
     expect(mocks.build).toHaveBeenCalledWith([{ docId: 'current', headingIds: [] }, { docId: 'related' }])
     emit({ type: 'error', requestId: 'request-1', message: '连接断开' })
-    emit({ type: 'state', state: 'disconnected', message: '请重新配对' })
+    emit({ type: 'state', state: 'disconnected', message: '正在尝试恢复连接' })
     await flushPromises()
-    expect(wrapper.text()).toContain('请重新配对')
+    expect(wrapper.text()).toContain('正在尝试恢复连接')
     expect(mocks.start).toHaveBeenCalledOnce()
-    expect(mocks.pair).toHaveBeenCalledOnce()
+    expect(mocks.pair).not.toHaveBeenCalled()
   })
 
-  it('准备上下文期间断线并配对新服务商，旧准备结果失效，必须手动重新发送', async () => {
+  it('准备上下文期间断线并恢复新服务商，旧准备结果失效，必须手动重新发送', async () => {
     let finish: (value: { documents: AiContextDocument[] }) => void = () => {}
     mocks.build.mockReturnValueOnce(new Promise(resolve => { finish = resolve }))
     const wrapper = await setup()
     await send(wrapper)
     emit({ type: 'state', state: 'disconnected', message: '连接断开' })
     await flushPromises()
-    mocks.pair.mockImplementationOnce(async () => {
-      emit({ type: 'state', state: 'ready' })
-      return [{ id: 'new-provider', name: '新服务商', protocol: 'responses', model: 'new-model' }]
-    })
-    await wrapper.get('input[aria-label="配对码"]').setValue('654321')
-    await wrapper.findAll('form')[0].trigger('submit')
+    snapshot = { ...snapshot, providers: [{ id: 'new-provider', name: '新服务商', protocol: 'responses', model: 'new-model' }] }
+    emit({ type: 'state', state: 'ready' })
     await flushPromises()
     finish({ documents: [doc] })
     await flushPromises()
@@ -113,6 +113,30 @@ describe('DocumentQA', () => {
     await flushPromises()
     expect(mocks.start).toHaveBeenCalledOnce()
     expect(mocks.start.mock.calls[0][0].providerId).toBe('new-provider')
+  })
+
+  it('未连接时引导打开导航连接设置，空闲关闭不取消其他面板的请求', async () => {
+    snapshot = { ...snapshot, state: 'disconnected', providers: [], remembered: false }
+    const open = vi.fn()
+    EventBus.on('show-note-bridge', open)
+    const wrapper = await setup()
+    expect(wrapper.find('input[aria-label="配对码"]').exists()).toBe(false)
+    await wrapper.findAll('button').find(button => button.text() === '打开 Note Bridge 连接设置')!.trigger('click')
+    expect(open).toHaveBeenCalledOnce()
+    EventBus.off('show-note-bridge', open)
+    wrapper.unmount()
+    wrappers.pop()
+    expect(mocks.cancel).not.toHaveBeenCalled()
+    expect(mocks.disconnect).not.toHaveBeenCalled()
+  })
+
+  it('关闭有活动请求的面板只取消该请求', async () => {
+    const wrapper = await setup()
+    await send(wrapper)
+    wrapper.unmount()
+    wrappers.pop()
+    expect(mocks.cancel).toHaveBeenCalledExactlyOnceWith('request-1')
+    expect(mocks.disconnect).not.toHaveBeenCalled()
   })
 
   it('历史回答与显示长度边界不会劈开 emoji，超长输出仍会停止', async () => {

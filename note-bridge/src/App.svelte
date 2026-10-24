@@ -243,7 +243,7 @@
         class:active={tab === 'connection'}
         onclick={() => (tab = 'connection')}
         ><span aria-hidden="true">◈</span> 连接与配对
-        <span class="nav-count">{snapshot?.connections.length ?? 0}</span
+        <span class="nav-count">{snapshot?.authorizations.length ?? 0}</span
         ></button
       >
       <button
@@ -370,15 +370,14 @@
         </details>
       </section>
 
-      <div class="two-column">
-        <section class="card pairing-card">
-          <div class="section-heading">
-            <div>
-              <h2>配对新网站</h2>
-              <p>在网站的文档问答设置中输入配对码。</p>
-            </div>
-            <span class="step">01</span>
+      <section class="card pairing-card">
+        <div class="section-heading">
+          <div>
+            <h2>配对新网站</h2>
+            <p>在网站导航的 note-bridge 中输入配对码，正确后即可连接。</p>
           </div>
+        </div>
+        <div class="pairing-control">
           {#if snapshot?.pairing && remaining > 0}
             <div
               class="pairing-code"
@@ -405,97 +404,55 @@
               >生成配对码</button
             >
           {/if}
-          <p class="tip">输入配对码后，还需要在这里确认网站来源。</p>
-        </section>
-        <section class="card approval-card">
-          <div class="section-heading">
-            <div>
-              <h2>确认连接请求</h2>
-              <p>核对来源后，批准网站访问模型服务。</p>
-            </div>
-            <span class="step">02</span>
-          </div>
-          {#if snapshot?.pendingPairings.length}
-            <ul class="plain-list">
-              {#each snapshot.pendingPairings as pending (pending.id)}<li
-                  class="pending-item"
-                >
-                  <strong>{pending.origin}</strong><small
-                    >请确认这是你正在使用的网站</small
-                  >
-                  <div class="button-row">
-                    <button
-                      class="primary compact"
-                      disabled={busy}
-                      onclick={() =>
-                        perform(
-                          () =>
-                            invoke('approve_pairing', {
-                              id: pending.id,
-                              allow: true,
-                            }),
-                          '已批准网站连接。',
-                        )}>批准</button
-                    ><button
-                      class="secondary compact"
-                      disabled={busy}
-                      onclick={() =>
-                        perform(() =>
-                          invoke('approve_pairing', {
-                            id: pending.id,
-                            allow: false,
-                          }),
-                        )}>拒绝</button
-                    >
-                  </div>
-                </li>{/each}
-            </ul>
-          {:else}
-            <div class="empty-state compact-empty">
-              <span class="empty-symbol" aria-hidden="true">◎</span><strong
-                >等待网站发起连接</strong
-              >
-              <p>请求到达后会在这里显示完整来源。</p>
-            </div>
-          {/if}
-        </section>
-      </div>
+          <p class="tip">配对后会记住授权，网站刷新可自动重连。</p>
+        </div>
+      </section>
 
       <section class="card">
         <div class="section-heading">
           <div>
             <h2>
               已授权的网站 <span class="inline-count"
-                >{snapshot?.connections.length ?? 0}</span
+                >{snapshot?.authorizations.length ?? 0}</span
               >
             </h2>
-            <p>撤销授权会立即终止该网站的连接和请求。</p>
+            <p>离线网站也会保留。撤销授权会终止使用该授权的所有连接和请求。</p>
           </div>
         </div>
-        {#if snapshot?.connections.length}<ul class="plain-list">
-            {#each snapshot.connections as connection (connection.id)}<li
+        {#if snapshot?.authorizations.length}<ul class="plain-list">
+            {#each snapshot.authorizations as authorization (authorization.id)}<li
                 class="connection-item"
               >
                 <span class="site-icon" aria-hidden="true">↗</span>
                 <div>
-                  <strong>{connection.origin}</strong><small
-                    >授权于 {new Date(connection.connectedAt).toLocaleString(
+                  <strong>{authorization.origin}</strong><small
+                    >授权于 {new Date(authorization.createdAt).toLocaleString(
                       'zh-CN',
                     )}</small
+                  ><small
+                    >最近连接 {new Date(
+                      authorization.lastConnectedAt,
+                    ).toLocaleString('zh-CN')}</small
                   >
                 </div>
+                <span class="badge" class:green={authorization.connected}
+                  >{authorization.connected ? '已连接' : '离线'}</span
+                >
                 <button
                   class="text-button danger-text"
                   disabled={busy}
                   onclick={() =>
                     perform(
-                      () => invoke('revoke_connection', { id: connection.id }),
-                      '网站授权已撤销。',
+                      () =>
+                        invoke('revoke_authorization', {
+                          id: authorization.id,
+                        }),
+                      '网站授权已撤销，再次连接需要重新配对。',
                     )}>撤销授权</button
                 >
               </li>{/each}
           </ul>{:else}<div class="empty-inline">
-            还没有授权的网站。完成上方两步即可开始文档问答。
+            还没有授权的网站。在网站输入配对码即可开始文档问答。
           </div>{/if}
       </section>
     {:else if tab === 'providers'}

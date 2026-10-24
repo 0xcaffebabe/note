@@ -1,5 +1,5 @@
 //! Isolated browser compatibility fixture. No installed CLI configuration or native
-//! credential store is read. Pairing is auto-approved ONLY in this test executable.
+//! credential store is read. Pairing uses the normal one-time code flow.
 use axum::{response::IntoResponse, routing::post, Json, Router};
 use bridge_core::{
     model::{AuthKind, Protocol},
@@ -49,16 +49,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "{}",
         json!({"code":pairing.code,"providerId":provider.id,"port":19661,"testOnly":true})
     );
-    let until = tokio::time::sleep(Duration::from_secs(180));
-    tokio::pin!(until);
-    loop {
-        tokio::select! {
-            _ = &mut until => break,
-            _ = tokio::signal::ctrl_c() => break,
-            _ = tokio::time::sleep(Duration::from_millis(100)) => {
-                for pending in bridge.snapshot().await.pending_pairings { let _ = bridge.approve_pairing(pending.id, true).await; }
-            }
-        }
+    tokio::select! {
+        _ = tokio::time::sleep(Duration::from_secs(180)) => {},
+        _ = tokio::signal::ctrl_c() => {},
     }
     bridge.stop().await;
     upstream.abort();

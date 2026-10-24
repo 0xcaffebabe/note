@@ -20,6 +20,8 @@ pub enum ClientMessage {
     Pair { code: String },
     #[serde(rename = "auth")]
     Auth { token: String },
+    #[serde(rename = "auth.forget")]
+    AuthForget,
     #[serde(rename = "ping")]
     Ping,
     #[serde(rename = "chat.start")]

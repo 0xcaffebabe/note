@@ -1,9 +1,11 @@
+mod authorization;
 pub mod discovery;
 pub mod model;
 pub mod protocol;
 pub mod provider;
 pub mod storage;
 
+use authorization::{Authorization, MAX_AUTHORIZATIONS};
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
@@ -32,14 +34,13 @@ use std::{
 use storage::{SecretStore, Storage};
 use tokio::{
     net::TcpListener,
-    sync::{mpsc, oneshot, Mutex, Semaphore},
+    sync::{mpsc, Mutex, Semaphore},
     task::JoinHandle,
 };
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 
 const PAIR_TTL_MS: u64 = 120_000;
-const APPROVE_TTL_MS: u64 = 60_000;
 const LOG_LIMIT: usize = 1000;
 
 fn now() -> u64 {
@@ -69,8 +70,8 @@ struct Runtime {
     server: Option<JoinHandle<()>>,
     pairing: Option<PairingWindow>,
     pair_attempts: u8,
-    pending: HashMap<String, Pending>,
     sessions: HashMap<String, Session>,
+    authorizations: Vec<Authorization>,
     discovered: HashMap<String, (DiscoveryPaths, String)>,
     logs: VecDeque<LogEntry>,
 }
@@ -112,28 +113,25 @@ pub struct PairingWindow {
 
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct PendingPairing {
-    pub id: String,
-    pub origin: String,
-    pub expires_at: u64,
-}
-
-struct Pending {
-    info: PendingPairing,
-    approval: oneshot::Sender<bool>,
-}
-
-#[derive(Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct ConnectionInfo {
     pub id: String,
     pub origin: String,
     pub connected_at: u64,
 }
 
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AuthorizationInfo {
+    pub id: String,
+    pub origin: String,
+    pub created_at: u64,
+    pub last_connected_at: u64,
+    pub connected: bool,
+}
+
 struct Session {
     info: ConnectionInfo,
-    token: String,
+    authorization_id: String,
     cancel: CancellationToken,
 }
 
@@ -161,8 +159,8 @@ pub struct Snapshot {
     pub allowed_origins: Vec<String>,
     pub providers: Vec<Provider>,
     pub pairing: Option<PairingWindow>,
-    pub pending_pairings: Vec<PendingPairing>,
     pub connections: Vec<ConnectionInfo>,
+    pub authorizations: Vec<AuthorizationInfo>,
     pub logs: Vec<LogEntry>,
 }
 
@@ -188,6 +186,7 @@ impl Bridge {
             Err(_) => return Err("无法读取连接配置".into()),
         };
         validate_settings(settings.port, &settings.allowed_origins)?;
+        let authorizations = authorization::load(&data_dir)?;
         // Log files contain only bridge-generated summaries; corrupt/oversized files are not loaded.
         let logs = fs::read(data_dir.join("runtime.jsonl"))
             .ok()
@@ -212,8 +211,8 @@ impl Bridge {
                     server: None,
                     pairing: None,
                     pair_attempts: 0,
-                    pending: HashMap::new(),
                     sessions: HashMap::new(),
+                    authorizations,
                     discovered: HashMap::new(),
                     logs: logs
                         .into_iter()
@@ -236,13 +235,20 @@ impl Bridge {
             allowed_origins: state.settings.allowed_origins.clone(),
             providers: self.inner.storage.providers(),
             pairing: state.pairing.clone().filter(|p| p.expires_at > now()),
-            pending_pairings: state
-                .pending
-                .values()
-                .filter(|p| p.info.expires_at > now())
-                .map(|p| p.info.clone())
-                .collect(),
             connections: state.sessions.values().map(|s| s.info.clone()).collect(),
+            authorizations: state
+                .authorizations
+                .iter()
+                .map(|grant| AuthorizationInfo {
+                    id: grant.id.clone(),
+                    origin: grant.origin.clone(),
+                    created_at: grant.created_at,
+                    last_connected_at: grant.last_connected_at,
+                    connected: state.sessions.values().any(|session| {
+                        session.authorization_id == grant.id && !session.cancel.is_cancelled()
+                    }),
+                })
+                .collect(),
             logs: state.logs.iter().cloned().collect(),
         }
     }
@@ -283,7 +289,6 @@ impl Bridge {
         state.running = false;
         state.shutdown.cancel();
         state.pairing = None;
-        state.pending.clear();
         for session in state.sessions.values() {
             session.cancel.cancel();
         }
@@ -315,35 +320,44 @@ impl Bridge {
         Ok(pairing)
     }
 
-    pub async fn approve_pairing(&self, id: String, allow: bool) -> Result<(), String> {
-        let pending = self
-            .inner
-            .state
-            .lock()
-            .await
-            .pending
-            .remove(&id)
-            .ok_or("配对请求不存在或已结束")?;
-        if pending.info.expires_at <= now() {
-            return Err("配对请求已过期".into());
-        }
-        pending
-            .approval
-            .send(allow)
-            .map_err(|_| "网页已断开，请重新配对".into())
+    pub async fn revoke_connection(&self, id: String) -> Result<(), String> {
+        let mut state = self.inner.state.lock().await;
+        let authorization_id = state
+            .sessions
+            .get(&id)
+            .ok_or("连接不存在")?
+            .authorization_id
+            .clone();
+        self.revoke_locked(&mut state, &authorization_id)?;
+        drop(state);
+        self.log("info", "已撤销网站授权", None).await;
+        Ok(())
     }
 
-    pub async fn revoke_connection(&self, id: String) -> Result<(), String> {
-        let session = self
-            .inner
-            .state
-            .lock()
-            .await
-            .sessions
-            .remove(&id)
-            .ok_or("连接不存在")?;
-        session.cancel.cancel();
-        self.log("info", "已撤销网站连接", None).await;
+    pub async fn revoke_authorization(&self, id: String) -> Result<(), String> {
+        let mut state = self.inner.state.lock().await;
+        self.revoke_locked(&mut state, &id)?;
+        drop(state);
+        self.log("info", "已撤销网站授权", None).await;
+        Ok(())
+    }
+
+    fn revoke_locked(&self, state: &mut Runtime, id: &str) -> Result<(), String> {
+        if !state.authorizations.iter().any(|grant| grant.id == id) {
+            return Err("网站授权不存在".into());
+        }
+        let mut next = state.authorizations.clone();
+        next.retain(|grant| grant.id != id);
+        authorization::save(&self.inner.data_dir, &next)?;
+        state.authorizations = next;
+        state.sessions.retain(|_, session| {
+            if session.authorization_id == id {
+                session.cancel.cancel();
+                false
+            } else {
+                true
+            }
+        });
         Ok(())
     }
 
@@ -568,12 +582,19 @@ async fn send(socket: &mut WebSocket, value: Value) -> bool {
     )
 }
 
+struct Authenticated {
+    info: ConnectionInfo,
+    authorization_id: String,
+    token: String,
+    cancel: CancellationToken,
+}
+
 async fn authenticate(
     bridge: &Bridge,
     socket: &mut WebSocket,
     origin: &str,
     shutdown: &CancellationToken,
-) -> Option<(ConnectionInfo, String, CancellationToken)> {
+) -> Option<Authenticated> {
     let first = tokio::select! {
         _ = shutdown.cancelled() => return None,
         result = tokio::time::timeout(Duration::from_secs(10), socket.recv()) => result.ok()??.ok()?,
@@ -593,18 +614,23 @@ async fn authenticate(
         .await;
         return None;
     }
-    match frame.message {
+    // Consuming a code, committing its grant, registering sockets, and revocation
+    // share one lock. A code cannot issue two grants or cross a service restart.
+    let mut state = bridge.inner.state.lock().await;
+    if !state.running || shutdown.is_cancelled() {
+        return None;
+    }
+    let (authorization_id, token) = match frame.message {
         ClientMessage::Pair { code } => {
-            let mut state = bridge.inner.state.lock().await;
             state.pair_attempts = state.pair_attempts.saturating_add(1);
             if state.pair_attempts > 10
+                || state.authorizations.len() >= MAX_AUTHORIZATIONS
                 || !state
                     .pairing
                     .as_ref()
                     .is_some_and(|p| p.expires_at > now() && p.code == code)
-                || state.pending.len() >= 4
             {
-                if state.pair_attempts > 10 {
+                if state.pair_attempts >= 10 {
                     state.pairing = None;
                 }
                 drop(state);
@@ -619,89 +645,89 @@ async fn authenticate(
                 return None;
             }
             state.pairing = None;
-            let id = Uuid::new_v4().to_string();
-            let (tx, rx) = oneshot::channel();
-            state.pending.insert(
-                id.clone(),
-                Pending {
-                    info: PendingPairing {
-                        id: id.clone(),
-                        origin: origin.into(),
-                        expires_at: now() + APPROVE_TTL_MS,
-                    },
-                    approval: tx,
-                },
-            );
-            drop(state);
-            if !send(
-                socket,
-                json!({"v":VERSION,"type":"pair.pending","pairingId":id}),
-            )
-            .await
-            {
-                bridge.inner.state.lock().await.pending.remove(&id);
-                return None;
-            }
-            let accepted = tokio::select! {
-                _ = shutdown.cancelled() => false,
-                result = tokio::time::timeout(Duration::from_millis(APPROVE_TTL_MS), rx) => matches!(result, Ok(Ok(true))),
-            };
-            bridge.inner.state.lock().await.pending.remove(&id);
-            if !accepted {
-                send(socket, error("pairing_denied", "配对未获批准或已超时")).await;
-                return None;
-            }
+            (None, authorization::new_token())
         }
         ClientMessage::Auth { token } => {
-            let mut state = bridge.inner.state.lock().await;
-            let existing = state
-                .sessions
-                .iter()
-                .find(|(_, session)| session.token == token && session.info.origin == origin)
-                .map(|(id, _)| id.clone());
-            let Some(id) = existing else {
+            let Some(hash) = authorization::hash_token(&token) else {
                 drop(state);
                 send(socket, error("auth_failed", "会话已失效，请重新配对")).await;
                 return None;
             };
-            let previous = state.sessions.remove(&id)?;
-            previous.cancel.cancel();
-            // Preserve the desktop-visible identity so a concurrent revoke still targets
-            // the replacement connection. Replacement and rotation are one locked action.
-            let info = previous.info;
-            let token = format!("{}{}", Uuid::new_v4().simple(), Uuid::new_v4().simple());
-            let cancel = shutdown.child_token();
-            state.sessions.insert(
-                id,
-                Session {
-                    info: info.clone(),
-                    token: token.clone(),
-                    cancel: cancel.clone(),
-                },
-            );
-            return Some((info, token, cancel));
+            (Some(hash), token)
         }
         _ => {
+            drop(state);
             send(socket, error("auth_required", "请先配对认证")).await;
             return None;
         }
+    };
+    // No token can be issued before its grant has been committed.
+    let mut next = state.authorizations.clone();
+    let authorization_id = if let Some(hash) = authorization_id {
+        let Some(grant) = next
+            .iter_mut()
+            .find(|grant| grant.token_hash == hash && grant.origin == origin)
+        else {
+            drop(state);
+            send(socket, error("auth_failed", "网站授权已失效，请重新配对")).await;
+            return None;
+        };
+        grant.last_connected_at = now().max(grant.last_connected_at);
+        grant.id.clone()
+    } else {
+        if next.len() >= MAX_AUTHORIZATIONS {
+            drop(state);
+            send(
+                socket,
+                error("pairing_failed", "网站授权已达上限，请先在桌面端撤销旧授权"),
+            )
+            .await;
+            return None;
+        }
+        let id = Uuid::new_v4().to_string();
+        let timestamp = now();
+        next.push(Authorization {
+            id: id.clone(),
+            origin: origin.into(),
+            token_hash: authorization::hash_token(&token)?,
+            created_at: timestamp,
+            last_connected_at: timestamp,
+        });
+        id
+    };
+    if authorization::save(&bridge.inner.data_dir, &next).is_err() {
+        drop(state);
+        send(
+            socket,
+            error(
+                "authorization_unavailable",
+                "无法保存网站授权，请检查桌面端存储后重试",
+            ),
+        )
+        .await;
+        return None;
     }
+    state.authorizations = next;
     let info = ConnectionInfo {
         id: Uuid::new_v4().to_string(),
         origin: origin.into(),
         connected_at: now(),
     };
-    let token = format!("{}{}", Uuid::new_v4().simple(), Uuid::new_v4().simple());
     let cancel = shutdown.child_token();
-    bridge.inner.state.lock().await.sessions.insert(
+    state.sessions.insert(
         info.id.clone(),
         Session {
             info: info.clone(),
-            token: token.clone(),
+            authorization_id: authorization_id.clone(),
             cancel: cancel.clone(),
         },
     );
-    Some((info, token, cancel))
+    Some(Authenticated {
+        info,
+        authorization_id,
+        token,
+        cancel,
+    })
 }
 
 async fn socket_session(
@@ -710,8 +736,12 @@ async fn socket_session(
     origin: String,
     shutdown: CancellationToken,
 ) {
-    let Some((info, token, connection_cancel)) =
-        authenticate(&bridge, &mut socket, &origin, &shutdown).await
+    let Some(Authenticated {
+        info,
+        authorization_id,
+        token,
+        cancel: connection_cancel,
+    }) = authenticate(&bridge, &mut socket, &origin, &shutdown).await
     else {
         return;
     };
@@ -723,8 +753,14 @@ async fn socket_session(
         .filter(|p| p.enabled)
         .map(|p| json!({"id":p.id,"name":p.name,"protocol":p.protocol,"model":p.model}))
         .collect();
-    if !send(&mut socket, json!({"v":VERSION,"type":"auth.ok","token":token,"providers":providers,"connectionId":info.id})).await {
-        remove_session(&bridge, &info.id, &token).await; return;
+    let sent = tokio::select! {
+        biased;
+        _ = connection_cancel.cancelled() => false,
+        sent = send(&mut socket, json!({"v":VERSION,"type":"auth.ok","token":token,"providers":providers,"connectionId":info.id,"authorizationId":authorization_id})) => sent,
+    };
+    if !sent {
+        remove_session(&bridge, &info.id).await;
+        return;
     }
     bridge.log("info", "网站已连接", None).await;
     let (mut sink, mut source) = socket.split();
@@ -733,6 +769,7 @@ async fn socket_session(
     let writer = tokio::spawn(async move {
         loop {
             tokio::select! {
+                biased;
                 _ = writer_cancel.cancelled() => break,
                 event = rx.recv() => {
                     let Some(event) = event else { break; };
@@ -746,6 +783,7 @@ async fn socket_session(
     let mut used_ids = HashSet::new();
     loop {
         let incoming = tokio::select! {
+            biased;
             _ = connection_cancel.cancelled() => break,
             result = tokio::time::timeout(Duration::from_secs(90), source.next()) => match result { Ok(Some(Ok(message))) => message, _ => break },
         };
@@ -765,6 +803,19 @@ async fn socket_session(
             }
         };
         match frame.message {
+            ClientMessage::AuthForget => {
+                if bridge
+                    .revoke_authorization(authorization_id.clone())
+                    .await
+                    .is_err()
+                {
+                    let _ = tx
+                        .send(error("forget_failed", "无法撤销网站授权，请在桌面端重试"))
+                        .await;
+                } else {
+                    break;
+                }
+            }
             ClientMessage::Ping => {
                 let _ = tx.send(json!({"v":VERSION,"type":"pong"})).await;
             }
@@ -834,19 +885,12 @@ async fn socket_session(
     }
     drop(tx);
     let _ = writer.await;
-    remove_session(&bridge, &info.id, &token).await;
+    remove_session(&bridge, &info.id).await;
 }
 
-async fn remove_session(bridge: &Bridge, id: &str, token: &str) {
-    let mut state = bridge.inner.state.lock().await;
-    // An old socket must not delete the session that replaced it after token rotation.
-    if state
-        .sessions
-        .get(id)
-        .is_some_and(|session| session.token == token)
-    {
-        state.sessions.remove(id);
-    }
+async fn remove_session(bridge: &Bridge, id: &str) {
+    // Every socket has its own identity; disconnecting never revokes its grant.
+    bridge.inner.state.lock().await.sessions.remove(id);
 }
 
 async fn run_chat(
@@ -931,4 +975,69 @@ async fn run_chat(
         )
         .await;
     let _ = tokio::time::timeout(Duration::from_secs(5), output.send(terminal)).await;
+}
+
+#[cfg(test)]
+mod pairing_tests {
+    use super::*;
+    use storage::MemorySecretStore;
+    use tokio_tungstenite::{
+        connect_async,
+        tungstenite::{
+            client::IntoClientRequest, http::HeaderValue, Message as ClientSocketMessage,
+        },
+    };
+
+    #[tokio::test]
+    async fn expired_pairing_code_is_rejected_without_persisting_an_authorization() {
+        let dir = tempfile::tempdir().unwrap();
+        let bridge =
+            Bridge::with_secrets(dir.path().into(), Arc::new(MemorySecretStore::new())).unwrap();
+        let reservation = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = reservation.local_addr().unwrap().port();
+        drop(reservation);
+        bridge
+            .start(port, vec!["http://localhost:4391".into()])
+            .await
+            .unwrap();
+        let pairing = bridge.open_pairing().await.unwrap();
+        // Move the actual server's window into the past without a two-minute sleep.
+        bridge
+            .inner
+            .state
+            .lock()
+            .await
+            .pairing
+            .as_mut()
+            .unwrap()
+            .expires_at = now() - 1;
+        let mut request = format!("ws://127.0.0.1:{port}/ws")
+            .into_client_request()
+            .unwrap();
+        request
+            .headers_mut()
+            .insert("origin", HeaderValue::from_static("http://localhost:4391"));
+        let (mut socket, _) = connect_async(request).await.unwrap();
+        socket
+            .send(ClientSocketMessage::Text(
+                json!({"v":1,"type":"pair","code":pairing.code})
+                    .to_string()
+                    .into(),
+            ))
+            .await
+            .unwrap();
+        let frame = tokio::time::timeout(Duration::from_secs(5), socket.next())
+            .await
+            .unwrap()
+            .unwrap()
+            .unwrap();
+        let denied: Value = serde_json::from_str(frame.to_text().unwrap()).unwrap();
+        assert_eq!(denied["code"], "pairing_failed");
+        assert!(denied.get("token").is_none());
+        let snapshot = bridge.snapshot().await;
+        assert!(snapshot.authorizations.is_empty());
+        assert!(snapshot.connections.is_empty());
+        assert!(!dir.path().join("authorizations.json").exists());
+        bridge.stop().await;
+    }
 }

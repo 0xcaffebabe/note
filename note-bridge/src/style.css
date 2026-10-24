@@ -471,22 +471,13 @@ label small {
 .two-column > .card {
   min-width: 0;
 }
-.step {
-  display: grid;
-  place-items: center;
-  width: 29px;
-  height: 29px;
-  border: 1px solid #e8ecf4;
-  color: #a3acc0;
-  background: #f9faff;
-  border-radius: 50%;
-  font-size: 10px;
-  font-weight: 700;
-}
-.pairing-card .section-heading,
-.approval-card .section-heading {
+.pairing-card .section-heading {
   align-items: flex-start;
   margin-bottom: 14px;
+}
+.pairing-control {
+  max-width: 380px;
+  margin-inline: auto;
 }
 .pairing-code,
 .pairing-placeholder {
@@ -550,9 +541,6 @@ label small {
   border-radius: 13px;
   margin-bottom: 16px;
 }
-.compact-empty {
-  padding: 23px 10px;
-}
 .inline-count {
   display: inline-block;
   margin-left: 7px;
@@ -577,30 +565,10 @@ label small {
   padding: 0;
   margin: 0;
 }
-.pending-item {
-  border: 1px solid #e1e7f8;
-  background: #f8faff;
-  border-radius: 8px;
-  padding: 13px 14px;
-  margin-bottom: 10px;
-  overflow-wrap: anywhere;
-}
-.pending-item strong {
-  font-size: 12px;
-  color: #536493;
-}
-.pending-item small {
-  display: block;
-  font-size: 10px;
-  margin-top: 3px;
-}
 .button-row {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-.pending-item .button-row {
-  margin-top: 11px;
 }
 .connection-item {
   display: flex;
@@ -989,10 +957,6 @@ footer {
   .pairing-placeholder {
     font-size: 27px;
     letter-spacing: 5px;
-  }
-  .pairing-card .section-heading .step,
-  .approval-card .section-heading .step {
-    display: none;
   }
   footer span {
     display: none;

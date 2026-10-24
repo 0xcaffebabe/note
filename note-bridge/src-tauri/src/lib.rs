@@ -35,13 +35,13 @@ async fn open_pairing(bridge: State<'_, Bridge>) -> Result<PairingWindow, String
 }
 
 #[tauri::command]
-async fn approve_pairing(bridge: State<'_, Bridge>, id: String, allow: bool) -> Result<(), String> {
-    bridge.approve_pairing(id, allow).await
+async fn revoke_connection(bridge: State<'_, Bridge>, id: String) -> Result<(), String> {
+    bridge.revoke_connection(id).await
 }
 
 #[tauri::command]
-async fn revoke_connection(bridge: State<'_, Bridge>, id: String) -> Result<(), String> {
-    bridge.revoke_connection(id).await
+async fn revoke_authorization(bridge: State<'_, Bridge>, id: String) -> Result<(), String> {
+    bridge.revoke_authorization(id).await
 }
 
 #[tauri::command]
@@ -147,8 +147,8 @@ pub fn run() {
             start_bridge,
             stop_bridge,
             open_pairing,
-            approve_pairing,
             revoke_connection,
+            revoke_authorization,
             discover_providers,
             import_provider,
             save_provider,

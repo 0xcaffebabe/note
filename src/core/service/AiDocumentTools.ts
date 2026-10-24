@@ -294,7 +294,10 @@ function plainSnippet(value: string): string {
     const code = lower.startsWith('&#x') ? parseInt(lower.slice(3, -1), 16) : parseInt(lower.slice(2, -1), 10)
     return code > 0 && code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff) ? String.fromCodePoint(code) : ''
   })
-  return safeTextPrefix(decoded.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '').replace(/<[^>]*>/g, '')
+  // Separate removed markup so nested fragments cannot join into a fresh tag.
+  // This is a plain-text snippet, including for malformed or incomplete markup.
+  return safeTextPrefix(decoded.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ').replace(/<[^>]*>/g, ' ')
+    .replace(/[<>]/g, ' ')
     .replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim(), 480)
 }
 

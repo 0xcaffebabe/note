@@ -16,6 +16,14 @@ export interface AiDocumentToolResult {
   sources?: AiCitation[]
 }
 
+/** Small, display-only metadata derived locally; never a raw tool payload or model-supplied summary. */
+export interface AiToolCallOverview {
+  input: { label: string; value: string }[]
+  summary?: string
+  items?: string[]
+  note?: string
+}
+
 /** Stable across tool calls and attachment order; 0 is the catalog, content sections start at 1. */
 export function aiDocumentSourceId(docId: string, section: number): string {
   let hash = 14695981039346656037n

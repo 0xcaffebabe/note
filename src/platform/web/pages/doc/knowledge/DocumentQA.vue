@@ -38,7 +38,30 @@
             <div class="qa-assistant-message">
               <div class="qa-assistant-label"><ChatDotRound aria-hidden="true" /><span>知识助手</span></div>
               <ul v-if="turn.toolCalls.length" class="qa-tool-calls" aria-label="工具调用">
-                <li v-for="call in turn.toolCalls" :key="call.callId" :class="call.status"><span class="qa-tool-dot" aria-hidden="true"></span>{{ toolLabel(call.name) }}<span>{{ call.status === 'running' ? '读取中…' : call.status === 'error' ? '未完成' : '已读取' }}</span><small v-if="call.message">{{ call.message }}</small></li>
+                <li v-for="call in turn.toolCalls" :key="call.callId" :class="call.status">
+                  <details class="qa-tool-call">
+                    <summary>
+                      <ArrowRight class="qa-tool-chevron" aria-hidden="true" />
+                      <span class="qa-tool-dot" aria-hidden="true"></span>
+                      <span class="qa-tool-name">{{ toolLabel(call.name) }}</span>
+                      <span class="qa-tool-status">{{ call.status === 'running' ? '读取中…' : call.status === 'error' ? '未完成' : '已读取' }}</span>
+                    </summary>
+                    <div class="qa-tool-overview">
+                      <template v-if="call.overview">
+                        <dl v-if="call.overview.input.length" class="qa-tool-input">
+                          <div v-for="(field, index) in call.overview.input" :key="index"><dt>{{ field.label }}</dt><dd>{{ field.value }}</dd></div>
+                        </dl>
+                        <p v-if="call.overview.summary" class="qa-tool-result">{{ call.overview.summary }}</p>
+                        <ul v-if="call.overview.items?.length" class="qa-tool-items"><li v-for="(item, index) in call.overview.items" :key="index">{{ item }}</li></ul>
+                        <p v-if="call.overview.note" class="qa-tool-note">{{ call.overview.note }}</p>
+                      </template>
+                      <p v-else-if="call.status === 'complete'">此条历史调用未保存概览。</p>
+                      <p v-if="call.status === 'running'">正在读取，完成后将在这里显示结果概览。</p>
+                      <p v-if="call.message" class="qa-tool-error">{{ call.message }}</p>
+                      <p v-else-if="call.status === 'error'" class="qa-tool-error">此次读取未完成。</p>
+                    </div>
+                  </details>
+                </li>
               </ul>
               <AiMarkdown v-if="turn.answer" :content="turn.answer" :sources="turnSources(turn)" />
               <p v-else class="qa-muted qa-answer-placeholder">{{ busy && turn.id === activeTurnId ? '正在思考…' : turn.cancelled ? '回答已停止' : turn.error ? '未能生成回答' : '未收到回答' }}</p>
@@ -97,7 +120,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { ChatDotRound, Close, Delete, Document, EditPen, Memo, Top } from '@element-plus/icons-vue'
+import { ArrowRight, ChatDotRound, Close, Delete, Document, EditPen, Memo, Top } from '@element-plus/icons-vue'
 import type { AiBridgeEvent, AiContext, AiContextDocument, AiEffort, AiModel } from '@/core/ports/AiBridgePort'
 import type { AiCitation } from '@/core/domain/AiDocumentTools'
 import type { AiChatSession, AiChatTurn } from '@/core/service/AiChatHistoryService'
@@ -212,7 +235,7 @@ function onEvent(event: AiBridgeEvent) {
     if (event.delta.length > remaining || turn.answer.length >= 100000) cancel()
   } else if (event.type === 'tool') {
     const existing = turn.toolCalls.find(call => call.callId === event.callId)
-    const update = { callId: event.callId, name: event.name, status: event.status, message: event.message }
+    const update = { callId: event.callId, name: event.name, status: event.status, message: event.message, ...(event.overview ? { overview: event.overview } : {}) }
     if (existing) Object.assign(existing, update)
     else turn.toolCalls.push(update)
     for (const source of event.sources || []) {
@@ -221,6 +244,7 @@ function onEvent(event: AiBridgeEvent) {
       if (previous >= 0) turn.sources[previous] = source
       else if (turn.sources.length < 1600) turn.sources.push(source)
     }
+    persist()
   } else {
     busy.value = false; activeId = ''; activeTurnId.value = ''
     if (event.type === 'error') { turn.status = 'error'; turn.error = event.message; finishTools(turn) }
@@ -433,12 +457,28 @@ button svg { width: var(--font-size-xl); height: var(--font-size-xl); flex-shrin
 .qa-turn-status { margin-top: var(--spacing-md); font-size: var(--font-size-sm); }
 .qa-error { color: var(--danger-color); font-size: var(--font-size-sm); overflow-wrap: anywhere; line-height: var(--leading-normal); }
 .qa-tool-calls { margin: 0 0 var(--spacing-md); padding: 0; list-style: none; color: var(--secondary-text-color); font-size: var(--font-size-sm); }
-.qa-tool-calls li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--spacing-sm); padding-block: var(--spacing-xs); }
-.qa-tool-calls li > span:last-of-type { margin-left: auto; font-size: var(--font-size-xs); }
-.qa-tool-calls small { flex-basis: 100%; padding-left: var(--spacing-md); overflow-wrap: anywhere; }
-.qa-tool-dot { width: var(--spacing-xs); height: var(--spacing-xs); border-radius: 50%; background: currentColor; }
-.qa-tool-calls .complete .qa-tool-dot { color: var(--success-color); }
-.qa-tool-calls .error { color: var(--danger-color); }
+.qa-tool-calls > li + li { margin-top: var(--spacing-xs); }
+.qa-tool-call { min-width: 0; border-radius: var(--radius-md); }
+.qa-tool-call summary { display: flex; align-items: center; gap: var(--spacing-sm); min-height: var(--site-control-size); padding: var(--spacing-xs) var(--spacing-sm); box-sizing: border-box; border-radius: var(--radius-md); cursor: pointer; list-style: none; }
+.qa-tool-call summary::-webkit-details-marker { display: none; }
+.qa-tool-call summary:hover { background: var(--hover-bg-color); color: var(--main-text-color); }
+.qa-tool-call summary:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+.qa-tool-chevron { width: var(--font-size-xs); height: var(--font-size-xs); flex-shrink: 0; }
+.qa-tool-call[open] .qa-tool-chevron { transform: rotate(90deg); }
+.qa-tool-name { min-width: 0; overflow-wrap: anywhere; }
+.qa-tool-status { margin-left: auto; flex-shrink: 0; font-size: var(--font-size-xs); }
+.qa-tool-dot { width: var(--spacing-xs); height: var(--spacing-xs); flex-shrink: 0; border-radius: 50%; background: currentColor; }
+.qa-tool-calls > .complete .qa-tool-dot { color: var(--success-color); }
+.qa-tool-calls > .error summary, .qa-tool-error { color: var(--danger-color); }
+.qa-tool-overview { margin: var(--spacing-xs) var(--spacing-sm) var(--spacing-sm); padding: var(--spacing-md); display: flex; flex-direction: column; gap: var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--radius-lg); background: var(--hover-bg-color); line-height: var(--leading-normal); overflow-wrap: anywhere; }
+.qa-tool-input { margin: 0; display: grid; gap: var(--spacing-xs); }
+.qa-tool-input > div { display: flex; flex-wrap: wrap; column-gap: var(--spacing-md); }
+.qa-tool-input dt { flex-shrink: 0; }
+.qa-tool-input dd { margin: 0; min-width: 0; color: var(--main-text-color); }
+.qa-tool-result { color: var(--main-text-color); }
+.qa-tool-items { margin: 0; padding-left: var(--spacing-md); color: var(--main-text-color); }
+.qa-tool-items li + li { margin-top: var(--spacing-xs); }
+.qa-tool-note { font-size: var(--font-size-xs); }
 .qa-sources { display: flex; flex-wrap: wrap; gap: var(--spacing-sm); margin-top: var(--spacing-md); }
 .qa-sources a { color: var(--secondary-text-color); text-decoration: none; font-size: var(--font-size-xs); border: 1px solid var(--border-color); border-radius: 999px; padding: var(--spacing-xs) var(--spacing-sm); overflow-wrap: anywhere; }
 .qa-sources a:hover { color: var(--primary-color); border-color: var(--primary-color); }

@@ -334,7 +334,7 @@ describe('BrowserAiBridge', () => {
 
   it('传递effort与函数定义，执行已注册文档工具并回传结果和来源', async () => {
     const { bridge, sockets, events } = setup()
-    const result = { data: { headings: ['章节'] }, sources: [{ sourceId: 'D123S1', title: '来源', url: '/doc.html?headingId=one' }] }
+    const result = { data: { total: 1, headings: [{ section: 0, title: '章节' }] }, sources: [{ sourceId: 'D123S1', title: '来源', url: '/doc.html?headingId=one' }] }
     const execute = vi.fn(async () => result)
     bridge.configureTools([documentTool], execute)
     const socket = await authenticate(bridge, sockets)
@@ -343,10 +343,32 @@ describe('BrowserAiBridge', () => {
     socket.receive({ type: 'tool.call', requestId, seq: 1, callId: 'call-1', name: 'get_toc', arguments: { docId: 'doc' } })
     await vi.waitFor(() => expect(socket.sent).toContainEqual({ v: 1, type: 'tool.result', requestId, callId: 'call-1', result, isError: false }))
     expect(execute).toHaveBeenCalledWith('get_toc', { docId: 'doc' }, expect.any(AbortSignal))
-    expect(events).toContainEqual({ type: 'tool', requestId, callId: 'call-1', name: 'get_toc', status: 'complete', sources: result.sources })
+    expect(events).toContainEqual({ type: 'tool', requestId, callId: 'call-1', name: 'get_toc', status: 'running', overview: { input: [{ label: '文档', value: 'doc' }] } })
+    expect(events).toContainEqual({ type: 'tool', requestId, callId: 'call-1', name: 'get_toc', status: 'complete', sources: result.sources,
+      overview: { input: [{ label: '文档', value: 'doc' }], summary: '本次返回 1 / 1 个章节。', items: ['第 1 节：章节'] } })
     socket.receive({ type: 'chat.delta', requestId, seq: 2, delta: '基于文档的回答' })
     socket.receive({ type: 'chat.done', requestId, seq: 3, finishReason: 'stop' })
     expect(events).toContainEqual({ type: 'delta', requestId, delta: '基于文档的回答' })
+  })
+
+  it('失败事件保留读取参数，外部 frame 和结果不能注入概览，事件不暴露原始工具正文', async () => {
+    const { bridge, sockets, events } = setup()
+    const execute = vi.fn().mockRejectedValueOnce(new Error('目录不存在')).mockResolvedValueOnce({
+      data: { total: 1, headings: [{ title: '真实章节', section: 0 }], text: 'private-document-text', extra: 'private-extra' },
+      overview: { summary: 'injected-result-summary' },
+    })
+    bridge.configureTools([documentTool], execute)
+    const socket = await authenticate(bridge, sockets)
+    const requestId = bridge.start(input)
+    const overview = { input: [{ label: '文档', value: 'doc' }] }
+    socket.receive({ type: 'tool.call', requestId, seq: 1, callId: 'failed', name: 'get_toc', arguments: { docId: 'doc' }, overview: { summary: 'injected-frame-summary' } })
+    await vi.waitFor(() => expect(events).toContainEqual({ type: 'tool', requestId, callId: 'failed', name: 'get_toc', status: 'error', message: '目录不存在', overview }))
+    socket.receive({ type: 'tool.call', requestId, seq: 2, callId: 'complete', name: 'get_toc', arguments: { docId: 'doc' } })
+    await vi.waitFor(() => expect(events).toContainEqual(expect.objectContaining({ type: 'tool', callId: 'complete', status: 'complete', overview: {
+      ...overview, summary: '本次返回 1 / 1 个章节。', items: ['第 1 节：真实章节'],
+    } })))
+    expect(JSON.stringify(events)).not.toMatch(/private-|injected-/)
+    expect(JSON.stringify(socket.sent)).not.toContain('injected-result-summary')
   })
 
   it('工具只响应当前请求且不重复执行；未知函数不能调用本地执行器', async () => {

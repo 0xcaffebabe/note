@@ -90,6 +90,46 @@ describe('AiChatHistoryService', () => {
     }
   })
 
+  it('工具概览在刷新后恢复并剔除额外字段，旧记录继续保持无概览', () => {
+    const storage = new MemoryStorage()
+    const history = new AiChatHistoryService(storage)
+    const saved = session()
+    const overview = { input: [{ label: '文档', value: '数据库事务' }], summary: '本次返回 1 / 5 个章节。', items: ['第 1 节：隔离级别'], note: '仍有章节未返回。' }
+    saved.turns[0].toolCalls[0].overview = overview
+    const unsafe = structuredClone(saved)
+    Object.assign(unsafe.turns[0].toolCalls[0], { rawResult: 'private-result' })
+    Object.assign(unsafe.turns[0].toolCalls[0].overview!, { text: 'private-text' })
+    Object.assign(unsafe.turns[0].toolCalls[0].overview!.input[0], { token: 'private-token' })
+    history.save(unsafe)
+    expect(storage.getItem(AI_CHAT_HISTORY_KEY)).not.toContain('private-')
+    expect(new AiChatHistoryService(storage).list()).toEqual([saved])
+    // A modified persisted object also passes through field copying before reaching the UI or a later save.
+    storage.setItem(AI_CHAT_HISTORY_KEY, JSON.stringify({ version: 1, sessions: [unsafe, session('legacy')] }))
+    expect(history.list()).toEqual([saved, session('legacy')])
+    history.save(history.list()[0])
+    expect(storage.getItem(AI_CHAT_HISTORY_KEY)).not.toContain('private-')
+    saved.turns[0].status = 'running'
+    saved.turns[0].toolCalls[0].status = 'running'
+    history.save(saved)
+    expect(history.list()[0].turns[0].toolCalls[0]).toEqual({ callId: 'call-1', name: 'get_document', status: 'error', message: '上次读取已中断', overview })
+  })
+
+  it('概览字段超限或类型不符时拒绝保存且不会清空有效历史', () => {
+    const storage = new MemoryStorage()
+    const history = new AiChatHistoryService(storage)
+    history.save(session())
+    const original = storage.getItem(AI_CHAT_HISTORY_KEY)
+    for (const overview of [{ input: [], items: Array(9).fill('title') }, { input: [], summary: 'a'.repeat(321) }, { input: [{ label: '文档', value: 123 }] }]) {
+      const invalid = session('invalid')
+      Object.assign(invalid.turns[0].toolCalls[0], { overview })
+      expect(() => history.save(invalid)).toThrow('聊天记录格式无效')
+      expect(storage.getItem(AI_CHAT_HISTORY_KEY)).toBe(original)
+      storage.setItem(AI_CHAT_HISTORY_KEY, JSON.stringify({ version: 1, sessions: [session(), invalid] }))
+      expect(history.list()).toEqual([session()])
+      storage.setItem(AI_CHAT_HISTORY_KEY, original!)
+    }
+  })
+
   it('配额失败或记录过多时保留以前记录，明确报错而不清空', () => {
     const storage = new MemoryStorage()
     const history = new AiChatHistoryService(storage)

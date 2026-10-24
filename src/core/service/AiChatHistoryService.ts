@@ -1,12 +1,14 @@
 import type { StoragePort } from '../ports/StoragePort'
 import { AI_EFFORTS, type AiContext, type AiEffort } from '../ports/AiBridgePort'
-import type { AiCitation } from '../domain/AiDocumentTools'
+import { copyAiToolCallOverview } from './AiToolCallOverview'
+import type { AiCitation, AiToolCallOverview } from '../domain/AiDocumentTools'
 
 export interface AiToolCallRecord {
   callId: string
   name: string
   status: 'running' | 'complete' | 'error'
   message?: string
+  overview?: AiToolCallOverview
 }
 
 export interface AiChatTurn {
@@ -60,9 +62,15 @@ function validTurn(value: unknown): value is AiChatTurn {
     && Array.isArray(value.sources) && value.sources.length <= 1600
     && value.sources.every(source => object(source) && identifier(source.sourceId) && text(source.title, 2000) && siteUrl(source.url))
     && Array.isArray(value.toolCalls) && value.toolCalls.length <= 16
-    && value.toolCalls.every(call => object(call) && identifier(call.callId) && text(call.name, 80) && ['running', 'complete', 'error'].includes(String(call.status)) && (call.message === undefined || text(call.message, 2000)))
+    && value.toolCalls.every(call => object(call) && identifier(call.callId) && text(call.name, 80) && ['running', 'complete', 'error'].includes(String(call.status)) && (call.message === undefined || text(call.message, 2000)) && (call.overview === undefined || !!copyAiToolCallOverview(call.overview)))
     && (value.error === undefined || text(value.error, 2000)) && (value.cancelled === undefined || typeof value.cancelled === 'boolean')
     && (value.status === undefined || ['running', 'complete', 'cancelled', 'error'].includes(String(value.status)))
+}
+
+function copyToolCall(call: AiToolCallRecord): AiToolCallRecord {
+  const overview = copyAiToolCallOverview(call.overview)
+  return { callId: call.callId, name: call.name, status: call.status,
+    ...(call.message ? { message: call.message } : {}), ...(overview ? { overview } : {}) }
 }
 
 function validSession(value: unknown): value is AiChatSession {
@@ -93,7 +101,7 @@ export class AiChatHistoryService {
       providerId: session.providerId, model: session.model, effort: session.effort, createdAt: session.createdAt, updatedAt: session.updatedAt,
       turns: session.turns.map(turn => ({ id: turn.id, question: turn.question, answer: turn.answer, context: turn.context,
         sources: turn.sources.map(source => ({ sourceId: source.sourceId, title: source.title, url: source.url })),
-        toolCalls: turn.toolCalls.map(call => ({ callId: call.callId, name: call.name, status: call.status, ...(call.message ? { message: call.message } : {}) })),
+        toolCalls: turn.toolCalls.map(copyToolCall),
         ...(turn.status ? { status: turn.status } : {}), ...(turn.cancelled ? { cancelled: true } : {}), ...(turn.error ? { error: turn.error } : {}) })),
     })
     this.write(sessions)
@@ -110,8 +118,9 @@ export class AiChatHistoryService {
     if (!object(saved) || saved.version !== 1 || !Array.isArray(saved.sessions) || saved.sessions.length > 50) throw new Error('聊天记录版本或格式不受支持。')
     // Invalid records cannot inject links into the transcript. Leave the saved file intact until the user saves/deletes a valid record.
     return saved.sessions.filter(validSession).map(session => ({ ...session, scope: 'knowledge_base', turns: session.turns.map(turn => {
-      if (turn.status !== 'running') return turn
-      return { ...turn, status: 'cancelled' as const, cancelled: true, toolCalls: turn.toolCalls.map(call => call.status === 'running'
+      const toolCalls = turn.toolCalls.map(copyToolCall)
+      if (turn.status !== 'running') return { ...turn, toolCalls }
+      return { ...turn, status: 'cancelled' as const, cancelled: true, toolCalls: toolCalls.map(call => call.status === 'running'
         ? { ...call, status: 'error' as const, message: '上次读取已中断' } : call) }
     }) }))
   }

@@ -43,8 +43,8 @@ async function openAssistant(page: Page) {
   return dialog
 }
 
-test('首页面向知识库提问，跨文档工具检索与可信来源可导航，断线不重发', async ({ page }) => {
-  test.setTimeout(45000)
+test('首页面向知识库提问，工具概览可展开并记住，跨文档来源可导航，断线不重发', async ({ page }) => {
+  test.setTimeout(60000)
   const requests: any[] = []
   const documents = new Map<string, string[]>()
   const citedSources = new Map<string, string[]>()
@@ -135,6 +135,46 @@ test('首页面向知识库提问，跨文档工具检索与可信来源可导�
   await expect(dialog.getByRole('navigation', { name: '回答来源' }).getByRole('link')).toHaveCount(2)
   expect(requests.filter(frame => frame.type === 'tool.result').every(frame => !frame.isError)).toBe(true)
   expect(requests.find(frame => frame.callId?.endsWith('-document-0')).result.data.text.length).toBeGreaterThan(0)
+
+  const toolCalls = dialog.locator('details.qa-tool-call')
+  await expect(toolCalls).toHaveCount(6)
+  await expect(dialog.locator('.qa-tool-overview:visible')).toHaveCount(0)
+  const overviewData = requests.find(frame => frame.callId?.endsWith('-overview')).result.data
+  const overview = toolCalls.nth(0)
+  const overviewToggle = overview.locator('summary')
+  await overviewToggle.click()
+  await expect(overview.locator('.qa-tool-overview')).toBeVisible()
+  await expect(overview.locator('.qa-tool-overview')).toContainText(`${overviewData.totalDocuments} 篇文档`)
+  await expect(overview.locator('.qa-tool-overview')).toContainText(overviewData.categories[0].category === '(root)' ? '根目录' : overviewData.categories[0].category)
+  await expect(overview.locator('.qa-tool-overview')).toContainText('仍有文档未返回')
+  // Native disclosure controls remain usable by both keyboard activation keys.
+  await overviewToggle.press('Enter')
+  await expect(overview.locator('.qa-tool-overview')).toBeHidden()
+  await overviewToggle.press('Space')
+  await expect(overview.locator('.qa-tool-overview')).toBeVisible()
+  await overviewToggle.press('Space')
+  await expect(overview.locator('.qa-tool-overview')).toBeHidden()
+  const searchData = requests.find(frame => frame.callId?.endsWith('-search')).result.data
+  const searchOverview = toolCalls.nth(1).locator('.qa-tool-overview')
+  await toolCalls.nth(1).locator('summary').click()
+  await expect(searchOverview).toContainText(documents.get(start.requestId)![0])
+  await expect(searchOverview).toContainText('文档标题与路径')
+  await expect(searchOverview).toContainText(`${searchData.total} 篇匹配文档`)
+  await expect(searchOverview).toContainText(searchData.documents[0].title)
+  await toolCalls.nth(1).locator('summary').click()
+  await expect(searchOverview).toBeHidden()
+  const tocData = requests.find(frame => frame.callId?.endsWith('-toc-0')).result.data
+  await toolCalls.nth(2).locator('summary').click()
+  await expect(toolCalls.nth(2).locator('.qa-tool-overview')).toContainText(tocData.headings[0].title)
+  await toolCalls.nth(2).locator('summary').click()
+  const documentData = requests.find(frame => frame.callId?.endsWith('-document-0')).result.data
+  await toolCalls.nth(3).locator('summary').click()
+  await expect(toolCalls.nth(3).locator('.qa-tool-overview')).toContainText(documentData.title)
+  await expect(toolCalls.nth(3).locator('.qa-tool-overview')).toContainText(documentData.sectionTitle)
+  await expect(toolCalls.nth(3).locator('.qa-tool-overview')).toContainText(`${Array.from(documentData.text).length} 个字符`)
+  await toolCalls.nth(3).locator('summary').click()
+  await overviewToggle.click()
+  await overviewToggle.scrollIntoViewIfNeeded()
   const sidebar = await dialog.locator('.qa-sidebar').boundingBox()
   const main = await dialog.locator('.qa-main').boundingBox()
   expect(sidebar!.x + sidebar!.width).toBeLessThanOrEqual(main!.x + 1)
@@ -154,6 +194,9 @@ test('首页面向知识库提问，跨文档工具检索与可信来源可导�
   await expect(tools).toBeHidden()
   dialog = await openAssistant(page)
   await expect(dialog.locator('.ai-markdown h2')).toBeVisible()
+  const darkOverview = dialog.locator('details.qa-tool-call').first()
+  if (await darkOverview.getAttribute('open') === null) await darkOverview.locator('summary').click()
+  await darkOverview.locator('summary').scrollIntoViewIfNeeded()
   const dark = test.info().outputPath('assistant-desktop-dark.png')
   await dialog.screenshot({ path: dark })
   await test.info().attach('assistant-desktop-dark', { path: dark, contentType: 'image/png' })
@@ -172,6 +215,18 @@ test('首页面向知识库提问，跨文档工具检索与可信来源可导�
     const heading = new URL(url, 'http://localhost').searchParams.get('headingId')!
     await expect(page.locator('.main.markdown-section').locator(`[id=${JSON.stringify(heading)}]`)).toBeInViewport()
   }
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await expect(page.getByRole('status', { name: 'Note Bridge 已连接', exact: true })).toBeVisible()
+  dialog = await openAssistant(page)
+  await expect(dialog.locator('details.qa-tool-call')).toHaveCount(6)
+  await expect(dialog.locator('.qa-tool-overview:visible')).toHaveCount(0)
+  const restoredSearch = dialog.locator('details.qa-tool-call').nth(1)
+  await restoredSearch.locator('summary').click()
+  await expect(restoredSearch.locator('.qa-tool-overview')).toContainText(documents.get(start.requestId)![0])
+  await expect(restoredSearch.locator('.qa-tool-overview')).toContainText(searchData.documents[0].title)
+  await expect(restoredSearch.locator('.qa-tool-overview')).toContainText(`${searchData.total} 篇匹配文档`)
+  expect(requests.filter(frame => frame.type === 'chat.start')).toHaveLength(1)
+  expect(requests.filter(frame => frame.type === 'tool.result')).toHaveLength(6)
 })
 
 test('全局聊天跨路由保留，新建切换删除、模型实时更新及刷新恢复偏好', async ({ page }) => {

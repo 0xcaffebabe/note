@@ -1,17 +1,23 @@
 import { test, expect, goto } from './fixtures'
 
-test('320px 触屏聊天弹窗：历史切换、模型控制与安全 Markdown 均留在视口，关闭不影响连接', async ({ page }) => {
+test('320px 触屏聊天弹窗：历史切换、工具概览与安全 Markdown 均留在视口，关闭不影响连接', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 })
   const frames: any[] = []
+  const longQuery = 'long-query-'.repeat(12)
   await page.routeWebSocket('ws://127.0.0.1:19661/ws', socket => socket.onMessage(raw => {
     const frame = JSON.parse(String(raw))
     frames.push(frame)
     if (frame.type === 'pair') socket.send(JSON.stringify({ v: 1, type: 'auth.ok', token: 'assistant-mobile-persistent-grant', connectionId: 'mobile',
       providers: [{ id: 'mock', name: '本地测试模型', protocol: 'responses', model: 'mock-model', efforts: ['default', 'low', 'medium', 'high'] }] }))
     if (frame.type === 'chat.start') {
-      socket.send(JSON.stringify({ v: 1, type: 'chat.delta', requestId: frame.requestId, seq: 1, delta: '## 文档概要\n\n- 支持移动问答\n- 聊天记录保存在浏览器\n\n```js\n    const result = "' + 'long-code-'.repeat(18) }))
-      socket.send(JSON.stringify({ v: 1, type: 'chat.delta', requestId: frame.requestId, seq: 2, delta: '";\n```\n\n| 特性 | 状态 |\n|---|---|\n| 模型选择 | 可用 |\n\n![不加载远程图片](https://example.invalid/private)' }))
-      socket.send(JSON.stringify({ v: 1, type: 'chat.done', requestId: frame.requestId, seq: 3, finishReason: 'stop' }))
+      socket.send(JSON.stringify({ v: 1, type: 'tool.call', requestId: frame.requestId, seq: 1, callId: `${frame.requestId}-search`, name: 'search_documents', arguments: { query: longQuery, scope: 'catalog' } }))
+    }
+    if (frame.type === 'tool.result') {
+      expect(frame.isError, JSON.stringify(frame.result)).toBe(false)
+      expect(frame.result.data.total).toBe(0)
+      socket.send(JSON.stringify({ v: 1, type: 'chat.delta', requestId: frame.requestId, seq: 2, delta: '## 文档概要\n\n- 支持移动问答\n- 聊天记录保存在浏览器\n\n```js\n    const result = "' + 'long-code-'.repeat(18) }))
+      socket.send(JSON.stringify({ v: 1, type: 'chat.delta', requestId: frame.requestId, seq: 3, delta: '";\n```\n\n| 特性 | 状态 |\n|---|---|\n| 模型选择 | 可用 |\n\n![不加载远程图片](https://example.invalid/private)' }))
+      socket.send(JSON.stringify({ v: 1, type: 'chat.done', requestId: frame.requestId, seq: 4, finishReason: 'stop' }))
     }
   }))
   await goto(page, '/home.html')
@@ -52,9 +58,22 @@ test('320px 触屏聊天弹窗：历史切换、模型控制与安全 Markdown �
   expect(await dialog.locator('.qa-main').evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true)
   expect(await dialog.locator('.ai-markdown pre').evaluate(element => element.scrollWidth > element.clientWidth)).toBe(true)
   for (const control of [question, model, effort, dialog.getByRole('button', { name: /关闭|close/i })]) await expect(control).toBeInViewport({ ratio: 1 })
+  const toolCall = dialog.locator('details.qa-tool-call')
+  const overview = toolCall.locator('.qa-tool-overview')
+  await expect(overview).toBeHidden()
+  await toolCall.locator('summary').tap()
+  await expect(overview).toBeVisible()
+  await expect(overview).toContainText(longQuery)
+  await expect(overview).toContainText('0 篇匹配文档')
+  for (const container of [dialog, dialog.locator('.qa-main'), overview]) {
+    expect(await container.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true)
+  }
+  await expect(question).toBeInViewport({ ratio: 1 })
   const mobile = test.info().outputPath('assistant-mobile-320px.png')
   await dialog.screenshot({ path: mobile })
   await test.info().attach('assistant-mobile-320px', { path: mobile, contentType: 'image/png' })
+  await toolCall.locator('summary').tap()
+  await expect(overview).toBeHidden()
   await dialog.getByRole('button', { name: '显示聊天记录', exact: true }).tap()
   await expect(dialog.locator('.qa-session-select')).toHaveCount(1)
   const history = test.info().outputPath('assistant-mobile-history.png')
@@ -65,6 +84,9 @@ test('320px 触屏聊天弹窗：历史切换、模型控制与安全 Markdown �
   await expect(effort).toHaveValue('high')
   await page.setViewportSize({ width: 390, height: 844 })
   await expect(dialog.locator('.knowledge-assistant-dialog')).toBeInViewport({ ratio: 1 })
+  await toolCall.locator('summary').tap()
+  await expect(overview).toBeVisible()
+  expect(await overview.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true)
   const comfortable = test.info().outputPath('assistant-mobile-390px.png')
   await dialog.screenshot({ path: comfortable })
   await test.info().attach('assistant-mobile-390px', { path: comfortable, contentType: 'image/png' })

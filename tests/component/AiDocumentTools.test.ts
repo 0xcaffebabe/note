@@ -187,6 +187,25 @@ describe('AiDocumentTools', () => {
     expect((indexOnly.data as any).documents.every((doc: any) => doc.matchedIn.join(',') === 'fulltext')).toBe(true)
   })
 
+  it('全文片段中嵌套、未闭合和实体编码的标签不会重新拼成标记，相邻文字保持分隔', async () => {
+    const { execute, search } = setup()
+    const snippets = [
+      '前<scr<script>removed</script>ipt 后<sty<style>removed</style>le',
+      '&lt;scr&lt;script&gt;removed&lt;/script&gt;ipt &#60;img src=x',
+      '甲<mark>乙</mark>丙<script>removed</script><img src=x',
+    ]
+    search.search.mockResolvedValue({ took: 1, list: [{ url: '/related.html', hilighedUrl: '', createTime: '',
+      hilighedSegement: snippets.map(txt => ({ id: '', txt })) }] })
+    const result = await execute('search_documents', { query: '片段', scope: 'fulltext' })
+    const texts = (result.data as { documents: { snippets: string[] }[] }).documents[0].snippets
+    expect(texts).toHaveLength(3)
+    for (const text of texts) {
+      expect(text).not.toMatch(/[<>]/)
+      expect(text).not.toContain('removed')
+    }
+    expect(texts[2]).toContain('甲 乙 丙')
+  })
+
   it('全文索引不可用或失败会明确退回目录，错误不泄露，取消不会伪装为搜索结果', async () => {
     const { execute, search, context, docs, categories, knowledge } = setup()
     search.search.mockRejectedValue(new Error('https://private.example?token=SECRET'))

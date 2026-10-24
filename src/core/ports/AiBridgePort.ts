@@ -1,4 +1,4 @@
-import type { AiCitation, AiDocumentToolDefinition, AiDocumentToolResult } from '../domain/AiDocumentTools'
+import type { AiCitation, AiDocumentToolDefinition, AiDocumentToolResult, AiToolCallOverview } from '../domain/AiDocumentTools'
 
 export const AI_EFFORTS = ['default', 'none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max', 'ultra'] as const
 export type AiEffort = typeof AI_EFFORTS[number]
@@ -72,7 +72,7 @@ export type AiBridgeEvent =
   | { type: 'delta'; requestId: string; delta: string }
   | { type: 'done'; requestId: string; cancelled: boolean }
   | { type: 'error'; requestId: string; message: string }
-  | { type: 'tool'; requestId: string; callId: string; name: string; status: 'running' | 'complete' | 'error'; message?: string; sources?: AiCitation[] }
+  | { type: 'tool'; requestId: string; callId: string; name: string; status: 'running' | 'complete' | 'error'; message?: string; sources?: AiCitation[]; overview?: AiToolCallOverview }
 
 /** Shared website connection. Only the origin-bound bridge grant is persisted, never an AI API key. */
 export interface AiBridgePort {

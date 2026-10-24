@@ -1,6 +1,7 @@
 import { AI_EFFORTS } from '@/core/ports/AiBridgePort'
 import type { AiBridgeEvent, AiBridgePort, AiBridgeSnapshot, AiBridgeState, AiChatInput, AiProvider, AiToolDefinition, AiToolExecutor, AiEffort } from '@/core/ports/AiBridgePort'
 import type { AiCitation, AiDocumentToolResult } from '@/core/domain/AiDocumentTools'
+import { buildAiToolCallOverview } from '@/core/service/AiToolCallOverview'
 import type { StoragePort } from '@/core/ports/StoragePort'
 import { browserStorage } from './LocalStorageAdapter'
 
@@ -423,7 +424,8 @@ export class BrowserAiBridge implements AiBridgePort {
     let timedOut = false
     const timer = setTimeout(() => { timedOut = true; controller.abort() }, 25000)
     let abortListener: (() => void) | undefined
-    this.emit({ type: 'tool', requestId: active.id, callId, name, status: 'running' })
+    const overview = buildAiToolCallOverview(name, args)
+    this.emit({ type: 'tool', requestId: active.id, callId, name, status: 'running', ...(overview ? { overview } : {}) })
     try {
       if (!active.tools.has(name) || !active.execute) throw new Error('未注册的文档工具')
       const aborted = new Promise<never>((_, reject) => {
@@ -438,13 +440,13 @@ export class BrowserAiBridge implements AiBridgePort {
       const safeResult: AiDocumentToolResult = { data: result.data, ...(sources.length ? { sources } : {}) }
       this.send({ type: 'tool.result', requestId: active.id, callId, result: safeResult, isError: false })
       this.armResponseTimeout()
-      this.emit({ type: 'tool', requestId: active.id, callId, name, status: 'complete', sources })
+      this.emit({ type: 'tool', requestId: active.id, callId, name, status: 'complete', sources, overview: buildAiToolCallOverview(name, args, safeResult) })
     } catch (cause) {
       if (!current()) return
       const message = cause instanceof Error ? cause.message.slice(0, 1000) : '文档工具读取失败'
       try {
         this.send({ type: 'tool.result', requestId: active.id, callId, result: { data: { error: message } }, isError: true })
-        this.emit({ type: 'tool', requestId: active.id, callId, name, status: 'error', message })
+        this.emit({ type: 'tool', requestId: active.id, callId, name, status: 'error', message, ...(overview ? { overview } : {}) })
       } catch { this.failConnection('连接已断开，稍后自动重连；问题不会自动重发') }
     } finally {
       clearTimeout(timer)

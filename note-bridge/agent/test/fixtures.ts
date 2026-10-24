@@ -255,8 +255,9 @@ export function mockFetch(
         : input instanceof URL
           ? input.href
           : input.url;
-    if (url.startsWith(ORIGIN)) {
-      const body = knowledge.get(new URL(url).pathname);
+    const target = new URL(url);
+    if (target.origin === ORIGIN) {
+      const body = knowledge.get(target.pathname);
       return new Response(body ?? "missing", {
         status: body ? 200 : 404,
         headers: { "content-type": "application/json" },

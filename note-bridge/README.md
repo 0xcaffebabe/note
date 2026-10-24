@@ -127,4 +127,4 @@ pi-ai 的环境变量/文件凭据探测已禁用，仅注册 bridge 的模型�
 
 2026-10-24 本地验证：网站 1153 项单元/组件、154 项浏览器 E2E、桌面 UI 10 项、Agent 37 项、Rust 51 项全部通过；网站与桌面构建、Rust fmt/Clippy 通过。macOS Apple Silicon 0.2.0 DMG 已构建，并直接使用包内 Node 与 Pi 资源再次通过真实 Rust→Node→Pi→mock 模型/知识站点端到端测试，涵盖工具读取、断线继续及重启持久化。此测试使用隔离目录，不等同于从 DMG 安装后的 GUI/Keychain 实机验收。
 
-职责拆分后重新通过 Agent 37 项、Rust 53 项（新增两条凭据清理失败回归）、桌面 UI 10 项；严格 TypeScript 检查、Prettier、rustfmt 和整个 Rust workspace 的 Clippy 均通过。重新构建 macOS Apple Silicon DMG，并用新包内 Node/Pi 通过同一隔离端到端链路。重构保持产品协议、SQLite 格式、知识版本校验及公开 Rust API，未改变网站页面。
+职责拆分后重新通过 Agent 38 项（含测试夹具精确 Origin 路由回归）、Rust 53 项（新增两条凭据清理失败回归）、桌面 UI 10 项；严格 TypeScript 检查、Prettier、rustfmt 和整个 Rust workspace 的 Clippy 均通过。重新构建 macOS Apple Silicon DMG，并用新包内 Node/Pi 通过同一隔离端到端链路。重构保持产品协议、SQLite 格式、知识版本校验及公开 Rust API，未改变网站页面。

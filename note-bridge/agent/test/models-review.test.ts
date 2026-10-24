@@ -15,6 +15,28 @@ import {
 } from './fixtures.js';
 import type { ChatTurn, SessionSummary } from '../src/types.js';
 
+test('mock knowledge routing requires the exact site origin', async () => {
+  const modelRequests: string[] = [];
+  const fetcher = mockFetch(({ url }) => {
+    modelRequests.push(url);
+    return new Response('model response');
+  });
+  const manifest = await fetcher(`${ORIGIN}/ai/manifest.json`);
+  assert.equal(manifest.status, 200);
+  assert.equal((await manifest.json()).schemaVersion, 1);
+
+  const otherOrigins = [
+    'https://notes.test.evil/ai/manifest.json',
+    'https://notes.test@evil.test/ai/manifest.json',
+    'https://notes.test:8443/ai/manifest.json',
+  ];
+  for (const url of otherOrigins) {
+    const response = await fetcher(url, { method: 'POST', body: '{}' });
+    assert.equal(await response.text(), 'model response');
+  }
+  assert.deepEqual(modelRequests, otherOrigins);
+});
+
 async function finish(runtime: AgentRuntime, sessionId: string) {
   for (let i = 0; i < 150; i++) {
     const page = (await runtime.request(AUTH, 'sessions.get', {

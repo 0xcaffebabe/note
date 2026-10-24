@@ -23,8 +23,10 @@ export interface AiChatTurn {
 
 export interface AiChatSession {
   id: string
-  docId: string
-  docTitle: string
+  scope: 'knowledge_base'
+  /** Original document retained for legacy history only; it does not limit the conversation. */
+  docId?: string
+  docTitle?: string
   title: string
   providerId: string
   model: string
@@ -46,7 +48,7 @@ function siteUrl(value: unknown): value is string {
 }
 
 function validContext(value: unknown): value is AiContext {
-  if (!object(value) || !Array.isArray(value.documents) || value.documents.length > 3) return false
+  if (!object(value) || (value.scope !== undefined && value.scope !== 'knowledge_base') || !Array.isArray(value.documents) || value.documents.length > 3) return false
   return value.documents.every(doc => object(doc) && text(doc.docId, 512) && text(doc.title, 2000) && siteUrl(doc.url)
     && text(doc.contentHash, 256) && Array.isArray(doc.sources) && doc.sources.length <= 256
     && Array.isArray(doc.headings) && doc.headings.length <= 100 && Array.isArray(doc.relatedLinks) && doc.relatedLinks.length <= 30
@@ -64,8 +66,10 @@ function validTurn(value: unknown): value is AiChatTurn {
 }
 
 function validSession(value: unknown): value is AiChatSession {
-  return object(value) && identifier(value.id) && text(value.docId, 512) && !!value.docId
-    && text(value.docTitle, 2000) && text(value.title, 200) && text(value.providerId, 128) && text(value.model, 256)
+  return object(value) && identifier(value.id)
+    && (value.scope === 'knowledge_base' || (value.scope === undefined && text(value.docId, 512) && !!value.docId && text(value.docTitle, 2000)))
+    && (value.docId === undefined || (text(value.docId, 512) && !!value.docId)) && (value.docTitle === undefined || text(value.docTitle, 2000))
+    && text(value.title, 200) && text(value.providerId, 128) && text(value.model, 256)
     && AI_EFFORTS.includes(value.effort as AiEffort) && Number.isFinite(value.createdAt) && Number.isFinite(value.updatedAt)
     && Array.isArray(value.turns) && value.turns.length <= 40 && value.turns.every(validTurn)
 }
@@ -74,9 +78,8 @@ function validSession(value: unknown): value is AiChatSession {
 export class AiChatHistoryService {
   constructor(private readonly storage: StoragePort) {}
 
-  list(docId?: string): AiChatSession[] {
-    const sessions = this.read()
-    return sessions.filter(session => docId === undefined || session.docId === docId).sort((a, b) => b.updatedAt - a.updatedAt)
+  list(): AiChatSession[] {
+    return this.read().sort((a, b) => b.updatedAt - a.updatedAt)
   }
 
   save(session: AiChatSession): void {
@@ -86,7 +89,7 @@ export class AiChatHistoryService {
     if (sessions.length >= 50) throw new Error('已保存 50 个聊天，请删除不再需要的记录后重试。')
     // Copy only declared fields; runtime state, executors, and accidental secrets are never serialized.
     sessions.unshift({
-      id: session.id, docId: session.docId, docTitle: session.docTitle, title: session.title,
+      id: session.id, scope: 'knowledge_base', docId: session.docId, docTitle: session.docTitle, title: session.title,
       providerId: session.providerId, model: session.model, effort: session.effort, createdAt: session.createdAt, updatedAt: session.updatedAt,
       turns: session.turns.map(turn => ({ id: turn.id, question: turn.question, answer: turn.answer, context: turn.context,
         sources: turn.sources.map(source => ({ sourceId: source.sourceId, title: source.title, url: source.url })),
@@ -106,7 +109,7 @@ export class AiChatHistoryService {
     try { saved = JSON.parse(raw) } catch { throw new Error('聊天记录格式损坏，请保留浏览器数据后处理。') }
     if (!object(saved) || saved.version !== 1 || !Array.isArray(saved.sessions) || saved.sessions.length > 50) throw new Error('聊天记录版本或格式不受支持。')
     // Invalid records cannot inject links into the transcript. Leave the saved file intact until the user saves/deletes a valid record.
-    return saved.sessions.filter(validSession).map(session => ({ ...session, turns: session.turns.map(turn => {
+    return saved.sessions.filter(validSession).map(session => ({ ...session, scope: 'knowledge_base', turns: session.turns.map(turn => {
       if (turn.status !== 'running') return turn
       return { ...turn, status: 'cancelled' as const, cancelled: true, toolCalls: turn.toolCalls.map(call => call.status === 'running'
         ? { ...call, status: 'error' as const, message: '上次读取已中断' } : call) }

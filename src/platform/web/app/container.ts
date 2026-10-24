@@ -17,7 +17,7 @@ import { AiDocumentTools } from '@/core/service/AiDocumentTools'
 const aiContextService = new AiContextService(docService, browserDomParser)
 const aiBridge = new BrowserAiBridge()
 const aiChatHistory = new AiChatHistoryService(browserStorage)
-const aiDocumentTools = new AiDocumentTools(aiContextService, docService, categoryService, api)
+const aiDocumentTools = new AiDocumentTools(aiContextService, docService, categoryService, api, searchService)
 aiBridge.configureTools(aiDocumentTools.definitions, (name, args, signal) => aiDocumentTools.execute(name, args, signal))
 
 export const services = {

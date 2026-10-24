@@ -43,10 +43,11 @@ async function openAssistant(page: Page) {
   return dialog
 }
 
-test('聊天弹窗调用真实文档工具，流式 Markdown 与可信来源可导航，断线不重发', async ({ page }) => {
+test('首页面向知识库提问，跨文档工具检索与可信来源可导航，断线不重发', async ({ page }) => {
   test.setTimeout(45000)
   const requests: any[] = []
-  const documents = new Map<string, string>()
+  const documents = new Map<string, string[]>()
+  const citedSources = new Map<string, string[]>()
   let disconnect = () => {}
   await page.routeWebSocket('ws://127.0.0.1:19661/ws', socket => {
     disconnect = () => socket.close()
@@ -57,25 +58,47 @@ test('聊天弹窗调用真实文档工具，流式 Markdown 与可信来源可�
         socket.send(JSON.stringify(authResponse))
       }
       if (frame.type === 'chat.start') {
-        documents.set(frame.requestId, frame.context.documents[0].docId)
-        socket.send(JSON.stringify({ v: 1, type: 'tool.call', requestId: frame.requestId, seq: 1, callId: `${frame.requestId}-toc`, name: 'get_toc', arguments: { docId: documents.get(frame.requestId) } }))
+        // The page contributes no document: the model discovers context through the catalog.
+        expect(frame.context).toMatchObject({ scope: 'knowledge_base', documents: [] })
+        socket.send(JSON.stringify({ v: 1, type: 'tool.call', requestId: frame.requestId, seq: 1, callId: `${frame.requestId}-overview`, name: 'get_knowledge_overview', arguments: { limit: 30 } }))
       }
-      if (frame.type === 'tool.result' && frame.callId.endsWith('-toc')) {
+      if (frame.type === 'tool.result' && frame.callId.endsWith('-overview')) {
         expect(frame.isError, JSON.stringify(frame.result)).toBe(false)
-        const heading = frame.result.data.headings.find((item: { headingId: string }) => item.headingId)
-        socket.send(JSON.stringify({ v: 1, type: 'tool.call', requestId: frame.requestId, seq: 2, callId: `${frame.requestId}-document`, name: 'get_document', arguments: { docId: documents.get(frame.requestId), section: heading.section } }))
+        expect(frame.result.data.totalDocuments).toBeGreaterThan(1)
+        const found = frame.result.data.documents.map((item: { docId: string }) => item.docId)
+        expect(new Set(found).size).toBeGreaterThan(1)
+        const selected = [...new Set<string>(found)].slice(0, 2)
+        documents.set(frame.requestId, selected)
+        citedSources.set(frame.requestId, [])
+        socket.send(JSON.stringify({ v: 1, type: 'tool.call', requestId: frame.requestId, seq: 2, callId: `${frame.requestId}-search`, name: 'search_documents', arguments: { query: selected[0], scope: 'catalog', limit: 5 } }))
       }
-      if (frame.type === 'tool.result' && frame.callId.endsWith('-document')) {
+      if (frame.type === 'tool.result' && frame.callId.endsWith('-search')) {
         expect(frame.isError, JSON.stringify(frame.result)).toBe(false)
-        const sourceId = frame.result.sources[0].sourceId
-        socket.send(JSON.stringify({ v: 1, type: 'chat.delta', requestId: frame.requestId, seq: 3, delta: '## 文档的关键结论\n\n- 通过目录找到实际章节\n- 按需读取原文作为依据\n\n| 内容 | 来源 |\n|---|---|\n| 关键概念 | 当前文档 |\n\n```python\nif context:\n    answer(context)' }))
-        socket.send(JSON.stringify({ v: 1, type: 'chat.delta', requestId: frame.requestId, seq: 4, delta: `\n\`\`\`\n\n这段说明来自原文。[${sourceId}]` }))
-        socket.send(JSON.stringify({ v: 1, type: 'chat.done', requestId: frame.requestId, seq: 5, finishReason: 'stop' }))
+        const first = documents.get(frame.requestId)![0]
+        expect(frame.result.data.documents.map((item: { docId: string }) => item.docId)).toContain(first)
+        socket.send(JSON.stringify({ v: 1, type: 'tool.call', requestId: frame.requestId, seq: 3, callId: `${frame.requestId}-toc-0`, name: 'get_toc', arguments: { docId: first } }))
+      }
+      if (frame.type === 'tool.result' && /-toc-[01]$/.test(frame.callId)) {
+        expect(frame.isError, JSON.stringify(frame.result)).toBe(false)
+        const index = Number(frame.callId.at(-1))
+        const heading = frame.result.data.headings.find((item: { headingId: string }) => item.headingId) || frame.result.data.headings[0]
+        socket.send(JSON.stringify({ v: 1, type: 'tool.call', requestId: frame.requestId, seq: 4 + index * 2, callId: `${frame.requestId}-document-${index}`, name: 'get_document', arguments: { docId: documents.get(frame.requestId)![index], section: heading.section } }))
+      }
+      if (frame.type === 'tool.result' && /-document-[01]$/.test(frame.callId)) {
+        expect(frame.isError, JSON.stringify(frame.result)).toBe(false)
+        const index = Number(frame.callId.at(-1))
+        citedSources.get(frame.requestId)!.push(frame.result.sources[0].sourceId)
+        if (index === 0) {
+          socket.send(JSON.stringify({ v: 1, type: 'tool.call', requestId: frame.requestId, seq: 5, callId: `${frame.requestId}-toc-1`, name: 'get_toc', arguments: { docId: documents.get(frame.requestId)![1] } }))
+          return
+        }
+        socket.send(JSON.stringify({ v: 1, type: 'chat.delta', requestId: frame.requestId, seq: 7, delta: '## 知识库的综合结论\n\n- 通过全库检索发现相关文档\n- 跨文档读取原文作为依据\n\n| 内容 | 来源 |\n|---|---|\n| 关键概念 | 多篇文档 |\n\n```python\nif context:\n    answer(context)' }))
+        socket.send(JSON.stringify({ v: 1, type: 'chat.delta', requestId: frame.requestId, seq: 8, delta: `\n\`\`\`\n\n这段说明综合了两篇原文。${citedSources.get(frame.requestId)!.map(id => `[${id}]`).join(' ')}` }))
+        socket.send(JSON.stringify({ v: 1, type: 'chat.done', requestId: frame.requestId, seq: 9, finishReason: 'stop' }))
       }
     })
   })
-  await goto(page, DOC)
-  await expect(page.locator('.markdown-section h2').first()).toBeVisible()
+  await goto(page, '/home.html')
   const unpairedAssistant = await openAssistant(page)
   await unpairedAssistant.getByRole('button', { name: '打开 Note Bridge 连接设置', exact: true }).click()
   await expect(unpairedAssistant).toBeHidden()
@@ -94,23 +117,24 @@ test('聊天弹窗调用真实文档工具，流式 Markdown 与可信来源可�
   await expect(dialog.getByRole('textbox', { name: '配对码', exact: true })).toHaveCount(0)
   await dialog.getByRole('combobox', { name: '模型', exact: true }).selectOption(modelKey('reasoner', 'gateway/reasoning-pro'))
   await dialog.getByRole('combobox', { name: '思考强度', exact: true }).selectOption('high')
-  await dialog.getByRole('textbox', { name: '你的问题', exact: true }).fill('这篇文章讲了什么？')
+  await dialog.getByRole('textbox', { name: '你的问题', exact: true }).fill('请综合知识库中相关文档，解释它们的关键概念和联系。')
   await dialog.getByRole('button', { name: '发送问题', exact: true }).click()
-  await expect(dialog.locator('.ai-markdown h2')).toHaveText('文档的关键结论')
+  await expect(dialog.locator('.ai-markdown h2')).toHaveText('知识库的综合结论')
   await expect(dialog.locator('.ai-markdown li')).toHaveCount(2)
   await expect(dialog.locator('.ai-markdown table td')).toHaveCount(2)
   await expect(dialog.locator('.ai-markdown pre code')).toHaveText('if context:\n    answer(context)')
   await expect(dialog.getByRole('button', { name: '复制代码', exact: true })).toBeVisible()
-  await expect(dialog.locator('.qa-tool-calls .complete')).toHaveCount(2)
+  await expect(dialog.locator('.qa-tool-calls .complete')).toHaveCount(6)
   await expect(dialog.getByRole('button', { name: '停止生成', exact: true })).toHaveCount(0)
   const start = requests.find(frame => frame.type === 'chat.start')
   expect(start.providerId).toBe('reasoner')
   expect(start.model).toBe('gateway/reasoning-pro')
   expect(start.effort).toBe('high')
-  expect(start.tools.map((tool: { name: string }) => tool.name)).toEqual(['get_document', 'get_toc', 'get_knowledge_network', 'get_related_documents', 'search_documents'])
-  expect(start.context.documents[0].sources).toEqual([])
+  expect(start.tools.map((tool: { name: string }) => tool.name)).toEqual(['get_document', 'get_toc', 'get_knowledge_network', 'get_related_documents', 'search_documents', 'get_knowledge_overview'])
+  expect(start.context).toMatchObject({ scope: 'knowledge_base', documents: [] })
+  await expect(dialog.getByRole('navigation', { name: '回答来源' }).getByRole('link')).toHaveCount(2)
   expect(requests.filter(frame => frame.type === 'tool.result').every(frame => !frame.isError)).toBe(true)
-  expect(requests.find(frame => frame.callId?.endsWith('-document')).result.data.text.length).toBeGreaterThan(0)
+  expect(requests.find(frame => frame.callId?.endsWith('-document-0')).result.data.text.length).toBeGreaterThan(0)
   const sidebar = await dialog.locator('.qa-sidebar').boundingBox()
   const main = await dialog.locator('.qa-main').boundingBox()
   expect(sidebar!.x + sidebar!.width).toBeLessThanOrEqual(main!.x + 1)
@@ -140,7 +164,7 @@ test('聊天弹窗调用真实文档工具，流式 Markdown 与可信来源可�
   disconnect()
   await expect.poll(() => requests.filter(frame => frame.type === 'auth').length).toBe(1)
   await expect(dialog.locator('.qa-connection')).toHaveText('已连接')
-  await expect(dialog.locator('.ai-markdown h2')).toHaveText('文档的关键结论')
+  await expect(dialog.locator('.ai-markdown h2')).toHaveText('知识库的综合结论')
   await expect(dialog.getByRole('combobox', { name: '思考强度', exact: true })).toHaveValue('high')
   expect(requests.filter(frame => frame.type === 'chat.start')).toHaveLength(1)
   await citation.click()
@@ -150,7 +174,7 @@ test('聊天弹窗调用真实文档工具，流式 Markdown 与可信来源可�
   }
 })
 
-test('聊天记录可新建切换删除，模型列表实时更新，刷新恢复会话和模型偏好', async ({ page }) => {
+test('全局聊天跨路由保留，新建切换删除、模型实时更新及刷新恢复偏好', async ({ page }) => {
   const requests: any[] = []
   const liveAuth = JSON.parse(JSON.stringify(authResponse))
   await page.routeWebSocket('ws://127.0.0.1:19661/ws', socket => socket.onMessage(raw => {
@@ -197,8 +221,17 @@ test('聊天记录可新建切换删除，模型列表实时更新，刷新恢�
   await expect(dialog.getByRole('combobox', { name: '思考强度', exact: true })).toHaveValue('low')
   await page.keyboard.press('Escape')
   await expect(page.getByRole('status', { name: 'Note Bridge 已连接', exact: true })).toBeVisible()
+  await page.locator('.navigation-launcher').focus()
+  await page.keyboard.press('Enter')
+  await page.getByRole('navigation', { name: '站内导航', exact: true }).getByRole('link', { name: '首页', exact: true }).click()
+  await expect(page).toHaveURL(/\/home\.html$/)
   dialog = await openAssistant(page)
   await expect(dialog.locator('.ai-markdown')).toContainText('已回答：第二段推导')
+  // Browser navigation while the modal is open keeps the same global conversation visible.
+  await page.goBack()
+  await expect(dialog).toBeVisible()
+  await expect(dialog.locator('.ai-markdown')).toContainText('已回答：第二段推导')
+  await expect(dialog.locator('.qa-session-select')).toHaveCount(2)
   await page.reload({ waitUntil: 'domcontentloaded' })
   await expect(page.getByRole('status', { name: 'Note Bridge 已连接', exact: true })).toBeVisible()
   dialog = await openAssistant(page)

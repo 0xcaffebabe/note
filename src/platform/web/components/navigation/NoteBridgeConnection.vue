@@ -2,7 +2,7 @@
   <el-dialog :model-value="modelValue" title="Note Bridge 连接" width="min(100% - var(--spacing-xl), 480px)" append-to-body @update:model-value="$emit('update:modelValue', $event)" @closed="$emit('closed')">
     <section class="bridge-connection" aria-label="Note Bridge 连接设置">
       <p class="bridge-status" :class="{ connected: state === 'ready' }" role="status"><span class="status-dot" aria-hidden="true"></span>{{ statusText }}</p>
-      <p class="bridge-hint">连接本机 Note Bridge 后，可在文档的知识助手中使用已配置的模型。</p>
+      <p class="bridge-hint">连接本机 Note Bridge，向整个知识库提问。</p>
       <p v-if="snapshot.remembered" class="bridge-hint">已记住此浏览器的连接凭证，刷新后会自动重连。服务商密钥仅保存在桌面端。</p>
       <p v-else-if="state === 'ready'" class="bridge-hint">当前页面已连接，但未能保存连接凭证，刷新后需要重新配对。</p>
       <p v-else class="bridge-hint">输入桌面端生成的一次性配对码即可连接。成功后会自动保存连接凭证，刷新页面无需再次输入配对码。</p>

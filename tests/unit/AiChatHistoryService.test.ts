@@ -9,9 +9,9 @@ class MemoryStorage implements StoragePort {
   setItem(key: string, value: string) { this.values.set(key, value) }
   removeItem(key: string) { this.values.delete(key) }
 }
-function session(id = 'chat-1', docId = 'doc-one'): AiChatSession {
-  return { id, docId, docTitle: '测试文档', title: '这篇文档讲了什么', providerId: 'provider-1', model: 'model', effort: 'high', createdAt: 1, updatedAt: 2,
-    turns: [{ id: 'turn-1', question: '问题', answer: '**回答** [D1S1]', status: 'complete', context: { documents: [] },
+function session(id = 'chat-1', docId?: string): AiChatSession {
+  return { id, scope: 'knowledge_base', ...(docId ? { docId, docTitle: '测试文档' } : {}), title: '知识库有哪些主题', providerId: 'provider-1', model: 'model', effort: 'high', createdAt: 1, updatedAt: 2,
+    turns: [{ id: 'turn-1', question: '问题', answer: '**回答** [D1S1]', status: 'complete', context: { scope: 'knowledge_base', documents: [] },
       sources: [{ sourceId: 'D1S1', title: '来源', url: '/doc/one.html?headingId=section' }], toolCalls: [{ callId: 'call-1', name: 'get_document', status: 'complete' }] }] }
 }
 
@@ -23,9 +23,36 @@ describe('AiChatHistoryService', () => {
     history.save({ ...session('chat-2', 'another-doc'), updatedAt: 4 })
     const refreshed = new AiChatHistoryService(storage)
     expect(refreshed.list().map(item => item.id)).toEqual(['chat-2', 'chat-1'])
-    expect(refreshed.list('doc-one')[0]).toEqual(session())
+    expect(refreshed.list()[1]).toEqual(session())
     refreshed.remove('chat-2')
     expect(refreshed.list()).toEqual([session()])
+  })
+
+  it('旧文档会话迁移为全局范围，保留历史、来源和原始文档信息，读取不改写存储', () => {
+    const storage = new MemoryStorage()
+    const { scope: _, ...legacy } = session('old-chat', 'old-doc')
+    const original = JSON.stringify({ version: 1, sessions: [legacy] })
+    storage.setItem(AI_CHAT_HISTORY_KEY, original)
+    const history = new AiChatHistoryService(storage)
+    expect(history.list()).toEqual([{ ...legacy, scope: 'knowledge_base' }])
+    expect(storage.getItem(AI_CHAT_HISTORY_KEY)).toBe(original)
+    history.save(history.list()[0])
+    expect(JSON.parse(storage.getItem(AI_CHAT_HISTORY_KEY)!).sessions[0]).toMatchObject({ scope: 'knowledge_base', docId: 'old-doc', docTitle: '测试文档' })
+    history.save(session())
+    expect(history.list().find(item => item.id === 'chat-1')).not.toHaveProperty('docId')
+  })
+
+  it('拒绝未知会话和上下文范围，兼容旧的无范围文档上下文', () => {
+    const storage = new MemoryStorage()
+    const history = new AiChatHistoryService(storage)
+    for (const unsafe of [{ ...session(), scope: 'outside' }, { ...session(), turns: [{ ...session().turns[0], context: { scope: 'outside', documents: [] } }] }]) {
+      storage.setItem(AI_CHAT_HISTORY_KEY, JSON.stringify({ version: 1, sessions: [unsafe] }))
+      expect(history.list()).toEqual([])
+    }
+    const compatible = session()
+    compatible.turns[0].context = { documents: [] }
+    storage.setItem(AI_CHAT_HISTORY_KEY, JSON.stringify({ version: 1, sessions: [compatible] }))
+    expect(history.list()).toEqual([compatible])
   })
 
   it('兼容原有单模型记录并保存同一服务商的实际模型及扩展强度', () => {

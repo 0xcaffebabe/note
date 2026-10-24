@@ -1,4 +1,4 @@
-import { test, expect, goto, DOC } from './fixtures'
+import { test, expect, goto } from './fixtures'
 
 test('320px 触屏聊天弹窗：历史切换、模型控制与安全 Markdown 均留在视口，关闭不影响连接', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 })
@@ -14,7 +14,7 @@ test('320px 触屏聊天弹窗：历史切换、模型控制与安全 Markdown �
       socket.send(JSON.stringify({ v: 1, type: 'chat.done', requestId: frame.requestId, seq: 3, finishReason: 'stop' }))
     }
   }))
-  await goto(page, DOC)
+  await goto(page, '/home.html')
   const launcher = page.locator('.navigation-launcher')
   await launcher.tap()
   await page.getByRole('button', { name: /^Note Bridge：/ }).tap()
@@ -43,7 +43,7 @@ test('320px 触屏聊天弹窗：历史切换、模型控制与安全 Markdown �
   await dialog.getByRole('button', { name: '收起聊天记录', exact: true }).tap()
   await expect(question).toBeFocused()
   await effort.selectOption('high')
-  await question.fill('总结当前文档')
+  await question.fill('总结知识库中相关内容')
   await dialog.getByRole('button', { name: '发送问题', exact: true }).tap()
   await expect(dialog.locator('.ai-markdown h2')).toHaveText('文档概要')
   await expect(dialog.locator('.ai-markdown pre code')).toContainText('long-code-')
@@ -74,4 +74,5 @@ test('320px 触屏聊天弹窗：历史切换、模型控制与安全 Markdown �
   expect(frames.filter(frame => frame.type === 'pair')).toHaveLength(1)
   expect(frames.filter(frame => frame.type === 'chat.start')).toHaveLength(1)
   expect(frames.find(frame => frame.type === 'chat.start').effort).toBe('high')
+  expect(frames.find(frame => frame.type === 'chat.start').context).toMatchObject({ scope: 'knowledge_base', documents: [] })
 })

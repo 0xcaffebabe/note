@@ -142,13 +142,17 @@ async fn mock_upstream(
             || !body.to_string().contains("fixture-tool-result-marker"));
     let unknown_tool = body["model"] == "fixture-unknown-tool";
     let multiple_tools = body["model"] == "fixture-multiple-tools";
+    let needs_overview = body["model"] == "fixture-global-tools"
+        && !body.to_string().contains("fixture-overview-result-marker");
     requests.lock().unwrap().push(RecordedRequest {
         path: uri.path().into(),
         headers,
         body,
     });
     if tool_round {
-        let events = if multiple_tools {
+        let events = if needs_overview {
+            named_tool_events(uri.path(), "get_knowledge_overview", json!({}))
+        } else if multiple_tools {
             multiple_tool_events(uri.path())
         } else {
             tool_events(uri.path(), unknown_tool)
@@ -213,8 +217,17 @@ fn tool_events(path: &str, unknown: bool) -> Vec<Value> {
     } else {
         "get_document"
     };
-    let args = json!({"docId":"fixture-文档"}).to_string();
-    let (first, second) = args.split_at(8);
+    named_tool_events(path, name, json!({"docId":"fixture-文档"}))
+}
+
+fn named_tool_events(path: &str, name: &str, args: Value) -> Vec<Value> {
+    let args = args.to_string();
+    let split = args
+        .char_indices()
+        .nth(8)
+        .map(|(index, _)| index)
+        .unwrap_or(args.len());
+    let (first, second) = args.split_at(split);
     match path {
         "/v1/responses" => vec![
             json!({"type":"response.output_item.done","output_index":0,"item":{"type":"reasoning","id":"rs_fixture","summary":[],"encrypted_content":"fixture-private-opaque-reasoning"}}),
@@ -453,6 +466,60 @@ fn tool_result(event: &Value) -> Value {
         "data":{"text":"fixture-tool-result-marker private document text"},
         "sources":[{"sourceId":"fixture_source","title":"Fixture section","url":"/fixture.html#section"}]
     }})
+}
+
+#[tokio::test]
+async fn global_questions_discover_then_read_without_initial_documents_for_all_protocols() {
+    let harness = Harness::new().await;
+    let mut providers = Vec::new();
+    for protocol in [
+        Protocol::Responses,
+        Protocol::ChatCompletions,
+        Protocol::Anthropic,
+    ] {
+        providers.push(harness.add_model(protocol, "fixture-global-tools").await);
+    }
+    let (mut socket, _) = harness.pair().await;
+    for (index, provider) in providers.iter().enumerate() {
+        let mut request = tool_chat(provider, &format!("global-{index}"));
+        request["context"] = json!({"scope":"knowledge_base","documents":[]});
+        request["tools"].as_array_mut().unwrap().push(json!({
+            "name":"get_knowledge_overview","description":"Browse the whole knowledge base",
+            "inputSchema":{"type":"object","properties":{},"required":[],"additionalProperties":false}
+        }));
+        send(&mut socket, request).await;
+        let overview = receive(&mut socket).await;
+        assert_eq!(overview["type"], "tool.call", "{overview}");
+        assert_eq!(overview["name"], "get_knowledge_overview");
+        assert_eq!(overview["arguments"], json!({}));
+        send(&mut socket, json!({"v":1,"type":"tool.result","requestId":overview["requestId"],"callId":overview["callId"],"result":{
+            "data":{"marker":"fixture-overview-result-marker","documents":[{"docId":"fixture-文档","title":"Discovered document"}]}
+        }})).await;
+        let read = receive(&mut socket).await;
+        assert_eq!(read["type"], "tool.call", "{read}");
+        assert_eq!(read["name"], "get_document");
+        assert_eq!(read["arguments"], json!({"docId":"fixture-文档"}));
+        send(&mut socket, tool_result(&read)).await;
+        assert_eq!(receive(&mut socket).await["type"], "chat.delta");
+        assert_eq!(receive(&mut socket).await["type"], "chat.done");
+    }
+    let requests = harness.upstream.requests.lock().unwrap().clone();
+    assert_eq!(requests.len(), 9);
+    for rounds in requests.chunks(3) {
+        let first = rounds[0].body.to_string();
+        assert!(first.contains("整个知识库"));
+        assert!(!first.contains(PRIVATE_DOCUMENT));
+        assert!(!first.contains("fixture-overview-result-marker"));
+        assert!(rounds[1]
+            .body
+            .to_string()
+            .contains("fixture-overview-result-marker"));
+        assert!(rounds[2]
+            .body
+            .to_string()
+            .contains("fixture-tool-result-marker"));
+    }
+    harness.bridge.stop().await;
 }
 
 #[tokio::test]

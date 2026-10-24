@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { AiContextService, aiCitationLinks } from '@/core/service/AiContextService'
+import { AiDocumentTools } from '@/core/service/AiDocumentTools'
 import DocFileInfo from '@/core/domain/DocFileInfo'
 import DocRender from '@/core/render/DocRender'
 import { markedMarkdown } from '@/adapters/libs/MarkedMarkdownAdapter'
 import { browserDomParser } from '@/adapters/browser/BrowserDomParser'
+import type Category from '@/core/domain/Category'
 
 function setup(content: string) {
   const render = new DocRender(markedMarkdown, browserDomParser)
@@ -56,9 +58,28 @@ describe('AiContextService', () => {
   it('只解析存在的来源 ID，不接受模型伪造的 URL', async () => {
     const { service } = setup('# 章节\n正文')
     const context = await service.build([{ docId: 'test-doc' }])
-    const links = aiCitationLinks('[D1S1] [D1S1] [D9S9] [恶意](javascript:alert(1))', context)
+    const sourceId = context.documents[0].sources[0].sourceId
+    const links = aiCitationLinks(`[${sourceId}] [${sourceId}] [D9S9] [恶意](javascript:alert(1))`, context)
     expect(links).toHaveLength(1)
     expect(links[0].url).toBe('/test/doc.html?headingId=' + encodeURIComponent(context.documents[0].sources[0].headingId))
+  })
+
+  it('章节选择和附件顺序改变后引用仍指向原章节，并与只读工具返回的 ID 一致', async () => {
+    const { service } = setup('文档简介\n\n# 第一节\n正文一\n\n# 第二节\n正文二')
+    const loaded = await service.load('test-doc')
+    const full = await service.build([{ docId: 'test-doc' }, { docId: 'related' }])
+    const selected = await service.build([{ docId: 'related' }, { docId: 'test-doc', headingIds: [loaded.headings[1].id] }])
+    const original = full.documents[0].sources[2]
+    expect(selected.documents[1].sources[0].sourceId).toBe(original.sourceId)
+    expect(selected.documents[0].sources.map(source => source.sourceId)).toEqual(full.documents[1].sources.map(source => source.sourceId))
+    expect(original.sourceId).not.toBe(full.documents[0].sources[1].sourceId)
+    expect(original.sourceId).not.toBe(full.documents[1].sources[2].sourceId)
+    const tools = new AiDocumentTools(service, { getSimliarDoc: async () => [] }, {
+      getFlatCategoryList: async () => [{ name: '测试', link: './doc/test/doc.md' }, { name: '关联', link: './doc/related.md' }] as Category[],
+    }, { getKnowledgeNetwork: async () => [] })
+    const result = await tools.execute('get_document', { docId: 'test-doc', section: 2 }, new AbortController().signal)
+    expect(result.sources![0].sourceId).toBe(original.sourceId)
+    expect(aiCitationLinks(`[${original.sourceId}]`, selected)[0].url).toBe(result.sources![0].url)
   })
 
   it('不存在的章节或空正文必须明确失败，不向桥接发送空来源文档', async () => {

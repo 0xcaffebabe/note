@@ -41,6 +41,8 @@ export interface AiContextDocument {
 }
 
 export interface AiContext {
+  /** Whole-library questions can start without any attached document. */
+  scope?: 'knowledge_base'
   documents: AiContextDocument[]
 }
 

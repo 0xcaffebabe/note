@@ -1,6 +1,7 @@
 import type DocFileInfo from '../domain/DocFileInfo'
 import type { DomParserPort } from '../ports/DomParserPort'
 import type { AiContext, AiContextDocument, AiSource } from '../ports/AiBridgePort'
+import { aiDocumentSourceId } from '../domain/AiDocumentTools'
 import DocUtils from '../util/DocUtils'
 import { safeTextPrefix } from '../util/StringUtils'
 
@@ -82,7 +83,7 @@ export class AiContextService {
     const unique = selections.filter((entry, index) => selections.findIndex(other => other.docId === entry.docId) === index)
     if (!unique.length || unique.length > AI_RELATED_LIMIT + 1) throw new Error('请选择当前文档及最多 2 篇关联文档')
     if (budget < 2000) throw new Error('上下文预算不足')
-    const documents = await Promise.all(unique.map(async (selection, docIndex) => {
+    const documents = await Promise.all(unique.map(async selection => {
       const document = await this.load(selection.docId)
       // Cap auxiliary fields as well as source text; huge metadata must not bypass the budget.
       document.headings = document.headings.slice(0, 100).map(heading => ({ ...heading, title: safeTextPrefix(heading.title, 200) }))
@@ -91,12 +92,14 @@ export class AiContextService {
         document.metadata = { omitted: '元数据超过 2000 字符，已省略' }
         document.truncated = true
       }
+      // Use original section indexes before selection so attachments and tool reads cite the same source.
+      const indexedSources = document.sources.map((source, index) => ({ ...source, sourceId: aiDocumentSourceId(document.docId, index + 1) }))
       const selected = selection.headingIds?.length
-        ? document.sources.filter(source => selection.headingIds!.includes(source.headingId))
-        : document.sources
+        ? indexedSources.filter(source => selection.headingIds!.includes(source.headingId))
+        : indexedSources
       if (!selected.length) throw new Error(`文档「${document.title}」所选范围没有正文，请选择其他章节或移除此关联文档`)
       if (selected.length > 256) document.truncated = true
-      document.sources = selected.slice(0, 256).map((source, sourceIndex) => ({ ...source, sourceId: `D${docIndex + 1}S${sourceIndex + 1}` }))
+      document.sources = selected.slice(0, 256)
       const allowance = Math.floor(budget / unique.length)
       let used = JSON.stringify({ ...document, sources: [] }).length + 100
       const sources: AiSource[] = []

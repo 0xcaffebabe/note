@@ -30,6 +30,7 @@
             <section id="site-navigation-panel" ref="panel" class="site-navigation-panel" :class="{ 'with-bottom-bar': withBottomBar }" aria-label="站点导航与工具" @keydown.esc.stop.prevent="closeMenu">
               <p class="panel-title">{{ siteName }}</p>
               <div class="panel-actions">
+                <button type="button" class="assistant-entry" aria-label="知识助手" @click="openAssistant"><el-icon><MagicStick /></el-icon><span>知识助手</span><kbd v-if="!isTouch" aria-hidden="true">Alt I</kbd></button>
                 <div class="theme-row"><span>深色模式</span><theme-switcher class="action-item" aria-label="深色模式" /></div>
                 <button type="button" @click="toggleFullScreen"><el-icon><FullScreen /></el-icon>{{ fullscreen ? '退出全屏' : '全屏' }}</button>
                 <button type="button" @click="enterZenMode"><el-icon><Aim /></el-icon>专注模式</button>
@@ -68,7 +69,7 @@
 <script setup lang="ts">
 import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { Aim, ArrowRightBold, CollectionTag, Connection, FullScreen, Hide, HomeFilled, Menu, MoreFilled, Reading, RefreshLeft, Search, Share, TopRight } from '@element-plus/icons-vue';
+import { Aim, ArrowRightBold, CollectionTag, Connection, FullScreen, Hide, HomeFilled, MagicStick, Menu, MoreFilled, Reading, RefreshLeft, Search, Share, TopRight } from '@element-plus/icons-vue';
 import config from '@/core/config/config';
 import DocUtils from '@/core/util/DocUtils';
 import { useServices } from '@/platform/web/app/useServices';
@@ -80,6 +81,7 @@ import { useDraggableNavigation } from './useDraggableNavigation';
 import { linkPreviewCounts } from '@/platform/web/pages/doc/LinkPreview';
 import NoteBridgeConnection from './NoteBridgeConnection.vue';
 import { useAiBridgeConnection } from './useAiBridgeConnection';
+import { isTouch } from '@/platform/web/composables/useBreakpoint';
 
 defineProps<{ embedded?: boolean; withBottomBar?: boolean }>();
 const route = useRoute();
@@ -136,6 +138,11 @@ function restoreBridgeFocus() {
 function closeDocumentTools() {
   collapse();
   launcher.value?.focus({ preventScroll: true });
+}
+
+function openAssistant() {
+  closeDocumentTools();
+  EventBus.emit('show-knowledge-assistant', null);
 }
 
 function minimizePreviews() {
@@ -509,6 +516,7 @@ kbd {
   }
 
   .theme-row { justify-content: space-between; }
+  .assistant-entry kbd { margin-left: auto; }
 }
 
 .panel-message { color: var(--secondary-text-color); }

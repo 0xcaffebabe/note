@@ -15,3 +15,10 @@ export interface AiDocumentToolResult {
   data: unknown
   sources?: AiCitation[]
 }
+
+/** Stable across tool calls and attachment order; 0 is the catalog, content sections start at 1. */
+export function aiDocumentSourceId(docId: string, section: number): string {
+  let hash = 14695981039346656037n
+  for (const byte of new TextEncoder().encode(docId)) hash = BigInt.asUintN(64, (hash ^ BigInt(byte)) * 1099511628211n)
+  return `D${hash}S${section}`
+}

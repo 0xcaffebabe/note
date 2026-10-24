@@ -10,7 +10,7 @@
 import { ref } from 'vue'
 import DocumentQA from './DocumentQA.vue'
 
-defineProps<{ doc: string }>()
+defineProps<{ doc?: string }>()
 defineEmits<{ close: [] }>()
 const visible = ref(false)
 const dialogZIndex = Number.parseInt(getComputedStyle(document.documentElement).getPropertyValue('--z-popup'), 10) || undefined

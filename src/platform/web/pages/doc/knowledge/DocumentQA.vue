@@ -1,5 +1,5 @@
 <template>
-  <section class="qa-workspace" :class="{ 'history-open': historyOpen }" aria-label="文档问答">
+  <section class="qa-workspace" :class="{ 'history-open': historyOpen }" aria-label="知识库问答">
     <aside class="qa-sidebar" aria-label="聊天记录">
       <div class="qa-sidebar-heading"><span>聊天记录</span><button class="qa-icon-button qa-hide-history" type="button" aria-label="收起聊天记录" @click="hideHistory"><Close /></button></div>
       <button ref="newChatEl" class="qa-new-chat" type="button" @click="newChat"><EditPen /><span>新聊天</span><span aria-hidden="true">＋</span></button>
@@ -8,7 +8,7 @@
         <p v-if="!sessions.length" class="qa-muted qa-history-empty">还没有聊天，从一个问题开始。</p>
         <div v-for="session in sessions" :key="session.id" class="qa-session" :class="{ active: session.id === activeSessionId }">
           <button type="button" class="qa-session-select" :aria-current="session.id === activeSessionId ? 'true' : undefined" :title="session.title" @click="selectSession(session.id)">
-            <span>{{ session.title }}</span><small>{{ session.docTitle }}</small>
+            <span>{{ session.title }}</span><small>整个知识库</small>
           </button>
           <button class="qa-icon-button qa-delete-chat" type="button" :aria-label="`删除聊天：${session.title}`" @click="removeSession(session.id)"><Delete /></button>
         </div>
@@ -19,7 +19,7 @@
     <div class="qa-main">
       <header class="qa-topbar">
         <button class="qa-icon-button qa-show-history" type="button" aria-label="显示聊天记录" :aria-expanded="historyOpen" @click="showHistory"><Memo /></button>
-        <div class="qa-current-document"><span>文档问答</span><strong :title="document?.title || conversationDocId">{{ document?.title || conversationDocId }}</strong></div>
+        <div class="qa-current-document"><span>知识助手</span><strong>整个知识库</strong></div>
         <span class="qa-connection" :class="{ connected: state === 'ready' }" role="status" :title="statusText"><span aria-hidden="true"></span>{{ state === 'ready' ? '已连接' : state === 'connecting' ? '连接中' : '未连接' }}</span>
       </header>
 
@@ -27,7 +27,7 @@
         <div v-if="!turns.length" class="qa-empty">
           <div class="qa-empty-mark" aria-hidden="true"><ChatDotRound /></div>
           <h2>从一个好问题开始</h2>
-          <p>一起理解这篇文档，探索相连的知识。</p>
+          <p>搜索整个知识库，串联不同文档，带着来源一起探索。</p>
           <div class="qa-suggestions">
             <button v-for="suggestion in suggestions" :key="suggestion" type="button" @click="useSuggestion(suggestion)">{{ suggestion }}<Top aria-hidden="true" /></button>
           </div>
@@ -54,26 +54,31 @@
         <p v-if="storageError" class="qa-storage-error" role="status">{{ storageError }}</p>
         <p v-if="error" class="qa-error" role="alert">{{ error }}</p>
         <div v-if="state !== 'ready' || !providers.length" class="qa-connection-prompt">
-          <span>{{ state === 'ready' ? '桌面端尚无可用模型，请先配置模型。' : '连接本机 Note Bridge，开始文档问答。' }}</span>
+          <span>{{ state === 'ready' ? '桌面端尚无可用模型，请先配置模型。' : '连接本机 Note Bridge，开始知识库问答。' }}</span>
           <button type="button" @click="openBridge">打开 Note Bridge 连接设置</button>
         </div>
         <form class="qa-composer" @submit.prevent="send">
           <label class="qa-sr-only" for="assistant-question">你的问题</label>
-          <textarea id="assistant-question" ref="questionEl" v-model="question" aria-label="你的问题" rows="3" maxlength="4000" placeholder="询问当前文档，或探索相关知识…" @keydown="onQuestionKeydown" />
+          <textarea id="assistant-question" ref="questionEl" v-model="question" aria-label="你的问题" rows="3" maxlength="4000" placeholder="向整个知识库提问，查找、比较或串联知识…" @keydown="onQuestionKeydown" />
           <div class="qa-composer-toolbar">
             <div class="qa-context-control" @keydown.esc="closeContextOnEscape">
-              <button type="button" class="qa-context-button" :aria-expanded="showContext" aria-controls="assistant-context" @click="showContext = !showContext"><Document aria-hidden="true" /><span>文档上下文</span><span v-if="headingIds.length || relatedIds.length" class="qa-context-count">{{ headingIds.length + relatedIds.length }}</span></button>
+              <button type="button" class="qa-context-button" aria-label="文档上下文" :aria-expanded="showContext" aria-controls="assistant-context" @click="showContext = !showContext"><Document aria-hidden="true" /><span>文档上下文</span><span v-if="includeCurrent" class="qa-context-count">{{ 1 + relatedIds.length }}</span></button>
               <div v-if="showContext" id="assistant-context" class="qa-context-panel" @keydown.esc.stop="showContext = false">
                 <div class="qa-context-title"><strong>文档上下文</strong><button class="qa-icon-button" type="button" aria-label="关闭文档上下文" @click="showContext = false"><Close /></button></div>
+                <p class="qa-muted">默认面向整个知识库，AI 可按需查找和读取文档、目录及知识网络。</p>
                 <p v-if="loading" class="qa-muted" role="status">正在读取文档…</p>
+                <template v-else-if="attachmentError"><p class="qa-error" role="status">{{ attachmentError }}</p><button class="qa-clear-context" type="button" @click="loadDocument(props.doc)">重试读取当前文档</button></template>
                 <template v-else-if="document">
-                  <p class="qa-muted">默认提供当前文档目录，AI 可按需读取文档、TOC 和知识网络。也可选择要直接附加的内容。</p>
-                  <label class="qa-field">附加当前文档章节<select v-model="headingIds" multiple aria-label="选择当前文档章节" :disabled="busy"><option v-for="heading in document.headings" :key="heading.id" :value="heading.id">{{ heading.title }}</option></select></label>
-                  <p class="qa-muted">未选择章节时，正文由 AI 按需读取。</p>
-                  <fieldset v-if="relatedOptions.length" :disabled="busy"><legend>附加关联文档（最多 2 篇）</legend><label v-for="related in relatedOptions" :key="related.docId" class="qa-check"><input v-model="relatedIds" type="checkbox" :value="related.docId" :disabled="relatedIds.length >= 2 && !relatedIds.includes(related.docId)" />{{ related.title }}</label></fieldset>
-                  <p class="qa-muted">直接附加内容上限 {{ budget.toLocaleString() }} 字符，过长内容按章节截断。</p>
-                  <button v-if="headingIds.length || relatedIds.length" class="qa-clear-context" type="button" :disabled="busy" @click="headingIds = []; relatedIds = []">恢复按需读取</button>
+                  <label class="qa-check"><input v-model="includeCurrent" type="checkbox" aria-label="附加当前文档目录" :disabled="busy" />附加当前文档目录：{{ document.title }}</label>
+                  <template v-if="includeCurrent">
+                    <label class="qa-field">附加当前文档章节<select v-model="headingIds" multiple aria-label="选择当前文档章节" :disabled="busy"><option v-for="heading in document.headings" :key="heading.id" :value="heading.id">{{ heading.title }}</option></select></label>
+                    <p class="qa-muted">未选择章节时，仅附加目录与元信息，正文由 AI 按需读取。</p>
+                    <fieldset v-if="relatedOptions.length" :disabled="busy"><legend>附加关联文档（最多 2 篇）</legend><label v-for="related in relatedOptions" :key="related.docId" class="qa-check"><input v-model="relatedIds" type="checkbox" :value="related.docId" :disabled="relatedIds.length >= 2 && !relatedIds.includes(related.docId)" />{{ related.title }}</label></fieldset>
+                    <p class="qa-muted">直接附加内容上限 {{ budget.toLocaleString() }} 字符，过长内容按章节截断。</p>
+                    <button class="qa-clear-context" type="button" :disabled="busy" @click="clearAttachment">取消附加文档</button>
+                  </template>
                 </template>
+                <p v-else class="qa-muted">当前页面没有可附加的文档。可以直接向知识库提问，也可以在阅读文档时选择附加内容。</p>
               </div>
             </div>
             <div class="qa-model-controls">
@@ -104,7 +109,7 @@ import { useAiBridgeConnection } from '@/platform/web/components/navigation/useA
 import EventBus from '@/platform/web/components/EventBus'
 import AiMarkdown from './AiMarkdown.vue'
 
-const props = defineProps<{ doc: string }>()
+const props = defineProps<{ doc?: string }>()
 const emit = defineEmits<{ 'open-connection': [] }>()
 const { aiContextService, aiChatHistory } = useServices()
 const { bridge, state, providers, statusText } = useAiBridgeConnection()
@@ -112,9 +117,11 @@ const budget = AI_CONTEXT_BUDGET
 const modelKey = ref('')
 const effort = ref<AiEffort>('default')
 const document = ref<AiContextDocument>()
+const includeCurrent = ref(false)
 const headingIds = ref<string[]>([])
 const relatedIds = ref<string[]>([])
 const loading = ref(false)
+const attachmentError = ref('')
 const busy = ref(false)
 const question = ref('')
 const error = ref('')
@@ -127,7 +134,7 @@ const showContext = ref(false)
 const transcriptEl = ref<HTMLElement>()
 const questionEl = ref<HTMLTextAreaElement>()
 const newChatEl = ref<HTMLButtonElement>()
-const suggestions = ['总结这篇文档的关键结论', '用一个例子解释核心概念', '这篇文档与哪些知识有关？']
+const suggestions = ['知识库有哪些主题？', '帮我查找缓存相关的知识并比较不同方案', '串联相关文档，为我制定一条学习路线']
 const effortLabels: Record<AiEffort, string> = { default: '默认强度', none: '不思考', minimal: '最低强度', low: '低强度', medium: '中等强度', high: '高强度', xhigh: '更高强度', max: '最高强度', ultra: '超高强度' }
 let activeId = ''
 let epoch = 0
@@ -140,7 +147,6 @@ let preferredProviderId = ''
 let preferredModel = ''
 let preferredEffort: AiEffort = 'default'
 const activeSession = computed(() => sessions.value.find(item => item.id === activeSessionId.value))
-const conversationDocId = computed(() => activeSession.value?.docId || props.doc)
 const turns = computed(() => activeSession.value?.turns || [])
 const modelGroups = computed(() => providers.value.map(provider => ({ id: provider.id, name: provider.name,
   models: (provider.models?.length ? provider.models : [{ id: provider.model, name: provider.model, efforts: provider.efforts?.length ? provider.efforts : ['default'] } as AiModel])
@@ -151,11 +157,11 @@ const selectedModel = computed(() => modelOptions.value.find(item => item.key ==
 const providerId = computed(() => selectedModel.value?.providerId || '')
 const model = computed(() => selectedModel.value?.id || '')
 const availableEfforts = computed<AiEffort[]>(() => selectedModel.value?.efforts.length ? selectedModel.value.efforts : ['default'])
-const canSend = computed(() => state.value === 'ready' && !!providerId.value && !!model.value && !busy.value && !loading.value && !!document.value && !!question.value.trim())
+const canSend = computed(() => state.value === 'ready' && !!providerId.value && !!model.value && !busy.value && !!question.value.trim())
 const relatedOptions = computed(() => (document.value?.relatedLinks || [])
   .filter(link => link.url.startsWith('/') && !link.url.startsWith('//') && /\.html(?:[?#]|$)/.test(link.url))
   .map(link => ({ docId: DocUtils.htmlUrl2Id(link.url), title: DocUtils.pathLeafName(link.title) }))
-  .filter((link, index, all) => link.docId !== conversationDocId.value && all.findIndex(other => other.docId === link.docId) === index))
+  .filter((link, index, all) => link.docId !== props.doc && all.findIndex(other => other.docId === link.docId) === index))
 
 function turnSources(turn: AiChatTurn): AiCitation[] {
   const sourceMap = new Map<string, AiCitation>()
@@ -171,7 +177,7 @@ function citations(turn: AiChatTurn) {
   return turnSources(turn).filter(source => used.has(source.sourceId))
 }
 function toolLabel(name: string) {
-  return ({ get_document: '读取文档', get_toc: '读取文档目录', get_knowledge_network: '读取知识网络', get_related_documents: '读取关联文档', search_documents: '查找文档' } as Record<string, string>)[name] || name
+  return ({ get_document: '读取文档', get_toc: '读取文档目录', get_knowledge_network: '读取知识网络', get_related_documents: '读取关联文档', search_documents: '查找文档', get_knowledge_overview: '读取知识库概览' } as Record<string, string>)[name] || name
 }
 function persist(session = activeSession.value) {
   if (persistTimer) { clearTimeout(persistTimer); persistTimer = undefined }
@@ -209,7 +215,12 @@ function onEvent(event: AiBridgeEvent) {
     const update = { callId: event.callId, name: event.name, status: event.status, message: event.message }
     if (existing) Object.assign(existing, update)
     else turn.toolCalls.push(update)
-    for (const source of event.sources || []) if (safeCitation(source) && !turn.sources.some(item => item.sourceId === source.sourceId)) turn.sources.push(source)
+    for (const source of event.sources || []) {
+      if (!safeCitation(source)) continue
+      const previous = turn.sources.findIndex(item => item.sourceId === source.sourceId)
+      if (previous >= 0) turn.sources[previous] = source
+      else if (turn.sources.length < 1600) turn.sources.push(source)
+    }
   } else {
     busy.value = false; activeId = ''; activeTurnId.value = ''
     if (event.type === 'error') { turn.status = 'error'; turn.error = event.message; finishTools(turn) }
@@ -253,7 +264,8 @@ function cancel() {
   if (activeId) { bridge.cancel(activeId); if (turn) { turn.status = 'cancelled'; turn.cancelled = true; finishTools(turn); persist() } }
   activeId = ''; activeTurnId.value = ''; busy.value = false
 }
-function resetComposer() { headingIds.value = []; relatedIds.value = []; question.value = ''; error.value = ''; showContext.value = false; historyOpen.value = false; followBottom = true }
+function clearAttachment() { includeCurrent.value = false; headingIds.value = []; relatedIds.value = [] }
+function resetComposer() { clearAttachment(); question.value = ''; error.value = ''; showContext.value = false; historyOpen.value = false; followBottom = true }
 function showHistory() { historyOpen.value = true; nextTick(() => newChatEl.value?.focus()) }
 function hideHistory() { historyOpen.value = false; nextTick(() => questionEl.value?.focus()) }
 function closeContextOnEscape(event: KeyboardEvent) { if (showContext.value) { event.stopPropagation(); showContext.value = false } }
@@ -281,15 +293,17 @@ function scrollToBottom() { const element = transcriptEl.value; if (element && f
 watch(() => turns.value.map(turn => `${turn.answer.length}:${turn.toolCalls.length}:${turn.error || ''}`).join('|'), () => nextTick(scrollToBottom))
 
 async function prepareContext(): Promise<AiContext> {
+  if (!includeCurrent.value || !document.value || !props.doc) return { scope: 'knowledge_base', documents: [] }
+  const current = document.value
   const selected = []
-  if (headingIds.value.length) selected.push({ docId: conversationDocId.value, headingIds: [...headingIds.value] })
+  const includesSections = headingIds.value.length > 0
+  if (includesSections) selected.push({ docId: props.doc, headingIds: [...headingIds.value] })
   selected.push(...relatedIds.value.map(docId => ({ docId, headingIds: [] as string[] })))
   const context = selected.length ? await aiContextService.build(selected) : { documents: [] }
-  if (!headingIds.value.length && document.value) {
-    const current = document.value
+  if (!includesSections) {
     context.documents.unshift({ ...current, metadata: JSON.stringify(current.metadata ?? {}).length > 2000 ? { omitted: '元数据过长，按需读取' } : (current.metadata ?? {}), headings: current.headings.slice(0, 100).map(heading => ({ ...heading, title: safeTextPrefix(heading.title, 200) })), relatedLinks: current.relatedLinks.slice(0, 10), sources: [] })
   }
-  return context
+  return { ...context, scope: 'knowledge_base' }
 }
 async function send() {
   if (!canSend.value) return
@@ -306,14 +320,18 @@ async function send() {
     let session = activeSession.value
     const now = Date.now()
     if (!session) {
-      session = { id: crypto.randomUUID(), docId: conversationDocId.value, docTitle: document.value!.title, title: safeTextPrefix(content, 80), ...submittedModel, turns: [], createdAt: now, updatedAt: now }
+      session = { id: crypto.randomUUID(), scope: 'knowledge_base', title: safeTextPrefix(content, 80), ...submittedModel, turns: [], createdAt: now, updatedAt: now }
       sessions.value.unshift(session); activeSessionId.value = session.id
       session = activeSession.value!
     }
-    const history = session.turns.filter(turn => (!turn.status || turn.status === 'complete') && !turn.error && !turn.cancelled && turn.answer && JSON.stringify(turn.context) === JSON.stringify(context)).slice(-2)
+    const historyTurns = session.turns.filter(turn => (!turn.status || turn.status === 'complete') && !turn.error && !turn.cancelled && turn.answer).slice(-2)
+    const history = historyTurns
       .flatMap(turn => [{ role: 'user' as const, content: turn.question }, { role: 'assistant' as const, content: safeTextPrefix(turn.answer, 4000) }])
     const requestId = bridge.start({ ...submittedModel, context, messages: [...history, { role: 'user', content }], maxOutputTokens: 4096 })
-    const turn: AiChatTurn = { id: crypto.randomUUID(), question: content, answer: '', context, sources: [], toolCalls: [], status: 'running' }
+    // Legacy manual attachments used positional IDs; never let an old source replace a current attachment.
+    const contextSourceIds = new Set(context.documents.flatMap(doc => doc.sources.map(source => source.sourceId)))
+    const sources = [...new Map(historyTurns.flatMap(citations).filter(source => !contextSourceIds.has(source.sourceId)).map(source => [source.sourceId, source])).values()].slice(0, 1600)
+    const turn: AiChatTurn = { id: crypto.randomUUID(), question: content, answer: '', context, sources, toolCalls: [], status: 'running' }
     session.turns.push(turn)
     session.providerId = submittedModel.providerId; session.model = submittedModel.model; session.effort = submittedModel.effort
     preferredProviderId = submittedModel.providerId; preferredModel = submittedModel.model; preferredEffort = submittedModel.effort
@@ -326,11 +344,12 @@ async function send() {
   }
 }
 
-async function loadDocument(docId: string) {
+async function loadDocument(docId?: string) {
+  if (!docId) return
   const generation = ++loadEpoch
-  document.value = undefined; loading.value = true
+  document.value = undefined; loading.value = true; attachmentError.value = ''
   try { const loaded = await aiContextService.load(docId); if (generation === loadEpoch && !disposed) document.value = loaded }
-  catch { if (generation === loadEpoch && !disposed) error.value = '文档读取失败，请关闭助手后重试' }
+  catch { if (generation === loadEpoch && !disposed) attachmentError.value = '当前文档读取失败，仍可向整个知识库提问。' }
   finally { if (generation === loadEpoch && !disposed) loading.value = false }
 }
 try {
@@ -342,11 +361,17 @@ try {
   }
 }
 catch { storageError.value = '无法读取已保存的聊天记录，本次聊天仍可继续。' }
+activeSessionId.value = sessions.value[0]?.id || ''
+restoreModelPreference()
+watch(includeCurrent, included => { if (!included) { headingIds.value = []; relatedIds.value = [] } })
+watch(showContext, shown => { if (shown && props.doc && !document.value && !loading.value) void loadDocument(props.doc) })
 watch(() => props.doc, docId => {
-  cancel(); resetComposer(); activeSessionId.value = sessions.value.find(session => session.docId === docId)?.id || ''
-  restoreModelPreference()
-}, { immediate: true })
-watch(conversationDocId, loadDocument, { immediate: true })
+  // Navigation never switches the active global chat or interrupts its stream.
+  // Only a not-yet-sent, explicitly attached context depends on this route.
+  if (includeCurrent.value && busy.value && !activeId) cancel()
+  loadEpoch++; document.value = undefined; loading.value = false; attachmentError.value = ''; clearAttachment()
+  if (showContext.value && docId) void loadDocument(docId)
+})
 onBeforeUnmount(() => { disposed = true; loadEpoch++; cancel(); if (persistTimer) clearTimeout(persistTimer); unsubscribe() })
 </script>
 

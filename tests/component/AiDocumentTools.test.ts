@@ -8,6 +8,7 @@ import { browserDomParser } from '@/adapters/browser/BrowserDomParser'
 import type Category from '@/core/domain/Category'
 import Cache from '@/core/cache/Cache'
 import CacheService from '@/core/cache/CacheService'
+import type SearchResult from '@/core/domain/search/SearchResult'
 
 function setup(content = '# 标题一\n正文\n\n```python\nif True:\n    print("hello")\n```\n\n# 标题二\n下一节') {
   const render = new DocRender(markedMarkdown, browserDomParser)
@@ -26,16 +27,17 @@ function setup(content = '# 标题一\n正文\n\n```python\nif True:\n    print(
     { id: 'other', links: [{ id: 'test-doc', name: '被引用' }] },
     { id: 'unknown', links: [{ id: 'test-doc', name: '未知来源' }] },
   ]) }
-  const tools = new AiDocumentTools(context, docs, categories, knowledge)
+  const search = { search: vi.fn(async (): Promise<SearchResult> => ({ took: 1, list: [] })) }
+  const tools = new AiDocumentTools(context, docs, categories, knowledge, search)
   const controller = new AbortController()
   const execute = (name: string, args: unknown, signal = controller.signal) => tools.execute(name, args, signal)
-  return { context, getDocFileInfo, categories, docs, knowledge, tools, controller, execute }
+  return { context, getDocFileInfo, categories, docs, knowledge, search, tools, controller, execute }
 }
 
 describe('AiDocumentTools', () => {
-  it('只公开五种只读工具，未知参数、越界路径、URL 和未收录 ID 不进入文档读取', async () => {
+  it('只公开六种只读工具，未知参数、越界路径、URL 和未收录 ID 不进入文档读取', async () => {
     const { tools, execute, getDocFileInfo, categories } = setup()
-    expect(tools.definitions.map(item => item.name)).toEqual(['get_document', 'get_toc', 'get_knowledge_network', 'get_related_documents', 'search_documents'])
+    expect(tools.definitions.map(item => item.name)).toEqual(['get_document', 'get_toc', 'get_knowledge_network', 'get_related_documents', 'search_documents', 'get_knowledge_overview'])
     for (const [name, args] of [
       ['read_file', { path: '/etc/passwd' }],
       ['get_document', { docId: '../secret' }],
@@ -47,6 +49,11 @@ describe('AiDocumentTools', () => {
       ['get_toc', { docId: 'test-doc', offset: 0.5 }],
       ['get_toc', { docId: 'test-doc', limit: null }],
       ['get_knowledge_network', { docId: 'test-doc', direction: 'all' }],
+      ['get_knowledge_network', { offset: -1 }],
+      ['get_knowledge_overview', { categoryLimit: 41 }],
+      ['get_knowledge_overview', { categoryOffset: 0.5 }],
+      ['get_knowledge_overview', { path: '/etc/passwd' }],
+      ['search_documents', { query: 'test', scope: 'internet' }],
       ['get_toc', []],
       ['get_toc', {}],
     ] as [string, unknown][]) await expect(execute(name, args)).rejects.toThrow()
@@ -107,16 +114,96 @@ describe('AiDocumentTools', () => {
   })
 
   it('搜索限定目录标题与路径，支持分页，无需正文或网络搜索服务', async () => {
-    const { execute, getDocFileInfo, knowledge } = setup()
-    const first = await execute('search_documents', { query: '文档', limit: 1 })
+    const { execute, getDocFileInfo, knowledge, search } = setup()
+    const first = await execute('search_documents', { query: '文档', scope: 'catalog', limit: 1 })
     expect((first.data as any).total).toBe(3)
     expect((first.data as any).nextOffset).toBe(1)
-    const second = await execute('search_documents', { query: '文档', offset: 1, limit: 1 })
+    const second = await execute('search_documents', { query: '文档', scope: 'catalog', offset: 1, limit: 1 })
     expect(second.sources![0].sourceId).not.toBe(first.sources![0].sourceId)
-    expect((await execute('search_documents', { query: '测试 test' })).data).toMatchObject({ total: 1, scope: 'catalog_titles_and_paths' })
+    expect((await execute('search_documents', { query: '测试 test', scope: 'catalog' })).data).toMatchObject({ total: 1, scope: 'catalog_titles_and_paths', fulltext: { status: 'not_requested' } })
     await expect(execute('search_documents', { query: '  ' })).rejects.toThrow('不得为空')
     expect(getDocFileInfo).not.toHaveBeenCalled()
     expect(knowledge.getKnowledgeNetwork).not.toHaveBeenCalled()
+    expect(search.search).not.toHaveBeenCalled()
+  })
+
+  it('无需当前文档即可发现全部目录、分类数量及孤立文档，分类与文档分别分页', async () => {
+    const { execute, getDocFileInfo, search, knowledge } = setup()
+    const first = await execute('get_knowledge_overview', { limit: 1, categoryLimit: 1 })
+    expect(first.data).toMatchObject({ scope: 'knowledge_base', totalDocuments: 3, totalCategories: 2,
+      categories: [{ category: '(root)', documentCount: 2 }], nextCategoryOffset: 1, categoriesTruncated: true,
+      documents: [{ docId: 'test-doc' }], total: 3, offset: 0, nextOffset: 1 })
+    const second = await execute('get_knowledge_overview', { offset: 1, categoryOffset: 1 })
+    expect(second.data).toMatchObject({ categories: [{ category: 'test', documentCount: 1 }], nextCategoryOffset: null,
+      documents: [{ docId: 'related' }, { docId: 'other' }], nextOffset: null })
+    expect((await execute('get_knowledge_overview', { category: 'test' })).data).toMatchObject({ total: 1, totalDocuments: 3, documents: [{ docId: 'test-doc' }] })
+    expect((await execute('get_knowledge_overview', { category: '不存在' })).data).toMatchObject({ total: 0, documents: [], nextOffset: null })
+    expect(first.sources![0].sourceId).toBe((await execute('search_documents', { query: '测试', scope: 'catalog' })).sources![0].sourceId)
+    expect(getDocFileInfo).not.toHaveBeenCalled()
+    expect(search.search).not.toHaveBeenCalled()
+    expect(knowledge.getKnowledgeNetwork).not.toHaveBeenCalled()
+  })
+
+  it('全局图谱与局部图谱均按边分页，去重并排除不在目录的端点', async () => {
+    const { execute, knowledge } = setup()
+    knowledge.getKnowledgeNetwork.mockResolvedValueOnce([
+      { id: 'test-doc', links: [{ id: 'related', name: '相关知识' }, { id: 'related', name: '重复边' }] },
+      { id: 'other', links: [{ id: 'test-doc', name: '被引用' }] },
+      { id: 'unknown', links: [{ id: 'related', name: '越界' }] },
+    ])
+    const first = await execute('get_knowledge_network', { limit: 1 })
+    expect(first.data).toMatchObject({ scope: 'knowledge_base', totalEdges: 2, offset: 0, nextOffset: 1,
+      edges: [{ from: 'test-doc', to: 'related' }] })
+    expect(first.data).not.toHaveProperty('docId')
+    const second = await execute('get_knowledge_network', { offset: 1, limit: 1 })
+    expect(second.data).toMatchObject({ totalEdges: 2, nextOffset: null, edges: [{ from: 'other', to: 'test-doc' }] })
+    const local = await execute('get_knowledge_network', { docId: 'test-doc', offset: 1, limit: 1 })
+    expect(local.data).toMatchObject({ scope: 'document', docId: 'test-doc', nextOffset: null, edges: [{ from: 'other', to: 'test-doc' }] })
+    expect((await execute('get_knowledge_network', { offset: 2 })).data).toMatchObject({ edges: [], nodes: [], nextOffset: null })
+  })
+
+  it('全局全文检索可命中正文独有关键词，合并目录匹配并返回有界纯文本片段和目录验证引用', async () => {
+    const { execute, search, getDocFileInfo } = setup()
+    const hit = (url: string, txt = '<mark>正文专有词</mark> &amp; 示例') => ({ url, hilighedUrl: '', createTime: '', hilighedSegement: [{ id: '<mark>小节</mark>', txt }] })
+    search.search.mockResolvedValue({ took: 2, list: [
+      hit('/related.html'), hit('/related.html', '重复文档的新片段'), hit('/related.html', '第三个片段'),
+      hit('/related.html', '第四个片段不得进入结果'), hit('/test/doc.html?headingId=unverified', '<script>机密脚本</script>&lt;b&gt;正文&lt;/b&gt;'),
+      hit('https://evil.example/other.html'), hit('//evil.example/other.html'), hit('/unknown.html'),
+      hit('/test/../related.html'), hit('/test/%2e%2e/related.html'), hit('/bad%ZZ.html'),
+    ] })
+    const response = await execute('search_documents', { query: '正文专有词' })
+    expect(search.search).toHaveBeenCalledWith('正文专有词')
+    expect(response.data).toMatchObject({ requestedScope: 'all', scope: 'catalog_and_fulltext_index', total: 2,
+      fulltext: { status: 'ok', acceptedDocuments: 2, maxResults: 200 }, documents: [
+        { docId: 'related', matchedIn: ['fulltext'], snippets: ['小节 · 正文专有词 & 示例', '小节 · 重复文档的新片段', '小节 · 第三个片段'] },
+        { docId: 'test-doc', matchedIn: ['fulltext'], snippets: ['小节 · 正文'] },
+      ] })
+    expect(response.sources!.map(source => source.url)).toEqual(['/related.html', '/test/doc.html'])
+    expect(getDocFileInfo).not.toHaveBeenCalled()
+    const merged = await execute('search_documents', { query: '测试', limit: 1 })
+    expect(merged.data).toMatchObject({ total: 2, nextOffset: 1, documents: [{ docId: 'test-doc', matchedIn: ['catalog', 'fulltext'] }] })
+    const indexOnly = await execute('search_documents', { query: '文档', scope: 'fulltext' })
+    expect(indexOnly.data).toMatchObject({ scope: 'fulltext_index', total: 2 })
+    expect((indexOnly.data as any).documents.every((doc: any) => doc.matchedIn.join(',') === 'fulltext')).toBe(true)
+  })
+
+  it('全文索引不可用或失败会明确退回目录，错误不泄露，取消不会伪装为搜索结果', async () => {
+    const { execute, search, context, docs, categories, knowledge } = setup()
+    search.search.mockRejectedValue(new Error('https://private.example?token=SECRET'))
+    const fallback = await execute('search_documents', { query: '测试', scope: 'fulltext' })
+    expect(fallback.data).toMatchObject({ requestedScope: 'fulltext', scope: 'catalog_titles_and_paths', fulltext: { status: 'failed' }, documents: [{ docId: 'test-doc', matchedIn: ['catalog'] }] })
+    expect(JSON.stringify(fallback)).not.toContain('SECRET')
+    const unconfigured = new AiDocumentTools(context, docs, categories, knowledge)
+    expect((await unconfigured.execute('search_documents', { query: '测试' }, new AbortController().signal)).data)
+      .toMatchObject({ scope: 'catalog_titles_and_paths', fulltext: { status: 'unavailable' }, total: 1 })
+    let resolve!: (value: SearchResult) => void
+    search.search.mockReturnValueOnce(new Promise(done => { resolve = done }))
+    const controller = new AbortController()
+    const pending = execute('search_documents', { query: '正文' }, controller.signal)
+    await vi.waitFor(() => expect(search.search).toHaveBeenCalledWith('正文'))
+    controller.abort()
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' })
+    resolve({ took: 1, list: [] })
   })
 
   it('使用真实缓存装饰器时，后续工具调用仍接受目录与图谱的同步缓存命中值', async () => {
@@ -165,5 +252,31 @@ describe('AiDocumentTools', () => {
     expect((result.data as any).documents.length).toBeGreaterThan(0)
     expect((result.data as any).documents.length).toBeLessThan(30)
     expect((result.data as any).nextOffset).toBe((result.data as any).documents.length)
+  })
+
+  it('长分类名、全局图谱和全文片段同时遵守字节预算，收缩后仍可继续分页', async () => {
+    const { execute, categories, knowledge, search } = setup()
+    const catalog = Array.from({ length: 45 }, (_, i) => ({ name: '文'.repeat(200), link: `./doc/${'长'.repeat(470)}${i}/文.md` })) as Category[]
+    categories.getFlatCategoryList.mockResolvedValue(catalog)
+    const ids = catalog.map(item => item.link.replace('./doc/', '').replace('/', '-').replace('.md', ''))
+    knowledge.getKnowledgeNetwork.mockResolvedValue(ids.map((id, i) => ({ id, links: [{ id: ids[(i + 1) % ids.length], name: '全局连接' }] })))
+    search.search.mockResolvedValue({ took: 1, list: catalog.map(item => ({ url: item.link.replace('./doc/', '/').replace('.md', '.html'), hilighedUrl: '', createTime: '',
+      hilighedSegement: Array.from({ length: 5 }, (_, i) => ({ id: `章节${i}`, txt: '中😀'.repeat(1000) })) })) })
+    for (const [tool, args, collection] of [
+      ['get_knowledge_overview', { categoryLimit: 40, limit: 30 }, 'documents'],
+      ['get_knowledge_network', { limit: 40 }, 'edges'],
+      ['search_documents', { query: '正文', scope: 'fulltext', limit: 30 }, 'documents'],
+    ] as const) {
+      const result = await execute(tool, args)
+      const data = result.data as any
+      expect(new TextEncoder().encode(JSON.stringify(result)).length).toBeLessThanOrEqual(AI_TOOL_RESULT_BYTES)
+      expect(data[collection].length).toBeGreaterThan(0)
+      expect(data.nextOffset).toBe(data[collection].length)
+      if (tool === 'get_knowledge_overview') {
+        expect(data.categories.length).toBeGreaterThan(0)
+        expect(data.nextCategoryOffset).toBe(data.categories.length)
+      }
+      if (tool === 'search_documents') expect(data.documents[0].snippets.every((snippet: string) => snippet.length <= 480 && snippet.isWellFormed())).toBe(true)
+    }
   })
 })

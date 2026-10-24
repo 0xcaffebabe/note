@@ -123,11 +123,12 @@ test.describe('mobile DocPage (Pixel 5)', () => {
     // 桌面独有项缺席(移动端区分标记)
     await expect(navigation.locator('.action-name', { hasText: '在VSC打开' })).toHaveCount(0)
     // 核心功能项移动端也都在(顺序无关)
-    for (const name of ['思维导图', '知识网络', '知识回顾', '知识助手', '路径复制', '知识复制', '随机复习', '更多设置']) {
+    for (const name of ['思维导图', '知识网络', '知识回顾', '路径复制', '知识复制', '随机复习', '更多设置']) {
       await expect(navigation.locator('.action-name', { hasText: name })).toHaveCount(1)
     }
     // 触屏端(isTouch)不渲染键盘提示
-    await expect(navigation.locator('.action-keys kbd')).toHaveCount(0)
+    await expect(navigation.locator('.action-keys kbd, .assistant-entry kbd')).toHaveCount(0)
+    await expect(navigation.getByRole('button', { name: '知识助手', exact: true })).toHaveCount(1)
     await navigation.getByRole('button', { name: '知识助手', exact: true }).tap()
     await expect(navigation).toBeHidden()
     await expect(page.getByRole('dialog', { name: '知识助手', exact: true })).toBeVisible()

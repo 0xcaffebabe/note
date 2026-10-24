@@ -8,6 +8,8 @@
 
 ## 开发与构建
 
+模块职责、依赖边界、接口注释与重构约定见 [ARCHITECTURE.md](ARCHITECTURE.md)。
+
 开发需要 Node.js 26.12.1、npm、Rust 和 Tauri 2 平台依赖。桌面包自带固定 Node 运行时，最终用户不需要安装 Node 或 pi CLI。macOS 最低版本随 Node 运行时提升为 **13.5**；Windows 构建目标为 x64。
 
 ```sh
@@ -22,6 +24,7 @@ npm run desktop:dev
 npm run build                     # Svelte / TypeScript 检查与桌面 UI 构建
 npm run agent:build               # Pi worker 编译
 npm run agent:test                # 隔离的 mock HTTP / SQLite 测试
+npm run format:check              # 桌面和 Agent 源码格式
 npm run test:ui                   # 桌面 UI 的 IPC fixture
 cargo test --locked -p bridge-core # 配对/网关/目录 + 真正 Rust→Node→Pi 联调
 cargo fmt --all --check
@@ -123,3 +126,5 @@ pi-ai 的环境变量/文件凭据探测已禁用，仅注册 bridge 的模型�
 独立发行标签为 `note-bridge-v0.2.0`。CI 的 draft release 需要手动触发，不会因修改网站自动发布桌面应用。macOS/Windows 原生托盘、系统凭据库、安装后首次启动和不同浏览器的本地网络权限仍需要实机验收。
 
 2026-10-24 本地验证：网站 1153 项单元/组件、154 项浏览器 E2E、桌面 UI 10 项、Agent 37 项、Rust 51 项全部通过；网站与桌面构建、Rust fmt/Clippy 通过。macOS Apple Silicon 0.2.0 DMG 已构建，并直接使用包内 Node 与 Pi 资源再次通过真实 Rust→Node→Pi→mock 模型/知识站点端到端测试，涵盖工具读取、断线继续及重启持久化。此测试使用隔离目录，不等同于从 DMG 安装后的 GUI/Keychain 实机验收。
+
+职责拆分后重新通过 Agent 37 项、Rust 53 项（新增两条凭据清理失败回归）、桌面 UI 10 项；严格 TypeScript 检查、Prettier、rustfmt 和整个 Rust workspace 的 Clippy 均通过。重新构建 macOS Apple Silicon DMG，并用新包内 Node/Pi 通过同一隔离端到端链路。重构保持产品协议、SQLite 格式、知识版本校验及公开 Rust API，未改变网站页面。

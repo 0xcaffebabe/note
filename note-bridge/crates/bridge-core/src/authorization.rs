@@ -1,3 +1,5 @@
+//! 持久网站授权及令牌摘要；原文令牌仅用于配对响应，不写入磁盘。
+
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -11,6 +13,7 @@ use std::{
 pub(crate) const MAX_AUTHORIZATIONS: usize = 32;
 const MAX_FILE_BYTES: u64 = 64 * 1024;
 
+/// 与精确 Origin 绑定的持久授权，保存 token 摘要及可审计的时间信息。
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct Authorization {
@@ -29,12 +32,14 @@ struct AuthorizationFile {
     authorizations: Vec<Authorization>,
 }
 
+/// 生成 256 位随机授权令牌；调用方须先提交摘要记录，再把原文交给浏览器。
 pub(crate) fn new_token() -> String {
     let mut bytes = [0u8; 32];
     rand::rngs::OsRng.fill_bytes(&mut bytes);
     bytes.iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
+/// 只接受固定长度的十六进制令牌，返回用于持久存储和比较的 SHA-256。
 pub(crate) fn hash_token(token: &str) -> Option<String> {
     if token.len() != 64 || !token.bytes().all(|byte| byte.is_ascii_hexdigit()) {
         return None;
@@ -42,6 +47,7 @@ pub(crate) fn hash_token(token: &str) -> Option<String> {
     Some(format!("{:x}", Sha256::digest(token.as_bytes())))
 }
 
+/// 有界加载授权；损坏、重复或未知版本必须失败，不能静默丢弃后重新授权。
 pub(crate) fn load(dir: &Path) -> Result<Vec<Authorization>, String> {
     let file = match File::open(dir.join("authorizations.json")) {
         Ok(file) => file,
@@ -69,7 +75,7 @@ pub(crate) fn load(dir: &Path) -> Result<Vec<Authorization>, String> {
             || hash_token(&grant.token_hash).is_none()
             || grant.created_at == 0
             || grant.last_connected_at < grant.created_at
-            || super::validate_settings(19661, std::slice::from_ref(&grant.origin)).is_err()
+            || crate::origin::validate(&grant.origin).is_err()
         {
             return Err("网站授权记录无效；请保留原文件后修复".into());
         }
@@ -77,7 +83,7 @@ pub(crate) fn load(dir: &Path) -> Result<Vec<Authorization>, String> {
     Ok(saved.authorizations)
 }
 
-/// Called while the runtime lock is held: disk and in-memory grants commit together.
+/// 调用方持有运行状态锁；文件原子提交成功后，才能替换内存授权或签发令牌。
 pub(crate) fn save(dir: &Path, authorizations: &[Authorization]) -> Result<(), String> {
     let bytes = serde_json::to_vec_pretty(&AuthorizationFile {
         version: 1,

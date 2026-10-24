@@ -41,6 +41,7 @@ jobs:
           components: rustfmt, clippy
       - run: npm ci
       - run: npm run agent:install
+      - run: npm run format:check
       - run: npm run agent:build
       - run: npm run agent:test
       - run: npm run build

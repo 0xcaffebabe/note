@@ -36,14 +36,16 @@ const platforms = {
   'x86_64-unknown-linux-gnu': ['linux', 'x64'],
   'aarch64-unknown-linux-gnu': ['linux', 'arm64'],
 };
-if (!target || !platforms[target])
+if (!target || !platforms[target]) {
   throw new Error('Unsupported sidecar target');
+}
 const [platform, arch] = platforms[target];
 const directory = `node-v${version}-${platform}-${arch}`;
 const archiveName = `${directory}.${platform === 'win' ? 'zip' : 'tar.gz'}`;
 const cache = join(tmpdir(), 'note-bridge-node', version);
 await mkdir(cache, { recursive: true });
 const archive = join(cache, archiveName);
+/** 下载固定版本的发布资源；每次尝试有独立超时，失败时保留最后的异常。 */
 const fetchRetry = async (url) => {
   let failure;
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -51,7 +53,9 @@ const fetchRetry = async (url) => {
       const response = await fetch(url, {
         signal: AbortSignal.timeout(120000),
       });
-      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.status}`);
+      }
       return response;
     } catch (error) {
       failure = error;
@@ -66,8 +70,9 @@ const expected = checksums
   .split('\n')
   .map((line) => line.trim().split(/\s+/))
   .find(([, name]) => name === archiveName)?.[0];
-if (!expected || !/^[a-f0-9]{64}$/.test(expected))
+if (!expected || !/^[a-f0-9]{64}$/.test(expected)) {
   throw new Error('Node release checksum missing');
+}
 const hashFile = async (path) =>
   createHash('sha256')
     .update(await readFile(path))
@@ -80,8 +85,9 @@ if ((await hashFile(archive).catch(() => null)) !== expected) {
     ),
     createWriteStream(`${archive}.part`),
   );
-  if ((await hashFile(`${archive}.part`)) !== expected)
+  if ((await hashFile(`${archive}.part`)) !== expected) {
     throw new Error('Node archive checksum mismatch');
+  }
   await copyFile(`${archive}.part`, archive);
   await rm(`${archive}.part`);
 }
@@ -91,7 +97,9 @@ await mkdir(extraction, { recursive: true });
 const extract = spawnSync('tar', ['-xf', archive, '-C', extraction], {
   stdio: 'inherit',
 });
-if (extract.status !== 0) throw new Error('Node extraction failed');
+if (extract.status !== 0) {
+  throw new Error('Node extraction failed');
+}
 const binary = join(
   extraction,
   directory,
@@ -105,7 +113,9 @@ const destination = join(
 );
 await mkdir(dirname(destination), { recursive: true });
 await copyFile(binary, destination);
-if (platform !== 'win') await chmod(destination, 0o755);
+if (platform !== 'win') {
+  await chmod(destination, 0o755);
+}
 await writeFile(
   join(root, 'agent', 'dist', 'runtime-build.json'),
   JSON.stringify({ nodeVersion: version, target, archiveSha256: expected }) +

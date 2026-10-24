@@ -1,6 +1,7 @@
 mod authorization;
 pub mod discovery;
 pub mod model;
+pub mod model_catalog;
 pub mod protocol;
 pub mod provider;
 pub mod storage;
@@ -18,7 +19,7 @@ use axum::{
 };
 pub use discovery::{DiscoveredProvider, DiscoveryPaths};
 use futures_util::{SinkExt, StreamExt};
-pub use model::{Provider, ProviderInput};
+pub use model::{ModelOption, Provider, ProviderInput};
 use protocol::{ChatRequest, ClientFrame, ClientMessage, VERSION};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -34,7 +35,7 @@ use std::{
 use storage::{SecretStore, Storage};
 use tokio::{
     net::TcpListener,
-    sync::{mpsc, oneshot, Mutex, Semaphore},
+    sync::{mpsc, oneshot, watch, Mutex, Semaphore},
     task::JoinHandle,
 };
 use tokio_util::sync::CancellationToken;
@@ -61,6 +62,7 @@ struct Inner {
     client: reqwest::Client,
     state: Mutex<Runtime>,
     slots: Arc<Semaphore>,
+    provider_changes: watch::Sender<u64>,
 }
 
 struct Runtime {
@@ -215,6 +217,7 @@ impl Bridge {
                 data_dir,
                 client: provider::client()?,
                 slots: Arc::new(Semaphore::new(8)),
+                provider_changes: watch::channel(0).0,
                 state: Mutex::new(Runtime {
                     running: false,
                     settings,
@@ -420,6 +423,9 @@ impl Bridge {
         let provider = tokio::task::spawn_blocking(move || bridge.inner.storage.save(input))
             .await
             .map_err(|_| "保存配置失败")??;
+        self.inner
+            .provider_changes
+            .send_modify(|revision| *revision = revision.wrapping_add(1));
         self.log("info", "模型配置已保存", None).await;
         Ok(provider)
     }
@@ -429,8 +435,23 @@ impl Bridge {
         tokio::task::spawn_blocking(move || bridge.inner.storage.remove(&id))
             .await
             .map_err(|_| "删除配置失败")??;
+        self.inner
+            .provider_changes
+            .send_modify(|revision| *revision = revision.wrapping_add(1));
         self.log("info", "模型配置已删除", None).await;
         Ok(())
+    }
+
+    /// Native-only discovery: fetching never edits saved model choices or CLI configuration.
+    pub async fn fetch_provider_models(&self, id: String) -> Result<Vec<ModelOption>, String> {
+        let (provider, secret) = self.provider_snapshot(id).await?;
+        model_catalog::fetch(&self.inner.client, &provider, secret.as_deref()).await
+    }
+
+    fn browser_providers(&self) -> Vec<Value> {
+        self.inner.storage.providers().into_iter().filter(|provider| provider.enabled).map(|provider| {
+            json!({"id":provider.id,"name":provider.name,"protocol":provider.protocol,"model":provider.model,"models":provider.model_options(),"efforts":provider::supported_efforts(&provider)})
+        }).collect()
     }
 
     pub async fn test_provider(&self, id: String) -> Result<(), String> {
@@ -756,14 +777,8 @@ async fn socket_session(
     else {
         return;
     };
-    let providers: Vec<Value> = bridge
-        .inner
-        .storage
-        .providers()
-        .into_iter()
-        .filter(|p| p.enabled)
-        .map(|p| json!({"id":p.id,"name":p.name,"protocol":p.protocol,"model":p.model,"efforts":provider::supported_efforts(&p)}))
-        .collect();
+    let mut provider_changes = bridge.inner.provider_changes.subscribe();
+    let providers = bridge.browser_providers();
     let sent = tokio::select! {
         biased;
         _ = connection_cancel.cancelled() => false,
@@ -796,6 +811,11 @@ async fn socket_session(
         let incoming = tokio::select! {
             biased;
             _ = connection_cancel.cancelled() => break,
+            changed = provider_changes.changed() => {
+                if changed.is_err() { break; }
+                let _ = tx.send(json!({"v":VERSION,"type":"providers.updated","providers":bridge.browser_providers()})).await;
+                continue;
+            },
             result = tokio::time::timeout(Duration::from_secs(90), source.next()) => match result { Ok(Some(Ok(message))) => message, _ => break },
         };
         if matches!(incoming, Message::Close(_)) {
@@ -950,9 +970,13 @@ async fn run_chat(
     let started = Instant::now();
     let mut seq = 0u64;
     let (provider, secret) = match bridge.provider_snapshot(chat.provider_id.clone()).await {
-        Ok(snapshot) if snapshot.0.enabled && snapshot.0.model == chat.model => snapshot,
+        Ok(snapshot)
+            if snapshot.0.enabled && snapshot.0.accepts_model(&chat.model, chat.effort) =>
+        {
+            snapshot
+        }
         Ok(_) => {
-            let _ = output.send(json!({"v":VERSION,"type":"chat.error","requestId":chat.request_id,"seq":seq,"code":"provider_unavailable","message":"模型配置不可用，请在桌面端启用后重新配对"})).await;
+            let _ = output.send(json!({"v":VERSION,"type":"chat.error","requestId":chat.request_id,"seq":seq,"code":"provider_unavailable","message":"模型或思考强度不可用，请选择桌面端已配置的模型"})).await;
             return;
         }
         Err(_) => {

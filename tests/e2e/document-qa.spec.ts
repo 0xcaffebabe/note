@@ -25,14 +25,19 @@ async function pairBridge(page: Page) {
 const authResponse = { v: 1, type: 'auth.ok', token: 'mock-persistent-grant-token', connectionId: 'test', authorizationId: 'grant-test',
   providers: [
     { id: 'mock', name: '本地测试模型', protocol: 'responses', model: 'mock-model', efforts: ['default', 'low', 'medium', 'high'] },
-    { id: 'reasoner', name: '推理测试模型', protocol: 'chatCompletions', model: 'reasoning-model', efforts: ['default', 'low', 'medium', 'high'] },
+    { id: 'reasoner', name: '推理测试模型', protocol: 'chatCompletions', model: 'reasoning-model', models: [
+      { id: 'reasoning-model', name: '默认推理模型', efforts: ['default', 'low'] },
+      { id: 'gateway/reasoning-pro', name: '自定义推理模型', efforts: ['default', 'low', 'medium', 'high'] },
+    ] },
   ] }
+
+const modelKey = (providerId: string, model: string) => JSON.stringify([providerId, model])
 
 async function openAssistant(page: Page) {
   const tools = await openNavigationTools(page)
   const assistant = tools.getByRole('button', { name: /^知识助手/ })
-  await assistant.focus()
-  await assistant.press('Enter')
+  // The popover moves focus after entering; a click waits for a stable target without racing that focus change.
+  await assistant.click()
   const dialog = page.getByRole('dialog', { name: '知识助手', exact: true })
   await expect(dialog).toBeVisible()
   return dialog
@@ -87,7 +92,7 @@ test('聊天弹窗调用真实文档工具，流式 Markdown 与可信来源可�
   await expect(dialog.getByRole('button', { name: '复制提问', exact: true })).toHaveCount(0)
   await expect(dialog.getByRole('radiogroup')).toHaveCount(0)
   await expect(dialog.getByRole('textbox', { name: '配对码', exact: true })).toHaveCount(0)
-  await dialog.getByRole('combobox', { name: '模型', exact: true }).selectOption('reasoner')
+  await dialog.getByRole('combobox', { name: '模型', exact: true }).selectOption(modelKey('reasoner', 'gateway/reasoning-pro'))
   await dialog.getByRole('combobox', { name: '思考强度', exact: true }).selectOption('high')
   await dialog.getByRole('textbox', { name: '你的问题', exact: true }).fill('这篇文章讲了什么？')
   await dialog.getByRole('button', { name: '发送问题', exact: true }).click()
@@ -100,6 +105,7 @@ test('聊天弹窗调用真实文档工具，流式 Markdown 与可信来源可�
   await expect(dialog.getByRole('button', { name: '停止生成', exact: true })).toHaveCount(0)
   const start = requests.find(frame => frame.type === 'chat.start')
   expect(start.providerId).toBe('reasoner')
+  expect(start.model).toBe('gateway/reasoning-pro')
   expect(start.effort).toBe('high')
   expect(start.tools.map((tool: { name: string }) => tool.name)).toEqual(['get_document', 'get_toc', 'get_knowledge_network', 'get_related_documents', 'search_documents'])
   expect(start.context.documents[0].sources).toEqual([])
@@ -144,13 +150,20 @@ test('聊天弹窗调用真实文档工具，流式 Markdown 与可信来源可�
   }
 })
 
-test('聊天记录可新建切换删除，关闭重开与刷新恢复会话和模型偏好', async ({ page }) => {
+test('聊天记录可新建切换删除，模型列表实时更新，刷新恢复会话和模型偏好', async ({ page }) => {
   const requests: any[] = []
+  const liveAuth = JSON.parse(JSON.stringify(authResponse))
   await page.routeWebSocket('ws://127.0.0.1:19661/ws', socket => socket.onMessage(raw => {
     const frame = JSON.parse(String(raw))
     requests.push(frame)
-    if (frame.type === 'pair' || frame.type === 'auth') socket.send(JSON.stringify(authResponse))
+    if (frame.type === 'pair' || frame.type === 'auth') socket.send(JSON.stringify(liveAuth))
     if (frame.type === 'chat.start') {
+      if (frame.providerId === 'reasoner') {
+        liveAuth.providers[1].models[1].efforts = ['default', 'medium']
+        liveAuth.providers[1].models[1].defaultEffort = 'medium'
+        liveAuth.providers[1].models.push({ id: 'new-live-model', name: '新增模型', efforts: ['default'] })
+        socket.send(JSON.stringify({ v: 1, type: 'providers.updated', providers: liveAuth.providers }))
+      }
       socket.send(JSON.stringify({ v: 1, type: 'chat.delta', requestId: frame.requestId, seq: 1, delta: `已回答：${frame.messages.at(-1).content}` }))
       socket.send(JSON.stringify({ v: 1, type: 'chat.done', requestId: frame.requestId, seq: 2, finishReason: 'stop' }))
     }
@@ -158,14 +171,18 @@ test('聊天记录可新建切换删除，关闭重开与刷新恢复会话和�
   await goto(page, DOC)
   await pairBridge(page)
   let dialog = await openAssistant(page)
-  await dialog.getByRole('combobox', { name: '模型', exact: true }).selectOption('reasoner')
+  await dialog.getByRole('combobox', { name: '模型', exact: true }).selectOption(modelKey('reasoner', 'gateway/reasoning-pro'))
   await dialog.getByRole('combobox', { name: '思考强度', exact: true }).selectOption('high')
   await dialog.getByRole('textbox', { name: '你的问题', exact: true }).fill('第一段推导')
   await dialog.getByRole('textbox', { name: '你的问题', exact: true }).press('Enter')
   await expect(dialog.locator('.ai-markdown')).toContainText('已回答：第一段推导')
+  await expect(dialog.getByRole('combobox', { name: '模型', exact: true }).getByRole('option', { name: '新增模型 · new-live-model', exact: true })).toHaveCount(1)
+  await expect(dialog.getByRole('combobox', { name: '思考强度', exact: true })).toHaveValue('medium')
+  expect(requests.find(frame => frame.type === 'chat.start')).toMatchObject({ providerId: 'reasoner', model: 'gateway/reasoning-pro', effort: 'high' })
+  expect(requests.filter(frame => frame.type === 'chat.cancel')).toHaveLength(0)
   await dialog.getByRole('button', { name: '新聊天', exact: true }).click()
   await expect(dialog.locator('.qa-empty')).toBeVisible()
-  await dialog.getByRole('combobox', { name: '模型', exact: true }).selectOption('mock')
+  await dialog.getByRole('combobox', { name: '模型', exact: true }).selectOption(modelKey('mock', 'mock-model'))
   await dialog.getByRole('combobox', { name: '思考强度', exact: true }).selectOption('low')
   await dialog.getByRole('textbox', { name: '你的问题', exact: true }).fill('第二段推导')
   await dialog.getByRole('button', { name: '发送问题', exact: true }).click()
@@ -173,10 +190,10 @@ test('聊天记录可新建切换删除，关闭重开与刷新恢复会话和�
   await expect(dialog.locator('.qa-session-select')).toHaveCount(2)
   await dialog.locator('.qa-session-select').filter({ hasText: '第一段推导' }).click()
   await expect(dialog.locator('.qa-user-message')).toHaveText('你：第一段推导')
-  await expect(dialog.getByRole('combobox', { name: '模型', exact: true })).toHaveValue('reasoner')
-  await expect(dialog.getByRole('combobox', { name: '思考强度', exact: true })).toHaveValue('high')
+  await expect(dialog.getByRole('combobox', { name: '模型', exact: true })).toHaveValue(modelKey('reasoner', 'gateway/reasoning-pro'))
+  await expect(dialog.getByRole('combobox', { name: '思考强度', exact: true })).toHaveValue('medium')
   await dialog.locator('.qa-session-select').filter({ hasText: '第二段推导' }).click()
-  await expect(dialog.getByRole('combobox', { name: '模型', exact: true })).toHaveValue('mock')
+  await expect(dialog.getByRole('combobox', { name: '模型', exact: true })).toHaveValue(modelKey('mock', 'mock-model'))
   await expect(dialog.getByRole('combobox', { name: '思考强度', exact: true })).toHaveValue('low')
   await page.keyboard.press('Escape')
   await expect(page.getByRole('status', { name: 'Note Bridge 已连接', exact: true })).toBeVisible()
@@ -187,7 +204,7 @@ test('聊天记录可新建切换删除，关闭重开与刷新恢复会话和�
   dialog = await openAssistant(page)
   await expect(dialog.locator('.qa-session-select')).toHaveCount(2)
   await expect(dialog.locator('.ai-markdown')).toContainText('已回答：第二段推导')
-  await expect(dialog.getByRole('combobox', { name: '模型', exact: true })).toHaveValue('mock')
+  await expect(dialog.getByRole('combobox', { name: '模型', exact: true })).toHaveValue(modelKey('mock', 'mock-model'))
   await expect(dialog.getByRole('combobox', { name: '思考强度', exact: true })).toHaveValue('low')
   await dialog.locator('.qa-session').filter({ hasText: '第一段推导' }).hover()
   await dialog.getByRole('button', { name: '删除聊天：第一段推导', exact: true }).click()

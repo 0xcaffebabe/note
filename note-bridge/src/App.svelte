@@ -3,6 +3,8 @@
   import { invoke, isTauri } from '@tauri-apps/api/core';
   import type {
     DiscoveredProvider,
+    Effort,
+    ModelOption,
     Provider,
     ProviderInput,
     Snapshot,
@@ -39,6 +41,56 @@
   let draft = $state<ProviderInput>(newProvider());
   let deleteTarget = $state<Provider | null>(null);
   let refreshing = false;
+  let draftModels = $state<ModelOption[]>([]);
+  let fetchedModels = $state<ModelOption[]>([]);
+  let selectedModels = $state<string[]>([]);
+  let modelSearch = $state('');
+  let fetched = $state(false);
+  let fetchedIdentity = $state('');
+  let fetchingModels = $state(false);
+  const effortNames: Record<Effort, string> = {
+    default: '默认',
+    none: '无',
+    minimal: '最少',
+    low: '低',
+    medium: '中',
+    high: '高',
+    xhigh: '很高',
+    max: '最大',
+    ultra: '超高',
+  };
+  const explicitEfforts = Object.keys(effortNames).filter(
+    (value) => value !== 'default',
+  ) as Effort[];
+  const savedProvider = $derived(
+    snapshot?.providers.find((provider) => provider.id === draft.id),
+  );
+  const canFetchModels = $derived(
+    !!savedProvider &&
+      !draft.apiKey?.trim() &&
+      draft.baseUrl.trim() === savedProvider.baseUrl &&
+      draft.authKind === savedProvider.authKind &&
+      draft.protocol === savedProvider.protocol,
+  );
+  const modelIdentity = $derived(
+    JSON.stringify([
+      draft.id,
+      draft.baseUrl.trim(),
+      draft.protocol,
+      draft.authKind,
+      draft.apiKey?.trim() ? 'edited' : 'saved',
+    ]),
+  );
+  const validFetched = $derived(
+    fetched && fetchedIdentity === modelIdentity && canFetchModels,
+  );
+  const filteredModels = $derived(
+    fetchedModels.filter((model) =>
+      `${model.name} ${model.id}`
+        .toLowerCase()
+        .includes(modelSearch.toLowerCase()),
+    ),
+  );
 
   const enabledCount = $derived(
     snapshot?.providers.filter((provider) => provider.enabled).length ?? 0,
@@ -130,7 +182,97 @@
   function editProvider(provider?: Provider) {
     error = '';
     draft = provider ? { ...provider, apiKey: '' } : newProvider();
+    draftModels = provider?.models?.length
+      ? provider.models.map((model) => ({
+          ...model,
+          efforts: [...model.efforts],
+        }))
+      : provider
+        ? [
+            {
+              id: provider.model,
+              name: provider.model,
+              efforts: ['default', 'low', 'medium', 'high'],
+            },
+          ]
+        : [];
+    fetchedModels = [];
+    selectedModels = [];
+    modelSearch = '';
+    fetched = false;
     editorOpen = true;
+  }
+
+  function fallbackModelName(id: string) {
+    let result = '';
+    for (const character of id) {
+      if (new TextEncoder().encode(result + character).length > 120) break;
+      result += character;
+    }
+    return result;
+  }
+
+  function updateModelId(index: number, id: string) {
+    if (draft.model === draftModels[index].id) draft.model = id;
+    draftModels[index].id = id;
+  }
+
+  function addModel() {
+    if (draftModels.length >= 200) return;
+    draftModels = [...draftModels, { id: '', name: '', efforts: ['default'] }];
+  }
+
+  function removeModel(index: number) {
+    const removed = draftModels[index];
+    draftModels = draftModels.filter((_, position) => position !== index);
+    if (draft.model === removed.id) draft.model = draftModels[0]?.id ?? '';
+  }
+
+  function toggleEffort(index: number, effort: Effort, checked: boolean) {
+    const model = draftModels[index];
+    model.efforts = checked
+      ? [...new Set([...model.efforts, effort])]
+      : model.efforts.filter((value) => value !== effort);
+    if (model.defaultEffort && !model.efforts.includes(model.defaultEffort))
+      delete model.defaultEffort;
+  }
+
+  async function fetchModels() {
+    if (!canFetchModels) return;
+    const identity = modelIdentity;
+    fetchingModels = true;
+    try {
+      await perform(async () => {
+        const models = await invoke<ModelOption[]>('fetch_provider_models', {
+          id: draft.id,
+        });
+        if (!editorOpen || modelIdentity !== identity) return;
+        fetchedModels = models;
+        fetchedIdentity = identity;
+        selectedModels = [];
+        fetched = true;
+      });
+    } finally {
+      fetchingModels = false;
+    }
+  }
+
+  function addSelectedModels() {
+    if (!validFetched) return;
+    const existing = new Set(draftModels.map((model) => model.id.trim()));
+    const additions = fetchedModels.filter(
+      (model) => selectedModels.includes(model.id) && !existing.has(model.id),
+    );
+    if (draftModels.length + additions.length > 200) {
+      error = '每个服务最多配置 200 个模型';
+      return;
+    }
+    draftModels = [
+      ...draftModels,
+      ...additions.map((model) => ({ ...model, efforts: [...model.efforts] })),
+    ];
+    if (!draft.model) draft.model = draftModels[0]?.id ?? '';
+    selectedModels = [];
   }
 
   function closeEditor() {
@@ -174,12 +316,30 @@
     event.preventDefault();
     await perform(async () => {
       try {
+        const models = draftModels.map((model) => ({
+          ...model,
+          id: model.id.trim(),
+          name: model.name.trim() || fallbackModelName(model.id.trim()),
+        }));
+        if (
+          models.some((model) => !model.id) ||
+          new Set(models.map((model) => model.id)).size !== models.length
+        )
+          throw new Error('模型标识不能为空或重复');
+        if (!models.some((model) => model.id === draft.model.trim()))
+          models.unshift({
+            id: draft.model.trim(),
+            name: fallbackModelName(draft.model.trim()),
+            efforts: ['default'],
+          });
+        if (models.length > 200) throw new Error('每个服务最多配置 200 个模型');
         await invoke('save_provider', {
           input: {
             ...draft,
             name: draft.name.trim(),
             baseUrl: draft.baseUrl.trim(),
             model: draft.model.trim(),
+            models,
             apiKey:
               draft.authKind === 'none' || !draft.apiKey?.trim()
                 ? undefined
@@ -502,7 +662,8 @@
                     <p class="muted break-word">{candidate.source}</p>
                     <p>{candidate.message}</p>
                     {#if candidate.model}<small
-                        >{protocolNames[candidate.protocol]} · {candidate.model}</small
+                        >{protocolNames[candidate.protocol]} · {candidate.models
+                          ?.length || 1} 个模型 · {candidate.model}</small
                       >{/if}
                   </div>
                   <button
@@ -575,8 +736,10 @@
                   >
                 </div>
                 <dl class="provider-details">
-                  <dt>模型</dt>
-                  <dd>{provider.model}</dd>
+                  <dt>模型列表</dt>
+                  <dd>
+                    {provider.models?.length || 1} 个模型 · 默认 {provider.model}
+                  </dd>
                   <dt>API 地址</dt>
                   <dd>{provider.baseUrl}</dd>
                   <dt>认证</dt>
@@ -751,7 +914,7 @@
           ></label
         >
         <label
-          >模型标识<input
+          >默认模型标识<input
             bind:value={draft.model}
             required
             maxlength="200"
@@ -759,6 +922,150 @@
             spellcheck="false"
           /></label
         >
+        <section class="model-editor" aria-labelledby="model-list-heading">
+          <div class="section-heading">
+            <div>
+              <h3 id="model-list-heading">模型列表</h3>
+              <p>支持自定义 ID 与显示名称，保存后同步到网站。</p>
+            </div>
+            <button
+              type="button"
+              class="secondary compact"
+              disabled={busy || draftModels.length >= 200}
+              onclick={addModel}>手动添加模型</button
+            >
+          </div>
+          <button
+            type="button"
+            class="secondary compact"
+            disabled={busy || !canFetchModels}
+            onclick={fetchModels}
+            >{fetchingModels ? '正在获取…' : '从 API 获取模型'}</button
+          >
+          <p class="tip">
+            {canFetchModels
+              ? '查询当前服务的模型列表，不生成回答。接口不可用时仍可手动添加。'
+              : '先保存 API 地址、协议与凭据，再获取该服务的模型列表。'}
+          </p>
+          {#if validFetched}
+            <div class="model-fetch-results">
+              <label
+                >筛选模型<input
+                  type="search"
+                  bind:value={modelSearch}
+                  placeholder="搜索名称或 ID"
+                /></label
+              >
+              <div class="model-candidates" aria-label="可添加的模型">
+                {#each filteredModels as model (model.id)}
+                  <label class="checkbox-label"
+                    ><input
+                      type="checkbox"
+                      bind:group={selectedModels}
+                      value={model.id}
+                      disabled={busy ||
+                        draftModels.some((item) => item.id === model.id)}
+                    /><span
+                      >{model.name}<small
+                        >{model.id}{draftModels.some(
+                          (item) => item.id === model.id,
+                        )
+                          ? ' · 已添加'
+                          : ''}</small
+                      ></span
+                    ></label
+                  >
+                {:else}<p class="tip">
+                    {fetchedModels.length
+                      ? '没有匹配的模型'
+                      : '服务未返回模型，可手动添加'}
+                  </p>{/each}
+              </div>
+              <button
+                type="button"
+                class="secondary compact"
+                disabled={busy || !selectedModels.length}
+                onclick={addSelectedModels}
+                >添加所选模型{selectedModels.length
+                  ? ` (${selectedModels.length})`
+                  : ''}</button
+              >
+            </div>
+          {/if}
+          <div class="model-rows">
+            {#each draftModels as model, index}
+              <fieldset class="model-row" disabled={busy}>
+                <legend
+                  >模型 {index + 1}{draft.model === model.id
+                    ? ' · 默认'
+                    : ''}</legend
+                >
+                <div class="two-column form-columns">
+                  <label
+                    >模型 ID<input
+                      aria-label={`模型 ${index + 1} ID`}
+                      value={model.id}
+                      oninput={(event) =>
+                        updateModelId(index, event.currentTarget.value)}
+                      required
+                      maxlength="256"
+                      spellcheck="false"
+                    /></label
+                  >
+                  <label
+                    >显示名称<input
+                      aria-label={`模型 ${index + 1} 显示名称`}
+                      bind:value={model.name}
+                      maxlength="120"
+                      placeholder="留空使用模型 ID"
+                    /></label
+                  >
+                </div>
+                <details class="model-efforts">
+                  <summary
+                    >支持的思考强度 · {model.efforts
+                      .map((effort) => effortNames[effort])
+                      .join(' / ')}</summary
+                  >
+                  <p class="tip">
+                    按当前服务的实际能力配置；未声明时只使用默认强度。
+                  </p>
+                  <div class="effort-options">
+                    {#each explicitEfforts as effort}<label
+                        class="checkbox-label"
+                        ><input
+                          type="checkbox"
+                          aria-label={`模型 ${index + 1} ${effortNames[effort]}强度`}
+                          checked={model.efforts.includes(effort)}
+                          onchange={(event) =>
+                            toggleEffort(
+                              index,
+                              effort,
+                              event.currentTarget.checked,
+                            )}
+                        />{effortNames[effort]}</label
+                      >{/each}
+                  </div>
+                </details>
+                <div class="model-row-actions">
+                  <button
+                    type="button"
+                    class="text-button"
+                    disabled={!model.id.trim() || draft.model === model.id}
+                    onclick={() => (draft.model = model.id)}>设为默认</button
+                  ><button
+                    type="button"
+                    class="text-button danger-text"
+                    aria-label={`删除模型 ${index + 1}`}
+                    onclick={() => removeModel(index)}>删除</button
+                  >
+                </div>
+              </fieldset>
+            {:else}<p class="tip">
+                默认模型会自动加入列表；也可添加更多模型。
+              </p>{/each}
+          </div>
+        </section>
         {#if draft.authKind !== 'none'}<label
             >{draft.authKind === 'bearer' ? 'Bearer token' : 'API key'}<input
               type="password"

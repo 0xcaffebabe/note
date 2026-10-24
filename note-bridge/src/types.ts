@@ -1,5 +1,21 @@
 export type Protocol = 'anthropic' | 'responses' | 'chatCompletions';
 export type AuthKind = 'apiKey' | 'bearer' | 'none';
+export type Effort =
+  | 'default'
+  | 'none'
+  | 'minimal'
+  | 'low'
+  | 'medium'
+  | 'high'
+  | 'xhigh'
+  | 'max'
+  | 'ultra';
+export interface ModelOption {
+  id: string;
+  name: string;
+  efforts: Effort[];
+  defaultEffort?: Effort;
+}
 
 export interface Provider {
   id: string;
@@ -7,6 +23,7 @@ export interface Provider {
   protocol: Protocol;
   baseUrl: string;
   model: string;
+  models?: ModelOption[];
   authKind: AuthKind;
   enabled: boolean;
   source?: string;
@@ -23,6 +40,7 @@ export interface DiscoveredProvider {
   protocol: Protocol;
   baseUrl: string;
   model: string;
+  models?: ModelOption[];
   authKind: AuthKind;
   source: string;
   status: 'ready' | 'missingCredential' | 'unsupported' | 'invalid';

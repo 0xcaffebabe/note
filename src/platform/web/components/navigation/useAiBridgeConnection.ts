@@ -6,7 +6,7 @@ export function useAiBridgeConnection() {
   const bridge = useServices().aiBridge
   const snapshot = shallowRef(bridge.snapshot())
   const unsubscribe = bridge.subscribe(event => {
-    if (event.type === 'state') snapshot.value = bridge.snapshot()
+    if (event.type === 'state' || event.type === 'providers') snapshot.value = bridge.snapshot()
   })
   onBeforeUnmount(unsubscribe)
   const state = computed(() => snapshot.value.state)

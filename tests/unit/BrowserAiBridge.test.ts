@@ -66,6 +66,55 @@ describe('BrowserAiBridge', () => {
     expect(JSON.stringify(socket.sent)).not.toContain('memory-only-token')
   })
 
+  it('模型目录实时更新不改变连接或生成状态，快照和配对结果不共享模型能力数组', async () => {
+    const { bridge, sockets, events } = setup()
+    const pairing = bridge.pair('123456')
+    const socket = sockets[0]
+    socket.open()
+    const catalog = { ...provider, models: [
+      { id: 'test', name: 'Test', efforts: ['default', 'low'] },
+      { id: 'custom/model', name: '自定义模型', efforts: ['default', 'xhigh', 'xhigh', 'unknown'], defaultEffort: 'xhigh' },
+    ] }
+    socket.receive({ type: 'auth.ok', token: 'memory-only-token', providers: [catalog] })
+    const paired = await pairing
+    expect(paired[0].models![1].efforts).toEqual(['default', 'xhigh'])
+    paired[0].efforts!.push('ultra')
+    paired[0].models![1].efforts.push('ultra')
+    paired[0].models![1].name = 'changed'
+    const snapshot = bridge.snapshot()
+    expect(snapshot.providers[0].models![1]).toEqual({ id: 'custom/model', name: '自定义模型', efforts: ['default', 'xhigh'], defaultEffort: 'xhigh' })
+    expect(snapshot.providers[0].efforts).not.toContain('ultra')
+    snapshot.providers[0].models![0].efforts.push('ultra')
+    expect(bridge.snapshot().providers[0].models![0].efforts).toEqual(['default', 'low'])
+    const requestId = bridge.start({ ...input, model: 'custom/model', effort: 'xhigh' })
+    expect(socket.sent.at(-1)).toMatchObject({ type: 'chat.start', providerId: 'local', model: 'custom/model', effort: 'xhigh' })
+    const states = events.filter(event => event.type === 'state').length
+    socket.receive({ type: 'providers.updated', providers: [{ ...catalog, models: [{ id: 'new-model', name: '新增模型', efforts: ['default', 'ultra'], defaultEffort: 'high' }] }] })
+    expect(events).toContainEqual({ type: 'providers' })
+    expect(events.filter(event => event.type === 'state')).toHaveLength(states)
+    expect(bridge.snapshot()).toMatchObject({ state: 'ready', providers: [{ models: [{ id: 'new-model', efforts: ['default', 'ultra'] }] }] })
+    expect(bridge.snapshot().providers[0].models![0].defaultEffort).toBeUndefined()
+    socket.receive({ type: 'chat.delta', requestId, seq: 1, delta: 'continuing' })
+    expect(events).toContainEqual({ type: 'delta', requestId, delta: 'continuing' })
+    expect(socket.sent.some(frame => frame.type === 'chat.cancel')).toBe(false)
+  })
+
+  it.each([
+    [{ ...provider, models: [{ id: '', name: 'invalid', efforts: [] }] }],
+    [{ ...provider, models: [{ id: 'same', name: 'one', efforts: [] }, { id: 'same', name: 'two', efforts: [] }] }],
+    [{ ...provider, models: Array.from({ length: 201 }, (_, index) => ({ id: String(index), name: 'model', efforts: [] })) }],
+    [{ ...provider, models: [{ id: 'a'.repeat(257), name: 'invalid', efforts: [] }] }],
+    [provider, provider],
+    Array.from({ length: 3 }, (_, providerIndex) => ({ ...provider, id: `provider-${providerIndex}`, models: Array.from({ length: 150 }, (_, index) => ({ id: String(index), name: 'model', efforts: [] })) })),
+  ])('拒绝无效、重复或无界模型目录 %#', async (...providers) => {
+    const { bridge, sockets } = setup()
+    const rejected = expect(bridge.pair('123456')).rejects.toThrow('无效数据')
+    sockets[0].open()
+    sockets[0].receive({ type: 'auth.ok', token: 'memory-only-token', providers })
+    await rejected
+    expect(bridge.snapshot().state).toBe('disconnected')
+  })
+
   it('过滤乱序、重复和终态之后的帧，限制单连接请求', async () => {
     const { bridge, sockets, events } = setup()
     const socket = await authenticate(bridge, sockets)

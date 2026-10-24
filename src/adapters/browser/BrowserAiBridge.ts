@@ -1,3 +1,4 @@
+import { AI_EFFORTS } from '@/core/ports/AiBridgePort'
 import type { AiBridgeEvent, AiBridgePort, AiBridgeSnapshot, AiBridgeState, AiChatInput, AiProvider, AiToolDefinition, AiToolExecutor, AiEffort } from '@/core/ports/AiBridgePort'
 import type { AiCitation, AiDocumentToolResult } from '@/core/domain/AiDocumentTools'
 import type { StoragePort } from '@/core/ports/StoragePort'
@@ -6,7 +7,6 @@ import { browserStorage } from './LocalStorageAdapter'
 type SocketFactory = (url: string) => WebSocket
 interface SavedConnection { version: 1; port: number; token: string }
 export const AI_BRIDGE_STORAGE_KEY = 'note:ai-bridge:v1'
-const EFFORTS: AiEffort[] = ['default', 'low', 'medium', 'high']
 interface ActiveRequest {
   id: string
   seq: number
@@ -46,7 +46,7 @@ export class BrowserAiBridge implements AiBridgePort {
     private readonly lifecycle: Pick<Window, 'addEventListener' | 'removeEventListener'> | undefined = typeof window === 'undefined' ? undefined : window) {}
 
   snapshot(): AiBridgeSnapshot {
-    return { state: this.state, providers: this.providers.map(provider => ({ ...provider })),
+    return { state: this.state, providers: this.copyProviders(),
       remembered: this.remembered, port: this.port, ...(this.message ? { message: this.message } : {}) }
   }
 
@@ -208,8 +208,8 @@ export class BrowserAiBridge implements AiBridgePort {
           const frame: Record<string, unknown> = JSON.parse(event.data)
           if (frame.v !== 1 || typeof frame.type !== 'string') throw new Error('invalid protocol')
           if (frame.type === 'auth.ok' && this.state !== 'ready') {
-            if (!this.validToken(frame.token) || !Array.isArray(frame.providers) || frame.providers.length > 200
-              || !frame.providers.every(provider => provider && ['id', 'name', 'protocol', 'model'].every(key => typeof provider[key] === 'string'))) throw new Error('invalid auth')
+            if (!this.validToken(frame.token)) throw new Error('invalid auth')
+            const providers = this.readProviders(frame.providers)
             if (authenticating) {
               if (frame.token !== authenticating.token) throw new Error('unexpected token rotation')
               const saved = this.readSaved()
@@ -224,9 +224,7 @@ export class BrowserAiBridge implements AiBridgePort {
             }
             clearTimeout(this.pairTimer)
             this.pendingReject = undefined
-            this.providers = (frame.providers as AiProvider[]).map(provider => ({ ...provider,
-              efforts: Array.isArray(provider.efforts) ? provider.efforts.filter(value => EFFORTS.includes(value)) : ['default'],
-            }))
+            this.providers = providers
             const saved = authenticating ? this.remembered : this.saveCredential(frame.token)
             this.retryAttempt = 0
             this.retryEnabled = true
@@ -237,7 +235,11 @@ export class BrowserAiBridge implements AiBridgePort {
               catch { this.failConnection('连接已断开，稍后自动重连') }
             }, 25000)
             this.setState('ready', saved ? undefined : '已连接，但浏览器无法保存凭证；刷新后需要重新配对')
-            resolve(this.providers.map(provider => ({ ...provider })))
+            resolve(this.copyProviders())
+          } else if (frame.type === 'providers.updated') {
+            if (this.state !== 'ready') throw new Error('unauthenticated providers')
+            this.providers = this.readProviders(frame.providers)
+            this.emit({ type: 'providers' })
           } else if (frame.type === 'pong') this.awaitingPong = false
           else if (frame.type === 'error') {
             if (frame.code === 'auth_failed' && authenticating) {
@@ -257,6 +259,46 @@ export class BrowserAiBridge implements AiBridgePort {
           this.failConnection('桥接返回了无效数据，请检查客户端版本')
         }
       }
+    })
+  }
+
+  private copyProviders(): AiProvider[] {
+    return this.providers.map(provider => ({ ...provider,
+      ...(provider.efforts ? { efforts: [...provider.efforts] } : {}),
+      ...(provider.models ? { models: provider.models.map(model => ({ ...model, efforts: [...model.efforts] })) } : {}),
+    }))
+  }
+
+  private readProviders(value: unknown): AiProvider[] {
+    const object = (item: unknown): item is Record<string, unknown> => !!item && typeof item === 'object' && !Array.isArray(item)
+    const text = (item: unknown, max: number): item is string => typeof item === 'string' && item.length > 0 && item.length <= max && !/[\u0000-\u001f\u007f]/.test(item)
+    const efforts = (item: unknown): AiEffort[] => {
+      const allowed = Array.isArray(item) ? [...new Set(item.filter((effort): effort is AiEffort => AI_EFFORTS.includes(effort)))] : []
+      return allowed.length ? allowed : ['default']
+    }
+    if (!Array.isArray(value) || value.length > 200) throw new Error('invalid providers')
+    const ids = new Set<string>()
+    let modelCount = 0
+    return value.map(provider => {
+      if (!object(provider) || !text(provider.id, 128) || !text(provider.name, 256) || !text(provider.protocol, 80)
+        || !text(provider.model, 256) || ids.has(provider.id)) throw new Error('invalid provider')
+      ids.add(provider.id)
+      const result: AiProvider = { id: provider.id, name: provider.name, protocol: provider.protocol, model: provider.model, efforts: efforts(provider.efforts) }
+      if (provider.models !== undefined) {
+        if (!Array.isArray(provider.models) || provider.models.length > 200) throw new Error('invalid models')
+        modelCount += provider.models.length
+        if (modelCount > 400) throw new Error('too many models')
+        const modelIds = new Set<string>()
+        result.models = provider.models.map(model => {
+          if (!object(model) || !text(model.id, 256) || !text(model.name, 256) || modelIds.has(model.id)) throw new Error('invalid model')
+          modelIds.add(model.id)
+          const supported = efforts(model.efforts)
+          const defaultEffort = model.defaultEffort as AiEffort
+          return { id: model.id, name: model.name, efforts: supported,
+            ...(supported.includes(defaultEffort) ? { defaultEffort } : {}) }
+        })
+      }
+      return result
     })
   }
 
@@ -288,7 +330,7 @@ export class BrowserAiBridge implements AiBridgePort {
     const requested = input.tools ?? this.tools
     if (requested.some(tool => !this.tools.some(known => known.name === tool.name))) throw new Error('请求包含未注册的文档工具')
     const tools = this.tools.filter(tool => requested.some(selected => selected.name === tool.name))
-    if (input.effort && !EFFORTS.includes(input.effort)) throw new Error('思考强度无效')
+    if (input.effort && !AI_EFFORTS.includes(input.effort)) throw new Error('思考强度无效')
     const requestId = this.requestId()
     this.active = { id: requestId, seq: -1, tools: new Set(tools.map(tool => tool.name)), execute: this.executeTool, calls: new Map(), seenCalls: new Set() }
     try { this.send({ ...input, tools, type: 'chat.start', requestId }) }

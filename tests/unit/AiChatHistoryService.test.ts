@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { AI_CHAT_HISTORY_KEY, AiChatHistoryService, type AiChatSession } from '@/core/service/AiChatHistoryService'
+import { AI_EFFORTS } from '@/core/ports/AiBridgePort'
 import type { StoragePort } from '@/core/ports/StoragePort'
 
 class MemoryStorage implements StoragePort {
@@ -25,6 +26,18 @@ describe('AiChatHistoryService', () => {
     expect(refreshed.list('doc-one')[0]).toEqual(session())
     refreshed.remove('chat-2')
     expect(refreshed.list()).toEqual([session()])
+  })
+
+  it('兼容原有单模型记录并保存同一服务商的实际模型及扩展强度', () => {
+    const storage = new MemoryStorage()
+    storage.setItem(AI_CHAT_HISTORY_KEY, JSON.stringify({ version: 1, sessions: [session()] }))
+    const history = new AiChatHistoryService(storage)
+    expect(history.list()).toEqual([session()])
+    for (const effort of AI_EFFORTS) {
+      const saved = { ...session(), model: 'custom/gateway-model', effort }
+      history.save(saved)
+      expect(new AiChatHistoryService(storage).list()[0]).toEqual(saved)
+    }
   })
 
   it('流式中刷新将部分回答标记中断，工具不会永久显示读取中', () => {

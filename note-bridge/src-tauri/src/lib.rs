@@ -1,5 +1,6 @@
 use bridge_core::{
-    Bridge, DiscoveredProvider, DiscoveryPaths, PairingWindow, Provider, ProviderInput, Snapshot,
+    Bridge, DiscoveredProvider, DiscoveryPaths, ModelOption, PairingWindow, Provider,
+    ProviderInput, Snapshot,
 };
 use tauri::{
     image::Image,
@@ -71,6 +72,14 @@ async fn save_provider(
 #[tauri::command]
 async fn remove_provider(bridge: State<'_, Bridge>, id: String) -> Result<(), String> {
     bridge.remove_provider(id).await
+}
+
+#[tauri::command]
+async fn fetch_provider_models(
+    bridge: State<'_, Bridge>,
+    id: String,
+) -> Result<Vec<ModelOption>, String> {
+    bridge.fetch_provider_models(id).await
 }
 
 #[tauri::command]
@@ -154,6 +163,7 @@ pub fn run() {
             save_provider,
             remove_provider,
             test_provider,
+            fetch_provider_models,
             clear_logs,
             save_logs
         ])

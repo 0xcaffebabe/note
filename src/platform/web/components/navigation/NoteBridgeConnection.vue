@@ -15,10 +15,10 @@
       </form>
       <template v-else>
         <p class="bridge-hint">本地端口：{{ snapshot.port }}</p>
-        <ul v-if="state === 'ready' && providers.length" class="bridge-providers" aria-label="可用模型">
-          <li v-for="provider in providers" :key="provider.id">{{ provider.name }} · {{ provider.model }}</li>
+        <ul v-if="state === 'ready' && providers.length" class="bridge-providers" aria-label="可用模型服务">
+          <li v-for="provider in providers" :key="provider.id">{{ provider.name }} · {{ provider.models?.length || 1 }} 个模型 · 默认 {{ provider.model }}</li>
         </ul>
-        <p v-else-if="state === 'ready'" class="bridge-hint">桌面端尚无可用服务商，请先配置模型，再点击重新连接。</p>
+        <p v-else-if="state === 'ready'" class="bridge-hint">桌面端尚无可用服务，请先配置并启用模型，保存后会自动同步。</p>
         <div class="bridge-actions">
           <button type="button" :disabled="connecting" @click="reconnect">重新连接</button>
           <button v-if="state !== 'disconnected'" type="button" @click="disconnect">断开连接</button>

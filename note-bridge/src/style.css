@@ -1052,3 +1052,68 @@ footer {
     gap: 10px;
   }
 }
+
+.model-editor {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.model-editor h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.model-rows {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+.model-row {
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.model-row legend {
+  padding: 0 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.model-row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+.model-efforts summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+}
+.effort-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.modal .effort-options label {
+  margin: 0;
+}
+.model-fetch-results {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.model-candidates {
+  max-height: 200px;
+  overflow: auto;
+  margin-bottom: 12px;
+}
+.model-candidates span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.model-candidates small {
+  display: block;
+  color: var(--muted);
+}

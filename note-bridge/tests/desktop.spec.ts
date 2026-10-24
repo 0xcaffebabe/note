@@ -1,9 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
 
 // Test-only IPC fixture. Production has no mock transport or sample providers.
-async function desktopFixture(page: Page, failSave = false) {
+async function desktopFixture(
+  page: Page,
+  failSave = false,
+  failModelFetch = false,
+) {
   await page.addInitScript(
-    ({ failSave }) => {
+    ({ failSave, failModelFetch }) => {
       const state = {
         running: true,
         port: 19661,
@@ -75,6 +79,19 @@ async function desktopFixture(page: Page, failSave = false) {
               (authorization) => authorization.id !== args.id,
             );
           }
+          if (command === 'fetch_provider_models') {
+            if (failModelFetch)
+              throw new Error('当前服务不支持模型列表接口，可手动添加模型');
+            return [
+              { id: 'fixture-model', name: 'Existing', efforts: ['default'] },
+              {
+                id: 'custom/deep-model',
+                name: '自定义推理模型',
+                efforts: ['default', 'high', 'xhigh'],
+              },
+              { id: 'embedding-model', name: '向量模型', efforts: ['default'] },
+            ];
+          }
           if (command === 'save_provider' && failSave)
             throw new Error('系统凭据库暂时不可用');
           if (command === 'save_logs') return '/test/note-bridge-logs.txt';
@@ -82,7 +99,7 @@ async function desktopFixture(page: Page, failSave = false) {
         },
       };
     },
-    { failSave },
+    { failSave, failModelFetch },
   );
   await page.goto('/');
 }
@@ -240,4 +257,137 @@ test('stopping the service retains remembered websites and renders them offline'
   await expect(websites).toHaveCount(2);
   await expect(websites.getByText('离线', { exact: true })).toHaveCount(2);
   await expect(websites.getByText('已连接', { exact: true })).toHaveCount(0);
+});
+
+test('model catalog can fetch selected custom models, keep overrides and save actual IDs', async ({
+  page,
+}) => {
+  await desktopFixture(page);
+  await page.getByRole('button', { name: '模型服务' }).click();
+  await page.getByRole('button', { name: '编辑', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog
+    .getByLabel('模型 1 显示名称', { exact: true })
+    .fill('我的默认模型');
+  await dialog.getByRole('button', { name: '从 API 获取模型' }).click();
+  await dialog.getByRole('checkbox', { name: /自定义推理模型/ }).check();
+  await dialog
+    .getByRole('button', { name: '添加所选模型 (1)', exact: true })
+    .click();
+  await expect(dialog.getByLabel('模型 2 ID', { exact: true })).toHaveValue(
+    'custom/deep-model',
+  );
+  await expect(
+    dialog.getByLabel('模型 1 显示名称', { exact: true }),
+  ).toHaveValue('我的默认模型');
+  await dialog
+    .getByRole('button', { name: '设为默认', exact: true })
+    .nth(1)
+    .click();
+  await dialog.getByRole('button', { name: '手动添加模型' }).click();
+  await dialog
+    .getByLabel('模型 3 ID', { exact: true })
+    .fill('gateway/private-model');
+  await dialog.getByLabel('模型 3 显示名称', { exact: true }).fill('私有模型');
+  await dialog
+    .locator('.model-row')
+    .nth(2)
+    .getByText('支持的思考强度', { exact: false })
+    .click();
+  await dialog
+    .getByRole('checkbox', { name: '模型 3 高强度', exact: true })
+    .check();
+  await dialog
+    .getByLabel('API 基础地址')
+    .fill('https://changed.example.test/v1');
+  await expect(
+    dialog.getByRole('button', { name: '从 API 获取模型' }),
+  ).toBeDisabled();
+  await expect(
+    dialog.getByRole('button', { name: /添加所选模型/ }),
+  ).toHaveCount(0);
+  await dialog.getByLabel('API 基础地址').fill('https://api.example.test/v1');
+  await test
+    .info()
+    .attach('note-bridge-multiple-models', {
+      body: await page.screenshot({ fullPage: true }),
+      contentType: 'image/png',
+    });
+  await dialog.getByRole('button', { name: '保存服务' }).click();
+  await expect(dialog).not.toBeVisible();
+  const input = await page.evaluate(
+    () =>
+      (
+        window as unknown as {
+          __testCalls: {
+            command: string;
+            args: { input?: Record<string, unknown> };
+          }[];
+        }
+      ).__testCalls.find((call) => call.command === 'save_provider')?.args
+        .input,
+  );
+  expect(input).toMatchObject({
+    model: 'custom/deep-model',
+    models: [
+      {
+        id: 'fixture-model',
+        name: '我的默认模型',
+        efforts: ['default', 'low', 'medium', 'high'],
+      },
+      {
+        id: 'custom/deep-model',
+        name: '自定义推理模型',
+        efforts: ['default', 'high', 'xhigh'],
+      },
+      {
+        id: 'gateway/private-model',
+        name: '私有模型',
+        efforts: ['default', 'high'],
+      },
+    ],
+  });
+  expect(JSON.stringify(input)).not.toContain('embedding-model');
+});
+
+test('model fetch failure preserves editable custom models', async ({
+  page,
+}) => {
+  await desktopFixture(page, false, true);
+  await page.getByRole('button', { name: '模型服务' }).click();
+  await page.getByRole('button', { name: '编辑', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('button', { name: '从 API 获取模型' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('可手动添加模型');
+  await expect(dialog.getByLabel('模型 1 ID', { exact: true })).toHaveValue(
+    'fixture-model',
+  );
+  await dialog.getByRole('button', { name: '手动添加模型' }).click();
+  await dialog.getByLabel('模型 2 ID', { exact: true }).fill('private-model');
+  const renamed = 'private/' + 'x'.repeat(122);
+  await dialog.getByLabel('模型 1 ID', { exact: true }).fill(renamed);
+  await dialog.getByLabel('模型 1 显示名称', { exact: true }).fill('');
+  await expect(dialog.getByLabel('默认模型标识')).toHaveValue(renamed);
+  await dialog.getByRole('button', { name: '保存服务' }).click();
+  await expect(dialog).not.toBeVisible();
+  const input = await page.evaluate(
+    () =>
+      (
+        window as unknown as {
+          __testCalls: {
+            command: string;
+            args: { input?: Record<string, unknown> };
+          }[];
+        }
+      ).__testCalls.find((call) => call.command === 'save_provider')?.args
+        .input,
+  );
+  expect(input).toMatchObject({
+    model: renamed,
+    models: [
+      { id: renamed, name: renamed.slice(0, 120) },
+      { id: 'private-model' },
+    ],
+  });
+  expect(JSON.stringify(input)).not.toContain('fixture-model');
 });

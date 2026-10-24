@@ -1,4 +1,6 @@
+use crate::protocol::Effort;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use url::{Host, Url};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -17,6 +19,87 @@ pub enum AuthKind {
     None,
 }
 
+pub const MAX_MODELS_PER_PROVIDER: usize = 200;
+pub const MAX_MODELS_TOTAL: usize = 400;
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ModelOption {
+    pub id: String,
+    pub name: String,
+    #[serde(default)]
+    pub efforts: Vec<Effort>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub default_effort: Option<Effort>,
+}
+
+impl ModelOption {
+    pub fn configured(id: impl Into<String>) -> Self {
+        let id = id.into();
+        Self {
+            name: id
+                .chars()
+                .scan(0, |bytes, ch| {
+                    *bytes += ch.len_utf8();
+                    (*bytes <= 120).then_some(ch)
+                })
+                .collect(),
+            id,
+            efforts: vec![Effort::Default],
+            default_effort: None,
+        }
+    }
+
+    pub fn validate(&self) -> Result<(), String> {
+        for (value, limit) in [(&self.id, 256), (&self.name, 120)] {
+            if value.trim().is_empty()
+                || value.trim() != value
+                || value.len() > limit
+                || value.chars().any(char::is_control)
+            {
+                return Err("模型 ID 或名称为空、过长或含非法字符".into());
+            }
+        }
+        if self.efforts.len() > 9
+            || self
+                .efforts
+                .iter()
+                .enumerate()
+                .any(|(i, value)| self.efforts[..i].contains(value))
+        {
+            return Err("模型思考强度列表无效".into());
+        }
+        if self
+            .default_effort
+            .is_some_and(|effort| effort != Effort::Default && !self.efforts.contains(&effort))
+        {
+            return Err("模型默认思考强度不在可用列表中".into());
+        }
+        Ok(())
+    }
+
+    pub fn supports_effort(&self, effort: Effort) -> bool {
+        effort == Effort::Default || self.efforts.contains(&effort)
+    }
+}
+
+pub fn validate_models(models: &[ModelOption], default_model: &str) -> Result<(), String> {
+    if models.len() > MAX_MODELS_PER_PROVIDER {
+        return Err("每个服务最多配置 200 个模型".into());
+    }
+    let mut ids = HashSet::new();
+    for model in models {
+        model.validate()?;
+        if !ids.insert(&model.id) {
+            return Err("模型 ID 不能重复".into());
+        }
+    }
+    if !models.is_empty() && !models.iter().any(|model| model.id == default_model) {
+        return Err("默认模型必须在模型列表中".into());
+    }
+    Ok(())
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Provider {
@@ -25,6 +108,8 @@ pub struct Provider {
     pub protocol: Protocol,
     pub base_url: String,
     pub model: String,
+    #[serde(default)]
+    pub models: Vec<ModelOption>,
     pub auth_kind: AuthKind,
     pub enabled: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -40,6 +125,8 @@ pub struct ProviderInput {
     pub protocol: Protocol,
     pub base_url: String,
     pub model: String,
+    #[serde(default)]
+    pub models: Vec<ModelOption>,
     pub auth_kind: AuthKind,
     #[serde(default = "enabled_by_default")]
     pub enabled: bool,
@@ -53,8 +140,34 @@ fn enabled_by_default() -> bool {
 }
 
 impl Provider {
+    pub fn model_options(&self) -> Vec<ModelOption> {
+        if self.models.is_empty() {
+            let mut model = ModelOption::configured(self.model.clone());
+            model.efforts = vec![Effort::Default, Effort::Low, Effort::Medium, Effort::High];
+            vec![model]
+        } else {
+            self.models
+                .iter()
+                .cloned()
+                .map(|mut model| {
+                    if !model.efforts.contains(&Effort::Default) {
+                        model.efforts.insert(0, Effort::Default);
+                    }
+                    model
+                })
+                .collect()
+        }
+    }
+
+    pub fn accepts_model(&self, id: &str, effort: Effort) -> bool {
+        self.model_options()
+            .iter()
+            .any(|model| model.id == id && model.supports_effort(effort))
+    }
+
     pub fn validate(&self) -> Result<(), String> {
         validate_id(&self.id)?;
+        validate_models(&self.models, &self.model)?;
         validate_fields(
             &self.name,
             &self.base_url,
@@ -69,6 +182,7 @@ impl ProviderInput {
         if let Some(id) = &self.id {
             validate_id(id)?;
         }
+        validate_models(&self.models, &self.model)?;
         validate_fields(
             &self.name,
             &self.base_url,

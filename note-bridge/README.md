@@ -30,12 +30,12 @@ npm run desktop:build               # 本机平台桌面包
 
 ## 使用流程
 
-1. 在「模型服务」扫描 Claude Code / Codex 配置；也可显式填写配置目录，或手动添加 API 基础地址、模型和凭据。扫描结果需要点「导入并启用」才会加入模型列表。
+1. 在「模型服务」扫描 Claude Code / Codex 配置；也可显式填写配置目录，或手动添加 API 基础地址、模型和凭据。扫描结果需要点「导入并启用」才会加入模型列表。导入时读取本地明确配置的多模型目录；在服务编辑中还可从当前 API 获取候选、勾选加入，或手动添加任意服务商支持的模型 ID、显示名称和 effort。
 2. 配置「连接与配对」中允许的网站 Origin。Origin 是完整的协议、主机和端口，例如 `https://notes.example.com`，不包括 URL 路径，也不使用通配符。
 3. 启动服务，默认监听 `127.0.0.1:19661`，WebSocket 地址为 `ws://127.0.0.1:19661/ws`；首次打开应用不会自动启动监听。
 4. 生成配对码，在网站导航（SiteNav）的独立「note-bridge」入口填写端口和配对码。配对码正确即可连接，无需在桌面端再次确认。配对码两分钟有效，使用一次后失效。
 5. 配对成功后，网站会记住连接凭证和端口；刷新或再次打开网站会自动认证重连。SiteNav 显示绿色「已连接」表示已经完成本次连接认证。桌面服务尚未启动时显示未连接，按 1/2/4/8/16/30 秒退避重试，之后最多每 30 秒重试；认证失效会清除本地凭证并停止重试，需要重新配对。
-6. 在文档问答弹窗中选择已启用的模型和 effort 后提问。AI 可按需调用网页提供的正文、TOC、知识网络、相关文档和目录搜索工具；正文分段、结果分页，不必每次注入整篇文档。左侧保留本地聊天记录，右侧流式显示 Markdown 回答及文档引用。连接中断只会重新连接，不会自动重发问答请求。「断开」仅暂停当前页面的连接和重试，保留记忆，刷新后仍会自动连接。
+6. 在文档问答弹窗中按服务分组选择模型及该模型声明的 effort 后提问。模型和能力更新保存后立即同步到已连接网页，不必重新配对，不中断已开始的回答。AI 可按需调用网页提供的正文、TOC、知识网络、相关文档和目录搜索工具；正文分段、结果分页，不必每次注入整篇文档。左侧保留本地聊天记录，右侧流式显示 Markdown 回答及文档引用。连接中断只会重新连接，不会自动重发问答请求。「断开」仅暂停当前页面的连接和重试，保留记忆，刷新后仍会自动连接。
 7. 桌面应用「已授权的网站」列出在线和离线的持久授权，可随时撤销。网站的「忘记连接」清除本地凭证；在线时还会撤销桌面授权，离线时可稍后在桌面应用撤销。
 
 关闭窗口会隐藏到系统托盘 / macOS 菜单栏；通过托盘可显示窗口、启停服务或彻底退出。再次打开应用会唤起已有实例。退出时会停止桥接和活动请求，但保留网站授权；再次启动服务后，已配对网站可以自动重连。
@@ -50,19 +50,35 @@ npm run desktop:build               # 本机平台桌面包
 - 网站在当前 Origin 的 `localStorage` 中使用 `note:ai-bridge:v1` 保存 `{version: 1, port, token}`，用于刷新后的自动认证。该令牌仅代表本机桥接授权，不是模型 API key。网站脚本可访问该 Origin 的本地存储，应只授权可信的网站；更换协议、域名或端口需重新配对。
 - GUI 仅接收去除凭据后的状态；网站 WebSocket 不开放配置扫描、导入、凭据管理或文件访问接口。
 - 支持 Anthropic Messages、OpenAI Responses、OpenAI Chat Completions。填写对应协议的 API 基础地址，由适配器追加端点。远程地址须为 HTTPS；本机回环 API 可用 HTTP。
-- effort 默认沿用模型服务设置，不发送额外参数；显式低/中/高分别映射到所选协议的 `reasoning.effort`、`reasoning_effort` 或 `output_config.effort`。协议能传递这些值不代表所有模型、兼容网关都支持；不支持时会提示检查模型参数或改回默认，不自动推测 thinking token budget。
+- effort 按模型保存，`default` 不发送额外参数。可声明 `none/minimal/low/medium/high/xhigh/max/ultra`，显式值映射到所选协议的 `reasoning.effort`、`reasoning_effort` 或 `output_config.effort`。新导入或获取的模型缺少能力信息时只提供默认强度，可按服务商实际能力补充；旧单模型配置保留原有低/中/高选项。声明不会改变模型能力，不自动推测 thinking token budget。
 - 日志记录请求 ID、模型、状态和耗时，不记录 API key、问答正文或上游响应正文。GUI 支持过滤、清空和经原生文件对话框导出日志。
 
 当前发现范围是用户配置目录及显式指定的目录，不扫描项目级配置、不合并组织策略，也不自动跨 Windows / WSL 读取另一环境的配置。环境变量取自桌面应用进程继承的环境；不会执行 shell、凭据 helper 或 hooks。
 
 | 配置来源 | 当前支持的字段 / 结构 | 需要手动处理的情况 |
 | --- | --- | --- |
-| Claude `settings.json` | 同一文件的 `env.ANTHROPIC_BASE_URL`、`ANTHROPIC_MODEL`、`ANTHROPIC_API_KEY` 或 `ANTHROPIC_AUTH_TOKEN`；模型可回退到顶层 `model` | `sonnet` / `opus` / `haiku` / `default` / `opusplan` 别名需改为完整 API 模型 ID；同时存在两种凭据视为冲突；不执行 `apiKeyHelper`，不复用 OAuth |
-| Codex `config.toml` | `model`、`model_provider`、`model_providers.*.base_url`、`wire_api`（`responses` / `chat`）、`env_key`、`requires_openai_auth` | 额外 `http_headers` / `env_http_headers` / `experimental_bearer_token` 标记为不支持；不会猜测未知 `wire_api` |
-| Codex profiles | 内联 `[profiles.<name>]` 及同目录最多 64 个 `*.config.toml`；覆盖 `model` / `model_provider`，同名 provider 表整体替换 | 不模拟 CLI 所有覆盖规则；缺少凭据或完整模型 ID 时需手动配置 |
+| Claude `settings.json` | 同一文件的 `env.ANTHROPIC_BASE_URL`、`ANTHROPIC_API_KEY` 或 `ANTHROPIC_AUTH_TOKEN`；`ANTHROPIC_MODEL`、`ANTHROPIC_DEFAULT_*_MODEL` 与名称、`ANTHROPIC_SMALL_FAST_MODEL`、`ANTHROPIC_CUSTOM_MODEL_OPTION`、`modelPicker.options` / `modelOverrides` | 别名仅通过显式本地映射解析，不猜测最新官方模型；同时存在两种凭据视为冲突；不执行 `apiKeyHelper`，不复用 OAuth |
+| Codex `config.toml` | `model`、`model_provider`、`model_catalog_json`、`model_providers.*.base_url`、`wire_api`（`responses` / `chat`）、`env_key`、`requires_openai_auth`、无冲突的显式 `experimental_bearer_token`（含 cc-switch 本机代理） | 额外 `http_headers` / `env_http_headers` 标记为不支持；不会猜测未知 `wire_api` |
+| Codex profiles | 内联 `[profiles.<name>]` 及同目录最多 64 个 `*.config.toml`；覆盖 `model` / `model_provider` / `model_catalog_json`，同名 provider 表整体替换 | 不模拟 CLI 所有覆盖规则；缺少凭据或完整模型 ID 时需手动配置 |
 | Codex `auth.json` | `auth_mode: "apikey"` 的 `OPENAI_API_KEY`；默认 OpenAI 服务缺少该文件凭据时可读进程 `OPENAI_API_KEY` | ChatGPT / OAuth tokens 明确不支持；自定义服务仅在明确声明 `requires_openai_auth` 时复用 API key，或读取自己指定的 `env_key` |
 
 扫描不自动启用模型。导入前会重新读取选定来源并比较指纹；来源发生变化会要求重新扫描确认，避免端点和凭据错配。完整的网站消息、认证、取消与上游协议见 [PROTOCOL.md](PROTOCOL.md)。
+
+## 模型列表来源与自定义模型
+
+模型服务与模型分开保存：一个 endpoint / 凭据配置可包含多个模型，`model` 指定默认模型，`models` 保存可选择的 ID、显示名称和 effort。单个服务最多 200 个、所有服务合计最多 400 个模型。网页发送的是用户选择的模型 ID；桥接校验其属于已启用服务的列表，不能通过伪造 ID 选择未配置的模型。
+
+处理方式参考 [cc-switch 自定义模型配置](https://github.com/farion1231/cc-switch/blob/main/src-tauri/src/codex_config.rs)与[模型列表查询](https://github.com/farion1231/cc-switch/blob/main/src-tauri/src/services/model_fetch.rs)：
+
+- **Codex 自定义模型**：读取生效配置的 `model_catalog_json`，包含 cc-switch 生成的 `cc-switch-model-catalog.json`。支持 `{models:[{slug,display_name,supported_reasoning_levels,default_reasoning_level,...}]}`，跳过隐藏或明确不能通过 API 使用的模型，并保留配置中的默认模型。目录读取与配置扫描均有大小限制；导入前将目录内容一起核对指纹，文件变化需重新扫描。
+- **Claude 自定义模型**：读取显式模型映射、名称和 `modelPicker.options`；不会把 `sonnet` / `opus` 等 CLI 别名原样传给 API。配置导入是一次快照，不是完整的 CLI 配置层级或组织策略解释器；之后在桥接内手动编辑的模型不声称受 CLI 的 `availableModels` 策略管理。
+- **当前 API 的候选列表**：服务保存后点「从 API 获取模型」，使用该服务自己的 endpoint 与凭据，仅执行只读列表查询。支持 OpenAI 风格 `data[].id` 和 Codex 风格 `models[].slug`，以及 Anthropic 分页；未知能力只保留默认 effort。勾选所需模型后加入并保存，避免把向量/图片等非聊天模型全部加入聊天菜单；接口缺失或失败时保留现有配置，仍可手填。模型 ID 可包含服务商自定义名称或代理路由前缀，不按官方品牌过滤。查询不生成回答。
+
+**默认 OpenAI provider 的目录与通用 `/v1/models` 不同。** [Codex 官方 App Server 文档](https://learn.chatgpt.com/docs/app-server#list-models-modellist)提供 `codex app-server` 的 `model/list`，在 `initialize` / `initialized` 后调用，返回可见模型及 `supportedReasoningEfforts`。Codex 的模型管理器根据登录方式、版本与目录配置决定来源：ChatGPT 登录通常读取 Codex 后端的账号目录；API-key 模式在未启用远端发现或不满足发现条件时使用 CLI 内置目录。仅改 `model_provider` 名称或 `base_url` 不保证读取该 API 的模型列表。显式 `model_catalog_json` 优先于远端目录。官方[模型目录说明](https://learn.chatgpt.com/docs/model-catalogs)区分富元数据的 Codex catalog 与通用 `/v1/models`，并说明自定义 API-key provider 需要显式 `model_catalog_url` 等条件才会远端发现。`note-bridge` 暂不自动访问此可跨域的 URL，使用本地 `model_catalog_json` 或已保存 API 基础地址的模型接口。
+
+cc-switch 在需要混合官方与自定义模型时，[单独缓存官方目录](https://github.com/farion1231/cc-switch/blob/main/src-tauri/src/services/provider/codex_official_models.rs)，按账号与 Codex 版本隔离，并使用 `codex debug models --bundled` 兜底。它不会把缺少可靠账号/版本来源的全局 `~/.codex/models_cache.json` 直接用作官方目录。
+
+Claude Agent SDK 也提供 [`supportedModels()`](https://code.claude.com/docs/en/agent-sdk/typescript#modelinfo)，较新 CLI 返回解析后的 `resolvedModel` 与 effort 能力。该接口属于 Claude Code 执行环境。当前 note-bridge 保持 **API 直连**：读取明确的本地模型配置并查询导入服务的 API，不自动启动 CLI，不拿 CLI 官方目录覆盖第三方服务，不读取全局模型缓存或订阅 OAuth。没有本地多模型目录时先保留已配置的默认模型，其余通过当前 API 获取或手动添加。
 
 ## 安全边界
 

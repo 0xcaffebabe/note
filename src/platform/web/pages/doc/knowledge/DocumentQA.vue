@@ -77,7 +77,7 @@
               </div>
             </div>
             <div class="qa-model-controls">
-              <label class="qa-select-field"><span class="qa-sr-only">模型</span><select v-model="providerId" aria-label="模型" :disabled="busy || !providers.length" @change="selectProvider"><option v-if="!providers.length" value="">选择模型</option><option v-for="provider in providers" :key="provider.id" :value="provider.id">{{ provider.name }} · {{ provider.model }}</option></select></label>
+              <label class="qa-select-field"><span class="qa-sr-only">模型</span><select v-model="modelKey" aria-label="模型" :disabled="busy || !modelOptions.length" @change="selectModel"><option v-if="!modelOptions.length" value="">选择模型</option><optgroup v-for="group in modelGroups" :key="group.id" :label="group.name"><option v-for="item in group.models" :key="item.key" :value="item.key">{{ item.name === item.id ? item.id : `${item.name} · ${item.id}` }}</option></optgroup></select></label>
               <label class="qa-select-field qa-effort"><span class="qa-sr-only">思考强度</span><select v-model="effort" aria-label="思考强度" @change="selectEffort" :disabled="busy || !providers.length || availableEfforts.length <= 1"><option v-for="value in availableEfforts" :key="value" :value="value">{{ effortLabels[value] }}</option></select></label>
               <button v-if="busy" class="qa-send-button qa-stop-button" type="button" aria-label="停止生成" title="停止生成" @click="cancel"><span aria-hidden="true"></span></button>
               <button v-else class="qa-send-button" type="submit" aria-label="发送问题" title="发送问题" :disabled="!canSend"><Top /></button>
@@ -93,7 +93,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { ChatDotRound, Close, Delete, Document, EditPen, Memo, Top } from '@element-plus/icons-vue'
-import type { AiBridgeEvent, AiContext, AiContextDocument, AiEffort } from '@/core/ports/AiBridgePort'
+import type { AiBridgeEvent, AiContext, AiContextDocument, AiEffort, AiModel } from '@/core/ports/AiBridgePort'
 import type { AiCitation } from '@/core/domain/AiDocumentTools'
 import type { AiChatSession, AiChatTurn } from '@/core/service/AiChatHistoryService'
 import { AI_CONTEXT_BUDGET } from '@/core/service/AiContextService'
@@ -109,7 +109,7 @@ const emit = defineEmits<{ 'open-connection': [] }>()
 const { aiContextService, aiChatHistory } = useServices()
 const { bridge, state, providers, statusText } = useAiBridgeConnection()
 const budget = AI_CONTEXT_BUDGET
-const providerId = ref('')
+const modelKey = ref('')
 const effort = ref<AiEffort>('default')
 const document = ref<AiContextDocument>()
 const headingIds = ref<string[]>([])
@@ -128,7 +128,7 @@ const transcriptEl = ref<HTMLElement>()
 const questionEl = ref<HTMLTextAreaElement>()
 const newChatEl = ref<HTMLButtonElement>()
 const suggestions = ['总结这篇文档的关键结论', '用一个例子解释核心概念', '这篇文档与哪些知识有关？']
-const effortLabels: Record<AiEffort, string> = { default: '默认强度', low: '低强度', medium: '中等强度', high: '高强度' }
+const effortLabels: Record<AiEffort, string> = { default: '默认强度', none: '不思考', minimal: '最低强度', low: '低强度', medium: '中等强度', high: '高强度', xhigh: '更高强度', max: '最高强度', ultra: '超高强度' }
 let activeId = ''
 let epoch = 0
 let loadEpoch = 0
@@ -137,13 +137,20 @@ let followBottom = true
 let persistTimer: ReturnType<typeof setTimeout> | undefined
 // Preserve the user's preference while connection metadata is unavailable or temporarily incomplete.
 let preferredProviderId = ''
+let preferredModel = ''
 let preferredEffort: AiEffort = 'default'
 const activeSession = computed(() => sessions.value.find(item => item.id === activeSessionId.value))
 const conversationDocId = computed(() => activeSession.value?.docId || props.doc)
 const turns = computed(() => activeSession.value?.turns || [])
-const selectedProvider = computed(() => providers.value.find(provider => provider.id === providerId.value))
-const model = computed(() => selectedProvider.value?.model || '')
-const availableEfforts = computed<AiEffort[]>(() => selectedProvider.value?.efforts?.length ? selectedProvider.value.efforts : ['default'])
+const modelGroups = computed(() => providers.value.map(provider => ({ id: provider.id, name: provider.name,
+  models: (provider.models?.length ? provider.models : [{ id: provider.model, name: provider.model, efforts: provider.efforts?.length ? provider.efforts : ['default'] } as AiModel])
+    .map(model => ({ ...model, providerId: provider.id, key: JSON.stringify([provider.id, model.id]) })),
+})))
+const modelOptions = computed(() => modelGroups.value.flatMap(group => group.models))
+const selectedModel = computed(() => modelOptions.value.find(item => item.key === modelKey.value))
+const providerId = computed(() => selectedModel.value?.providerId || '')
+const model = computed(() => selectedModel.value?.id || '')
+const availableEfforts = computed<AiEffort[]>(() => selectedModel.value?.efforts.length ? selectedModel.value.efforts : ['default'])
 const canSend = computed(() => state.value === 'ready' && !!providerId.value && !!model.value && !busy.value && !loading.value && !!document.value && !!question.value.trim())
 const relatedOptions = computed(() => (document.value?.relatedLinks || [])
   .filter(link => link.url.startsWith('/') && !link.url.startsWith('//') && /\.html(?:[?#]|$)/.test(link.url))
@@ -178,6 +185,7 @@ function finishTools(turn: AiChatTurn) {
   turn.toolCalls.filter(call => call.status === 'running').forEach(call => { call.status = 'error'; call.message = '读取已中断' })
 }
 function onEvent(event: AiBridgeEvent) {
+  if (event.type === 'providers') return
   if (event.type === 'state') {
     if (event.state !== 'ready') {
       epoch++
@@ -211,25 +219,31 @@ function onEvent(event: AiBridgeEvent) {
 }
 const unsubscribe = bridge.subscribe(onEvent)
 
+function syncEffortPreference() {
+  effort.value = availableEfforts.value.includes(preferredEffort) ? preferredEffort
+    : selectedModel.value?.defaultEffort || availableEfforts.value[0] || 'default'
+}
 function syncModelPreference() {
-  const available = providers.value
-  providerId.value = available.find(provider => provider.id === preferredProviderId)?.id
-    || available.find(provider => provider.id === providerId.value)?.id || available[0]?.id || ''
-  effort.value = availableEfforts.value.includes(preferredEffort) ? preferredEffort : availableEfforts.value[0] || 'default'
+  const available = modelOptions.value
+  const preferredProvider = providers.value.find(provider => provider.id === preferredProviderId)
+  const firstProvider = providers.value[0]
+  modelKey.value = (available.find(item => item.providerId === preferredProviderId && item.id === preferredModel)
+    || available.find(item => item.providerId === preferredProviderId && item.id === preferredProvider?.model)
+    || available.find(item => item.key === modelKey.value)
+    || available.find(item => item.providerId === firstProvider?.id && item.id === firstProvider.model)
+    || available[0])?.key || ''
+  syncEffortPreference()
 }
 function restoreModelPreference() {
   const session = activeSession.value
-  if (session) { preferredProviderId = session.providerId; preferredEffort = session.effort }
+  if (session) { preferredProviderId = session.providerId; preferredModel = session.model; preferredEffort = session.effort }
   syncModelPreference()
 }
 function saveModelPreference() {
-  preferredProviderId = providerId.value; preferredEffort = effort.value
+  preferredProviderId = providerId.value; preferredModel = model.value; preferredEffort = effort.value
   if (activeSession.value) { activeSession.value.providerId = providerId.value; activeSession.value.model = model.value; activeSession.value.effort = effort.value; persist() }
 }
-function selectProvider() {
-  effort.value = availableEfforts.value.includes(preferredEffort) ? preferredEffort : availableEfforts.value[0] || 'default'
-  saveModelPreference()
-}
+function selectModel() { syncEffortPreference(); saveModelPreference() }
 function selectEffort() { saveModelPreference() }
 watch(providers, syncModelPreference, { immediate: true })
 function openBridge() { emit('open-connection'); EventBus.emit('show-note-bridge', null) }
@@ -280,25 +294,29 @@ async function prepareContext(): Promise<AiContext> {
 async function send() {
   if (!canSend.value) return
   const generation = ++epoch
+  const submittedModel = { providerId: providerId.value, model: model.value, effort: effort.value }
   busy.value = true; error.value = ''; showContext.value = false; followBottom = true
   const content = question.value.trim()
   try {
     const context = await prepareContext()
     if (generation !== epoch || disposed) return
+    const availableModel = modelOptions.value.find(item => item.providerId === submittedModel.providerId && item.id === submittedModel.model)
+    if (!availableModel || !availableModel.efforts.includes(submittedModel.effort)) throw new Error('所选模型或思考强度已更新，请确认后重新发送问题。')
+    modelKey.value = availableModel.key; effort.value = submittedModel.effort
     let session = activeSession.value
     const now = Date.now()
     if (!session) {
-      session = { id: crypto.randomUUID(), docId: conversationDocId.value, docTitle: document.value!.title, title: safeTextPrefix(content, 80), providerId: providerId.value, model: model.value, effort: effort.value, turns: [], createdAt: now, updatedAt: now }
+      session = { id: crypto.randomUUID(), docId: conversationDocId.value, docTitle: document.value!.title, title: safeTextPrefix(content, 80), ...submittedModel, turns: [], createdAt: now, updatedAt: now }
       sessions.value.unshift(session); activeSessionId.value = session.id
       session = activeSession.value!
     }
     const history = session.turns.filter(turn => (!turn.status || turn.status === 'complete') && !turn.error && !turn.cancelled && turn.answer && JSON.stringify(turn.context) === JSON.stringify(context)).slice(-2)
       .flatMap(turn => [{ role: 'user' as const, content: turn.question }, { role: 'assistant' as const, content: safeTextPrefix(turn.answer, 4000) }])
-    const requestId = bridge.start({ providerId: providerId.value, model: model.value, effort: effort.value, context, messages: [...history, { role: 'user', content }], maxOutputTokens: 4096 })
+    const requestId = bridge.start({ ...submittedModel, context, messages: [...history, { role: 'user', content }], maxOutputTokens: 4096 })
     const turn: AiChatTurn = { id: crypto.randomUUID(), question: content, answer: '', context, sources: [], toolCalls: [], status: 'running' }
     session.turns.push(turn)
-    session.providerId = providerId.value; session.model = model.value; session.effort = effort.value
-    preferredProviderId = providerId.value; preferredEffort = effort.value
+    session.providerId = submittedModel.providerId; session.model = submittedModel.model; session.effort = submittedModel.effort
+    preferredProviderId = submittedModel.providerId; preferredModel = submittedModel.model; preferredEffort = submittedModel.effort
     activeId = requestId; activeTurnId.value = turn.id
     if (question.value.trim() === content) question.value = ''
     persist(session)

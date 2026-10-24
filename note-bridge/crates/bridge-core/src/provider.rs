@@ -99,25 +99,30 @@ pub fn client() -> Result<Client, String> {
         .map_err(|_| "无法初始化模型连接".into())
 }
 
-// Effort is a protocol capability, not a guarantee about an arbitrary configured model/gateway.
-// Default omits the parameter; unsupported explicit settings yield a sanitized upstream error.
-pub fn supported_efforts(_provider: &Provider) -> &'static [Effort] {
-    &[Effort::Default, Effort::Low, Effort::Medium, Effort::High]
+// Top-level efforts keep older clients compatible. New selectors use each model's explicit
+// capabilities; unknown models only offer default, which omits the upstream parameter.
+pub fn supported_efforts(provider: &Provider) -> Vec<Effort> {
+    provider
+        .model_options()
+        .into_iter()
+        .find(|model| model.id == provider.model)
+        .map(|model| model.efforts)
+        .unwrap_or_else(|| vec![Effort::Default])
 }
 
 fn payload(provider: &Provider, chat: &ChatRequest) -> Value {
     let system = chat.instructions();
     let mut body = match provider.protocol {
         Protocol::Anthropic => {
-            json!({"model":provider.model,"stream":true,"max_tokens":chat.max_output_tokens,"system":system,"messages":chat.messages})
+            json!({"model":chat.model,"stream":true,"max_tokens":chat.max_output_tokens,"system":system,"messages":chat.messages})
         }
         Protocol::Responses => {
-            json!({"model":provider.model,"stream":true,"max_output_tokens":chat.max_output_tokens,"instructions":system,"input":chat.messages,"store":false})
+            json!({"model":chat.model,"stream":true,"max_output_tokens":chat.max_output_tokens,"instructions":system,"input":chat.messages,"store":false})
         }
         Protocol::ChatCompletions => {
             let mut messages = vec![json!({"role":"system","content":system})];
             messages.extend(chat.messages.iter().map(|message| json!(message)));
-            let mut body = json!({"model":provider.model,"stream":true,"messages":messages});
+            let mut body = json!({"model":chat.model,"stream":true,"messages":messages});
             // Keep the original text-only gateway contract; reasoning/tool requests use
             // the current field that includes both visible and reasoning output tokens.
             let limit = if chat.tools.is_empty() && chat.effort == Effort::Default {
@@ -750,6 +755,7 @@ mod tests {
                 protocol,
                 base_url: "http://127.0.0.1:1234/v1".into(),
                 model: "fixture".into(),
+                models: Vec::new(),
                 auth_kind: AuthKind::None,
                 enabled: true,
                 source: None,

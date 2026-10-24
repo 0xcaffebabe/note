@@ -18,12 +18,26 @@ All messages are UTF-8 JSON objects with `v: 1` and a `type`. Frames/messages ar
 3. A correct code is consumed once and authenticates the website immediately. No additional desktop approval is required. The website receives the following frame directly. The provider list contains only enabled providers and no endpoint, key, source file, or credential reference:
 
    ```json
-   {"v":1,"type":"auth.ok","connectionId":"socket-uuid","authorizationId":"authorization-uuid","token":"opaque-random-token","providers":[{"id":"uuid","name":"My model","protocol":"responses","model":"configured-model","efforts":["default","low","medium","high"]}]}
+   {"v":1,"type":"auth.ok","connectionId":"socket-uuid","authorizationId":"authorization-uuid","token":"opaque-random-token","providers":[{"id":"uuid","name":"My model","protocol":"responses","model":"configured-model","efforts":["default","high"],"models":[{"id":"configured-model","name":"Default model","efforts":["default","high"]},{"id":"vendor/custom-model","name":"Custom model","efforts":["default","xhigh"],"defaultEffort":"xhigh"}]}]}
    ```
 
 Successful pairing creates a persistent authorization bound to the exact origin and a high-entropy opaque token. The desktop persists only the token hash and authorization metadata in its application data directory; raw tokens are never included in desktop snapshots, UI, or logs. The note website stores `{version: 1, port, token}` under `note:ai-bridge:v1` in origin-scoped `localStorage`, so a refresh or subsequent visit can authenticate again. Up to 32 remembered authorizations are retained, with no automatic expiry; explicitly revoke unused authorizations to make room for another pairing. This is a local bridge authorization, not an upstream model API key. Provider API keys remain in the operating system credential store and are never sent to the website. Tokens must not be put in URL query parameters.
 
-### Reconnection and revocation
+## Model lists and live updates
+
+Each provider keeps `model` as its default and includes `models: [{id,name,efforts,defaultEffort?}]`. IDs are scoped to the provider; two services may use the same model ID. At most 200 models per provider and 400 across all providers are stored. No endpoint, local path or credential is included. The legacy provider-level `efforts` describes its default model.
+
+Saving, enabling, disabling or deleting a provider in the native application pushes the complete enabled list to authenticated sockets:
+
+```json
+{"v":1,"type":"providers.updated","providers":[{"id":"provider-uuid","name":"Gateway","protocol":"responses","model":"vendor/default","models":[{"id":"vendor/default","name":"Default","efforts":["default"]},{"id":"vendor/reasoner","name":"Reasoner","efforts":["default","high","xhigh"]}]}]}
+```
+
+This is a metadata update, not a connection state change. Clients update selectors without cancelling an active answer; subsequent requests validate against the current saved list. A question still preparing context must not silently switch to another provider if its submitted selection disappears. Histories persist provider ID, model ID and effort independently.
+
+Only native IPC exposes `fetch_provider_models(id)`: it queries the saved provider endpoint/auth with a 15-second total timeout, 1-MiB response bound, no redirects, and bounded pagination. It returns candidates without modifying storage. Users select or manually configure models, then save. Websites cannot request configuration scans, model-list network fetches, edits or credentials.
+
+## Reconnection and revocation
 
 On refresh or after a lost connection, the website opens a new socket and sends this as its first frame within ten seconds:
 
@@ -66,12 +80,12 @@ Authentication/connection errors use `{v:1,type:"error",code,message}`. Messages
 ```
 
 - One active generation per connection. Request IDs must be new within the connection, at most 80 ASCII letters/digits or `_ - : .`; reconnect after 1,000 requests.
-- `providerId` must reference an enabled local provider. `model` must equal that provider's configured model. Websites cannot override the endpoint, authorization, or protocol.
+- `providerId` must reference an enabled local provider. `model` must be one of that provider's configured `models` (legacy providers without a list use their single configured model). Websites cannot override the endpoint, authorization, or protocol.
 - `messages` contains 1–40 user/assistant messages and ends with a user message. User-provided system messages and fabricated tool-call history are unsupported; the bridge constructs tool turns only from the current upstream response.
 - `context.documents` contains 1–3 documents, each with at most 256 sources. Without registered tools each document requires at least one source, preserving the original text-only contract. With tools, `sources: []` is allowed so the initial request can carry just document metadata. Source IDs are unique across the initial request, at most 100 ASCII letters/digits or `_ - : .`.
 - Serialized context plus message text is limited to 100,000 Unicode characters; the note UI uses a smaller 24,000-character context budget and bounded recent history. `maxOutputTokens` is 1–8192, default 2048. These are bounds, not claims of model-specific token counting.
 - Document content and tool results are untrusted reference material. The adapter asks the model to read necessary documents using registered tools and cite only supplied `[sourceId]` values. The website resolves only IDs from its initial context or locally executed tool results to verified site links.
-- Optional `effort` is `default`, `low`, `medium`, or `high`; omission means `default`. The `efforts` list in `auth.ok` describes values the protocol can forward, not guaranteed support by an arbitrary model or gateway. `default` omits the upstream effort parameter. Explicit values map to Responses `reasoning.effort`, Chat Completions `reasoning_effort`, or Anthropic `output_config.effort`. The bridge does not invent a thinking-token budget or automatically enable thinking. Models/gateways that reject the parameter return a sanitized `upstream_parameters` error suggesting default effort.
+- Optional `effort` is `default`, `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`, or `ultra`; omission means `default`. Each model advertises its configured `efforts` and optional `defaultEffort`; the server rejects undeclared explicit values. Missing capability information means default-only for newly discovered models. Legacy single-model configurations preserve low/medium/high for compatibility. `default` omits the upstream effort parameter. Explicit values map to Responses `reasoning.effort`, Chat Completions `reasoning_effort`, or Anthropic `output_config.effort`. Declared metadata is not proof that a gateway accepts every setting; parameter rejection remains a sanitized error.
 
 ### Read-only function calling
 

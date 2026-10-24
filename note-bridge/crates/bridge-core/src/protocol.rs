@@ -63,14 +63,19 @@ pub struct ChatRequest {
     pub effort: Effort,
 }
 
-#[derive(Clone, Copy, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Effort {
     #[default]
     Default,
+    None,
+    Minimal,
     Low,
     Medium,
     High,
+    Xhigh,
+    Max,
+    Ultra,
 }
 
 #[derive(Clone, Deserialize, Serialize)]

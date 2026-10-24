@@ -28,6 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             protocol: Protocol::ChatCompletions,
             base_url: format!("http://127.0.0.1:{upstream_port}/v1"),
             model: "probe-model".into(),
+            models: Vec::new(),
             auth_kind: AuthKind::None,
             enabled: true,
             api_key: None,

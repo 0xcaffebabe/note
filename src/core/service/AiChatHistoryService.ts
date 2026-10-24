@@ -1,5 +1,5 @@
 import type { StoragePort } from '../ports/StoragePort'
-import type { AiContext, AiEffort } from '../ports/AiBridgePort'
+import { AI_EFFORTS, type AiContext, type AiEffort } from '../ports/AiBridgePort'
 import type { AiCitation } from '../domain/AiDocumentTools'
 
 export interface AiToolCallRecord {
@@ -36,7 +36,6 @@ export interface AiChatSession {
 
 export const AI_CHAT_HISTORY_KEY = 'note:ai-chat-history:v1'
 const MAX_HISTORY_BYTES = 4 * 1024 * 1024
-const EFFORTS = ['default', 'low', 'medium', 'high']
 type JsonObject = Record<string, unknown>
 
 function object(value: unknown): value is JsonObject { return !!value && typeof value === 'object' && !Array.isArray(value) }
@@ -67,7 +66,7 @@ function validTurn(value: unknown): value is AiChatTurn {
 function validSession(value: unknown): value is AiChatSession {
   return object(value) && identifier(value.id) && text(value.docId, 512) && !!value.docId
     && text(value.docTitle, 2000) && text(value.title, 200) && text(value.providerId, 128) && text(value.model, 256)
-    && EFFORTS.includes(String(value.effort)) && Number.isFinite(value.createdAt) && Number.isFinite(value.updatedAt)
+    && AI_EFFORTS.includes(value.effort as AiEffort) && Number.isFinite(value.createdAt) && Number.isFinite(value.updatedAt)
     && Array.isArray(value.turns) && value.turns.length <= 40 && value.turns.every(validTurn)
 }
 

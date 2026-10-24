@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import type { AiBridgeEvent, AiBridgeSnapshot, AiContextDocument } from '@/core/ports/AiBridgePort'
+import type { AiBridgeEvent, AiBridgeSnapshot, AiContextDocument, AiProvider } from '@/core/ports/AiBridgePort'
 import type { AiChatSession } from '@/core/service/AiChatHistoryService'
 
 const mocks = vi.hoisted(() => ({ snapshot: vi.fn(), pair: vi.fn(), start: vi.fn(), cancel: vi.fn(), disconnect: vi.fn(), subscribe: vi.fn(), load: vi.fn(), build: vi.fn(), list: vi.fn(), save: vi.fn(), remove: vi.fn() }))
@@ -44,6 +44,7 @@ async function chooseSection(wrapper: ReturnType<typeof mount>) {
   await wrapper.get('button[aria-controls="assistant-context"]').trigger('click')
   await wrapper.get('select[aria-label="选择当前文档章节"]').setValue(['real-heading'])
 }
+const modelKey = (providerId: string, model: string) => JSON.stringify([providerId, model])
 function unmount(wrapper: ReturnType<typeof mount>) { wrapper.unmount(); wrappers.splice(wrappers.indexOf(wrapper), 1) }
 
 describe('DocumentQA', () => {
@@ -154,6 +155,44 @@ describe('DocumentQA', () => {
     expect(mocks.start.mock.calls[0][0].providerId).toBe('new-provider')
   })
 
+  it.each(['model', 'effort'])('准备上下文时已提交的%s失效会保留问题并提示确认，不自动改用其他配置', async (changed) => {
+    let finish: (value: { documents: AiContextDocument[] }) => void = () => {}
+    mocks.build.mockReturnValueOnce(new Promise(resolve => { finish = resolve }))
+    const wrapper = await setup()
+    await wrapper.get('select[aria-label="思考强度"]').setValue('high')
+    await chooseSection(wrapper); await send(wrapper)
+    snapshot = { ...snapshot, providers: changed === 'model'
+      ? [{ id: 'other-provider', name: '另一服务商', protocol: 'responses', model: 'other-model', efforts: ['default'] }]
+      : [{ ...snapshot.providers[0], efforts: ['default'] }] }
+    emit({ type: 'providers' }); await flushPromises()
+    finish({ documents: [doc] }); await flushPromises()
+    expect(mocks.start).not.toHaveBeenCalled()
+    expect(mocks.save).not.toHaveBeenCalled()
+    expect(wrapper.get('textarea').element.value).toBe('解释这段内容')
+    expect(wrapper.get('[role="alert"]').text()).toContain('所选模型或思考强度已更新')
+    expect(wrapper.find('button[aria-label="停止生成"]').exists()).toBe(false)
+    await wrapper.get('form').trigger('submit'); await flushPromises()
+    expect(mocks.start.mock.calls[0][0]).toMatchObject(changed === 'model'
+      ? { providerId: 'other-provider', model: 'other-model', effort: 'default' }
+      : { providerId: 'provider', model: 'test', effort: 'default' })
+  })
+
+  it('准备上下文时历史模型重新出现，当前提交仍使用点击发送时的有效模型', async () => {
+    stored = [{ id: 'saved-session', docId: 'current', docTitle: '当前文章', title: '已保存聊天', providerId: 'saved-provider', model: 'saved-model', effort: 'high', turns: [], createdAt: 1, updatedAt: 1 }]
+    let finish: (value: { documents: AiContextDocument[] }) => void = () => {}
+    mocks.build.mockReturnValueOnce(new Promise(resolve => { finish = resolve }))
+    const wrapper = await setup()
+    expect(wrapper.get('select[aria-label="模型"]').element.value).toBe(modelKey('provider', 'test'))
+    await chooseSection(wrapper); await send(wrapper)
+    snapshot = { ...snapshot, providers: [...snapshot.providers, { id: 'saved-provider', name: '历史模型', protocol: 'responses', model: 'saved-model', efforts: ['default', 'high'] }] }
+    emit({ type: 'providers' }); await flushPromises()
+    expect(wrapper.get('select[aria-label="模型"]').element.value).toBe(modelKey('saved-provider', 'saved-model'))
+    finish({ documents: [doc] }); await flushPromises()
+    expect(mocks.start.mock.calls[0][0]).toMatchObject({ providerId: 'provider', model: 'test', effort: 'high' })
+    expect(stored[0]).toMatchObject({ providerId: 'provider', model: 'test', effort: 'high' })
+    expect(wrapper.get('select[aria-label="模型"]').element.value).toBe(modelKey('provider', 'test'))
+  })
+
   it('未连接时打开导航连接设置，空闲关闭不取消其他面板请求', async () => {
     snapshot = { ...snapshot, state: 'disconnected', providers: [], remembered: false }
     const open = vi.fn(); EventBus.on('show-note-bridge', open)
@@ -223,9 +262,9 @@ describe('DocumentQA', () => {
     const wrapper = await setup()
     expect(mocks.save).not.toHaveBeenCalled()
     expect(stored[0]).toMatchObject({ providerId: 'saved-provider', effort: 'high' })
-    snapshot = { ...snapshot, providers: [firstProvider, { id: 'saved-provider', name: '历史模型', protocol: 'responses', model: 'saved-model', efforts: ['default', 'low', 'medium', 'high'] }] }
+    snapshot = { ...snapshot, providers: [firstProvider, { id: 'saved-provider', name: '历史模型', protocol: 'responses', model: 'default-model', models: [{ id: 'default-model', name: '默认模型', efforts: ['default'] }, { id: 'saved-model', name: '保存的模型', efforts: ['default', 'low', 'medium', 'high'] }] }] }
     emit({ type: 'state', state: 'ready' }); await flushPromises()
-    expect(wrapper.get('select[aria-label="模型"]').element.value).toBe('saved-provider')
+    expect(wrapper.get('select[aria-label="模型"]').element.value).toBe(modelKey('saved-provider', 'saved-model'))
     expect(wrapper.get('select[aria-label="思考强度"]').element.value).toBe('high')
     expect(mocks.save).not.toHaveBeenCalled()
     await send(wrapper)
@@ -237,13 +276,13 @@ describe('DocumentQA', () => {
     const firstProvider = snapshot.providers[0]
     const savedProvider = { ...firstProvider, id: 'saved-provider', name: '历史模型', model: 'saved-model' }
     const wrapper = await setup()
-    expect(wrapper.get('select[aria-label="模型"]').element.value).toBe('provider')
+    expect(wrapper.get('select[aria-label="模型"]').element.value).toBe(modelKey('provider', 'test'))
     expect(mocks.save).not.toHaveBeenCalled()
     snapshot = { ...snapshot, providers: [firstProvider, savedProvider] }
     emit({ type: 'state', state: 'ready' }); await flushPromises()
-    expect(wrapper.get('select[aria-label="模型"]').element.value).toBe('saved-provider')
+    expect(wrapper.get('select[aria-label="模型"]').element.value).toBe(modelKey('saved-provider', 'saved-model'))
     expect(wrapper.get('select[aria-label="思考强度"]').element.value).toBe('high')
-    await wrapper.get('select[aria-label="模型"]').setValue('provider')
+    await wrapper.get('select[aria-label="模型"]').setValue(modelKey('provider', 'test'))
     await wrapper.get('select[aria-label="思考强度"]').setValue('low')
     expect(stored[0]).toMatchObject({ providerId: 'provider', effort: 'low' })
     snapshot = { ...snapshot, providers: [] }
@@ -251,10 +290,45 @@ describe('DocumentQA', () => {
     expect(stored[0]).toMatchObject({ providerId: 'provider', effort: 'low' })
     snapshot = { ...snapshot, providers: [savedProvider, firstProvider] }
     emit({ type: 'state', state: 'ready' }); await flushPromises()
-    expect(wrapper.get('select[aria-label="模型"]').element.value).toBe('provider')
+    expect(wrapper.get('select[aria-label="模型"]').element.value).toBe(modelKey('provider', 'test'))
     expect(wrapper.get('select[aria-label="思考强度"]').element.value).toBe('low')
     await send(wrapper)
     expect(mocks.start.mock.calls.at(-1)![0]).toMatchObject({ providerId: 'provider', effort: 'low' })
+  })
+
+  it('同服务商的多个模型独立选择，实时更新修正思考强度且不会中断当前回答', async () => {
+    const gateway: AiProvider = { id: 'gateway', name: '自定义网关', protocol: 'responses', model: 'default-model', models: [
+      { id: 'default-model', name: '默认模型', efforts: ['default', 'low'] },
+      { id: 'custom/reasoner', name: '自定义推理模型', efforts: ['default', 'high', 'xhigh'] },
+    ] }
+    snapshot = { ...snapshot, providers: [gateway, { ...gateway, id: 'other-gateway', name: '另一网关' }] }
+    const wrapper = await setup()
+    const models = wrapper.get('select[aria-label="模型"]')
+    expect(models.findAll('optgroup').map(group => group.attributes('label'))).toEqual(['自定义网关', '另一网关'])
+    expect(models.findAll('option')).toHaveLength(4)
+    await models.setValue(modelKey('gateway', 'custom/reasoner'))
+    await wrapper.get('select[aria-label="思考强度"]').setValue('xhigh')
+    await send(wrapper)
+    expect(mocks.start.mock.calls[0][0]).toMatchObject({ providerId: 'gateway', model: 'custom/reasoner', effort: 'xhigh' })
+    snapshot = { ...snapshot, providers: [{ ...gateway, models: [gateway.models![0],
+      { id: 'custom/reasoner', name: '推理模型（更新）', efforts: ['default', 'medium'], defaultEffort: 'medium' },
+      { id: 'new-model', name: '新增模型', efforts: ['default'] },
+    ] }] }
+    emit({ type: 'providers' }); await flushPromises()
+    expect(models.element.value).toBe(modelKey('gateway', 'custom/reasoner'))
+    expect(models.text()).toContain('新增模型')
+    expect(wrapper.get('select[aria-label="思考强度"]').element.value).toBe('medium')
+    expect(wrapper.get('button[aria-label="停止生成"]').exists()).toBe(true)
+    expect(mocks.cancel).not.toHaveBeenCalled()
+    emit({ type: 'delta', requestId: 'request-1', delta: '列表更新后继续回答' })
+    emit({ type: 'done', requestId: 'request-1', cancelled: false }); await flushPromises()
+    expect(wrapper.get('.qa-assistant-message').text()).toContain('列表更新后继续回答')
+    await send(wrapper, '使用更新后的强度')
+    expect(mocks.start.mock.calls.at(-1)![0]).toMatchObject({ providerId: 'gateway', model: 'custom/reasoner', effort: 'medium' })
+    emit({ type: 'done', requestId: 'request-1', cancelled: false }); await flushPromises()
+    await models.setValue(modelKey('gateway', 'default-model'))
+    expect(wrapper.get('select[aria-label="思考强度"]').element.value).toBe('default')
+    expect(stored[0]).toMatchObject({ providerId: 'gateway', model: 'default-model', effort: 'default' })
   })
 
   it('Enter发送，Shift+Enter和中文输入法提交不触发发送', async () => {

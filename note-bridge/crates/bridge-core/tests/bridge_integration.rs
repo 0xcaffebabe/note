@@ -3,11 +3,12 @@ use axum::{
     extract::State,
     http::{HeaderMap, StatusCode, Uri},
     response::{IntoResponse, Response},
-    routing::post,
+    routing::{get, post},
     Json, Router,
 };
 use bridge_core::{
-    model::{AuthKind, Protocol},
+    model::{AuthKind, ModelOption, Protocol},
+    protocol::Effort,
     storage::MemorySecretStore,
     Bridge, Provider, ProviderInput,
 };
@@ -56,6 +57,18 @@ impl Upstream {
         let port = listener.local_addr().unwrap().port();
         let requests = Arc::new(Mutex::new(Vec::new()));
         let app = Router::new()
+            .route("/v1/models", get(mock_models))
+            .route("/paged/v1/models", get(mock_models))
+            .route("/empty-final/v1/models", get(mock_models))
+            .route("/empty-middle/v1/models", get(mock_models))
+            .route(
+                "/redirect/v1/models",
+                get(|| async { axum::response::Redirect::temporary("/v1/models") }),
+            )
+            .route(
+                "/oversized/v1/models",
+                get(|| async { "x".repeat(1024 * 1024 + 1) }),
+            )
             .route("/v1/messages", post(mock_upstream))
             .route("/v1/responses", post(mock_upstream))
             .route("/v1/chat/completions", post(mock_upstream))
@@ -75,6 +88,46 @@ impl Drop for Upstream {
     fn drop(&mut self) {
         self.task.abort();
     }
+}
+
+async fn mock_models(
+    State(requests): State<Arc<Mutex<Vec<RecordedRequest>>>>,
+    uri: Uri,
+    headers: HeaderMap,
+) -> Json<Value> {
+    requests.lock().unwrap().push(RecordedRequest {
+        path: uri.path().into(),
+        headers,
+        body: Value::Null,
+    });
+    if uri.path().starts_with("/empty-final/") || uri.path().starts_with("/empty-middle/") {
+        return Json(match uri.query() {
+            None => {
+                json!({"data":[{"id":"first-page-model"}],"has_more":true,"last_id":"first-page-model"})
+            }
+            Some("after_id=first-page-model") if uri.path().starts_with("/empty-final/") => {
+                json!({"data":[],"has_more":false})
+            }
+            Some("after_id=first-page-model") => {
+                json!({"data":[{"id":"hidden-intermediate","visibility":"hide"}],"has_more":true,"last_id":"hidden-intermediate"})
+            }
+            Some("after_id=hidden-intermediate") => {
+                json!({"data":[{"id":"last-page-model"}],"has_more":false})
+            }
+            other => panic!("unexpected model pagination cursor: {other:?}"),
+        });
+    }
+    if uri.path().starts_with("/paged/") {
+        return Json(if uri.query().is_none() {
+            json!({"data":[{"id":"first-page-model"}],"has_more":true,"last_id":"first-page-model"})
+        } else {
+            assert_eq!(uri.query(), Some("after_id=first-page-model"));
+            json!({"data":[{"id":"second-page-model"}],"has_more":false,"last_id":"second-page-model"})
+        });
+    }
+    Json(
+        json!({"data":[{"id":"fixture-alternate","display_name":"Alternate gateway model"},{"id":"vendor/other-alias"}]}),
+    )
 }
 
 async fn mock_upstream(
@@ -280,6 +333,7 @@ impl Harness {
                 protocol,
                 base_url: self.upstream.base_url.clone(),
                 model: model.into(),
+                models: Vec::new(),
                 auth_kind: if protocol == Protocol::Anthropic {
                     AuthKind::ApiKey
                 } else {
@@ -1102,5 +1156,261 @@ async fn ten_failed_pairing_attempts_invalidate_the_code_until_a_new_window_is_o
     assert!(!harness._dir.path().join("authorizations.json").exists());
     let (_, accepted) = harness.pair().await;
     assert_eq!(accepted["type"], "auth.ok");
+    harness.bridge.stop().await;
+}
+
+#[tokio::test]
+async fn model_candidates_are_read_only_then_saved_choices_update_live_and_drive_actual_requests() {
+    let harness = Harness::new().await;
+    for (index, protocol) in [
+        Protocol::Responses,
+        Protocol::ChatCompletions,
+        Protocol::Anthropic,
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let provider = harness.add_provider(protocol, false).await;
+        let before = harness.bridge.snapshot().await.providers;
+        let fetched = harness
+            .bridge
+            .fetch_provider_models(provider.id.clone())
+            .await
+            .unwrap();
+        assert_eq!(fetched[0].id, "fixture-alternate");
+        assert_eq!(fetched[0].efforts, vec![Effort::Default]);
+        assert_eq!(harness.bridge.snapshot().await.providers, before);
+        let request = harness
+            .upstream
+            .requests
+            .lock()
+            .unwrap()
+            .last()
+            .unwrap()
+            .clone();
+        assert_eq!(request.path, "/v1/models");
+        if protocol == Protocol::Anthropic {
+            assert_eq!(request.headers["x-api-key"], FAKE_KEY);
+            assert_eq!(request.headers["anthropic-version"], "2023-06-01");
+            assert!(!request.headers.contains_key("authorization"));
+        } else {
+            assert_eq!(
+                request.headers["authorization"],
+                format!("Bearer {FAKE_KEY}")
+            );
+        }
+        let (mut socket, auth) = harness.pair().await;
+        assert!(auth["providers"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|value| value["models"].is_array()));
+        let mut alternate = fetched[0].clone();
+        alternate.efforts.push(Effort::Xhigh);
+        alternate.default_effort = Some(Effort::Xhigh);
+        let updated = harness
+            .bridge
+            .save_provider(ProviderInput {
+                id: Some(provider.id.clone()),
+                name: provider.name.clone(),
+                protocol,
+                base_url: provider.base_url.clone(),
+                model: provider.model.clone(),
+                models: vec![ModelOption::configured(provider.model.clone()), alternate],
+                auth_kind: provider.auth_kind,
+                enabled: true,
+                api_key: None,
+                source: Some("fixture-private-config-path".into()),
+            })
+            .await
+            .unwrap();
+        let event = receive(&mut socket).await;
+        assert_eq!(event["type"], "providers.updated");
+        assert!(!event.to_string().contains(FAKE_KEY));
+        assert!(!event.to_string().contains("fixture-private-config-path"));
+        assert!(!event.to_string().contains(&provider.base_url));
+        let listed = event["providers"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|value| value["id"] == provider.id)
+            .unwrap();
+        assert_eq!(listed["models"][1]["defaultEffort"], "xhigh");
+        let mut request = chat(&updated, &format!("selected-{index}"));
+        request["model"] = json!("fixture-alternate");
+        request["effort"] = json!("xhigh");
+        send(&mut socket, request).await;
+        loop {
+            let event = receive(&mut socket).await;
+            assert_ne!(event["type"], "chat.error", "{event}");
+            if event["type"] == "chat.done" {
+                break;
+            }
+        }
+        let upstream = harness
+            .upstream
+            .requests
+            .lock()
+            .unwrap()
+            .last()
+            .unwrap()
+            .clone();
+        assert_eq!(upstream.body["model"], "fixture-alternate");
+        let sent_effort = match protocol {
+            Protocol::Responses => &upstream.body["reasoning"]["effort"],
+            Protocol::ChatCompletions => &upstream.body["reasoning_effort"],
+            Protocol::Anthropic => &upstream.body["output_config"]["effort"],
+        };
+        assert_eq!(sent_effort, "xhigh");
+        let sent_count = harness.upstream.requests.lock().unwrap().len();
+        for (model, effort, label) in [
+            ("unconfigured-model", "default", "model"),
+            ("fixture-alternate", "medium", "effort"),
+        ] {
+            let mut forged = chat(&updated, &format!("forged-{label}-{index}"));
+            forged["model"] = json!(model);
+            forged["effort"] = json!(effort);
+            send(&mut socket, forged).await;
+            assert_eq!(receive(&mut socket).await["type"], "chat.error");
+        }
+        assert_eq!(harness.upstream.requests.lock().unwrap().len(), sent_count);
+        harness
+            .bridge
+            .remove_provider(provider.id.clone())
+            .await
+            .unwrap();
+        let removed = receive(&mut socket).await;
+        assert_eq!(removed["type"], "providers.updated");
+        assert!(!removed["providers"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|value| value["id"] == provider.id));
+        socket.close(None).await.unwrap();
+    }
+    harness.bridge.stop().await;
+}
+
+#[tokio::test]
+async fn model_fetch_failures_never_follow_redirects_leak_credentials_or_replace_saved_models() {
+    let harness = Harness::new().await;
+    for (prefix, expected) in [
+        ("missing", "不提供模型列表接口"),
+        ("redirect", "重定向"),
+        ("oversized", "1 MiB"),
+    ] {
+        let provider = harness
+            .bridge
+            .save_provider(ProviderInput {
+                id: None,
+                name: "Gateway".into(),
+                protocol: Protocol::Responses,
+                base_url: harness
+                    .upstream
+                    .base_url
+                    .replace("/v1", &format!("/{prefix}/v1")),
+                model: "custom-alias".into(),
+                models: vec![ModelOption::configured("custom-alias")],
+                auth_kind: AuthKind::Bearer,
+                enabled: true,
+                api_key: Some(FAKE_KEY.into()),
+                source: None,
+            })
+            .await
+            .unwrap();
+        let before = harness.bridge.snapshot().await.providers;
+        let error = harness
+            .bridge
+            .fetch_provider_models(provider.id)
+            .await
+            .unwrap_err();
+        assert!(error.contains(expected), "{error}");
+        assert!(!error.contains(FAKE_KEY));
+        assert_eq!(harness.bridge.snapshot().await.providers, before);
+        assert!(harness.upstream.requests.lock().unwrap().is_empty());
+    }
+    harness.bridge.stop().await;
+}
+
+#[tokio::test]
+async fn anthropic_catalog_reads_all_bounded_pages_using_the_same_endpoint() {
+    let harness = Harness::new().await;
+    let provider = harness
+        .bridge
+        .save_provider(ProviderInput {
+            id: None,
+            name: "Paged gateway".into(),
+            protocol: Protocol::Anthropic,
+            base_url: harness.upstream.base_url.replace("/v1", "/paged/v1"),
+            model: "first-page-model".into(),
+            models: vec![ModelOption::configured("first-page-model")],
+            auth_kind: AuthKind::ApiKey,
+            enabled: true,
+            api_key: Some(FAKE_KEY.into()),
+            source: None,
+        })
+        .await
+        .unwrap();
+    let models = harness
+        .bridge
+        .fetch_provider_models(provider.id)
+        .await
+        .unwrap();
+    assert_eq!(
+        models
+            .iter()
+            .map(|model| model.id.as_str())
+            .collect::<Vec<_>>(),
+        vec!["first-page-model", "second-page-model"]
+    );
+    {
+        let requests = harness.upstream.requests.lock().unwrap();
+        assert_eq!(requests.len(), 2);
+        assert!(requests
+            .iter()
+            .all(|request| request.headers["x-api-key"] == FAKE_KEY));
+    }
+    harness.bridge.stop().await;
+}
+
+#[tokio::test]
+async fn catalog_pagination_keeps_prior_models_and_skips_filtered_intermediate_pages() {
+    let harness = Harness::new().await;
+    for (prefix, expected) in [
+        ("empty-final", vec!["first-page-model"]),
+        ("empty-middle", vec!["first-page-model", "last-page-model"]),
+    ] {
+        let provider = harness
+            .bridge
+            .save_provider(ProviderInput {
+                id: None,
+                name: "Paged gateway".into(),
+                protocol: Protocol::Anthropic,
+                base_url: harness
+                    .upstream
+                    .base_url
+                    .replace("/v1", &format!("/{prefix}/v1")),
+                model: "first-page-model".into(),
+                models: vec![ModelOption::configured("first-page-model")],
+                auth_kind: AuthKind::ApiKey,
+                enabled: true,
+                api_key: Some(FAKE_KEY.into()),
+                source: None,
+            })
+            .await
+            .unwrap();
+        let models = harness
+            .bridge
+            .fetch_provider_models(provider.id)
+            .await
+            .unwrap();
+        assert_eq!(
+            models
+                .iter()
+                .map(|model| model.id.as_str())
+                .collect::<Vec<_>>(),
+            expected
+        );
+    }
     harness.bridge.stop().await;
 }

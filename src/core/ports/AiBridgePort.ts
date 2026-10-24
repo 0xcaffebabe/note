@@ -1,8 +1,16 @@
 import type { AiCitation, AiDocumentToolDefinition, AiDocumentToolResult } from '../domain/AiDocumentTools'
 
-export type AiEffort = 'default' | 'low' | 'medium' | 'high'
+export const AI_EFFORTS = ['default', 'none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max', 'ultra'] as const
+export type AiEffort = typeof AI_EFFORTS[number]
 export type AiToolDefinition = AiDocumentToolDefinition
 export type AiToolExecutor = (name: string, argumentsValue: unknown, signal: AbortSignal) => Promise<AiDocumentToolResult>
+
+export interface AiModel {
+  id: string
+  name: string
+  efforts: AiEffort[]
+  defaultEffort?: AiEffort
+}
 
 export interface AiProvider {
   id: string
@@ -10,6 +18,7 @@ export interface AiProvider {
   protocol: string
   model: string
   efforts?: AiEffort[]
+  models?: AiModel[]
 }
 
 export interface AiSource {
@@ -57,6 +66,7 @@ export interface AiBridgeSnapshot {
 
 export type AiBridgeEvent =
   | { type: 'state'; state: AiBridgeState; message?: string }
+  | { type: 'providers' }
   | { type: 'delta'; requestId: string; delta: string }
   | { type: 'done'; requestId: string; cancelled: boolean }
   | { type: 'error'; requestId: string; message: string }

@@ -1,4 +1,6 @@
-use crate::model::{validate_id, validate_secret, AuthKind, Provider, ProviderInput};
+use crate::model::{
+    validate_id, validate_secret, AuthKind, Provider, ProviderInput, MAX_MODELS_TOTAL,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::fs::{self, File, OpenOptions};
@@ -139,6 +141,7 @@ impl Storage {
                 if config.version != 1 || config.providers.len() > MAX_PROVIDERS {
                     return Err("应用配置版本或配置数量不受支持".into());
                 }
+                validate_total_models(&config.providers)?;
                 let mut ids = HashSet::new();
                 let mut credential_ids = HashSet::new();
                 for provider in &config.providers {
@@ -226,6 +229,7 @@ impl Storage {
             protocol: input.protocol,
             base_url: input.base_url,
             model: input.model,
+            models: input.models,
             auth_kind: input.auth_kind,
             enabled: input.enabled,
             source: input.source,
@@ -235,6 +239,7 @@ impl Storage {
             Some(index) => next.providers[index] = provider.clone(),
             None => next.providers.push(provider.clone()),
         }
+        validate_total_models(&next.providers)?;
         // Every changed credential gets a new keyring entry. The atomic JSON
         // replacement commits the endpoint and its reference together, so even a
         // process crash cannot pair an old URL with a newly replaced credential.
@@ -318,6 +323,18 @@ impl Storage {
     }
 }
 
+fn validate_total_models(providers: &[Provider]) -> Result<(), String> {
+    if providers
+        .iter()
+        .map(|provider| provider.models.len().max(1))
+        .sum::<usize>()
+        > MAX_MODELS_TOTAL
+    {
+        return Err("所有服务合计最多配置 400 个模型".into());
+    }
+    Ok(())
+}
+
 fn write_config(data_dir: &Path, config: &ConfigFile) -> Result<(), String> {
     let bytes = serde_json::to_vec_pretty(config).map_err(|_| "无法序列化配置".to_string())?;
     if bytes.len() as u64 > MAX_CONFIG_BYTES {
@@ -369,11 +386,44 @@ mod tests {
             protocol: Protocol::Responses,
             base_url: "https://api.example.test/v1".into(),
             model: "fixture-model".into(),
+            models: Vec::new(),
             auth_kind: AuthKind::Bearer,
             enabled: true,
             api_key: secret.map(String::from),
             source: None,
         }
+    }
+
+    #[test]
+    fn model_catalog_round_trips_and_rejects_duplicate_missing_default_and_total_overflow() {
+        use crate::model::ModelOption;
+        let dir = tempfile::tempdir().unwrap();
+        let secrets = Arc::new(MemorySecretStore::new());
+        let store = Storage::with_secrets(dir.path().into(), secrets.clone()).unwrap();
+        let mut provider = input(Some("fixture-key"));
+        provider.models = vec![
+            ModelOption::configured("fixture-model"),
+            ModelOption::configured("vendor/alias"),
+        ];
+        let saved = store.save(provider.clone()).unwrap();
+        let reopened = Storage::with_secrets(dir.path().into(), secrets).unwrap();
+        assert_eq!(reopened.providers()[0].models, saved.models);
+        provider
+            .models
+            .push(ModelOption::configured("fixture-model"));
+        assert!(store.save(provider.clone()).unwrap_err().contains("重复"));
+        provider.models = vec![ModelOption::configured("another")];
+        assert!(store
+            .save(provider.clone())
+            .unwrap_err()
+            .contains("默认模型"));
+        provider.models = (0..200)
+            .map(|n| ModelOption::configured(format!("vendor-{n}")))
+            .collect();
+        provider.model = "vendor-0".into();
+        store.save(provider.clone()).unwrap();
+        assert!(store.save(provider).unwrap_err().contains("400"));
+        assert_eq!(store.providers().len(), 2);
     }
 
     #[test]

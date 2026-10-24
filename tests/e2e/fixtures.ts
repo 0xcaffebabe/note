@@ -160,6 +160,8 @@ export async function openNavigationTools(page: Page) {
   await page.getByRole('button', { name: '站点导航与工具', exact: true }).click()
   const navigation = page.getByRole('dialog', { name: '站点导航与工具', exact: true })
   await expect(navigation).toBeVisible()
+  // 可见时入场动画可能尚未结束；等待初始焦点，避免后续键盘操作被 after-enter 截走。
+  await expect(navigation.getByRole('button').first()).toBeFocused()
   return navigation
 }
 

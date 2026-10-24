@@ -1,5 +1,4 @@
 import Content from '../../domain/Content'
-import DocUtils from '../../util/DocUtils'
 import DocFileInfo from '../../domain/DocFileInfo'
 import DocSegement from '../../domain/doc/DocSegement'
 import type { DocMetadata } from '../../domain/doc/DocMetadata'
@@ -8,6 +7,9 @@ import type DocRender from '../../render/DocRender'
 import type { TagService } from '../TagService'
 import type { KnowledgeNetworkService } from '../KnowledgeNetworkService'
 import type { DomParserPort } from '../../ports'
+import { extractRelatedContent } from './RelatedContentExtractor'
+
+export { extractRelatedContent } from './RelatedContentExtractor'
 
 /**
  * 跨方法调用回调: 渲染链里若干步骤本应命中 DocService 外层 @cache(同一作用域 id/键),
@@ -155,31 +157,4 @@ export class DocRenderService {
     }
     return result
   }
-}
-
-/** Shared by the reader and site-owned AI data publishing; keeps section numbering aligned. */
-export function extractRelatedContent(file: DocFileInfo): void {
-  if (file.relatedLinks !== undefined) return
-  file.relatedLinks = []
-  if (!file.content || !/关联内容/.test(file.content)) return
-  const lines = file.content.split('\n')
-  const start = lines.findIndex(line => /^#{2,3}\s*关联内容/.test(line))
-  if (start === -1) return
-  const level = lines[start].match(/^(#+)/)![1].length
-  let end = lines.length
-  for (let i = start + 1; i < lines.length; i++) {
-    const heading = lines[i].match(/^(#{1,6})\s/)
-    if (heading && heading[1].length <= level) { end = i; break }
-  }
-  for (const line of lines.slice(start + 1, end)) {
-    const link = line.match(/^-\s*\[([^\]]+)\]\(([^)]+)\)\s*(.*)$/)
-    if (!link) continue
-    try {
-      const { id } = DocUtils.resloveDocUrl(link[2].trim())
-      file.relatedLinks.push({ href: DocUtils.docId2HtmlPath(id), path: link[1].trim(), desc: link[3].trim() })
-    } catch { /* An invalid reference cannot affect the document body. */ }
-  }
-  lines.splice(start, end - start)
-  while (lines.length && lines[lines.length - 1].trim() === '') lines.pop()
-  file.content = lines.join('\n')
 }

@@ -17,10 +17,8 @@
 </template>
 
 <script lang="ts">
-import { computed, defineAsyncComponent, defineComponent, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { useRoute } from "vue-router";
-import DocUtils from "@/core/util/DocUtils";
-import { isTouch } from "@/platform/web/composables/useBreakpoint";
+import { defineAsyncComponent, defineComponent, onBeforeUnmount, ref } from "vue";
+import { useKnowledgeAssistant } from "./app/useKnowledgeAssistant";
 import SiteNavigation from "./components/navigation/SiteNavigation.vue";
 import CommandPalette from "@/platform/web/components/search/CommandPalette.vue";
 import LinkPreviewLayer from "@/platform/web/pages/doc/LinkPreviewLayer.vue";
@@ -37,35 +35,7 @@ export default defineComponent({
     LinkPreviewLayer,
   },
   setup() {
-    const route = useRoute()
-    const assistantDoc = computed(() => DocUtils.routeDocId(route) || undefined)
-    const assistantMounted = ref(false)
-    const knowledgeAssistant = ref<{ show(): void }>()
-    let openAssistantWhenReady = false
-    const showKnowledgeAssistant = () => {
-      assistantMounted.value = true
-      if (knowledgeAssistant.value) knowledgeAssistant.value.show()
-      else openAssistantWhenReady = true
-    }
-    watch(knowledgeAssistant, (panel) => {
-      if (!panel || !openAssistantWhenReady) return
-      openAssistantWhenReady = false
-      panel.show()
-    })
-    const handleAssistantShortcut = (event: KeyboardEvent) => {
-      const target = event.target
-      const typing = target instanceof HTMLElement && target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')
-      if (isTouch.value || event.defaultPrevented || event.repeat || typing || !event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
-      if (![event.key.toLowerCase(), event.code.toLowerCase().replace('key', '')].includes('i')) return
-      event.preventDefault()
-      showKnowledgeAssistant()
-    }
-    EventBus.on('show-knowledge-assistant', showKnowledgeAssistant)
-    onMounted(() => document.addEventListener('keydown', handleAssistantShortcut))
-    onBeforeUnmount(() => {
-      EventBus.off('show-knowledge-assistant', showKnowledgeAssistant)
-      document.removeEventListener('keydown', handleAssistantShortcut)
-    })
+    const { assistantDoc, assistantMounted, knowledgeAssistant } = useKnowledgeAssistant()
     const commandPalette = ref<InstanceType<typeof CommandPalette>>()
     // 统一搜索入口: 全文 / 目录 都走 CommandPalette(取代移动端 Search 抽屉 + CategorySearch 弹窗)
     const showSearch = (mode?: 'category' | 'fulltext') => {
@@ -74,7 +44,10 @@ export default defineComponent({
     EventBus.on('show-site-search', showSearch)
     onBeforeUnmount(() => EventBus.off('show-site-search', showSearch))
     return {
-      commandPalette, assistantDoc, assistantMounted, knowledgeAssistant,
+      commandPalette,
+      assistantDoc,
+      assistantMounted,
+      knowledgeAssistant,
     }
   },
   created() {

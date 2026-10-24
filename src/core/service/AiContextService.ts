@@ -1,59 +1,36 @@
-import type DocFileInfo from '../domain/DocFileInfo'
+import type { PublishedDocumentContent } from '../domain/knowledge/PublishedDocument'
 import type { DomParserPort } from '../ports/DomParserPort'
+import type { KnowledgeDocumentReaderPort } from '../ports/KnowledgeDocumentReaderPort'
 import DocUtils from '../util/DocUtils'
+import { extractDocumentSections } from './knowledge/DocumentSectionExtractor'
 
-interface DocumentReader {
-  getDocFileInfo(id: string): Promise<DocFileInfo>
-  renderMd(file: DocFileInfo): string
-}
-export interface PublishedDocumentSection { headingId: string; title: string; text: string }
-export interface PublishedDocumentContent {
-  docId: string
-  title: string
-  url: string
-  headings: { id: string; title: string }[]
-  sources: PublishedDocumentSection[]
-}
+export type {
+  PublishedDocumentContent,
+  PublishedDocumentSection,
+} from '../domain/knowledge/PublishedDocument'
 
-/** Static data extraction shared with the site renderer. Agent selection/budgets live in Note Bridge. */
+/**
+ * 静态文档内容的提取门面，负责组装文档身份、原文地址和渲染后的章节。
+ * 读取与渲染经端口注入，DOM 遍历交给章节提取器；不承担 Agent 的上下文选择。
+ */
 export class AiContextService {
-  constructor(private readonly docs: DocumentReader, private readonly dom: DomParserPort) {}
+  constructor(
+    private readonly docs: KnowledgeDocumentReaderPort,
+    private readonly dom: DomParserPort,
+  ) {}
 
-  async load(docId: string): Promise<PublishedDocumentContent> {
+  /** 读取完整文档并保留真实标题锚点，供独立发布的知识客户端引用。 */
+  public async load(docId: string): Promise<PublishedDocumentContent> {
     const file = await this.docs.getDocFileInfo(docId)
     const body = this.dom.parse(this.docs.renderMd(file)).body
-    body.querySelectorAll('script,style,button,.heading-anchor,.code-block-toolbar,sup').forEach(node => node.remove())
-    const sources: PublishedDocumentSection[] = []
-    const headings: PublishedDocumentContent['headings'] = []
-    let current: PublishedDocumentSection = { headingId: '', title: file.name, text: '' }
-    sources.push(current)
-    const walk = (node: Node) => {
-      if (node.nodeType === 3) { current.text += node.textContent || ''; return }
-      if (node.nodeType !== 1) return
-      const element = node as Element
-      if (/^H[1-6]$/.test(element.tagName) && element.id) {
-        const title = element.textContent || file.name
-        current = { headingId: element.id, title, text: title + '\n' }
-        sources.push(current)
-        headings.push({ id: element.id, title })
-        return
-      }
-      if (element.tagName === 'PRE' || element.classList.contains('mermaid-source')) {
-        current.text += '\n```\n' + (element.textContent || '') + '\n```\n'
-        return
-      }
-      if (element.tagName === 'IMG') { current.text += element.getAttribute('alt') || ''; return }
-      if (element.tagName === 'TABLE') {
-        current.text += '\n' + Array.from(element.querySelectorAll('tr'), row =>
-          Array.from(row.querySelectorAll('th,td'), cell => cell.textContent?.trim() || '').join('\t')).join('\n') + '\n'
-        return
-      }
-      Array.from(element.childNodes).forEach(walk)
-      if (/^(P|DIV|LI|TR|BLOCKQUOTE|UL|OL|BR)$/.test(element.tagName)) current.text += '\n'
-      if (/^(TD|TH)$/.test(element.tagName)) current.text += '\t'
+    const { headings, sources } = extractDocumentSections(body, file.name)
+
+    return {
+      docId,
+      title: file.name,
+      url: encodeURI(DocUtils.docId2HtmlPath(docId)),
+      headings,
+      sources,
     }
-    Array.from(body.childNodes).forEach(walk)
-    return { docId, title: file.name, url: encodeURI(DocUtils.docId2HtmlPath(docId)), headings,
-      sources: sources.filter(source => source.text.trim().length > 0) }
   }
 }

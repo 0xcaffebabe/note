@@ -94,14 +94,18 @@ export default defineConfig({
         navigateFallbackDenylist: [/\.html(\?|$)/, /[?&]__asset_retry=/],
         runtimeCaching: [
           {
-            // A new run must bind a current manifest; never serve a stale revision via SW.
+            // 新回答绑定最新 manifest；Service Worker 不能返回旧版本清单。
             urlPattern: /\/ai\/manifest\.json(?:\?|$)/,
             handler: 'NetworkOnly',
           },
           {
             urlPattern: /\/ai\/objects\/[a-f0-9]{64}\.json(?:\?|$)/,
             handler: 'CacheFirst',
-            options: { cacheName: 'ai-knowledge-resources', expiration: { maxEntries: 100, maxAgeSeconds: 30 * 24 * 60 * 60 }, cacheableResponse: { statuses: [200] } },
+            options: {
+              cacheName: 'ai-knowledge-resources',
+              expiration: { maxEntries: 100, maxAgeSeconds: 30 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [200] },
+            },
           },
           {
             // 文档页导航网络优先 离线时回退到已访问过的缓存副本

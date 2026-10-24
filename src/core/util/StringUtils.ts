@@ -111,9 +111,13 @@ export function hashCode(str: string): number {
 /** 按 UTF-16 字符预算取前缀；边界落在代理对中间时舍弃整个码点，保持 JSON 可被严格解码。 */
 export function safeTextPrefix(text: string, maxUnits: number): string {
   let end = Math.min(text.length, Math.max(0, Math.floor(maxUnits)))
-  if (end > 0 && end < text.length
+  if (
+    end > 0 && end < text.length
     && text.charCodeAt(end - 1) >= 0xd800 && text.charCodeAt(end - 1) <= 0xdbff
-    && text.charCodeAt(end) >= 0xdc00 && text.charCodeAt(end) <= 0xdfff) end--
+    && text.charCodeAt(end) >= 0xdc00 && text.charCodeAt(end) <= 0xdfff
+  ) {
+    end--
+  }
   return text.slice(0, end)
 }
 

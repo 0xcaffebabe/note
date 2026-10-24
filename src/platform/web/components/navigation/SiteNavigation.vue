@@ -18,8 +18,17 @@
           <button type="button" class="search-box dock-action" aria-label="搜索 (Ctrl+K)" @click="search()">
             <el-icon><Search /></el-icon><span>搜索</span><kbd>{{ metaKeyLabel }} K</kbd>
           </button>
-          <button type="button" class="bridge-button dock-action" :class="{ connected: bridgeState === 'ready' }" :aria-label="`Note Bridge：${bridgeStatusText}`" :title="bridgeStatusText" @click="openBridge">
-            <el-icon><Connection /></el-icon><span>Note Bridge</span><span v-if="bridgeState === 'ready'" class="bridge-label">已连接</span>
+          <button
+            type="button"
+            class="bridge-button dock-action"
+            :class="{ connected: bridgeState === 'ready' }"
+            :aria-label="`Note Bridge：${bridgeStatusText}`"
+            :title="bridgeStatusText"
+            @click="openBridge"
+          >
+            <el-icon><Connection /></el-icon>
+            <span>Note Bridge</span>
+            <span v-if="bridgeState === 'ready'" class="bridge-label">已连接</span>
           </button>
           <el-popover v-model:visible="menuOpen" trigger="click" role="dialog" aria-label="站点导航与工具" placement="top-end" :popper-options="popperOptions" :width="280" popper-class="site-navigation-popover" @after-enter="focusMenu" @after-leave="restoreLauncherFocus">
             <template #reference>
@@ -30,7 +39,11 @@
             <section id="site-navigation-panel" ref="panel" class="site-navigation-panel" :class="{ 'with-bottom-bar': withBottomBar }" aria-label="站点导航与工具" @keydown.esc.stop.prevent="closeMenu">
               <p class="panel-title">{{ siteName }}</p>
               <div class="panel-actions">
-                <button type="button" class="assistant-entry" aria-label="知识助手" @click="openAssistant"><el-icon><MagicStick /></el-icon><span>知识助手</span><kbd v-if="!isTouch" aria-hidden="true">Alt I</kbd></button>
+                <button type="button" class="assistant-entry" aria-label="知识助手" @click="openAssistant">
+                  <el-icon><MagicStick /></el-icon>
+                  <span>知识助手</span>
+                  <kbd v-if="!isTouch" aria-hidden="true">Alt I</kbd>
+                </button>
                 <div class="theme-row"><span>深色模式</span><theme-switcher class="action-item" aria-label="深色模式" /></div>
                 <button type="button" @click="toggleFullScreen"><el-icon><FullScreen /></el-icon>{{ fullscreen ? '退出全屏' : '全屏' }}</button>
                 <button type="button" @click="enterZenMode"><el-icon><Aim /></el-icon>专注模式</button>
@@ -49,7 +62,13 @@
       <div class="navigation-handle" data-link-preview-control>
         <button ref="launcher" type="button" class="navigation-launcher dock-action" :class="{ 'bridge-ready': bridgeState === 'ready' }" :title="(expanded ? '收起站点导航' : '展开站点导航') + '（可拖动）'" :aria-label="expanded ? '收起站点导航' : '展开站点导航'" :aria-describedby="bridgeState === 'ready' ? 'navigation-bridge-status' : undefined" aria-description="拖动可调整位置，更多工具中可恢复默认位置" :aria-expanded="expanded" aria-controls="site-navigation-shortcuts" @pointerdown="start" @pointermove="move" @pointerup="handlePointerUp" @pointercancel="cancelPointer" @lostpointercapture="lostCapture" @contextmenu.prevent @click="toggleNavigation">
           <el-icon><ArrowRightBold v-if="expanded" /><Menu v-else /></el-icon>
-          <span v-if="bridgeState === 'ready'" id="navigation-bridge-status" class="bridge-mini-status" role="status" aria-label="Note Bridge 已连接">已连接</span>
+          <span
+            v-if="bridgeState === 'ready'"
+            id="navigation-bridge-status"
+            class="bridge-mini-status"
+            role="status"
+            aria-label="Note Bridge 已连接"
+          >已连接</span>
         </button>
         <button
           v-if="linkPreviewCounts.hidden"
@@ -123,14 +142,18 @@ function collapse() {
   expanded.value = false;
 }
 
+/** 连接弹窗接管焦点前记录触发位置；导航本身折叠以避免两个面板争用焦点。 */
 function openBridge() {
   bridgeReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   collapse();
   bridgeOpen.value = true;
 }
 
+/** 原触发元素仍可见时恢复它，否则回到稳定的导航入口。 */
 function restoreBridgeFocus() {
-  const target = bridgeReturnFocus?.isConnected && bridgeReturnFocus.getClientRects().length ? bridgeReturnFocus : launcher.value;
+  const target = bridgeReturnFocus?.isConnected && bridgeReturnFocus.getClientRects().length
+    ? bridgeReturnFocus
+    : launcher.value;
   target?.focus({ preventScroll: true });
   bridgeReturnFocus = null;
 }
@@ -347,8 +370,13 @@ onBeforeUnmount(() => {
 .navigation-launcher { touch-action: none; user-select: none; -webkit-touch-callout: none; }
 .navigation-launcher.bridge-ready { flex-direction: column; gap: 0; padding: var(--spacing-xs); }
 .bridge-mini-status { color: var(--success-color); font-size: var(--font-size-xs); line-height: var(--leading-tight); pointer-events: none; }
-.bridge-button.connected, .bridge-button.connected:hover:not(:disabled) { color: var(--success-color); }
-.bridge-label { font-size: var(--font-size-xs); }
+.bridge-button.connected,
+.bridge-button.connected:hover:not(:disabled) {
+  color: var(--success-color);
+}
+.bridge-label {
+  font-size: var(--font-size-xs);
+}
 .preview-restore {
   position: absolute;
   top: calc(-1 * var(--spacing-xs));

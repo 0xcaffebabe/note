@@ -10,13 +10,36 @@ import type ClusterNode from '@/core/domain/ClusterNode'
 import { KnowledgeClient } from '../../note-bridge/agent/src/knowledge'
 
 const content = new DocContentService(nodeMarkdown, nodeDomParser)
-const a = '目录-正文'; const b = '目录-关联'
+const a = '目录-正文'
+const b = '目录-关联'
 const markdown = '# 相同标题\n\n正文🙂\n\n# 相同标题\n\n```ts\n  const a = 1\n```\n\n## 关联内容（自动生成）\n\n- [关联](./目录/关联.md)\n'
 const input = (body = markdown) => ({
-  categories: [{ name: '目录', link: '', chidren: [{ name: '正文', link: './目录/正文.md', chidren: [] }, { name: '关联', link: './目录/关联.md', chidren: [] }] }] as Category[],
-  files: [content.buildFileInfo('doc/目录/正文.md', body, []), content.buildFileInfo('doc/目录/关联.md', '# 关联\n\n另一个正文', [])],
-  graph: [{ id: a, links: [{ id: b, name: '关联' }, { id: 'absent', name: 'not published' }] }],
-  clusters: [{ name: '', children: [{ name: 'doc/目录/正文.md', children: [] }, { name: 'doc/目录/关联.md', children: [] }] }] as ClusterNode[],
+  categories: [{
+    name: '目录',
+    link: '',
+    chidren: [
+      { name: '正文', link: './目录/正文.md', chidren: [] },
+      { name: '关联', link: './目录/关联.md', chidren: [] },
+    ],
+  }] as Category[],
+  files: [
+    content.buildFileInfo('doc/目录/正文.md', body, []),
+    content.buildFileInfo('doc/目录/关联.md', '# 关联\n\n另一个正文', []),
+  ],
+  graph: [{
+    id: a,
+    links: [
+      { id: b, name: '关联' },
+      { id: 'absent', name: 'not published' },
+    ],
+  }],
+  clusters: [{
+    name: '',
+    children: [
+      { name: 'doc/目录/正文.md', children: [] },
+      { name: 'doc/目录/关联.md', children: [] },
+    ],
+  }] as ClusterNode[],
 })
 
 describe('site-owned versioned AI data', () => {
@@ -25,8 +48,11 @@ describe('site-owned versioned AI data', () => {
     const second = await buildKnowledgeData(input())
     expect(first.manifest).toEqual(second.manifest)
     expect([...first.assets]).toEqual([...second.assets])
+    expect([...first.assets.keys()].at(-1)).toBe('/ai/manifest.json')
     for (const [path, body] of first.assets) {
-      if (path === '/ai/manifest.json') continue
+      if (path === '/ai/manifest.json') {
+        continue
+      }
       expect(path).toBe(`/ai/objects/${createHash('sha256').update(body).digest('hex')}.json`)
     }
     const catalog = JSON.parse(first.assets.get(first.manifest.resources.catalog.path)!)
@@ -55,8 +81,11 @@ describe('site-owned versioned AI data', () => {
     const publication = await buildKnowledgeData(input())
     const requested: string[] = []
     const fetcher: typeof fetch = async target => {
-      const path = new URL(String(target)).pathname; requested.push(path)
-      return new Response(publication.assets.get(path) || '', { status: publication.assets.has(path) ? 200 : 404 })
+      const path = new URL(String(target)).pathname
+      requested.push(path)
+      return new Response(publication.assets.get(path) || '', {
+        status: publication.assets.has(path) ? 200 : 404,
+      })
     }
     const snapshot = await new KnowledgeClient('https://example.test', { fetch: fetcher }).pin()
     expect(requested).toEqual(['/ai/manifest.json', publication.manifest.resources.catalog.path])

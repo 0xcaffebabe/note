@@ -283,3 +283,91 @@ describe('persistent session RPC', () => {
     expect(bridge.snapshot().state).toBe('disconnected')
   })
 })
+
+
+describe('bridge lifecycle boundaries', () => {
+  it('ignores late events from a replaced socket and reconnects only after heartbeat failure', async () => {
+    vi.useFakeTimers()
+    const { bridge, sockets } = setup()
+    const first = await authenticate(bridge, sockets)
+    const lateMessage = first.onmessage!
+    const lateClose = first.onclose!
+    const reconnecting = bridge.reconnect()
+    const active = sockets[1]
+    active.open()
+    active.receive({
+      type: 'auth.ok',
+      token: 'memory-only-token',
+      providers: [provider],
+      capabilities: ['persistent_sessions', 'knowledge_tools'],
+    })
+    await reconnecting
+
+    lateMessage({ data: 'invalid JSON' })
+    lateClose()
+    expect(bridge.snapshot().state).toBe('ready')
+
+    vi.advanceTimersByTime(25000)
+    expect(active.sent.at(-1)).toEqual({ v: 2, type: 'ping' })
+    vi.advanceTimersByTime(25000)
+    expect(bridge.snapshot()).toMatchObject({
+      state: 'disconnected',
+      message: expect.stringContaining('心跳超时'),
+    })
+    vi.advanceTimersByTime(1000)
+    expect(sockets).toHaveLength(3)
+    sockets[2].open()
+    expect(sockets[2].sent).toEqual([{ v: 2, type: 'auth', token: 'memory-only-token' }])
+  })
+
+  it('adopts a credential changed by another page and removes lifecycle listeners on disposal', async () => {
+    const lifecycle = new EventTarget()
+    const { bridge, sockets, storage } = setup(new MemoryStorage(), lifecycle)
+    await authenticate(bridge, sockets)
+    storage.setItem(AI_BRIDGE_STORAGE_KEY, JSON.stringify({
+      version: 1,
+      port: 19662,
+      token: 'new-remembered-token',
+    }))
+    lifecycle.dispatchEvent(Object.assign(new Event('storage'), { key: AI_BRIDGE_STORAGE_KEY }))
+    expect(sockets).toHaveLength(2)
+    sockets[1].open()
+    expect(sockets[1].sent).toEqual([{ v: 2, type: 'auth', token: 'new-remembered-token' }])
+    sockets[1].receive({
+      type: 'auth.ok',
+      token: 'new-remembered-token',
+      providers: [provider],
+      capabilities: ['persistent_sessions', 'knowledge_tools'],
+    })
+    expect(bridge.snapshot()).toMatchObject({ state: 'ready', port: 19662, remembered: true })
+
+    bridge.dispose()
+    storage.removeItem(AI_BRIDGE_STORAGE_KEY)
+    lifecycle.dispatchEvent(Object.assign(new Event('storage'), { key: AI_BRIDGE_STORAGE_KEY }))
+    lifecycle.dispatchEvent(new Event('online'))
+    expect(sockets).toHaveLength(2)
+    expect(bridge.snapshot().message).toBeUndefined()
+  })
+
+  it('rejects unsafe tool overview text without treating it as a committed session update', async () => {
+    const { bridge, sockets, events } = setup()
+    const socket = await authenticate(bridge, sockets)
+    socket.receive({
+      type: 'session.updated',
+      sessionId: session.id,
+      revision: session.revision,
+      session,
+      turn: {
+        ...turn,
+        toolCalls: [{
+          callId: 'tool-1',
+          name: 'get_document',
+          status: 'complete',
+          overview: { input: [{ label: '文档', value: 'hidden\u202esuffix' }] },
+        }],
+      },
+    })
+    expect(bridge.snapshot().state).toBe('disconnected')
+    expect(events.some(event => event.type === 'session.updated')).toBe(false)
+  })
+})

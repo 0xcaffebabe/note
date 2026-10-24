@@ -8,7 +8,8 @@ import { browserDomParser } from '@/adapters/browser/BrowserDomParser'
 function setup(content: string) {
   const render = new DocRender(markedMarkdown, browserDomParser)
   const file = Object.assign(new DocFileInfo(), { id: 'test-doc', name: '测试', content })
-  const service = new AiContextService({ getDocFileInfo: async id => ({ ...file, id }),
+  const service = new AiContextService({
+    getDocFileInfo: async id => ({ ...file, id }),
     renderMd: doc => render.render(doc.content, doc.id, [], []),
   }, browserDomParser)
   return { service, file, render }

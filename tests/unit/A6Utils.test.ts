@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { median } from '@/core/util/MathUtils'
 import { computeKnowledgeGap, gapLevelClass, gapInterpretation } from '@/core/util/KnowledgeGapUtils'
-import { indent, applyTemplateVariables, cleanTemplateLines, contentsToOutline, categoriesToOutline } from '@/core/util/LlmTemplateUtils'
 import DocUtils from '@/core/util/DocUtils'
 
 describe('MathUtils.median', () => {
@@ -30,24 +29,6 @@ describe('KnowledgeGapUtils', () => {
     expect(gapLevelClass(0.9)).toBe('critical-gap')
     expect(gapInterpretation(0.1)).toContain('均匀')
     expect(gapInterpretation(0.9)).toContain('严重')
-  })
-})
-
-describe('LlmTemplateUtils', () => {
-  it('indent / applyTemplateVariables / cleanTemplateLines', () => {
-    expect(indent(3)).toBe('   ')
-    expect(applyTemplateVariables('a {{x}} {{x}} {{y}}', { x: '1', y: '2' })).toBe('a 1 1 2')
-    expect(cleanTemplateLines('  a  \n  b  ')).toBe('a\nb')
-  })
-  it('contentsToOutline 按 level 缩进', () => {
-    const out = contentsToOutline([{ name: 'A', level: 0, chidren: [{ name: 'B', level: 1 }] }])
-    expect(out).toContain('- A')
-    expect(out).toContain(' - B')
-  })
-  it('categoriesToOutline 按递归层缩进', () => {
-    const out = categoriesToOutline([{ name: 'X', chidren: [{ name: 'Y' }] }], 0)
-    expect(out).toContain('- X')
-    expect(out).toContain(' - Y')
   })
 })
 

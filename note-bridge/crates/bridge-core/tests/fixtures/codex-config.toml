@@ -1,0 +1,21 @@
+model = "fixture-openai-model"
+model_provider = "openai"
+
+[model_providers.custom]
+name = "Custom fixture"
+base_url = "https://custom.example.test/v1"
+env_key = "FIXTURE_CUSTOM_KEY"
+wire_api = "chat"
+
+[model_providers.missing]
+base_url = "https://missing.example.test/v1"
+env_key = "FIXTURE_MISSING_KEY"
+wire_api = "responses"
+
+[profiles.custom]
+model = "fixture-custom-model"
+model_provider = "custom"
+
+[profiles.missing]
+model = "fixture-missing-model"
+model_provider = "missing"

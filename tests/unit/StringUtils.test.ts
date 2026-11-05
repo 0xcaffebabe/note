@@ -1,5 +1,16 @@
 import { describe, it, expect } from 'vitest'
-import { cleanText, html2text, getMidString, octal2Chinese } from '@/core/util/StringUtils'
+import { cleanText, html2text, getMidString, octal2Chinese, safeTextPrefix } from '@/core/util/StringUtils'
+
+describe('safeTextPrefix', () => {
+  it('遵守 UTF-16 预算且不截断补充平面 Unicode 码点', () => {
+    expect(safeTextPrefix('a😀b', 2)).toBe('a')
+    expect(safeTextPrefix('a😀b', 3)).toBe('a😀')
+    expect(safeTextPrefix('a😀b', 4)).toBe('a😀b')
+    expect(safeTextPrefix('😀', 1)).toBe('')
+    expect(safeTextPrefix('中文', 1)).toBe('中')
+    expect(safeTextPrefix('text', 0)).toBe('')
+  })
+})
 
 // 文本清洗用于搜索分词/相似度等环节; 锁定其对中文、标点、空白与空值的处理口径
 describe('cleanText', () => {

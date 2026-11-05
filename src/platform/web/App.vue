@@ -11,25 +11,31 @@
   </el-container>
   <site-navigation v-if="!$route.meta.hasBottomBar" />
   <command-palette ref="commandPalette" />
+  <knowledge-assistant v-if="assistantMounted" ref="knowledgeAssistant" :doc="assistantDoc" />
   <!-- 文档路由独有 docPath；离开时保存并卸载，返回时恢复固定卡片。 -->
   <link-preview-layer v-if="$route.params.docPath" />
 </template>
 
 <script lang="ts">
-import { defineComponent, onBeforeUnmount, ref } from "vue";
+import { defineAsyncComponent, defineComponent, onBeforeUnmount, ref } from "vue";
+import { useKnowledgeAssistant } from "./app/useKnowledgeAssistant";
 import SiteNavigation from "./components/navigation/SiteNavigation.vue";
 import CommandPalette from "@/platform/web/components/search/CommandPalette.vue";
 import LinkPreviewLayer from "@/platform/web/pages/doc/LinkPreviewLayer.vue";
 import EventBus from "./components/EventBus";
 
+// 首次打开才下载聊天界面；挂在应用层，路由切换不重建会话。
+const KnowledgeAssistant = defineAsyncComponent(() => import('./pages/doc/knowledge/LLM.vue'));
 const cateListKey='system::currentCategoryList';
 export default defineComponent({
   components: {
     SiteNavigation,
     CommandPalette,
+    KnowledgeAssistant,
     LinkPreviewLayer,
   },
   setup() {
+    const { assistantDoc, assistantMounted, knowledgeAssistant } = useKnowledgeAssistant()
     const commandPalette = ref<InstanceType<typeof CommandPalette>>()
     // 统一搜索入口: 全文 / 目录 都走 CommandPalette(取代移动端 Search 抽屉 + CategorySearch 弹窗)
     const showSearch = (mode?: 'category' | 'fulltext') => {
@@ -39,6 +45,9 @@ export default defineComponent({
     onBeforeUnmount(() => EventBus.off('show-site-search', showSearch))
     return {
       commandPalette,
+      assistantDoc,
+      assistantMounted,
+      knowledgeAssistant,
     }
   },
   created() {

@@ -41,8 +41,20 @@ describe('listAllFile 递归遍历 + 忽略目录剪枝', () => {
 
   it('默认忽略表含 .git/node_modules/dist/test-results 等', () => {
     expect(DEFAULT_IGNORE_PREFIXES).toEqual(
-      ['.git', 'node_modules', 'dist', 'doc/.agents', 'QWEN', 'test-results', 'playwright-report'],
+      ['.git', 'node_modules', 'dist', 'doc/.agents', 'QWEN', 'test-results', 'playwright-report', 'note-bridge'],
     )
+  })
+
+  it('独立桌面工程不进入知识文档扫描，正常 doc 与相似名称目录仍保留', () => {
+    const f = makeFs({
+      './': ['doc', 'note-bridge', 'note-bridge-guide'],
+      doc: ['article.md'],
+      'note-bridge': ['README.md', 'target'],
+      'note-bridge/target': ['generated.md'],
+      'note-bridge-guide': ['guide.md'],
+    })
+    expect(listFilesBySuffix(f, 'md')).toEqual(['doc/article.md', 'note-bridge-guide/guide.md'])
+    expect(listFilesBySuffix(f, 'md', '/repo/note-bridge')).toEqual([])
   })
 })
 

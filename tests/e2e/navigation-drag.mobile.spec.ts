@@ -100,7 +100,7 @@ test('320px 顶边拖动后工具弹层仍可完整访问，并可用 Escape 关
   await expectAnchor(page, positioned)
   await page.locator('.more-btn').tap()
   const tools = page.getByRole('dialog', { name: '站点导航与工具', exact: true })
-  await expect(tools.getByRole('switch')).toBeFocused()
+  await expect(tools.getByRole('button', { name: '知识助手', exact: true })).toBeFocused()
   const popup = (await tools.boundingBox())!
   expect(popup.x).toBeGreaterThanOrEqual(0)
   expect(popup.y).toBeGreaterThanOrEqual(0)

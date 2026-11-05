@@ -3,15 +3,14 @@ import type { SearchEnginePort, AlgoliaSearchResponse, SearchOptions } from '@/c
 import SearchSuggestion from '@/core/domain/search/SearchSuggestion'
 import { algoliasearch } from 'algoliasearch'
 
-const APP_ID = 'K9I7PAT3CY'
-const API_KEY = '8f3ec5043331dedbccce916154fc0162'
+import { PUBLIC_SEARCH_CONFIG } from '../../core/config/PublicSearchConfig'
 
 export class AlgoliaSearchAdapter implements SearchEnginePort {
-  private client = algoliasearch(APP_ID, API_KEY)
+  private client = algoliasearch(PUBLIC_SEARCH_CONFIG.applicationId, PUBLIC_SEARCH_CONFIG.searchOnlyApiKey)
 
   async search(kw: string, opts: SearchOptions): Promise<AlgoliaSearchResponse | undefined> {
     return this.client.searchSingleIndex({
-      indexName: 'note',
+      indexName: PUBLIC_SEARCH_CONFIG.indexName,
       searchParams: { query: kw, ...opts },
     }) as unknown as Promise<AlgoliaSearchResponse | undefined>
   }

@@ -1,0 +1,27 @@
+[package]
+name = "note-bridge-desktop"
+version = "0.2.0"
+description = "Local model bridge for note"
+edition = "2021"
+license.workspace = true
+publish = false
+
+[lib]
+name = "note_bridge_desktop"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "note-bridge"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+png = "0.17"
+
+[dependencies]
+bridge-core = { path = "../crates/bridge-core" }
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-single-instance = "2"
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+tokio = { version = "1", features = ["time"] }

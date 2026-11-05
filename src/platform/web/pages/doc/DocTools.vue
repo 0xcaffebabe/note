@@ -25,11 +25,11 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, type Component } from 'vue';
-import { Share, Connection, DataAnalysis, MagicStick, Position, CopyDocument, EditPen, Refresh, Setting } from '@element-plus/icons-vue';
+import { Share, Connection, DataAnalysis, Position, CopyDocument, EditPen, Refresh, Setting } from '@element-plus/icons-vue';
 import { isMobile, isTouch, isFull } from '@/platform/web/composables/useBreakpoint';
 import { useServices } from '@/platform/web/app/useServices';
 
-type DocAction = 'showMindGraph' | 'showKnowledgeNetwork' | 'showKnowledgeReviewer' | 'showLlm' | 'copyDocPath' | 'copyDocContent' | 'openInEditor' | 'handleRandomReview';
+type DocAction = 'showMindGraph' | 'showKnowledgeNetwork' | 'showKnowledgeReviewer' | 'copyDocPath' | 'copyDocContent' | 'openInEditor' | 'handleRandomReview';
 type ActionType = DocAction | 'showMoreSetting';
 interface Action {
   name: string;
@@ -41,7 +41,7 @@ interface Action {
   fullOnly?: boolean;
 }
 
-const emit = defineEmits(['select', 'showMindGraph', 'showKnowledgeNetwork', 'showKnowledgeReviewer', 'showLlm', 'copyDocPath', 'copyDocContent', 'openInEditor', 'handleRandomReview']);
+const emit = defineEmits(['select', 'showMindGraph', 'showKnowledgeNetwork', 'showKnowledgeReviewer', 'copyDocPath', 'copyDocContent', 'openInEditor', 'handleRandomReview']);
 const { configService } = useServices();
 const showSettings = ref(false);
 const fontSize = ref(Number(configService.get('fontSize')) || 16);
@@ -49,7 +49,6 @@ const actions: Action[] = [
   { name: '思维导图', type: 'success', action: 'showMindGraph', icon: Share, key: 'l' },
   { name: '知识网络', type: 'warning', action: 'showKnowledgeNetwork', icon: Connection, key: 'k' },
   { name: '知识回顾', type: 'primary', action: 'showKnowledgeReviewer', icon: DataAnalysis, key: 'r' },
-  { name: '知识助手', type: 'warning', action: 'showLlm', icon: MagicStick, key: 'i' },
   { name: '路径复制', type: 'success', action: 'copyDocPath', icon: Position, key: 'c', divided: true },
   { name: '知识复制', type: 'warning', action: 'copyDocContent', icon: CopyDocument, key: 'x' },
   { name: '在VSC打开', type: 'danger', action: 'openInEditor', icon: EditPen, key: 'v', fullOnly: true },

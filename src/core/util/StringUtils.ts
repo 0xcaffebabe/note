@@ -108,6 +108,19 @@ export function hashCode(str: string): number {
   return hash
 }
 
+/** 按 UTF-16 字符预算取前缀；边界落在代理对中间时舍弃整个码点，保持 JSON 可被严格解码。 */
+export function safeTextPrefix(text: string, maxUnits: number): string {
+  let end = Math.min(text.length, Math.max(0, Math.floor(maxUnits)))
+  if (
+    end > 0 && end < text.length
+    && text.charCodeAt(end - 1) >= 0xd800 && text.charCodeAt(end - 1) <= 0xdbff
+    && text.charCodeAt(end) >= 0xdc00 && text.charCodeAt(end) <= 0xdfff
+  ) {
+    end--
+  }
+  return text.slice(0, end)
+}
+
 export const stopWords = ['的', '是', '在', '一个', '和',
 '与', '批注', '可以', '使用', '通过', 'md', '据库', '这个', '截图', '没有',
 '进行', '如果', '需要', '务器', '屏幕', '不会', '就是', '或者', '并且',

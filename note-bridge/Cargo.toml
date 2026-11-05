@@ -1,0 +1,9 @@
+[workspace]
+members = ["crates/bridge-core", "src-tauri"]
+default-members = ["crates/bridge-core"]
+resolver = "2"
+
+[workspace.package]
+version = "0.2.0"
+edition = "2021"
+license = "CC-BY-SA-4.0"
